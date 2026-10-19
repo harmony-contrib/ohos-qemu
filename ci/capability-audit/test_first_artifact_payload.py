@@ -52,7 +52,7 @@ class FirstArtifactPayloadTests(unittest.TestCase):
 
     def test_full_original_ledger_summary_without_any_raw_child_is_refused(self):
         from verify_gap_closure import LEDGER, requirements
-        from release_scope import SCOPE, exclusion_record
+        from release_scope import SCOPE, exclusion_record, exclusion_labels
         from run_root_probe import digest
         baseline = requirements(json.loads(LEDGER.read_text())['devices']['phone'])
         exclusions = exclusion_record('phone', baseline)
@@ -66,7 +66,7 @@ class FirstArtifactPayloadTests(unittest.TestCase):
         self.reject('cxx-arkts11-gaps', dict(schema_version=2, status='pass', scope=SCOPE,
             archive_sha256=self.identity['sha256'], boot_id=self.environment['boot_id'],
             original_expected_count=len(baseline), release_exclusions=exclusions,
-            excluded=['ArkTS Static', 'CloudSync', 'imageGeneration'], unresolved=[],
+            excluded=exclusion_labels('phone'), unresolved=[],
             expected_count=len(expected), closed_count=len(expected), audit_baseline_sha256=digest(LEDGER),
             closed={key: {'evidence': '/missing/old-guest.json', 'sha256': '0' * 64} for key in expected}))
 

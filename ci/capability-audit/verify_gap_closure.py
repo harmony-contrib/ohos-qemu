@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 
 from run_root_probe import digest
-from release_scope import SCOPE, IMAGE_GENERATION, exclusion_record
+from release_scope import SCOPE, IMAGE_GENERATION, exclusion_record, exclusion_labels
 
 ROOT = Path(__file__).resolve().parents[2]
 LEDGER = ROOT / 'docs/capability-audit/native-arkts11-gap-ledger.json'
@@ -1234,7 +1234,7 @@ def collect(archive, boot_path, runtime_root, device):
         'archive': str(archive.resolve()), 'archive_sha256': archive_sha,
         'boot_id': environment['boot_id'], 'audit_baseline': str(LEDGER), 'audit_baseline_sha256': digest(LEDGER),
         'expected_count': len(expected), 'closed_count': len(closed), 'closed': closed,
-        'unresolved': unresolved, 'excluded': ['ArkTS Static', 'CloudSync', 'imageGeneration'],
+        'unresolved': unresolved, 'excluded': exclusion_labels(device),
         'original_expected_count': original_count, 'release_exclusions': exclusions,
         'first_artifact_behavior_gate_passed': False}
     return result

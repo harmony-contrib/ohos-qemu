@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "scope": "ordinary SDK105 select caller and targets; source preparation only",
+  "action": "ohos.want.action.select",
+  "mime": "application/vnd.harmonycontrib.select375",
+  "entity": "org.harmonycontrib.select375",
+  "roles": {
+    "caller": {"bundle": "org.harmonycontrib.select375caller", "apl": "normal", "system_app": false, "permissions": []},
+    "target_a": {"bundle": "org.harmonycontrib.select375targeta", "apl": "normal", "system_app": false, "permissions": []},
+    "target_b": {"bundle": "org.harmonycontrib.select375targetb", "apl": "normal", "system_app": false, "permissions": []}
+  },
+  "cases": {
+    "read-a": {"target": "target_a", "flags": 1},
+    "read-b": {"target": "target_b", "flags": 1},
+    "write-a": {"target": "target_a", "flags": 3},
+    "no-grant-a": {"target": "target_a", "flags": 0},
+    "cancel": {"target": "", "flags": 1},
+    "private-start": {"target": "", "flags": 0},
+    "forged-sid": {"target": "", "flags": 0}
+  },
+  "private_provider": {"bundle": "com.ohos.settings", "ability": "PickerDialog"},
+  "permission_denied_file_code": 13900012,
+  "private_start_denied_codes": [201, 16000004, 16000005],
+  "result_codes": {"target_a": 37501, "target_b": 37502},
+  "full_gate": false
+}

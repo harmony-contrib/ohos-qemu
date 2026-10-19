@@ -1,0 +1,86 @@
+{
+  "started_utc": "2026-10-19T01:42:35.141102+00:00",
+  "branch": "codex/ohos7-integrated-development",
+  "base": "427eeec249b367798a9eafdbab28349ef6527e77",
+  "resource_owner": "root",
+  "maximum_active_child_agents": 3,
+  "representative": {
+    "product": "arm64_virt",
+    "device_type": "phone",
+    "fresh_archive_required": true,
+    "full_behavior_gate_passed": false
+  },
+  "deliverables": [
+    {
+      "product": "arm64_virt",
+      "device_type": "phone"
+    },
+    {
+      "product": "arm64_virt",
+      "device_type": "2in1"
+    },
+    {
+      "product": "armv7a_virt",
+      "device_type": "phone"
+    },
+    {
+      "product": "armv7a_virt",
+      "device_type": "2in1"
+    },
+    {
+      "product": "x86_64_virt",
+      "device_type": "phone"
+    },
+    {
+      "product": "x86_64_virt",
+      "device_type": "2in1"
+    }
+  ],
+  "streams": {
+    "apps": {
+      "agent": "apps",
+      "state": "chooser_committed_55b1446; ordinary_caller_successor_frozen",
+      "write_paths": []
+    },
+    "system": {
+      "agent": "media_repair",
+      "state": "frozen_and_committed_a714da4",
+      "write_paths": [
+        "patches/common/applications/standard/calendardata/filter_async_lifetime/",
+        "ci/capability-audit/test_batch_system_calendar_filter_async_lifetime.py",
+        "ci/capability-audit/batch_system_calendar375_*.py",
+        "ci/capability-audit/test_batch_system_calendar375_*.py",
+        "docs/capability-audit/parallel/system/round375/"
+      ]
+    },
+    "network": {
+      "agent": "network_repair",
+      "state": "first_batch_committed_55b1446; official_research_frozen; private_runtime_adapter_only",
+      "write_paths": []
+    },
+    "location": {
+      "agent": "location375",
+      "state": "component_and_kit_committed_55b1446",
+      "handoff": "docs/capability-audit/parallel/location/round375/HANDOFF.md",
+      "private_kit_manifest_sha256": "76a8bfd4828beb546277b3897f90971c22d6b7eb30559c61169c7b3a10421d21"
+    },
+    "media": {
+      "agent": "media375",
+      "state": "source_committed_55b1446; official_boundary_frozen; private_runtime_adapter_only",
+      "write_paths": []
+    }
+  },
+  "rules": [
+    "Root serializes all Git staging and commits.",
+    "Agents cannot edit shared build/packaging scripts or another upstream target.",
+    "No package build until all known batch source fixes are collected.",
+    "Complete the representative runtime cycle and collect failures before another build.",
+    "Remaining five artifacts start only after newly packaged representative complete runtime gate passes."
+  ],
+  "updated_utc": "2026-10-19T02:35:36.868026+00:00",
+  "provider_policy": {
+    "user_instruction": "Inspect OpenHarmony and corresponding SIG repositories; integrate usable implementations; mark unsupported where no deliverable exists.",
+    "unsupported_is_not_successful_runtime_capability": true
+  },
+  "source_batch": "five_stream_first_batch_frozen_and_core_reviewed"
+}

@@ -480,14 +480,14 @@ def verified_payload(name, path, identity, environment):
             expected |= {'permission:' + row['permission'] for row in baseline['permission_registry_gaps']}
             expected |= {'behavior:' + row['id'] for row in baseline['runtime_behavior_gaps']}
             sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'ci/capability-audit'))
-            from release_scope import SCOPE, exclusion_record
+            from release_scope import SCOPE, exclusion_record, exclusion_labels
             original_count = len(expected)
             exclusions = exclusion_record(environment['device_type'], expected)
             expected -= set(exclusions['ids'])
             if (payload.get('schema_version') != 2 or payload.get('scope') != SCOPE or
                     payload.get('original_expected_count') != original_count or
                     payload.get('release_exclusions') != exclusions or
-                    payload.get('excluded') != ['ArkTS Static', 'CloudSync', 'imageGeneration'] or
+                    payload.get('excluded') != exclusion_labels(environment['device_type']) or
                     payload.get('unresolved') != [] or type(payload.get('expected_count')) is not int or
                     payload['expected_count'] != len(expected) or payload.get('closed_count') != len(expected) or
                     set(payload.get('closed', {})) != expected or

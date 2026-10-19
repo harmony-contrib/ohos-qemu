@@ -1,0 +1,42 @@
+{
+  "official_scope": [
+    "https://gitcode.com/openharmony",
+    "https://gitcode.com/openharmony-sig",
+    "https://gitee.com/openharmony",
+    "https://gitee.com/openharmony-sig",
+    "https://github.com/openharmony"
+  ],
+  "queries": [
+    "site:gitee.com/openharmony intelligent_voice ASR model README",
+    "site:gitee.com/openharmony-sig number attribution mark data phone number",
+    "site:gitee.com/openharmony device_attest README certificate",
+    "site:gitee.com/openharmony security_guard README product",
+    "site:gitcode.com/openharmony/ai_intelligent_voice_framework",
+    "site:gitcode.com/openharmony-sig ASR 模型 语音识别",
+    "site:gitcode.com/openharmony/telephony_call_manager number identity",
+    "site:gitcode.com/openharmony/security_security_guard modelcfg",
+    "site:gitcode.com/openharmony-sig/applications_ai_model_samples/ AsrAndTts 模型",
+    "site:gitcode.com/openharmony-sig security_guard 模型",
+    "site:gitcode.com/openharmony-sig AiCaption",
+    "site:gitcode.com/openharmony-sig sherpa-onnx",
+    "site:gitcode.com/openharmony-tpc sherpa",
+    "site:gitcode.com/openharmony tiny-encoder.ms",
+    "site:gitcode.com/openharmony MindSporeLiteCDemoASR",
+    "site:gitcode.com/openharmony AiCaptionServiceExtAbility",
+    "site:gitcode.com/openharmony-sig 实时字幕 模型"
+  ],
+  "positive_official_sources": [
+    "https://gitcode.com/openharmony/applications_number_identity",
+    "https://gitcode.com/openharmony/security_security_guard",
+    "https://gitcode.com/openharmony/ai_intelligent_voice_framework/tree/master",
+    "https://gitcode.com/openharmony-sig/applications_ai_model_samples",
+    "https://gitcode.com/openharmony-sig/compatibility"
+  ],
+  "access_failures": [
+    "GitCode and Gitee blob/raw/ASR sample children unavailable in web tool; SIG main explicitly reported Access rate limit exceeded. No login bypass attempted.",
+    "Python HTTPS to GitCode/Gitee APIs ended SSL EOF; official GitHub HTTP source/API succeeded.",
+    "Official GitHub applications_app_samples mirror returned no history for current ASR path and 404 for OpenHarmony-7.0-Release; root host commit therefore recorded separately."
+  ],
+  "non_primary_results": "Search also surfaced personal mirrors/blogs, ohosSenseVoice and unrelated upstream projects. They were not treated as official OpenHarmony/SIG deliverable evidence.",
+  "absence_bound": "No search result or access failure alone is treated as proof of global absence. Findings are bounded to inspected official refs, local current product source and confirmed missing product material."
+}

@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "research_round": "375-provider-research",
+  "completed_utc": "2026-10-19T02:31:22.382283+00:00",
+  "scope": "Official OpenHarmony and corresponding SIG provider research only; no implementation, native/build/SDK/VM/Docker or Git operations were performed by this research round.",
+  "workspace_source_ref": {
+    "manifest_default": "master",
+    "sample_host_commit": "9816293dbb701405719af072e226584ad47f91bc",
+    "sample_commit_evidence": "Root reported host git rev-parse; not a newly prepared volume or packaged artifact receipt. Local selected file hashes recorded independently.",
+    "sample_official_url": "https://gitcode.com/openharmony/applications_app_samples/tree/9816293dbb701405719af072e226584ad47f91bc/code/DocsSample/MindSporeLiteKit/MindSporeLiteCDemoASR"
+  },
+  "official_release_ref": "OpenHarmony-7.0-Release",
+  "release7_pins": {
+    "applications_number_identity": "50e1330646432ce166e7981c577f25f46c90e7ac",
+    "xts_device_attest": "edbf39f5ca115e6096a87909b39f29c4fcfdc553",
+    "security_security_guard": "b6e82fc42cd88e675ff823d4a3031a5b62e9921d",
+    "ai_intelligent_voice_framework": "630177fce145c5d811ed143fbd54b484ea9a6e4b"
+  },
+  "also_checked_master_pins": {
+    "ai_intelligent_voice_framework": "19188608475123695def986a399641bfa64a49f7",
+    "security_security_guard": "b45619df14d3144445c2bf8b493ce2c034fe48ab",
+    "xts_device_attest": "dfa463e41761c46164490ab161baf29c577e3df6",
+    "applications_number_identity": "d94ee1a37529ad9079156e5bf8cda29d6e7b9391"
+  },
+  "status_definitions": {
+    "available": "Reusable source or limited data exists; does not imply current package delivery or runtime acceptance.",
+    "absent": "Complete provider/default data not found in the specific inspected official sources; not a claim about all public/private repositories.",
+    "product-dependent": "Actual functioning capability additionally needs product material/configuration/integration absent from the current deliverable."
+  },
+  "findings": [
+    {
+      "id": "behavior:accessibility-caption-provider-missing",
+      "status": "product-dependent",
+      "complete_provider_in_current_product": "absent",
+      "available": [
+        "MindSporeLiteCDemoASR offline file-recognition C++/N-API sample and documented three-stage inference.",
+        "MindSpore Lite CPU inference entry with FP16 disabled.",
+        "OpenAI upstream Whisper code and original model weights have an explicit MIT statement; this is a possible lawful upstream, not the OH converted object provenance."
+      ],
+      "missing": [
+        "No complete real-time AiCaptionServiceExtAbility provider established in inspected OpenHarmony/SIG sources.",
+        "Four required model/embedding files are local LFS pointers, not complete model objects. Official GitCode LFS/file access was unavailable in this research; remote object absence was not proven.",
+        "Sample third_party directory contains only .gitkeep; LibrosaCpp/libsamplerate/AudioFile/base64 dependencies must be sourced and pinned.",
+        "No verified provenance/conversion recipe/specific distributable license statement tying the three .ms objects to original Whisper weights.",
+        "No actual audio stream subscription, bounded/cancelable recognition session, subtitle overlay lifecycle and permission/error recovery integration delivered by sample."
+      ],
+      "lfs_objects": [
+        {
+          "file": "tiny-encoder.ms",
+          "pointer_bytes": 133,
+          "oid": "a9ce157384d2e0a6918e2f31fff20e6dab9497e799041653c90425ef15f70189",
+          "size": 37595808
+        },
+        {
+          "file": "tiny-decoder-main.ms",
+          "pointer_bytes": 134,
+          "oid": "1525c8f0e702f9d40a71304a634f1d2c80e456ca7477ce77832fc3a684af9978",
+          "size": 118304760
+        },
+        {
+          "file": "tiny-decoder-loop.ms",
+          "pointer_bytes": 134,
+          "oid": "e589cde4945eb372148acae052a01250c050d9bf3aabe46a4e59046ed74fdc1f",
+          "size": 112847208
+        },
+        {
+          "file": "tiny-positional_embedding.bin",
+          "pointer_bytes": 131,
+          "oid": "c13450ae630323a0bdd39b1226f92a7ac251131a909c7efdb7d2f5516736eb83",
+          "size": 688128
+        }
+      ],
+      "lfs_declared_total_bytes": 269435904,
+      "license_constraints": [
+        "app_samples root LICENSE separates Apache-2.0 code from Testing Materials; lines 13,21,25-26 restrict the latter to internal OH testing and prohibit product/service distribution. Do not redistribute zh.wav as business data.",
+        "No blanket Apache classification of model assets was established. Original upstream Whisper MIT does not prove converted .ms object identity or license provenance."
+      ],
+      "architecture_constraints": [
+        "Sample README: API14 Stage model, tested Phone/HarmonyOS5+, not an OHOS7 six-artifact acceptance statement.",
+        "Sample explicitly selects OH_AI_DEVICETYPE_CPU with FP16 disabled. ARM64/x86 native inference library ABI, supported operators, tensor schema and latency remain untested; no GPU/DSP requirement inferred."
+      ],
+      "sources": [
+        {
+          "repo": "applications_app_samples",
+          "ref": "master",
+          "commit": "9816293dbb701405719af072e226584ad47f91bc",
+          "commit_source": "root host source observation",
+          "path": "code/DocsSample/MindSporeLiteKit/MindSporeLiteCDemoASR",
+          "url": "https://gitcode.com/openharmony/applications_app_samples/tree/9816293dbb701405719af072e226584ad47f91bc/code/DocsSample/MindSporeLiteKit/MindSporeLiteCDemoASR"
+        },
+        {
+          "url": "https://gitcode.com/openharmony-sig/applications_ai_model_samples",
+          "ref": "master",
+          "commit": null,
+          "access_limitation": "Main README and AsrAndTts folder listing observed; rate limit prevented child source/model/license verification. This is not absence proof."
+        },
+        {
+          "url": "https://github.com/openai/whisper/blob/86098128c0b4f24f0e2aa2994de830614b474227/README.md#license",
+          "commit": "86098128c0b4f24f0e2aa2994de830614b474227"
+        },
+        {
+          "url": "https://github.com/openharmony/ai_intelligent_voice_framework/blob/630177fce145c5d811ed143fbd54b484ea9a6e4b/README_zh.md",
+          "scope": "Voice enrollment/wakeup framework, not continuous ASR."
+        }
+      ],
+      "implementation_route_if_reopened": "Pin and verify the four actual model objects and their provenance/licenses plus dependencies, or use separately verified lawful model conversion; then implement PCM/audio lifecycle, bounded inference, real subtitle service/UI and cancellation/permission/error cases. Not implemented or built in this research."
+    },
+    {
+      "id": "behavior:telephony-number-identity-provider-missing",
+      "status": "product-dependent",
+      "complete_provider_in_current_product": "absent",
+      "available": [
+        "Official 7.0 number_identity system HAP/native DataShare provider and contact.numberlookup/telephony.numberidentity N-API source.",
+        "Real local user mark query/update/delete and RDB persistence implementation, independent of a cloud spam dataset.",
+        "Local number location parser and Apache-licensed limited text data: 11 rows / 10 unique prefixes.",
+        "Limited yellow-page seed: version plus 3 operator groups containing 6 top-level phone entries; not a full maintained number database."
+      ],
+      "missing": [
+        "Current local manifest does not include applications_number_identity and base/telephony/number_identity is absent.",
+        "Full numberlocation.dat and production maintained attribution/mark/anti-fraud dataset absent from inspected official tree; README explicitly assigns full .dat to product.",
+        "NumberIdentity service is only mark-file import command 0, not a complete SpamShield/HSDR service.",
+        "HSDR client code and REQUEST_HSDR permission exist but do not include actual HSDR cloud/service/data provider; SpamShield complete provider not established.",
+        "Current call_manager uses com.numberidentity and datashare:///numbermarkability while official app declares com.ohos.numberidentity and com.ohos.numbermarkability; bundle/authority/descriptor contracts require deliberate reconciliation."
+      ],
+      "license": "Apache-2.0 source and included limited data. Preserve license/attribution; no claim that unspecified external production datasets are licensed by this repository.",
+      "minimal_local_subcapability": {
+        "can_implement_without_external_dataset": true,
+        "scope": [
+          "Caller-owned local marks CRUD with persistence and permissions",
+          "Location queries limited explicitly to bundled prefixes",
+          "Limited operator yellow pages and correct unknown-number response"
+        ],
+        "repo": "applications_number_identity",
+        "commit": "50e1330646432ce166e7981c577f25f46c90e7ac",
+        "destination": "base/telephony/number_identity",
+        "component": "number_identity",
+        "targets": [
+          "//base/telephony/number_identity:NumberIdentity",
+          "//base/telephony/number_identity:number_identity",
+          "//base/telephony/number_identity/frameworks/js:numberlookup",
+          "//base/telephony/number_identity/frameworks/js:numberidentity",
+          "//base/telephony/number_identity/frameworks/extension:caller_info_query_extension",
+          "//base/telephony/number_identity/frameworks/extension:caller_info_query_extension_module",
+          "//base/telephony/number_identity/interfaces/kits/caller_info_query_extension_ability:callerinfoqueryextensionability_napi",
+          "//base/telephony/number_identity/interfaces/kits/caller_info_query_extension_context:callerinfoqueryextensioncontext_napi",
+          "//base/telephony/number_identity/etc:number_location"
+        ],
+        "minimal_provider_modules": [
+          "entry HAP and AppScope",
+          "number_location",
+          "number_mark",
+          "yellow_page",
+          "shared",
+          "utils",
+          "frameworks/js",
+          "etc bundled text seed"
+        ],
+        "component_declared_dependencies": [
+          "ability_base",
+          "ability_runtime",
+          "bundle_framework",
+          "c_utils",
+          "call_manager",
+          "common_event_service",
+          "core_service",
+          "crypto_framework",
+          "data_share",
+          "hdf_core",
+          "hilog",
+          "i18n",
+          "ipc",
+          "location",
+          "kv_store",
+          "napi",
+          "relational_store",
+          "netstack",
+          "netmanager_base",
+          "work_scheduler",
+          "init",
+          "samgr",
+          "cJSON",
+          "protobuf",
+          "openssl",
+          "icu",
+          "libphonenumber",
+          "hisysevent",
+          "access_token",
+          "eventhandler"
+        ],
+        "integration_steps": [
+          "Pin official 7.0 source under base/telephony/number_identity and register component/product part plus signed system HAP/native library/text seed.",
+          "Use a single agreed bundle, DataShare authority and IPC descriptor across provider and call_manager/Contacts/CallUI/MMS; preserve command-0 import semantics.",
+          "Use GN etc:number_location default text/yellow-page targets; keep missing .dat and number_identity_config targets disabled.",
+          "Validate local mark create/query/update/delete/restart, unknown number, read/write permission, account isolation; do not fabricate cloud risk or imply comprehensive attribution."
+        ],
+        "constraints": [
+          "Full SDK/system signing and ability/native dependency compatibility require root batch build.",
+          "AppScope declares min/target API11 while README independent build references compileSDK26/target23; GN JSON vs Hvigor json5 paths must be checked on target7.0 toolchain.",
+          "Existing GET_TELEPHONY_STATE read and SET_TELEPHONY_STATE write boundaries must be retained; no permissions broadened in this research."
+        ]
+      },
+      "sources": [
+        {
+          "url": "https://github.com/openharmony/applications_number_identity/blob/50e1330646432ce166e7981c577f25f46c90e7ac/README_zh.md"
+        },
+        {
+          "url": "https://github.com/openharmony/applications_number_identity/blob/50e1330646432ce166e7981c577f25f46c90e7ac/bundle.json"
+        },
+        {
+          "url": "https://github.com/openharmony/applications_number_identity/blob/50e1330646432ce166e7981c577f25f46c90e7ac/etc/BUILD.gn"
+        },
+        {
+          "url": "https://github.com/openharmony/applications_number_identity/blob/50e1330646432ce166e7981c577f25f46c90e7ac/entry/src/main/ets/service/NumberIdentityService.ts"
+        },
+        {
+          "url": "https://github.com/openharmony/applications_number_identity/blob/50e1330646432ce166e7981c577f25f46c90e7ac/shared/src/number_identity_hsdr_helper.cpp"
+        }
+      ]
+    },
+    {
+      "id": "behavior:device-attest-uninitialized",
+      "status": "product-dependent",
+      "complete_default_product_config": "absent",
+      "available": [
+        "Apache-2.0 device attestation service, SDK and OEM adapter source."
+      ],
+      "missing": [
+        "Genuine registered product ID/key and certification-cloud-issued production token/provisioning.",
+        "Generic QEMU product attestation identity trusted by the real OpenHarmony certification service."
+      ],
+      "evidence": [
+        "7.0 OEMGetProductId and OEMGetProductKey contain empty actual-value buffers; OEM adapter hash matches current local file.",
+        "Official workflow requires enterprise registration/product information, XTS certification review, cloud token issuance and production burning before cloud activation/authentication."
+      ],
+      "implementation_route_if_reopened": "Implement secure product provisioning/storage using a legitimately registered identity/token and service trust; validate actual authentication and negative expired/key/network cases. Platform HAP signing, random values or a demo identity do not satisfy this. No generic fallback can provide genuine certification.",
+      "sources": [
+        {
+          "url": "https://github.com/openharmony/xts_device_attest/blob/edbf39f5ca115e6096a87909b39f29c4fcfdc553/README_zh.md"
+        },
+        {
+          "url": "https://github.com/openharmony/xts_device_attest/blob/edbf39f5ca115e6096a87909b39f29c4fcfdc553/services/oem_adapter/src/device_attest_oem_adapter.c"
+        }
+      ]
+    },
+    {
+      "id": "behavior:security-guard-empty-model-config",
+      "status": "absent",
+      "status_scope": "Complete default product risk model/config in inspected official 7.0 and master; framework remains available.",
+      "available": [
+        "Apache-2.0 event/config/collector/model management framework and model/plugin ABI."
+      ],
+      "missing": [
+        "Production modelcfg is empty on both official 7.0 and master.",
+        "No complete production GetModelApi model DSO plus valid modelId/path/events/output semantics/default product config was established.",
+        "Unit-test preset_model/libtest examples and README feature descriptions are not deployable risk models."
+      ],
+      "abi": [
+        "model_manager.cpp resolves allowed real cfg.path, dlopen then dlsym(\"GetModelApi\").",
+        "IModel ABI requires Init, GetResult, SubscribeResult, Release; it is not satisfied by filling JSON alone.",
+        "Risk service has a finite numeric MODELIDS whitelist; arbitrary capability-audit name rejection does not show a valid configured model failed."
+      ],
+      "implementation_route_if_reopened": "Specify a useful real event/collector-derived product model with numeric ID, implement its GetModelApi DSO, configure allowed path/permissions/events and real output semantics, and validate input-driven results plus unknown IDs/permissions/restart. No evidence that a commercial OEM model/key is inherently required; no such complete official default was found.",
+      "sources": [
+        {
+          "url": "https://github.com/openharmony/security_security_guard/blob/b6e82fc42cd88e675ff823d4a3031a5b62e9921d/oem_property/hos/security_guard_model.cfg"
+        },
+        {
+          "url": "https://github.com/openharmony/security_security_guard/blob/b6e82fc42cd88e675ff823d4a3031a5b62e9921d/services/risk_classify/model_manager/src/model_manager.cpp"
+        },
+        {
+          "url": "https://github.com/openharmony/security_security_guard/blob/b6e82fc42cd88e675ff823d4a3031a5b62e9921d/interfaces/inner_api/classify/include/i_model.h"
+        }
+      ]
+    }
+  ],
+  "release_scope_recommendations": [
+    {
+      "id": "behavior:accessibility-caption-provider-missing",
+      "recommendation": "unsupported_current_complete_provider",
+      "reason": "No directly deliverable real-time AiCaption provider established. Preserve public ASR sample/model reuse as separate future implementation opportunity; unavailable remote LFS access is not evidence that models do not exist."
+    },
+    {
+      "id": "behavior:telephony-number-identity-provider-missing",
+      "recommendation": "unsupported_complete_aggregate_with_reusable_local_subcapabilities",
+      "reason": "Complete original aggregate includes full attribution/mark/SpamShield/HSDR services/data. The official local CRUD/parser is implementable and must be tracked separately, not discarded or treated as complete aggregate acceptance."
+    },
+    {
+      "id": "behavior:device-attest-uninitialized",
+      "recommendation": "unsupported_current_unprovisioned_product",
+      "reason": "Actual certification identity/token is product-dependent and no generic public default meets the real service trust."
+    },
+    {
+      "id": "behavior:security-guard-empty-model-config",
+      "recommendation": "unsupported_default_product_risk_models",
+      "reason": "Official default production model list is empty; framework is available but no complete default model/provider is delivered."
+    }
+  ],
+  "policy_execution": "Recommendations only. Root must record explicit user-policy release scope separately. Never label unsupported as repaired/runtime-pass, never weaken runtime verifiers, and never transfer old-image closure to a new package.",
+  "formal_closures": 0,
+  "runtime_passes": 0,
+  "product_code_changes": 0,
+  "resource_execution": false,
+  "access_limitations": [
+    "GitCode main official repository pages/search were actually browsed, but multiple blob/raw and SIG AsrAndTts child pages returned unavailable/rate-limit. Official OpenHarmony GitHub mirrors supplied immutable source pins for four main repos.",
+    "ASR sample source pin is root-provided local host observation; remote sample commit/LFS objects not retrieved.",
+    "No private source, certificates, credentials or secret store was inspected."
+  ]
+}

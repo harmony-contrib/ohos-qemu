@@ -1802,7 +1802,7 @@
     "container": null,
     "max_product_source_out_jobs": 1,
     "source_and_out": "root sole writer; per-job exclusive admission required",
-    "active_stage": "patch consolidation and source gap review",
+    "active_stage": "round375 source batch frozen; root starts current host/Linux/SDK prerequisites serially before representative preparation",
     "active_jobs": [],
     "remaining_five_started": false,
     "queued": [
@@ -1812,7 +1812,7 @@
     ]
   },
   "active_exclusive_grants": {},
-  "updated_at": "2026-10-19T00:27:53.198423+00:00",
+  "updated_at": "2026-10-19T02:35:36.868026+00:00",
   "previous_exclusive_grants": {
     "apps_provider_lifecycle": {
       "agent": "apps",

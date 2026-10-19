@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from release_scope import SCOPE, IMAGE_GENERATION, exclusion_record
+from release_scope import SCOPE, IMAGE_GENERATION, exclusion_record, exclusion_labels, PROVIDER_IDS
 from verify_gap_closure import LEDGER, requirements
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'scripts'))
@@ -23,12 +23,17 @@ class ReleaseScopeTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(LEDGER.read_bytes()).hexdigest(),
                          'ac9426982dff3d7cb80050a6815eae92afb8f77c027b2d4319bc8d9423d6e93c')
 
-    def test_only_two_features_and_no_broad_ArkUI_or_storage_exclusion(self):
-        for device, count in (('phone', 10), ('2in1', 9)):
+    def test_only_user_decided_features_and_no_broad_ArkUI_or_storage_exclusion(self):
+        for device, count in (('phone', 15), ('2in1', 13)):
             expected = requirements(self.baseline['devices'][device])
             result = exclusion_record(device, expected)
             self.assertEqual(result['count'], count)
-            self.assertEqual(set(result['features']), {'CloudSync', 'imageGeneration'})
+            self.assertEqual(set(result['features']), set(exclusion_labels(device)) - {'ArkTS Static'})
+            unsupported = result['unsupported_public_providers']
+            self.assertEqual(unsupported['status'], 'unsupported_not_fixed_not_runtime_validated')
+            for row in unsupported['features'].values():
+                self.assertIn(row['id'], PROVIDER_IDS.values())
+                self.assertIs(row['repaired'], False); self.assertIs(row['runtime_pass'], False)
             self.assertEqual(set(result['features']['imageGeneration']), IMAGE_GENERATION)
             self.assertEqual(len(expected), len(set(expected) - set(result['ids'])) + count)
             self.assertNotIn('behavior:api26-runtime-export-mismatches-phone', result['ids'])
@@ -49,7 +54,7 @@ class ReleaseScopeTests(unittest.TestCase):
                    'boot_id': 'fixture', 'archive_sha256': identity['sha256'], 'unresolved': [],
                    'original_expected_count': len(expected), 'expected_count': len(retained),
                    'closed_count': len(retained), 'closed': {key: {} for key in retained},
-                   'release_exclusions': exclusions, 'excluded': ['ArkTS Static', 'CloudSync', 'imageGeneration'],
+                   'release_exclusions': exclusions, 'excluded': exclusion_labels('phone'),
                    'audit_baseline_sha256': hashlib.sha256(LEDGER.read_bytes()).hexdigest()}
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'structural-fixture.json'

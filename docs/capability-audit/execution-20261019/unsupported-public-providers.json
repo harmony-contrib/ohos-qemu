@@ -1,0 +1,68 @@
+{
+  "schema": "user-approved-public-provider-boundary/20261019",
+  "user_instruction": "看下 openharmony 以及对应 sig 等仓库是否有，如果有就补齐，如果没有就认为是能力不支持",
+  "decision": "current_complete_provider_unsupported_not_fixed_not_runtime_validated",
+  "scope": "Five exact original provider findings only. Available frameworks, limited data/code and access-limited repository observations are preserved. No broad SysCap/API/backend exclusions.",
+  "features": {
+    "LiveCaptions": {
+      "id": "behavior:accessibility-caption-provider-missing",
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "reason": "No complete distributable real-time caption provider in verified OpenHarmony/SIG sources; sample model objects/dependencies/licensing and streaming provider are incomplete.",
+      "repaired": false,
+      "runtime_pass": false
+    },
+    "NumberIdentity": {
+      "id": "behavior:telephony-number-identity-provider-missing",
+      "devices": [
+        "phone"
+      ],
+      "reason": "Public local user mark/limited lookup implementation exists; complete dataset and SpamShield/HSDR providers for the original aggregate are not supplied. The local subset remains a separate integration task.",
+      "repaired": false,
+      "runtime_pass": false
+    },
+    "DeviceAttest": {
+      "id": "behavior:device-attest-uninitialized",
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "reason": "Framework exists; valid product identity, cloud registration token and provisioning are not public default inputs.",
+      "repaired": false,
+      "runtime_pass": false
+    },
+    "SecurityGuardModels": {
+      "id": "behavior:security-guard-empty-model-config",
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "reason": "Official 7.0 and master production modelcfg are empty; no complete default risk model in inspected sources.",
+      "repaired": false,
+      "runtime_pass": false
+    },
+    "AudioVividMetaBuilder": {
+      "id": "behavior:audio-vivid-metadata-runtime-plugin-missing",
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "reason": "Official implementation supplies wrapper/abstract ABI/optional dlopen; complete MetaBuilder plugin absent from inspected build targets and Media SIG component list.",
+      "repaired": false,
+      "runtime_pass": false
+    }
+  },
+  "evidence": [
+    {
+      "path": "docs/capability-audit/parallel/network/round375-provider-research/result.json",
+      "sha256": "48779a547b486cc915f24167c772fd036a050f4b238da9c7947b4ee965f5cc18"
+    },
+    {
+      "path": "docs/capability-audit/parallel/media/round375/OFFICIAL-IMPLEMENTATION-BOUNDARY.md",
+      "sha256": "d3bc75003f5e14aa7bdd601e336c3cd4ffa9c3cfb0f61b073a9212d22d9731e0"
+    }
+  ],
+  "reopen": "Supply a complete lawful provider/data/model/product identity, integrate it and restore that exact finding to runtime acceptance."
+}
