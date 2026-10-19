@@ -1,5 +1,6 @@
 """Hostile synthetic inputs only; no image extraction, crypto, SDK or guest pass."""
 import copy
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -31,7 +32,8 @@ class NumberIdentityImageTests(unittest.TestCase):
             change(value)
         abc = bytearray(64);abc[:8] = b'PANDA\0\0\0';struct.pack_into('<I', abc, 16, len(abc));struct.pack_into('<I', abc, 8, zlib.adler32(abc[12:]) & 0xffffffff)
         resource = bytearray(144);resource[:7] = b'Restool';struct.pack_into('<II', resource, 128, len(resource), 1)
-        members = {'module.json': json.dumps(value).encode(), 'ets/modules.abc': abc, 'resources.index': resource}
+        members = {'module.json': json.dumps(value).encode(), 'ets/modules.abc': abc,
+                   'resources.index': resource, 'libs/arm64-v8a/libnumber_identity.z.so': b'HOST ONLY' * 10}
         if payload:
             members.update(payload)
         path = self.root / 'synthetic-host-only.hap'
@@ -44,34 +46,81 @@ class NumberIdentityImageTests(unittest.TestCase):
         return path
 
     def test_expected_native_module_is_bounded_host_structure_only(self):
-        result = guard.inspect_hap(self.hap(), self.module)
+        result = guard.inspect_hap(self.hap(), self.module, 'arm64')
         self.assertEqual(result['bundle'], 'com.ohos.numberidentity')
         self.assertEqual(result['compiled_abc_bytes'], 64)
         self.assertNotIn('provider_runtime_validated', result)
         old = copy.deepcopy(self.module)
         for item in old['extensionAbilities']:
-            item.pop('srcLanguage', None)
+            item['srcLanguage'] = 'c++'
         with self.assertRaisesRegex(ValueError, 'source module'):
-            guard.inspect_hap(self.hap(), old)
+            guard.inspect_hap(self.hap(), old, 'arm64')
 
     def test_wrong_bundle_URI_permissions_and_boolean_exports_rejected(self):
         changes = [lambda v: v['app'].update(bundleName='com.numberidentity'),
                    lambda v: v['module']['extensionAbilities'][0].update(uri='datashare://evil'),
                    lambda v: v['module']['requestPermissions'].append({'name': 'ohos.permission.SET_TELEPHONY_STATE'}),
                    lambda v: v['module']['extensionAbilities'][0].update(exported=1),
-                   lambda v: v['module']['extensionAbilities'][0].pop('srcLanguage'),
+                   lambda v: v['module']['extensionAbilities'][0].update(srcLanguage='c++'),
                    lambda v: v['module']['extensionAbilities'][0].update(srcLanguage='ets')]
         for change in changes:
             with self.subTest(change=change), self.assertRaises(ValueError):
-                guard.inspect_hap(self.hap(change), self.module)
+                guard.inspect_hap(self.hap(change), self.module, 'arm64')
 
     def test_duplicate_unsafe_and_empty_or_corrupt_compiled_payloads_rejected(self):
         with self.assertRaises(ValueError):
-            guard.inspect_hap(self.hap(duplicate=True), self.module)
+            guard.inspect_hap(self.hap(duplicate=True), self.module, 'arm64')
         for payload in ({'../escape': b'bad'}, {'ets/modules.abc': b'HOST stub'},
                         {'resources.index': b''}, {'resources.index': b'fake' * 40}):
             with self.subTest(payload=list(payload)), self.assertRaises(ValueError):
-                guard.inspect_hap(self.hap(payload=payload), self.module)
+                guard.inspect_hap(self.hap(payload=payload), self.module, 'arm64')
+
+    def test_hap_native_provider_architecture_inventory_and_content_are_required(self):
+        path = self.hap()
+        for arch in ('armv7a', 'x86_64'):
+            with self.subTest(arch=arch), self.assertRaisesRegex(ValueError, 'selected ABI'):
+                guard.inspect_hap(path, self.module, arch)
+        for payload in ({'libs/x86_64/libnumber_identity.z.so': b'HOST OTHER' * 10},
+                        {'libs/arm64-v8a/foreign.so': b'HOST OTHER' * 10},
+                        {'libs/arm64-v8a/foreign.so.1': b'HOST OTHER' * 10},
+                        {'libs/x86_64/foreign.so.1': b'HOST OTHER' * 10},
+                        {'libs/arm64-v8a/provider.json': b'HOST OTHER'},
+                        {'libs/arm64-v8a/libnumber_identity.z.so': b''}):
+            with self.subTest(payload=list(payload)), self.assertRaises(ValueError):
+                guard.inspect_hap(self.hap(payload=payload), self.module, 'arm64')
+        with zipfile.ZipFile(self.hap()) as archive:
+            members = {name: archive.read(name) for name in archive.namelist() if not name.endswith('.so')}
+        missing = self.root / 'missing-provider.hap'
+        with zipfile.ZipFile(missing, 'w') as archive:
+            for name, data in members.items():
+                archive.writestr(name, data)
+        with self.assertRaisesRegex(ValueError, 'selected ABI'):
+            guard.inspect_hap(missing, self.module, 'arm64')
+
+    def test_extension_and_stage_entry_cannot_change(self):
+        for change in (lambda v: v['module'].update(srcEntry='./ets/ForeignStage.ts'),
+                       lambda v: v['module']['extensionAbilities'][0].update(srcEntrance='./ets/Foreign.ts')):
+            with self.subTest(change=change), self.assertRaisesRegex(ValueError, 'differs'):
+                guard.inspect_hap(self.hap(change), self.module, 'arm64')
+        for value in ('./ets/Foreign.ts', None, 1):
+            with self.subTest(conflicting_entry=value), self.assertRaisesRegex(ValueError, 'ambiguous'):
+                guard.inspect_hap(self.hap(lambda v: v['module']['extensionAbilities'][0].update(srcEntry=value)),
+                                  self.module, 'arm64')
+            with self.subTest(conflicting_stage=value), self.assertRaisesRegex(ValueError, 'ambiguous'):
+                guard.inspect_hap(self.hap(lambda v: v['module'].update(srcEntrance=value)),
+                                  self.module, 'arm64')
+
+    def test_equal_or_renamed_entry_aliases_are_unambiguous(self):
+        def rename(value):
+            value['module']['srcEntrance'] = value['module'].pop('srcEntry')
+            row = value['module']['extensionAbilities'][0]
+            row['srcEntry'] = row.pop('srcEntrance')
+        guard.inspect_hap(self.hap(rename), self.module, 'arm64')
+        def same(value):
+            value['module']['srcEntrance'] = value['module']['srcEntry']
+            row = value['module']['extensionAbilities'][0]
+            row['srcEntry'] = row['srcEntrance']
+        guard.inspect_hap(self.hap(same), self.module, 'arm64')
 
     def test_wrong_ABI_type_and_header_only_ELF_rejected(self):
         for arch, elf_class, machine, kind in [('arm64', 1, 40, 3), ('arm64', 2, 183, 2),
@@ -112,7 +161,7 @@ class NumberIdentityImageTests(unittest.TestCase):
         for name in ('install_list.json', 'uninstall_list.json', 'install_list_capability.json', 'install_list_permissions.json'):
             (policies / name).write_text('{"install_list":[]}')
         scratch = self.root / 'scratch';scratch.mkdir();hap = self.hap()
-        native, manifest, selection, profile = (mock.Mock() for _ in range(4))
+        native, manifest, packaging, loader, selection, profile = (mock.Mock() for _ in range(6))
         profile.verify.return_value = {'state': 'authenticated_renewed', 'bundle': guard.BUNDLE}
         def extracted(image, candidates, directory, executable):
             target = directory / 'host-only-file'
@@ -121,16 +170,18 @@ class NumberIdentityImageTests(unittest.TestCase):
             else:
                 target.write_text('{"install_list":[]}')
             return target, {'image_path': candidates[0], 'image_inode': 1}
-        with mock.patch.object(guard, 'load_guard', side_effect=[native, manifest, selection, profile]), \
+        with mock.patch.object(guard, 'load_guard', side_effect=[native, manifest, packaging, loader, selection, profile]), \
              mock.patch.object(guard, 'verify_selection', return_value={}) as chosen, \
              mock.patch.object(guard, 'verify_signature', return_value={}) as signature, \
              mock.patch.object(guard, 'dump_unique_file', side_effect=extracted), \
              mock.patch.object(guard, 'debugfs_path', return_value='HOST unused'), \
-             mock.patch.object(guard, 'inspect_elf', return_value={}), \
+             mock.patch.object(guard, 'inspect_elf', return_value={'sha256': hashlib.sha256(b'HOST ONLY' * 10).hexdigest()}), \
              mock.patch.object(guard, 'file_sha256', return_value='HOST ONLY'):
             guard.verify_image(source, Path('unused-image'), 'arm64', scratch)
         native.validate.assert_called_once_with(source, require_patched=True)
         manifest.validate.assert_called_once_with(source, require_patched=True)
+        packaging.validate.assert_called_once_with(source, require_patched=True)
+        loader.validate.assert_called_once_with(source, require_patched=True)
         selection.configure.assert_called_once_with(source, require_patched=True)
         chosen.assert_called_once_with(source, guard.INSTALL_ID, Path('unused-image'), scratch, removable=False)
         self.assertEqual(signature.call_args.kwargs, {'profile_relative': guard.PROFILE})

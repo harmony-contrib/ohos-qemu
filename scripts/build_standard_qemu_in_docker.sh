@@ -3115,6 +3115,12 @@ apply_qemu_capability_patch_plan() {
     bash "${PATCH_ROOT}/common/base/telephony/number_identity/native_manifest/apply.sh" \
       --source-root "${OHOS_ROOT}" \
       2>&1 | tee "${CACHE_ROOT}/logs/apply_number_identity_native_manifest.log"
+    bash "${PATCH_ROOT}/common/base/telephony/number_identity/native_package_identity/apply.sh" \
+      --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_number_identity_native_package_identity.log"
+    bash "${PATCH_ROOT}/common/foundation/ability/ability_runtime/number_identity_loader/apply.sh" \
+      --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_number_identity_loader.log"
     python3 "${PATCH_ROOT}/lib/number_identity_provider.py" --source-root "${OHOS_ROOT}" --prepare \
       2>&1 | tee "${CACHE_ROOT}/logs/prepare_number_identity_local_signing.log"
     python3 "${PATCH_ROOT}/common/vendor/ohemu/virt/number_identity_local/configure.py" \
@@ -3375,6 +3381,17 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_display_modes_component.log"
   bash "${SETTINGS_REFRESH_RATE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_refresh_rate_component.log"
+  # An installed chooser owns the shared Settings module. Upgrade its exact
+  # predecessor vector before Share/Wallpaper revalidate that ownership. A
+  # pristine tree keeps the original dependency-first application order below.
+  if [[ -f "${OHOS_ROOT}/applications/standard/settings/product/phone/src/main/module.json5" ]] &&
+    [[ "$(sha256sum "${OHOS_ROOT}/applications/standard/settings/product/phone/src/main/module.json5" | cut -d ' ' -f 1)" == \
+      "8bb80334c6dc6b68c032eedbc14dcd7f79e28d260fcbae0bd2c8965d9a054e3e" ]]; then
+    # The module digest only schedules apply; apply still validates every
+    # target/dependency/project and performs the locked atomic transition.
+    bash "${SETTINGS_SELECT_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/upgrade_settings_native_select_component.log"
+  fi
   bash "${PATCH_ROOT}/common/applications/standard/settings/share_picker/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_share_picker.log"
   bash "${PATCH_ROOT}/common/applications/standard/settings/wallpaper_settings/apply.sh" --source-root "${OHOS_ROOT}" \

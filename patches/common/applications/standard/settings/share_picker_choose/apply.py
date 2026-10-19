@@ -19,6 +19,8 @@ PROJECTS = {
 }
 SETTINGS = 'applications/standard/settings/'
 NATIVE = 'foundation/ability/ability_runtime/'
+INSTALLED_PREDECESSOR_VECTOR_SHA256 = 'cd2929513dba3381d74711c778c1a12cd474def94cf053b66ed586a631ef5dd6'
+TOKEN_COMPARISON_SOURCE = NATIVE + 'services/abilitymgr/src/dialog_session/dialog_session_manager.cpp'
 TARGETS = {
     SETTINGS + 'product/phone/src/main/module.json5',
     SETTINGS + 'product/phone/src/main/resources/base/profile/main_pages.json',
@@ -110,6 +112,14 @@ def manifest():
                 raise ValueError('unknown new-source payload: ' + name)
     if set(value.get('dependencies', {})) != DEPENDENCIES:
         raise ValueError('complete exact predecessor/header dependencies required')
+    predecessor = value.get('installed_predecessor', {})
+    if (set(predecessor) != {'projects', 'files', 'dependencies'} or
+        predecessor.get('projects') != PROJECTS or
+        set(predecessor.get('files', {})) != TARGETS or
+        predecessor.get('dependencies') != value.get('dependencies') or
+        digest(json.dumps(predecessor, sort_keys=True, separators=(',', ':')).encode()) !=
+            INSTALLED_PREDECESSOR_VECTOR_SHA256):
+        raise ValueError('exact complete installed predecessor vector required')
     return value
 
 
@@ -138,27 +148,38 @@ def state(root, value, check_revisions=True):
         if path.stat().st_nlink != 1:
             raise ValueError('source alias refused: ' + name)
     states = set()
+    installed_predecessor = True
     for name, row in value['files'].items():
         path = safe_path(root, name)
         if not path.exists():
             if row['before'] is not None:
                 raise ValueError('missing fixed source: ' + name)
             states.add('before')
+            installed_predecessor = False
         elif path.is_file():
             if path.stat().st_nlink != 1:
                 raise ValueError('source alias refused: ' + name)
             current = digest(path.read_bytes())
+            historical = value['installed_predecessor']['files'][name]
+            installed_predecessor = installed_predecessor and current == historical
             if current == row['after']:
                 states.add('after')
             elif row['before'] is not None and current == row['before']:
                 states.add('before')
+            elif current == historical:
+                states.add('installed_predecessor')
             else:
                 raise ValueError('unknown source bytes; preserving edits: ' + name)
         else:
             raise ValueError('nonregular source: ' + name)
+    if installed_predecessor:
+        return 'installed_predecessor'
     if len(states) != 1:
         raise ValueError('mixed Settings/native component; preserving all files')
-    return states.pop()
+    result = states.pop()
+    if result not in {'before', 'after'}:
+        raise ValueError('mixed installed predecessor; preserving all files')
+    return result
 
 
 def capture(root, relative):
@@ -223,12 +244,29 @@ def atomic_write(target, data, mode):
     return published_identity
 
 
+def upgrade_installed_predecessor(candidate):
+    # Only the complete pinned installed vector authorizes this local rewrite.
+    # The caller validates all nine targets, eighteen dependencies and revisions.
+    path = safe_path(candidate, TOKEN_COMPARISON_SOURCE)
+    source = path.read_text()
+    for left, operator in [('found->second->dialogToken', '!='),
+                           ('caller->second->callerToken', '=='),
+                           ('item.second->dialogToken', '==')]:
+        old = left + ' ' + operator + ' record->GetToken()'
+        new = left + '.GetRefPtr() ' + operator + ' record->GetToken().GetRefPtr()'
+        if source.count(old) != 1:
+            raise ValueError('installed predecessor token comparison mismatch')
+        source = source.replace(old, new)
+    path.write_text(source)
+
+
 def install(root, value):
     before = state(root, value)
     if before == 'after':
         return {'status': 'already_applied', 'runtime_validated': False}
     expected = {name: capture(root, name) for name in [*value['files'], *value['dependencies']]}
-    originals = {name: expected[name] for name in value['files']}
+    originals = {name: expected[name] for name in value['files']
+                 if before != 'installed_predecessor' or name == TOKEN_COMPARISON_SOURCE}
     with tempfile.TemporaryDirectory(prefix='ohos-choose-candidate-') as scratch:
         candidate = Path(scratch).resolve()
         for name in [*value['files'], *value['dependencies']]:
@@ -237,16 +275,19 @@ def install(root, value):
                 target = candidate / name
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(source, target)
-        for name in value['patches']:
-            subprocess.run(['git', '-C', str(candidate), 'apply', '--check', str(COMPONENT / name)],
-                           env=patch_environment(candidate), check=True)
-            subprocess.run(['git', '-C', str(candidate), 'apply', str(COMPONENT / name)],
-                           env=patch_environment(candidate), check=True)
-        for name, row in value['files'].items():
-            if row.get('payload') is not None:
-                target = candidate / name
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(COMPONENT / row['payload'], target)
+        if before == 'installed_predecessor':
+            upgrade_installed_predecessor(candidate)
+        else:
+            for name in value['patches']:
+                subprocess.run(['git', '-C', str(candidate), 'apply', '--check', str(COMPONENT / name)],
+                               env=patch_environment(candidate), check=True)
+                subprocess.run(['git', '-C', str(candidate), 'apply', str(COMPONENT / name)],
+                               env=patch_environment(candidate), check=True)
+            for name, row in value['files'].items():
+                if row.get('payload') is not None:
+                    target = candidate / name
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(COMPONENT / row['payload'], target)
         if state(candidate, value, check_revisions=False) != 'after' or state(root, value) != before:
             raise ValueError('source changed during candidate preparation')
         unchanged(root, expected)

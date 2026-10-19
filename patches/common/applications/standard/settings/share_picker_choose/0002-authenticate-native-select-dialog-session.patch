@@ -322,7 +322,7 @@
 +        !IsLegacyPickerOwner(*found->second, false) ||
 +        record->GetApplicationInfo().uid != found->second->uid ||
 +        record->GetApplicationInfo().accessTokenId != found->second->tokenId ||
-+        (found->second->dialogToken != nullptr && found->second->dialogToken != record->GetToken())) {
++        (found->second->dialogToken != nullptr && found->second->dialogToken.GetRefPtr() != record->GetToken().GetRefPtr())) {
 +        return false;
 +    }
 +    auto original = Token::GetAbilityRecordByToken(caller->second->callerToken);
@@ -534,9 +534,9 @@
 +            if (caller == dialogCallerInfoMap_.end()) {
 +                continue;
 +            }
-+            if (caller->second->callerToken == record->GetToken()) {
++            if (caller->second->callerToken.GetRefPtr() == record->GetToken().GetRefPtr()) {
 +                removed.emplace_back(item.first, false);
-+            } else if (item.second->dialogToken == record->GetToken() ||
++            } else if (item.second->dialogToken.GetRefPtr() == record->GetToken().GetRefPtr() ||
 +                (item.second->dialogToken == nullptr &&
 +                record->GetWant().GetStringParam(DIALOG_SESSION_ID) == item.first &&
 +                record->GetApplicationInfo().uid == item.second->uid &&

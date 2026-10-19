@@ -23,8 +23,9 @@ REVISION = '50e1330646432ce166e7981c577f25f46c90e7ac'
 BUNDLE = 'com.ohos.numberidentity'
 INSTALL_ID = 'com.ohos.numberidentityability'
 PROFILE = PROJECT + '/signature/NumberIdentity.hapRelease.p7b'
-SOURCE_MODULE_SHA = '39f721b4ec57bc8112790bcb94a3860137615959119497d0d3350fd67d7fa4a6'
+SOURCE_MODULE_SHA = 'e0fe578838c3c3036421dd0049b783bad86764bf23a58b7be09cb11a9ed78fa9'
 ARCHES = {'arm64': (2, 183, 'lib64'), 'armv7a': (1, 40, 'lib'), 'x86_64': (2, 62, 'lib64')}
+HAP_ABIS = {'arm64': 'arm64-v8a', 'armv7a': 'armeabi-v7a', 'x86_64': 'x86_64'}
 LIBRARIES = ('libnumber_identity.z.so', 'module/telephony/libnumberidentity.z.so',
              'module/contact/libnumberlookup.z.so')
 
@@ -57,7 +58,14 @@ def module_contract(module):
          'NumberIdentity source module differs from fixed public module')
 
 
-def inspect_hap(hap, source_module):
+def entry_path(row):
+    entries = [row[key] for key in ('srcEntry', 'srcEntrance') if key in row]
+    need(entries and all(type(item) is str and item and item == entries[0] for item in entries),
+         'NumberIdentity entry is missing or ambiguous')
+    return entries[0]
+
+
+def inspect_hap(hap, source_module, arch):
     module_contract(source_module)
     need(Path(hap).stat().st_size <= 512 * 1024 * 1024, 'NumberIdentity HAP file too large')
     with zipfile.ZipFile(hap) as archive:
@@ -74,6 +82,12 @@ def inspect_hap(hap, source_module):
                  (entry.external_attr >> 16) & 0o170000 != 0o120000,
                  'unsafe NumberIdentity HAP member')
         need({'module.json', 'ets/modules.abc', 'resources.index'} <= set(names), 'compiled NumberIdentity HAP missing')
+        native_member = 'libs/' + HAP_ABIS[arch] + '/' + LIBRARIES[0]
+        need(sorted(name for name in names if name.startswith('libs/') and not name.endswith('/')) == [native_member] and
+             sorted(name for name in names if name.endswith('.so')) == [native_member],
+             'NumberIdentity must bundle exactly its native provider for the selected ABI')
+        native_bytes = archive.read(native_member)
+        need(len(native_bytes) >= 64, 'NumberIdentity bundled native provider is empty/truncated')
         abc, resources = archive.read('ets/modules.abc'), archive.read('resources.index')
         need(len(abc) >= 60 and abc[:8] == b'PANDA\0\0\0' and
              struct.unpack_from('<I', abc, 16)[0] == len(abc) and
@@ -89,6 +103,7 @@ def inspect_hap(hap, source_module):
         actual = value['module']
         for key in ('name', 'type', 'deviceTypes', 'mainElement'):
             need(encode(actual.get(key)) == encode(source_module.get(key)), 'NumberIdentity module differs: ' + key)
+        need(entry_path(actual) == entry_path(source_module), 'NumberIdentity stage entry differs')
         permissions = actual.get('requestPermissions', [])
         expected = source_module['requestPermissions']
         need([p['name'] for p in permissions] == [p['name'] for p in expected] and
@@ -100,12 +115,16 @@ def inspect_hap(hap, source_module):
             rows, wanted = actual.get(kind, []), source_module.get(kind, [])
             need([r['name'] for r in rows] == [r['name'] for r in wanted], 'NumberIdentity extension surface differs')
             for row, original in zip(rows, wanted):
+                need(entry_path(row) == entry_path(original),
+                     'NumberIdentity extension entry differs')
                 for key in ('name', 'type', 'exported', 'visible', 'uri', 'readPermission',
                             'writePermission', 'permissions', 'skills', 'srcLanguage'):
                     need(encode(row.get(key)) == encode(original.get(key)),
                          'NumberIdentity extension boundary differs: ' + key)
         return {'bundle': BUNDLE, 'module': actual['name'], 'hap_sha256': file_sha256(hap),
-                'compiled_abc_bytes': len(abc), 'resource_index_bytes': len(resources)}
+                'compiled_abc_bytes': len(abc), 'resource_index_bytes': len(resources),
+                'bundled_native_provider': {'member': native_member, 'bytes': len(native_bytes),
+                    'sha256': hashlib.sha256(native_bytes).hexdigest()}}
 
 
 def inspect_elf(path, arch, library):
@@ -167,6 +186,12 @@ def verify_image(source, image, arch, scratch):
     manifest = load_guard('patches/common/base/telephony/number_identity/native_manifest/verify_source.py',
                           'number_identity_native_manifest_guard')
     manifest.validate(source, require_patched=True)
+    packaging = load_guard('patches/common/base/telephony/number_identity/native_package_identity/verify_source.py',
+                           'number_identity_native_package_guard')
+    packaging.validate(source, require_patched=True)
+    loader = load_guard('patches/common/foundation/ability/ability_runtime/number_identity_loader/verify_source.py',
+                        'number_identity_loader_guard')
+    loader.validate(source, require_patched=True)
     selection = load_guard('patches/common/vendor/ohemu/virt/number_identity_local/configure.py',
                            'number_identity_selection_guard')
     selection.configure(source, require_patched=True)
@@ -183,7 +208,7 @@ def verify_image(source, image, arch, scratch):
     directory = scratch / 'hap';directory.mkdir()
     hap, inode = dump_unique_file(image, tuple(p + '/app/' + INSTALL_ID + '/NumberIdentity.hap'
                                  for p in ('', '/system')), directory, debugfs_path())
-    result.update(inspect_hap(hap, source_module));result['hap_image'] = inode
+    result.update(inspect_hap(hap, source_module, arch));result['hap_image'] = inode
     result['signature'] = verify_signature(hap, source, scratch, profile_relative=PROFILE)
     result['image_policies'] = {}
     for name in ('install_list.json', 'uninstall_list.json', 'install_list_capability.json', 'install_list_permissions.json'):
@@ -200,6 +225,9 @@ def verify_image(source, image, arch, scratch):
         actual, inode = dump_unique_file(image, tuple(p + relative for p in ('', '/system')),
                                          directory, debugfs_path())
         result['native_libraries'][library] = {**inode, **inspect_elf(actual, arch, library)}
+    need(result['bundled_native_provider']['sha256'] ==
+         result['native_libraries'][LIBRARIES[0]]['sha256'],
+         'NumberIdentity bundled provider differs from the validated installed native implementation')
     result['system_image_sha256'] = file_sha256(image)
     return result
 

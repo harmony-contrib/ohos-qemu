@@ -1,32 +1,32 @@
 --- a/base/telephony/number_identity/entry/src/main/module.json5
 +++ b/base/telephony/number_identity/entry/src/main/module.json5
-@@ -21,7 +21,8 @@
+@@ -21,8 +21,7 @@
          "description": "dataability_description",
          "type": "dataShare",
          "uri": "datashare://com.ohos.numberlocationability",
--        "exported": true
-+        "exported": true,
-+        "srcLanguage": "c++"
+-        "exported": true,
+-        "srcLanguage": "c++"
++        "exported": true
        },
        {
          "name": "DownloadFileAbility",
-@@ -31,7 +32,8 @@
+@@ -32,8 +31,7 @@
          "description": "dataability_description",
          "type": "dataShare",
          "uri": "datashare://com.ohos.downloadfileability",
--        "exported": true
-+        "exported": true,
-+        "srcLanguage": "c++"
+-        "exported": true,
+-        "srcLanguage": "c++"
++        "exported": true
        },
        {
          "name": "DownloadFileWorkSheduler",
-@@ -69,7 +71,8 @@
+@@ -71,8 +69,7 @@
          "description": "Number mark data query.",
          "type": "dataShare",
          "uri": "datashare://com.ohos.numbermarkability",
--        "exported": true
-+        "exported": true,
-+        "srcLanguage": "c++"
+-        "exported": true,
+-        "srcLanguage": "c++"
++        "exported": true
        }
      ],
      "requestPermissions": [

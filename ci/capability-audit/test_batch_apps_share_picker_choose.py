@@ -316,7 +316,7 @@ class ChooseSourceTests(unittest.TestCase):
         binding = block(manager, 'bool DialogSessionManager::AttachLegacyPickerAbility(')
         for token in ['!IsLegacyPickerOwner(*found->second, false)', 'record->GetApplicationInfo().uid',
                       'record->GetApplicationInfo().accessTokenId', 'caller->second->callerToken',
-                      'found->second->dialogToken != record->GetToken()',
+                      'found->second->dialogToken.GetRefPtr() != record->GetToken().GetRefPtr()',
                       'found->second->pid = IPCSkeleton::GetCallingPid()',
                       'found->second->dialogToken = record->GetToken()']:
             self.assertIn(token, binding)
@@ -339,6 +339,116 @@ class ChooseSourceTests(unittest.TestCase):
         self.assertGreaterEqual(create.count('RemoveDeathRecipient(owner->callerDeath)'), 2)
         clear = block(manager, 'void DialogSessionManager::ClearDialogContext(')
         self.assertLess(clear.index('legacyPickerOwners_.erase'), clear.index('ReleaseLegacyPickerOwner(released)'))
+
+    def installed_predecessor(self):
+        # Reconstruct only the pinned old source bytes in this owned scratch.
+        # It is a host source fixture, never an installed/product receipt.
+        self.apply()
+        name = INSTALL.TOKEN_COMPARISON_SOURCE
+        path = self.root / name
+        source = path.read_text()
+        for left, operator in [('found->second->dialogToken', '!='),
+                               ('caller->second->callerToken', '=='),
+                               ('item.second->dialogToken', '==')]:
+            after = left + '.GetRefPtr() ' + operator + ' record->GetToken().GetRefPtr()'
+            before = left + ' ' + operator + ' record->GetToken()'
+            self.assertEqual(source.count(after), 1)
+            source = source.replace(after, before)
+        path.write_text(source)
+        for target, expected in self.value['installed_predecessor']['files'].items():
+            self.assertEqual(hashlib.sha256((self.root / target).read_bytes()).hexdigest(), expected)
+        self.assertEqual(INSTALL.state(self.root, self.value, False), 'installed_predecessor')
+        return path
+
+    def test_exact_installed_predecessor_upgrades_only_native_token_file_and_replays(self):
+        path = self.installed_predecessor()
+        others = {name: (INSTALL.capture(self.root, name)) for name in
+                  [*self.value['files'], *self.value['dependencies']] if name != INSTALL.TOKEN_COMPARISON_SOURCE}
+        self.assertEqual(self.apply()['status'], 'applied')
+        INSTALL.unchanged(self.root, others)
+        self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),
+                         self.value['files'][INSTALL.TOKEN_COMPARISON_SOURCE]['after'])
+        self.assertEqual(self.apply()['status'], 'already_applied')
+
+    def test_installed_predecessor_partial_token_fix_and_dependency_drift_rejected(self):
+        path = self.installed_predecessor()
+        original = path.read_bytes()
+        path.write_bytes(original.replace(b'caller->second->callerToken == record->GetToken()',
+            b'caller->second->callerToken.GetRefPtr() == record->GetToken().GetRefPtr()'))
+        partial = self.snapshot()
+        with self.assertRaisesRegex(ValueError, 'unknown source bytes'):
+            self.apply()
+        self.assertEqual(self.snapshot(), partial)
+        path.write_bytes(original)
+        dependency = self.root / next(iter(self.value['dependencies']))
+        dependency.write_bytes(dependency.read_bytes() + b'// external dependency edit\n')
+        drift = self.snapshot()
+        with self.assertRaisesRegex(ValueError, 'predecessor dependency'):
+            self.apply()
+        self.assertEqual(self.snapshot(), drift)
+
+    def test_installed_predecessor_post_publication_failure_restores_bytes_and_modes(self):
+        self.installed_predecessor()
+        before = self.snapshot()
+        state = INSTALL.state
+        injected = False
+
+        def fail_once(root, value, check_revisions=True):
+            nonlocal injected
+            result = state(root, value, check_revisions)
+            if Path(root) == self.root and result == 'after' and not injected:
+                injected = True
+                raise OSError('injected upgrade post-publication failure')
+            return result
+
+        with mock.patch.object(INSTALL, 'state', side_effect=fail_once):
+            with self.assertRaisesRegex(OSError, 'upgrade post-publication'):
+                self.apply()
+        self.assertTrue(injected)
+        self.assertEqual(self.snapshot(), before)
+        self.assertEqual(INSTALL.state(self.root, self.value, False), 'installed_predecessor')
+
+    def test_installed_predecessor_prepublication_chmod_preserved_without_revert(self):
+        path = self.installed_predecessor()
+        original = path.read_bytes()
+        unchanged = INSTALL.unchanged
+        calls = 0
+        mode = (path.stat().st_mode & 0o777) ^ 0o100
+
+        def mutate_once(root, expected):
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                path.chmod(mode)
+            return unchanged(root, expected)
+
+        with mock.patch.object(INSTALL, 'unchanged', side_effect=mutate_once):
+            with self.assertRaisesRegex(ValueError, 'changed during transaction'):
+                self.apply()
+        self.assertEqual(path.read_bytes(), original)
+        self.assertEqual(path.stat().st_mode & 0o777, mode)
+
+    def test_native_cross_type_tokens_compare_only_unwrapped_references(self):
+        self.apply()
+        manager = (self.root / INSTALL.NATIVE /
+                   'services/abilitymgr/src/dialog_session/dialog_session_manager.cpp').read_text()
+        binding = block(manager, 'bool DialogSessionManager::AttachLegacyPickerAbility(')
+        exited = block(manager, 'void DialogSessionManager::OnLegacyPickerAbilityExit(')
+        comparisons = [
+            (binding, 'found->second->dialogToken', '!='),
+            (exited, 'caller->second->callerToken', '=='),
+            (exited, 'item.second->dialogToken', '=='),
+        ]
+        for body, left, operator in comparisons:
+            # Both GetRefPtr calls use the held sptr values. The temporary
+            # GetToken() strong reference lasts through the full comparison.
+            expected = left + '.GetRefPtr() ' + operator + ' record->GetToken().GetRefPtr()'
+            self.assertEqual(body.count(expected), 1)
+            self.assertNotIn(left + ' ' + operator + ' record->GetToken()', body)
+        self.assertIn('std::lock_guard<ffrt::mutex> guard(dialogSessionRecordLock_);', binding)
+        self.assertIn('std::lock_guard<ffrt::mutex> guard(dialogSessionRecordLock_);', exited)
+        self.assertIn('found->second->dialogToken = record->GetToken();', binding)
+        self.assertIn('CancelLegacyPickerSession(item.first, item.second);', exited)
 
     def test_native_source_contract_uses_real_request_caller_and_opaque_payload(self):
         self.apply()

@@ -176,7 +176,7 @@
 +        !found->second->startAdmitted || !IsLegacyPickerOwner(*found->second, false) ||
          record->GetApplicationInfo().uid != found->second->uid ||
          record->GetApplicationInfo().accessTokenId != found->second->tokenId ||
-         (found->second->dialogToken != nullptr && found->second->dialogToken != record->GetToken())) {
+         (found->second->dialogToken != nullptr && found->second->dialogToken.GetRefPtr() != record->GetToken().GetRefPtr())) {
 @@ -110,6 +110,46 @@
  bool DialogSessionManager::IsLegacyPickerId(const std::string &id)
  {

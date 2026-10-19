@@ -1,0 +1,10 @@
+--- a/foundation/ability/ability_runtime/frameworks/native/appkit/app/main_thread.cpp
++++ b/foundation/ability/ability_runtime/frameworks/native/appkit/app/main_thread.cpp
+@@ -1431,6 +1431,7 @@
+         "com.ohos.medialibrary.medialibrarydata",
+         "com.ohos.ringtonelibrary.ringtonelibrarydata",
+         "com.ohos.telephonydataability",
++        "com.ohos.numberidentity",
+         "com.ohos.FusionSearch",
+         "com.ohos.formrenderservice"
+     };

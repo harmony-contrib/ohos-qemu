@@ -1,4 +1,4 @@
-"""Replay retained native08 provider artifacts into the exact F09 image identity.
+"""Replay historical native08/F09 or explicit completed same-source provider evidence.
 
 No compiler, signer, guest, source-tree access, or invented fresh-build receipt.
 Independent SDK projects remain separate evidence owned by the caller.
@@ -273,7 +273,7 @@ def archive_metadata(archive):
     return {name: decode(raw) for name, raw in result.items() if name != 'SHA256SUMS'}
 
 
-def verify_production_provider(config, *, provider_name, device, signed_hap, system_image_sha256):
+def verify_historical_provider(config, *, provider_name, device, signed_hap, system_image_sha256):
     """Pure file replay API used by both capture and independent re-verification."""
     require(isinstance(config, dict) and set(config) == FIELDS and type(config['schema_version']) is int and
             config['schema_version'] == 1 and provider_name in PROVIDERS and device == 'phone',
@@ -405,3 +405,14 @@ def verify_production_provider(config, *, provider_name, device, signed_hap, sys
             'native_build_inputs_tree_sha256': native_inputs['tree_sha256'],
             'package_build_inputs_tree_sha256': package_inputs['tree_sha256'], 'cached_compile_arkts': True,
             'fresh_es2abc_claimed': False, 'runtime_validated': False, 'first_artifact_behavior_gate_passed': False}
+
+
+def verify_production_provider(config, *, provider_name, device, signed_hap, system_image_sha256):
+    """Exact schema dispatch; never relabel historical bytes as a fresh package."""
+    if isinstance(config, dict) and 'kind' in config:
+        from batch_apps_completed_provider_binding import KIND, verify_completed_provider
+        require(config['kind'] == KIND, 'unknown production provider lineage kind')
+        return verify_completed_provider(config, provider_name=provider_name, device=device,
+            signed_hap=signed_hap, system_image_sha256=system_image_sha256)
+    return verify_historical_provider(config, provider_name=provider_name, device=device,
+        signed_hap=signed_hap, system_image_sha256=system_image_sha256)

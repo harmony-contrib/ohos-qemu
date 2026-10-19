@@ -20,8 +20,7 @@
       "description": "dataability_description",
       "type": "dataShare",
       "uri": "datashare://com.ohos.numberlocationability",
-      "exported": true,
-      "srcLanguage": "c++"
+      "exported": true
     },
     {
       "name": "DownloadFileAbility",
@@ -31,8 +30,7 @@
       "description": "dataability_description",
       "type": "dataShare",
       "uri": "datashare://com.ohos.downloadfileability",
-      "exported": true,
-      "srcLanguage": "c++"
+      "exported": true
     },
     {
       "name": "DownloadFileWorkSheduler",
@@ -70,8 +68,7 @@
       "description": "Number mark data query.",
       "type": "dataShare",
       "uri": "datashare://com.ohos.numbermarkability",
-      "exported": true,
-      "srcLanguage": "c++"
+      "exported": true
     }
   ],
   "requestPermissions": [
