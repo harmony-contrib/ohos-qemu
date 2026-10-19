@@ -44,7 +44,12 @@
     "source_out_write_lease": "root only, agents cease source/out reads during complete preparation and full image build",
     "representative_products": "arm64_virt ONLY until complete freshly packaged runtime gate PASS",
     "max_product_source_out_jobs": 1,
-    "max_isolated_low_priority_aux_SDK_jobs": 1
+    "max_isolated_low_priority_aux_SDK_jobs": 1,
+    "single_development_branch": true,
+    "agent_branches_or_worktrees_allowed": false,
+    "Git_index_and_commits_owner": "root",
+    "parallel_edits_require_disjoint_explicit_file_leases": true,
+    "shared_resource_owner": "root"
   },
   "agents": {
     "apps": {
@@ -1790,55 +1795,21 @@
   },
   "current_resource_lease": {
     "owner": "root",
-    "scope": "root-only one representative06 pending after batched fixes and native14 gate passed",
-    "max_heavy_jobs": 2,
+    "scope": "single development checkout; no active build/container/VM/SDK jobs",
     "container": null,
-    "source_and_out": "root sole writer; all five agents completed and all read leases released",
-    "preparation_cpus": 2,
-    "preparation_memory_gib": 5,
-    "full_build_planned_cpus": 4,
-    "full_build_planned_memory_gib": 10,
-    "compiler_jobs": 2,
-    "kernel_jobs": 2,
-    "capacity_observation": {
-      "host_memory_bytes": 34359738368,
-      "physical_cpus": 12,
-      "docker_memory_bytes": 16819298304,
-      "docker_cpus": 12,
-      "host_disk_free_gib": 381
-    },
-    "capacity_reason": "one product job4CPU10GiB/Ninja2 unchanged; measured headroom permits at most one isolated nice10 auxiliary SDK job2workerCPU/2048MiBheap/private caches, per core round3/resource-admission.json; all SDK jobs currently finished",
-    "completed_dependencies": [
-      "current090 M144 native and signed HAP",
-      "live SDK03 HAP and exact SDK39 NativeStrip replay",
-      "three ABI clock CLI build and host recheck"
-    ],
-    "queued": [
-      "all current native SELinux checks pass",
-      "ONE fresh representative06",
-      "new archive full runtime and dedicated AudioHaptic/Calendar/OpenVPN boundaries"
-    ],
+    "max_product_source_out_jobs": 1,
+    "source_and_out": "root sole writer; per-job exclusive admission required",
+    "active_stage": "patch consolidation and source gap review",
+    "active_jobs": [],
     "remaining_five_started": false,
-    "active_stage": "freeze06 then full source preparation"
+    "queued": [
+      "batch remaining implementation fixes",
+      "one fresh representative artifact and its complete runtime validation",
+      "remaining artifacts only after first-artifact gate passes"
+    ]
   },
-  "active_exclusive_grants": {
-    "network_new_runtime_QA": {
-      "agent": "network",
-      "scope": "new QA only OpenVPN runtime tools; production and shared files frozen",
-      "new_paths": [
-        "ci/capability-audit/batch_network_openvpn_runtime_*.py",
-        "ci/capability-audit/fixtures/batch_network/openvpn_runtime/",
-        "docs/capability-audit/parallel/network/"
-      ],
-      "existing_file_edit": false,
-      "Git_commit": false,
-      "source_out_access": false,
-      "SDK_Docker_VM_or_other_heavy_jobs": false,
-      "root_edits_same_files": false,
-      "released": true
-    }
-  },
-  "updated_at": "2026-10-17T06:17:59.389976+00:00",
+  "active_exclusive_grants": {},
+  "updated_at": "2026-10-19T00:27:53.198423+00:00",
   "previous_exclusive_grants": {
     "apps_provider_lifecycle": {
       "agent": "apps",
@@ -2080,20 +2051,15 @@
     "source_upgrade_and_preparation_passed": true
   },
   "core_acceptance_current": {
-    "implementation_commit": "c057606bdd5d8f1fb26dd08e4eabbe118e47b1a7",
-    "representative02": "complete failed; source build passed but empty GN directory publication rejected; evidence preserved",
-    "representative03": "complete failed at six unsupported context filetype fields; all evidence sealed; complete actual contexts preflight passed after batch repair",
+    "integration_base": "a0d62155747253f203952878594e21976c12a92c",
+    "development_branch": "codex/ohos7-integrated-development",
+    "source_out_owner": "root",
     "first_artifact_behavior_gate_passed": false,
     "remaining_five_started": false,
-    "source_out_owner": "root",
-    "qa_only_agents": [],
-    "original_five_workstreams_complete": true,
-    "representative04": "complete failed: helpers missing Want GN dependency; source/kernel/logs sealed; actual contexts generation passed",
-    "agent_file_leases": "all five production/QA write leases and read-only audits released",
-    "dedicated_QA_tools": "six unsigned HAPs actual SDK105 compiled and bound: AudioHaptic2/Calendar3/OpenVPN1; signature/BMS/dedicated fresh guest pending",
-    "frozen_candidate_commit": "af2edafbd00d9c299858c4a1546f15cf7330f31a",
-    "representative05": "complete failed at SELinux execution group check; all raw logs/kernel/receipts sealed; no archive",
-    "SELinux_followup": "four failures fixed together; fresh GN policy/context compilation plus all14 raw checks and whole entrypoint pass; original exception negative cases rejected",
-    "native_OpenVPN_helpers": "two actual product flag objects and actual GN wrapper links pass; complete image/package/runtime still pending"
-  }
+    "agent_file_leases": "none active; explicit disjoint paths required before next edits",
+    "previous_coordination": "integration-20261019/previous-coordination.json",
+    "historical_82_is_missing_implementation_count": false,
+    "new_candidates_are_runtime_validated": false
+  },
+  "development_branch": "codex/ohos7-integrated-development"
 }

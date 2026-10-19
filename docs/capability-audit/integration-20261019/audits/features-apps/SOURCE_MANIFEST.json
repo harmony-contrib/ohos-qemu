@@ -1,0 +1,44 @@
+{
+  "schema": "integration374-feature-complete-frozen-manifest/v1",
+  "directory": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/integration374-feature-review-apps",
+  "members": {
+    "CURRENT_SOURCE_EVIDENCE.json": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/integration374-feature-review-apps/CURRENT_SOURCE_EVIDENCE.json",
+      "sha256": "55029b75864c861cb3f1a6864dbcaf1a051b595fcb964f184bcdc99d51bcbf5e",
+      "bytes": 26927
+    },
+    "FILE_RECONCILIATION.json": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/integration374-feature-review-apps/FILE_RECONCILIATION.json",
+      "sha256": "476137ee96f16c68f5ff6f339205565eb5e2a651ba7d63ddb9cfd85bbda3b108",
+      "bytes": 213585
+    },
+    "FOCUSED_DIFFS.diff": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/integration374-feature-review-apps/FOCUSED_DIFFS.diff",
+      "sha256": "9f2e51ff4dbc08a18015a65682bd327dfbba1d1bd129f2038b8886db437e06a8",
+      "bytes": 29117
+    },
+    "HISTORY_PROOF.json": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/integration374-feature-review-apps/HISTORY_PROOF.json",
+      "sha256": "9dfa6e6d083ae916debd28f13c3e4023e5df4e2b18239ed6257b338b24af69fc",
+      "bytes": 6793
+    },
+    "REPORT.md": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/integration374-feature-review-apps/REPORT.md",
+      "sha256": "e3f297710b3ec59306e1f9782adece90ec813776565653bcb08d28eea0a9479f",
+      "bytes": 5313
+    },
+    "SOURCE_PINS.json": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/integration374-feature-review-apps/SOURCE_PINS.json",
+      "sha256": "29a3522d9b73f9471951694896e6d8b046425811f20cba0dbf185f5320766825",
+      "bytes": 216722
+    },
+    "result.json": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/integration374-feature-review-apps/result.json",
+      "sha256": "3aac28a06c49167ea78827ce3794b4d5b113db1f16cba224578552730f8cd4f4",
+      "bytes": 1059
+    }
+  },
+  "member_count": 7,
+  "frozen_once": true,
+  "append_after_freeze_allowed": false
+}

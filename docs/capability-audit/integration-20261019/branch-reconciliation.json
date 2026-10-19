@@ -1,0 +1,255 @@
+{
+  "base": "a0d62155747253f203952878594e21976c12a92c",
+  "development_branch": "codex/ohos7-integrated-development",
+  "original_branches": [
+    {
+      "branch": "audit/ohos7-capability-matrix",
+      "head": "dcb17cfb48375de632341a5cfbe9264e7114fc65",
+      "ancestor_of_base": true,
+      "patch_equivalent_commits": 0,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "codex/apps-gnss-prefix-20261017",
+      "head": "b8a4c1b992c79acd5fcbfa42c579f3f96820a63f",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 3,
+      "reviewed_non_equivalent_commits": [
+        "b8a4c1b992c79acd5fcbfa42c579f3f96820a63f"
+      ]
+    },
+    {
+      "branch": "codex/audio-incarnation-validation",
+      "head": "3a3d59f82a8c548d31b8f886054ea0b5d90c6c39",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 1,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "codex/calendar-runtime-validation",
+      "head": "0b725cea695eafb56e0be47ea33cf30666130fbd",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 0,
+      "reviewed_non_equivalent_commits": [
+        "0b725cea695eafb56e0be47ea33cf30666130fbd"
+      ]
+    },
+    {
+      "branch": "codex/capability-apps-20261015",
+      "head": "24e1318a55aa3509ce62008c737d46a204c9264f",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 20,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "codex/capability-core-next-20261017",
+      "head": "93b030742823dd864b97781299a349955485eab9",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 0,
+      "reviewed_non_equivalent_commits": [
+        "098bafe90bc129d886397d2efb2978df8d4d15d0",
+        "436c2cfcb6c6b0bb86655a4d9034a5c0c590e7c0",
+        "49c20a026d2b1fe3e896de094cec3f251ad9bef9",
+        "4d4934199cbab0146562d586b78e99213a5d6b78",
+        "c4b660b4902403d28b68115badf109d73a0269f5",
+        "0021dafe7466e0863335a1c1fc875e8370640e93",
+        "ba14ab50478a966f7e63e6250a8ca6bf7952d56d",
+        "93b030742823dd864b97781299a349955485eab9"
+      ]
+    },
+    {
+      "branch": "codex/capability-location-20261015",
+      "head": "3c9f0704363edf18ba48778514f76c062a441031",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 12,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "codex/capability-media-20261015",
+      "head": "c5d7562f714877e13069ad02dd50f173420065c5",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 16,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "codex/capability-network-20261015",
+      "head": "47f535f47c2a42b428acb2c770851f3ebbadba3c",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 15,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "codex/capability-qa-validation",
+      "head": "4f65ab56e4dc1552bf8f012aa3e08757392e8c0b",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 3,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "codex/capability-system-20261015",
+      "head": "a8d5d2b2589d0ab488db1a4a75704236edb2b130",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 24,
+      "reviewed_non_equivalent_commits": [
+        "331b5fd5e3e82fd88c753942ead67901b7bed3e8",
+        "a8d5d2b2589d0ab488db1a4a75704236edb2b130"
+      ]
+    },
+    {
+      "branch": "codex/gnss-precision-input",
+      "head": "25124ef3a87fc3203fdf49b7846e3c4d36b37300",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 1,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "codex/network-peer-lan-20261017",
+      "head": "1b57a04873703d950f3bca9a701c15222572ff47",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 0,
+      "reviewed_non_equivalent_commits": [
+        "1b57a04873703d950f3bca9a701c15222572ff47"
+      ]
+    },
+    {
+      "branch": "codex/ohos7-batched-repair-e",
+      "head": "c14e803c33f96f5fe01e04378c868fce32aa1487",
+      "ancestor_of_base": true,
+      "patch_equivalent_commits": 0,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "codex/ohos7-batched-repair-f",
+      "head": "a0d62155747253f203952878594e21976c12a92c",
+      "ancestor_of_base": true,
+      "patch_equivalent_commits": 0,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "codex/ohos7-runtime-qa-repair",
+      "head": "15de9fac9664846a9781dc69f79c954526de62fb",
+      "ancestor_of_base": true,
+      "patch_equivalent_commits": 0,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "codex/wallpaper-settings-source",
+      "head": "a6ce594387b248fc70e541ad3f85bcbee9677058",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 11,
+      "reviewed_non_equivalent_commits": [
+        "6c3dd817a328aae84eb393e8320e77af73c7002f",
+        "a6ce594387b248fc70e541ad3f85bcbee9677058"
+      ]
+    },
+    {
+      "branch": "feat/install-device-type",
+      "head": "dda077da9336ef54467fdb64143edbaf673b577e",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 1,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "feat/qemu-a11y",
+      "head": "98932bb214b92eee1332ef7ba2b455f19233b2d1",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 0,
+      "reviewed_non_equivalent_commits": [
+        "6ddac55c0f7c9bae8a5fa6293363da51279002be",
+        "98932bb214b92eee1332ef7ba2b455f19233b2d1"
+      ]
+    },
+    {
+      "branch": "feat/qemu-cpu-model",
+      "head": "92d47bc1bd93d66059667958482c9966a74ce645",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 1,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "feat/qemu-device-type-matrix",
+      "head": "4583606bcc96174c0b33a84c671c146c64bbc7b9",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 1,
+      "reviewed_non_equivalent_commits": [
+        "efdf5c28f1a8d8a848e043d07de0447761dc37a1",
+        "29cbcd39d02b4c86742e41677d971bca89818767"
+      ]
+    },
+    {
+      "branch": "feat/qemu-launch-params",
+      "head": "58fbd708cfcc566faaa65291253e2a4f5c3736a2",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 1,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "feat/qos-vibrator-jsvm-m144",
+      "head": "19fba6d494f1de2019c1be078717d4667be371ef",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 0,
+      "reviewed_non_equivalent_commits": [
+        "38813418f449a6483921954374cdf004352242ff",
+        "8aa4575cd8a23880de1f7996229acfbb4235cc83",
+        "58368bf13a61d6b5c5ace56f3a98e4bd9de3254e",
+        "fdd7fc9fa2a36bd936579121d2c4148cba476d65",
+        "49012e5c8005730c5a87b356705dc0246a1a5926",
+        "4cd91d5e967fba09453710203e6a67fd8f5dd0f0",
+        "051ddaa82d03c9c86717bbeac786033a70c99ed1",
+        "f9633f6901eaf8ae81e6d5afe67e90eca9f7fde4",
+        "3c1efa9cf93909f341e824d4b98d00f89a0729e9",
+        "14834700bdcd7943311336878541a12cbc904682",
+        "19fba6d494f1de2019c1be078717d4667be371ef"
+      ]
+    },
+    {
+      "branch": "fix/2in1-window-manager",
+      "head": "bf938def98c787bd1a99c01cff48d236571c9c2f",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 0,
+      "reviewed_non_equivalent_commits": [
+        "c1d3c97cfd4cc8c471b4515a868896f762051d5f",
+        "12344a08a695e10123825f48560fb6a5c11c442f",
+        "bf938def98c787bd1a99c01cff48d236571c9c2f"
+      ]
+    },
+    {
+      "branch": "fix/native-child-process-six-packages",
+      "head": "c1d3c97cfd4cc8c471b4515a868896f762051d5f",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 1,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "fix/qemu-absolute-pointer-sync",
+      "head": "40a1535941d9c3098a00d418355bd0e51860384e",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 1,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "fix/standard-qemu-gpu-matrix",
+      "head": "4ce11356999792a36661678f18df165706537b3f",
+      "ancestor_of_base": false,
+      "patch_equivalent_commits": 0,
+      "reviewed_non_equivalent_commits": [
+        "268532998a1719b66203351e897df57c54a2ca5a",
+        "4ce11356999792a36661678f18df165706537b3f"
+      ]
+    },
+    {
+      "branch": "main",
+      "head": "5fdf3b3e82fcfa9b00e1a555ee7de4d9d2fd93da",
+      "ancestor_of_base": true,
+      "patch_equivalent_commits": 0,
+      "reviewed_non_equivalent_commits": []
+    },
+    {
+      "branch": "work/ohos7-capability-closure",
+      "head": "fcabc7ec82be387761a3383a4ec5efa65cf915e3",
+      "ancestor_of_base": true,
+      "patch_equivalent_commits": 0,
+      "reviewed_non_equivalent_commits": []
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "schema": "integration374-media-system-review-frozen/v1",
+  "base": "a0d62155747253f203952878594e21976c12a92c",
+  "complete_members_except_manifest": true,
+  "members": {
+    "FILE_AUDIT.json": {
+      "sha256": "204a27e660ad5d24bcc2f8b340f09abd386eed1a89c43f83ebb1a998b915b997",
+      "bytes": 95979
+    },
+    "REPORT.md": {
+      "sha256": "fda982bb2715c747bae660b153bb76ecd60975d7b54ddba028c375b3d83e94ae",
+      "bytes": 11484
+    },
+    "SOURCE_ANCHORS.json": {
+      "sha256": "8c32cb316bae6cafcb8c9869a24a74a590bb652a80422c43365bdc82009881a9",
+      "bytes": 4293
+    },
+    "commit-diffs/0021dafe7466e0863335a1c1fc875e8370640e93.diff": {
+      "sha256": "040167da90289ddd973967e8710401ff6af26ff562f3fa43e99430007f23ae1c",
+      "bytes": 6650
+    },
+    "commit-diffs/098bafe90bc129d886397d2efb2978df8d4d15d0.diff": {
+      "sha256": "eb47ccab21a2fad3da5719d0b2d28508657488496f1e8d694f30658233ac21a8",
+      "bytes": 208176
+    },
+    "commit-diffs/436c2cfcb6c6b0bb86655a4d9034a5c0c590e7c0.diff": {
+      "sha256": "2bc6208031baf71cf2b8d976a184ebb1aa37a5348f003546fd7d420af43b6821",
+      "bytes": 63190
+    },
+    "commit-diffs/49c20a026d2b1fe3e896de094cec3f251ad9bef9.diff": {
+      "sha256": "de09df95a0166e946b88e380cb2031ad75620fdfcce179e993da8952de47ba6c",
+      "bytes": 17549
+    },
+    "commit-diffs/4d4934199cbab0146562d586b78e99213a5d6b78.diff": {
+      "sha256": "b399df387bd7d93d3faeb77593d1e703be62e510351872de174fb9219c6e73d8",
+      "bytes": 35522
+    },
+    "commit-diffs/93b030742823dd864b97781299a349955485eab9.diff": {
+      "sha256": "1254f4e4defa60b282f9bb1b3c9eff5e73ed0c1e73b5b2dd3d26cfc4750ca137",
+      "bytes": 180897
+    },
+    "commit-diffs/ba14ab50478a966f7e63e6250a8ca6bf7952d56d.diff": {
+      "sha256": "25259749e8c14c5771fb3b62411d62e222b2cbec859d91b0a0171ecef3df8e45",
+      "bytes": 168731
+    },
+    "commit-diffs/c4b660b4902403d28b68115badf109d73a0269f5.diff": {
+      "sha256": "25bda3f147bf1d9cb53ec0a777ca4a1917e2ba266fa6291a58bac676f6f0ea36",
+      "bytes": 5100
+    }
+  },
+  "source_only_read_only_Git_audit": true,
+  "tests_or_resources_executed": false,
+  "product_or_Git_mutated": false
+}

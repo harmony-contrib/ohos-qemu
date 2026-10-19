@@ -1,0 +1,156 @@
+[
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/audio-incarnation-validation/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/audio-incarnation-validation.tar.gz",
+    "sha256": "90ccc54a9ce906452b945228c1e929119882aa68c62e86bea091d744be21ea63",
+    "bytes": 12797733,
+    "verified_regular_files": 4030,
+    "metadata": [
+      "HEAD 3a3d59f82a8c548d31b8f886054ea0b5d90c6c39",
+      "branch refs/heads/codex/audio-incarnation-validation"
+    ]
+  },
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/calendar-runtime-validation/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/calendar-runtime-validation.tar.gz",
+    "sha256": "99ab00b8fdd055203225a6dcb2783474680b56fe74148843d6bddf66e915de9e",
+    "bytes": 12869874,
+    "verified_regular_files": 4050,
+    "metadata": [
+      "HEAD 0b725cea695eafb56e0be47ea33cf30666130fbd",
+      "branch refs/heads/codex/calendar-runtime-validation"
+    ]
+  },
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/capability-batched-repair-e/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/capability-batched-repair-e.tar.gz",
+    "sha256": "d91af1b77f32ec2d9a7af0020750362cf4929784509b0a6a11fa4bfbc420e258",
+    "bytes": 14393981,
+    "verified_regular_files": 4247,
+    "metadata": [
+      "HEAD c14e803c33f96f5fe01e04378c868fce32aa1487",
+      "branch refs/heads/codex/ohos7-batched-repair-e"
+    ]
+  },
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/capability-batched-repair-f.tar.gz",
+    "sha256": "0f13821a18d727b0a816e551d9f97c1240f61cf03c4cb96278d4c4191d7e8676",
+    "bytes": 13669804,
+    "verified_regular_files": 4278,
+    "metadata": [
+      "HEAD a0d62155747253f203952878594e21976c12a92c",
+      "branch refs/heads/codex/ohos7-batched-repair-f"
+    ]
+  },
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/capability-core-next/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/capability-core-next.tar.gz",
+    "sha256": "c5a8b709f7f61c825e9b54cf88b04faf906fa97bf306a87abfbb091830034bb6",
+    "bytes": 12516099,
+    "verified_regular_files": 3906,
+    "metadata": [
+      "HEAD 93b030742823dd864b97781299a349955485eab9",
+      "branch refs/heads/codex/capability-core-next-20261017"
+    ]
+  },
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/capability-qa-validation/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/capability-qa-validation.tar.gz",
+    "sha256": "cdfb3849de9647df5b7f9d4387ddd3fd76150147af098367a5cede477ada693f",
+    "bytes": 12712191,
+    "verified_regular_files": 4015,
+    "metadata": [
+      "HEAD 4f65ab56e4dc1552bf8f012aa3e08757392e8c0b",
+      "branch refs/heads/codex/capability-qa-validation"
+    ]
+  },
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/capability-runtime-qa-batch/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/capability-runtime-qa-batch.tar.gz",
+    "sha256": "a99e16a372f9d0e507f0de828fb5b0b16103367e702416ea0daeb9ac35feaa11",
+    "bytes": 14669065,
+    "verified_regular_files": 4252,
+    "metadata": [
+      "HEAD 75b371547bc02bba9707e2526507f05f9ab9e63b",
+      "detached"
+    ]
+  },
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/capability-runtime-qa-repair/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/capability-runtime-qa-repair.tar.gz",
+    "sha256": "401f1f5d5468c9948b98ec094e8b20bf4d799e7e8e8ce820bf514b46bc678f94",
+    "bytes": 14952697,
+    "verified_regular_files": 4283,
+    "metadata": [
+      "HEAD 15de9fac9664846a9781dc69f79c954526de62fb",
+      "branch refs/heads/codex/ohos7-runtime-qa-repair"
+    ]
+  },
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/gnss-precision-validation/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/gnss-precision-validation.tar.gz",
+    "sha256": "a4a3ba4b86b969383e3cd4c0caf5eba38a9610092e2e11a6298fce428bbe63ed",
+    "bytes": 12704421,
+    "verified_regular_files": 4014,
+    "metadata": [
+      "HEAD 25124ef3a87fc3203fdf49b7846e3c4d36b37300",
+      "branch refs/heads/codex/gnss-precision-input"
+    ]
+  },
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-apps/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/ohos-capability-apps.tar.gz",
+    "sha256": "bf3f6cc32a877da2cba904466c97855bdb0cee6c75a63718c6fe1f61e98c185e",
+    "bytes": 12687826,
+    "verified_regular_files": 3827,
+    "metadata": [
+      "HEAD b8a4c1b992c79acd5fcbfa42c579f3f96820a63f",
+      "branch refs/heads/codex/apps-gnss-prefix-20261017"
+    ]
+  },
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-location/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/ohos-capability-location.tar.gz",
+    "sha256": "73b5668fe6b184a901514ea6a7fc8c675a3b07c674263df044cd9d98bd26137c",
+    "bytes": 12506980,
+    "verified_regular_files": 3656,
+    "metadata": [
+      "HEAD 3c9f0704363edf18ba48778514f76c062a441031",
+      "branch refs/heads/codex/capability-location-20261015"
+    ]
+  },
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/ohos-capability-media.tar.gz",
+    "sha256": "e62fb23d94ea9fce9e7c78c797426beb9304e24cb5c7c0384ed42cbd064c8f58",
+    "bytes": 12190464,
+    "verified_regular_files": 3513,
+    "metadata": [
+      "HEAD a6ce594387b248fc70e541ad3f85bcbee9677058",
+      "branch refs/heads/codex/wallpaper-settings-source"
+    ]
+  },
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-network/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/ohos-capability-network.tar.gz",
+    "sha256": "1e6115d6f2f7492eedd629773f221647089206d99022ba51028043b9ce3b3d2d",
+    "bytes": 14253848,
+    "verified_regular_files": 4502,
+    "metadata": [
+      "HEAD 1b57a04873703d950f3bca9a701c15222572ff47",
+      "branch refs/heads/codex/network-peer-lan-20261017"
+    ]
+  },
+  {
+    "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu",
+    "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/worktree-backups/ohos-capability-system.tar.gz",
+    "sha256": "b5deb24ac6b546114abf8c0c7978c4ba256d6d2fd551a7b488e5fe8163a80619",
+    "bytes": 9261235,
+    "verified_regular_files": 2953,
+    "metadata": [
+      "HEAD a8d5d2b2589d0ab488db1a4a75704236edb2b130",
+      "branch refs/heads/codex/capability-system-20261015"
+    ]
+  }
+]

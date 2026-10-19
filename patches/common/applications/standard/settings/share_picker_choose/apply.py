@@ -91,7 +91,10 @@ def manifest():
         path = safe_path(COMPONENT, name)
         if digest(path.read_bytes()) != row['sha256']:
             raise ValueError('unknown patch bytes: ' + name)
-        names = subprocess.check_output(['git', 'apply', '--numstat', str(path)], text=True)
+        # Git silently filters patch paths when invoked from a repository
+        # subdirectory. This is a readonly inventory of the entire patch.
+        names = subprocess.check_output(['git', 'apply', '--numstat', str(path)],
+                                        cwd=Path(path.anchor), text=True)
         actual = {line.split('\t')[2] for line in names.splitlines()}
         if not actual or actual != set(row['targets']) or not actual.issubset(TARGETS):
             raise ValueError('unexpected patch targets')

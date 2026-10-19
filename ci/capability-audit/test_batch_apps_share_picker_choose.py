@@ -63,6 +63,14 @@ class ChooseSourceTests(unittest.TestCase):
         return {p.relative_to(self.root).as_posix(): (p.read_bytes(), p.stat().st_mode & 0o777)
                 for p in self.root.rglob('*') if p.is_file() and '.ohos-qemu-patches' not in p.parts}
 
+    def test_manifest_checks_all_targets_from_nested_repository_directory(self):
+        previous = Path.cwd()
+        try:
+            os.chdir(ROOT / 'ci')
+            self.assertEqual(set(INSTALL.manifest()['files']), INSTALL.TARGETS)
+        finally:
+            os.chdir(previous)
+
     def test_complete_two_project_apply_and_replay_twice(self):
         self.assertEqual(INSTALL.state(self.root, self.value, False), 'before')
         self.assertEqual(self.apply()['status'], 'applied')

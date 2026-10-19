@@ -1,0 +1,1258 @@
+{
+  "schema": "integration374-worktree-preservation-metadata-only/v1",
+  "excluded_main_worktree": "/Volumes/PSSD/code/ohos-rs/ohos-qemu",
+  "worktrees_examined": 14,
+  "totals": {
+    "regular_files": 2533,
+    "regular_logical_bytes": 52104078,
+    "regular_allocated_bytes": 57569280,
+    "symlinks": 0,
+    "symlink_bytes": 0,
+    "directories": 114,
+    "other_entries": 0,
+    "errors": 0,
+    "external_lexical_symlinks": 0,
+    "source_out_hint_symlinks": 0
+  },
+  "unique_inode_regular_logical_bytes": 52104078,
+  "unique_regular_inodes": 2533,
+  "worktree_list_unchanged": true,
+  "source_files_content_read_or_hashed": false,
+  "symlink_targets_followed": false,
+  "no_deletion_packaging_or_git_worktree_mutation": true,
+  "large_file_threshold_bytes": 104857600,
+  "large_files": [],
+  "symlinks": [],
+  "errors": [],
+  "trees": [
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/audio-incarnation-validation/ohos-qemu",
+      "HEAD": "3a3d59f82a8c548d31b8f886054ea0b5d90c6c39",
+      "branch": "refs/heads/codex/audio-incarnation-validation",
+      "slug": "audio-incarnation-validation",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/audio-incarnation-validation/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/audio-incarnation-validation/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 0,
+        "regular_logical_bytes": 0,
+        "regular_allocated_bytes": 0,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 0,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    },
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/calendar-runtime-validation/ohos-qemu",
+      "HEAD": "0b725cea695eafb56e0be47ea33cf30666130fbd",
+      "branch": "refs/heads/codex/calendar-runtime-validation",
+      "slug": "calendar-runtime-validation",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/calendar-runtime-validation/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/calendar-runtime-validation/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 0,
+        "regular_logical_bytes": 0,
+        "regular_allocated_bytes": 0,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 0,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    },
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/capability-batched-repair-e/ohos-qemu",
+      "HEAD": "c14e803c33f96f5fe01e04378c868fce32aa1487",
+      "branch": "refs/heads/codex/ohos7-batched-repair-e",
+      "slug": "capability-batched-repair-e",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/capability-batched-repair-e/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/capability-batched-repair-e/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "f4c183b47c3480f0b28b6c3bfa84aa1bd93621b3dabcb8ae81a76b444fea5275",
+          "git_path_entries": 100,
+          "counts": {
+            "regular_files": 100,
+            "regular_logical_bytes": 2606063,
+            "regular_allocated_bytes": 2813952,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 100,
+        "regular_logical_bytes": 2606063,
+        "regular_allocated_bytes": 2813952,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 0,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    },
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu",
+      "HEAD": "a0d62155747253f203952878594e21976c12a92c",
+      "branch": "refs/heads/codex/ohos7-batched-repair-f",
+      "slug": "capability-batched-repair-f",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "c5dbce25563a9309b71457410695b9c08031e08b26cce7ce5b8fa88e07c32c09",
+          "git_path_entries": 12,
+          "counts": {
+            "regular_files": 12,
+            "regular_logical_bytes": 132483,
+            "regular_allocated_bytes": 155648,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 12,
+        "regular_logical_bytes": 132483,
+        "regular_allocated_bytes": 155648,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 0,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    },
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/capability-core-next/ohos-qemu",
+      "HEAD": "93b030742823dd864b97781299a349955485eab9",
+      "branch": "refs/heads/codex/capability-core-next-20261017",
+      "slug": "capability-core-next",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/capability-core-next/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/capability-core-next/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 0,
+        "regular_logical_bytes": 0,
+        "regular_allocated_bytes": 0,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 0,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    },
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/capability-qa-validation/ohos-qemu",
+      "HEAD": "4f65ab56e4dc1552bf8f012aa3e08757392e8c0b",
+      "branch": "refs/heads/codex/capability-qa-validation",
+      "slug": "capability-qa-validation",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/capability-qa-validation/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/capability-qa-validation/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "a3aeb12362ae327e5e1db46a7845fe734d21c11407684a849be0264aba8a9140",
+          "git_path_entries": 2,
+          "counts": {
+            "regular_files": 2,
+            "regular_logical_bytes": 11755,
+            "regular_allocated_bytes": 16384,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 2,
+        "regular_logical_bytes": 11755,
+        "regular_allocated_bytes": 16384,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 0,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    },
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/capability-runtime-qa-batch/ohos-qemu",
+      "HEAD": "75b371547bc02bba9707e2526507f05f9ab9e63b",
+      "detached": true,
+      "slug": "capability-runtime-qa-batch",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/capability-runtime-qa-batch/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/capability-runtime-qa-batch/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "574f96bee245f0c05038dc550b8cb15c0f2bc0742dd93e578d72f6e04d8e86fd",
+          "git_path_entries": 182,
+          "counts": {
+            "regular_files": 182,
+            "regular_logical_bytes": 3880503,
+            "regular_allocated_bytes": 4259840,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 182,
+        "regular_logical_bytes": 3880503,
+        "regular_allocated_bytes": 4259840,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 0,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    },
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/capability-runtime-qa-repair/ohos-qemu",
+      "HEAD": "15de9fac9664846a9781dc69f79c954526de62fb",
+      "branch": "refs/heads/codex/ohos7-runtime-qa-repair",
+      "slug": "capability-runtime-qa-repair",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/capability-runtime-qa-repair/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/capability-runtime-qa-repair/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "d60cbc6ab0f35e2f89b44e38c6c45921dc2af683f51cf65ac1b251e21bb2036c",
+          "git_path_entries": 201,
+          "counts": {
+            "regular_files": 201,
+            "regular_logical_bytes": 4373966,
+            "regular_allocated_bytes": 4796416,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 201,
+        "regular_logical_bytes": 4373966,
+        "regular_allocated_bytes": 4796416,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 0,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    },
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/gnss-precision-validation/ohos-qemu",
+      "HEAD": "25124ef3a87fc3203fdf49b7846e3c4d36b37300",
+      "branch": "refs/heads/codex/gnss-precision-input",
+      "slug": "gnss-precision-validation",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/gnss-precision-validation/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/gnss-precision-validation/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 0,
+        "regular_logical_bytes": 0,
+        "regular_allocated_bytes": 0,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 0,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    },
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-apps/ohos-qemu",
+      "HEAD": "b8a4c1b992c79acd5fcbfa42c579f3f96820a63f",
+      "branch": "refs/heads/codex/apps-gnss-prefix-20261017",
+      "slug": "ohos-capability-apps",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/ohos-capability-apps/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/ohos-capability-apps/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e309929177005c9d2298b414c9ace6f8e4ffe78a3d301494bdca7274840e383e",
+          "git_path_entries": 47,
+          "counts": {
+            "regular_files": 47,
+            "regular_logical_bytes": 575051,
+            "regular_allocated_bytes": 671744,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 47,
+        "regular_logical_bytes": 575051,
+        "regular_allocated_bytes": 671744,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 0,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    },
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-location/ohos-qemu",
+      "HEAD": "3c9f0704363edf18ba48778514f76c062a441031",
+      "branch": "refs/heads/codex/capability-location-20261015",
+      "slug": "ohos-capability-location",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/ohos-capability-location/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/ohos-capability-location/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "8b7c019443e6ee0f2f7f22ffef50b4595dfde1ac4e2679e6d87ee9fd7f66196b",
+          "git_path_entries": 1150,
+          "counts": {
+            "regular_files": 1150,
+            "regular_logical_bytes": 29986600,
+            "regular_allocated_bytes": 32411648,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 1150,
+        "regular_logical_bytes": 29986600,
+        "regular_allocated_bytes": 32411648,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 0,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    },
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu",
+      "HEAD": "a6ce594387b248fc70e541ad3f85bcbee9677058",
+      "branch": "refs/heads/codex/wallpaper-settings-source",
+      "slug": "ohos-capability-media",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "git_path_entries": 0,
+          "counts": {
+            "regular_files": 0,
+            "regular_logical_bytes": 0,
+            "regular_allocated_bytes": 0,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/ohos-capability-media/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "2e780cb4a0258a56299438dd2c9f9f9bb0ac894f82f5a31f4413aa11a0939020",
+          "git_path_entries": 99,
+          "counts": {
+            "regular_files": 99,
+            "regular_logical_bytes": 1751731,
+            "regular_allocated_bytes": 1957888,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 99,
+        "regular_logical_bytes": 1751731,
+        "regular_allocated_bytes": 1957888,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 0,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    },
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-network/ohos-qemu",
+      "HEAD": "1b57a04873703d950f3bca9a701c15222572ff47",
+      "branch": "refs/heads/codex/network-peer-lan-20261017",
+      "slug": "ohos-capability-network",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/ohos-capability-network/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "5b1a25195d70b86a4d71bcabc5a75772a647624d7bf8844ca2f68519daea62b5",
+          "git_path_entries": 52,
+          "counts": {
+            "regular_files": 645,
+            "regular_logical_bytes": 7572695,
+            "regular_allocated_bytes": 9076736,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 114,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/ohos-capability-network/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "ca5d5d66f6f444946ad18c05352286e15d945133afff882e8b540eb5457f0820",
+          "git_path_entries": 34,
+          "counts": {
+            "regular_files": 34,
+            "regular_logical_bytes": 485396,
+            "regular_allocated_bytes": 548864,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [
+        ".network-scratch/broker-source",
+        ".network-scratch/broker-source/.git",
+        ".network-scratch/broker-source/.git/hooks",
+        ".network-scratch/broker-source/.git/info",
+        ".network-scratch/broker-source/.git/objects",
+        ".network-scratch/broker-source/.git/objects/info",
+        ".network-scratch/broker-source/.git/objects/pack",
+        ".network-scratch/broker-source/.git/refs",
+        ".network-scratch/broker-source/.git/refs/heads",
+        ".network-scratch/broker-source/.git/refs/tags",
+        ".network-scratch/broker-source/foundation",
+        ".network-scratch/broker-source/foundation/communication",
+        ".network-scratch/broker-source/foundation/communication/netmanager_base",
+        ".network-scratch/broker-source/foundation/communication/netmanager_base/services",
+        ".network-scratch/broker-source/foundation/communication/netmanager_base/services/netmanagernative",
+        ".network-scratch/broker-source/foundation/communication/netmanager_base/services/netmanagernative/include",
+        ".network-scratch/broker-source/foundation/communication/netmanager_base/services/netmanagernative/include/manager",
+        ".network-scratch/broker-source/foundation/communication/netmanager_base/services/netmanagernative/src",
+        ".network-scratch/broker-source/foundation/communication/netmanager_base/services/netmanagernative/src/manager",
+        ".network-scratch/broker-source/foundation/communication/netmanager_base/services/netmanagernative/src/netsys",
+        ".network-scratch/broker-source/foundation/communication/netmanager_ext",
+        ".network-scratch/broker-source/foundation/communication/netmanager_ext/services",
+        ".network-scratch/broker-source/foundation/communication/netmanager_ext/services/vpnmanager",
+        ".network-scratch/broker-source/foundation/communication/netmanager_ext/services/vpnmanager/include",
+        ".network-scratch/broker-source/foundation/communication/netmanager_ext/services/vpnmanager/src",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/.git",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/.git/hooks",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/.git/info",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/.git/objects",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/.git/objects/info",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/.git/objects/pack",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/.git/refs",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/.git/refs/heads",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/.git/refs/tags",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/.github",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/.github/ISSUE_TEMPLATE",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/.github/workflows",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/contrib",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/contrib/OCSP_check",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/contrib/cmake",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/contrib/extract-crl",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/contrib/openvpn-fwmarkroute-1.00",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/contrib/vcpkg-manifests",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/contrib/vcpkg-manifests/mingw",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/contrib/vcpkg-manifests/windows",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/contrib/vcpkg-ports",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/contrib/vcpkg-ports/pkcs11-helper",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/contrib/vcpkg-triplets",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/debug",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/dev-tools",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/distro",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/distro/dns-scripts",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/distro/systemd",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/doc",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/doc/doxygen",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/doc/man-sections",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/doc/tests",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/include",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/m4",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/sample",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/sample/sample-config-files",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/sample/sample-keys",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/sample/sample-plugins",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/sample/sample-plugins/client-connect",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/sample/sample-plugins/defer",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/sample/sample-plugins/keying-material-exporter-demo",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/sample/sample-plugins/log",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/sample/sample-plugins/simple",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/sample/sample-scripts",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/src",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/src/compat",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/src/openvpn",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/src/openvpnmsica",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/src/openvpnserv",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/src/plugins",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/src/plugins/auth-pam",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/src/plugins/down-root",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/src/tapctl",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/tests",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/tests/unit_tests",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/tests/unit_tests/example_test",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/tests/unit_tests/openvpn",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/tests/unit_tests/openvpn/input",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/tests/unit_tests/openvpnserv",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/tests/unit_tests/plugins",
+        ".network-scratch/openvpn-source/openvpn-dc1f569087135894ac2703aeabd7a960ee9452d4/tests/unit_tests/plugins/auth-pam",
+        ".network-scratch/session-source",
+        ".network-scratch/session-source/.git",
+        ".network-scratch/session-source/.git/hooks",
+        ".network-scratch/session-source/.git/info",
+        ".network-scratch/session-source/.git/objects",
+        ".network-scratch/session-source/.git/objects/info",
+        ".network-scratch/session-source/.git/objects/pack",
+        ".network-scratch/session-source/.git/refs",
+        ".network-scratch/session-source/.git/refs/heads",
+        ".network-scratch/session-source/.git/refs/tags",
+        ".network-scratch/session-source/.ohos-qemu-patches",
+        ".network-scratch/session-source/foundation",
+        ".network-scratch/session-source/foundation/communication",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext/frameworks",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext/frameworks/native",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext/frameworks/native/netvpnclient",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext/frameworks/native/netvpnclient/src",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext/interfaces",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext/interfaces/innerkits",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext/interfaces/innerkits/netvpnclient",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext/services",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext/services/vpnmanager",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext/services/vpnmanager/include",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext/services/vpnmanager/src",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext/test",
+        ".network-scratch/session-source/foundation/communication/netmanager_ext/test/netmanager_ext_mock_test"
+      ],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 679,
+        "regular_logical_bytes": 8058091,
+        "regular_allocated_bytes": 9625600,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 114,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    },
+    {
+      "worktree": "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu",
+      "HEAD": "a8d5d2b2589d0ab488db1a4a75704236edb2b130",
+      "branch": "refs/heads/codex/capability-system-20261015",
+      "slug": "ohos-capability-system",
+      "categories": {
+        "untracked": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "3d986abbc2eb98f400923827c922728ff24881ce76e0a5c3881e11bbed2b1a1d",
+          "git_path_entries": 8,
+          "counts": {
+            "regular_files": 8,
+            "regular_logical_bytes": 5286,
+            "regular_allocated_bytes": 32768,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        },
+        "ignored": {
+          "argv": [
+            "git",
+            "--no-optional-locks",
+            "-C",
+            "/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu",
+            "ls-files",
+            "--others",
+            "--ignored",
+            "--exclude-standard",
+            "-z"
+          ],
+          "exit_code": 0,
+          "error": null,
+          "raw_list_sha256": "fe39ebbb85fe816bce5c0f5f5b63aaf2bdf04c10837f5932ad34424d0b4dc8f3",
+          "git_path_entries": 53,
+          "counts": {
+            "regular_files": 53,
+            "regular_logical_bytes": 722549,
+            "regular_allocated_bytes": 827392,
+            "symlinks": 0,
+            "symlink_bytes": 0,
+            "directories": 0,
+            "other_entries": 0,
+            "errors": 0,
+            "external_lexical_symlinks": 0,
+            "source_out_hint_symlinks": 0
+          }
+        }
+      },
+      "nested_directory_expansions": [],
+      "listing_overlap": [],
+      "counts": {
+        "regular_files": 61,
+        "regular_logical_bytes": 727835,
+        "regular_allocated_bytes": 860160,
+        "symlinks": 0,
+        "symlink_bytes": 0,
+        "directories": 0,
+        "other_entries": 0,
+        "errors": 0,
+        "external_lexical_symlinks": 0,
+        "source_out_hint_symlinks": 0
+      }
+    }
+  ],
+  "elapsed_seconds": 0.6810970306396484,
+  "limitations": [
+    "Logical size sums listed regular files, not APFS snapshots/compression/clones or backup archive size. Allocated bytes are st_blocks*512 and may not equal physical unique bytes.",
+    "Symlink targets are lexical only; link chains are not resolved and targets are not traversed or statted. Back up symlinks as links, never dereference.",
+    "Git may collapse an embedded untracked repository to a directory; only those listed directory entries are expanded with lstat/os.scandir and no symlink follow.",
+    "No tracked source or Git history inventory is implied here; this lists only Git untracked/ignored categories at the observed moment.",
+    "Files may change after metadata observation; root must preserve metadata/content at backup time before cleanup."
+  ]
+}

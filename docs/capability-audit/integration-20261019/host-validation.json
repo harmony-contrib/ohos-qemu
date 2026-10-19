@@ -1,0 +1,29 @@
+{
+  "argv": [
+    "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+    "-m",
+    "unittest",
+    "-v",
+    "test_batch_apps_share_picker_choose",
+    "test_batch_system_calendar_filter_async_lifetime",
+    "test_batch_system_calendar_crud_candidate",
+    "test_batch_media_audio_haptic",
+    "test_batch_media_audio_haptic_coordinator",
+    "test_batch_network_peer_lan",
+    "test_batch_system_calendar_main",
+    "test_calendar_provider",
+    "test_batch_apps_calendar_dispatch",
+    "test_a11y_pointer_routing",
+    "test_launcher_kernel_log_level",
+    "test_package_checksum_coverage",
+    "test_batch_system_calendar_runtime_public_locale",
+    "test_batch_media_audio_haptic_hilog_transport"
+  ],
+  "cwd": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit",
+  "exit_code": 0,
+  "elapsed_seconds": 53.031630754470825,
+  "host_only": true,
+  "log": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/integration374-consolidation/targeted-host-tests-after-fix.log",
+  "sha256": "633657fd3da3b04eb2c63eca185963caecdb11c1d45b09bac09394ecce92d048",
+  "runtime_validated": false
+}

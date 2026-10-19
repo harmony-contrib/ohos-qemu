@@ -1,0 +1,128 @@
+{
+  "schema": "readonly-git-integration-audit374/network/v1",
+  "integration_base": "a0d62155747253f203952878594e21976c12a92c",
+  "unique_commit": "1b57a04873703d950f3bca9a701c15222572ff47",
+  "decision": "Preserve and integrate the standalone commit additions; never restore its whole old packager blob. All scope remains candidate, not runtime closure.",
+  "commit_files": [
+    {
+      "path": "ci/capability-audit/batch_network_peer_lan.py",
+      "commit_sha256": "e24036589d2a221ecab2d325a6acc32dd8103f5871df3943e4450a9625dd1465",
+      "bytes": 24532,
+      "base_exists": false,
+      "base_sha256": null,
+      "classification": "missing executable candidate"
+    },
+    {
+      "path": "ci/capability-audit/test_batch_network_peer_lan.py",
+      "commit_sha256": "21298227367c9e43bfc7db1c689f97350e03db43dd5571b5769c77e30a1faacb",
+      "bytes": 17285,
+      "base_exists": false,
+      "base_sha256": null,
+      "classification": "missing executable candidate"
+    },
+    {
+      "path": "docs/capability-audit/parallel/network/round16-peer-lan/README.md",
+      "commit_sha256": "b8c1bf30fb34aa941cbe01a23e44b13f4bc4418f94733cf34348462708f92ae5",
+      "bytes": 9284,
+      "base_exists": false,
+      "base_sha256": null,
+      "classification": "missing historical source/help/host-only provenance; not new runtime evidence"
+    },
+    {
+      "path": "docs/capability-audit/parallel/network/round16-peer-lan/host-backend-contract.json",
+      "commit_sha256": "f03c80d998b8ca2ea72f8c0f179c45a4ad6fb45e117835fa08b502c5b4a271a3",
+      "bytes": 2541,
+      "base_exists": false,
+      "base_sha256": null,
+      "classification": "missing historical source/help/host-only provenance; not new runtime evidence"
+    },
+    {
+      "path": "docs/capability-audit/parallel/network/round16-peer-lan/host-tests.json",
+      "commit_sha256": "58f18fcb028293e275dd862db3592cf7343585351da8be1eefd7d2b20fa60a29",
+      "bytes": 2341,
+      "base_exists": false,
+      "base_sha256": null,
+      "classification": "missing historical source/help/host-only provenance; not new runtime evidence"
+    },
+    {
+      "path": "docs/capability-audit/parallel/network/round16-peer-lan/result.json",
+      "commit_sha256": "0fde2feffe4dabdba89b867d8e2d6fe96831d419168aca4f301ff523264c4b74",
+      "bytes": 6494,
+      "base_exists": false,
+      "base_sha256": null,
+      "classification": "missing historical source/help/host-only provenance; not new runtime evidence"
+    },
+    {
+      "path": "docs/capability-audit/parallel/network/round16-peer-lan/test_a11y_pointer_routing.log",
+      "commit_sha256": "cc480c37a18deee9f8961c88f1522801f5523798a1036131ffe93b63622bd917",
+      "bytes": 294,
+      "base_exists": false,
+      "base_sha256": null,
+      "classification": "missing historical source/help/host-only provenance; not new runtime evidence"
+    },
+    {
+      "path": "docs/capability-audit/parallel/network/round16-peer-lan/test_batch_network_peer_lan.log",
+      "commit_sha256": "2aa00404bd0aa96282fbcee22c43d27443226a4d724bf977a0652d60891444b2",
+      "bytes": 1910,
+      "base_exists": false,
+      "base_sha256": null,
+      "classification": "missing historical source/help/host-only provenance; not new runtime evidence"
+    },
+    {
+      "path": "docs/capability-audit/parallel/network/round16-peer-lan/test_launcher_kernel_log_level.log",
+      "commit_sha256": "52a47654ac2ce7137f303319a739dcf115bafd51b7748cb676ff7275d90d7171",
+      "bytes": 292,
+      "base_exists": false,
+      "base_sha256": null,
+      "classification": "missing historical source/help/host-only provenance; not new runtime evidence"
+    },
+    {
+      "path": "scripts/package_standard_qemu.sh",
+      "commit_sha256": "0bbadac9f8db54c80ce1402fe4a71b505413414aceade4edcc777c3c815f9a8c",
+      "bytes": 128466,
+      "base_exists": true,
+      "base_sha256": "3626e73b0f62790c2f465ff063cf7475a9f85b5628cf23016f0738399635db6d",
+      "classification": "four additive peer hooks missing; preserve newer existing blocks"
+    }
+  ],
+  "packager_additive_hunk_literal_context_checks": [
+    {
+      "old_context_sha256": "298e04be0de12a0589d60ecf4d3b7bbe492178b190135342d41f9c6624535873",
+      "old_context_lines": 6,
+      "literal_occurrences_in_base": 1
+    },
+    {
+      "old_context_sha256": "9b0b84d17c59fd235d8eebf07586ee9c7007413735f31d94a7a75b522d5f53e8",
+      "old_context_lines": 6,
+      "literal_occurrences_in_base": 1
+    },
+    {
+      "old_context_sha256": "1c10b8a4c53f987c6109191631edaf3f108fde8bbb0e8f58ffc81040e8bbdf0e",
+      "old_context_lines": 6,
+      "literal_occurrences_in_base": 1
+    },
+    {
+      "old_context_sha256": "5da197f6c47728e154e95c263a469ba808ded3aa93f5ae8f124824914de5ec6d",
+      "old_context_lines": 6,
+      "literal_occurrences_in_base": 1
+    }
+  ],
+  "do_not_regress": [
+    "normalize_common_qemu_launcher RTC localtime->UTC normalization at a0 lines430-433",
+    "refresh_package_checksums recursive full-package file inventory at a0 lines1615-1619",
+    "PrivacyCenter recipe source_git_revision/native_source_revision join and actual image verifier at a0 lines3197-3211"
+  ],
+  "not_covered_by_this_commit": [
+    "actual two-VM lease/process/QMP/HDC/private disks resource owner",
+    "real boot and distinct actual UDIDs",
+    "network service Ethernet discovery/account/authentication and ordinary signed nonce session/offline cleanup",
+    "original15/267 Docker OpenVPN peer constructor ledger/UID integration"
+  ],
+  "scratch_decision": "No additional uncommitted production fix identified. Latest final source/postimages and emitted native hashes are already committed; retain scratch as recoverable historical backup if worktree is removed, do not add fetched upstream/generated samples/logs or execute old edit scripts.",
+  "scratch_files": 645,
+  "scratch_bytes": 7572695,
+  "resource_or_candidate_execution": false,
+  "Git_writes": false,
+  "peer_distinction": "1b57 two QEMU stream Ethernet guests and 267 original15 Docker OpenVPN TLS peer are different, complementary paths. Neither replaces other or full gate.",
+  "static_integration_note": "Only literal hunk-context comparisons performed. No actual cherry-pick, patch apply, tests, shell syntax run, QEMU or SDK performed."
+}
