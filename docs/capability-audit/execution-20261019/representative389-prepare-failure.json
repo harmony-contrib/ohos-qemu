@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "scope": "completed failed source preparation; no native package build started",
+  "source_commit": "4ea678efd3e2548a90dd18f291f0bcc8efd909f7",
+  "tree_sha256": "6f3ad5249bd135bbb26615081c8c329e7cdf0537c5b70285a62c512c9b59cae8",
+  "receipt": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-canonical-first-arm64-phone-prepare-389-01/evidence.json",
+    "sha256": "4b8d98c612662b962d475e415f72ff9f2e22fbb1a3758b680edeae0b8198a782",
+    "bytes": 14784
+  },
+  "launcher": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-canonical-first-arm64-phone-prepare-389-01/launcher.log",
+    "sha256": "1c0ceb30ddd70e720711fa3f2164f91be9668794c451e01e0d0a12a5f39c371b",
+    "bytes": 59450
+  },
+  "exit_code": 1,
+  "cleanup_verified": true,
+  "resource_lease_released": true,
+  "passed_components": [
+    "NumberIdentity local_provider",
+    "NumberIdentity native_manifest",
+    "NumberIdentity native_package_identity",
+    "NumberIdentity ability_runtime loader",
+    "NumberIdentity product selection"
+  ],
+  "failure": "Settings external_input successor guard ran before the exact installed chooser upgrade",
+  "fix": "Move the authenticated installed-chooser upgrade before every Settings component; retain pristine dependency order and validate composition with all three real predecessor guards",
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false
+}

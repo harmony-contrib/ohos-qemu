@@ -2,6 +2,7 @@
 import base64
 import gzip
 import hashlib
+import importlib.machinery
 import importlib.util
 import json
 import os
@@ -369,6 +370,59 @@ class ChooseSourceTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),
                          self.value['files'][INSTALL.TOKEN_COMPARISON_SOURCE]['after'])
         self.assertEqual(self.apply()['status'], 'already_applied')
+
+    def test_builder_upgrades_before_all_settings_predecessor_guards(self):
+        script = (ROOT / 'scripts/build_standard_qemu_in_docker.sh').read_text()
+        upgrade = script.index('logs/upgrade_settings_native_select_component.log')
+        final = script.index('logs/apply_settings_native_select_component.log')
+        for command in (
+                'bash "${SETTINGS_SOURCE_PROVIDER_COMPONENT_SCRIPT}"',
+                'bash "${SETTINGS_EXTERNAL_INPUT_COMPONENT_SCRIPT}"',
+                'bash "${PATCH_ROOT}/common/applications/standard/settings/share_picker/apply.sh"',
+                'bash "${PATCH_ROOT}/common/applications/standard/settings/wallpaper_settings/apply.sh"'):
+            with self.subTest(command=command):
+                self.assertLess(upgrade, script.index(command))
+                self.assertLess(script.index(command), final)
+
+    def test_exact_upgrade_composes_with_all_three_real_predecessor_guards(self):
+        self.installed_predecessor()
+        parent = COMP.parent
+        # These two pre-existing input UI files are outside the chooser's
+        # target/dependency vector. Retain their real reviewed patch bytes.
+        patch = (parent / 'external_input/0001-route-public-input-settings-to-real-pages.patch').read_text()
+        for section in patch.split('diff --git ')[1:]:
+            if '\n--- /dev/null\n' not in section:
+                continue
+            lines = section.splitlines(keepends=True)
+            name = next(line[len('+++ b/'):].strip() for line in lines if line.startswith('+++ b/'))
+            content = ''.join(line[1:] for line in lines if line.startswith('+') and not line.startswith('+++'))
+            target = self.root / name
+            self.assertFalse(target.exists())
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content)
+        guards = []
+        execute = importlib.machinery.SourceFileLoader.exec_module
+
+        def load_exported_fixture(loader, module):
+            execute(loader, module)
+            if Path(loader.path) == COMP / 'apply.py':
+                # These exported bytes carry no Git metadata. Omit only the
+                # same revision lookup as self.apply(); retain the actual
+                # complete target/dependency checks used by every guard.
+                module.revisions = mock.Mock()
+
+        for name in ('external_input', 'share_picker', 'wallpaper_settings'):
+            spec = importlib.util.spec_from_file_location('predecessor_' + name, parent / name / 'verify_source.py')
+            guard = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(guard)
+            with mock.patch.object(importlib.machinery.SourceFileLoader, 'exec_module', load_exported_fixture):
+                with self.assertRaisesRegex(ValueError, 'complete native and Settings chooser'):
+                    guard.validate(self.root, require_patched=True)
+            guards.append(guard)
+        self.apply()
+        for guard in guards:
+            with mock.patch.object(importlib.machinery.SourceFileLoader, 'exec_module', load_exported_fixture):
+                self.assertTrue(guard.validate(self.root, require_patched=True))
 
     def test_installed_predecessor_partial_token_fix_and_dependency_drift_rejected(self):
         path = self.installed_predecessor()

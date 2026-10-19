@@ -3363,6 +3363,17 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_prebuilt_component.log"
   bash "${PHOTOS_SIGNING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_signing_component.log"
+  # An installed chooser owns the shared Settings module. Upgrade its exact
+  # predecessor vector before any Settings component revalidates that ownership. A
+  # pristine tree keeps the original dependency-first application order below.
+  if [[ -f "${OHOS_ROOT}/applications/standard/settings/product/phone/src/main/module.json5" ]] &&
+    [[ "$(sha256sum "${OHOS_ROOT}/applications/standard/settings/product/phone/src/main/module.json5" | cut -d ' ' -f 1)" == \
+      "8bb80334c6dc6b68c032eedbc14dcd7f79e28d260fcbae0bd2c8965d9a054e3e" ]]; then
+    # The module digest only schedules apply; apply still validates every
+    # target/dependency/project and performs the locked atomic transition.
+    bash "${SETTINGS_SELECT_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/upgrade_settings_native_select_component.log"
+  fi
   bash "${SETTINGS_SOURCE_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_source_provider_component.log"
   bash "${SETTINGS_ACCESSIBILITY_COMPLETION_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3381,17 +3392,6 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_display_modes_component.log"
   bash "${SETTINGS_REFRESH_RATE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_refresh_rate_component.log"
-  # An installed chooser owns the shared Settings module. Upgrade its exact
-  # predecessor vector before Share/Wallpaper revalidate that ownership. A
-  # pristine tree keeps the original dependency-first application order below.
-  if [[ -f "${OHOS_ROOT}/applications/standard/settings/product/phone/src/main/module.json5" ]] &&
-    [[ "$(sha256sum "${OHOS_ROOT}/applications/standard/settings/product/phone/src/main/module.json5" | cut -d ' ' -f 1)" == \
-      "8bb80334c6dc6b68c032eedbc14dcd7f79e28d260fcbae0bd2c8965d9a054e3e" ]]; then
-    # The module digest only schedules apply; apply still validates every
-    # target/dependency/project and performs the locked atomic transition.
-    bash "${SETTINGS_SELECT_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
-      2>&1 | tee "${CACHE_ROOT}/logs/upgrade_settings_native_select_component.log"
-  fi
   bash "${PATCH_ROOT}/common/applications/standard/settings/share_picker/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_share_picker.log"
   bash "${PATCH_ROOT}/common/applications/standard/settings/wallpaper_settings/apply.sh" --source-root "${OHOS_ROOT}" \
