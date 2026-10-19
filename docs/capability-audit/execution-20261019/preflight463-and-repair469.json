@@ -1,0 +1,108 @@
+{
+  "schema": "preflight463-failure-and-batch469/v1",
+  "source_before": "31e763c9833e133e9297e1938d3d03b6869e9fad",
+  "branch": "codex/ohos7-integrated-development",
+  "representative_package_started": false,
+  "closed_preflight_attempts": {
+    "host": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r61-canonical-five-capability-host-463-01/receipt.json",
+      "sha256": "1e098d5c444059065e58ec23a81aa8026bff8abfd5fe0604f392dc7cb9122ff7",
+      "bytes": 1400248
+    },
+    "linux": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r61-canonical-Linux-host-463-01/receipt.json",
+      "sha256": "0098c386d7a2ff95649d06ac0b1e776e07c84cf6bdfd7505d9594f61f5a9ee04",
+      "bytes": 44925
+    },
+    "SDK14_failed_attempt": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r61-canonical-caller-SDK-batch-463-01/evidence.json",
+      "sha256": "6e68f75809974d003c89f437de8aca95ea405f70f33738b973c82309a45fbbcb",
+      "bytes": 8942
+    },
+    "SDK39_failed_child": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r61-canonical-caller-SDK-batch-463-01/live-sdk39-26/evidence.json",
+      "sha256": "36a798f390a0d49ffa4fed2da73e6fc5894c2b72b280262e3e5d5f16c531d80f",
+      "bytes": 19485
+    },
+    "Select3": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r61-select-caller-SDK105-463-01/root-evidence.json",
+      "sha256": "07d0930507fe80b89bda70338b0065b874d065ab580750053e73fc5591a647d9",
+      "bytes": 10114
+    },
+    "NumberDataShare3": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r61-number-caller-SDK105-463-01/evidence.json",
+      "sha256": "05aa41682e20dfd285e04457df471b953820b8d4dfdd0bfc22ad9cc72d7ffb15",
+      "bytes": 14996
+    }
+  },
+  "fixes": {
+    "mandatory_audio_revoke": "register the already executed ordinary revoke producer through original check and strict final verifier; preserve all 47 requirements",
+    "SDK_CID": "observe original CID bytes; wait only for missing/empty/expected incomplete prefix within original deadline with original CLI alive; reject wrong/invalid/nonregular identity; preserve full native worker and cleanup gates"
+  },
+  "canonical_suite_before_sha256": "cce78670b79d2294777822d97eb7306bb1c15799176d290331c961430a37463c",
+  "canonical_suite_after_sha256": "3fdb81396862d7626d07d0968b2ff8b6b9ec37f5d7121098f9382cbde089ce82",
+  "source_freezes": {
+    "SDK467": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-sdk-cid467/FROZEN.json",
+      "sha256": "95d8df90532d9c97a1e68de76817b68dfebbb78bf291b888e7fc5b02885d5434",
+      "bytes": 7891
+    },
+    "preflight469": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-next-epoch469/FROZEN.json",
+      "sha256": "8b65f49b2349153be941613f8474c70b1f9d5018f9ad0e8b350a25b5b4a7d1bf",
+      "bytes": 2264
+    },
+    "suite468": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-gate-repair468/FROZEN.json",
+      "sha256": "1fedd6e1cfb79042e6324cba700464f2ac85be27cc41603bc49a94fa2b532c41",
+      "bytes": 7794
+    }
+  },
+  "root_targeted_validation": {
+    "SDK_CID_boundaries": {
+      "tests": 26,
+      "exit_code": 0
+    },
+    "suite_registration_and_owned_callbacks": {
+      "tests": 15,
+      "exit_code": 0
+    }
+  },
+  "original_SDK_CID_failure_raw_not_saved": true,
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false,
+  "capability_ids_closed": 0,
+  "counts": {
+    "host_test_methods": 1125,
+    "host_pass": 1123,
+    "conditional_skips": 2,
+    "Linux_groups_pass": 9,
+    "SDK14_first_three_roles_pass": 13,
+    "SDK39_CID_admission_failed": 1,
+    "NativeStrip": "dependency_not_executed",
+    "Select_roles_pass": 3,
+    "NumberDataShare_roles_pass": 3
+  },
+  "committed_SDK_patch_records": [
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/execution-20261019/sdk467/README.md",
+      "sha256": "9bf71369d1a8c159436d425782a846c84aa20030fd592525456607f5350cfd4d",
+      "bytes": 955
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/execution-20261019/sdk467/run_live_sdk39_26.py.diff",
+      "sha256": "d5ab6726071687c44e22b04d0d8d75a7e15945847aec953287f73ef402b1fcd7",
+      "bytes": 4697
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/execution-20261019/sdk467/run_native_strip26.py.diff",
+      "sha256": "ec617d739cc30bc4aad2bf0a8b01bb5c3cfa351ea30a176b457d87b3664515d4",
+      "bytes": 1012
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/execution-20261019/sdk467/source-manifest.json.diff",
+      "sha256": "dab837203d62ec5c1d0f971f2a0c32a42b5ccc53b28de3094bbff60fa2340504",
+      "bytes": 6205
+    }
+  ]
+}

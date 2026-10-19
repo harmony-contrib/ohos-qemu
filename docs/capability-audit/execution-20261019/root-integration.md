@@ -29,3 +29,7 @@ root 只读采集实际源卷的三个 GN 向量、Settings/AMS/Calendar 向量�
 本次批量修复保留原 HDC 原始输出字节，修正 Docker 完整 provider 校验中的镜像环境与 created/exited 字段区别，并接入经过两轮 fork 问题修复和独立复核的 ALSA PCM 观测组件。GN 开关只作用于 libasound；源码状态必须完整匹配 before/after，禁用时显式清除已打补丁树的旧 true 参数。443 三种 whole-TU 模式均真实编译通过，完整 DSO 重链、新镜像和真实 onset 仍待新一轮验收。
 
 403 包的后续诊断还完成了两个 provider 的实际镜像 HAP/签名及完整候选 API 校验、PrivacyCenter 新路径输入的真实签名验证、GNSS 两个 whole-TU 和镜像角色检查、完整 GNSS 原82/435文件前置，以及两份新网络 caller HAP 和 Linux VPN 对端编译。这些均有独立结果文件；不作为 guest callback、权限切换、网络联机或正式能力销项。历史 82 个未闭项中，9 个精确公开 provider 依用户规则记不支持，其余73项仍需新包运行证据，并非73个已确认代码缺陷。后续继续先完成一个新代表包全量运行验收，才启动其余五包。
+
+31e763c 的463前置尝试已结束：host 1125方法（1123通过、2条件跳过）、Linux9组、Select3角色和Number DataShare3角色通过。SDK14前三组13角色通过，Linux SDK39在实际CID文件比较处失败，NativeStrip因依赖未执行。原实际容器已按完整CID删除并确认不存在，原失败记录保留；本轮尚未启动代表镜像构建。原失败未保存当次CID字节，不能断言具体为空或某个前缀。
+
+构建前继续合批修两处验收工具问题：SDK的两个Linux producer在原时限内等待完整预期CID，并保存每次原始读取；Suite补登已经执行的audio-revoke结果，保留原严格verifier和47项必需覆盖。原Suite缺登记会使全量门必然拒绝，7项新回归用完整原前像复现其中3项失败，修复后及原8项callback全部通过；root另复测26项CID边界全部通过。源码和旧证据见 `preflight463-and-repair469.json`，SDK修复patch同步提交在 `sdk467/`。后续必须使用新的真实提交、源码kit及SDK结果，不重标463。

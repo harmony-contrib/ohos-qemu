@@ -746,6 +746,8 @@ def run(args, *, owned_command=None, owned_guest_factory=None, owned_select_hook
                     check('storage-stats', path, [record])
                 if persona == 'completion-handler':
                     check('completion-handler', path, [record])
+                if persona == 'audio-revoke':
+                    check('audio-revoke', path, [record])
                 if persona == 'rpc-runtime':
                     check('rpc-runtime', path, [record])
                 if persona == 'avc-media':

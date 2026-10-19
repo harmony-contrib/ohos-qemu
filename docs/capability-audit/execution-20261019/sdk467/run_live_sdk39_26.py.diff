@@ -1,0 +1,84 @@
+--- SDK-batch375/run_live_sdk39_26.py
++++ SDK-batch467/run_live_sdk39_26.py
+@@ -50,6 +50,68 @@
+         for block in iter(lambda: stream.read(1024 * 1024), b''):
+             result.update(block)
+     return result.hexdigest()
++
++
++def wait_cid_file467(path, expected, process, deadline, *, output, report, evidence):
++    """Observe exact owned CID bytes; only incomplete expected prefixes retry."""
++    require(isinstance(expected, str) and re.fullmatch('[a-f0-9]{64}', expected),
++            'actual complete inspected Docker CID required')
++    path, output = Path(path), Path(output)
++    observations = report.setdefault('cid_file_observations', [])
++    directory = output / 'cid-observations'
++    directory.mkdir(exist_ok=False)
++    wanted = expected.encode('ascii')
++    while True:
++        row = dict(index=len(observations), path=str(path), observed_monotonic=time.monotonic(),
++                   state=None, raw=None, error=None)
++        data = None
++        try:
++            before = path.lstat()
++        except FileNotFoundError:
++            row['state'] = 'missing'
++        except OSError as error:
++            row.update(state='invalid', error=type(error).__name__ + ': ' + str(error))
++        else:
++            row['lstat'] = dict(device=before.st_dev, inode=before.st_ino,
++                                mode=before.st_mode, size=before.st_size)
++            if not stat.S_ISREG(before.st_mode):
++                row.update(state='invalid', error='CID path is not a regular non-symlink file')
++            else:
++                descriptor = None
++                try:
++                    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
++                    opened = os.fstat(descriptor)
++                    require(stat.S_ISREG(opened.st_mode) and
++                            (opened.st_dev, opened.st_ino) == (before.st_dev, before.st_ino),
++                            'CID file identity changed before read')
++                    data = os.read(descriptor, 65)
++                    raw_path = directory / ('%06d.bin' % row['index'])
++                    with raw_path.open('xb') as stream:
++                        stream.write(data)
++                    row['raw'] = dict(record(raw_path), bytes=len(data), read_limit=65)
++                    after = path.lstat()
++                    require(stat.S_ISREG(after.st_mode) and
++                            (after.st_dev, after.st_ino) == (opened.st_dev, opened.st_ino),
++                            'CID file identity changed after read')
++                    require(max(before.st_size, opened.st_size, after.st_size) <= 64,
++                            'CID file contains more than 64 bytes')
++                    row['state'] = 'complete' if data == wanted else (
++                        'incomplete_expected_prefix' if len(data) < 64 and wanted.startswith(data) else 'invalid')
++                except (OSError, ValueError) as error:
++                    row.update(state='invalid', error=type(error).__name__ + ': ' + str(error))
++                finally:
++                    if descriptor is not None:
++                        os.close(descriptor)
++        row['cli_exit_code'] = process.poll()
++        row['finished_monotonic'] = time.monotonic()
++        observations.append(row)
++        save(evidence, report)  # Persist every observed raw read before accepting or rejecting.
++        require(row['state'] != 'invalid', 'actual Docker CID file differs')
++        require(row['finished_monotonic'] < deadline, 'actual Docker CID file deadline expired')
++        if row['state'] == 'complete':
++            return
++        require(row['cli_exit_code'] is None, 'Docker CLI exited before complete CID file')
++        time.sleep(min(.1, max(0, deadline - time.monotonic())))
+ 
+ 
+ def record(path):
+@@ -511,10 +573,8 @@
+             require(value is not None, 'owned container was not created')
+             known_cid = value['Id']
+             cid_path = out / 'container.cid'
+-            while not cid_path.exists() and time.monotonic() < deadline and process.poll() is None:
+-                time.sleep(.1)
+-            require(cid_path.is_file() and not cid_path.is_symlink() and cid_path.read_text().strip() == known_cid,
+-                    'actual Docker CID file differs')
++            wait_cid_file467(cid_path, known_cid, process, deadline,
++                             output=out, report=report, evidence=evidence)
+             host = value['HostConfig']
+             require(host['NanoCpus'] == 2000000000 and host['Memory'] == 5 * 1024**3 and
+                     host['NetworkMode'] == 'none' and host['ReadonlyRootfs'] is True and host['PidsLimit'] == 512,
