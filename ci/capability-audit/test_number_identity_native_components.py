@@ -41,6 +41,16 @@ sys.path.insert(0, str(SUPPORT))
 
 
 class NumberIdentityNativeComponentsTests(unittest.TestCase):
+    def test_phone_selection_requires_all_three_component_final_states(self):
+        path = ROOT / 'patches/common/vendor/ohemu/virt/number_identity_local/configure.py'
+        spec = importlib.util.spec_from_file_location('number_identity_phone_selection', path)
+        selection = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(selection)
+        for component in COMPONENTS:
+            with self.subTest(component=component['component']):
+                self.assertEqual(selection.SOURCE_PINS[component['target']], component['after_sha256'])
+                self.assertNotEqual(selection.SOURCE_PINS[component['target']], component['before_sha256'])
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix='number-identity-native-components-')
         self.addCleanup(self.temporary.cleanup)

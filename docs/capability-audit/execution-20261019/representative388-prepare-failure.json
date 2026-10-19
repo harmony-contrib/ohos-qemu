@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "scope": "completed failed source preparation; no native package build started",
+  "source_commit": "75fd2278be83e28b2f0825ced38a2afbe745c4db",
+  "tree_sha256": "cf0b388bc0cf023e277c588889f4ef2e087a9cb7c91a0298521874595c8d033a",
+  "receipt": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-canonical-first-arm64-phone-prepare-388-01/evidence.json",
+    "sha256": "f09250d462d132350e73ec1f92d334ed16dc98181d39197d97a9822f9473e97f",
+    "bytes": 14783
+  },
+  "launcher": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-canonical-first-arm64-phone-prepare-388-01/launcher.log",
+    "sha256": "5305c762fe2d0b494424f9ad04624ce757637217bed8d907143a481b6959f9a1",
+    "bytes": 45474
+  },
+  "exit_code": 1,
+  "cleanup_verified": true,
+  "resource_lease_released": true,
+  "failure": "NumberIdentity selection SOURCE_PINS still expected the superseded module JSON5 hash",
+  "fix": "Synchronize selection to exact final module/profile/loader states and enforce cross-component regression",
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false
+}
