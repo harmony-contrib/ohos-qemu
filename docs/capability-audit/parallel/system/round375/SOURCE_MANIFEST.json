@@ -1,0 +1,94 @@
+{
+  "schema": "round375-system-source-delivery/v1",
+  "frozen_for_root_integration": true,
+  "upstream_project": "applications/standard/calendardata",
+  "upstream_revision": "f922427ca0dc20895a0e254ae41382e5b03299a4",
+  "upstream_targets": [
+    "calendarmanager/napi/src/calendar_napi.cpp",
+    "calendarmanager/napi/src/napi_queue.cpp"
+  ],
+  "sources": {
+    "ci/capability-audit/batch_system_calendar375_observed_sources.py": {
+      "sha256": "53ac67838f33a99e3943f3288d0d48ef415bbb7cc8920fd62718a05c307f81c4",
+      "bytes": 5811
+    },
+    "ci/capability-audit/test_batch_system_calendar375_composition.py": {
+      "sha256": "e33435cd7380d30c732fd6e7c92a57321c864aca11905c8c42ea139e9bf08fbc",
+      "bytes": 10753
+    },
+    "docs/capability-audit/parallel/system/round375/BUILDER-INTEGRATION.diff": {
+      "sha256": "456987f06f0879d40f7e784033ace74df00b4dfd3e1771cbaf919400d9526f35",
+      "bytes": 1894
+    },
+    "docs/capability-audit/parallel/system/round375/CRUD-SUCCESSOR.md": {
+      "sha256": "bc4ea3e24252941d74b3e8cc944597acf9dd4e4a280957f00c959d0626a411d9",
+      "bytes": 2396
+    },
+    "docs/capability-audit/parallel/system/round375/HANDOFF.md": {
+      "sha256": "041d75dcc3a2431cfefed423a65feba2f39fdacab258458e3a1374b023851f16",
+      "bytes": 4547
+    },
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/0001-retain-native-filter-through-async-completion.patch": {
+      "sha256": "6bfa0fa7f7444cbfd3eee242ffe8924da5092097cba258c5d5b7d124b11cdd53",
+      "bytes": 14687
+    },
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/README.md": {
+      "sha256": "2057a53e853203a5eec2f64179115c239da91010c4d8f7c6db93d9258b69f087",
+      "bytes": 5550
+    },
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/apply.py": {
+      "sha256": "a334ecfb452ee6ae365cfa0496bd4b97a4948105b66896b1c0ace2e8a263d195",
+      "bytes": 5405
+    },
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/files/calendarmanager/napi/src/calendar_napi.cpp.gz.b64": {
+      "sha256": "9368d972f537861afa5302f01ec64da0c2f71bfc55575bb5d2043455089f6100",
+      "bytes": 4840
+    },
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/files/calendarmanager/napi/src/napi_queue.cpp": {
+      "sha256": "0343cb316b01c22687ff7d6a7d19562bf66b4854a52263fa97ebbc177da1abe8",
+      "bytes": 13200
+    },
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/manifest.json": {
+      "sha256": "ff9dbe9e963f7f02523be58bcc6de597443272e844cab134a343310e38f92019",
+      "bytes": 4267
+    },
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/ownership_model.py": {
+      "sha256": "fed333ccdf5d519a5d6e54f2e0548d5ae8a80ac2f91be70ffe24ef0953ba9c0a",
+      "bytes": 10698
+    },
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/previous_candidate/0-calendar_napi.cpp.gz.b64": {
+      "sha256": "e197c8ffb63478ea665f0778b6ce447f8afc5aff231dbe7381c3876d7060de29",
+      "bytes": 4804
+    },
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/tests/previous_candidate/1-napi_queue.cpp.gz.b64": {
+      "sha256": "63add8b6bba5b533c46943d49678f00c7db32a457aaa8e19a6f6493832b5d018",
+      "bytes": 4612
+    },
+    "patches/common/applications/standard/calendardata/filter_async_lifetime/verify_source.py": {
+      "sha256": "5d2a8da2ca5ef72315aa6ced31c62cb67c17d4b090b486fd76c0eb7a28f17a70",
+      "bytes": 3656
+    }
+  },
+  "host_validation": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/round375-system/host-validation-final.json",
+    "sha256": "a22f074894ae8f8f1ad5071588b31aa04bf1a368285b5a65942530a251485afd",
+    "bytes": 2310
+  },
+  "actual_five_source_composition": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/round375-system/observed-r60-final-01/receipt.json",
+    "sha256": "8356407f9b823525ac1a8132f33bfd88363ca52f52f4c240fdbcc1f5e840284b",
+    "bytes": 5145
+  },
+  "shared_builder_mutated_by_agent": false,
+  "native_or_SDK_compiled_by_agent": false,
+  "guest_or_shared_resources_started": false,
+  "Git_mutation": false,
+  "requirements_closed": [],
+  "remaining_required_gates": [
+    "actual product NAPI/header compile",
+    "real engine teardown/13 callers/native sanitizer/lifecycle",
+    "full prepared source and SDK HAP",
+    "new representative package behavior/boundary/regression before other five"
+  ],
+  "manifest_self_excluded": true
+}

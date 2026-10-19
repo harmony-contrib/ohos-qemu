@@ -92,7 +92,7 @@ def platform_leaf_fingerprint(chain):
     return certificate_fingerprint(certificates[-1])
 
 
-def verify(root, require_editor=False, require_reminder_ui=False):
+def verify(root, require_editor=False, require_reminder_ui=False, require_filter_async=False):
     source = root / 'applications/standard/calendardata'
     source_build = (source / 'BUILD.gn').read_text()
     if (source_build.count('ohos_app("calendardata_hap")') != 1 or
@@ -129,6 +129,12 @@ def verify(root, require_editor=False, require_reminder_ui=False):
             guard = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(guard)
             guard.validate(root, require_patched=True)
+    if require_filter_async:
+        guard_path = Path(__file__).resolve().parents[1] / 'common/applications/standard/calendardata/filter_async_lifetime/verify_source.py'
+        spec = importlib.util.spec_from_file_location('calendar_filter_async_guard', guard_path)
+        guard = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(guard)
+        guard.validate(root, require_patched=True)
     build = (root / 'applications/standard/hap/BUILD.gn').read_text()
     if re.search(r'calendarData_hap|CalendarData\.hap', build):
         raise ValueError('stale CalendarData prebuilt still exists in the HAP build graph')
@@ -143,8 +149,9 @@ def main():
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--require-editor', action='store_true')
     parser.add_argument('--require-reminder-ui', action='store_true')
+    parser.add_argument('--require-filter-async', action='store_true')
     args = parser.parse_args()
-    verify(args.source_root, args.require_editor, args.require_reminder_ui)
+    verify(args.source_root, args.require_editor, args.require_reminder_ui, args.require_filter_async)
 
 
 if __name__ == '__main__':

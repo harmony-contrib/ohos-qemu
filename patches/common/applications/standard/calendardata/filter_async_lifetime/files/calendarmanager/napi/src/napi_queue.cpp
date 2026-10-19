@@ -86,8 +86,9 @@ void ContextBase::GetCbInfo(napi_env envi, napi_callback_info info, NapiCbInfoPa
         // get the last arguments :: <callback>
         size_t index = argc - 1;
         napi_valuetype type = napi_undefined;
-        napi_status tyst = napi_typeof(env, argv[index], &type);
-        if ((tyst == napi_ok) && (type == napi_function)) {
+        status = napi_typeof(env, argv[index], &type);
+        CHECK_STATUS_RETURN_VOID(this, INTERNAL_ERROR, "cannot inspect async callback type");
+        if (type == napi_function) {
             status = napi_create_reference(env, argv[index], 1, &callbackRef);
             if (status != napi_ok) {
                 SetErrorValue(error, INTERNAL_ERROR, "ref callback failed!");

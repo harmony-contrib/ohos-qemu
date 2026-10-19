@@ -70,6 +70,12 @@ class SourcePolicy:
         assert 'napi_set_named_property(ctx.env, result[RESULT_ERROR], "code", code)' in queue
         assert 'napi_get_and_clear_last_exception' in queue
         assert 'napi_call_function(ctx.env, receiver, callback' in queue
+        callback_type = queue[queue.index('size_t index = argc - 1;'):queue.index('if (parse)')]
+        assert 'status = napi_typeof(env, argv[index], &type);' in callback_type
+        assert 'CHECK_STATUS_RETURN_VOID(this, INTERNAL_ERROR, "cannot inspect async callback type")' in callback_type
+        for index, label in ((0, 'event filter'), (1, 'event keys')):
+            assert 'ctxt->status = napi_typeof(env, argv[' + str(index) + '], &type);' in region
+            assert 'CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "cannot inspect ' + label + ' type")' in region
 
 
 class Native:

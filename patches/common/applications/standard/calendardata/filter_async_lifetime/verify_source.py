@@ -46,7 +46,7 @@ def regular_path(root, relative):
     return target
 
 
-def validate(root, require_patched=False):
+def source_state(root):
     root = Path(root).resolve(strict=True)
     project = root / PROJECT
     if (project / '.git').exists():
@@ -57,19 +57,26 @@ def validate(root, require_patched=False):
         target = regular_path(root, relative)
         if not target.exists() or digest(target.read_bytes()) != expected:
             raise ValueError('unknown/incomplete installed editor dependency: ' + relative)
-    states = []
+    actual_files = {}
     for relative, before, after in FILES:
         target = regular_path(root, relative)
-        actual = digest(target.read_bytes()) if target.exists() else None
-        if actual == after:
-            states.append(True)
-        elif actual == before and not require_patched:
-            states.append(False)
-        else:
-            raise ValueError('unknown Calendar filter async lifetime source; preserving all files: ' + relative)
-    if len(set(states)) != 1:
-        raise ValueError('partial Calendar filter async lifetime state; preserving all files')
-    return states[0]
+        actual_files[relative] = digest(target.read_bytes()) if target.exists() else None
+    expected = {
+        'original': {name: before for name, before, _ in FILES},
+        'previous_candidate': MANIFEST['previous_complete_candidate'],
+        'final': {name: after for name, _, after in FILES},
+    }
+    for name, state in expected.items():
+        if actual_files == state:
+            return name
+    raise ValueError('unknown or partial Calendar filter async lifetime state; preserving all files')
+
+
+def validate(root, require_patched=False):
+    state = source_state(root)
+    if require_patched and state != 'final':
+        raise ValueError('complete final Calendar filter async lifetime state required')
+    return state == 'final'
 
 
 if __name__ == '__main__':

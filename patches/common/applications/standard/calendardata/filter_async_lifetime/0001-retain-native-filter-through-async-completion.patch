@@ -16,11 +16,15 @@
 +        CHECK_ARGS_RETURN_VOID(ctxt, calendar != nullptr, INTERNAL_ERROR, "CalendarNapi nullptr");
 +        ctxt->calendar = calendar->GetNative();
 +        CHECK_ARGS_RETURN_VOID(ctxt, ctxt->calendar != nullptr, INTERNAL_ERROR, "nativeCalendar nullptr");
-@@ -308 +317,2 @@
+@@ -306 +315,2 @@
+-            napi_typeof(env, argv[0], &type);
++            ctxt->status = napi_typeof(env, argv[0], &type);
++            CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "cannot inspect event filter type");
+@@ -308 +318,2 @@
 -            ctxt->status = NapiUtil::GetValue(env, argv[0], ctxt->eventFilter);
 +            EventFilterNapi* filter = nullptr;
 +            ctxt->status = NapiUtil::GetValue(env, argv[0], filter);
-@@ -310,4 +320,4 @@
+@@ -310,4 +321,4 @@
 -            napi_ref reference;
 -            ctxt->status = napi_create_reference(env, argv[0], 1, &reference);
 -            CHECK_STATUS_RETURN_VOID(ctxt, INTERNAL_ERROR, "napi_create_reference FAILED!");
@@ -29,7 +33,11 @@
 +            ctxt->eventFilter = filter->GetNative();
 +            CHECK_ARGS_RETURN_VOID(ctxt, ctxt->eventFilter != nullptr, PARAMETER_INVALID,
 +                "invalid native event filter");
-@@ -326,9 +336 @@
+@@ -317 +328,2 @@
+-            napi_typeof(env, argv[1], &type);
++            ctxt->status = napi_typeof(env, argv[1], &type);
++            CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "cannot inspect event keys type");
+@@ -326,9 +338 @@
 -        std::shared_ptr<Native::EventFilter> nativeFilter = nullptr;
 -        if (ctxt->eventFilter != nullptr) {
 -            nativeFilter = ctxt->eventFilter->GetNative();
@@ -40,10 +48,10 @@
 -        CHECK_RETURN_VOID(nativeCalendar != nullptr, "nativeCalendar nullptr");
 -        auto result = nativeCalendar->GetEvents(nativeFilter, ctxt->eventKeys);
 +        auto result = ctxt->calendar->GetEvents(ctxt->eventFilter, ctxt->eventKeys);
-@@ -337 +339 @@
+@@ -337 +341 @@
 -    auto output = [env, ctxt](napi_value& result) {
 +    auto output = [ctxt](napi_value& result) {
-@@ -341,6 +343 @@
+@@ -341,6 +345 @@
 -    auto result = NapiQueue::AsyncWork(env, ctxt, std::string(__FUNCTION__), execute, output);
 -    if (ctxt->refHolder != nullptr && *ctxt->refHolder != nullptr) {
 -        napi_delete_reference(ctxt->env, *ctxt->refHolder);
@@ -94,7 +102,13 @@
 +            ThrowAsyncError(env, "Cannot retain calendar async receiver");
 +        }
 +        CHECK_STATUS_RETURN_VOID(this, INTERNAL_ERROR, " ref self failed!");
-@@ -56 +92,7 @@
+@@ -53,2 +89,3 @@
+-        napi_status tyst = napi_typeof(env, argv[index], &type);
+-        if ((tyst == napi_ok) && (type == napi_function)) {
++        status = napi_typeof(env, argv[index], &type);
++        CHECK_STATUS_RETURN_VOID(this, INTERNAL_ERROR, "cannot inspect async callback type");
++        if (type == napi_function) {
+@@ -56 +93,7 @@
 -            CHECK_STATUS_RETURN_VOID(this, INTERNAL_ERROR, " ref callback failed!");
 +            if (status != napi_ok) {
 +                SetErrorValue(error, INTERNAL_ERROR, "ref callback failed!");
@@ -103,7 +117,7 @@
 +                ThrowAsyncError(env, "Cannot retain calendar async callback");
 +                return;
 +            }
-@@ -75 +117,40 @@
+@@ -75 +118,40 @@
 -    AsyncContext *aCtx = new AsyncContext;
 +    bool pending = false;
 +    napi_is_exception_pending(env, &pending);
@@ -145,9 +159,9 @@
 +        ThrowAsyncError(env, "Cannot allocate calendar async context");
 +        return nullptr;
 +    }
-@@ -77,0 +159 @@
+@@ -77,0 +160 @@
 +    aCtx->environment->context = aCtx->ctx;
-@@ -82 +164,6 @@
+@@ -82 +165,6 @@
 -        napi_create_promise(env, &aCtx->deferred, &promise);
 +        auto status = napi_create_promise(env, &aCtx->deferred, &promise);
 +        if (status != napi_ok) {
@@ -155,7 +169,7 @@
 +            ThrowAsyncError(env, "Cannot create calendar async promise");
 +            return nullptr;
 +        }
-@@ -85 +172,26 @@
+@@ -85 +173,26 @@
 -        napi_get_undefined(env, &promise);
 +        if (napi_get_undefined(env, &promise) != napi_ok) {
 +            delete aCtx;
@@ -183,7 +197,7 @@
 +        delete aCtx->cleanup;
 +        aCtx->cleanup = nullptr;
 +        return fail(status, "Cannot watch calendar async environment");
-@@ -88,2 +200,5 @@
+@@ -88,2 +201,5 @@
 -    napi_create_string_utf8(env, name.c_str(), NAPI_AUTO_LENGTH, &resource);
 -    napi_create_async_work(
 +    status = napi_create_string_utf8(env, name.c_str(), NAPI_AUTO_LENGTH, &resource);
@@ -191,13 +205,13 @@
 +        return fail(status, "Cannot create calendar async resource");
 +    }
 +    status = napi_create_async_work(
-@@ -93 +208,4 @@
+@@ -93 +209,4 @@
 -            auto actx = reinterpret_cast<AsyncContext*>(data);
 +            auto actx = static_cast<WorkContext*>(data);
 +            if (!actx->environment->alive.load()) {
 +                return;
 +            }
-@@ -101 +219,11 @@
+@@ -101 +220,11 @@
 -            auto actx = reinterpret_cast<AsyncContext*>(data);
 +            auto actx = static_cast<WorkContext*>(data);
 +            if (env == nullptr || !actx->environment->alive.load()) {
@@ -210,14 +224,14 @@
 +                delete actx;
 +                return;
 +            }
-@@ -105,0 +234 @@
+@@ -105,0 +235 @@
 +                SetErrorValue(actx->ctx->error, INTERNAL_ERROR, "Calendar async work cancelled or failed");
-@@ -111 +240,3 @@
+@@ -111 +241,3 @@
 -            GenerateOutput(*actx, output);
 +            if (actx->environment->alive.load()) {
 +                GenerateOutput(*actx, output);
 +            }
-@@ -116,5 +247,6 @@
+@@ -116,5 +248,6 @@
 -    auto status = napi_queue_async_work(env, aCtx->work);
 -    if (status != napi_ok) {
 -        napi_get_undefined(env, &promise);
@@ -229,21 +243,21 @@
 +    status = napi_queue_async_work(env, aCtx->work);
 +    if (status != napi_ok) {
 +        return fail(status, "Cannot queue calendar async work");
-@@ -126,0 +259,3 @@
+@@ -126,0 +260,3 @@
 +    if (ctx.ctx->env == nullptr) {
 +        return;
 +    }
-@@ -127,0 +263 @@
+@@ -127,0 +264 @@
 +    napi_status status = napi_ok;
-@@ -129 +265 @@
+@@ -129 +266 @@
 -        napi_get_undefined(ctx.env, &result[RESULT_ERROR]);
 +        status = napi_get_undefined(ctx.env, &result[RESULT_ERROR]);
-@@ -131 +267,3 @@
+@@ -131 +268,3 @@
 -            napi_get_undefined(ctx.env, &output);
 +            if (status == napi_ok) {
 +                status = napi_get_undefined(ctx.env, &output);
 +            }
-@@ -135,6 +273,28 @@
+@@ -135,6 +274,28 @@
 -        napi_value message = nullptr;
 -        napi_value code = nullptr;
 -        napi_create_string_utf8(ctx.env, ctx.ctx->error.message.c_str(), NAPI_AUTO_LENGTH, &message);
@@ -278,13 +292,13 @@
 +    if (status != napi_ok) {
 +        ThrowAsyncError(ctx.env, "Cannot construct calendar async result");
 +        return;
-@@ -145 +305 @@
+@@ -145 +306 @@
 -            napi_resolve_deferred(ctx.env, ctx.deferred, result[RESULT_DATA]);
 +            status = napi_resolve_deferred(ctx.env, ctx.deferred, result[RESULT_DATA]);
-@@ -148 +308 @@
+@@ -148 +309 @@
 -            napi_reject_deferred(ctx.env, ctx.deferred, result[RESULT_ERROR]);
 +            status = napi_reject_deferred(ctx.env, ctx.deferred, result[RESULT_ERROR]);
-@@ -152,7 +312,16 @@
+@@ -152,7 +313,16 @@
 -        napi_get_reference_value(ctx.env, ctx.ctx->callbackRef, &callback);
 -        napi_value callbackResult = nullptr;
 -        LOG_DEBUG("GenerateOutput call callback function");

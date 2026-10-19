@@ -1,5 +1,5 @@
 {
-  "schema": 1,
+  "schema": 2,
   "project": "applications/standard/calendardata",
   "revision": "f922427ca0dc20895a0e254ae41382e5b03299a4",
   "installed_predecessor": [
@@ -10,13 +10,13 @@
   "files": {
     "calendarmanager/napi/src/calendar_napi.cpp": {
       "before_sha256": "c221a9d84da1e727fb0c1f74c1dfbe97202eacb81aaaeacf5dbdb60cc237a612",
-      "after_sha256": "ac7988d8392eb0a4b28857e89e4e2735ed48421639fa5c8c51b40fb48e029258",
+      "after_sha256": "845238618114fad82dd02ad7574178af9bf6cb9ded45e5941d5f8f13509cb0e0",
       "payload_path": "calendarmanager/napi/src/calendar_napi.cpp.gz.b64",
       "payload_encoding": "gzip_base64"
     },
     "calendarmanager/napi/src/napi_queue.cpp": {
       "before_sha256": "ebe49fef63a257561072c52890130e28be5bebf2d4d09aa670ef6c518f2cc8a5",
-      "after_sha256": "0a08657a0f8b8d021a9725d73d14f7b6ac7f2c8f3ecfb59ee127ef85e78837a1"
+      "after_sha256": "0343cb316b01c22687ff7d6a7d19562bf66b4854a52263fa97ebbc177da1abe8"
     }
   },
   "dependencies": {
@@ -70,5 +70,11 @@
       "file": "09-napi_util.cpp.gz.b64",
       "sha256": "476452c69c4b447265961c1ded3b937fd795f49cdef4218b1c51614cbd8e9e2b"
     }
-  }
+  },
+  "previous_complete_candidate": {
+    "calendarmanager/napi/src/calendar_napi.cpp": "ac7988d8392eb0a4b28857e89e4e2735ed48421639fa5c8c51b40fb48e029258",
+    "calendarmanager/napi/src/napi_queue.cpp": "0a08657a0f8b8d021a9725d73d14f7b6ac7f2c8f3ecfb59ee127ef85e78837a1"
+  },
+  "state_policy": "Only complete original, exact previous source-only candidate, or complete final states; no per-file alternatives.",
+  "native_revision_review": "real queue header and 13 callers inspected; native compilation/runtime still required"
 }

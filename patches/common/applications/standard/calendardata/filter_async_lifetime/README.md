@@ -14,10 +14,13 @@ python3 patches/common/applications/standard/calendardata/filter_async_lifetime/
   --source-root /path/to/private/full-source --require-patched
 ```
 
-The installer verifies the complete original or complete successor state,
-stages both exact postimages, and restores all predecessor bytes/modes if a
-replacement or final verification fails. Unknown/mixed inputs and symlinks are
-rejected. Its handled-failure rollback is not a power-loss filesystem
+The installer verifies the complete original, complete previous source-only
+candidate, or complete final state. Both upgrade inputs stage the two exact
+final postimages. Per-file mixtures, unknown inputs and symlinks are rejected.
+A replacement that publishes and then raises is included in rollback. Unknown
+concurrent edits and a failed backup restoration preserve the transaction and
+original backups for root inspection, rather than overwrite unrelated bytes or
+delete the only predecessor. Its handled-failure rollback is not a power-loss filesystem
 transaction. The reviewable original patch uses zero context; the test replays
 it with `git apply --unidiff-zero` and verifies both complete output hashes.
 Installation uses exact postimages, not relaxed patch context matching.
@@ -31,6 +34,11 @@ pointer and no filter `napi_ref` to leak, delete early, or access from a worker.
 Malformed/null wrappers and a valid wrapper without a native filter fail;
 the real zero-argument no-filter overload remains available. The API caller
 does not need to retain its filter until the operation finishes.
+
+The round375 successor also propagates the actual `napi_typeof` status before
+using either GetEvents argument type and before choosing callback/promise mode.
+A failed type inspection must not reuse the previous successful type or silently
+switch a failed callback inspection into promise mode.
 
 The queue's existing shared context/execute/complete ownership retains the
 native snapshots until completion or synchronous submission failure. The new
@@ -67,3 +75,13 @@ ownership, concurrent requests, failure/cancel, callback reentry, environment
 exit and a failed hook removal. Native sanitizer execution, real product
 TU/CFI linking, actual engine teardown ordering and a new-package API/lifecycle
 test remain required. No finding is closed by this source candidate.
+
+Round375 composition checks exercise the complete current source-provider,
+editor, native dispatch, reminder viewer and notification-owner stack with this
+component inserted before or after the viewer, followed by complete replays.
+They retain the viewer's READ-only MainAbility scene and shared LocalStorage.
+The sealed r60 source vector supplies five actual original NAPI files; the
+remaining five native dependencies are explicitly fixture-only inputs. Neither
+check executes C++, the NAPI engine or a product build. Root owns active build
+wiring and the remaining native/package gate; see
+`docs/capability-audit/parallel/system/round375/HANDOFF.md` for the exact increment.
