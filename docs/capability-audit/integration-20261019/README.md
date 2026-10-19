@@ -21,11 +21,12 @@ QoS/JSVM/vibrator/ABI 旧提交的现行组件及接线也已核对。详见 aud
 
 整合不是恢复旧分支的整份脚本。内容处理完成后，使用 reconciliation merge
 记录旧分支历史归属，保留当前经过审查的文件树。各原始分支 tip 见
-branch-reconciliation.json。受保护旧工作区保留历史目录，不用于后续开发。
+branch-reconciliation.json；29 个旧本地分支均已清理，仅保留统一开发分支，
+结果见 cleanup-result.json。受保护旧工作区保留历史目录，不用于后续开发。
 
 ## 验证和当前限制
 
-整合回归 155 项通过。首次回归保留在外部证据目录；其中选择器只读
+整合回归 155 项、分工策略校验 7 项及 packager 语法检查通过。首次回归保留在外部证据目录；其中选择器只读
 `git apply --numstat` 从仓库子目录执行时误过滤路径，已固定中立工作目录，
 新增回归后完整重验通过。未运行新包构建或虚机，未把主机通过计为能力闭合。
 具体命令、日志 SHA 和结果见 host-validation.json。

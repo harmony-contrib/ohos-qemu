@@ -1,0 +1,281 @@
+{
+  "scope": "Read-only count reconciliation while373 integration is explicitly paused. No capability closure or new runtime evidence.",
+  "current_product_commit_from_root": "a0d62155747253f203952878594e21976c12a92c",
+  "baseline_open82": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r51-full-unresolved-batch-worklist-04.json",
+    "sha256": "eefbee1c3a9476d6635886f3a67913350fb68b9e33981704d42d1991eec6503a",
+    "bytes": 90178
+  },
+  "count_rule": "Exact baseline requirement IDs; technical blockers do not add IDs. Cross-group IDs must not be summed twice. Historical199 are not migrated to currentF.",
+  "counts": {
+    "historical_open82_total": 82,
+    "Location_group_owned_open": 9,
+    "cross_group_related_do_not_double_count": 2,
+    "related_union": 11,
+    "original_plan_location_agent_telephony_additional": 13,
+    "original_plan_location_agent_total": 22,
+    "current_F_Location_guest_scoped_pass": 0,
+    "current_F_formal_Location_ID_closure": 0
+  },
+  "Location_owned_requirements": [
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:addFusionFence",
+      "group": "定位",
+      "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
+      "group": "定位",
+      "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
+      "group": "定位",
+      "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
+      "group": "定位",
+      "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
+      "group": "定位",
+      "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:removeFusionFence",
+      "group": "定位",
+      "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
+      "group": "定位",
+      "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
+      "group": "定位",
+      "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
+    },
+    {
+      "id": "behavior:location-provider-backends-missing",
+      "group": "定位",
+      "next_required": "实现或接通实际定位后端和全部新增接口；用真实轨迹、围栏、行政区与权限边界验证"
+    }
+  ],
+  "cross_group_related": [
+    {
+      "id": "behavior:msdp-device-status-mock-or-missing-clients",
+      "group": "其他系统服务",
+      "next_required": "核对本项原始需求与真实服务，批量修复并增加完整新包证据"
+    },
+    {
+      "id": "behavior:location-privacy-ui-providers-unavailable",
+      "group": "系统应用与入口",
+      "next_required": "核对实际已启用提供者，补齐调用、界面、拒绝/取消/退出和服务重启证明"
+    }
+  ],
+  "original_plan_telephony_requirements_separate_scope": [
+    {
+      "id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
+      "group": "电话与通信",
+      "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttErrCause",
+      "group": "电话与通信",
+      "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttModifyInd",
+      "group": "电话与通信",
+      "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onReceiveRttMessage",
+      "group": "电话与通信",
+      "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttErrCause",
+      "group": "电话与通信",
+      "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttModifyInd",
+      "group": "电话与通信",
+      "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:sendRttMessage",
+      "group": "电话与通信",
+      "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:setRttCapability",
+      "group": "电话与通信",
+      "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:startRtt",
+      "group": "电话与通信",
+      "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:stopRtt",
+      "group": "电话与通信",
+      "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
+      "group": "电话与通信",
+      "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
+      "group": "电话与通信",
+      "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
+    },
+    {
+      "id": "behavior:telephony-no-modem-or-sim",
+      "group": "电话与通信",
+      "next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出"
+    }
+  ],
+  "implementation_vs_acceptance": [
+    {
+      "ids": [
+        "arkts_export:@ohos.geoLocationManager:addFusionFence",
+        "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
+        "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
+        "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
+        "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
+        "arkts_export:@ohos.geoLocationManager:removeFusionFence",
+        "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
+        "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch"
+      ],
+      "status": "Eight corresponding API routes are present in the frozen api26_runtime patch stack; do not label these as eight APIs with no implementation. Complete current-package behavior/provider/permission/lifecycle acceptance is unproved.",
+      "remaining": "Icon actual state; BLE real scan/filter/error/off; district real reverse-geocoder; track actual GNSS history; fusion owner GNSS/WLAN/cell/lifecycle. Presence of source routes is not proof of backend availability or passed guest APIs."
+    },
+    {
+      "ids": [
+        "behavior:location-provider-backends-missing"
+      ],
+      "status": "Real GNSS bridge/source routes and narrow-input validation exist, but broad backend finding is not closed. No currentF Location guest scoped pass.",
+      "remaining": "Actual same-package provider/source/ordinary API callback, trajectory/fence/district and permission/off/restart/lifecycle proof; broad backend scope cannot be inferred from private native carriers."
+    },
+    {
+      "ids": [
+        "behavior:location-privacy-ui-providers-unavailable"
+      ],
+      "status": "Cross-owned Apps entry ID. New readonly ArkUI/AMS carriers are implemented; native admission and real UI/session/cancel/exit/restart proof pending.",
+      "remaining": "Do not count again in Location primary9. Complete373 integration not yet delivered. ArkUI CFI remains an observed original admission blocker."
+    },
+    {
+      "ids": [
+        "behavior:msdp-device-status-mock-or-missing-clients"
+      ],
+      "status": "Cross-owned System ID. Real sensor/public still source implementation exists; broader modalities/clients remain outside narrow proof.",
+      "remaining": "relativeStill explicitly unsupported; physical immobility accuracy explicitly not claimed; real current-package ordinary subscription and two-generation/off/no-late boundaries still required."
+    }
+  ],
+  "actual_RO371": {
+    "descriptor": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r59-F-location354-observed-summary-371-01/summary.json",
+      "sha256": "b9a340c919c13e439d88303d3dd02f130c7cf7e5e2522359b9f095a80c5bddf8",
+      "bytes": 268623
+    },
+    "source_commit": "2f0fcedae7d2e832abf42024bc637be6303f1b30",
+    "cleanup_verified": true,
+    "what_passed": "Actual RO source->GN->target-only commands binding, compiler/ccache identities; ArkUI one and AMS shared/static two commands. This is inventory, not guest/scoped capability acceptance.",
+    "ArkUI_actual_flags": {
+      "cfi": [],
+      "lto": [
+        "-flto=thin"
+      ],
+      "no_rtti": true
+    },
+    "AMS_actual_flags": "Both actual shared/static commands contain -fsanitize=cfi and noRTTI; actual original mixed LTO preserved.",
+    "ready": false,
+    "compiled": false,
+    "selected": false,
+    "first_artifact_behavior_gate_passed": false
+  },
+  "private_tool_successors_prepared_not_native_acceptance": [
+    {
+      "source_manifest": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-location-compile-query368-draft/SOURCE_MANIFEST.json",
+        "sha256": "4b5579fe0d25d9182e93f44ac6e0ff30a4f8136cd2e7e6c9036fdb1dc8cd6a06",
+        "bytes": 11494
+      },
+      "fixes": [
+        "exact whole actual354 -t commands -s query admission",
+        "finite64/platformsdk staged path grammar"
+      ],
+      "remaining": "root tests/integration/actual observe+compile; ArkUI noCFI must still refuse"
+    },
+    {
+      "source_manifest": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-location-runtime-path372-draft/SOURCE_MANIFEST.json",
+        "sha256": "39fe27d808a20586c232b37d8685c197e06c3d9be6e8cfe8298f513612b4763a",
+        "bytes": 3935
+      },
+      "fixes": [
+        "runtime native and role exporter finite64/platformsdk grammar"
+      ],
+      "remaining": "four-file overlay is not complete runnable kit;373 integration paused for count reconciliation"
+    }
+  ],
+  "registered_closure_rule": {
+    "file": "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/ci/capability-audit/parallel_runtime_suite.py",
+    "lines": [
+      117,
+      127
+    ],
+    "external_inputs_registered_IDs": []
+  },
+  "source_pins": [
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-first-artifact-acceptance255-review/FACTS.json",
+      "sha256": "74ddcd4906dd24468663c4fbc523db4435d83f53e4e80d7f5ce1d42a080524a4",
+      "bytes": 87835
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-first-artifact-acceptance255-review/REPORT.md",
+      "sha256": "f26a430b284bca6895da0da883bfeb9ce958a5bf9a012a434a0ffec06e878da6",
+      "bytes": 24678
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/docs/capability-audit/native-arkts11-gap-ledger.json",
+      "sha256": "ac9426982dff3d7cb80050a6815eae92afb8f77c027b2d4319bc8d9423d6e93c",
+      "bytes": 306044
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/docs/capability-audit/parallel-work-plan.json",
+      "sha256": "05704e9cbed2e8ee7b53a97b49a3d6e94eff946e88c624ca5294313460fb304b",
+      "bytes": 100512
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/patches/common/base/location/location/api26_runtime/README.md",
+      "sha256": "91e19aac83042edcc577f43e3e26959f707177ffc4effd409049b7c45d2d52e2",
+      "bytes": 8012
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/patches/common/base/msdp/device_status/public_still/README.md",
+      "sha256": "008edd41a467b583a7352952f4ea897a4f5436b78103a256c77bb90ffccd1319",
+      "bytes": 4304
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/ci/capability-audit/parallel_runtime_suite.py",
+      "sha256": "8e1f6586c5e532206dbb51f785aa9b4a5d6827592bdbbbedcc9f338b716395e9",
+      "bytes": 7296
+    },
+    {
+      "path": "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/ci/capability-audit/batch_system_verify_live_inputs.py",
+      "sha256": "98a9b6387eea00975247bbcca7174d185dc8fbeb6e983bcd6eccbab2dcc1cafc",
+      "bytes": 25593
+    }
+  ],
+  "performed": "Only small JSON/source reads and stdlib JSON/hash report generation; no Git/candidate imports/tests/resources/archive/image access."
+}

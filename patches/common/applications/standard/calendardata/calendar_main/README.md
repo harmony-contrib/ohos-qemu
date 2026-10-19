@@ -1,3 +1,8 @@
+> Integration 2026-10-19: retained CRUD candidate; not wired into the current
+> product build. The active reminder viewer is `../main_ui`. Both modify the
+> same upstream UI files, so compose a reviewed successor before enabling this
+> installer. See `docs/capability-audit/integration-20261019/remaining-gaps.md`.
+
 # Calendar MainAbility candidate
 
 This component supplies the missing CalendarData main page and reminder URI
@@ -80,5 +85,5 @@ explicit dependency doubles; they do not simulate a passing guest:
 
 ```sh
 LC_ALL=C LC_CTYPE=C LANG=C PYTHONDONTWRITEBYTECODE=1 \
-  python3 ci/capability-audit/test_batch_system_calendar_main.py -v
+  python3 ci/capability-audit/test_batch_system_calendar_crud_candidate.py -v
 ```

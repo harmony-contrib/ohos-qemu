@@ -1,0 +1,179 @@
+{
+  "schema": "read-only-capability-gap-inventory373/v1",
+  "agent": "network_repair",
+  "scope": [
+    "VPN",
+    "网络与外设"
+  ],
+  "current_source_commit_supplied_by_parent": "a0d62155747253f203952878594e21976c12a92c",
+  "source_commit_independently_queried": false,
+  "baseline_total_ledger": {
+    "expected": 281,
+    "historical_closed": 199,
+    "historical_open": 82,
+    "not_a_current_package_result": true
+  },
+  "assigned_unique_ids": 9,
+  "by_group": {
+    "网络与外设": 6,
+    "VPN": 3
+  },
+  "new_current_package_registered_closures": 0,
+  "remaining_assigned_ledger_ids": 9,
+  "classification_counts": {
+    "confirmed_partial_source_or_integration_gap": 3,
+    "candidate_exists_current_package_behavior_pending": 4,
+    "current_backend_status_not_reobserved": 2
+  },
+  "classification_note": "These classify evidence/readiness, not nine distinct implementation defects. Current backend status not reobserved retains historical ledger open but does not assert current missing implementation.",
+  "candidate_imports_or_tests_or_resources_executed": false,
+  "rows": [
+    {
+      "id": "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand",
+      "group": "网络与外设",
+      "ledger_open": true,
+      "current_new_package_closed": false,
+      "classification": "confirmed_partial_source_or_integration_gap",
+      "existing_source_or_partial_capability": "API26 NAPI and service/GAP/HCI OOB candidate exists, including real permission checks, single-use C/R, cancellation and real result propagation.",
+      "remaining_requirement": "Virtual-to-raw alias mapping, optional randomizer omission and actual local OOB generation are explicitly unavailable; actual controller/vendor/HDI and peer challenge remain required.",
+      "evidence_limit": "Actual source limitations are explicit; previous complete-TU/host passes do not prove a newly packaged controller/peer permission/off/data lifecycle.",
+      "source_references": [
+        "patches/common/foundation/communication/bluetooth_service/oob_pairing_backend/README.md:12-40"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.net.vpn:getConnectedSysVpnConfig",
+      "group": "VPN",
+      "ledger_open": true,
+      "current_new_package_closed": false,
+      "classification": "candidate_exists_current_package_behavior_pending",
+      "existing_source_or_partial_capability": "Zero-or-one private IPC list, nullable disconnected state, calling-account scope, broker owner/generation and health candidate exist.",
+      "remaining_requirement": "Genuine CONNECTED TLS/TUN data, nullable/nonempty getters, permission/account and simultaneous-owner lifecycle on current new package.",
+      "evidence_limit": "Generic cleanup QA deliberately uses unreachable loopback and undefined getter, so it cannot close connected semantics.",
+      "source_references": [
+        "patches/common/foundation/communication/netmanager_ext/connected_vpn_nullable/README.md",
+        "patches/common/foundation/communication/netmanager_ext/openvpn_broker/README.md"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.net.vpn:getConnectedVpnAppInfo",
+      "group": "VPN",
+      "ledger_open": true,
+      "current_new_package_closed": false,
+      "classification": "candidate_exists_current_package_behavior_pending",
+      "existing_source_or_partial_capability": "Single/multi VPN bundle ownership, account filtering, 202/201 permission ordering and broker candidate exist.",
+      "remaining_requirement": "Real connected app list, no-ID/multi-ID owner/account boundaries, active packet path, death/reconnect and cleanup on new package.",
+      "evidence_limit": "Host/native/SDK passes are preparation; no current connected guest closure was found.",
+      "source_references": [
+        "patches/common/foundation/communication/netmanager_ext/connected_vpn_nullable/README.md"
+      ]
+    },
+    {
+      "id": "behavior:netmanager-ebpf-backend",
+      "group": "网络与外设",
+      "ledger_open": true,
+      "current_new_package_closed": false,
+      "classification": "candidate_exists_current_package_behavior_pending",
+      "existing_source_or_partial_capability": "All three defconfigs have BPF_SYSCALL and CGROUP_BPF candidate.",
+      "remaining_requirement": "Actual new kernel BPF program/map load/attach, UID accounting, access-policy enforcement, denied caller and cleanup.",
+      "evidence_limit": "Historical ENOSYS is not a fresh observation on candidate kernel; configuration/source alone does not close backend.",
+      "source_references": [
+        "patches/common/device/qemu/kernel_capability/0001-enable-ebpf-dmabuf-and-arm64-ftrace.patch"
+      ]
+    },
+    {
+      "id": "behavior:bluetooth-state-transition-false-success",
+      "group": "网络与外设",
+      "ledger_open": true,
+      "current_new_package_closed": false,
+      "classification": "current_backend_status_not_reobserved",
+      "existing_source_or_partial_capability": "Bluetooth enum/export and OOB source exist, but those do not establish controller availability.",
+      "remaining_requirement": "Select/confirm real controller+vendor/HDI, enable/disable final state, pairing/data/unplug/cleanup.",
+      "evidence_limit": "Baseline confirms old missing libbt_vendor rollback; no current packaged-controller observation was read. A missing modern backend is not freshly confirmed by this read-only audit.",
+      "source_references": [
+        "docs/capability-audit/parallel/network/result.json:requirements_review.behavior:bluetooth-state-transition-false-success",
+        "docs/capability-audit/parallel-work-plan.json"
+      ]
+    },
+    {
+      "id": "behavior:wifi-sta-backend-unavailable",
+      "group": "网络与外设",
+      "ledger_open": true,
+      "current_new_package_closed": false,
+      "classification": "candidate_exists_current_package_behavior_pending",
+      "existing_source_or_partial_capability": "Build stages mac80211_hwsim/virt_wifi; WPA scan/channel and real cfg80211 ACK/readback regulatory candidate exist.",
+      "remaining_requirement": "Current service identity/interface/modules; actual STA/AP association, DHCP/data/P2P, failures/device changes and teardown with compatible peer.",
+      "evidence_limit": "Old root diagnostic/regulatory candidate compile is not current production WiFi service/AP data proof.",
+      "source_references": [
+        "scripts/build_standard_qemu_in_docker.sh:2461-2462",
+        "patches/common/foundation/communication/wifi/software_ap_regulatory/README.md"
+      ]
+    },
+    {
+      "id": "behavior:usb-manager-device-query",
+      "group": "网络与外设",
+      "ledger_open": true,
+      "current_new_package_closed": false,
+      "classification": "current_backend_status_not_reobserved",
+      "existing_source_or_partial_capability": "Baseline ordinary USB service/root-hub enumeration exists.",
+      "remaining_requirement": "Actual host-device fixture/passthrough, device-mode UDC and configfs binding, MTP provider entry, descriptors/open/permission/data/unplug/cleanup.",
+      "evidence_limit": "Baseline missing UDC/MTP is unresolved. No current UDC/actual image observation was read; absence of local patches/common/base/usb alone is not proof the upstream implementation is missing.",
+      "source_references": [
+        "docs/capability-audit/parallel/network/result.json:requirements_review.behavior:usb-manager-device-query",
+        "docs/capability-audit/parallel-work-plan.json"
+      ]
+    },
+    {
+      "id": "behavior:peer-device-user-nat-isolation",
+      "group": "网络与外设",
+      "ledger_open": true,
+      "current_new_package_closed": false,
+      "classification": "confirmed_partial_source_or_integration_gap",
+      "existing_source_or_partial_capability": "Launcher still emits default user NAT; 267 supplies pure original-source-derived peer owner protocol.",
+      "remaining_requirement": "Explicit shared-network launcher/unique devices plus actual owned constructor guard/producer integration, discovery/account/authentication/distributed/cast traffic and removal.",
+      "evidence_limit": "267 explicitly NOT_READY: actual constructor guard unimplemented and same-UID rule rejects macOS setuid ps. Passing synthetic protocol tests is not peer resource/guest proof.",
+      "source_references": [
+        "scripts/package_standard_qemu.sh:1256-1257",
+        "F-peer-owner-protocol267-draft/HANDOFF.md",
+        "F-peer-owner-protocol267-draft/ROOT-INTERFACE267.md"
+      ]
+    },
+    {
+      "id": "behavior:vpn-runtime-export-gaps",
+      "group": "VPN",
+      "ledger_open": true,
+      "current_new_package_closed": false,
+      "classification": "confirmed_partial_source_or_integration_gap",
+      "existing_source_or_partial_capability": "Policy/store/getter/session/broker source candidates and limited generic cleanup QA exist.",
+      "remaining_requirement": "Explicit source gaps include persist-tun reconfiguration, unsupported split/encrypted/nonstandard-port DNS and nonzero route metric mapping; broad TLS/TUN/multi-owner/account/getter/options/dialog runtime proof remains.",
+      "evidence_limit": "238 is fresh-input preparation only; 267 is NOT_READY; generic owned cleanup is narrower than full VPN finding. Existing source limitations cannot be reclassified as mere packaging.",
+      "source_references": [
+        "patches/common/foundation/communication/netmanager_ext/openvpn_broker/README.md:61-66",
+        "patches/common/foundation/communication/netmanager_ext/openvpn_session/README.md:22-33",
+        "F-network-current-inputs238-draft/HANDOFF.md"
+      ]
+    }
+  ],
+  "parallel_recommendations": [
+    {
+      "work": "VPN source and genuine data/getter acceptance preparation",
+      "files": "Agent only netmanager_base/netmanager_ext/OpenVPN candidate paths and batch_network_*; root owns resources and original validators.",
+      "gate": "Source changes for missing options batched; first new package then genuine TLS/TUN data and owner/account boundaries."
+    },
+    {
+      "work": "Bluetooth controller/OOB dependency investigation",
+      "files": "Agent only bluetooth framework/service candidate paths.",
+      "gate": "Do not claim hardware implementation from enums/export; root chooses controller/passthrough and leases peer."
+    },
+    {
+      "work": "WiFi/USB/eBPF current-package observation",
+      "files": "Read-only inventory/source recommendations first; kernel, shared build/init/launcher edits root-only.",
+      "gate": "Observe current state before treating old historical backend absence as new source bug."
+    },
+    {
+      "work": "Peer constructor/network integration",
+      "files": "Unique fresh private owner successor; root owns shared packager/launchers and actual lease.",
+      "gate": "Resolve tool UID admission, actual constructor ledger and two-cut settlement before resource execution; no spliced synthetic success."
+    }
+  ]
+}

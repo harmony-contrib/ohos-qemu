@@ -1,0 +1,94 @@
+{
+  "schema": "round373-system-open-capability-id-count/v1",
+  "as_of_parent_source_commit": "a0d62155747253f203952878594e21976c12a92c",
+  "source_authority": "parent states clean committed F; no Git executed by author",
+  "scope": "only assigned Calendar and Knowledge, not every item historically grouped Other System Services",
+  "count_basis": "unique requirement IDs from historical255/82 catalog retained open because no current-F full closure evidence; not test/producer/stage count",
+  "unique_unclosed_ids": [
+    "behavior:calendar-lifecycle-device-difference",
+    "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent"
+  ],
+  "unique_unclosed_count": 2,
+  "confirmed_missing_implementation_ids": [],
+  "confirmed_missing_implementation_count": 0,
+  "confirmed_missing_implementation_caveat": "No new implementation defect confirmed by this scoped review; this is not proof of all broad Calendar/Knowledge semantics implemented.",
+  "source_repaired_pending_new_package_acceptance_ids": [
+    "behavior:calendar-lifecycle-device-difference",
+    "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent"
+  ],
+  "source_repaired_pending_new_package_acceptance_count": 2,
+  "current_a0d_scoped_case_pass_but_not_full_gate_ids": [],
+  "current_a0d_scoped_case_pass_but_not_full_gate_count": 0,
+  "prior_guest_partial_observations_do_not_count_as_case_pass": true,
+  "media_overlap_ids": [
+    "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent"
+  ],
+  "media_overlap_count": 1,
+  "nonmedia_unique_ids": [
+    "behavior:calendar-lifecycle-device-difference"
+  ],
+  "categories_are_not_additive": "two IDs may each have fixed narrow blockers and wider evidence gaps; overlap must be deduplicated globally",
+  "historical_catalog_rows": [
+    {
+      "id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
+      "group": "媒体知识数据",
+      "next_required": "实现实际知识内容存取和索引，验证带数据往返、权限和删除，不能用空数组代替"
+    },
+    {
+      "id": "behavior:calendar-lifecycle-device-difference",
+      "group": "其他系统服务",
+      "next_required": "核对本项原始需求与真实服务，批量修复并增加完整新包证据"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "behavior:calendar-lifecycle-device-difference",
+      "owner": "system/calendar",
+      "overlap_with_media": false,
+      "runtime_case": "calendar",
+      "historical_catalog_group": "其他系统服务",
+      "status": "known blocker fixed; fresh a0d representative package and complete lifecycle validation pending",
+      "known_source_repairs": [
+        "Ability-local shared LocalStorage for MainAbility/viewer",
+        "305 finite public locale pair separator comparison"
+      ],
+      "confirmed_new_producer_implementation_defect": false,
+      "current_a0d_actual_scoped_case_pass": false,
+      "current_a0d_full_ID_closed": false,
+      "residual_obligations": [
+        "new archive/profile/helpers/SDK role bindings and public locale installed label proof",
+        "public create/read/permission/notification/URI/update/delete/owned cleanup actual chains",
+        "rapid OnNewWant, independent instances, viewer exit/restart and guest reboot continuity proof"
+      ],
+      "source_contract": "batch_system_calendar_runtime_verify.py:431-440 always returns remaining gaps/full_calendar_lifecycle_verified=false/ledger_closed=false",
+      "old296_result": "successful public locale calls only; locale spelling comparison failed before prepared state and phases; not Calendar scoped-case/lifecycle pass"
+    },
+    {
+      "id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
+      "owner": "system/Knowledge with media overlap",
+      "overlap_with_media": true,
+      "runtime_case": "knowledge-holiday",
+      "historical_catalog_group": "媒体知识数据",
+      "status": "350 capture preparation/strict verification fixed; fresh a0d representative package and complete public lifecycle validation pending",
+      "known_source_repairs": [
+        "permission-checked typed media-owner Knowledge query path",
+        "350 bounded readonly capture and whole protected-phase command consumption"
+      ],
+      "confirmed_new_producer_implementation_defect": false,
+      "current_a0d_actual_scoped_case_pass": false,
+      "current_a0d_full_ID_closed": false,
+      "residual_obligations": [
+        "new archive/profile/core helper and four actual SDK role/artifact binding",
+        "same fresh run/boot actual22 public permission/import/present/hide/unhide/trash/recover/delete/cleanup steps; v2 capture path and full independent verifier",
+        "broader KnowledgeContent nonempty analysis/account isolation semantic proof remains outside HOLIDAY scope; do not infer implementation absence or closure from this audit"
+      ],
+      "source_contract": "batch_media_knowledge_suite.py:1428-1429 returns false broader scope and empty IDs; parallel_runtime_suite.py:117-127 maps knowledge-holiday to empty closure set",
+      "old296_result": "wholecase exit1 at real cleanup screenCap guest1; emergency cleanup preserved; normal raw oracle/final token/independent verifier not reached"
+    }
+  ],
+  "candidate_product_modifications": [],
+  "tests_or_resources_executed": false,
+  "current_F_new_package_runtime_pass": false,
+  "historical199_or_E_passes_transferred": false,
+  "fresh_global_unresolved_total_inferred": false
+}

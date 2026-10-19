@@ -1,0 +1,811 @@
+{
+  "schema": "telephony-remaining-integration374/v1",
+  "source_branch_supplied_by_parent": "codex/ohos7-integrated-development",
+  "snapshot_commit": "d60fcd0b97f134744615f970b93b5d6982200b6d",
+  "snapshot_note": "Actual HEAD pinned at audit start; read-only git diff confirms telephony/phone profile/IDL prep unchanged from a0d6215.",
+  "assigned_exact_ids": 13,
+  "new_formal_closures": 0,
+  "classification_counts": {
+    "rtt_listener_repaired_pending_package_real_ims": 6,
+    "rtt_existing_feature_gated_pending_package_real_ims": 4,
+    "explicit_modem_producer_observer_integrated_pending_package": 2,
+    "device_backend_current_evidence_insufficient": 1
+  },
+  "rollup": {
+    "interfaces_with_existing_repaired_or_integrated_source": 12,
+    "current_device_backend_evidence_insufficient": 1,
+    "pure_missing_implementation_total": null,
+    "new_missing_public_method_body_proven": 0
+  },
+  "counting_scope": "Owner location + original group 电话与通信. Excludes Location9 and apps APN/number-identity providers.",
+  "phone_not_all_profiles": "Phone explicitly enables both RTT features; no matching explicit RTT assignment found in inspected 2in1 profile. Phone readiness is not all-six readiness.",
+  "communication_component": {
+    "projects": {
+      "base/telephony/core_service": "504dcba74da128ed446967e328e5c7162bfebbe2",
+      "base/telephony/state_registry": "2327cba6f48f4274b269e530c48a919e2eed28b7",
+      "base/telephony/ril_adapter": "81fac83292857fcd9bee90808a81d8ad7224b4e0"
+    },
+    "targets": 44,
+    "legal_states": [
+      "original",
+      "final",
+      "prefix_1",
+      "prefix_2"
+    ],
+    "patches": 3
+  },
+  "historical_compile_only": {
+    "RTT": {
+      "status": "pass",
+      "scope": "two_complete_ARM64_product_TUs_ONLY_NOT_IMS_or_new_package",
+      "source_head": "42f264011d0a44a300e3e8b825863754916cb6a8",
+      "objects": [
+        {
+          "unit": "napi_call_manager",
+          "exit_code": 0,
+          "candidate_sha256": "686c65e152fa49fefb7b42acf4daf054271c2bc0e899992d6891ea6b68a6f674",
+          "object_format": "LLVM_bitcode",
+          "target_triple": "target triple = \"aarch64-unknown-linux-ohos\"",
+          "explicit_diagnostic_RTT_define": false
+        },
+        {
+          "unit": "napi_call_ability_callback",
+          "exit_code": 0,
+          "candidate_sha256": "a10617c35a5f0407edc525e56a3fa2b0bf2d3cc8726738db3d972212a6a30b40",
+          "object_format": "LLVM_bitcode",
+          "target_triple": "target triple = \"aarch64-unknown-linux-ohos\"",
+          "explicit_diagnostic_RTT_define": false
+        }
+      ],
+      "not_current_package_closure": true
+    },
+    "communication_Rust": {
+      "status": "pass",
+      "scope": "complete_current_Rust_dylib_compile_link_source_bound_CXX_private_registry_API_existing_other_dependencies_NOT_fresh_GN_package_runtime",
+      "first_artifact_behavior_gate_passed": false,
+      "not_current_package_closure": true
+    }
+  },
+  "rows": [
+    {
+      "id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
+      "owner": "location",
+      "original_group": "电话与通信",
+      "formal_status": "unresolved_in_last_complete_ledger",
+      "current_new_package_closed": false,
+      "source_missing_proven": false,
+      "original_requirement": {
+        "name": "offReceiveRttMessage",
+        "syscaps": [
+          "SystemCapability.Telephony.CallManager"
+        ],
+        "since": 22,
+        "dynamic_since": 22,
+        "static_since": 23,
+        "availability": [
+          "dynamic",
+          "static"
+        ],
+        "system_api": true,
+        "kind": "function"
+      },
+      "original_next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出",
+      "classification": "rtt_listener_repaired_pending_package_real_ims",
+      "existing_implementation": "固定源在 SUPPORT_RTT_CALL 下已有真实 NAPI descriptor 与 call.js 转发；保留真实 IMS event route。",
+      "repaired_source": "同步 optional/undefined off 只移除匹配 env/function，不把 listener 当 completion；独立多监听、queue generation/reference/env 清理。",
+      "payload": "RttMessageInfo",
+      "confirmed_remaining_implementation": "未从当前补丁发现还缺本公共方法体；真实 modem/SIM/IMS transport/session 与 provider event 接线不是 callback 补丁所提供，需 root 实际确认。",
+      "pending_acceptance": [
+        "本新 phone 公共导出、普通/system caller 权限及错误边界。",
+        "真实 RttMessageInfo payload/call/session，与匹配 peer 事件。",
+        "optional/undefined/指定 callback off、额外参数拒绝、队列中事件注销静默，其他 listener/env 保持、退出释放。"
+      ],
+      "evidence": [
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/README.md",
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+        "docs/capability-audit/parallel/location/backend-excerpts.json",
+        "patches/phone/product_profile/apply.py"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttErrCause",
+      "owner": "location",
+      "original_group": "电话与通信",
+      "formal_status": "unresolved_in_last_complete_ledger",
+      "current_new_package_closed": false,
+      "source_missing_proven": false,
+      "original_requirement": {
+        "name": "offRttErrCause",
+        "syscaps": [
+          "SystemCapability.Telephony.CallManager"
+        ],
+        "since": 22,
+        "dynamic_since": 22,
+        "static_since": 23,
+        "availability": [
+          "dynamic",
+          "static"
+        ],
+        "system_api": true,
+        "kind": "function"
+      },
+      "original_next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出",
+      "classification": "rtt_listener_repaired_pending_package_real_ims",
+      "existing_implementation": "固定源在 SUPPORT_RTT_CALL 下已有真实 NAPI descriptor 与 call.js 转发；保留真实 IMS event route。",
+      "repaired_source": "同步 optional/undefined off 只移除匹配 env/function，不把 listener 当 completion；独立多监听、queue generation/reference/env 清理。",
+      "payload": "RttErrorInfo",
+      "confirmed_remaining_implementation": "未从当前补丁发现还缺本公共方法体；真实 modem/SIM/IMS transport/session 与 provider event 接线不是 callback 补丁所提供，需 root 实际确认。",
+      "pending_acceptance": [
+        "本新 phone 公共导出、普通/system caller 权限及错误边界。",
+        "真实 RttErrorInfo payload/call/session，与匹配 peer 事件。",
+        "optional/undefined/指定 callback off、额外参数拒绝、队列中事件注销静默，其他 listener/env 保持、退出释放。"
+      ],
+      "evidence": [
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/README.md",
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+        "docs/capability-audit/parallel/location/backend-excerpts.json",
+        "patches/phone/product_profile/apply.py"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttModifyInd",
+      "owner": "location",
+      "original_group": "电话与通信",
+      "formal_status": "unresolved_in_last_complete_ledger",
+      "current_new_package_closed": false,
+      "source_missing_proven": false,
+      "original_requirement": {
+        "name": "offRttModifyInd",
+        "syscaps": [
+          "SystemCapability.Telephony.CallManager"
+        ],
+        "since": 22,
+        "dynamic_since": 22,
+        "static_since": 23,
+        "availability": [
+          "dynamic",
+          "static"
+        ],
+        "system_api": true,
+        "kind": "function"
+      },
+      "original_next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出",
+      "classification": "rtt_listener_repaired_pending_package_real_ims",
+      "existing_implementation": "固定源在 SUPPORT_RTT_CALL 下已有真实 NAPI descriptor 与 call.js 转发；保留真实 IMS event route。",
+      "repaired_source": "同步 optional/undefined off 只移除匹配 env/function，不把 listener 当 completion；独立多监听、queue generation/reference/env 清理。",
+      "payload": "RttEventInfo",
+      "confirmed_remaining_implementation": "未从当前补丁发现还缺本公共方法体；真实 modem/SIM/IMS transport/session 与 provider event 接线不是 callback 补丁所提供，需 root 实际确认。",
+      "pending_acceptance": [
+        "本新 phone 公共导出、普通/system caller 权限及错误边界。",
+        "真实 RttEventInfo payload/call/session，与匹配 peer 事件。",
+        "optional/undefined/指定 callback off、额外参数拒绝、队列中事件注销静默，其他 listener/env 保持、退出释放。"
+      ],
+      "evidence": [
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/README.md",
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+        "docs/capability-audit/parallel/location/backend-excerpts.json",
+        "patches/phone/product_profile/apply.py"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onReceiveRttMessage",
+      "owner": "location",
+      "original_group": "电话与通信",
+      "formal_status": "unresolved_in_last_complete_ledger",
+      "current_new_package_closed": false,
+      "source_missing_proven": false,
+      "original_requirement": {
+        "name": "onReceiveRttMessage",
+        "syscaps": [
+          "SystemCapability.Telephony.CallManager"
+        ],
+        "since": 22,
+        "dynamic_since": 22,
+        "static_since": 23,
+        "availability": [
+          "dynamic",
+          "static"
+        ],
+        "system_api": true,
+        "kind": "function"
+      },
+      "original_next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出",
+      "classification": "rtt_listener_repaired_pending_package_real_ims",
+      "existing_implementation": "固定源在 SUPPORT_RTT_CALL 下已有真实 NAPI descriptor 与 call.js 转发；保留真实 IMS event route。",
+      "repaired_source": "独立多监听与 environment、重复注册 ref 清理、pending token 所有权与 env teardown；已移除 generation 不会再投递。",
+      "payload": "RttMessageInfo",
+      "confirmed_remaining_implementation": "未从当前补丁发现还缺本公共方法体；真实 modem/SIM/IMS transport/session 与 provider event 接线不是 callback 补丁所提供，需 root 实际确认。",
+      "pending_acceptance": [
+        "本新 phone 公共导出、普通/system caller 权限及错误边界。",
+        "真实 RttMessageInfo payload/call/session，与匹配 peer 事件。",
+        "真实多 listener/env、重复注册、撤权/注销/退出与 queued-generation 边界。"
+      ],
+      "evidence": [
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/README.md",
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+        "docs/capability-audit/parallel/location/backend-excerpts.json",
+        "patches/phone/product_profile/apply.py"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttErrCause",
+      "owner": "location",
+      "original_group": "电话与通信",
+      "formal_status": "unresolved_in_last_complete_ledger",
+      "current_new_package_closed": false,
+      "source_missing_proven": false,
+      "original_requirement": {
+        "name": "onRttErrCause",
+        "syscaps": [
+          "SystemCapability.Telephony.CallManager"
+        ],
+        "since": 22,
+        "dynamic_since": 22,
+        "static_since": 23,
+        "availability": [
+          "dynamic",
+          "static"
+        ],
+        "system_api": true,
+        "kind": "function"
+      },
+      "original_next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出",
+      "classification": "rtt_listener_repaired_pending_package_real_ims",
+      "existing_implementation": "固定源在 SUPPORT_RTT_CALL 下已有真实 NAPI descriptor 与 call.js 转发；保留真实 IMS event route。",
+      "repaired_source": "独立多监听与 environment、重复注册 ref 清理、pending token 所有权与 env teardown；已移除 generation 不会再投递。",
+      "payload": "RttErrorInfo",
+      "confirmed_remaining_implementation": "未从当前补丁发现还缺本公共方法体；真实 modem/SIM/IMS transport/session 与 provider event 接线不是 callback 补丁所提供，需 root 实际确认。",
+      "pending_acceptance": [
+        "本新 phone 公共导出、普通/system caller 权限及错误边界。",
+        "真实 RttErrorInfo payload/call/session，与匹配 peer 事件。",
+        "真实多 listener/env、重复注册、撤权/注销/退出与 queued-generation 边界。"
+      ],
+      "evidence": [
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/README.md",
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+        "docs/capability-audit/parallel/location/backend-excerpts.json",
+        "patches/phone/product_profile/apply.py"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttModifyInd",
+      "owner": "location",
+      "original_group": "电话与通信",
+      "formal_status": "unresolved_in_last_complete_ledger",
+      "current_new_package_closed": false,
+      "source_missing_proven": false,
+      "original_requirement": {
+        "name": "onRttModifyInd",
+        "syscaps": [
+          "SystemCapability.Telephony.CallManager"
+        ],
+        "since": 22,
+        "dynamic_since": 22,
+        "static_since": 23,
+        "availability": [
+          "dynamic",
+          "static"
+        ],
+        "system_api": true,
+        "kind": "function"
+      },
+      "original_next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出",
+      "classification": "rtt_listener_repaired_pending_package_real_ims",
+      "existing_implementation": "固定源在 SUPPORT_RTT_CALL 下已有真实 NAPI descriptor 与 call.js 转发；保留真实 IMS event route。",
+      "repaired_source": "独立多监听与 environment、重复注册 ref 清理、pending token 所有权与 env teardown；已移除 generation 不会再投递。",
+      "payload": "RttEventInfo",
+      "confirmed_remaining_implementation": "未从当前补丁发现还缺本公共方法体；真实 modem/SIM/IMS transport/session 与 provider event 接线不是 callback 补丁所提供，需 root 实际确认。",
+      "pending_acceptance": [
+        "本新 phone 公共导出、普通/system caller 权限及错误边界。",
+        "真实 RttEventInfo payload/call/session，与匹配 peer 事件。",
+        "真实多 listener/env、重复注册、撤权/注销/退出与 queued-generation 边界。"
+      ],
+      "evidence": [
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/README.md",
+        "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+        "docs/capability-audit/parallel/location/backend-excerpts.json",
+        "patches/phone/product_profile/apply.py"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:sendRttMessage",
+      "owner": "location",
+      "original_group": "电话与通信",
+      "formal_status": "unresolved_in_last_complete_ledger",
+      "current_new_package_closed": false,
+      "source_missing_proven": false,
+      "original_requirement": {
+        "name": "sendRttMessage",
+        "syscaps": [
+          "SystemCapability.Telephony.CallManager"
+        ],
+        "since": 22,
+        "dynamic_since": 22,
+        "static_since": 23,
+        "availability": [
+          "dynamic",
+          "static"
+        ],
+        "system_api": true,
+        "kind": "function"
+      },
+      "original_next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出",
+      "classification": "rtt_existing_feature_gated_pending_package_real_ims",
+      "existing_implementation": "固定源已有真实 NAPI descriptor 与 public call.js；phone profile 同时启用 call_manager_feature_support_rtt 和 cellular_call_support_rtt。",
+      "repaired_source": "当前 shared builder 应用 RTT enum/真实 IMSCall::IsPrevRtt accessor/ICU provider 依赖与生命周期组件；无需重复导出或成功 shim。",
+      "confirmed_remaining_implementation": "未证实当前公共方法体缺失；仍要真实 modem/SIM/IMS session transport/peer 接入。",
+      "pending_acceptance": [
+        "本新 phone 公共导出、system/ordinary permission 与非法参数/call 边界。",
+        "真实已协商 RTT session 的 UTF-8 消息往返、peer correlation，非法 call/权限/失败必须真实返回。",
+        "无实际网络/会话时保持真实错误，不从 setup/feature 开关推断成功。"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/backend-excerpts.json",
+        "patches/phone/product_profile/apply.py",
+        "patches/common/base/telephony/call_manager/api26_enums/README.md",
+        "scripts/build_standard_qemu_in_docker.sh"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:setRttCapability",
+      "owner": "location",
+      "original_group": "电话与通信",
+      "formal_status": "unresolved_in_last_complete_ledger",
+      "current_new_package_closed": false,
+      "source_missing_proven": false,
+      "original_requirement": {
+        "name": "setRttCapability",
+        "syscaps": [
+          "SystemCapability.Telephony.CallManager"
+        ],
+        "since": 22,
+        "dynamic_since": 22,
+        "static_since": 23,
+        "availability": [
+          "dynamic",
+          "static"
+        ],
+        "system_api": true,
+        "kind": "function"
+      },
+      "original_next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出",
+      "classification": "rtt_existing_feature_gated_pending_package_real_ims",
+      "existing_implementation": "固定源已有真实 NAPI descriptor 与 public call.js；phone profile 同时启用 call_manager_feature_support_rtt 和 cellular_call_support_rtt。",
+      "repaired_source": "当前 shared builder 应用 RTT enum/真实 IMSCall::IsPrevRtt accessor/ICU provider 依赖与生命周期组件；无需重复导出或成功 shim。",
+      "confirmed_remaining_implementation": "未证实当前公共方法体缺失；仍要真实 modem/SIM/IMS session transport/peer 接入。",
+      "pending_acceptance": [
+        "本新 phone 公共导出、system/ordinary permission 与非法参数/call 边界。",
+        "真实 capability 设置与 IMS 协商边界、合法/非法参数和权限结果。",
+        "无实际网络/会话时保持真实错误，不从 setup/feature 开关推断成功。"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/backend-excerpts.json",
+        "patches/phone/product_profile/apply.py",
+        "patches/common/base/telephony/call_manager/api26_enums/README.md",
+        "scripts/build_standard_qemu_in_docker.sh"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:startRtt",
+      "owner": "location",
+      "original_group": "电话与通信",
+      "formal_status": "unresolved_in_last_complete_ledger",
+      "current_new_package_closed": false,
+      "source_missing_proven": false,
+      "original_requirement": {
+        "name": "startRtt",
+        "syscaps": [
+          "SystemCapability.Telephony.CallManager"
+        ],
+        "since": 22,
+        "dynamic_since": 22,
+        "static_since": 23,
+        "availability": [
+          "dynamic",
+          "static"
+        ],
+        "system_api": true,
+        "kind": "function"
+      },
+      "original_next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出",
+      "classification": "rtt_existing_feature_gated_pending_package_real_ims",
+      "existing_implementation": "固定源已有真实 NAPI descriptor 与 public call.js；phone profile 同时启用 call_manager_feature_support_rtt 和 cellular_call_support_rtt。",
+      "repaired_source": "当前 shared builder 应用 RTT enum/真实 IMSCall::IsPrevRtt accessor/ICU provider 依赖与生命周期组件；无需重复导出或成功 shim。",
+      "confirmed_remaining_implementation": "未证实当前公共方法体缺失；仍要真实 modem/SIM/IMS session transport/peer 接入。",
+      "pending_acceptance": [
+        "本新 phone 公共导出、system/ordinary permission 与非法参数/call 边界。",
+        "真实 IMS call/session RTT start/协商、错误 call 与无 provider 的真实失败。",
+        "无实际网络/会话时保持真实错误，不从 setup/feature 开关推断成功。"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/backend-excerpts.json",
+        "patches/phone/product_profile/apply.py",
+        "patches/common/base/telephony/call_manager/api26_enums/README.md",
+        "scripts/build_standard_qemu_in_docker.sh"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:stopRtt",
+      "owner": "location",
+      "original_group": "电话与通信",
+      "formal_status": "unresolved_in_last_complete_ledger",
+      "current_new_package_closed": false,
+      "source_missing_proven": false,
+      "original_requirement": {
+        "name": "stopRtt",
+        "syscaps": [
+          "SystemCapability.Telephony.CallManager"
+        ],
+        "since": 22,
+        "dynamic_since": 22,
+        "static_since": 23,
+        "availability": [
+          "dynamic",
+          "static"
+        ],
+        "system_api": true,
+        "kind": "function"
+      },
+      "original_next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出",
+      "classification": "rtt_existing_feature_gated_pending_package_real_ims",
+      "existing_implementation": "固定源已有真实 NAPI descriptor 与 public call.js；phone profile 同时启用 call_manager_feature_support_rtt 和 cellular_call_support_rtt。",
+      "repaired_source": "当前 shared builder 应用 RTT enum/真实 IMSCall::IsPrevRtt accessor/ICU provider 依赖与生命周期组件；无需重复导出或成功 shim。",
+      "confirmed_remaining_implementation": "未证实当前公共方法体缺失；仍要真实 modem/SIM/IMS session transport/peer 接入。",
+      "pending_acceptance": [
+        "本新 phone 公共导出、system/ordinary permission 与非法参数/call 边界。",
+        "真实 session stop 与随后消息/回调静默，不能终止其他 call/session。",
+        "无实际网络/会话时保持真实错误，不从 setup/feature 开关推断成功。"
+      ],
+      "evidence": [
+        "docs/capability-audit/parallel/location/backend-excerpts.json",
+        "patches/phone/product_profile/apply.py",
+        "patches/common/base/telephony/call_manager/api26_enums/README.md",
+        "scripts/build_standard_qemu_in_docker.sh"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
+      "owner": "location",
+      "original_group": "电话与通信",
+      "formal_status": "unresolved_in_last_complete_ledger",
+      "current_new_package_closed": false,
+      "source_missing_proven": false,
+      "original_requirement": {
+        "name": "offCommunicationStateChange",
+        "syscaps": [
+          "SystemCapability.Telephony.StateRegistry"
+        ],
+        "since": 26,
+        "dynamic_since": 26,
+        "static_since": 26,
+        "availability": [
+          "dynamic",
+          "static"
+        ],
+        "system_api": false,
+        "kind": "function"
+      },
+      "original_next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出",
+      "classification": "explicit_modem_producer_observer_integrated_pending_package",
+      "existing_implementation": "严格实际 AT +OHOS5A 0/1→HRil notification1412→RIL V1_5 callback162→core→registry IPC14→observer callback13→dynamic NAPI 与 ANI bool/slot。没有 NR 推断或初始 false。",
+      "repaired_source": "44 target/3 projects 原与3个prefix/final全状态 guard；GN AccessToken SDK、proxy overrides/IPC identity 头；当前 builder 先准备父层 IDL extension 再应用组件。",
+      "confirmed_remaining_implementation": "interface/producer 代码不缺。真实 AT/radio peer 的独立0/1 URC、inherited HDI ABI/ANI 与产品集成、provider false/shutdown/reset discipline 必须在当前包证明。",
+      "pending_acceptance": [
+        "mandatory callback + optional slot（这里 off 不等于 RTT optional-callback 语义）、真实 bool/slot/非法 URC。",
+        "native telephony+SET_TELEPHONY_STATE 发布身份；GET_NETWORK_INFO 注册和每次投递权限/撤权边界。",
+        "off 按 env/slot/function，重复 off/env exit/queued old-generation 静默。",
+        "真实 radio/5A 状态结束与 reset 后不得把历史 true 当当前状态。"
+      ],
+      "evidence": [
+        "patches/common/base/telephony/state_registry/communication_state/README.md",
+        "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch",
+        "patches/common/base/telephony/state_registry/communication_state/source_states.json",
+        "scripts/prepare_ril_communication_callback.py",
+        "scripts/build_standard_qemu_in_docker.sh"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
+      "owner": "location",
+      "original_group": "电话与通信",
+      "formal_status": "unresolved_in_last_complete_ledger",
+      "current_new_package_closed": false,
+      "source_missing_proven": false,
+      "original_requirement": {
+        "name": "onCommunicationStateChange",
+        "syscaps": [
+          "SystemCapability.Telephony.StateRegistry"
+        ],
+        "since": 26,
+        "dynamic_since": 26,
+        "static_since": 26,
+        "availability": [
+          "dynamic",
+          "static"
+        ],
+        "system_api": false,
+        "kind": "function"
+      },
+      "original_next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出",
+      "classification": "explicit_modem_producer_observer_integrated_pending_package",
+      "existing_implementation": "严格实际 AT +OHOS5A 0/1→HRil notification1412→RIL V1_5 callback162→core→registry IPC14→observer callback13→dynamic NAPI 与 ANI bool/slot。没有 NR 推断或初始 false。",
+      "repaired_source": "44 target/3 projects 原与3个prefix/final全状态 guard；GN AccessToken SDK、proxy overrides/IPC identity 头；当前 builder 先准备父层 IDL extension 再应用组件。",
+      "confirmed_remaining_implementation": "interface/producer 代码不缺。真实 AT/radio peer 的独立0/1 URC、inherited HDI ABI/ANI 与产品集成、provider false/shutdown/reset discipline 必须在当前包证明。",
+      "pending_acceptance": [
+        "mandatory callback + optional slot（这里 off 不等于 RTT optional-callback 语义）、真实 bool/slot/非法 URC。",
+        "native telephony+SET_TELEPHONY_STATE 发布身份；GET_NETWORK_INFO 注册和每次投递权限/撤权边界。",
+        "off 按 env/slot/function，重复 off/env exit/queued old-generation 静默。",
+        "真实 radio/5A 状态结束与 reset 后不得把历史 true 当当前状态。"
+      ],
+      "evidence": [
+        "patches/common/base/telephony/state_registry/communication_state/README.md",
+        "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch",
+        "patches/common/base/telephony/state_registry/communication_state/source_states.json",
+        "scripts/prepare_ril_communication_callback.py",
+        "scripts/build_standard_qemu_in_docker.sh"
+      ]
+    },
+    {
+      "id": "behavior:telephony-no-modem-or-sim",
+      "owner": "location",
+      "original_group": "电话与通信",
+      "formal_status": "unresolved_in_last_complete_ledger",
+      "current_new_package_closed": false,
+      "source_missing_proven": false,
+      "original_requirement": {
+        "id": "telephony-no-modem-or-sim",
+        "status": "partially_broken",
+        "syscap_match": {
+          "exact": [
+            "SystemCapability.Telephony.CallManager",
+            "SystemCapability.Telephony.CellularData",
+            "SystemCapability.Telephony.CoreService",
+            "SystemCapability.Telephony.SmsMms",
+            "SystemCapability.Telephony.StateRegistry"
+          ]
+        },
+        "evidence": "telephony framework and state queries load, but QEMU exposes no modem/SIM/radio transport; boot and service state report no SIM/network, so calls, SMS and cellular data cannot complete"
+      },
+      "original_next_required": "补齐实际调制解调器/SIM/RTT 通路；验证会话事件、参数、注销静默与退出",
+      "classification": "device_backend_current_evidence_insufficient",
+      "existing_implementation": "framework/state query、reference AT/RIL 路由、phone RTT 和真实显式5A生产链都已有源码；它们本身不提供 modem/SIM/radio/IMS 设备。",
+      "repaired_source": "上述 source plumbing 已接入 shared build；不是完整 radio peripheral/SIM provisioning/IMS peer 实证。",
+      "confirmed_remaining_implementation": "需要实际核对当前 AT device/vendor HDI/radio/SIM/network/IMS identities 与接线，对当下确实不存在的 provider 再实现；本审计未观察实际当前 image/boot/AT/IMS，所以纯缺实现任务数未知。",
+      "evidence_insufficient": "历史 no-modem/SIM 是旧完整账本 observation，不可直接改写为新源码缺实现。",
+      "pending_acceptance": [
+        "当前新包 modem/SIM/radio/AT provider 身份、真实 service 状态。",
+        "calls/SMS/cellular-data 实际事务，负向/权限/offline/device reset 与清理。",
+        "真正 IMS RTT 协商/消息、独立5A URCs/false reset 语义。"
+      ],
+      "evidence": [
+        "r51-full-unresolved-batch-worklist-04.json",
+        "docs/capability-audit/parallel/location/round4-fusion-communication.md",
+        "docs/capability-audit/parallel/location/result.json"
+      ]
+    }
+  ],
+  "anchors": [
+    {
+      "path": "scripts/build_standard_qemu_in_docker.sh",
+      "needle": "bash \"${TELEPHONY_CALL_ENUMS_COMPONENT_SCRIPT}\"",
+      "hits": [
+        {
+          "line": 3102,
+          "text": "bash \"${TELEPHONY_CALL_ENUMS_COMPONENT_SCRIPT}\" --source-root \"${OHOS_ROOT}\" \\"
+        }
+      ]
+    },
+    {
+      "path": "scripts/build_standard_qemu_in_docker.sh",
+      "needle": "bash \"${TELEPHONY_RTT_LIFECYCLE_COMPONENT_SCRIPT}\"",
+      "hits": [
+        {
+          "line": 3104,
+          "text": "bash \"${TELEPHONY_RTT_LIFECYCLE_COMPONENT_SCRIPT}\" --source-root \"${OHOS_ROOT}\" \\"
+        }
+      ]
+    },
+    {
+      "path": "scripts/build_standard_qemu_in_docker.sh",
+      "needle": "prepare_ril_communication_callback.py",
+      "hits": [
+        {
+          "line": 3106,
+          "text": "python3 \"${SCRIPT_DIR}/prepare_ril_communication_callback.py\" --source-root \"${OHOS_ROOT}\" \\"
+        }
+      ]
+    },
+    {
+      "path": "scripts/build_standard_qemu_in_docker.sh",
+      "needle": "base/telephony/state_registry/communication_state/apply.sh",
+      "hits": [
+        {
+          "line": 3108,
+          "text": "bash \"${PATCH_ROOT}/common/base/telephony/state_registry/communication_state/apply.sh\" --source-root \"${OHOS_ROOT}\" \\"
+        }
+      ]
+    },
+    {
+      "path": "patches/phone/product_profile/apply.py",
+      "needle": "call_manager_feature_support_rtt",
+      "hits": [
+        {
+          "line": 278,
+          "text": "(\"telephony\", \"call_manager\"): {\"call_manager_feature_support_rtt\": True},"
+        }
+      ]
+    },
+    {
+      "path": "patches/phone/product_profile/apply.py",
+      "needle": "cellular_call_support_rtt",
+      "hits": [
+        {
+          "line": 279,
+          "text": "(\"telephony\", \"cellular_call\"): {\"cellular_call_support_rtt\": True},"
+        }
+      ]
+    },
+    {
+      "path": "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+      "needle": "napi_value NapiCallManager::OffRttModifyInd",
+      "hits": [
+        {
+          "line": 5,
+          "text": "napi_value NapiCallManager::OffRttModifyInd(napi_env env, napi_callback_info info)"
+        }
+      ]
+    },
+    {
+      "path": "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+      "needle": "napi_value NapiCallManager::OffReceiveRttMessage",
+      "hits": [
+        {
+          "line": 49,
+          "text": "napi_value NapiCallManager::OffReceiveRttMessage(napi_env env, napi_callback_info info)"
+        }
+      ]
+    },
+    {
+      "path": "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+      "needle": "napi_value NapiCallManager::OffRttErrCause",
+      "hits": [
+        {
+          "line": 92,
+          "text": "napi_value NapiCallManager::OffRttErrCause(napi_env env, napi_callback_info info)"
+        }
+      ]
+    },
+    {
+      "path": "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+      "needle": "static void UnregisterRttCallback",
+      "hits": [
+        {
+          "line": 229,
+          "text": "+static void UnregisterRttCallback(std::vector<std::shared_ptr<RttCallbackRegistration>>& callbacks,"
+        }
+      ]
+    },
+    {
+      "path": "patches/common/base/telephony/call_manager/api26_rtt_lifecycle/0001-honor-RTT-listener-removal-and-queued-event-lifetime.patch",
+      "needle": "napi_add_env_cleanup_hook",
+      "hits": [
+        {
+          "line": 220,
+          "text": "+    if (napi_add_env_cleanup_hook(eventCallback.env, CleanupRttCallback, holder.get()) != napi_ok) {"
+        }
+      ]
+    },
+    {
+      "path": "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch",
+      "needle": "DECLARE_NAPI_WRITABLE_FUNCTION(\"onCommunicationStateChange\"",
+      "hits": [
+        {
+          "line": 930,
+          "text": "+        DECLARE_NAPI_WRITABLE_FUNCTION(\"onCommunicationStateChange\", OnCommunicationStateChange),"
+        }
+      ]
+    },
+    {
+      "path": "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch",
+      "needle": "DECLARE_NAPI_WRITABLE_FUNCTION(\"offCommunicationStateChange\"",
+      "hits": [
+        {
+          "line": 931,
+          "text": "+        DECLARE_NAPI_WRITABLE_FUNCTION(\"offCommunicationStateChange\", OffCommunicationStateChange),"
+        }
+      ]
+    },
+    {
+      "path": "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch",
+      "needle": "static const char prefix[] = \"+OHOS5A:\"",
+      "hits": [
+        {
+          "line": 302,
+          "text": "+    static const char prefix[] = \"+OHOS5A:\";"
+        }
+      ]
+    },
+    {
+      "path": "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch",
+      "needle": "Permission::GET_NETWORK_INFO",
+      "hits": [
+        {
+          "line": 393,
+          "text": "+        Permission::GET_NETWORK_INFO) == Security::AccessToken::PERMISSION_GRANTED;"
+        },
+        {
+          "line": 751,
+          "text": "+        Permission::GET_NETWORK_INFO) != Security::AccessToken::PERMISSION_GRANTED) { return; }"
+        },
+        {
+          "line": 856,
+          "text": "+        Permission::GET_NETWORK_INFO) == Security::AccessToken::PERMISSION_GRANTED;"
+        },
+        {
+          "line": 1111,
+          "text": "if (!TelephonyPermission::CheckPermission(Permission::GET_NETWORK_INFO)) {"
+        },
+        {
+          "line": 1121,
+          "text": "+            record.tokenId_, Permission::GET_NETWORK_INFO) == Security::AccessToken::PERMISSION_GRANTED) {"
+        },
+        {
+          "line": 1153,
+          "text": "+            AccessTokenKit::VerifyAccessToken(record.tokenId_, Permission::GET_NETWORK_INFO) == PERMISSION_GRANTED) {"
+        }
+      ]
+    },
+    {
+      "path": "patches/common/base/telephony/state_registry/communication_state/0001-connect-modem-5a-producer-and-observer.patch",
+      "needle": "Permission::SET_TELEPHONY_STATE",
+      "hits": [
+        {
+          "line": 1139,
+          "text": "+        !TelephonyPermission::CheckPermission(Permission::SET_TELEPHONY_STATE)) {"
+        }
+      ]
+    },
+    {
+      "path": "scripts/prepare_ril_communication_callback.py",
+      "needle": "[oneway] CommunicationStateUpdated",
+      "hits": [
+        {
+          "line": 26,
+          "text": "[oneway] CommunicationStateUpdated([in] struct RilRadioResponseInfo responseInfo, [in] boolean is5A);"
+        }
+      ]
+    },
+    {
+      "path": "patches/common/base/telephony/call_manager/api26_enums/0004-forward-public-state-and-rtt-enums.patch",
+      "needle": "startRtt: call.startRtt",
+      "hits": [
+        {
+          "line": 15,
+          "text": "startRtt: call.startRtt,"
+        }
+      ]
+    },
+    {
+      "path": "patches/common/base/telephony/state_registry/communication_state/README.md",
+      "needle": "No initial false is synthesized",
+      "hits": [
+        {
+          "line": 17,
+          "text": "are ignored. No initial false is synthesized before a real modem update."
+        }
+      ]
+    },
+    {
+      "path": "patches/common/base/telephony/state_registry/communication_state/README.md",
+      "needle": "complete44-file guard",
+      "hits": [
+        {
+          "line": 38,
+          "text": "explicitly includes the service IPC identity header. The complete44-file guard"
+        }
+      ]
+    }
+  ],
+  "candidate_import_test_SDK_build_resources_Git_mutation": false,
+  "audit_note": "Initial in-memory row construction had an off-prefix slicing StopIteration before writing members. Corrected to distinguish off(3) and on(2); all13 asserted and preserved here; no product/test execution."
+}

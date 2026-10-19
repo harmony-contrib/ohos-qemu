@@ -6,7 +6,8 @@
     "sha256": "eefbee1c3a9476d6635886f3a67913350fb68b9e33981704d42d1991eec6503a",
     "total": 281,
     "closed": 199,
-    "unresolved": 82
+    "unresolved": 82,
+    "count_scope": "historical unclosed requirement IDs; not a count of missing current implementations"
   },
   "parent_owned": [
     "scripts except network.files",
@@ -49,7 +50,9 @@
     "agent_branches_or_worktrees_allowed": false,
     "Git_index_and_commits_owner": "root",
     "parallel_edits_require_disjoint_explicit_file_leases": true,
-    "shared_resource_owner": "root"
+    "shared_resource_owner": "root",
+    "knowledge_requirement_owner": "system; media supports shared source changes only under a disjoint root lease",
+    "prefixes_are_exclusive_edit_grants": false
   },
   "agents": {
     "apps": {
@@ -1411,27 +1414,6 @@
       ],
       "requirements": [
         {
-          "id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
-          "group": "媒体知识数据",
-          "requirement": {
-            "name": "KnowledgeContent",
-            "syscaps": [
-              "SystemCapability.FileManagement.PhotoAccessHelper.Core"
-            ],
-            "since": 23,
-            "dynamic_since": 23,
-            "static_since": 23,
-            "availability": [
-              "dynamic",
-              "static"
-            ],
-            "system_api": true,
-            "kind": "class"
-          },
-          "preparation_status": "实现与完整验证尚未齐备",
-          "next_required": "实现实际知识内容存取和索引，验证带数据往返、权限和删除，不能用空数组代替"
-        },
-        {
           "id": "behavior:audio-capture-and-dependent-pipelines",
           "group": "音视频输入与处理",
           "requirement": {
@@ -1736,6 +1718,27 @@
           },
           "preparation_status": "实现与完整验证尚未齐备",
           "next_required": "核对本项原始需求与真实服务，批量修复并增加完整新包证据"
+        },
+        {
+          "id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
+          "group": "媒体知识数据",
+          "requirement": {
+            "name": "KnowledgeContent",
+            "syscaps": [
+              "SystemCapability.FileManagement.PhotoAccessHelper.Core"
+            ],
+            "since": 23,
+            "dynamic_since": 23,
+            "static_since": 23,
+            "availability": [
+              "dynamic",
+              "static"
+            ],
+            "system_api": true,
+            "kind": "class"
+          },
+          "preparation_status": "实现与完整验证尚未齐备",
+          "next_required": "实现实际知识内容存取和索引，验证带数据往返、权限和删除，不能用空数组代替"
         }
       ],
       "count": 10,

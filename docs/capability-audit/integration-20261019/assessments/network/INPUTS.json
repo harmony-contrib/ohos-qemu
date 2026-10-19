@@ -1,0 +1,115 @@
+{
+  "inputs": {
+    "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r51-full-unresolved-batch-worklist-04.json": {
+      "sha256": "eefbee1c3a9476d6635886f3a67913350fb68b9e33981704d42d1991eec6503a",
+      "bytes": 90178
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/docs/capability-audit/parallel-work-plan.json": {
+      "sha256": "05704e9cbed2e8ee7b53a97b49a3d6e94eff946e88c624ca5294313460fb304b",
+      "bytes": 100512
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/docs/capability-audit/parallel/network/result.json": {
+      "sha256": "935b9231fac8d8d0c8c2087f1a97ac867a25e01741b9f93415fb79b4a27cf497",
+      "bytes": 62836
+    },
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-current-progress.json": {
+      "sha256": "e9385a031074c18d7007266c0b5164d00b21f6089e31278365163b623aacb7e0",
+      "bytes": 53436
+    },
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-first-artifact-acceptance255-review/REPORT.md": {
+      "sha256": "f26a430b284bca6895da0da883bfeb9ce958a5bf9a012a434a0ffec06e878da6",
+      "bytes": 24678
+    },
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-first-artifact-acceptance255-review/FACTS.json": {
+      "sha256": "74ddcd4906dd24468663c4fbc523db4435d83f53e4e80d7f5ce1d42a080524a4",
+      "bytes": 87835
+    },
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-first-artifact-acceptance255-review/SOURCE_MANIFEST.json": {
+      "sha256": "5c59c6e8ea952ffd4cc08178c66f8a8583f4e187c640d916133c1cb63ce07803",
+      "bytes": 2082
+    },
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-network-current-inputs238-draft/HANDOFF238.md": {
+      "sha256": "f0ec80e497ade98cab696ecb3fb2b9d616a46e71da7972ca6485e0c5b428e448",
+      "bytes": 607
+    },
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-network-current-inputs238-draft/HANDOFF.md": {
+      "sha256": "0dc122ba641c419da5d7b2b984cf8f3c86a676a466e085df5c10f9bd44110d78",
+      "bytes": 2987
+    },
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-network-current-inputs238-draft/SOURCE_MANIFEST.json": {
+      "sha256": "a264c09ad728d14c049c2a3073c0a4e059a4553d7022c001cfb156dc3b7b8b11",
+      "bytes": 5664
+    },
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-peer-owner-protocol267-draft/HANDOFF.md": {
+      "sha256": "f2d929e5c4db0ad70fda9c73d13f5d80787194588dbfee5da8552130daac0653",
+      "bytes": 3323
+    },
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-peer-owner-protocol267-draft/ROOT-INTERFACE267.md": {
+      "sha256": "3bdd5bfa1eeddd24ef4113e518a5cfd680b0ba5dc00f1fa5675094f43eed57a2",
+      "bytes": 17163
+    },
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-peer-owner-protocol267-draft/SOURCE_MANIFEST.json": {
+      "sha256": "173487736665a217a895a2306c82fb9d9057e2b30d1ac896cc43096125c4d5d0",
+      "bytes": 4349
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/docs/capability-audit/parallel/network/round21-guest-acceptance/HANDOFF.md": {
+      "sha256": "e92888ac659e7788eebc71763bac8b1f96ba9ccdce2708774022477e016e79bd",
+      "bytes": 14516
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/docs/capability-audit/parallel/network/round21-openvpn-runtime-qa/HANDOFF.md": {
+      "sha256": "1619d6b3afb5a9e3468ca20c4b660bbe94f850e316303f86467611a7cae1f31a",
+      "bytes": 14286
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/patches/common/foundation/communication/bluetooth/api26_oob_pairing/README.md": {
+      "sha256": "6df94dab66f440806ac268567ac628efa5f5686815df925355e3091bcb4d5ef8",
+      "bytes": 1633
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/patches/common/foundation/communication/bluetooth_service/oob_pairing_backend/README.md": {
+      "sha256": "0c6196ef8d62be5178b90e77a54b26619fa637652f6b2a6981a8b1806eaeaabc",
+      "bytes": 3742
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/patches/common/foundation/communication/netmanager_ext/connected_vpn_nullable/README.md": {
+      "sha256": "1ea5a07b222e69156679f859af2c7523f8caf614f8f2cd9b630d89ce8dc504ff",
+      "bytes": 2943
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/patches/common/foundation/communication/netmanager_ext/openvpn_broker/README.md": {
+      "sha256": "adc483cda2dd712b3eb8a6302d17fd709d8d0b3a18eeaca50eed69804a057119",
+      "bytes": 4312
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/patches/common/foundation/communication/netmanager_ext/openvpn_session/README.md": {
+      "sha256": "5e005c5e132ff7b3ec5801c60753e3c8492ca5a4aa8db94693b71b051b877862",
+      "bytes": 3330
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/patches/common/foundation/communication/wifi/wpa_scan/README.md": {
+      "sha256": "e306f7c8626b5e01ec65f54b7f23895ac941956047ac8257c8ca998dc77f6c0e",
+      "bytes": 1085
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/patches/common/foundation/communication/wifi/wpa_channels/README.md": {
+      "sha256": "cc0e18f7148c6ae173601233acd42f9329b65fe3e7a999b7cd542cdc217ce41d",
+      "bytes": 970
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/patches/common/foundation/communication/wifi/software_ap_regulatory/README.md": {
+      "sha256": "2f62efc3ea9b4f52c7f6ab2c053d1915d2c51c6912be02c1671dcbaf35a44428",
+      "bytes": 2166
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/patches/common/device/qemu/kernel_capability/0001-enable-ebpf-dmabuf-and-arm64-ftrace.patch": {
+      "sha256": "1f5a455c3f0815a908c2fa8ebc7c96556dd4ddf815d522a846620a40971dbc56",
+      "bytes": 2054
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/scripts/build_standard_qemu_in_docker.sh": {
+      "sha256": "ef6f5e932e67e6a2f65c6a6fb7fb4f45a12face4b7b1f9bd1474d0220cea769b",
+      "bytes": 176097
+    },
+    "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/scripts/package_standard_qemu.sh": {
+      "sha256": "3626e73b0f62790c2f465ff063cf7475a9f85b5628cf23016f0738399635db6d",
+      "bytes": 123162
+    }
+  },
+  "mutable_input_snapshot": "progress_input_snapshot.json",
+  "inspection": "standard-library read/JSON/hash and text search only; no source imports, tests, Git or external resources",
+  "absence_observation": {
+    "path": "/Users/ranger/.codex/worktrees/capability-batched-repair-f/ohos-qemu/patches/common/base/usb",
+    "exists": false,
+    "not_proof_of_upstream_absence": true
+  }
+}
