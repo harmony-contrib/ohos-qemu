@@ -1,0 +1,110 @@
+{
+  "scope": "source payload content read only; native code never executed; no runtime validation",
+  "url": "https://ohpm.openharmony.cn/ohpm/sherpa_onnx/-/sherpa_onnx-1.11.2.har",
+  "sha256": "d196941c571f4bd7dd98e6c03097aa4873b9a934ceced64800fb85b25892e6a0",
+  "integrity": "sha512-HIH7e6luXcZRPRbzi8lGJqgYyweOvSee79GKybrh1PezFI5cZ8w2OoER1GqdsJPibGmVwduBMPeYJ9xdaxo93A==",
+  "libraries": [
+    {
+      "member": "package/libs/arm64-v8a/libc++_shared.so",
+      "bytes": 1261960,
+      "sha256": "3cecd922ef5e1289d988506741ed6a96bc028ae2cdc528f9459af6a000e1218b",
+      "elf_class": 2,
+      "machine": 183,
+      "needed": [
+        "libc.so"
+      ]
+    },
+    {
+      "member": "package/libs/arm64-v8a/libonnxruntime.so",
+      "bytes": 12930856,
+      "sha256": "f9fd9080a10f2b93323d597225fbaa63d06f93b384bdfdd7285db9a9115fcc2b",
+      "elf_class": 2,
+      "machine": 183,
+      "needed": [
+        "libc++_shared.so",
+        "libc.so"
+      ]
+    },
+    {
+      "member": "package/libs/arm64-v8a/libsherpa-onnx-c-api.so",
+      "bytes": 3314336,
+      "sha256": "dafe889309536c25bcd3e07e9ff2a67659589fe16bd55fb0cbc2fb8d98c76aea",
+      "elf_class": 2,
+      "machine": 183,
+      "needed": [
+        "libhilog_ndk.z.so",
+        "librawfile.z.so",
+        "libonnxruntime.so",
+        "libc++_shared.so",
+        "libc.so"
+      ]
+    },
+    {
+      "member": "package/libs/arm64-v8a/libsherpa_onnx.so",
+      "bytes": 573504,
+      "sha256": "88c3d104b0af37102a0e14ee30fd4f8a27636c8ba8f5bd1925b3ad71bb6aba75",
+      "elf_class": 2,
+      "machine": 183,
+      "needed": [
+        "libace_napi.z.so",
+        "libhilog_ndk.z.so",
+        "librawfile.z.so",
+        "libsherpa-onnx-c-api.so",
+        "libonnxruntime.so",
+        "libc++_shared.so",
+        "libc.so"
+      ]
+    },
+    {
+      "member": "package/libs/x86_64/libc++_shared.so",
+      "bytes": 1294440,
+      "sha256": "fb22756b3cece1bc7a05f9fdc79b9a09eeb59a67fc43a1ab095fe04a5cb37e1b",
+      "elf_class": 2,
+      "machine": 62,
+      "needed": [
+        "libc.so"
+      ]
+    },
+    {
+      "member": "package/libs/x86_64/libonnxruntime.so",
+      "bytes": 15011792,
+      "sha256": "80abf5a65b6f07977b7d994d79bf5dd380e3db51a947fc571c872c631331c18b",
+      "elf_class": 2,
+      "machine": 62,
+      "needed": [
+        "libc++_shared.so",
+        "libc.so"
+      ]
+    },
+    {
+      "member": "package/libs/x86_64/libsherpa-onnx-c-api.so",
+      "bytes": 3730032,
+      "sha256": "8e7704ca37e2113c67521b338748d82b71b9edef511e556c37f10fed57de1fd8",
+      "elf_class": 2,
+      "machine": 62,
+      "needed": [
+        "libhilog_ndk.z.so",
+        "librawfile.z.so",
+        "libonnxruntime.so",
+        "libc++_shared.so",
+        "libc.so"
+      ]
+    },
+    {
+      "member": "package/libs/x86_64/libsherpa_onnx.so",
+      "bytes": 612872,
+      "sha256": "540df4b521bda78677a11957e18710d039eda3d83347b4beb9cc124a1a5b3945",
+      "elf_class": 2,
+      "machine": 62,
+      "needed": [
+        "libace_napi.z.so",
+        "libhilog_ndk.z.so",
+        "librawfile.z.so",
+        "libsherpa-onnx-c-api.so",
+        "libonnxruntime.so",
+        "libc++_shared.so",
+        "libc.so"
+      ]
+    }
+  ]
+}

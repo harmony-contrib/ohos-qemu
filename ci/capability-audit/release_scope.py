@@ -19,7 +19,7 @@ IMAGE_GENERATION = frozenset('arkts_export:@ohos.arkui.intelligence.imageGenerat
     'openGeneratorNodeGraph', 'PartialResultType', 'restoreGeneratorDialog', 'restoreGeneratorNodeGraph'))
 
 
-PROVIDER_POLICY = 'docs/capability-audit/execution-20261021/unsupported-public-providers.json'
+PROVIDER_POLICY = 'ci/capability-audit/policy579/execution-20261021/unsupported-public-providers.json'
 PROVIDER_POLICY_SHA256 = 'd0b930414b9ba46835ac2e217d614605a120fe04bd138979824ed2889ad81ce4'
 PROVIDER_IDS = {
     'NumberIdentity': 'behavior:telephony-number-identity-provider-missing',
@@ -47,7 +47,13 @@ def provider_policy(device):
             any(row['repaired'] is not False or row['runtime_pass'] is not False for row in value['features'].values())):
         raise ValueError('exact unsupported provider IDs and non-success status required')
     for evidence in value['evidence']:
-        source = root / evidence['path']
+        name = evidence['path']
+        aliases = {
+            'docs/capability-audit/execution-20261021/livecaptions-source579.md':
+                'ci/capability-audit/policy579/execution-20261021/livecaptions-source579.md',
+            'docs/capability-audit/execution-20261021/livecaptions-har579.json':
+                'ci/capability-audit/policy579/execution-20261021/livecaptions-har579.json'}
+        source = root / aliases.get(name, name)
         if source.is_symlink() or hashlib.sha256(source.read_bytes()).hexdigest() != evidence['sha256']:
             raise ValueError('public implementation boundary evidence changed')
     return {name: row for name, row in value['features'].items() if device in row['devices']}
