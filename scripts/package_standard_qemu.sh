@@ -3444,6 +3444,11 @@ PY
     python3 "${SCRIPT_DIR}/verify_mms_provider_image.py" \
       --system-image "${IMAGES_OUT}/system.img" \
       --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/mms-provider-evidence.json"
+    python3 "${SCRIPT_DIR}/verify_systemui_provider_image.py" \
+      --system-image "${IMAGES_OUT}/system.img" --device "${DEVICE_TYPE}" \
+      --source-root "${SOURCE_ROOT}" \
+      --build-hap-dir "${SOURCE_ROOT}/out/${PRODUCT}/obj/applications/standard/systemui/systemui_hap" \
+      --output "${PACKAGE_DIR}/systemui-provider-evidence.json"
     if [ "${DEVICE_TYPE}" = phone ]; then
       python3 "${SCRIPT_DIR}/verify_number_identity_image.py" \
         --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \

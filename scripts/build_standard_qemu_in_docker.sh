@@ -3621,6 +3621,15 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_hap_contacts_theme_provider.log"
   python3 "${PATCH_ROOT}/lib/contacts_theme_providers.py" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_contacts_theme_signing_policy.log"
+  # Build the actual patched SystemUI modules, retaining independent ScreenLock.
+  bash "${PATCH_ROOT}/common/applications/standard/systemui/source_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_systemui_source_provider.log"
+  bash "${PATCH_ROOT}/common/applications/standard/hap/systemui_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_systemui_hap_provider.log"
+  python3 "${PATCH_ROOT}/common/applications/standard/systemui/source_provider/prepare_dependencies.py" \
+    --source-root "${OHOS_ROOT}" --cache-root "${CACHE_ROOT}/systemui-source-dependencies" \
+    --evidence "${CACHE_ROOT}/logs/systemui-source-preparation.json" \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_systemui_source_dependencies.log"
   bash "${PHOTOS_FACARD_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_photos_facard_component.log"
   bash "${PHOTO_RECORD_CLASSES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
