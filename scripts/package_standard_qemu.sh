@@ -3444,6 +3444,9 @@ PY
     python3 "${SCRIPT_DIR}/verify_mms_provider_image.py" \
       --system-image "${IMAGES_OUT}/system.img" \
       --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/mms-provider-evidence.json"
+    python3 "${SCRIPT_DIR}/verify_screen_capture_resources_image.py" \
+      --system-image "${IMAGES_OUT}/system.img" --source-root "${SOURCE_ROOT}" \
+      --output "${PACKAGE_DIR}/screen-capture-resources-evidence.json"
     python3 "${SCRIPT_DIR}/verify_systemui_provider_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --device "${DEVICE_TYPE}" \
       --source-root "${SOURCE_ROOT}" \

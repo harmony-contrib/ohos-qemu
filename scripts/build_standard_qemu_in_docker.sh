@@ -3642,6 +3642,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_knowledge_holiday_component.log"
   bash "${PATCH_ROOT}/common/foundation/multimedia/player_framework/recorder_configuration/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_recorder_configuration_component.log"
+  bash "${PATCH_ROOT}/common/foundation/multimedia/player_framework/screen_capture_resources/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_screen_capture_resources_component.log"
   bash "${SQLITE_EXPRESSION_BLOB_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_sqlite_expression_blob_component.log"
   bash "${AVC_EOS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
