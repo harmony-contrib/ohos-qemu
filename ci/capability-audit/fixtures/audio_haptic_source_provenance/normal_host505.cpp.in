@@ -1,0 +1,61 @@
+#include "qemu_audio_provenance505.h"
+#include <functional>
+#include <map>
+#include <iostream>
+#define CHECK_AND_RETURN_RET_LOG(ok,value,...) do{if(!(ok))return(value);}while(0)
+constexpr int32_t MSERR_OK=0,MSERR_START_FAILED=-3;
+namespace PlayerKeys{constexpr const char*PLAYER_AUDIO_HAPTICS_SYNC_ID="dsp-sync-id";}
+struct Format {
+ std::map<std::string,std::string>strings;std::map<std::string,int>integers;
+ bool PutIntValue(const std::string&key,int value){integers[key]=value;return true;}
+ bool PutStringValue(const std::string&key,const std::string&value){strings[key]=value;return true;}
+};
+static std::vector<std::string>rows;static void EmitProvenance505(const std::string&row){rows.push_back(row);}
+static void Need(bool value,const char*message){if(!value){std::cerr<<message<<'\n';std::exit(1);}}
+enum class AudioHapticSessionEnd{NONE,START_FAILED};enum class AudioHapticPlayerState{STATE_NEW,STATE_RUNNING};
+struct AudioHapticPlaybackSession{std::atomic<AudioHapticSessionEnd>end{AudioHapticSessionEnd::NONE};std::atomic<bool>playIssued{false},playConfirmed{false};};
+struct FakePlayer {
+ int parameterResult=0,playResult=0,playCalls=0;Format last;std::function<void()>duringPlay;
+ int SetParameter(const Format&f){last=f;return parameterResult;}
+ int Play(){playCalls++;if(duringPlay)duringPlay();return playResult;}
+};
+struct AudioHapticPlayerImpl{static void SendHapticPlayerEvent(int,const char*){}};
+class AudioHapticSoundNormalImpl {
+public:
+ std::mutex audioHapticPlayerLock_,callbackMutex_;int prepareResult=0,audioHapticSyncId_=0,fileDes_=-1;
+ struct{int64_t offset=0,length=0;}pinnedAudioSource_;
+ std::shared_ptr<FakePlayer>avPlayer_=std::make_shared<FakePlayer>();
+ std::shared_ptr<AudioHapticPlaybackSession>playbackSession_=std::make_shared<AudioHapticPlaybackSession>();
+ std::atomic<AudioHapticPlayerState>playerState_{AudioHapticPlayerState::STATE_NEW};bool isCurrent=true,isStarting_=false,hasPendingFirstFrame_=false;
+ uint64_t pendingFirstFrameLatency_=17,provenanceGeneration505_=0;int firstCalls=0;
+ int PrepareForStartInternal(){return prepareResult;}
+ bool IsCurrentSession(const std::shared_ptr<AudioHapticPlaybackSession>&s){return isCurrent&&s==playbackSession_;}
+ void NotifyFirstFrameEvent(const std::shared_ptr<AudioHapticPlaybackSession>&,uint64_t){Need(audioHapticPlayerLock_.try_lock(),"callback must remain outside player lock");audioHapticPlayerLock_.unlock();firstCalls++;}
+ int32_t StartSound(const int32_t&);
+};
+@REAL_METHOD@
+int main(int argc,char**argv){Need(argc>=2&&argc<=3,"real WAV test file required");bool sawNativeProducer=false;int fd=::open(argv[1],O_RDONLY|O_CLOEXEC);Need(fd>=0,"real source file");struct stat st{};Need(::fstat(fd,&st)==0,"source stat");
+ for(int prepare:{0,-17})for(int parameter:{0,-18})for(int play:{0,-19})for(bool first:{false,true}){
+  AudioHapticSoundNormalImpl p;p.fileDes_=fd;p.pinnedAudioSource_.length=st.st_size;p.prepareResult=prepare;p.avPlayer_->parameterResult=parameter;p.avPlayer_->playResult=play;
+  if(first)p.avPlayer_->duringPlay=[&]{p.hasPendingFirstFrame_=true;};Need(::lseek(fd,11,SEEK_SET)==11,"original offset setup");
+  int result=p.StartSound(0);int expected=prepare?prepare:parameter?parameter:play?MSERR_START_FAILED:0;
+  Need(result==expected,"ordinary prepare/parameter/Play return changed");Need(::lseek(fd,0,SEEK_CUR)==11,"source observer changed shared FD offset");
+  auto found=p.avPlayer_->last.strings.find(Qap505::KEY);Qap505::Source actualSource;
+  if(found!=p.avPlayer_->last.strings.end()&&Qap505::Decode(found->second,actualSource)&&actualSource.wav==1)sawNativeProducer=true;
+  Need(p.avPlayer_->playCalls==((prepare||parameter)?0:1),"backend call ordering changed");Need(p.firstCalls==(!prepare&&!parameter&&!play&&first?1:0),"first-frame delivery changed");
+  Need(p.avPlayer_->last.integers.empty()||p.avPlayer_->last.integers[PlayerKeys::PLAYER_AUDIO_HAPTICS_SYNC_ID]==0,"non-DSP generation must not alter DSP ID");
+#if QAP505_AFTER
+  if(!prepare){auto i=p.avPlayer_->last.strings.find(Qap505::KEY);Need(i!=p.avPlayer_->last.strings.end(),"actual source descriptor not passed through real Format");Qap505::Source source;Need(Qap505::Decode(i->second,source)&&source.wav==1,"native FD source descriptor");Need(source.generation==p.provenanceGeneration505_,"native generation association");}
+#endif
+  std::cout<<"{\"prepare\":"<<prepare<<",\"parameter\":"<<parameter<<",\"play\":"<<play<<",\"pending_first\":"<<(first?"true":"false")<<",\"result\":"<<result<<",\"calls\":"<<p.avPlayer_->playCalls<<",\"delivered\":"<<p.firstCalls<<"}\n";
+ }
+ AudioHapticSoundNormalImpl invalid;invalid.fileDes_=-1;invalid.pinnedAudioSource_.length=st.st_size;Need(invalid.StartSound(0)==0,"diagnostic FD failure changed business return");
+#if QAP505_AFTER
+ Qap505::Source unknown;Need(Qap505::Decode(invalid.avPlayer_->last.strings[Qap505::KEY],unknown)&&unknown.wav==0,"failed observer must stay unknown");
+ for(const auto&row:rows){Need(row.find("\"accepted\":false")!=std::string::npos&&row.find("\"onset_proven\":false")!=std::string::npos,"source observations cannot claim output onset");}
+ std::cerr<<"source raw rows="<<rows.size()<<" unknown FD case preserved\n";
+#endif
+ ::close(fd);
+ if(argc==3&&std::string(argv[2])=="require-producer"&&!sawNativeProducer){std::cerr<<"missing actual native FD producer in StartSound\n";return 1;}
+ return 0;
+}

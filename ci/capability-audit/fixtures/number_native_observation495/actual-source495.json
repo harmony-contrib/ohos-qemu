@@ -1,0 +1,52 @@
+{
+  "receipt": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-number-source495-copy-02/receipt.json",
+    "sha256": "7673d12097a5f989fc3eaa328bc6bf4edb0997196ac1ea008b94fffca995e538"
+  },
+  "source_commit": "054d684589538d12f6e6c1981ccff80c5137f8a3",
+  "source_mutated": false,
+  "files": [
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-number-source495-copy-02/files/foundation/ability/ability_runtime/frameworks/native/appkit/app/main_thread.cpp",
+      "source_relative": "foundation/ability/ability_runtime/frameworks/native/appkit/app/main_thread.cpp",
+      "sha256": "3680fd9fb200b103a87bc01d530e0c68deadfac843825354adb4182763618c1e",
+      "bytes": 185260,
+      "two_read_payloads_equal": true
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-number-source495-copy-02/files/base/telephony/number_identity/number_location/src/number_location_ability.cpp",
+      "source_relative": "base/telephony/number_identity/number_location/src/number_location_ability.cpp",
+      "sha256": "48bd4bfb2f2df9c0dea5a00ece8d844c61b9027b6bf58adcfe87df59f21bd46b",
+      "bytes": 5216,
+      "two_read_payloads_equal": true
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-number-source495-copy-02/files/base/telephony/number_identity/number_location/include/number_location_ability.h",
+      "source_relative": "base/telephony/number_identity/number_location/include/number_location_ability.h",
+      "sha256": "19a0dd52250a6a6627e137ea1e53c0c3021684da655f4b78c1ff6ab60900d038",
+      "bytes": 2169,
+      "two_read_payloads_equal": true
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-number-source495-copy-02/files/base/telephony/number_identity/number_location/src/number_identity_datashare_stub_impl.cpp",
+      "source_relative": "base/telephony/number_identity/number_location/src/number_identity_datashare_stub_impl.cpp",
+      "sha256": "d65b50a71901c8c5302ca548e65a51679dd479486e8e0be4aa79ac184dd55600",
+      "bytes": 6896,
+      "two_read_payloads_equal": true
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-number-source495-copy-02/files/base/telephony/number_identity/number_location/include/number_identity_datashare_stub_impl.h",
+      "source_relative": "base/telephony/number_identity/number_location/include/number_identity_datashare_stub_impl.h",
+      "sha256": "39df5d004d73ce13c724807dc784e93b279b6a5996fecb6fe8ad8bc2ecfdbebe",
+      "bytes": 3168,
+      "two_read_payloads_equal": true
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-number-source495-copy-02/files/base/telephony/number_identity/utils/log/include/number_identity_log_wrapper.h",
+      "source_relative": "base/telephony/number_identity/utils/log/include/number_identity_log_wrapper.h",
+      "sha256": "a86ff12aea69ac1d945393772774f465acf370caeedead8afb9b7deca2793bdc",
+      "bytes": 2981,
+      "two_read_payloads_equal": true
+    }
+  ]
+}

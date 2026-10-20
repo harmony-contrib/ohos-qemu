@@ -207,6 +207,7 @@ QEMU_QOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/resourceschedule/qos_
 QEMU_VIBRATOR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/vibrator/apply.sh"
 QEMU_AUDIO_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/audio/apply.sh"
 QEMU_AUDIO_CAPTURE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/audio/capture_loopback/apply.sh"
+QEMU_AUDIO_ACCEPTED_WRITE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/drivers/peripheral/audio/accepted_write/apply.sh"
 QEMU_ACCESSIBILITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/barrierfree/accessibility/apply.sh"
 SENSOR_HEALTH_PERMISSION_COMPONENT_SCRIPT="${PATCH_ROOT}/common/interface/sdk-js/sensor_health_permission/apply.sh"
 ARKWEB_BUSINESS_ERROR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/web/webview/business_error/apply.sh"
@@ -240,6 +241,8 @@ I18N_SUGGESTION_TYPE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/global/i18n/api
 DEVICE_MANAGER_AUTH_FORM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributedhardware/device_manager/api26_auth_form/apply.sh"
 SYSTEM_SOUND_TONE_FEATURE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/api26_tone_haptics_feature/apply.sh"
 AUDIO_HAPTIC_LIFECYCLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/audio_haptic_lifecycle/apply.sh"
+AUDIO_HAPTIC_SOURCE_PLAYER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/audio_haptic_source_provenance/apply.sh"
+AUDIO_HAPTIC_SOURCE_CODEC_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/audio_haptic_source_provenance/apply.sh"
 AUDIO_HAPTIC_PUBLIC_ERRORS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/audio_haptic_public_errors/apply.sh"
 CAPTURER_FRAME_ASSEMBLY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/capturer_frame_assembly/apply.sh"
 AUDIO_VIVID_INTEGRITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/audio_vivid_integrity/apply.sh"
@@ -402,6 +405,11 @@ AVC_EOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/av
 AVC_SURFACE_LAYOUT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_surface_layout/apply.sh"
 AUDIO_CAPTURE_INTEGRITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/audio_capture_integrity/apply.sh"
 CAPTURER_READ_LIFECYCLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/capturer_read_lifecycle/apply.sh"
+JSFRAMEWORK_NATIVE_TEST_BRIDGE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/jsframework/native_test_bridge/apply.sh"
+AUDIO_HAPTIC_SYNC_ID_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/audio_haptic_sync_id/apply.sh"
+AUDIO_RESAMPLER_COUNTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/audio_resampler_counts/apply.sh"
+SONIC_DEFINED_ARITHMETIC_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/sonic/defined_arithmetic/apply.sh"
+AUDIO_PA_WRITE_STATUS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/pa_write_status/apply.sh"
 CODEC_HARDWARE_PROFILE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/codec_hardware_profile/apply.sh"
 QEMU_VIRTIO_YUV_BUFFER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/virtio_yuv_buffer/apply.sh"
 AUDIO_SUITE_LIBRARY_PATH_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/audio_suite_library_path/apply.sh"
@@ -2081,6 +2089,59 @@ apply_sdk_cortex_m_component() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_sdk_cortex_m_component.log"
 }
 
+prepare_audio_haptic_source_lifecycle() {
+  local audio_source_state
+  # Authenticate the entire lifecycle and both provenance components before the
+  # legacy installer can change any of their source files.
+  python3 "${AUDIO_HAPTIC_SOURCE_PLAYER_COMPONENT_SCRIPT%/*}/verify_batch.py" --source-root "${OHOS_ROOT}" \
+    > "${CACHE_ROOT}/logs/preflight_audio_haptic_source_provenance.json"
+  audio_source_state="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["state"])' \
+    "${CACHE_ROOT}/logs/preflight_audio_haptic_source_provenance.json")"
+  case "${audio_source_state}" in
+    final505) return 0 ;;
+    legacy:upstream|legacy:b4|legacy:incarnation|legacy:incarnation_v1|legacy:incarnation_race_v2|legacy:incarnation_e) ;;
+    *) echo "unknown whole AudioHaptic source state: ${audio_source_state}" >&2; return 1 ;;
+  esac
+  bash "${AUDIO_HAPTIC_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_haptic_lifecycle_component.log"
+  python3 "${AUDIO_HAPTIC_LIFECYCLE_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_haptic_lifecycle_component.log"
+  bash "${AUDIO_VIVID_INTEGRITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_vivid_integrity_component.log"
+  bash "${AUDIO_VIVID_INTEGRITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_vivid_integrity_component.log"
+}
+
+apply_sonic_defined_arithmetic() {
+  bash "${SONIC_DEFINED_ARITHMETIC_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_sonic_defined_arithmetic.log"
+  bash "${SONIC_DEFINED_ARITHMETIC_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_sonic_defined_arithmetic.log"
+}
+
+apply_audio_resampler_counts() {
+  bash "${AUDIO_RESAMPLER_COUNTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_resampler_counts.log"
+  bash "${AUDIO_RESAMPLER_COUNTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_resampler_counts.log"
+}
+
+apply_pa_write_status() {
+  bash "${AUDIO_PA_WRITE_STATUS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_pa_write_status.log"
+  bash "${AUDIO_PA_WRITE_STATUS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_pa_write_status.log"
+}
+
+apply_audio_haptic_source_provenance() {
+  bash "${AUDIO_HAPTIC_SOURCE_PLAYER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_haptic_source_player.log"
+  bash "${AUDIO_HAPTIC_SOURCE_CODEC_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_haptic_source_codec.log"
+  python3 "${AUDIO_HAPTIC_SOURCE_PLAYER_COMPONENT_SCRIPT%/*}/verify_batch.py" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_haptic_source_provenance.log"
+}
+
 apply_qemu_audio_component() {
   if [ ! -f "${QEMU_AUDIO_COMPONENT_SCRIPT}" ]; then
     echo "missing QEMU audio component: ${QEMU_AUDIO_COMPONENT_SCRIPT}" >&2
@@ -2092,6 +2153,10 @@ apply_qemu_audio_component() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_capture_component.log"
   bash "${QEMU_AUDIO_CAPTURE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_qemu_audio_capture_component.log"
+  bash "${QEMU_AUDIO_ACCEPTED_WRITE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_accepted_write_component.log"
+  bash "${QEMU_AUDIO_ACCEPTED_WRITE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_qemu_audio_accepted_write_component.log"
 }
 
 fix_case_insensitive_selinux_version_header() {
@@ -2938,6 +3003,53 @@ prepare_source_and_sdk() {
 }
 
 # The only aggregate capability patch plan, shared by Docker and both profiles.
+apply_number_identity_native_observation() {
+  local source_plan source_steps component
+  source_plan="$(python3 "${PATCH_ROOT}/common/foundation/ability/ability_runtime/number_identity_native_trace495/verify_source.py" \
+    --source-root "${OHOS_ROOT}" --preflight-sequence)" || return 1
+  source_steps="$(python3 - "${source_plan}" <<'PYPLAN'
+import json, sys
+def unique(items):
+    value = {}
+    for key, item in items:
+        if key in value:
+            raise ValueError('duplicate Number source-plan key')
+        value[key] = item
+    return value
+plan = json.loads(sys.argv[1], object_pairs_hook=unique)['component_sequence']
+old = 'common/foundation/ability/ability_runtime/number_identity_loader'
+a = 'common/foundation/ability/ability_runtime/number_identity_native_trace495'
+b = 'common/base/telephony/number_identity/native_observation495'
+if plan not in ([old, a, b], [a, b], [b], []):
+    raise ValueError('unknown Number source component sequence')
+print(' '.join(plan))
+PYPLAN
+)" || return 1
+  for component in ${source_steps}; do
+    case "${component}" in
+      common/foundation/ability/ability_runtime/number_identity_loader)
+        bash "${PATCH_ROOT}/common/foundation/ability/ability_runtime/number_identity_loader/apply.sh" \
+          --source-root "${OHOS_ROOT}" \
+          2>&1 | tee "${CACHE_ROOT}/logs/apply_number_identity_loader.log"
+        ;;
+      common/foundation/ability/ability_runtime/number_identity_native_trace495)
+        bash "${PATCH_ROOT}/common/foundation/ability/ability_runtime/number_identity_native_trace495/apply.sh" \
+          --source-root "${OHOS_ROOT}" \
+          2>&1 | tee "${CACHE_ROOT}/logs/apply_number_native_trace.log"
+        ;;
+      common/base/telephony/number_identity/native_observation495)
+        bash "${PATCH_ROOT}/common/base/telephony/number_identity/native_observation495/apply.sh" \
+          --source-root "${OHOS_ROOT}" \
+          2>&1 | tee "${CACHE_ROOT}/logs/apply_number_native_observation.log"
+        ;;
+      *) return 2 ;;
+    esac
+  done
+  python3 "${PATCH_ROOT}/common/foundation/ability/ability_runtime/number_identity_native_trace495/verify_source.py" \
+    --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_number_native_observation.log"
+}
+
 apply_qemu_capability_patch_plan() {
   for mesa_product in "${PRODUCTS[@]}"; do
     python3 "${SCRIPT_DIR}/qemu_mesa_llvm_artifacts.py" \
@@ -3127,6 +3239,10 @@ apply_qemu_capability_patch_plan() {
   bash "${TELEPHONY_RTT_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_rtt_lifecycle_component.log"
   if [ "${DEVICE_TYPE}" = phone ] && [ "${QEMU_PHONE_PROFILE_COMPONENT}" != "0" ]; then
+    # Authenticate the complete loader/provider vector before changing this family.
+    python3 "${PATCH_ROOT}/common/foundation/ability/ability_runtime/number_identity_native_trace495/verify_source.py" \
+      --source-root "${OHOS_ROOT}" --preflight-sequence \
+      > "${CACHE_ROOT}/logs/preflight_number_native_observation.json"
     bash "${PATCH_ROOT}/common/base/telephony/number_identity/local_provider/apply.sh" \
       --source-root "${OHOS_ROOT}" \
       2>&1 | tee "${CACHE_ROOT}/logs/apply_number_identity_local_provider.log"
@@ -3136,9 +3252,7 @@ apply_qemu_capability_patch_plan() {
     bash "${PATCH_ROOT}/common/base/telephony/number_identity/native_package_identity/apply.sh" \
       --source-root "${OHOS_ROOT}" \
       2>&1 | tee "${CACHE_ROOT}/logs/apply_number_identity_native_package_identity.log"
-    bash "${PATCH_ROOT}/common/foundation/ability/ability_runtime/number_identity_loader/apply.sh" \
-      --source-root "${OHOS_ROOT}" \
-      2>&1 | tee "${CACHE_ROOT}/logs/apply_number_identity_loader.log"
+    apply_number_identity_native_observation
     python3 "${PATCH_ROOT}/lib/number_identity_provider.py" --source-root "${OHOS_ROOT}" --prepare \
       2>&1 | tee "${CACHE_ROOT}/logs/prepare_number_identity_local_signing.log"
     python3 "${PATCH_ROOT}/common/vendor/ohemu/virt/number_identity_local/configure.py" \
@@ -3157,18 +3271,11 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_device_manager_auth_form_component.log"
   bash "${SYSTEM_SOUND_TONE_FEATURE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_system_sound_tone_feature_component.log"
-  bash "${AUDIO_HAPTIC_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
-    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_haptic_lifecycle_component.log"
-  python3 "${AUDIO_HAPTIC_LIFECYCLE_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
-    2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_haptic_lifecycle_component.log"
+  prepare_audio_haptic_source_lifecycle
   bash "${AUDIO_HAPTIC_PUBLIC_ERRORS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_haptic_public_errors_component.log"
   python3 "${AUDIO_HAPTIC_PUBLIC_ERRORS_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_haptic_public_errors_component.log"
-  bash "${AUDIO_VIVID_INTEGRITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
-    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_vivid_integrity_component.log"
-  bash "${AUDIO_VIVID_INTEGRITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
-    2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_vivid_integrity_component.log"
   bash "${AUDIO_PUBLIC_ENUMS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_public_enums_component.log"
   bash "${UI_EFFECT_PUBLIC_MODES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3585,8 +3692,20 @@ apply_qemu_capability_patch_plan() {
     python3 "${SCRIPT_DIR}/prepare_qemu_knowledge_resource.py" "${knowledge_resource_args[@]}" \
       2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_knowledge_resource.log"
   fi
+  apply_sonic_defined_arithmetic
+  apply_audio_resampler_counts
+  apply_pa_write_status
+  apply_audio_haptic_source_provenance
   ensure_flexlexer_header
   clean_corrupt_hvigor_state
+  bash "${JSFRAMEWORK_NATIVE_TEST_BRIDGE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_jsframework_native_test_bridge.log"
+  python3 "${JSFRAMEWORK_NATIVE_TEST_BRIDGE_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_jsframework_native_test_bridge.log"
+  bash "${AUDIO_HAPTIC_SYNC_ID_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_haptic_sync_id_component.log"
+  python3 "${AUDIO_HAPTIC_SYNC_ID_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_haptic_sync_id_component.log"
   # Hash actual, fully patched kernel/config/HDI sources before any traversal.
   # Directory mtimes and a shell environment flag cannot invalidate Ninja's
   # old Image output; the GN action now consumes this stable fingerprint.

@@ -1,0 +1,77 @@
+#include <atomic>
+#include <cstdint>
+#include <functional>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+#define AUDIO_INFO_LOG(...) ((void)0)
+#define AUDIO_ERR_LOG(...) ((void)0)
+constexpr int SUCCESS=0,ERR_INVALID_PARAM=-2,HPAE_STREAM_CLASS_TYPE_PLAY=17;
+enum class BootAnimationState {PREE_AUDIO_START=23};
+std::vector<std::string> events;
+struct Trace{explicit Trace(const std::string&){};};
+struct ClockTime {
+ static void GetAllTimeStamp(int64_t&stamp){events.push_back("timestamp");stamp=991;}
+ static int64_t GetCurMilli(){events.push_back("clockMilli");return 1973;}
+};
+struct Flag {
+ bool value=true;
+ Flag&operator=(bool v){value=v;events.push_back(v?"noWait=true":"noWait=false");return *this;}
+};
+struct IHpaeManager {
+ int result=0,streamClass=-1,originalSession=-1,syncId=-1,volumeCalls=0;
+ std::string volumeSession;float volume=-1;std::function<void()>atStart;
+ static IHpaeManager&GetHpaeManager(){static IHpaeManager m;return m;}
+ int Start(int kind,int session){events.push_back("start");streamClass=kind;originalSession=session;if(atStart)atStart();return result;}
+ int StartWithSyncId(int kind,int session,int id){events.push_back("sync");streamClass=kind;originalSession=session;syncId=id;if(atStart)atStart();return result;}
+ void AddStreamVolumeToEffect(const std::string&session,float value){events.push_back("volume");volumeSession=session;volume=value;volumeCalls++;}
+};
+struct CoreServiceHandler {
+ int calls=0,stage=-1,uid=-1;int64_t milliseconds=-1;
+ static CoreServiceHandler&GetInstance(){static CoreServiceHandler c;return c;}
+ void RecordBootStateTime(int s,int u,int64_t ms){events.push_back("boot");calls++;stage=s;uid=u;milliseconds=ms;}
+};
+struct HpaeRendererStreamImpl {
+ uint32_t streamIndex_=37;std::atomic<bool>preBufDone_{true};int64_t timestamp_=0;Flag noWaitDataFlag_;
+ struct{int originalSessionId=499;struct{int customSampleRate=0;}streamInfo;struct{int appUid=20000000;}appInfo;}processConfig_;
+ float clientVolume_=0.35f;
+ int32_t Start();int32_t StartWithSyncId(const int32_t&);
+};
+@REAL_FUNCTIONS@
+void need(bool value,const char*message){if(!value)throw std::runtime_error(message);}
+void reset(){events.clear();IHpaeManager::GetHpaeManager()=IHpaeManager{};CoreServiceHandler::GetInstance()=CoreServiceHandler{};}
+bool expectedEffects(bool withSync,bool repaired){return !withSync||repaired;}
+int checks=0;
+void matrix(bool repaired){
+ for(bool sync:{false,true})for(int rate:{0,48000,96000})for(int ret:{0,-77,9})for(uint32_t index:{37u,807u})for(float volume:{0.0f,0.35f,1.0f}){
+  reset();HpaeRendererStreamImpl r;r.streamIndex_=index;r.processConfig_.originalSessionId=600+index;
+  r.processConfig_.appInfo.appUid=20000000+index;r.processConfig_.streamInfo.customSampleRate=rate;r.clientVolume_=volume;
+  auto&m=IHpaeManager::GetHpaeManager();m.result=ret;
+  m.atStart=[&]{need(!r.preBufDone_.load()&&r.timestamp_==991,"prebuffer/timestamp setup moved after backend");need(r.noWaitDataFlag_.value,"custom-rate noWait moved before backend");};
+  int rc=sync?r.StartWithSyncId(197):r.Start();
+  need(rc==(ret==0?SUCCESS:ERR_INVALID_PARAM),"backend failure mapping changed");
+  need(m.streamClass==HPAE_STREAM_CLASS_TYPE_PLAY&&m.originalSession==600+(int)index,"wrong stream class/session forwarded");
+  need(m.syncId==(sync?197:-1),"sync ID changed");need(r.noWaitDataFlag_.value==(rate==0),"custom-rate noWait final state differs");
+  bool effects=expectedEffects(sync,repaired);auto&c=CoreServiceHandler::GetInstance();
+  need(m.volumeCalls==(effects?1:0)&&c.calls==(effects?1:0),"Start effect-volume/boot side effects lost");
+  if(effects){need(m.volumeSession==std::to_string(index)&&m.volume==volume,"effect volume identity/value changed");need(c.stage==(int)BootAnimationState::PREE_AUDIO_START&&c.uid==20000000+(int)index&&c.milliseconds==1973,"boot stage/UID/clock changed");}
+  std::vector<std::string>expected={"timestamp",sync?"sync":"start"};if(rate!=0)expected.push_back("noWait=false");
+  if(effects){expected.push_back("volume");expected.push_back("clockMilli");expected.push_back("boot");}
+  need(events==expected,"manager/noWait/volume/boot order differs");checks++;
+ }
+}
+int main(int argc,char**argv){
+ if(argc==2&&std::string(argv[1])=="--probe-equivalent-effects"){
+  int missing=0;
+  for(int rate:{0,48000})for(int ret:{0,-77}){
+   reset();HpaeRendererStreamImpl r;r.processConfig_.streamInfo.customSampleRate=rate;IHpaeManager::GetHpaeManager().result=ret;
+   int rc=r.StartWithSyncId(197);auto&m=IHpaeManager::GetHpaeManager();auto&c=CoreServiceHandler::GetInstance();
+   if(rc!=(ret==0?SUCCESS:ERR_INVALID_PARAM)||m.volumeCalls!=1||c.calls!=1)missing++;
+  }
+  std::cout<<"{\"HPAE_StartWithSyncId_missing_side_effect_cases\":"<<missing<<",\"accepted\":false,\"onset_proven\":false}"<<std::endl;return missing?1:0;
+ }
+ bool repaired=argc==2&&std::string(argv[1])=="--expect-equivalent-effects";
+ try{matrix(repaired);std::cout<<"{\"checks\":"<<checks<<",\"scope\":\"two_actual_HPAE_functions_controlled_manager_effect_volume_boot_surfaces_ONLY\",\"accepted\":false,\"onset_proven\":false}"<<std::endl;return 0;}
+ catch(const std::exception&e){std::cerr<<e.what()<<std::endl;return 1;}
+}

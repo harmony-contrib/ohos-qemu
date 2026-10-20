@@ -1,0 +1,99 @@
+--- a/kit411/candidate/assemble_number411.py
++++ b/kit411/candidate/assemble_number411.py
+@@ -8,6 +8,8 @@
+ from pathlib import Path
+ import re
+ import secrets
++import hashlib
++import stat
+ 
+ import number_owner411 as n
+ 
+@@ -15,7 +17,7 @@
+ FIELDS = dict(bundle=['name'], uid=['applicationInfo', 'uid'], token=['applicationInfo', 'accessTokenId'],
+               systemApp=['applicationInfo', 'isSystemApp'])
+ INPUT_KEYS = {'config', 'sdk_evidence', 'signing_boot', 'signed_roles', 'target_permission_source',
+-              'observer_proof', 'number', 'phase_timeout_seconds', 'native_image_report'}
++              'observer_proof', 'number', 'phase_timeout_seconds', 'native_image_report', 'native_consumer_inputs496'}
+ 
+ 
+ def required(value, label):
+@@ -34,8 +36,58 @@
+                       parse_constant=lambda _: (_ for _ in ()).throw(ValueError('nonfinite DATA')))
+ 
+ 
++
++NATIVE_INPUT_KEYS496 = {'number_image_report', 'loader_image_report', 'system_image',
++                       'emitter_elfs', 'build_inputs', 'producer_sources'}
++NATIVE_EMITTERS496 = {'libappkit_native.z.so', 'libnumber_identity.z.so'}
++
++
++def native_descriptor497(row, maximum):
++    n.need(type(row) is dict and set(row) == {'path', 'sha256', 'bytes'} and
++           type(row['path']) is str and type(row['sha256']) is str and
++           re.fullmatch('[0-9a-f]{64}', row['sha256']) and
++           type(row['bytes']) is int and 0 < row['bytes'] <= maximum,
++           'exact finite native evidence descriptor required; status is not admission')
++    path = Path(row['path'])
++    n.need(path.is_absolute() and path.resolve() == path and
++           all(not p.is_symlink() for p in (path, *path.parents)), 'canonical native evidence path required')
++    before = path.stat()
++    n.need(stat.S_ISREG(before.st_mode) and before.st_nlink == 1 and before.st_size == row['bytes'],
++           'one regular native evidence inode/size required')
++    digest = hashlib.sha256()
++    with path.open('rb') as stream:
++        for block in iter(lambda: stream.read(1048576), b''): digest.update(block)
++    after = path.stat()
++    n.need((before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns) ==
++           (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns) and
++           digest.hexdigest() == row['sha256'], 'native evidence changed during full-byte descriptor verification')
++    return dict(row)
++
++
++def native_inputs496(value):
++    if value is None: return None
++    n.need(type(value) is dict and set(value) == NATIVE_INPUT_KEYS496,
++           'exact optional native DATA keys required; no command/callback/readiness fields')
++    result = {}
++    for key in ('number_image_report', 'loader_image_report', 'system_image', 'build_inputs'):
++        item = value[key]
++        result[key] = None if item is None else native_descriptor497(item,
++            16*1024**3 if key == 'system_image' else 16*1024*1024)
++    for key, names, limit in (('emitter_elfs', NATIVE_EMITTERS496, 256*1024*1024),
++                             ('producer_sources', {'capture', 'observer'}, 1024*1024)):
++        items = value[key]
++        if items is None:
++            result[key] = None
++        else:
++            n.need(type(items) is dict and set(items) == names, 'exact native ' + key + ' descriptor names required')
++            result[key] = {name: native_descriptor497(item, limit) for name, item in items.items()}
++    return result  # Descriptor integrity only. Actual raw/admitted/ELF joins remain separate.
++
++
+ def context(data):
+-    n.need(type(data) is dict and set(data) == INPUT_KEYS, 'exact DATA keys required; no executable fields')
++    n.need(type(data) is dict and set(data) in (INPUT_KEYS, INPUT_KEYS - {'native_consumer_inputs496'}),
++           'original DATA keys plus the one optional native DATA key only; no executable fields')
++    native_inputs496(data.get('native_consumer_inputs496'))
+     for key in ('config', 'sdk_evidence', 'signing_boot'): required(data[key], key)
+     module, c = n.source_modules()
+     cp = c.checked(data['config'])
+@@ -101,7 +153,8 @@
+ 
+ 
+ def assemble(data):
+-    for key in INPUT_KEYS - {'native_image_report'}: required(data.get(key), key)
++    for key in INPUT_KEYS - {'native_image_report', 'native_consumer_inputs496'}: required(data.get(key), key)
++    native_data496 = data.get('native_consumer_inputs496')  # context() verifies every supplied descriptor.
+     if data.get('native_image_report') is not None:
+         image=data['native_image_report'];path=n.regular(image['path'])
+         n.need(n.digest(path)==image['sha256'] and (not 'bytes' in image or
+@@ -139,7 +192,7 @@
+            'root-chosen unused candidate number and bounded phase wait required; runtime first read must still prove absence')
+     spec = dict(archive_sha256=config['archive']['sha256'], source_commit=sdk['source_commit'],
+                 target_permission_source=data['target_permission_source'], roles=roles, vm=None, native_image_report=data['native_image_report'],
+-                number=data['number'], runs={role:secrets.token_hex(16) for role in c.ROLES},
++                number=data['number'], native_consumer_inputs496=native_data496, runs={role:secrets.token_hex(16) for role in c.ROLES},
+                 phase_timeout_seconds=data['phase_timeout_seconds'])
+     return dict(scope='runtime input DATA ONLY; not signature execution, installed identity, Number boot or gate pass',
+                 spec=spec, observer_proof=data['observer_proof'], presign_boot=boot_proof,

@@ -1,0 +1,367 @@
+--- a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_render.c
++++ b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_render.c
+@@ -13,6 +13,7 @@
+  * limitations under the License.
+  */
+ 
++#include <stdint.h>
+ #include "alsa_soundcard.h"
+ #include "alsa_snd_render.h"
+ #include "osal_time.h"
+@@ -566,54 +567,77 @@
+ }
+ 
+ static int32_t RenderWritei(snd_pcm_t *pcm, const struct AudioHwRenderParam *handleData,
+-    const struct AudioPcmHwParams *hwParams)
+-{
+-    int32_t ret = HDF_SUCCESS;
+-    int32_t tryNum = AUDIO_ALSALIB_RETYR;
+-
+-    /* Check whether the PCM status is normal */
++    const struct AudioPcmHwParams *hwParams, uint64_t *acceptedBytes)
++{
++    if (acceptedBytes == NULL) {
++        return HDF_FAILURE;
++    }
++    *acceptedBytes = 0;
++    if (pcm == NULL || handleData == NULL || hwParams == NULL || hwParams->bitsPerFrame <= 0 ||
++        hwParams->bitsPerFrame % BIT_COUNT_OF_BYTE != 0) {
++        return HDF_FAILURE;
++    }
++    uint64_t frameBytes = (uint64_t)hwParams->bitsPerFrame / BIT_COUNT_OF_BYTE;
++    uint64_t requestedFrames = handleData->frameRenderMode.bufferFrameSize;
++    uint64_t requestedBytes = handleData->frameRenderMode.bufferSize;
++    if (requestedFrames > SIZE_MAX / frameBytes || requestedFrames * frameBytes != requestedBytes ||
++        (requestedBytes != 0 && handleData->frameRenderMode.buffer == NULL)) {
++        return HDF_FAILURE;
++    }
++    if (requestedFrames == 0) {
++        return HDF_SUCCESS;
++    }
++
+     snd_pcm_state_t state = snd_pcm_state(pcm);
+     if (state == SND_PCM_STATE_SETUP) {
+-        ret = snd_pcm_prepare(pcm);
++        int32_t ret = snd_pcm_prepare(pcm);
+         if (ret < 0) {
+             AUDIO_FUNC_LOGE("snd_pcm_prepare fail: %{public}s", snd_strerror(ret));
+             return HDF_FAILURE;
+         }
+     }
+ 
+-    size_t sbufFrameSize = (size_t)handleData->frameRenderMode.bufferFrameSize;
++    size_t remaining = (size_t)requestedFrames;
+     char *dataBuf = handleData->frameRenderMode.buffer;
+-    int32_t offset = hwParams->bitsPerFrame / BIT_COUNT_OF_BYTE;
+-    while (sbufFrameSize > 0) {
+-        long frames = snd_pcm_writei(pcm, dataBuf, sbufFrameSize);
++    int32_t tryNum = AUDIO_ALSALIB_RETYR;
++    while (remaining > 0) {
++        snd_pcm_sframes_t frames = snd_pcm_writei(pcm, dataBuf, remaining);
+         if (frames > 0) {
+-            sbufFrameSize -= frames;
+-            dataBuf += frames * offset;
+-        } else if (frames == -EAGAIN) {
+-            snd_pcm_wait(pcm, PCM_WAIT_TIMEOUT_MS);
+-            tryNum--;
+-            if (tryNum == 0) {
+-                return HDF_SUCCESS;
+-            }
+-        } else if (frames == -EBADFD) {
+-            /* not #SND_PCM_STATE_PREPARED or #SND_PCM_STATE_RUNNING */
+-            AUDIO_FUNC_LOGE("render PCM is not in the right state: %{public}s", snd_strerror(frames));
+-            snd_pcm_prepare(pcm);
+-            return HDF_FAILURE;
+-        } else {
+-            /* -ESTRPIPE: a suspend event occurred,
+-             * stream is suspended and waiting for an application recovery.
+-             * -EPIPE: an underrun occurred.
+-             */
+-            AUDIO_FUNC_LOGI("err: %{public}s", snd_strerror(ret));
+-            ret = snd_pcm_recover(pcm, frames, 0); // 0 for open render recover log.
+-            if (ret < 0) {
+-                AUDIO_FUNC_LOGE("snd_pcm_writei failed: %{public}s", snd_strerror(ret));
++            if ((uint64_t)frames > remaining) {
++                AUDIO_FUNC_LOGE("snd_pcm_writei returned more frames than requested");
+                 return HDF_FAILURE;
+             }
+-        }
+-    }
+-
++            size_t bytes = (size_t)frames * (size_t)frameBytes;
++            *acceptedBytes += (uint64_t)bytes;
++            remaining -= (size_t)frames;
++            dataBuf += bytes;
++            continue;
++        }
++        if (frames == 0) {
++            AUDIO_FUNC_LOGE("snd_pcm_writei made no progress");
++            return ALSA_RENDER_WRITE_RETRYABLE;
++        }
++        if (frames == -EBADFD) {
++            AUDIO_FUNC_LOGE("render PCM is not in the right state: %{public}s", snd_strerror(frames));
++            (void)snd_pcm_prepare(pcm);
++            return HDF_FAILURE;
++        }
++        if (frames == -EAGAIN) {
++            if (snd_pcm_wait(pcm, PCM_WAIT_TIMEOUT_MS) < 0) {
++                return HDF_FAILURE;
++            }
++        } else {
++            int32_t ret = snd_pcm_recover(pcm, (int)frames, 0);
++            if (ret < 0) {
++                AUDIO_FUNC_LOGE("snd_pcm_writei recovery failed: %{public}s", snd_strerror(ret));
++                return HDF_FAILURE;
++            }
++        }
++        if (--tryNum == 0) {
++            AUDIO_FUNC_LOGE("snd_pcm_writei retry budget exhausted");
++            return frames == -EAGAIN ? ALSA_RENDER_WRITE_RETRYABLE : HDF_FAILURE;
++        }
++    }
+     return HDF_SUCCESS;
+ }
+ 
+@@ -718,33 +742,55 @@
+     return HDF_SUCCESS;
+ }
+ 
+-int32_t RenderWriteImpl(struct AlsaRender *renderIns, const struct AudioHwRenderParam *handleData)
+-{
+-    int32_t ret = HDF_SUCCESS;
+-    struct AlsaSoundCard *cardIns = (struct AlsaSoundCard*)renderIns;
+-    CHECK_NULL_PTR_RETURN_DEFAULT(renderIns);
+-
++static int32_t RenderWriteAcceptedDefault(struct AlsaRender *renderIns,
++    const struct AudioHwRenderParam *handleData, uint64_t *acceptedBytes)
++{
++    struct AlsaSoundCard *cardIns = (struct AlsaSoundCard *)renderIns;
+     if (cardIns->pauseState) {
+         AUDIO_FUNC_LOGE("Currently in pause, please check!");
+         return HDF_FAILURE;
+     }
+-
+     if (!cardIns->mmapFlag) {
+-        ret = ResetRenderParams(cardIns, SND_PCM_ACCESS_RW_INTERLEAVED);
++        int32_t ret = ResetRenderParams(cardIns, SND_PCM_ACCESS_RW_INTERLEAVED);
+         if (ret < 0) {
+             AUDIO_FUNC_LOGE("ResetRenderParams failed!");
+             return HDF_FAILURE;
+         }
+         cardIns->mmapFlag = true;
+     }
+-
+-    ret = RenderWritei(cardIns->pcmHandle, handleData, &cardIns->hwParams);
+-    if (ret != HDF_SUCCESS) {
+-        AUDIO_FUNC_LOGE("RenderWritei failed!");
+-        return HDF_FAILURE;
+-    }
+-
+-    return HDF_SUCCESS;
++    return RenderWritei(cardIns->pcmHandle, handleData, &cardIns->hwParams, acceptedBytes);
++}
++
++int32_t RenderWriteImpl(struct AlsaRender *renderIns, const struct AudioHwRenderParam *handleData)
++{
++    uint64_t acceptedBytes = 0;
++    if (renderIns == NULL || handleData == NULL) {
++        return HDF_FAILURE;
++    }
++    int32_t ret = RenderWriteAcceptedDefault(renderIns, handleData, &acceptedBytes);
++    return ret == HDF_SUCCESS ? HDF_SUCCESS : HDF_FAILURE;
++}
++
++int32_t RenderWriteAccepted(struct AlsaRender *renderIns, const struct AudioHwRenderParam *handleData,
++    uint64_t *acceptedBytes)
++{
++    if (acceptedBytes == NULL) {
++        return HDF_FAILURE;
++    }
++    *acceptedBytes = 0;
++    if (renderIns == NULL || handleData == NULL || renderIns->Write == NULL) {
++        return HDF_FAILURE;
++    }
++    if (renderIns->Write == RenderWriteImpl) {
++        return RenderWriteAcceptedDefault(renderIns, handleData, acceptedBytes);
++    }
++    /* Preserve the pre-existing all-or-error contract of a vendor Write override.
++     * This compatibility branch is not a raw ALSA writei observation. */
++    int32_t ret = renderIns->Write(renderIns, handleData);
++    if (ret == HDF_SUCCESS) {
++        *acceptedBytes = handleData->frameRenderMode.bufferSize;
++    }
++    return ret == HDF_SUCCESS ? HDF_SUCCESS : HDF_FAILURE;
+ }
+ 
+ int32_t RenderGetMmapPositionImpl(struct AlsaRender *renderIns)
+--- a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_lib_render.c
++++ b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_lib_render.c
+@@ -471,6 +471,24 @@
+     return HDF_SUCCESS;
+ }
+ 
++static int32_t AudioOutputRenderWriteAccepted(
++    const struct DevHandle *handle, int cmdId, struct AudioHwRenderParam *handleData)
++{
++    CHECK_NULL_PTR_RETURN_DEFAULT(handleData);
++    handleData->writeAcceptedBytes = 0;
++    handleData->writeRetryable = false;
++    struct AlsaRender *renderIns = RenderGetInstance(handleData->renderMode.hwInfo.adapterName);
++    CHECK_NULL_PTR_RETURN_DEFAULT(renderIns);
++
++    int32_t ret = RenderWriteAccepted(renderIns, handleData, &handleData->writeAcceptedBytes);
++    handleData->writeRetryable = (ret == ALSA_RENDER_WRITE_RETRYABLE);
++    if (ret != HDF_SUCCESS) {
++        AUDIO_FUNC_LOGE("Render write frame failed after accepting a prefix");
++        return HDF_FAILURE;
++    }
++    return HDF_SUCCESS;
++}
++
+ int32_t AudioOutputRenderWrite(
+     const struct DevHandle *handle, int cmdId, const struct AudioHwRenderParam *handleData)
+ {
+@@ -611,7 +629,7 @@
+             break;
+         case AUDIO_DRV_PCM_IOCTL_WRITE:
+             pthread_mutex_lock(&g_mutex);
+-            ret = AudioOutputRenderWrite(handle, cmdId, handleData);
++            ret = AudioOutputRenderWriteAccepted(handle, cmdId, handleData);
+             pthread_mutex_unlock(&g_mutex);
+             break;
+         case AUDIO_DRV_PCM_IOCTRL_STOP:
+--- a/drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_snd_render.h
++++ b/drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_snd_render.h
+@@ -76,6 +76,13 @@
+     int32_t (*SetPauseState)(struct AlsaRender *, bool);
+ };
+ 
++/* Private result, never an HDI status or a byte count. */
++enum AlsaRenderWriteResult { ALSA_RENDER_WRITE_RETRYABLE = 1 };
++
++/* Accepted bytes are a prefix even when the returned status is an error. */
++int32_t RenderWriteAccepted(struct AlsaRender *renderIns, const struct AudioHwRenderParam *handleData,
++    uint64_t *acceptedBytes);
++
+ struct AlsaRender *RenderCreateInstance(const char* adapterName, enum AudioCategory scene);
+ struct AlsaRender *RenderGetInstance(const char *adapterName);
+ void  RenderSetPriData(struct AlsaRender *renderIns, RenderPriData data);
+--- a/drivers/peripheral/audio/hdi_service/primary_impl/src/audio_render.c
++++ b/drivers/peripheral/audio/hdi_service/primary_impl/src/audio_render.c
+@@ -855,9 +855,87 @@
+     return HDF_SUCCESS;
+ }
+ 
++#ifdef ALSA_LIB_MODE
++static int32_t AudioRenderRenderFrameAccepted(
++    struct IAudioRender *render, const int8_t *frame, uint32_t frameLen, uint64_t *replyBytes)
++{
++    if (replyBytes == NULL) {
++        return AUDIO_ERR_INVALID_PARAM;
++    }
++    *replyBytes = 0;
++    struct AudioHwRender *hwRender = (struct AudioHwRender *)render;
++    if (hwRender == NULL || frame == NULL || frameLen > FRAME_DATA) {
++        return AUDIO_ERR_INVALID_PARAM;
++    }
++    pthread_mutex_lock(&hwRender->renderParam.frameRenderMode.mutex);
++    struct AudioFrameRenderMode *mode = &hwRender->renderParam.frameRenderMode;
++    if (hwRender->writeAcceptanceUncertain) {
++        pthread_mutex_unlock(&mode->mutex);
++        return AUDIO_ERR_INTERNAL;
++    }
++    uint32_t formatBits = 0;
++    if (mode->buffer == NULL || mode->attrs.sampleRate == 0 ||
++        FormatToBits(mode->attrs.format, &formatBits) != HDF_SUCCESS ||
++        formatBits == 0 || formatBits > 64 || formatBits % PCM_8_BIT != 0 ||
++        mode->attrs.channelCount == 0 || mode->attrs.channelCount > 4) {
++        pthread_mutex_unlock(&mode->mutex);
++        return AUDIO_ERR_INVALID_PARAM;
++    }
++    uint32_t frameBytes = mode->attrs.channelCount * (formatBits / PCM_8_BIT);
++    uint32_t requestedFrames = frameLen / frameBytes;
++    if (frameLen % frameBytes != 0 || mode->frames > UINT64_MAX - requestedFrames) {
++        pthread_mutex_unlock(&mode->mutex);
++        return AUDIO_ERR_INVALID_PARAM;
++    }
++    int32_t ret = memcpy_s(mode->buffer, FRAME_DATA, frame, frameLen);
++    if (ret != EOK) {
++        pthread_mutex_unlock(&mode->mutex);
++        return AUDIO_ERR_INTERNAL;
++    }
++    mode->bufferSize = frameLen;
++    mode->bufferFrameSize = requestedFrames;
++    /* A matched adapter replaces the sentinel even on an error. */
++    hwRender->renderParam.writeAcceptedBytes = UINT64_MAX;
++    hwRender->renderParam.writeRetryable = false;
++    ret = AudioRenderRenderFramSplit(hwRender);
++    uint64_t acceptedBytes = hwRender->renderParam.writeAcceptedBytes;
++    if (acceptedBytes > frameLen || acceptedBytes % frameBytes != 0) {
++        /* Only a newly allocated render instance may clear this uncertainty.
++         * Never expose an invalid count or replay an unknown accepted prefix. */
++        hwRender->writeAcceptanceUncertain = true;
++        pthread_mutex_unlock(&mode->mutex);
++        AUDIO_FUNC_LOGE("Invalid accepted render byte count");
++        return AUDIO_ERR_INTERNAL;
++    }
++    uint32_t acceptedFrames = (uint32_t)(acceptedBytes / frameBytes);
++    *replyBytes = acceptedBytes;
++    mode->frames += acceptedFrames;
++    if (acceptedFrames != 0 && TimeToAudioTimeStamp(acceptedFrames, &mode->time,
++        mode->attrs.sampleRate) == HDF_FAILURE) {
++        AUDIO_FUNC_LOGE("Accepted render prefix timestamp update failed");
++        ret = AUDIO_ERR_INTERNAL;
++    }
++    if (ret == HDF_SUCCESS && acceptedBytes != frameLen) {
++        ret = AUDIO_ERR_INTERNAL;
++    }
++    bool retryable = hwRender->renderParam.writeRetryable;
++    pthread_mutex_unlock(&mode->mutex);
++    /* The generated HDI stub serializes replyBytes only on success. Positive
++     * prefixes and confirmed retryable zero must cross that boundary intact;
++     * the raw backend status was retained by AudioRenderRenderFramSplit. */
++    if (acceptedBytes != 0 || retryable) {
++        return AUDIO_SUCCESS;
++    }
++    return ret < 0 ? AUDIO_ERR_INTERNAL : AUDIO_SUCCESS;
++}
++#endif
++
+ int32_t AudioRenderRenderFrame(
+     struct IAudioRender *render, const int8_t *frame, uint32_t frameLen, uint64_t *replyBytes)
+ {
++#ifdef ALSA_LIB_MODE
++    return AudioRenderRenderFrameAccepted(render, frame, frameLen, replyBytes);
++#else
+     struct AudioHwRender *hwRender = (struct AudioHwRender *)render;
+     if (hwRender == NULL || frame == NULL || replyBytes == NULL) {
+         AUDIO_FUNC_LOGE("Render Frame Paras is NULL!");
+@@ -913,6 +991,7 @@
+         return AUDIO_ERR_INTERNAL;
+     }
+     return AUDIO_SUCCESS;
++#endif
+ }
+ 
+ int32_t AudioRenderGetRenderPosition(struct IAudioRender *render, uint64_t *frames, struct AudioTimeStamp *time)
+--- a/drivers/peripheral/audio/hdi_service/primary_impl/include/audio_internal.h
++++ b/drivers/peripheral/audio/hdi_service/primary_impl/include/audio_internal.h
+@@ -244,6 +244,9 @@
+ struct AudioHwRenderParam {
+     struct AudioHwRenderMode renderMode;
+     struct AudioFrameRenderMode frameRenderMode;
++    /* Output only for the current WRITE; never a hardware playback position. */
++    uint64_t writeAcceptedBytes;
++    bool writeRetryable;
+ };
+ 
+ struct ErrorDump {
+@@ -269,6 +272,8 @@
+     struct DevHandle *devCtlHandle;             // Bind Ctl handle
+     struct HdfRemoteService *proxyRemoteHandle; // proxyPriRemoteHandle
+     struct ErrorLog errorLog;
++    /* Invalid WRITE result: requires release and a newly allocated instance. */
++    bool writeAcceptanceUncertain;
+ };
+ 
+ struct AudioHwCaptureMode {

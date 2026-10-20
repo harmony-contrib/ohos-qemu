@@ -1,0 +1,52 @@
+"""Exact source admission only; no native callback or runtime verdict."""
+from pathlib import Path
+import argparse
+import hashlib
+import json
+import stat
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[5] / 'lib'))
+from exact_source_states import validate_component
+COMPONENT = Path(__file__).resolve().parent
+PROJECT = 'base/telephony/number_identity'
+REVISION = '50e1330646432ce166e7981c577f25f46c90e7ac'
+FILES = (('number_location/include/number_identity_datashare_stub_impl.h', '39df5d004d73ce13c724807dc784e93b279b6a5996fecb6fe8ad8bc2ecfdbebe', '6ad603e1ddaabfd4c2a29e8fe650ccbdbaa20bac51072756d98842e45189f5c8'), ('number_location/include/number_identity_native_trace.h', None, '5538eeb65afa91bcabeb39a64e6fbe6939ad88c3f1279ac860366d71a5c1fbc6'), ('number_location/include/number_location_ability.h', '19a0dd52250a6a6627e137ea1e53c0c3021684da655f4b78c1ff6ab60900d038', 'df55045f373f3d02166f68f12950c0d26f51314cd5b24bc7aa66ca9d620871d5'), ('number_location/src/number_identity_datashare_stub_impl.cpp', 'd65b50a71901c8c5302ca548e65a51679dd479486e8e0be4aa79ac184dd55600', 'ecc474085ce71a77b641c0d6962554fbb3400683a63ea45e3720feebfc7d6715'), ('number_location/src/number_location_ability.cpp', '48bd4bfb2f2df9c0dea5a00ece8d844c61b9027b6bf58adcfe87df59f21bd46b', '371c44cc4d8387d95092ee1c073e7a6976149b361914c55f0b10eeb89b973dd4'))
+EXPECTED = {'schema': 'native_observation495/v1', 'project': 'base/telephony/number_identity', 'revision': '50e1330646432ce166e7981c577f25f46c90e7ac', 'files': [['number_location/include/number_identity_datashare_stub_impl.h', '39df5d004d73ce13c724807dc784e93b279b6a5996fecb6fe8ad8bc2ecfdbebe', '6ad603e1ddaabfd4c2a29e8fe650ccbdbaa20bac51072756d98842e45189f5c8'], ['number_location/include/number_identity_native_trace.h', None, '5538eeb65afa91bcabeb39a64e6fbe6939ad88c3f1279ac860366d71a5c1fbc6'], ['number_location/include/number_location_ability.h', '19a0dd52250a6a6627e137ea1e53c0c3021684da655f4b78c1ff6ab60900d038', 'df55045f373f3d02166f68f12950c0d26f51314cd5b24bc7aa66ca9d620871d5'], ['number_location/src/number_identity_datashare_stub_impl.cpp', 'd65b50a71901c8c5302ca548e65a51679dd479486e8e0be4aa79ac184dd55600', 'ecc474085ce71a77b641c0d6962554fbb3400683a63ea45e3720feebfc7d6715'], ['number_location/src/number_location_ability.cpp', '48bd4bfb2f2df9c0dea5a00ece8d844c61b9027b6bf58adcfe87df59f21bd46b', '371c44cc4d8387d95092ee1c073e7a6976149b361914c55f0b10eeb89b973dd4']], 'patch': '0001-record-number-native-causal-observations.patch', 'patch_sha256': '098be9d6dc90000cbb092ff442ee57a471bcbc7e00a2b4103f52d7029938c9a9', 'source_only': True, 'build_or_guest_pass': False}
+
+def metadata():
+    raw = (COMPONENT / 'source_states.json').read_bytes()
+    def unique(items):
+        result = {}
+        for key, value in items:
+            if key in result: raise ValueError('duplicate component metadata key')
+            result[key] = value
+        return result
+    if (COMPONENT / 'source_states.json').is_symlink() or json.loads(raw, object_pairs_hook=unique) != EXPECTED:
+        raise ValueError('exact diagnostic component metadata differs')
+    patches = list(COMPONENT.glob('[0-9][0-9][0-9][0-9]-*.patch'))
+    if len(patches) != 1 or patches[0].name != EXPECTED['patch'] or patches[0].is_symlink() or hashlib.sha256(patches[0].read_bytes()).hexdigest() != EXPECTED['patch_sha256']:
+        raise ValueError('exact diagnostic patch differs')
+
+def validate(root, require_patched=False):
+    metadata()
+    root = Path(root).resolve()
+    for relative, original, repaired in FILES:
+        target = root / PROJECT / relative
+        if target.is_symlink():
+            raise ValueError('diagnostic source alias refused')
+        if target.exists():
+            info = target.stat()
+            if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                raise ValueError('single regular diagnostic source inode required')
+    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--source-root', required=True, type=Path)
+    parser.add_argument('--require-patched', action='store_true')
+    args = parser.parse_args(argv)
+    print(json.dumps(dict(scope='exact Number diagnostic source only', patched=validate(args.source_root, args.require_patched), native_callback_proven=False, compiled=False, guest_pass=False)))
+    return 0
+
+if __name__ == '__main__':
+    raise SystemExit(main())

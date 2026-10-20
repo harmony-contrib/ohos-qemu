@@ -1,0 +1,135 @@
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <cassert>
+#include <cmath>
+#include <cstdint>
+#include <chrono>
+#include <thread>
+#include <deque>
+#include <cstring>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
+#include "audio_speed.h"
+#include "audio_utils.h"
+#define CHECK_AND_RETURN_RET(c,r) do{if(!(c))return(r);}while(0)
+#define CHECK_AND_CALL_FUNC_RETURN_RET(c,r,...) CHECK_AND_RETURN_RET(c,r)
+#define HILOG_COMM_ERROR(...) ((void)0)
+#define HILOG_COMM_WARN(...) ((void)0)
+#define HILOG_COMM_INFO(...) ((void)0)
+#define RETURN_RET_IF(c,r) CHECK_AND_RETURN_RET(!(c),r)
+#define AUDIO_DEBUG_LOG(...) ((void)0)
+#define CHECK_AND_RETURN_RET_PRELOG(c,r,...) CHECK_AND_RETURN_RET(c,r)
+#define AUDIO_WARNING_LOG(...) ((void)0)
+#define AUDIO_ERR_LOG(...) ((void)0)
+#define AUDIO_INFO_LOG(...) ((void)0)
+#include "ring_buffer_wrapper.h"
+namespace OHOS::AudioStandard {
+using AudioSamplingRate=int;using AudioEncodingType=int;using AudioSampleFormat=int;using AudioChannel=int;using AudioChannelLayout=int;
+struct AudioStreamInfo{AudioStreamInfo(int,int,int,int,int){}};
+constexpr int ERR_NOT_SUPPORTED=-6;
+constexpr int RUNNING=1,PAUSED=2,STOPPED=3,RELEASED=4,STOPPING=5;
+constexpr int FUTEX_OK=0,FUTEX_TIMEOUT=1;
+using FutexCode=int;
+constexpr size_t MAX_WRITE_SIZE=20*1024*1024;
+constexpr size_t MAX_PITCH_BUFFER_FACTOR=3;
+constexpr int AUDIO_US_PER_SECOND=1000;
+bool isEqual(float a,float b){return a==b;}
+constexpr int ENCODING_PCM=1,ENCODING_AUDIOVIVID=2,AUDIO_FLAG_3DA_DIRECT=3,STREAM_USAGE_INTERPHONE=4;
+constexpr int WRITE_BUFFER_TIMEOUT_IN_MS=1;
+inline int slept=0;inline void usleep(int){slept++;}
+constexpr int RENDER_MODE_CALLBACK=1,WAIT_FOR_NEXT_CB=1,LOG_COUNT_LIMIT=100,OPERATION_TIMEOUT_IN_MS=1,DRAIN_STREAM=1,MAX_OPERATION_CODE=2;
+struct BufferDesc{uint8_t *buffer=nullptr;size_t bufLength=0;size_t dataLength=0;uint8_t *metaBuffer=nullptr;size_t metaLength=0;};
+struct Queue{std::deque<BufferDesc>q;void Push(BufferDesc b){q.push_back(b);}bool PopNotWait(BufferDesc&b){if(q.empty())return false;b=q.front();q.pop_front();return true;}size_t Size(){return q.size();}void Clear(){q.clear();}void WaitNotEmptyFor(std::chrono::milliseconds){}};
+struct FakeCV{template<class F>bool wait_for(std::unique_lock<std::mutex>&,std::chrono::milliseconds,F f){return f();}};
+struct ClockTime{static int64_t GetCurNano(){return 1000;}};
+struct Config {int streamInfo=0;};
+struct VolumeTools {static void DfxOperation(BufferDesc,int,const std::string&,int&) {}};
+struct DumpFileUtil{static void WriteDumpFile(int,void*,size_t){}};
+struct FakeIpc{int updates=0,drains=0;void UpdatePosition(){updates++;}int Drain(bool){drains++;return SUCCESS;}int SetPitch(float){return SUCCESS;}};
+struct AudioWriteState{size_t perPeriodFrame_=0,unprocessedFramesBytes_=0,totalBytesWrittenAfterFlush_=0;};
+struct StateHolder{AudioWriteState a{};auto load(){return a;}void store(AudioWriteState b){a=b;}};
+struct FakePitch {
+ int factor=1,calls=0;bool delay=false,fail=false;
+ static std::shared_ptr<FakePitch>CreateInstance(const AudioStreamInfo&){return std::make_shared<FakePitch>();}int PitchAlgoInit(){return SUCCESS;}int SetPitch(float){return SUCCESS;}
+ int ProcessBufferPitch(int8_t *in,size_t n,int8_t *out,size_t &size){calls++;if(fail)return ERR_OPERATION_FAILED;
+  if(delay){size=0;return SUCCESS;}assert(size>=n*factor);for(size_t i=0;i<n;i++)for(int j=0;j<factor;j++)out[i*factor+j]=in[i];size=n*factor;return SUCCESS;}
+};
+using AudioPitchProcessor=FakePitch;
+struct FakeBuffer {
+ std::atomic<int>*state=nullptr;size_t frame=2,chunk=4096;uint64_t pos=0;int waits=0,publishes=0;
+ int pauseAt=0,timeoutAt=0,failPublishAt=0,failGetAt=0;bool split=false;
+ std::vector<uint8_t> scratch=std::vector<uint8_t>(64*1024*1024),heard;
+ template<class F>int WaitFor(int64_t,F f){waits++;if(waits==pauseAt){*state=PAUSED;return FUTEX_OK;}if(waits==timeoutAt)return FUTEX_TIMEOUT;f();return FUTEX_OK;}
+ int GetReadableDataFrames(){return 0;}
+ uint64_t GetCurWriteFrame(){return pos;}uint64_t GetCurReadFrame(){return pos;}
+ int GetAllWritableBufferFromPosFrame(uint64_t,RingBufferWrapper&r){if(waits==failGetAt)return ERR_OPERATION_FAILED;
+  size_t half=split?(chunk/frame/2)*frame:chunk;r.basicBufferDescs[0]={scratch.data(),half};
+  r.basicBufferDescs[1]=split?BasicBufferDesc{scratch.data()+half,chunk-half}:BasicBufferDesc{};r.dataLength=chunk;return SUCCESS;}
+ int SetCurWriteFrame(uint64_t next,bool){publishes++;if(publishes==failPublishAt)return ERR_OPERATION_FAILED;
+  size_t n=(next-pos)*frame;heard.insert(heard.end(),scratch.begin(),scratch.begin()+n);pos=next;return SUCCESS;}
+};
+class RendererInClientInner {
+public:
+ struct WriteProgress{size_t published=0;int32_t error=SUCCESS;bool retryable=false,canceled=false;};
+ std::mutex writeMutex_,speedMutex_,pitchMutex_,cbBufferMutex_,callServerMutex_;std::unique_ptr<uint8_t[]>ownedOutput_;size_t ownedOutputSize_=0,ownedOutputOffset_=0;bool outputWriteUnknown_=false,lastWriteRetryable_=false;
+ bool cbThreadReleased_=false,isHWDecodingType_=false;int sleepCount_=0;size_t spanSizeInFrame_=64,cbBufferSize_=1024;int rendererFlags=0;
+ struct {int rendererFlags=0,streamUsage=0;bool isStatic=false;}rendererInfo_;struct {int encoding=ENCODING_PCM,samplingRate=8000,format=SAMPLE_S16LE,channels=1,channelLayout=0;}curStreamParams_;Queue cbBufferQueue_;FakeCV callServerCV_;int renderMode_=RENDER_MODE_CALLBACK,notifiedOperation_=DRAIN_STREAM,notifiedResult_=SUCCESS;
+ std::unique_ptr<uint8_t[]>cbBuffer_=std::make_unique<uint8_t[]>(1024);int handleCalls=0,dropped=0;
+ void CheckAndProcessPendingSpanSize(){}bool WaitForRunning(){return state_==RUNNING;}void WaitForBufferNeedOperate(){}void CheckOperations(){}void CallClientHandle(){handleCalls++;}
+ int WriteRawBuffer(BufferDesc&){return ERR_OPERATION_FAILED;}int Write3DADirectBuffer(BufferDesc&){return ERR_OPERATION_FAILED;}void RecordDropPosition(size_t n){dropped+=n;}
+ int32_t WriteInner(uint8_t*p,size_t n){std::lock_guard lock(writeMutex_);return ProcessBufferAndWriteCache(p,n,n);}int32_t WriteInner(uint8_t*,size_t,uint8_t*,size_t){return ERR_OPERATION_FAILED;}
+ bool IsFastStream(){return false;}size_t bufferSize_=0;int GetBufferSize(size_t&v){v=256;return SUCCESS;}int32_t RebuildWriteTransforms();int32_t SetPitch(float);
+ int32_t ProcessWriteInner(BufferDesc&);bool WriteCallbackFunc();bool DrainAudioStreamInner(bool);void FlushSpeedBuffer();
+ std::atomic<int>state_{RUNNING};std::atomic<bool>speedEnable_{false};float speed_=.5f,curPitch_=1;
+ size_t sizePerFrameInByte_=2;std::string traceTag_;int sessionId_=1;int64_t preWriteEndTime_=0;int volumeDataCount_=0,dumpOutFd_=0;Config clientConfig_;
+ std::unique_ptr<AudioSpeed>audioSpeed_;std::unique_ptr<uint8_t[]>speedBuffer_,pitchBuffer_;size_t pitchBufferCapacity_=0;
+ std::shared_ptr<FakePitch>pitchProcessor_;StateHolder audioWriteState_;bool isBlendSet_=false,volumeOK=true;
+ struct Blend{void Process(uint8_t*p,size_t n){for(size_t i=0;i<n;i++)p[i]^=0x55;}}audioBlend_;
+ std::shared_ptr<FakeBuffer>clientBuffer_=std::make_shared<FakeBuffer>();std::shared_ptr<FakeIpc>ipcStream_=std::make_shared<FakeIpc>();size_t tracked=0;
+ RendererInClientInner(){clientBuffer_->state=&state_;}
+ int GetBufferWaitTimeoutInMs(){return 1;}bool CheckBufferNeedWrite(){return true;}bool ProcessVolume(){return volumeOK;}
+ void NotifyStreamSilentChange(){}void HandleRendererPositionChanges(size_t n){tracked+=n;}void WriteMuteDataSysEvent(uint8_t*,size_t){}
+ WriteProgress WriteCacheData(uint8_t*,size_t);void DropOwnedOutput();int32_t DrainOwnedOutput();int32_t DrainPendingOutput(bool=false);int32_t CacheConvertedOutput(uint8_t*,size_t);
+ int32_t ProcessSpeed(uint8_t*&,size_t&,bool&);int32_t ProcessPitch(uint8_t*&,size_t&,bool&);int32_t ProcessBufferAndWriteCache(uint8_t*,size_t,size_t);
+ void speed(float value,int fmt=SAMPLE_S16LE,int ch=1){speed_=value;sizePerFrameInByte_=clientBuffer_->frame=(fmt==SAMPLE_U8?1:fmt==SAMPLE_S16LE?2:fmt==SAMPLE_S24LE?3:4)*ch;
+  audioSpeed_=std::make_unique<AudioSpeed>(8000,fmt,ch);audioSpeed_->SetSpeed(value);speedEnable_=true;speedBuffer_=std::make_unique<uint8_t[]>(MAX_SPEED_BUFFER_SIZE);}
+ int write(std::vector<uint8_t>&b){std::lock_guard lock(writeMutex_);return ProcessBufferAndWriteCache(b.data(),b.size(),b.size());}
+ int drain(bool finish=false){std::lock_guard lock(writeMutex_);return DrainPendingOutput(finish);}
+};
+@FUNCTIONS@
+}
+using namespace OHOS::AudioStandard;
+std::vector<uint8_t> input(size_t n){std::vector<uint8_t>b(n);for(size_t i=0;i<n/2;i++){int16_t s=int16_t(std::sin(i*.031)*12000);std::memcpy(b.data()+i*2,&s,2);}return b;}
+std::vector<uint8_t> reference(std::vector<uint8_t>&b,float speed,int cap=16*1024*1024){AudioSpeed s(8000,SAMPLE_S16LE,1,cap);s.SetSpeed(speed);auto out=std::make_unique<uint8_t[]>(cap);int n=0;assert(s.ChangeSpeedFunc(b.data(),b.size(),out,n)==int(b.size()));std::vector<uint8_t>v(out.get(),out.get()+n);assert(s.Finish()==0);do{assert(s.ReadOutput(out,n)==0);v.insert(v.end(),out.get(),out.get()+n);}while(n);return v;}
+int main(){int groups=0;
+ {RendererInClientInner c;auto b=input(16);c.clientBuffer_->chunk=4;c.clientBuffer_->timeoutAt=2;assert(c.write(b)==4);assert(c.tracked==4);c.clientBuffer_->timeoutAt=0;std::vector<uint8_t>tail(b.begin()+4,b.end());assert(c.write(tail)==12);assert(c.clientBuffer_->heard==b);assert(c.audioWriteState_.a.totalBytesWrittenAfterFlush_==8);groups++;}
+ {RendererInClientInner c;auto b=input(16);c.clientBuffer_->chunk=4;c.clientBuffer_->pauseAt=2;assert(c.write(b)==4);assert(c.lastWriteRetryable_);c.state_=RUNNING;c.clientBuffer_->pauseAt=0;std::vector<uint8_t>tail(b.begin()+4,b.end());assert(c.write(tail)==12);assert(c.clientBuffer_->heard==b);groups++;}
+ {RendererInClientInner c;auto b=input(10);c.sizePerFrameInByte_=c.clientBuffer_->frame=4;c.clientBuffer_->chunk=16;assert(c.write(b)==8);assert(c.clientBuffer_->heard==std::vector<uint8_t>(b.begin(),b.begin()+8));groups++;}
+ {RendererInClientInner c;auto b=input(16);c.clientBuffer_->failPublishAt=1;assert(c.write(b)<0);assert(c.tracked==0&&c.clientBuffer_->pos==0);c.clientBuffer_->failPublishAt=0;assert(c.write(b)==16);assert(c.clientBuffer_->heard==b);groups++;}
+ {RendererInClientInner c;auto b=input(16);c.volumeOK=false;c.ipcStream_.reset();assert(c.write(b)==16);assert(c.tracked==16);groups++;}
+ for(bool pause:{false,true}){RendererInClientInner c;c.speed(.125f);auto b=input(300000);auto expected=reference(b,.125f);c.clientBuffer_->chunk=4096;c.clientBuffer_->split=true;
+  if(pause)c.clientBuffer_->pauseAt=3;else c.clientBuffer_->timeoutAt=3;assert(c.write(b)==int(b.size()));assert(c.ownedOutputSize_>c.ownedOutputOffset_);auto prefix=c.clientBuffer_->heard.size();assert(prefix==8192);
+  auto another=input(2000);if(!pause)c.clientBuffer_->timeoutAt=c.clientBuffer_->waits+1;assert(c.write(another)<0);assert(c.clientBuffer_->heard.size()==prefix);c.state_=RUNNING;c.clientBuffer_->timeoutAt=0;c.clientBuffer_->pauseAt=0;assert(c.drain(true)==0);
+  assert(c.clientBuffer_->heard==expected);assert(c.ownedOutputSize_==0&&c.tracked==expected.size());auto before=c.clientBuffer_->heard.size();assert(c.drain(true)==0);assert(c.clientBuffer_->heard.size()==before);groups++;}
+ for(float speed:{.125f,.5f,1.f,2.f}){RendererInClientInner c;c.speed(speed);std::vector<uint8_t>whole;for(int tick=0;tick<6;tick++){auto b=input(4000+tick*1000);whole.insert(whole.end(),b.begin(),b.end());assert(c.write(b)==int(b.size()));}assert(c.drain(true)==0);
+  AudioSpeed s(8000,SAMPLE_S16LE,1,MAX_SPEED_BUFFER_SIZE);s.SetSpeed(speed);auto o=std::make_unique<uint8_t[]>(MAX_SPEED_BUFFER_SIZE);std::vector<uint8_t>expected;for(int tick=0;tick<6;tick++){auto b=input(4000+tick*1000);int n;assert(s.ChangeSpeedFunc(b.data(),b.size(),o,n)==int(b.size()));expected.insert(expected.end(),o.get(),o.get()+n);do{assert(s.ReadOutput(o,n)==0);expected.insert(expected.end(),o.get(),o.get()+n);}while(n);}assert(s.Finish()==0);int n;do{assert(s.ReadOutput(o,n)==0);expected.insert(expected.end(),o.get(),o.get()+n);}while(n);assert(expected==c.clientBuffer_->heard);groups++;}
+ {RendererInClientInner c;c.speed(.5f);auto b=input(100);assert(c.write(b)==100);assert(c.clientBuffer_->heard.empty());assert(c.drain(true)==0);assert(!c.clientBuffer_->heard.empty());groups++;}
+ {RendererInClientInner c;c.speed(.125f);c.curPitch_=2;c.pitchProcessor_=std::make_shared<FakePitch>();c.pitchProcessor_->factor=2;c.pitchBuffer_=std::make_unique<uint8_t[]>(10);c.pitchBufferCapacity_=10;c.isBlendSet_=true;auto b=input(160000);c.clientBuffer_->timeoutAt=2;assert(c.write(b)==int(b.size()));assert(c.pitchBufferCapacity_>10);assert(c.ownedOutputSize_>0);c.clientBuffer_->timeoutAt=0;assert(c.drain(true)==0);auto plain=reference(b,.125f);std::vector<uint8_t>expected;for(auto byte:plain){expected.push_back(byte^0x55);expected.push_back(byte^0x55);}assert(expected==c.clientBuffer_->heard);groups++;}
+ {RendererInClientInner c;c.curPitch_=2;c.pitchProcessor_=std::make_shared<FakePitch>();c.pitchProcessor_->delay=true;auto b=input(1000);assert(c.write(b)==1000);assert(c.clientBuffer_->heard.empty());assert(c.drain()==0);groups++;}
+ {RendererInClientInner c;c.speed(.5f);c.curPitch_=2;c.pitchProcessor_=std::make_shared<FakePitch>();c.pitchProcessor_->fail=true;auto b=input(4000);assert(c.write(b)<0&&c.outputWriteUnknown_);assert(c.write(b)<0);c.DropOwnedOutput();assert(c.outputWriteUnknown_);groups++;}
+ {RendererInClientInner c;c.speed(.125f);auto b=input(8000);c.clientBuffer_->failPublishAt=2;c.clientBuffer_->chunk=4;assert(c.write(b)<0&&c.outputWriteUnknown_);auto n=c.clientBuffer_->heard.size();assert(n==4);assert(c.write(b)<0&&c.clientBuffer_->heard.size()==n);groups++;}
+ {RendererInClientInner c;auto b=input(16);auto original=b;c.isBlendSet_=true;c.clientBuffer_->chunk=4;c.clientBuffer_->timeoutAt=2;assert(c.write(b)==4);assert(b==original);c.clientBuffer_->timeoutAt=0;std::vector<uint8_t>tail(b.begin()+4,b.end());assert(c.write(tail)==12);for(auto&v:original)v^=0x55;assert(c.clientBuffer_->heard==original);groups++;}
+ {RendererInClientInner c;c.speed(.5f);auto b=input(8000);c.clientBuffer_->timeoutAt=2;c.clientBuffer_->chunk=4;assert(c.write(b)==8000);auto old=c.ownedOutputSize_;assert(old>0);c.state_=STOPPED;assert(c.drain()<0);assert(!c.outputWriteUnknown_&&c.ownedOutputSize_==old);c.DropOwnedOutput();assert(c.audioSpeed_->Flush()==0);c.state_=RUNNING;assert(c.drain(true)==0);groups++;}
+ {RendererInClientInner c;c.speed(.5f);std::vector<uint8_t>b(3);assert(c.write(b)==ERR_INVALID_PARAM&&!c.outputWriteUnknown_);auto aligned=input(8000);assert(c.write(aligned)==8000);groups++;}
+ {RendererInClientInner c;c.speed(.125f);auto first=input(160000),next=input(4000);c.cbBufferQueue_.Push({first.data(),first.size(),first.size()});c.clientBuffer_->timeoutAt=2;assert(c.WriteCallbackFunc());assert(c.ownedOutputSize_>0);c.cbBufferQueue_.Push({next.data(),next.size(),next.size()});auto n=c.clientBuffer_->heard.size();c.clientBuffer_->timeoutAt=c.clientBuffer_->waits+1;assert(c.WriteCallbackFunc());assert(c.cbBufferQueue_.Size()==1&&c.clientBuffer_->heard.size()==n);c.clientBuffer_->timeoutAt=0;assert(c.WriteCallbackFunc());assert(c.cbBufferQueue_.Size()==0);{std::lock_guard lock(c.writeMutex_);assert(c.DrainAudioStreamInner(false));}assert(c.ipcStream_->drains==1);groups++;}
+ {RendererInClientInner c;auto b=input(16);c.clientBuffer_->pauseAt=1;c.cbBufferQueue_.Push({b.data(),b.size(),b.size()});assert(c.WriteCallbackFunc());assert(c.cbBufferQueue_.Size()==1&&c.dropped==0);c.state_=RUNNING;c.clientBuffer_->pauseAt=0;assert(c.WriteCallbackFunc());assert(c.clientBuffer_->heard==b);groups++;}
+ {RendererInClientInner c;c.speed(.125f);auto b=input(100);assert(c.write(b)==100);{std::lock_guard lock(c.writeMutex_);assert(c.DrainAudioStreamInner(false));}assert(c.clientBuffer_->heard==reference(b,.125f));groups++;}
+ {RendererInClientInner c;c.speed(.125f);auto b=input(160000);c.clientBuffer_->timeoutAt=2;assert(c.write(b)==int(b.size()));c.clientBuffer_->timeoutAt=c.clientBuffer_->waits+1;{std::lock_guard lock(c.writeMutex_);assert(!c.DrainAudioStreamInner(false));}assert(c.ipcStream_->drains==0);{std::lock_guard lock(c.writeMutex_);c.DropOwnedOutput();c.FlushSpeedBuffer();}c.clientBuffer_->timeoutAt=0;auto n=c.clientBuffer_->heard.size();assert(c.drain(true)==0&&c.clientBuffer_->heard.size()==n);groups++;}
+ {RendererInClientInner c;c.speed(.125f);auto b=input(160000);c.clientBuffer_->timeoutAt=2;assert(c.write(b)==int(b.size()));c.outputWriteUnknown_=true;assert(c.SetPitch(1.5f)==SUCCESS);assert(c.pitchBufferCapacity_==0);{std::lock_guard lock(c.writeMutex_);c.DropOwnedOutput();assert(c.RebuildWriteTransforms()==SUCCESS);assert(c.outputWriteUnknown_);}c.outputWriteUnknown_=false;c.clientBuffer_->timeoutAt=0;assert(c.drain(true)==SUCCESS);groups++;}
+ {RendererInClientInner c;auto b=input(1000);c.outputWriteUnknown_=true;c.cbBufferQueue_.Push({b.data(),b.size(),b.size()});int old=slept;assert(c.WriteCallbackFunc());assert(c.cbBufferQueue_.Size()==1&&slept==old+1&&c.handleCalls==0);c.outputWriteUnknown_=false;assert(c.WriteCallbackFunc());assert(c.cbBufferQueue_.Size()==0&&c.clientBuffer_->heard==b);groups++;}
+ std::cout<<"CLIENT528 normal PCM/real Sonic pending output and explicit pitch dependency model "<<groups<<" groups PASS\n";
+}

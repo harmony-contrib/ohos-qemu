@@ -1,0 +1,93 @@
+{
+  "schema": "audio-source505-raw-observation-contract/v1",
+  "private_metadata_key": "ohos.qemu.audio.source_provenance_v1",
+  "source_identity_fields": [
+    "source_pid",
+    "source_birth_ticks",
+    "source_generation"
+  ],
+  "source_location_byte_fields": [
+    "source_dev",
+    "source_ino",
+    "source_offset_bytes",
+    "source_length_bytes",
+    "pcm_data_offset_in_source_bytes",
+    "pcm_data_bytes"
+  ],
+  "source_format_fields": [
+    "wav_known",
+    "rate",
+    "channels",
+    "sample_bytes",
+    "source_prefix_sha256",
+    "source_prefix_bytes"
+  ],
+  "receiver_fields": [
+    "plugin_instance",
+    "renderer_session_known",
+    "renderer_session_id",
+    "query_status",
+    "write_renderer_session_known",
+    "write_renderer_session_id",
+    "write_query_status",
+    "receiver_pid",
+    "receiver_birth_ticks",
+    "metadata_binding_instance"
+  ],
+  "byte_interval_fields": [
+    "ingress_byte_begin",
+    "byte_count",
+    "write_requested_bytes",
+    "raw_returned_bytes",
+    "write_accepted_bytes",
+    "accepted_bytes_total",
+    "cache_id",
+    "old_generation"
+  ],
+  "events": [
+    "source_native",
+    "metadata_forwarded",
+    "metadata_consumed",
+    "input",
+    "write",
+    "cache",
+    "cache_split",
+    "drop",
+    "flush",
+    "renderer_release",
+    "unknown",
+    "source_play_result"
+  ],
+  "units": "all named byte fields are bytes; ingress offsets are plugin metadata-binding PCM ingress bytes, not source-file offsets or HW frames",
+  "accepted_cursor": "increments only valid actual positive Write return within requested range; ingress cursor separately counts actual received buffers",
+  "metadata_alone_is_not_source_to_decoded_mapping": true,
+  "source_frame_relation_known": false,
+  "HW_timestamp_in_schema": false,
+  "accepted": false,
+  "onset_proven": false,
+  "first_artifact_behavior_gate_passed": false,
+  "wire_numeric_fields_order": [
+    "source_pid",
+    "source_birth_ticks",
+    "source_generation",
+    "source_dev",
+    "source_ino",
+    "source_offset_bytes",
+    "source_length_bytes",
+    "wav_known",
+    "pcm_data_offset_in_source_bytes",
+    "pcm_data_bytes",
+    "rate",
+    "channels",
+    "sample_bytes",
+    "source_prefix_bytes"
+  ],
+  "wire": "qap505v1:<14 canonical U64 fields separated by colon>:<SHA256 lower hex digest or empty unknown>",
+  "privacy": "No raw source or PCM samples in descriptor/logs. Bounded first128-byte SHA256 is only a diagnostic content sample, never a source-to-decoded-frame proof.",
+  "generation": "Process native monotonically increasing saturating U64 ID, joined with source PID and /proc/self/stat birth ticks (zero unknown). Never DSP SyncID.",
+  "boundaries": "Cache slices retain original generation/ingress offsets and native cache_id across partial writes; reset/seek/flush retires provenance; old cached slices remain explicitly old_generation. Observation cap emits unknown observation_limit.",
+  "session_timing": "renderer_session/query fields are immutable metadata-consumption binding. Each write row separately records actual immediately-before-Write GetAudioStreamId result; a late successful query never retroactively proves old source/frame mapping.",
+  "binding_identity": "receiver PID/birth + plugin_instance + metadata_binding_instance qualifies ingress offsets. Initial metadata query/session change creates a new native binding and cursor; cached slices retain old binding. old_generation means retired immutable binding (not numerical source_generation ordering).",
+  "private_relay_route": "Late updates are exactly one private KEY with string value. Two relays inspect begin/end exactly-one-key shape; forward without changing globalMeta, app identity, time range or ordinary plugin setters. Wrong type/no sink/no plugin stays unknown/pending; ordinary multi-key Meta always follows original body.",
+  "rejected_predecessor": "505 full-Meta observer helper rejected for native setter replay; final source successor513 uses private single-key relay"
+}

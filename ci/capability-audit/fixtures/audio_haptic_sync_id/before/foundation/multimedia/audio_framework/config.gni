@@ -1,0 +1,132 @@
+# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+declare_args() {
+  audio_framework_feature_wired_audio = true
+  audio_framework_feature_double_pnp_detect = false
+  audio_framework_feature_dtmf_tone = true
+  audio_framework_feature_detect_soundbox = false
+  audio_framework_feature_wireless_default_exclude = false
+  audio_framework_feature_exclude_indirect_usb_input_device = false
+  audio_framework_feature_support_os_account = true
+  audio_framework_feature_opensl_es = true
+  sonic_enable = true
+  speex_enable = false
+  audio_framework_feature_distributed_audio = true
+  audio_framework_feature_hitrace_enable = true
+  audio_framework_config_policy_enable = true
+  audio_framework_feature_input = true
+  audio_framework_feature_power_manager = true
+  audio_framework_feature_device_manager = true
+  audio_framework_enable_unittest_debug = false
+  audio_framework_feature_hiview_enable = true
+  audio_framework_feature_offline_effect = true
+  audio_telephony_core_service_enable = true
+  audio_telephony_cellular_data_enable = true
+  audio_framework_feature_file_io = true
+  audio_framework_feature_inner_capturer = true
+  audio_framework_feature_low_latency = true
+  audio_framework_feature_3da_direct = true
+  audio_framework_feature_new_engine_flag = true
+  audio_framework_feature_usb_audio = false
+  audio_framework_feature_hdmi_detect_audio = false
+  audio_framework_feature_mutesink_enable = true
+  audio_framework_feature_audiosuite_support = false
+  audio_framework_feature_audiosuite_format_convert_support = false
+  audio_framework_feature_multi_alarm_level = false
+  audio_framework_feature_multi_bus = false
+  audio_framework_feature_source_period_size = 1
+  audio_framework_feature_input_independent_routing_rule = false
+  audio_framework_feature_multi_zone_volume = false
+  audio_framework_feature_multi_user_zone = false
+  
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.usb_usb_manager)) {
+    audio_framework_feature_usb_audio = true
+  }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.hdf_drivers_interface_distributed_audio)) {
+    audio_framework_feature_distributed_audio = true
+  } else {
+    audio_framework_feature_distributed_audio = false
+  }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.hiviewdfx_hitrace)) {
+    audio_framework_feature_hitrace_enable = true
+  } else {
+    audio_framework_feature_hitrace_enable = false
+  }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.customization_config_policy)) {
+    audio_framework_config_policy_enable = true
+  } else {
+    audio_framework_config_policy_enable = false
+  }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.multimodalinput_input)) {
+    audio_framework_feature_input = true
+  } else {
+    audio_framework_feature_input = false
+  }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.powermgr_power_manager)) {
+    audio_framework_feature_power_manager = true
+  } else {
+    audio_framework_feature_power_manager = false
+  }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.distributedhardware_device_manager)) {
+    audio_framework_feature_device_manager = true
+  } else {
+    audio_framework_feature_device_manager = false
+  }
+
+  if (!defined(global_parts_info) ||
+      defined(global_parts_info.hiviewdfx_hiview)) {
+    audio_framework_feature_hiview_enable = true
+  } else {
+    audio_framework_feature_hiview_enable = false
+  }
+
+  if (defined(global_parts_info) &&
+      !defined(global_parts_info.telephony_core_service)) {
+    audio_telephony_core_service_enable = false
+  }
+
+  if (defined(global_parts_info) &&
+      !defined(global_parts_info.telephony_cellular_data)) {
+    audio_telephony_cellular_data_enable = false
+  }
+
+  if (defined(global_parts_info) &&
+      !defined(global_parts_info.telephony_call_manager)) {
+    audio_framework_feature_call_manager_enable = false
+  } else {
+    audio_framework_feature_call_manager_enable = true
+  }
+
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.multi_alarm_level)) {
+    audio_framework_feature_multi_alarm_level = true
+  }
+
+  audio_framework_feature_new_napi = true
+}
+
+third_party_path = "//third_party"

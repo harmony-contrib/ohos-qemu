@@ -1,0 +1,130 @@
+// Host dependency model around literal product methods. No target/HDI/HW claim.
+#include <algorithm>
+#include <atomic>
+#include <cassert>
+#include <chrono>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <deque>
+#include <functional>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+#include <unistd.h>
+using namespace std;
+constexpr int SUCCESS=0, ERROR=-1, AUDIO_MS_PER_S=1000, FRAME_LEN_20MS=20;
+constexpr int AUDIO_OUTPUT_FLAG_INTERPHONE=99;
+constexpr uint64_t SLEEP_TIME_IN_US=0;
+struct AuxiliaryNames {size_t count(const string&s)const{return s=="a2dp"||s=="usb";}};
+const AuxiliaryNames AUXILIARY_SPEAKER_LIST;
+enum StreamManagerState {STREAM_MANAGER_NEW,STREAM_MANAGER_IDLE,STREAM_MANAGER_RUNNING,
+    STREAM_MANAGER_SUSPENDED,STREAM_MANAGER_RELEASED};
+struct Trace { explicit Trace(const string&){} };
+struct HighResolutionTimer {void Start(){}void Stop(){}template<class T=chrono::milliseconds>int64_t Elapsed(){return 0;}};
+#define AUDIO_INFO_LOG(...) ((void)0)
+#define AUDIO_WARNING_LOG(...) ((void)0)
+#define AUDIO_ERR_LOG(...) ((void)0)
+#define AUDIO_DEBUG_LOG(...) ((void)0)
+#define CHECK_AND_RETURN(c) do{if(!(c))return;}while(0)
+#define CHECK_AND_RETURN_LOG(c,...) CHECK_AND_RETURN(c)
+#define CHECK_AND_RETURN_RET(c,v) do{if(!(c))return(v);}while(0)
+#define CHECK_AND_RETURN_RET_LOG(c,v,...) CHECK_AND_RETURN_RET(c,v)
+#define CHECK_AND_CALL_FUNC_RETURN_RET_LOG(c,v,...) CHECK_AND_RETURN_RET(c,v)
+bool IsRemoteDeviceClass(const string&){return true;}
+size_t GetSizeFromFormat(int f){return f>0?static_cast<size_t>(f):0;}
+enum class ProblemCategory{FAULT_NO_SOUND};enum class OperationType{PLAY};
+enum class BusinessScenario{SEND_DATA};constexpr int ERR_NULL_POINTER=-2;
+template<class...T>int BuildErrorCode(T...){return 0;}
+struct StreamDfxManager {static StreamDfxManager& GetInstance(){static StreamDfxManager v;return v;}
+template<class...T>void SendAudioErrorEvent(T...){}};
+struct HpaePcmBuffer {uint32_t frames=4,channels=1,rate=1000;vector<float>data;
+uint32_t GetFrameLen(){return frames;}uint32_t GetChannelCount(){return channels;}
+uint32_t GetSampleRate(){return rate;}float*GetPcmDataBuffer(){return data.data();}};
+void ConvertFromFloat(int width,size_t n,const float*in,char*out){for(size_t i=0;i<n;i++)for(int b=0;b<width;b++)out[i*width+b]=static_cast<char>(static_cast<int>(in[i])>>(8*b));}
+template<class T>struct OutputPort{};
+struct HpaeNode {bool ResetAll(){return true;}};
+struct Input {vector<HpaePcmBuffer*> ready,current;size_t reads=0;
+vector<HpaePcmBuffer*>&ReadPreOutputData(){++reads;current.clear();if(!ready.empty()){current.push_back(ready.front());ready.erase(ready.begin());}return current;}
+map<OutputPort<HpaePcmBuffer*>*,shared_ptr<HpaeNode>>GetPreOutputMap(){return {};}
+void DisConnect(OutputPort<HpaePcmBuffer*>*){}};
+struct Sink {struct Reply{int status;uint64_t count;int64_t actualAccepted=-1;};deque<Reply> replies;
+int calls=0,control=0;bool inited=true;vector<vector<unsigned char>>submitted;vector<unsigned char>accepted;
+int RenderFrame(char&first,uint64_t n,uint64_t&count){++calls;auto*p=&first;
+submitted.emplace_back(p,p+n);for(size_t i=0;i<n;i++)p[i]=static_cast<char>(static_cast<unsigned char>(p[i])+1);
+Reply r=replies.empty()?Reply{SUCCESS,n}:replies.front();if(!replies.empty())replies.pop_front();count=r.count;
+uint64_t physical=r.actualAccepted<0?count:static_cast<uint64_t>(r.actualAccepted);
+if(physical<=n)accepted.insert(accepted.end(),p,p+physical);return r.status;}
+int Flush(){return control;}int Reset(){return control;}int Stop(){return control;}
+int Pause(){return control;}int Resume(){return control;}int Start(){return control;}
+bool IsInited(){return inited;}void DeInit(){inited=false;}int SetPaPower(bool){return control;}};
+const string HDI_ID_INFO_DEFAULT="default";
+struct HdiAdapterManager {shared_ptr<Sink>sink=make_shared<Sink>();
+static HdiAdapterManager&GetInstance(){static HdiAdapterManager m;return m;}
+template<class...T>int GetRenderIdByDeviceClass(T...){return 1;}
+shared_ptr<Sink>GetRenderSink(int,bool){return sink;}void ReleaseId(int){}};
+struct Info {int routeFlag=0;};struct Attr {string adapterName="host",sinkName="a2dp";};
+class HpaeSinkOutputNode {public:
+explicit HpaeSinkOutputNode(size_t bytes=8,uint32_t rate=1000,int width=2):renderFrameData_(bytes),
+ renderFrameScratch_(bytes),sampleRate(rate),sampleWidth(width){renderSize_=outputSize_=bytes;}
+void DoProcess();bool ReadDataAndConvertFormat();void ResetPendingRenderData();
+bool Reset();bool ResetAll();int32_t RenderSinkFlush();int32_t RenderSinkReset();
+int32_t RenderSinkPause();int32_t RenderSinkResume();int32_t RenderSinkStart();int32_t RenderSinkStop();
+int32_t RenderSinkDeInit();int32_t GetRenderSinkInstance(const string&,const string&,const string&);
+int GetAuxiliarySink(const string&){return SUCCESS;}int AuxiliarySinkDeInit(){return SUCCESS;}int renderId_=0;
+#ifdef BEFORE512
+void RenderFrameForAuxiliarySink();
+#else
+void RenderFrameForAuxiliarySink(char*,size_t);
+#endif
+string GetTraceInfo(){return"host";}Info&GetNodeInfo(){return info;}
+uint32_t GetSessionId(){return 7;}string GetDeviceClass(){return"host";}
+int GetBitWidth(){return sampleWidth;}uint32_t GetChannelCount(){return 1;}
+uint32_t GetSampleRate(){return sampleRate;}uint32_t GetFrameLen(){return renderSize_/sampleWidth;}
+void HandlePaPower(HpaePcmBuffer*){}void HandleHapticParam(uint64_t t){hapticTimes.push_back(t);}
+void CheckAndSetCollDelayForRenderFrameFailed(){}void HandleRemoteTiming(){}
+int SetSinkState(StreamManagerState s){state_=s;return 0;}
+vector<char>renderFrameData_,renderFrameScratch_;size_t renderSize_=0,outputSize_=0,currentSize_=0,pendingRenderSize_=0;
+bool renderWriteInvalid_=false;uint64_t renderTimeRemainder_=0,renderFrameTimes_=0;
+Input inputStream_;shared_ptr<Sink>audioRendererSink_=make_shared<Sink>(),auxiliarySink_=make_shared<Sink>();
+bool auxSinkEnable_=true;StreamManagerState auxSinkState_=STREAM_MANAGER_RUNNING,state_=STREAM_MANAGER_NEW;
+Attr sinkOutAttr_;atomic<size_t>collRenderFrameFailedCount_=0;HighResolutionTimer periodTimer_,intervalTimer_;
+uint32_t sampleRate;int sampleWidth;Info info;vector<uint64_t>hapticTimes;
+chrono::high_resolution_clock::time_point remoteTimePoint_;bool isOpenPaPower_=false,isDisplayPaPowerState_=false;int64_t silenceDataUs_=0;
+};
+@REAL_FUNCTIONS@
+
+static vector<unique_ptr<HpaePcmBuffer>> buffers;
+static void feed(HpaeSinkOutputNode&n,uint32_t frames=4,int first=1){auto b=make_unique<HpaePcmBuffer>();b->frames=frames;b->rate=n.sampleRate;
+for(uint32_t i=0;i<frames;i++)b->data.push_back(first+i);n.inputStream_.ready.push_back(b.get());buffers.push_back(std::move(b));}
+static vector<unsigned char>raw(int first,int frames,int width=2){vector<unsigned char>v;for(int i=first;i<first+frames;i++)for(int b=0;b<width;b++)v.push_back(static_cast<unsigned char>(i>>(8*b)));return v;}
+static vector<unsigned char>converted(vector<unsigned char>v){for(auto&x:v)++x;return v;}
+static vector<unsigned char>queued(HpaeSinkOutputNode&n){return vector<unsigned char>(n.renderFrameData_.begin(),n.renderFrameData_.begin()+n.currentSize_);}
+int main(){
+#ifdef BEFORE512
+ HpaeSinkOutputNode n;feed(n);n.audioRendererSink_->replies.push_back({SUCCESS,4});n.DoProcess();
+ if(n.currentSize_!=4){puts("before: accepted prefix4 incorrectly removed full8");return 1;}return 0;
+#else
+ int tests=0;
+ {HpaeSinkOutputNode n;feed(n);n.DoProcess();assert(n.currentSize_==0&&n.pendingRenderSize_==0);assert(n.audioRendererSink_->accepted==converted(raw(1,4)));assert(n.renderFrameTimes_==4);++tests;}
+ for(int status:{SUCCESS}){HpaeSinkOutputNode n;feed(n);auto original=raw(1,4);auto all=converted(original);n.audioRendererSink_->replies.push_back({status,4});n.DoProcess();assert(n.currentSize_==4&&n.pendingRenderSize_==4);assert(queued(n)==vector<unsigned char>(original.begin()+4,original.end()));
+ auto reads=n.inputStream_.reads;n.DoProcess();assert(n.inputStream_.reads==reads);assert(n.currentSize_==0);assert(n.audioRendererSink_->accepted==all);assert(n.auxiliarySink_->submitted.size()==2);assert(n.renderFrameTimes_==4);++tests;}
+ for(int status:{SUCCESS}){HpaeSinkOutputNode n;feed(n);n.audioRendererSink_->replies.push_back({status,0});n.DoProcess();assert(n.currentSize_==8&&n.pendingRenderSize_==8&&n.renderFrameTimes_==0);assert(n.audioRendererSink_->calls==1&&n.auxiliarySink_->calls==0);n.DoProcess();assert(n.audioRendererSink_->accepted==converted(raw(1,4)));assert(n.audioRendererSink_->calls==2);++tests;}
+ for(uint64_t rawCount:vector<uint64_t>{0,4,8}){HpaeSinkOutputNode n;feed(n);n.audioRendererSink_->replies.push_back({ERROR,rawCount});n.DoProcess();assert(n.renderWriteInvalid_&&n.currentSize_==8&&n.renderFrameTimes_==0);assert(n.auxiliarySink_->calls==0);n.DoProcess();assert(n.audioRendererSink_->calls==1);++tests;}
+ for(int status:{SUCCESS,ERROR})for(uint64_t invalid:vector<uint64_t>{3,10,UINT64_MAX}){HpaeSinkOutputNode n;feed(n);n.audioRendererSink_->replies.push_back({status,invalid});n.DoProcess();assert(n.renderWriteInvalid_&&n.currentSize_==8&&n.renderFrameTimes_==0);n.DoProcess();assert(n.audioRendererSink_->calls==1);assert(n.auxiliarySink_->calls==0);assert(n.RenderSinkStart()==ERROR);n.ResetPendingRenderData();assert(n.renderWriteInvalid_&&n.currentSize_==0);++tests;}
+ {HpaeSinkOutputNode n;feed(n,8);n.audioRendererSink_->replies.push_back({SUCCESS,4});n.DoProcess();assert(n.currentSize_==12);n.DoProcess();assert(n.currentSize_==8);n.DoProcess();assert(n.currentSize_==0);assert(n.audioRendererSink_->accepted==converted(raw(1,8)));++tests;}
+ {HpaeSinkOutputNode n;feed(n,2);feed(n,6,3);n.DoProcess();assert(n.currentSize_==8);n.DoProcess();assert(n.currentSize_==0);assert(n.audioRendererSink_->accepted==converted(raw(1,8)));++tests;}
+ {HpaeSinkOutputNode n(1,48000,1);for(int i=0;i<48;i++){feed(n,1,1);n.DoProcess();}assert(n.renderFrameTimes_==1&&n.renderTimeRemainder_==0);++tests;}
+ for(int method=0;method<3;method++)for(int status:{SUCCESS,ERROR}){HpaeSinkOutputNode n;feed(n);n.audioRendererSink_->replies.push_back({SUCCESS,4});n.DoProcess();n.audioRendererSink_->control=status;
+ int ret=method==0?n.RenderSinkFlush():method==1?n.RenderSinkReset():n.RenderSinkStop();assert(ret==status);assert(n.currentSize_==(status==SUCCESS?0u:4u));assert(n.pendingRenderSize_==(status==SUCCESS?0u:4u));++tests;}
+ {HpaeSinkOutputNode n;feed(n);n.audioRendererSink_->replies.push_back({SUCCESS,4});n.DoProcess();n.RenderSinkPause();n.RenderSinkResume();assert(n.currentSize_==4);n.DoProcess();assert(n.audioRendererSink_->accepted==converted(raw(1,4)));++tests;}
+ for(bool all:{false,true}){HpaeSinkOutputNode n;feed(n);n.audioRendererSink_->replies.push_back({SUCCESS,4});n.DoProcess();if(all)n.ResetAll();else n.Reset();assert(n.currentSize_==0&&n.pendingRenderSize_==0&&n.renderFrameTimes_==0);++tests;}
+ {HpaeSinkOutputNode n;feed(n,0);n.DoProcess();assert(n.audioRendererSink_->calls==0);++tests;}
+ {HpaeSinkOutputNode n;feed(n);n.audioRendererSink_->replies.push_back({SUCCESS,4});n.DoProcess();assert(n.RenderSinkDeInit()==SUCCESS);assert(n.currentSize_==0&&n.pendingRenderSize_==0&&!n.audioRendererSink_);++tests;}
+ {HpaeSinkOutputNode n;feed(n);n.audioRendererSink_->replies.push_back({SUCCESS,4});n.DoProcess();assert(n.GetRenderSinkInstance("primary","","")==SUCCESS);assert(n.currentSize_==0&&n.pendingRenderSize_==0&&n.renderFrameTimes_==0);++tests;}
+ {HpaeSinkOutputNode n;feed(n);n.audioRendererSink_->replies.push_back({SUCCESS,3});n.DoProcess();n.audioRendererSink_->control=ERROR;assert(n.RenderSinkFlush()==ERROR&&n.renderWriteInvalid_);n.audioRendererSink_->control=SUCCESS;assert(n.RenderSinkReset()==SUCCESS&&n.renderWriteInvalid_);++tests;}
+ for(int transportStage=0;transportStage<2;transportStage++){HpaeSinkOutputNode n;feed(n);n.audioRendererSink_->replies.push_back({ERROR,0,4});n.DoProcess();assert(n.currentSize_==8&&n.renderWriteInvalid_);assert(n.audioRendererSink_->accepted.size()==4);n.DoProcess();assert(n.audioRendererSink_->calls==1);n.RenderSinkStop();n.RenderSinkFlush();n.Reset();n.ResetAll();assert(n.renderWriteInvalid_);n.RenderSinkDeInit();n.GetRenderSinkInstance("primary","","");assert(n.renderWriteInvalid_);feed(n);n.DoProcess();assert(n.audioRendererSink_->calls==0);++tests;}
+ printf("source-method host512 %d boundary groups passed; no target/HDI/HW claim\n",tests);return 0;
+#endif
+}

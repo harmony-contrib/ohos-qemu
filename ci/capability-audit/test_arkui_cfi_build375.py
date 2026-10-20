@@ -16,7 +16,7 @@ class CFIBuildRecipe(unittest.TestCase):
                 target.write_bytes((cfi.COMPONENT / 'fixtures/original' / cfi.PROJECT / name).read_bytes())
             # The actual old entry preflights the complete upgraded sibling set.
             coverage = cfi.COMPONENT.parent / 'cfi_coverage'
-            for field in ('BUILD.gn', 'adapter/ohos/entrance/ui_content_impl.cpp',
+            for field in ('bundle.json', 'BUILD.gn', 'adapter/ohos/entrance/ui_content_impl.cpp',
                           'adapter/ohos/build/BUILD.gn', 'build/ace_lib.gni',
                           'frameworks/core/components_ng/pattern/smart_layout/engine/BUILD.gn'):
                 target = root / cfi.PROJECT / field

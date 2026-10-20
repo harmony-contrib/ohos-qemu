@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import shutil
 from pathlib import Path, PurePosixPath
 import struct
 import subprocess
@@ -156,10 +157,38 @@ def inspect_elf(path, arch, library):
     if library.startswith('module/'):
         need('napi_module_register' in symbols.undefined and b'telephony.numberidentity\0' in data and
              b'contact.numberlookup\0' in data, 'NumberIdentity actual NAPI registration missing')
+    elif library == 'libappkit_native.z.so':
+        need(any('MainThread' in symbol for symbol in symbols.defined) and
+             b'NUMBER_NATIVE495_LOAD v=1 event=' in data,
+             'actual Number native-loader implementation/observation missing')
     else:
         need(any('Telephony' in symbol and 'Number' in symbol for symbol in symbols.defined),
              'NumberIdentity native implementation exports missing')
     return {'sha256': file_sha256(path), 'elf_class': cls, 'elf_machine': machine, 'elf_type': 3}
+
+
+def verify_loader_image(image, arch, scratch, output_directory):
+    library = 'libappkit_native.z.so'
+    directory = scratch / 'loader-elf'
+    directory.mkdir()
+    relative = '/' + ARCHES[arch][2] + '/' + library
+    actual, inode = dump_unique_file(image, tuple(prefix + relative for prefix in ('', '/system')),
+                                     directory, debugfs_path())
+    report = {**inode, **inspect_elf(actual, arch, library),
+              'basename': library, 'bytes': actual.stat().st_size,
+              'system_image_sha256': file_sha256(image),
+              'scope': 'on-disk loader ELF only; loaded process and callback remain unverified',
+              'loaded_process_verified': False, 'native_callback_proven': False}
+    destination = Path(output_directory)
+    need(destination.is_absolute() and destination.parent.resolve() == destination.parent and
+         not destination.exists() and not destination.is_symlink(),
+         'fresh canonical loader evidence directory required')
+    destination.mkdir(mode=0o700)
+    target = destination / library
+    shutil.copyfile(actual, target)
+    need(file_sha256(target) == report['sha256'], 'exported loader ELF differs from image')
+    report['file'] = str(target)
+    return report
 
 
 def compare_policy(name, source_data, image_data):
@@ -179,6 +208,18 @@ def load_guard(relative, name):
     return module
 
 
+def require_number_loader_source(source):
+    loader = load_guard('patches/common/foundation/ability/ability_runtime/number_identity_loader/verify_source.py',
+                        'number_identity_loader_guard')
+    try:
+        loader.validate(source, require_patched=True)
+    except ValueError:
+        # The only successor is an authenticated complete loader/provider vector.
+        trace = load_guard('patches/common/foundation/ability/ability_runtime/number_identity_native_trace495/verify_source.py',
+                           'number_identity_native_trace_guard')
+        trace.preflight_sequence(source, require_patched=True)
+
+
 def verify_image(source, image, arch, scratch):
     native = load_guard('patches/common/base/telephony/number_identity/local_provider/verify_source.py',
                         'number_identity_native_guard')
@@ -189,9 +230,7 @@ def verify_image(source, image, arch, scratch):
     packaging = load_guard('patches/common/base/telephony/number_identity/native_package_identity/verify_source.py',
                            'number_identity_native_package_guard')
     packaging.validate(source, require_patched=True)
-    loader = load_guard('patches/common/foundation/ability/ability_runtime/number_identity_loader/verify_source.py',
-                        'number_identity_loader_guard')
-    loader.validate(source, require_patched=True)
+    require_number_loader_source(source)
     selection = load_guard('patches/common/vendor/ohemu/virt/number_identity_local/configure.py',
                            'number_identity_selection_guard')
     selection.configure(source, require_patched=True)
@@ -238,6 +277,7 @@ def main(argv=None):
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--arch', choices=tuple(ARCHES), required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--loader-output-dir', type=Path)
     args = parser.parse_args(argv)
     result = {'status': 'fail', 'scope': 'offline_public_local_subset_HAP_profile_ELF_image_policy_only',
               'provider_runtime_validated': False, 'local_subset_runtime_validated': False,
@@ -246,6 +286,9 @@ def main(argv=None):
     try:
         with tempfile.TemporaryDirectory(prefix='number-identity-image-') as temporary:
             result.update(verify_image(args.source_root, args.system_image, args.arch, Path(temporary)))
+            if args.loader_output_dir is not None:
+                result['loader_library'] = verify_loader_image(args.system_image, args.arch, Path(temporary),
+                                                               args.loader_output_dir)
         result['status'] = 'pass'
     except (OSError, ValueError, KeyError, TypeError, ImportError, struct.error,
             zipfile.BadZipFile, subprocess.SubprocessError) as error:

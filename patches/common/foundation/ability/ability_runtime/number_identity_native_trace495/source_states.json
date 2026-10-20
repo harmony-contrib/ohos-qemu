@@ -1,0 +1,16 @@
+{
+  "schema": "number_identity_native_trace495/v1",
+  "project": "foundation/ability/ability_runtime",
+  "revision": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8",
+  "files": [
+    [
+      "frameworks/native/appkit/app/main_thread.cpp",
+      "3680fd9fb200b103a87bc01d530e0c68deadfac843825354adb4182763618c1e",
+      "ed25c0dd5459e94c802aa9abcfb70baa3aba8110ae8b1f4a4f2ffd0bdb3b4528"
+    ]
+  ],
+  "patch": "0001-record-number-native-causal-observations.patch",
+  "patch_sha256": "0ba3cd951c143aeb67fa181160981267949b4daf00f51559687792f47f6ecde8",
+  "source_only": true,
+  "build_or_guest_pass": false
+}

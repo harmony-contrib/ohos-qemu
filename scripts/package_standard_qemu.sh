@@ -3040,6 +3040,88 @@ PY
   echo "full ${DEVICE_TYPE} source profile and runtime artifacts verified for ${product}"
 }
 
+verify_audio_accepted_write_source() {
+  case "${DEVICE_TYPE_PROFILE}" in
+    qemu_phone_full_source|qemu_2in1_full_source) ;;
+    *) return 0 ;;
+  esac
+  python3 "${SCRIPT_DIR}/../patches/common/drivers/peripheral/audio/accepted_write/apply.py" \
+    --source-root "${SOURCE_ROOT}" --preflight --require-patched \
+    > "${SOURCE_ROOT}/out/${PRODUCT}/audio-accepted-write-source.json"
+}
+
+verify_sonic_defined_arithmetic_source() {
+  case "${DEVICE_TYPE_PROFILE}" in
+    qemu_phone_full_source|qemu_2in1_full_source) ;;
+    *) return 0 ;;
+  esac
+  python3 "${SCRIPT_DIR}/../patches/common/third_party/sonic/defined_arithmetic/apply.py" \
+    --source-root "${SOURCE_ROOT}" --preflight --require-patched \
+    > "${SOURCE_ROOT}/out/${PRODUCT}/sonic-defined-arithmetic-source.json"
+}
+
+verify_audio_resampler_counts_source() {
+  case "${DEVICE_TYPE_PROFILE}" in
+    qemu_phone_full_source|qemu_2in1_full_source) ;;
+    *) return 0 ;;
+  esac
+  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/audio_resampler_counts/apply.py" \
+    --source-root "${SOURCE_ROOT}" --preflight --require-patched \
+    > "${SOURCE_ROOT}/out/${PRODUCT}/audio-resampler-counts-source.json"
+}
+
+verify_pa_write_status_source() {
+  case "${DEVICE_TYPE_PROFILE}" in
+    qemu_phone_full_source|qemu_2in1_full_source) ;;
+    *) return 0 ;;
+  esac
+  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/pa_write_status/apply.py" \
+    --source-root "${SOURCE_ROOT}" --preflight --require-patched \
+    > "${SOURCE_ROOT}/out/${PRODUCT}/pa-write-status-source.json"
+}
+
+verify_audio_haptic_source_provenance() {
+  case "${DEVICE_TYPE_PROFILE}" in
+    qemu_phone_full_source|qemu_2in1_full_source) ;;
+    *) return 0 ;;
+  esac
+  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/player_framework/audio_haptic_source_provenance/verify_batch.py" \
+    --source-root "${SOURCE_ROOT}" --require-patched \
+    > "${SOURCE_ROOT}/out/${PRODUCT}/audio-haptic-source-provenance.json"
+}
+
+verify_jsframework_native_test_bridge_source() {
+  case "${DEVICE_TYPE_PROFILE}" in
+    qemu_phone_full_source|qemu_2in1_full_source) ;;
+    *) return 0 ;;
+  esac
+  # Authentication of build/test source does not establish target test success.
+  python3 "${SCRIPT_DIR}/../patches/common/third_party/jsframework/native_test_bridge/verify_source.py" \
+    --source-root "${SOURCE_ROOT}" --require-patched \
+    > "${SOURCE_ROOT}/out/${PRODUCT}/jsframework-native-test-bridge-source.json"
+}
+
+verify_number_native_observation_source() {
+  case "${DEVICE_TYPE_PROFILE}" in
+    qemu_phone_full_source) ;;
+    *) return 0 ;;
+  esac
+  python3 "${SCRIPT_DIR}/../patches/common/foundation/ability/ability_runtime/number_identity_native_trace495/verify_source.py" \
+    --source-root "${SOURCE_ROOT}" --require-patched \
+    > "${SOURCE_ROOT}/out/${PRODUCT}/number-native-observation-source.json"
+}
+
+verify_audio_haptic_sync_id_source() {
+  case "${DEVICE_TYPE_PROFILE}" in
+    qemu_phone_full_source|qemu_2in1_full_source) ;;
+    *) return 0 ;;
+  esac
+  # This checks the prepared source, not presentation timing or runtime routing.
+  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/audio_haptic_sync_id/verify_source.py" \
+    --source-root "${SOURCE_ROOT}" --require-patched \
+    > "${SOURCE_ROOT}/out/${PRODUCT}/audio-haptic-sync-id-source.json"
+}
+
 verify_ace_cfi_native_closure() {
   case "${DEVICE_TYPE_PROFILE}" in
     qemu_phone_full_source|qemu_2in1_full_source) ;;
@@ -3102,6 +3184,15 @@ case "${PRODUCT}" in
 esac
 
 verify_ace_cfi_native_closure
+verify_audio_accepted_write_source
+verify_sonic_defined_arithmetic_source
+verify_audio_resampler_counts_source
+verify_pa_write_status_source
+verify_audio_haptic_source_provenance
+verify_audio_haptic_sync_id_source
+verify_jsframework_native_test_bridge_source
+
+verify_number_native_observation_source
 
 if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ] || \
    [ "${DEVICE_TYPE_PROFILE}" = "qemu_phone_full_source" ]; then
@@ -3196,6 +3287,26 @@ mkdir -p "${IMAGES_OUT}" "${LAUNCH_OUT}" "${TOOLS_OUT}"
 case "${DEVICE_TYPE_PROFILE}" in
   qemu_phone_full_source|qemu_2in1_full_source)
     cp "${SOURCE_ROOT}/out/${PRODUCT}/ace-cfi-closure.json" "${PACKAGE_DIR}/ace-cfi-closure.json"
+    ;;
+esac
+case "${DEVICE_TYPE_PROFILE}" in
+  qemu_phone_full_source|qemu_2in1_full_source)
+    cp "${SOURCE_ROOT}/out/${PRODUCT}/jsframework-native-test-bridge-source.json" "${PACKAGE_DIR}/jsframework-native-test-bridge-source.json"
+    ;;
+esac
+case "${DEVICE_TYPE_PROFILE}" in
+  qemu_phone_full_source|qemu_2in1_full_source)
+    cp "${SOURCE_ROOT}/out/${PRODUCT}/audio-haptic-sync-id-source.json" "${PACKAGE_DIR}/audio-haptic-sync-id-source.json"
+    cp "${SOURCE_ROOT}/out/${PRODUCT}/audio-accepted-write-source.json" "${PACKAGE_DIR}/audio-accepted-write-source.json"
+    cp "${SOURCE_ROOT}/out/${PRODUCT}/sonic-defined-arithmetic-source.json" "${PACKAGE_DIR}/sonic-defined-arithmetic-source.json"
+    cp "${SOURCE_ROOT}/out/${PRODUCT}/audio-resampler-counts-source.json" "${PACKAGE_DIR}/audio-resampler-counts-source.json"
+    cp "${SOURCE_ROOT}/out/${PRODUCT}/pa-write-status-source.json" "${PACKAGE_DIR}/pa-write-status-source.json"
+    cp "${SOURCE_ROOT}/out/${PRODUCT}/audio-haptic-source-provenance.json" "${PACKAGE_DIR}/audio-haptic-source-provenance.json"
+    ;;
+esac
+case "${DEVICE_TYPE_PROFILE}" in
+  qemu_phone_full_source)
+    cp "${SOURCE_ROOT}/out/${PRODUCT}/number-native-observation-source.json" "${PACKAGE_DIR}/number-native-observation-source.json"
     ;;
 esac
 cp "${SCRIPT_DIR}/sign-hap.sh" "${TOOLS_OUT}/sign-hap.sh"
@@ -3336,7 +3447,8 @@ PY
     if [ "${DEVICE_TYPE}" = phone ]; then
       python3 "${SCRIPT_DIR}/verify_number_identity_image.py" \
         --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
-        --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/number-identity-local-evidence.json"
+        --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/number-identity-local-evidence.json" \
+        --loader-output-dir "${PACKAGE_DIR}/number-native-emitter-elf"
     fi
     python3 "${SCRIPT_DIR}/verify_contacts_theme_provider_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --device "${DEVICE_TYPE}" \

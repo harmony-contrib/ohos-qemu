@@ -1,0 +1,119 @@
+{
+  "scope": "Fixed read-only input copies from the one existing owned native494 container.",
+  "created_utc": "2026-10-19T19:07:26.615423+00:00",
+  "native_source_commit": "054d684589538d12f6e6c1981ccff80c5137f8a3",
+  "existing_container_id": "16310b7c1a09a6c69ae0b1b8686d6371a8f75e57abfe7527baae17cfb426f1da",
+  "existing_native_resource_lease_held": true,
+  "new_resource_lease_acquired": false,
+  "new_container_created": false,
+  "guest_process_started": false,
+  "source_mutated": false,
+  "whole_source_consistency_claimed": false,
+  "final_build_result": false,
+  "files": [
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-number-datashare495-copy-01/files/foundation/distributeddatamgr/data_share/frameworks/native/provider/src/datashare_stub.cpp",
+      "source_relative": "foundation/distributeddatamgr/data_share/frameworks/native/provider/src/datashare_stub.cpp",
+      "sha256": "56953b653343e42e4e1b1f906c6675b937e0b2e36503825488d73bc2469f1b09",
+      "bytes": 25580,
+      "two_read_payloads_equal": true
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-number-datashare495-copy-01/files/foundation/distributeddatamgr/data_share/frameworks/native/provider/include/datashare_stub.h",
+      "source_relative": "foundation/distributeddatamgr/data_share/frameworks/native/provider/include/datashare_stub.h",
+      "sha256": "482a483a2453a22c0455d70b7d4ca3bef5e7fcfe78e62b38bd565c173fca446f",
+      "bytes": 5607,
+      "two_read_payloads_equal": true
+    }
+  ],
+  "commands": [
+    {
+      "label": "inspect-before",
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r59-F-private-docker-cli-97-01/bin/docker",
+        "--host",
+        "unix:///Users/ranger/.orbstack/run/docker.sock",
+        "inspect",
+        "16310b7c1a09a6c69ae0b1b8686d6371a8f75e57abfe7527baae17cfb426f1da"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "69d8a93b9a8c00a9df491e44fdde64b820e6e2379b4a9c404b56aff9cc9cfe7d",
+      "stdout_bytes": 19913,
+      "stderr": ""
+    },
+    {
+      "label": "first-foundation/distributeddatamgr/data_share/frameworks/native/provider/src/datashare_stub.cpp",
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r59-F-private-docker-cli-97-01/bin/docker",
+        "--host",
+        "unix:///Users/ranger/.orbstack/run/docker.sock",
+        "cp",
+        "16310b7c1a09a6c69ae0b1b8686d6371a8f75e57abfe7527baae17cfb426f1da:/Volumes/PSSD/qemu/openharmony/foundation/distributeddatamgr/data_share/frameworks/native/provider/src/datashare_stub.cpp",
+        "-"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "250cfaa49fd7f3e6e0a38acc7552ab73a42e297c2ed1b7f838ad9b441c4f9777",
+      "stdout_bytes": 27136,
+      "stderr": ""
+    },
+    {
+      "label": "confirm-foundation/distributeddatamgr/data_share/frameworks/native/provider/src/datashare_stub.cpp",
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r59-F-private-docker-cli-97-01/bin/docker",
+        "--host",
+        "unix:///Users/ranger/.orbstack/run/docker.sock",
+        "cp",
+        "16310b7c1a09a6c69ae0b1b8686d6371a8f75e57abfe7527baae17cfb426f1da:/Volumes/PSSD/qemu/openharmony/foundation/distributeddatamgr/data_share/frameworks/native/provider/src/datashare_stub.cpp",
+        "-"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "250cfaa49fd7f3e6e0a38acc7552ab73a42e297c2ed1b7f838ad9b441c4f9777",
+      "stdout_bytes": 27136,
+      "stderr": ""
+    },
+    {
+      "label": "first-foundation/distributeddatamgr/data_share/frameworks/native/provider/include/datashare_stub.h",
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r59-F-private-docker-cli-97-01/bin/docker",
+        "--host",
+        "unix:///Users/ranger/.orbstack/run/docker.sock",
+        "cp",
+        "16310b7c1a09a6c69ae0b1b8686d6371a8f75e57abfe7527baae17cfb426f1da:/Volumes/PSSD/qemu/openharmony/foundation/distributeddatamgr/data_share/frameworks/native/provider/include/datashare_stub.h",
+        "-"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "010a43d04236f6be29346ecd3aedbaec4130728992915df3dbdc9650c436e0ba",
+      "stdout_bytes": 7168,
+      "stderr": ""
+    },
+    {
+      "label": "confirm-foundation/distributeddatamgr/data_share/frameworks/native/provider/include/datashare_stub.h",
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r59-F-private-docker-cli-97-01/bin/docker",
+        "--host",
+        "unix:///Users/ranger/.orbstack/run/docker.sock",
+        "cp",
+        "16310b7c1a09a6c69ae0b1b8686d6371a8f75e57abfe7527baae17cfb426f1da:/Volumes/PSSD/qemu/openharmony/foundation/distributeddatamgr/data_share/frameworks/native/provider/include/datashare_stub.h",
+        "-"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "010a43d04236f6be29346ecd3aedbaec4130728992915df3dbdc9650c436e0ba",
+      "stdout_bytes": 7168,
+      "stderr": ""
+    },
+    {
+      "label": "inspect-after",
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r59-F-private-docker-cli-97-01/bin/docker",
+        "--host",
+        "unix:///Users/ranger/.orbstack/run/docker.sock",
+        "inspect",
+        "16310b7c1a09a6c69ae0b1b8686d6371a8f75e57abfe7527baae17cfb426f1da"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "d0126e8277f7a29512701b4307e552299cfe9a52a758cb631930c54f364b2d98",
+      "stdout_bytes": 19913,
+      "stderr": ""
+    }
+  ]
+}

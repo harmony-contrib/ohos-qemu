@@ -1,0 +1,111 @@
+# Copyright (C) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+config("number_identity_js_config") {
+  include_dirs = [ "include" ]
+}
+
+ohos_shared_library("numberlookup") {
+  sources = [
+    "src/napi_number_identity.cpp",
+  ]
+
+  include_dirs = [
+    "//base/telephony/number_identity/utils/log/include",
+    "//base/telephony/number_identity/shared/include",
+  ]
+
+  public_configs = [ ":number_identity_js_config" ]
+
+  external_deps = [
+    "ability_base:base",
+    "ability_base:want",
+    "ability_base:zuri",
+    "ability_runtime:abilitykit_native",
+    "ability_runtime:ability_manager",
+    "ability_runtime:data_ability_helper",
+    "ability_runtime:napi_base_context",
+    "core_service:libtel_common",
+    "core_service:tel_core_service_api",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "data_share:datashare_provider",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "i18n:intl_util",
+    "init:libbegetutil",
+    "napi:ace_napi",
+    "ipc:ipc_single",
+    "ipc:ipc_napi",
+  ]
+
+  defines = [
+    "NUMBER_IDENTITY_LOG_TAG = \"NumberIdentityJsApi\"",
+    "LOG_DOMAIN = 0xD001F1A",
+  ]
+
+  if (build_variant != "user") {
+    defines += [ "NUMBER_IDENTITY_DEBUG" ]
+  }
+
+  part_name = "number_identity"
+  subsystem_name = "telephony"
+  relative_install_dir = "module/contact"
+}
+
+ohos_shared_library("numberidentity") {
+  sources = [
+    "src/napi_number_identity.cpp",
+  ]
+
+  include_dirs = [
+    "//base/telephony/number_identity/utils/log/include",
+    "//base/telephony/number_identity/shared/include",
+  ]
+
+  public_configs = [ ":number_identity_js_config" ]
+
+  external_deps = [
+    "ability_base:base",
+    "ability_base:want",
+    "ability_base:zuri",
+    "ability_runtime:abilitykit_native",
+    "ability_runtime:ability_manager",
+    "ability_runtime:data_ability_helper",
+    "ability_runtime:napi_base_context",
+    "core_service:libtel_common",
+    "core_service:tel_core_service_api",
+    "c_utils:utils",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "data_share:datashare_provider",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "i18n:intl_util",
+    "init:libbegetutil",
+    "napi:ace_napi",
+    "ipc:ipc_single",
+    "ipc:ipc_napi",
+  ]
+
+  defines = [
+    "NUMBER_IDENTITY_LOG_TAG = \"NumberIdentityJsApi\"",
+    "LOG_DOMAIN = 0xD001F1A",
+  ]
+
+  part_name = "number_identity"
+  subsystem_name = "telephony"
+  relative_install_dir = "module/telephony"
+}

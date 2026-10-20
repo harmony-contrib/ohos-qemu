@@ -1,0 +1,82 @@
+{
+    "name": "@ohos/number_identity",
+    "version": "4.0",
+    "description": "telephony data storage service",
+    "publishAs": "code-segment",
+    "homePage": "",
+    "repository": "",
+    "license": "Apache License 2.0",
+    "language": "",
+    "private": false,
+    "scripts": {},
+    "envs": [],
+    "dirs": [],
+    "author": {},
+    "contributors": [],
+    "segment": {
+        "destPath": "base/telephony/number_identity"
+    },
+    "component": {
+        "name": "number_identity",
+        "subsystem": "telephony",
+        "features": [],
+        "adapted_system_type": [
+            "standard"
+        ],
+        "rom": "200KB",
+        "ram": "200KB",
+        "deps": {
+            "components": [
+                "ability_base",
+                "ability_runtime",
+                "bundle_framework",
+                "c_utils",
+                "call_manager",
+                "common_event_service",
+                "core_service",
+                "crypto_framework",
+                "data_share",
+                "hdf_core",
+                "hilog",
+                "i18n",
+                "ipc",
+                "location",
+                "kv_store",
+                "napi",
+                "relational_store",
+                "netstack",
+                "netmanager_base",
+                "work_scheduler",
+                "init",
+                "samgr",
+                "cJSON",
+                "protobuf",
+                "openssl",
+                "icu",
+                "libphonenumber",
+                "hisysevent",
+                "access_token",
+                "eventhandler"
+            ]
+        },
+        "build": {
+            "group_type": {
+                "base_group": [
+                ],
+                "fwk_group": [
+                    "//base/telephony/number_identity/frameworks/js:numberlookup",
+                    "//base/telephony/number_identity/frameworks/js:numberidentity",
+                    "//base/telephony/number_identity/frameworks/extension:caller_info_query_extension",
+                    "//base/telephony/number_identity/frameworks/extension:caller_info_query_extension_module",
+                    "//base/telephony/number_identity/interfaces/kits/caller_info_query_extension_ability:callerinfoqueryextensionability_napi",
+                    "//base/telephony/number_identity/interfaces/kits/caller_info_query_extension_context:callerinfoqueryextensioncontext_napi",
+                    "//base/telephony/number_identity/etc:number_location"
+                ],
+                "service_group": [
+                    "//base/telephony/number_identity:NumberIdentity",
+                    "//base/telephony/number_identity:number_identity"
+                ]
+            }
+        }
+    }
+}

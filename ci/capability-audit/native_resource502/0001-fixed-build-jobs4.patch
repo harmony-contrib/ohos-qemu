@@ -1,0 +1,11 @@
+--- a/run_F_representative17.py
++++ b/run_F_representative17.py
+@@ -151,7 +151,7 @@
+         DOCKER_SOURCE_SEED='0', DOCKER_SOURCE_REFRESH='0',
+         QEMU_KNOWLEDGE_ICS=str(ROOT / 'patches/resources/knowledge/cn-2026/holidays.ics'),
+         PACKAGE_ROOT=str(output / ('no-packages-prepare-only' if stage == 'prepare' else 'packages')),
+-        LOG_DIR=str(output / 'logs'), BUILD_JOBS='2', KERNEL_BUILD_JOBS='2',
++        LOG_DIR=str(output / 'logs'), BUILD_JOBS='2' if stage == 'prepare' else '4', KERNEL_BUILD_JOBS='2',
+         DOCKER_BUILD_CPUS='2' if stage == 'prepare' else '4', DOCKER_BUILD_MEMORY='5g' if stage == 'prepare' else '10g',
+         SKIP_REPO_SYNC='1', SKIP_PREBUILTS='1', SKIP_GIT_LFS='1', SKIP_APT='1',
+         PREPARE_ONLY='1' if stage == 'prepare' else '0', BUILD_ONLY_LOAD='0', SOURCE_PREPARE_ONLY='0',

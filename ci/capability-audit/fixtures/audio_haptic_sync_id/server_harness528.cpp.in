@@ -1,0 +1,105 @@
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <cassert>
+#include <cstring>
+#include <iostream>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
+#define CHECK_AND_RETURN_RET(c,r) do{if(!(c))return (r);}while(0)
+#define CHECK_AND_RETURN_RET_LOG(c,r,...) CHECK_AND_RETURN_RET(c,r)
+#define CHECK_AND_CALL_FUNC_RETURN_RET(c,r,...) CHECK_AND_RETURN_RET(c,r)
+#define CHECK_AND_RETURN_LOG(c,...) do{if(!(c))return;}while(0)
+#define AUDIO_ERR_LOG(...) ((void)0)
+#define AUDIO_INFO_LOG(...) ((void)0)
+#define AUDIO_WARNING_LOG(...) ((void)0)
+#define HILOG_COMM_INFO(...) ((void)0)
+constexpr int SUCCESS=0,ERROR=-1,ERR_OPERATION_FAILED=-3,ERR_INVALID_PARAM=-4;
+static int failCopy=0,copyCalls=0;
+#include "ring_buffer_wrapper.h"
+using OHOS::AudioStandard::RingBufferWrapper;
+struct Trace{explicit Trace(const std::string&){}static void Count(const std::string&,int64_t){} };
+struct ClockTime{static int64_t GetCurNano(){return 0;}};
+struct BufferDesc {uint8_t*buffer=nullptr;size_t bufLength=0,dataLength=0;};
+struct DumpFileUtil {static constexpr int BETA_VERSION=1;static void WriteDumpFile(void*,void*,size_t){} };
+struct AudioDump {static AudioDump&GetInstance(){static AudioDump a;return a;}int GetVersionType(){return 0;}};
+struct AudioCacheMgr{static AudioCacheMgr&GetInstance(){static AudioCacheMgr a;return a;}void CacheData(const std::string&,void*,size_t){} };
+struct Checker{void RecordNormalFrame(){} };
+struct SharedBuffer {
+ std::array<uint8_t,64>bytes{};size_t frame=2,split=0;uint64_t r=0,w=4;int readFailure=0;
+ uint64_t GetCurReadFrame(){return r;}uint64_t GetCurWriteFrame(){return w;}
+ int64_t GetReadableDataFrames(){return w-r;}
+ int GetAllReadableBufferFromPosFrame(uint64_t p,RingBufferWrapper& b){size_t len=(w-p)*frame;size_t first=split?std::min(split,len):len;b.basicBufferDescs[0]={bytes.data()+p*frame,first};b.basicBufferDescs[1]={bytes.data()+p*frame+first,len-first};b.dataLength=len;return 0;}
+ int SetCurReadFrame(uint64_t p,bool=true){if(readFailure)return readFailure;r=p;return 0;}
+};
+constexpr int AUDIO_FLAG_3DA_DIRECT=2,ENCODING_AUDIOVIVID=2,STREAM_ULTRASONIC=2,FADE_STRATEGY_DEFAULT=0,MSEC_PER_SEC=1000,SAMPLE_U8=0;
+struct Config{struct{bool isStatic=false;int rendererFlags=0;uint64_t expectedPlaybackDurationBytes=0;}rendererInfo;struct{uint32_t samplingRate=48000;int encoding=0,format=1;}streamInfo;int streamType=0;};
+struct Enqueue {int result=0,calls=0;int EnqueueBuffer(const BufferDesc&b){assert(b.buffer);calls++;return result;}};
+struct RendererInServer {
+ size_t byteSizePerFrame_=2,spanSizeInFrame_=4,spanSizeInByte_=8;std::mutex writeLock_;SharedBuffer*audioServerBuffer_;bool offloadEnable_=false;
+ std::string traceTag_,dumpFileName_;unsigned streamIndex_=1;Config processConfig_;int standByCounter_=0,finished=0;std::atomic<bool>isOffloadJankReport{false};int64_t lastWriteTime_=0;
+ std::atomic<int>writeCount_{0};void*dumpC2S_=nullptr;std::vector<uint8_t>rendererTmpBuffer_;Enqueue*stream_;Checker check;Checker*audioStreamChecker_=&check;
+ void ProcessFadeOutIfNeeded(RingBufferWrapper&,uint64_t,uint64_t,size_t){}void DoFadingOut(RingBufferWrapper&){}int GetFadeStrategy(uint64_t){return 0;}
+ bool CheckIsUnderrun(uint64_t r,uint64_t w){return r>=w;}int Write3DAModeData(uint64_t,uint64_t){assert(false);return ERROR;}
+ void DetectLatency(uint8_t*,size_t){}void OtherStreamEnqueue(const BufferDesc&){}void WriteMuteDataSysEvent(const BufferDesc&){}void OnWriteDataFinish(){finished++;}
+ int WriteDataInStaticMode(int8_t*,size_t){assert(false);return ERROR;}
+ int GetAvailableSize(size_t& n){n=(audioServerBuffer_->w-audioServerBuffer_->r)*byteSizePerFrame_;return 0;}
+ @COPY_DECL@
+ int32_t WriteData(int8_t*,size_t,bool);int32_t WriteData();BufferDesc PrepareOutputBuffer(const RingBufferWrapper&);
+ int32_t SelectModeAndWriteData(int8_t*,size_t,bool);int32_t OnWriteDataInternal(int8_t*,size_t,bool);int32_t OnWriteData(int8_t*,size_t);int32_t OnWriteDataNoWake(int8_t*,size_t);
+};
+struct AudioCallBackStreamInfo{bool isWriteFirst_=false,needData=true,forceData=false,isLowLatency=false;size_t requestDataLen=8;int8_t*inputData=nullptr;};
+struct HpaeRendererStreamImpl{
+ bool isCallbackMode_=true,noWaitDataFlag_=false;std::atomic<bool>sendDataEnabled_{true};uint32_t streamIndex_=1;size_t byteSizePerFrame_=2;std::atomic<size_t>mutePaddingFrames_{0};Config processConfig_;std::weak_ptr<RendererInServer>writeCallback_;
+ void UpdateInnerCapWriteState(bool){}bool InitLatencyInfo(AudioCallBackStreamInfo&){return false;}void ResetSinkLatencyFetcher(AudioCallBackStreamInfo&){}void NotifyFirstStreamData(){}
+ int WriteDataFromRingBuffer(bool,int8_t*,size_t){assert(false);return ERROR;}
+ int32_t OnStreamData(AudioCallBackStreamInfo&);
+};
+struct Pcm{std::array<float,4>v{};bool valid=false;float*GetPcmDataBuffer(){return v.data();}size_t Size(){return v.size()*sizeof(float);}void SetBufferValid(bool b){valid=b;}};
+struct History{bool GetFrameData(Pcm&){return false;}void StoreFrameData(Pcm&){} };
+struct NodeCallback{void OnNodeStatusUpdate(int,int){} };
+struct Output{int count=0;void WriteDataToOutput(Pcm*){count++;}};
+constexpr int DEVICE_CLASS_OFFLOAD=1,DEVICE_CLASS_REMOTE_OFFLOAD=2,OPERATION_UNDERFLOW=1,OPERATION_DRAINED=2,PIPE_TYPE_UNKNOWN=0;
+using AudioPipeType=int;
+static int ConvertDeviceClassToPipe(int){return PIPE_TYPE_UNKNOWN;}
+static void ConvertToFloat(int,size_t n,const int8_t*p,float*q){for(size_t i=0;i<n;i++){int16_t v;std::memcpy(&v,p+i*2,2);q[i]=v/32768.f;}}
+struct AudioPerformanceMonitor{static AudioPerformanceMonitor&GetInstance(){static AudioPerformanceMonitor p;return p;}void RecordSilenceState(int,bool,int,uint32_t){} };
+struct HpaeSinkInputNode{
+ bool offloadEnable_=true,isDrain_=false;int standbyCounter_=0,appUid_=1;uint64_t totalFrames_=0;Pcm inputAudioBuffer_;std::array<int8_t,8>interleveData_;std::shared_ptr<History>historyBuffer_;Output outputStream_;AudioCallBackStreamInfo streamInfo_;HpaeRendererStreamImpl*renderer;
+ std::weak_ptr<NodeCallback>GetNodeStatusCallback(){return {};}int GetDeviceClass(){return 0;}int GetSessionId(){return 1;}std::string GetTraceInfo(){return "host shim";}int GetBitWidth(){return 16;}size_t GetChannelCount(){return 1;}size_t GetFrameLen(){return 4;}
+ void CheckAndDestroyHistoryBuffer(){}
+ // Explicit route-construction shim: actual OnStreamInfoChange is separately source-cited;
+ // this fixture binds its returned renderer->OnStreamData directly, with needData=true/no history.
+ int GetDataFromSharedBuffer(){streamInfo_.inputData=interleveData_.data();streamInfo_.requestDataLen=8;return renderer->OnStreamData(streamInfo_);}
+ bool ReadToAudioBuffer(int32_t&);void DoProcess();
+};
+@FUNCTIONS@
+int main(int argc,char**) {
+ bool patched=@PATCHED@;int cases=0;
+ for(size_t split:{0u,4u})for(int fault:{0,1,2})for(bool low:{false,true}) {
+  if(fault==2&&split==0)continue;
+  SharedBuffer b;b.split=split;for(int i=0;i<8;i++)b.bytes[i]=uint8_t(i+1);
+  auto server=std::make_shared<RendererInServer>();server->audioServerBuffer_=&b;Enqueue enq;server->stream_=&enq;
+  HpaeRendererStreamImpl renderer;renderer.writeCallback_=server;
+  HpaeSinkInputNode node;node.renderer=&renderer;node.interleveData_.fill(-42);node.inputAudioBuffer_.v.fill(9.f);node.streamInfo_.isLowLatency=low;
+  failCopy=fault;copyCalls=0;node.DoProcess();failCopy=0;
+  bool expectedFailure=patched&&fault>0;
+  assert(node.inputAudioBuffer_.valid==!expectedFailure);assert(node.totalFrames_==(expectedFailure?0:4));assert(b.r==(expectedFailure?0:4));assert(server->finished==(expectedFailure?0:1));
+  if(expectedFailure){for(auto v:node.inputAudioBuffer_.v)assert(v==0.f);for(int i=0;i<8;i++)assert(b.bytes[i]==i+1);
+    // Physical partial destination may be visible on copy2 error, but never valid output.
+    if(fault==2)assert(node.interleveData_[0]==1&&node.interleveData_[4]==-42);
+    copyCalls=0;node.DoProcess();assert(node.inputAudioBuffer_.valid&&b.r==4&&node.totalFrames_==4);
+  } else {for(int i=0;i<8;i++)assert(b.bytes[i]==0);}
+  cases++;
+ }
+ for(int fault:{0,1,2})for(int enqRet:{0,-81,4}) {
+  SharedBuffer b;b.split=4;for(int i=0;i<8;i++)b.bytes[i]=i+1;RendererInServer server;server.audioServerBuffer_=&b;Enqueue enq;enq.result=enqRet;server.stream_=&enq;
+  failCopy=fault;copyCalls=0;int ret=server.WriteData();failCopy=0;
+  bool expectedFailure=patched&&(fault||enqRet<0);assert((ret!=0)==expectedFailure);assert(b.r==(expectedFailure?0:4));
+  assert(enq.calls==(patched&&fault?0:1));if(expectedFailure)for(int i=0;i<8;i++)assert(b.bytes[i]==i+1);cases++;
+ }
+ std::cout<<"SERVER524 actual wrapper/server/OnStreamData/ReadToAudioBuffer/DoProcess "<<cases<<" finite cases phase="<<(patched?"after":"before")<<"\n";
+ if(argc>1&&!patched){std::cout<<"OLD BUG: failed copy made node valid and advanced shared read\n";return 1;}
+}

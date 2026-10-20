@@ -352,8 +352,8 @@ def canonical_context(config):
 EXECUTED_EXPORT_SOURCE_SHA256={'F-provider-current-owner237-draft/provider46_common.py': '2051f1e528ae4df8761a6ab732b652fe7f4d5f72ec2c511fb8fab4472f69e6ba', 'F-provider-current-owner237-draft/provider_guard237.py': '257b20a3509643a4c7bb570b04b8cfdbd53db0da287bb477deb203c0f079e8bc', 'F-runtime-support35-draft/owned_resource35.py': '02dcc35db074c625cb070ca7af29446ba917e585d45cb015fc86ff4b8863e4eb', 'F-runtime-support35-draft/support_common35.py': '69c29368c72b503f5fe5165f2796fe5273f84e92098dfb5cc6bf8059770f6a43', 'F-location-inventory-owner227-draft/run_inventory227.py': 'c6b79831f3122b3050ee7074a6b99924591ef95fce359ae7ab38ec8f4d9a8ded'}
 # Protocol is deliberately one reviewed success path, not an arbitrary Docker
 # journal interpreter. Other producers/stages require their own reviewed protocol.
-NATIVE376_MANIFEST_SHA='3c0ed570c30ca44bd9cb3632a3467d0831e1a94e704b8f317e5b051febe070c4'
-NATIVE376_WRAPPER_SHA='c33b32e5a4cd44d0d2555f0208412205ceea0b0a1261a7ec67f4296d868e3ee1'
+NATIVE376_MANIFEST_SHA='aafeef136c7e5e16c5f843769379faa2a21877aa64fcec150d5c89a2f709214e'
+NATIVE376_WRAPPER_SHA='bac2d981c9b452b01105a6fdc9462199298fc4b810d010e3ef80040d58cbae48'
 NATIVE376_IMAGE='sha256:8f7a960c7dc515a597d43a510d6d8a5e634e5c94a55aa5d9e22bfbf6b0f42c55'
 NATIVE376_NAME='ohos-qemu-phone-build'
 NATIVE376_SOURCE='ohos-qemu-7_0-release-source'
@@ -484,7 +484,7 @@ def native376_resources(value, launcher, expected, tree):
             'actual launcher argv/source pin missing')
     env=value['adopted_complete_host_environment'];out=launcher.parent
     template=dict(ENGINE376['adopted']);template.update(PACKAGE_ROOT=str(out/'packages'),LOG_DIR=str(out/'logs'),
-        PREPARE_ONLY='0',DOCKER_BUILD_CPUS='4',DOCKER_BUILD_MEMORY='10g')
+        PREPARE_ONLY='0',BUILD_JOBS='4',DOCKER_BUILD_CPUS='4',DOCKER_BUILD_MEMORY='10g')
     endpoint_env={k:env[k] for k in ('DOCKER_HOST','DOCKER_CONTEXT') if k in env}
     require({k:v for k,v in env.items() if k not in ('DOCKER_HOST','DOCKER_CONTEXT','DOCKER_CONFIG')}==
             {k:v for k,v in template.items() if k not in ('DOCKER_HOST','DOCKER_CONTEXT','DOCKER_CONFIG')},

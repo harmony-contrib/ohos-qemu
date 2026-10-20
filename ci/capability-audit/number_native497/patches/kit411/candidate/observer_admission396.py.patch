@@ -1,0 +1,11 @@
+--- a/kit411/candidate/observer_admission396.py
++++ b/kit411/candidate/observer_admission396.py
+@@ -21,7 +21,7 @@
+ VIRTUAL_RECHECK = PurePosixPath('/number-helper-recheck/recheck')
+ VIRTUAL_DSOS = PurePosixPath('/number-helper-output/product-dsos')
+ BUILDER_SHA = 'eb898a0590c1c5652d6dc10a2addecd5d25a62a77f3a8ca6266e889a7393998d'
+-OBSERVER_SHA = '30fbfdd82cc417b7b55d4b145a02a68449a82ac660935b3d83a88b80f7608b8e'
++OBSERVER_SHA = 'b56d895cddd5dcc375b7b871e871b199540b43c0a495d7ec8b31ff1106a4e5ed'
+ FIXTURE = 'batch_apps/number_runtime/number_token_query395.cpp'
+ 
+ 

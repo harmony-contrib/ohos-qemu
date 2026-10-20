@@ -1,0 +1,106 @@
+{
+  "schema": "actual494-source505-fixtures/v1",
+  "actual_receipt_sha256": {
+    "r62-audio-onset-source504-copy-01": "f1d2fcd7662c02784fe2699997742c4e70730ebd36c6bbbdc5ce14c987e88178",
+    "r62-audio-onset-api504-copy-01": "bcbaed6c257f71b9cf4a31d1ef41286170de8202fcef784ceb0f5b8209c800f5",
+    "r62-audio-onset-bridge504-copy-01": "274a4fd9f6093e9c81c2c494091386497c98f900473de2147e31b53253493432",
+    "r62-audio-onset-relay504-copy-01": "2de83bf421b483ea2cea7673786fc1021951683c5908c498b54c5089bf6d5633",
+    "r62-audio-onset-lifecycle504-copy-01": "bd169923e81ede725c87ffc2c22fedeac08aa31bb1320ce24d7a8f428eacfeb4"
+  },
+  "source_files": [
+    {
+      "relative": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_sound_normal_impl.cpp",
+      "sha256": "284068ca75062ce4716dbaa6169bcce5fb5620d7f809c706cab56e5e23d0858f",
+      "bytes": 31153
+    },
+    {
+      "relative": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_sound_normal_impl.h",
+      "sha256": "017a60022cdfb40cd323f73854234f2e1b64215421e653449e9adf54f7b0ccb0",
+      "bytes": 5968
+    },
+    {
+      "relative": "foundation/multimedia/player_framework/services/engine/histreamer/player/hiplayer_impl.cpp",
+      "sha256": "3bb7f9e9220411f0c20323274d0b45ca9a5a95f800bff1a91d2a13bb6c3700db",
+      "bytes": 213021
+    },
+    {
+      "relative": "foundation/multimedia/player_framework/services/engine/histreamer/player/hiplayer_impl.h",
+      "sha256": "cf37a65cdf9b0420d792c5454c1480bc2e6b6bcd25a3d7aeef5720b5409925bc",
+      "bytes": 27487
+    },
+    {
+      "relative": "foundation/multimedia/av_codec/services/media_engine/plugins/sink/audio_server_sink_plugin.cpp",
+      "sha256": "24bc39c901437a47b178e022a055322e0bf055dcbf5074c044ba155e6213b276",
+      "bytes": 63056
+    },
+    {
+      "relative": "foundation/multimedia/av_codec/services/media_engine/plugins/sink/audio_server_sink_plugin.h",
+      "sha256": "c256981b4dc8012e5eac1327ee5d572f834e43ec476c62101ee3657bcf0f4abc",
+      "bytes": 11084
+    },
+    {
+      "relative": "foundation/multimedia/av_codec/services/media_engine/filters/audio_sink_filter.cpp",
+      "sha256": "0e5d427cc26152d092b486e45921f302a45f2e5e9cac1ac218dcd905918390ea",
+      "bytes": 15638
+    },
+    {
+      "relative": "foundation/multimedia/av_codec/services/media_engine/modules/sink/audio_sink.cpp",
+      "sha256": "3bb47db1ee09e9eee25aa03b79c4e94890a125b7ecc002199da4ef10404f3f4e",
+      "bytes": 77887
+    },
+    {
+      "relative": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_player_impl.cpp",
+      "sha256": "b654c792352a010f5526f707b94e7a8de7c52027c5011ed2847caa12dae890e1",
+      "bytes": 41062
+    },
+    {
+      "relative": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_player_impl.h",
+      "sha256": "69b9ab3c4a3a49bfdb2f754efcadc86e79591a5ac30fc169f82c9af4acad91c3",
+      "bytes": 7056
+    },
+    {
+      "relative": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_playback_session.h",
+      "sha256": "d3b63a658f58b2091154b5006b6657fb3866c064cc2291ae3f619e3f5995a30c",
+      "bytes": 1925
+    },
+    {
+      "relative": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_publication_callback.h",
+      "sha256": "1716816d6db703f582367bfbd478090938f50743e44d48074d7da57586cc5d6c",
+      "bytes": 1575
+    },
+    {
+      "relative": "foundation/multimedia/audio_framework/interfaces/inner_api/native/audiorenderer/include/audio_renderer.h",
+      "sha256": "0e655c03ceb2ad7725982496253bc70ce713392c7492c350659e35f586bdb29f",
+      "bytes": 48254
+    },
+    {
+      "relative": "foundation/multimedia/player_framework/services/services/player/server/player_server.cpp",
+      "sha256": "85bcefcb7f0c1e5722ccd355c31c59a98a642f790bd7d29ef13c54164d7a842f",
+      "bytes": 121554
+    }
+  ],
+  "private_header_sha256": "e6a9cfbf52d5cbe868d1b0ee1e663f282f9f68b1442b06087bf1976fa783ef73",
+  "lifecycle_manifest_sha256": "b18c74176e83a0c419d992ea4c10c0bed5894f78045d1925f26f628233740f8c",
+  "read_only_support_files_not_canonical_changes": [
+    "patches/lib/apply_exact_component.py",
+    "patches/lib/exact_source_states.py",
+    "patches/common/foundation/multimedia/player_framework/audio_haptic_lifecycle/source_states.json",
+    "ci/capability-audit/fixtures/batch_media/audio_haptic_generation/source_states.json"
+  ],
+  "host_only": true,
+  "accepted": false,
+  "onset_proven": false,
+  "rejected505_excerpt": {
+    "fixture": "rejected_full_meta_helper505.cpp",
+    "sha256": "4552aef6c6683193dd85b147d7c736e05a8466e49e1c8c6fadf86f7a1f248113",
+    "original_source_sha256": "5efdf89a21c815107535e99a56b2c78f001238272716122f0aac56e5a221316d",
+    "original_freeze_sha256": "2da36c9756607ca52b4b524ddf5d214fd1de1f1844b1d2fb524e304f203c57f2",
+    "scope": "actual rejected505 method excerpt; never applied to active source"
+  },
+  "historical_fixture_sha256": "f467e27898ce8d877b5a1e521961e2d5938cd954e192e1b598bb6c6b6f6a0ab2",
+  "actual_build_config_receipt_sha256": "1518bbf07d975e40ad266ff72bb38f0a407773b74c9f9dd998e9bd441ad46b8c",
+  "target_flags_status": "No target flags or GN changed. Actual BUILD source configuration copied; no generated target505 flags/native compile or runtime proven. Host explicitly -fno-exceptions.",
+  "scope": "actual4948 existing source targets plus3 identical private headers; final513 successor of rejected505",
+  "receiver_identity_io": "PID and birth ticks cached in plugin Ledger construction; Write performs no /proc/source FD read",
+  "readonly_prerequisites": 6
+}

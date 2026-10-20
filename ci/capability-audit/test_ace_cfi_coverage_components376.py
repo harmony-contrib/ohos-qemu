@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Actual private exact-component entry replay. No target compiler/resource use."""
 from pathlib import Path
-import hashlib,importlib.util,json,os,re,shutil,subprocess,sys,tempfile,unittest
+import ast,copy,hashlib,importlib.util,json,os,re,shutil,subprocess,sys,tempfile,types,unittest
 R=Path(__file__).resolve().parents[2]
 H=R
 C=R/'patches/common/foundation/arkui/ace_engine/cfi_coverage'
@@ -19,18 +19,18 @@ class Source486(unittest.TestCase):
   self.write('pristine')
  def write(self,state):
   for name,_,_ in n.FILES:
-   f=self.root/P/name;f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes((C/'fixtures'/('final' if state=='coverage' else 'original')/P/name).read_bytes())
+   f=self.root/P/name;f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes((C/'fixtures'/('final' if state=='coverage' or (state=='coverage-legacy' and name!='bundle.json') else 'original')/P/name).read_bytes())
   for name,_,_ in old.FILES:
-   if name=='build/BUILD.gn' and state=='coverage':continue
+   if name=='build/BUILD.gn' and state in ('coverage','coverage-legacy'):continue
    f=self.root/P/name;f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes((O/'fixtures'/('original' if state=='pristine' else 'final')/P/name).read_bytes())
-  f=self.root/q.PROJECT/'BUILD.gn';f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes((Q/'fixtures'/('final' if state in ('coverage','identity-qrcode','identity-qrcode-sec') else 'original')/q.PROJECT/'BUILD.gn').read_bytes())
-  f=self.root/sec.PROJECT/'BUILD.gn';f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes((S/'fixtures'/('final' if state in ('coverage','identity-qrcode-sec') else 'original')/sec.PROJECT/'BUILD.gn').read_bytes())
+  f=self.root/q.PROJECT/'BUILD.gn';f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes((Q/'fixtures'/('final' if state in ('coverage','coverage-legacy','identity-qrcode','identity-qrcode-sec') else 'original')/q.PROJECT/'BUILD.gn').read_bytes())
+  f=self.root/sec.PROJECT/'BUILD.gn';f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes((S/'fixtures'/('final' if state in ('coverage','coverage-legacy','identity-qrcode-sec') else 'original')/sec.PROJECT/'BUILD.gn').read_bytes())
  def snapshot(self):
   return {str(f.relative_to(self.root)):hashlib.sha256(f.read_bytes()).hexdigest() for f in self.root.rglob('*') if f.is_file() and '.ohos-qemu-patches' not in f.parts}
  def entry(self,component,ok=True):
   # The parent explicitly authorizes only the original helper's scratch git apply.
   # Stop discovery before the shared checkout; the scratch has no index or HEAD.
-  env=dict(os.environ,PYTHONDONTWRITEBYTECODE='1',GIT_CEILING_DIRECTORIES=str(H),TMPDIR=tempfile.gettempdir())
+  env=dict(os.environ,PYTHONDONTWRITEBYTECODE='1',GIT_CEILING_DIRECTORIES=str(self.root.parent),TMPDIR=tempfile.gettempdir())
   for k in ('GIT_DIR','GIT_WORK_TREE','GIT_INDEX_FILE','GIT_OBJECT_DIRECTORY','GIT_COMMON_DIR'):env.pop(k,None)
   r=subprocess.run(['/bin/bash',str(component/'apply.sh'),'--source-root',str(self.root)],capture_output=True,text=True,env=env)
   self.assertEqual(r.returncode==0,ok,r.stdout+r.stderr);return r
@@ -135,4 +135,59 @@ if (is_ohos && current_os == "ohos") {
   name='frameworks/core/components_ng/pattern/smart_layout/engine/BUILD.gn';a=(C/'fixtures/original'/P/name).read_text();z=(C/'fixtures/final'/P/name).read_text();extra='  if (is_ohos && current_os == "ohos") {\n    external_deps -= [ "bounds_checking_function:libsec_static" ]\n    deps = [ "//third_party/bounds_checking_function:libsec_static_ace_cfi" ]\n  }\n';self.assertEqual(z.replace(extra,'',1),a);self.assertEqual(z.count(extra),1)
  def test_24_original_secstatic_cannot_count_as_variant_ready(self):
   self.write('coverage');p=self.root/sec.PROJECT/'BUILD.gn';p.write_bytes((S/'fixtures/original'/sec.PROJECT/'BUILD.gn').read_bytes());a=self.snapshot();self.entry(O,False);self.entry(C,False);self.assertEqual(self.snapshot(),a)
+ def test_25_bundle_change_is_one_declaration_only(self):
+  a=json.loads((C/'fixtures/original'/P/'bundle.json').read_text());z=json.loads((C/'fixtures/final'/P/'bundle.json').read_text())
+  self.assertEqual(a['component']['deps']['third_party'],[]);self.assertEqual(z['component']['deps']['third_party'],['bounds_checking_function'])
+  self.assertIn('bounds_checking_function',a['component']['deps']['components']);z['component']['deps']['third_party']=[];self.assertEqual(z,a)
+ def checker495(self):
+  fixture=R/'ci/capability-audit/fixtures/ace_cfi_dependency495/build/templates/common/check_deps_handler.py'
+  self.assertEqual(hashlib.sha256(fixture.read_bytes()).hexdigest(),'033795041cb208910db1bad14b1c9370dbd31f6dfcc88928e9a56cd98c48ca9e')
+  # Execute the unchanged actual target function AST, with only its required
+  # builtins. No rewritten checker, generated parts_info or whole-CLI claim.
+  tree=ast.parse(fixture.read_bytes());node=next(x for x in tree.body if isinstance(x,ast.FunctionDef) and x.name=='check_third_party_deps')
+  module=ast.Module(body=[node],type_ignores=[]);namespace={};exec(compile(module,str(fixture),'exec'),namespace)
+  return namespace['check_third_party_deps']
+ def test_26_actual_checker_old_rejects_new_accepts(self):
+  fn=self.checker495();args=types.SimpleNamespace(part_name='ace_engine',target_path='//foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/smart_layout/engine:smartlayout')
+  for kind,accepted in [('original',False),('final',True)]:
+   bundle=json.loads((C/'fixtures'/kind/P/'bundle.json').read_text());deps=dict(bundle['component']['deps'],build_config_file='foundation/arkui/ace_engine/bundle.json')
+   if accepted:self.assertIsNone(fn(args,'bounds_checking_function',{'ace_engine':deps},'actual494 missing declaration',[]))
+   else:
+    with self.assertRaisesRegex(Exception,'bundle.json'):fn(args,'bounds_checking_function',{'ace_engine':deps},'actual494 missing declaration',[])
+ def test_27_actual_checker_foreign_or_missing_still_refuses(self):
+  fn=self.checker495();args=types.SimpleNamespace(part_name='ace_engine',target_path='//foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/smart_layout/engine:smartlayout')
+  bundle=json.loads((C/'fixtures/final'/P/'bundle.json').read_text())
+  for dep,info in [('unregistered_third_party',{'ace_engine':bundle['component']['deps']}),('bounds_checking_function',{}),('bounds_checking_function',{'ace_engine':{'components':['bounds_checking_function'],'third_party':[]}})]:
+   with self.subTest(dep=dep),self.assertRaises(Exception):fn(args,dep,info,'missing declaration',[])
+ def test_28_complete_legacy_upgrade_and_repeat(self):
+  self.write('coverage-legacy');self.assertEqual(n.preflight(self.root),'coverage-legacy');legacy=self.snapshot()
+  with self.assertRaises(ValueError):n.validate(self.root,True)
+  self.entry(C);self.assertEqual(n.preflight(self.root),'coverage');after=self.snapshot()
+  self.assertEqual({k for k in legacy if legacy[k]!=after[k]},{P+'/bundle.json'})
+  self.full();self.assertEqual(self.snapshot(),after)
+ def test_29_patched_bundle_with_unpatched_CFI_is_mixed(self):
+  self.write('identity-qrcode-sec');f=self.root/P/'bundle.json';f.write_bytes((C/'fixtures/final'/P/'bundle.json').read_bytes());before=self.snapshot()
+  self.entry(O,False);self.entry(C,False);self.assertEqual(before,self.snapshot())
+ def test_30_bundle_symlink_and_hardlink_reject_before_mutation(self):
+  for kind in ('symlink','hardlink'):
+   with self.subTest(kind=kind):
+    self.write('coverage-legacy');p=self.root/P/'bundle.json';dest=self.root/('foreign-'+kind);dest.write_bytes(p.read_bytes());p.unlink()
+    if kind=='symlink':p.symlink_to(dest)
+    else:os.link(dest,p)
+    before=self.snapshot();self.entry(O,False);self.entry(C,False);self.assertEqual(before,self.snapshot());p.unlink();dest.unlink()
+ def reverse495(self,patch):
+  env=dict(os.environ,PYTHONDONTWRITEBYTECODE='1',GIT_CEILING_DIRECTORIES=str(self.root.parent))
+  for key in ('GIT_DIR','GIT_WORK_TREE','GIT_INDEX_FILE','GIT_OBJECT_DIRECTORY','GIT_COMMON_DIR'):env.pop(key,None)
+  for options in (['--check'],[]):
+   result=subprocess.run(['git','-C',str(self.root),'apply','-R',*options,str(patch)],capture_output=True,text=True,env=env)
+   self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+ def test_31_real_full7_patch_reverse_restores_precoverage(self):
+  self.write('identity-qrcode-sec');before=self.snapshot();self.entry(C);self.assertEqual(n.preflight(self.root),'coverage')
+  self.reverse495(C/n.PATCH);self.assertEqual(self.snapshot(),before);self.assertEqual(n.preflight(self.root),'identity-qrcode-sec')
+ def test_32_real_legacy1_patch_reverse_preserves_CFI_six(self):
+  self.write('coverage-legacy');before=self.snapshot();self.entry(C);self.assertEqual(n.preflight(self.root),'coverage')
+  legacy=load('legacy495',C/'legacy495/verify_source.py');self.reverse495(C/'legacy495'/legacy.PATCH)
+  self.assertEqual(self.snapshot(),before);self.assertEqual(n.preflight(self.root),'coverage-legacy')
+  for name,_,after in n.FILES:
+   if name!='bundle.json':self.assertEqual(self.snapshot()[P+'/'+name],after)
 if __name__=='__main__':unittest.main()

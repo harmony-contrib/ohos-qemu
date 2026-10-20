@@ -1,0 +1,44 @@
+{
+  "scope": "source-only successor of actual376; fixed build BUILD_JOBS4, prepare2/kernel2; v17 lifecycle unchanged. Inherited HANDOFF/dependency diff describe the predecessor only.",
+  "predecessor": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/representative376/manifest.json",
+    "sha256": "3c0ed570c30ca44bd9cb3632a3467d0831e1a94e704b8f317e5b051febe070c4",
+    "bytes": 2307
+  },
+  "files_sha256": {
+    "test_representative17.py": "766a2aab1b2337956d467bef6bc666972ace4c4d59cfa3dc2e62f5f9ad264928",
+    "dependency02.diff": "78f36fae86e67992e73271f9dee01c0c7d0f8eb48aa8134f64095cc9cad20c86",
+    "run_F_representative17.py": "bac2d981c9b452b01105a6fdc9462199298fc4b810d010e3ef80040d58cbae48",
+    "HANDOFF.md": "ea750bcdd60025b925eeab6d3ec43abb09962caf68e4f93cc122959e1a94c630"
+  },
+  "external_inputs": {
+    "predecessor16": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-representative16-draft/run_F_representative16.py",
+      "sha256": "de3a0bd185b7e02b4956dc6a0ad1a2f7ae384f9856905b0a949eb5e5149eb610",
+      "bytes": 33126
+    },
+    "predecessor16_tests": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-representative16-draft/test_representative16.py",
+      "sha256": "2a84ba9c1dcdcd69b40a5df1060e268038097c95e8d572f8a3c2becdd6a4d757",
+      "bytes": 14402
+    },
+    "predecessor16_manifest": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-representative16-draft/manifest.json",
+      "sha256": "bdd2402a3b9ad0f8689c44aa7efc80e07427e436e7f9026687cd4031bffcb942",
+      "bytes": 1581
+    },
+    "root_runtime_config15.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root_runtime_config15.py",
+      "sha256": "cfcfac3bd6b5838349014b853dfc08b5c4e73673358b7be56eb958545252e675",
+      "bytes": 9488
+    },
+    "dependency02-manifest": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/representative375-dependency02/manifest.json",
+      "sha256": "974b030c348f279335d5ddb965235089b75d8a13eedca6701f60fff16e0dd413",
+      "bytes": 1059
+    }
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false,
+  "schema": "F-representative17-source-draft/v1"
+}

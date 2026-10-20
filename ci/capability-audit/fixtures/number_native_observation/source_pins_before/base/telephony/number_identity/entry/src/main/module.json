@@ -1,0 +1,121 @@
+{
+  "module": {
+    "name": "numberidentity",
+    "type": "entry",
+    "srcEntrance": "./ets/Application/NumberLocationAbilityStage.ts",
+    "description": "$string:app_name",
+    "mainElement": "MainAbility",
+    "deviceTypes": [
+      "default",
+      "2in1",
+      "tablet",
+      "wearable"
+    ],
+    "deliveryWithInstall": true,
+    "installationFree": false,
+    "pages": "",
+    "abilities": [],
+    "extensionAbilities": [
+      {
+        "name": "NumberLocationAbility",
+        "srcEntrance": "./ets/DataShareExtAbility/DataShareExtAbility.ts",
+        "readPermission": "ohos.permission.GET_TELEPHONY_STATE",
+        "description": "dataability_description",
+        "type": "dataShare",
+        "uri": "datashare://com.ohos.numberlocationability",
+        "exported": true,
+        "srcLanguage": "c++"
+      },
+      {
+        "name": "DownloadFileAbility",
+        "srcEntrance": "./ets/DataShareExtAbility/DataShareExtAbility.ts",
+        "readPermission": "ohos.permission.GET_TELEPHONY_STATE",
+        "writePermission": "ohos.permission.SET_TELEPHONY_STATE",
+        "description": "dataability_description",
+        "type": "dataShare",
+        "uri": "datashare://com.ohos.downloadfileability",
+        "exported": true,
+        "srcLanguage": "c++"
+      },
+      {
+        "name": "DownloadFileWorkSheduler",
+        "srcEntrance": "./ets/DataShareExtAbility/DownloadFileWorkSheduler.ts",
+        "description": "download_file_WorkSheduler",
+        "type": "workScheduler",
+        "exported": false
+      },
+      {
+        "name": "BackupExtensionAbility",
+        "srcEntrance": "./ets/backup/BackupExtension.ets",
+        "description": "dataability_description",
+        "label": "dataability_description",
+        "type": "backup",
+        "exported": false,
+        "metadata": [
+          {
+            "name": "ohos.extension.backup",
+            "resource": "$profile:backup_config"
+          }
+        ]
+      },
+      {
+        "name": "NumberIdentityServiceExtAbility",
+        "srcEntry": "./ets/service/NumberIdentityServiceExtAbility.ts",
+        "type": "service",
+        "exported": true,
+        "description": "Number identity service extension."
+      },
+      {
+        "name": "NumberMarkAbility",
+        "srcEntrance": "./ets/DataShareExtAbility/DataShareExtAbility.ts",
+        "readPermission": "ohos.permission.GET_TELEPHONY_STATE",
+        "writePermission": "ohos.permission.SET_TELEPHONY_STATE",
+        "description": "Number mark data query.",
+        "type": "dataShare",
+        "uri": "datashare://com.ohos.numbermarkability",
+        "exported": true,
+        "srcLanguage": "c++"
+      }
+    ],
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.WRITE_CALL_LOG",
+        "reason": "need update call log for number mark updates",
+        "usedScene": {
+          "abilities": [
+            "NumberMarkAbility"
+          ],
+          "when": "always"
+        }
+      },
+      {
+        "name": "ohos.permission.GET_TELEPHONY_STATE",
+        "reason": "need this for caller info query"
+      },
+      {
+        "name": "ohos.permission.GET_BUNDLE_INFO",
+        "reason": "need this for bundle info query"
+      },
+      {
+        "name": "ohos.permission.GET_BUNDLE_RESOURCES",
+        "reason": "need this for bundle info query"
+      },
+      {
+        "name": "ohos.permission.hsdr.REQUEST_HSDR",
+        "reason": "need access HSDR for cloud query"
+      },
+      {
+        "name": "ohos.permission.GET_NETWORK_INFO",
+        "reason": "get network info permission"
+      },
+      {
+        "name": "ohos.permission.INTERNET",
+        "reason": "get internet permission"
+      },
+      {
+        "name": "ohos.permission.MANAGE_SETTINGS",
+        "reason": "set setting data"
+      }
+    ]
+  }
+}

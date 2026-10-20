@@ -1,0 +1,14 @@
+--- a/foundation/multimedia/audio_framework/services/audio_service/server/src/pa_renderer_stream_impl.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_service/server/src/pa_renderer_stream_impl.cpp
+@@ -753,9 +753,10 @@
+ 
+     error = pa_stream_write(paStream_, static_cast<void*>(bufferDesc.buffer), bufferDesc.bufLength, nullptr,
+         0LL, PA_SEEK_RELATIVE);
+-    if (error < 0) {
++    if (error != 0) {
+         AUDIO_ERR_LOG("Write stream failed");
+         pa_stream_cancel_write(paStream_);
++        return ERR_OPERATION_FAILED;
+     }
+     totalBytesWritten_ += bufferDesc.bufLength;
+     return SUCCESS;

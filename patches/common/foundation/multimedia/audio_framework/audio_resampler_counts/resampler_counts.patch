@@ -1,0 +1,1067 @@
+--- a/foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/proresampler/audio_proresampler.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/proresampler/audio_proresampler.cpp
+@@ -16,6 +16,7 @@
+ #define LOG_TAG "AudioProResampler"
+ #endif
+ #include "audio_proresampler.h"
++#include <limits>
+ #include "audio_stream_info.h"
+ #include "securec.h"
+ #include "audio_engine_log.h"
+@@ -39,8 +40,6 @@
+     : inRate_(inRate), outRate_(outRate), channels_(channels), quality_(quality),
+     expectedOutFrameLen_(outRate_ * FRAME_LEN_20MS / MS_PER_SECOND)
+ {
+-    CHECK_AND_RETURN_LOG(inRate != outRate,
+-        "input and output rate of ProResampler should be different! Same Rate: %{public}d", inRate);
+     
+     CHECK_AND_RETURN_LOG((inRate_ >= MIN_SAMPLE_RATE) && (inRate_ <= MAX_SAMPLE_RATE) &&
+         (outRate_ >= MIN_SAMPLE_RATE) && (outRate_ <= MAX_SAMPLE_RATE),
+@@ -52,6 +51,11 @@
+     
+     CHECK_AND_RETURN_LOG(quality <= MAX_QUALITY, "invalid quality level: %{public}d", quality);
+ 
++    if (inRate_ == outRate_) {
++        configurationValid_ = true;
++        return;
++    }
++
+     int32_t errRet = ConfigBufferSizeAndExpectedInFrameLen();
+     CHECK_AND_RETURN_LOG(errRet == RESAMPLER_ERR_SUCCESS,
+         "ProResampler construct reserve buff error code %{public}s", ErrCodeToString(errRet).c_str());
+@@ -60,7 +64,7 @@
+     CHECK_AND_RETURN_LOG(state_, "Init failed! failed with error %{public}s.",
+         ErrCodeToString(errRet).c_str());
+     
+-    SingleStagePolyphaseResamplerSkipHalfTaps(state_);
++    configurationValid_ = errRet == EOK && SingleStagePolyphaseResamplerSkipHalfTaps(state_) == EOK;
+     AUDIO_INFO_LOG("Init success inRate: %{public}d, outRate: %{public}d, channels: %{public}d, "
+         "quality: %{public}d.", inRate_, outRate_, channels_, quality_);
+ }
+@@ -68,47 +72,61 @@
+ int32_t ProResampler::Process(const float *inBuffer, uint32_t inFrameLen, float *outBuffer,
+     uint32_t outFrameLen)
+ {
+-    CHECK_AND_RETURN_RET_LOG(outBuffer != nullptr, RESAMPLER_ERR_INVALID_ARG, "out buffer ptr is nullptr");
+-    CHECK_AND_RETURN_RET_LOG(state_ != nullptr, RESAMPLER_ERR_ALLOC_FAILED, "resampler state is invalid");
+-    CHECK_AND_RETURN_RET_LOG(inBuffer != nullptr, RESAMPLER_ERR_INVALID_ARG, "in buffer ptr is nullptr");
+-    CHECK_AND_RETURN_RET_LOG((inFrameLen <= MAX_FRAME_LEN) && (outFrameLen <= MAX_FRAME_LEN),
+-        RESAMPLER_ERR_ALLOC_FAILED,
+-        "inFrameLen %{public}d or outFrameLen %{public}d out of valid range",
+-        inFrameLen,
+-        outFrameLen);
+-
+-    AUDIO_DEBUG_LOG("Process unified: inRate=%{public}u->outRate=%{public}u, channels=%{public}u, "
+-        "inFrames=%{public}u, outFrames=%{public}u", inRate_, outRate_, channels_, inFrameLen, outFrameLen);
+-
+-    uint32_t expectedOutFrameLen = outFrameLen;
+-
+-    if (tmpOutBuf_.size() < static_cast<size_t>(expectedOutFrameLen) * channels_) {
+-        tmpOutBuf_.resize(static_cast<size_t>(expectedOutFrameLen) * channels_, 0.0f);
+-    }
+-
+-    int32_t ret =
+-        SingleStagePolyphaseResamplerProcess(state_, inBuffer, &inFrameLen, tmpOutBuf_.data(), &outFrameLen);
+-    CHECK_AND_RETURN_RET_LOG(ret == EOK, ret, "process failed with error %{public}s",
+-        ErrCodeToString(ret).c_str());
+-
+-    uint32_t fillSize = expectedOutFrameLen > outFrameLen ? expectedOutFrameLen - outFrameLen : 0;
+-    lastDelayFrames_ = fillSize;
+-    ret = memset_s(outBuffer, fillSize * channels_ * sizeof(float), 0, fillSize * channels_ * sizeof(float));
+-    CHECK_AND_RETURN_RET_LOG(ret == EOK, ret, "memset_s failed with error %{public}d", ret);
+-
+-    ret = memcpy_s(outBuffer + fillSize * channels_, (expectedOutFrameLen - fillSize) * channels_ * sizeof(float),
+-        tmpOutBuf_.data(), outFrameLen * channels_ * sizeof(float));
+-    CHECK_AND_RETURN_RET_LOG(ret == EOK, ret, "memcpy_s failed with error %{public}d", ret);
+-    return ret;
++    ProcessResult result;
++    return ProcessWithCounts(inBuffer, inFrameLen, outBuffer, outFrameLen, result);
++}
++
++int32_t ProResampler::ProcessWithCounts(const float *inBuffer, uint32_t inFrameLen, float *outBuffer,
++    uint32_t outFrameLen, ProcessResult &result)
++{
++    result = {};
++    CHECK_AND_RETURN_RET_LOG(inBuffer != nullptr && outBuffer != nullptr,
++        RESAMPLER_ERR_INVALID_ARG, "invalid input/output buffer");
++    CHECK_AND_RETURN_RET_LOG(configurationValid_ && state_ != nullptr,
++        RESAMPLER_ERR_ALLOC_FAILED, "invalid resampler configuration");
++    CHECK_AND_RETURN_RET_LOG(inFrameLen <= MAX_FRAME_LEN && outFrameLen <= MAX_FRAME_LEN &&
++        channels_ > 0 && channels_ <= MAX_CHANNELS &&
++        inFrameLen <= std::numeric_limits<size_t>::max() / channels_ / sizeof(float) &&
++        outFrameLen <= std::numeric_limits<size_t>::max() / channels_ / sizeof(float),
++        RESAMPLER_ERR_OVERFLOW, "invalid frame/sample count");
++    const uint32_t requestedIn = inFrameLen;
++    const uint32_t requestedOut = outFrameLen;
++    const size_t outputSamples = static_cast<size_t>(outFrameLen) * channels_;
++    CHECK_AND_RETURN_RET_LOG(outputSamples <= tmpOutBuf_.max_size(),
++        RESAMPLER_ERR_OVERFLOW, "output allocation overflow");
++    if (tmpOutBuf_.size() < outputSamples) {
++        tmpOutBuf_.resize(outputSamples, 0.0f);
++    }
++    int32_t ret = SingleStagePolyphaseResamplerProcess(state_, inBuffer, &inFrameLen,
++        tmpOutBuf_.data(), &outFrameLen);
++    result.consumedFrames = inFrameLen;
++    result.producedFrames = outFrameLen;
++    CHECK_AND_RETURN_RET_LOG(ret == EOK && inFrameLen <= requestedIn && outFrameLen <= requestedOut,
++        ret == EOK ? RESAMPLER_ERR_OVERFLOW : ret, "invalid/failed actual resampler counts");
++    result.paddingFrames = requestedOut - outFrameLen;
++    lastDelayFrames_ = result.paddingFrames;
++    const size_t paddingSamples = static_cast<size_t>(result.paddingFrames) * channels_;
++    if (paddingSamples != 0) {
++        ret = memset_s(outBuffer, outputSamples * sizeof(float), 0, paddingSamples * sizeof(float));
++        CHECK_AND_RETURN_RET_LOG(ret == EOK, ret, "padding copy failed after resampler state advanced");
++    }
++    if (outFrameLen != 0) {
++        ret = memcpy_s(outBuffer + paddingSamples, (outputSamples - paddingSamples) * sizeof(float),
++            tmpOutBuf_.data(), static_cast<size_t>(outFrameLen) * channels_ * sizeof(float));
++        CHECK_AND_RETURN_RET_LOG(ret == EOK, ret, "output copy failed after resampler state advanced");
++    }
++    result.outputFrames = requestedOut; // leading padding plus actual produced frames
++    result.valid = true;
++    return EOK;
+ }
+ 
+ int32_t ProResampler::CheckRateAndChannelParam()
+ {
+     // resampler change from valid state to invalid state
+     if ((inRate_ < MIN_SAMPLE_RATE) || (inRate_ > MAX_SAMPLE_RATE) || (outRate_ < MIN_SAMPLE_RATE) ||
+-        (outRate_ > MAX_SAMPLE_RATE) || (inRate_ == outRate_) || (channels_ <= 0) || (channels_ > MAX_CHANNELS)) {
++        (outRate_ > MAX_SAMPLE_RATE) || (channels_ <= 0) || (channels_ > MAX_CHANNELS)) {
+         AUDIO_ERR_LOG("resampler set to invalid state, because inRate %{public}u Hz and outRate %{public}u Hz "
+-            "should be within [8000, 384000] and be different, or channel number %{public}u should be within [1, 16]",
++            "should be within [8000, 384000] or channel number %{public}u should be within [1, 16]",
+             inRate_, outRate_, channels_);
+         CHECK_AND_RETURN_RET(state_ != nullptr, RESAMPLER_ERR_INVALID_ARG);
+         SingleStagePolyphaseResamplerFree(state_);
+@@ -121,60 +139,66 @@
+ 
+ int32_t ProResampler::UpdateRates(uint32_t inRate, uint32_t outRate)
+ {
+-    AUDIO_INFO_LOG("ProResampler inRate update: %{public}d -> %{public}d, outRate update: %{public}d -> %{public}d",
+-        inRate_, inRate, outRate_, outRate);
++    configurationValid_ = false;
+     inRate_ = inRate;
+     outRate_ = outRate;
+-
+     int32_t ret = CheckRateAndChannelParam();
+-    CHECK_AND_RETURN_RET_LOG(ret == RESAMPLER_ERR_SUCCESS, ret,
+-        "ProResampler updateRates error code %{public}s", ErrCodeToString(ret).c_str());
+-
++    CHECK_AND_RETURN_RET_LOG(ret == EOK, ret, "invalid updated rates");
++    if (inRate_ == outRate_) {
++        SingleStagePolyphaseResamplerFree(state_);
++        state_ = nullptr;
++        tmpOutBuf_.clear();
++        lastDelayFrames_ = 0;
++        configurationValid_ = true; // converter's same-rate path does not resample
++        return EOK;
++    }
+     expectedOutFrameLen_ = outRate_ * FRAME_LEN_20MS / MS_PER_SECOND;
+     ret = ConfigBufferSizeAndExpectedInFrameLen();
+-    CHECK_AND_RETURN_RET_LOG(ret == RESAMPLER_ERR_SUCCESS, ret,
+-        "ProResampler updateRates reserve buff error code %{public}s", ErrCodeToString(ret).c_str());
+-    if (state_ == nullptr) { // resampler can be updated from an invalid state to valid state
+-        int32_t errRet = RESAMPLER_ERR_SUCCESS;
+-        state_ = SingleStagePolyphaseResamplerInit(channels_, inRate_, outRate_, quality_, &errRet);
+-        CHECK_AND_RETURN_RET_LOG(state_ && (errRet == RESAMPLER_ERR_SUCCESS), errRet,
+-            "error code %{public}s", ErrCodeToString(errRet).c_str());
+-        return SingleStagePolyphaseResamplerSkipHalfTaps(state_);
+-    }
+-    ret = SingleStagePolyphaseResamplerSetRate(state_, inRate_, outRate_);
+-    CHECK_AND_RETURN_RET_LOG(ret == RESAMPLER_ERR_SUCCESS, ret, "error code %{public}s", ErrCodeToString(ret).c_str());
++    CHECK_AND_RETURN_RET_LOG(ret == EOK, ret, "updated buffer configuration failed");
++    if (state_ == nullptr) {
++        state_ = SingleStagePolyphaseResamplerInit(channels_, inRate_, outRate_, quality_, &ret);
++        CHECK_AND_RETURN_RET_LOG(state_ != nullptr && ret == EOK,
++            ret == EOK ? RESAMPLER_ERR_ALLOC_FAILED : ret, "updated initialization failed");
++        ret = SingleStagePolyphaseResamplerSkipHalfTaps(state_);
++    } else {
++        ret = SingleStagePolyphaseResamplerSetRate(state_, inRate_, outRate_);
++    }
++    configurationValid_ = (ret == EOK);
+     return ret;
+ }
+ 
+ int32_t ProResampler::UpdateChannels(uint32_t channels)
+ {
+-    // if update channel, the only way to update SingleStagePolyphaseResampler is to create a new one
+-    AUDIO_INFO_LOG("update work channel %{public}d -> %{public}d", channels_, channels);
++    configurationValid_ = false;
+     channels_ = channels;
+-
+-    int32_t errRet = CheckRateAndChannelParam();
+-    CHECK_AND_RETURN_RET(errRet == RESAMPLER_ERR_SUCCESS, errRet,
+-        "ProResampler updateChannels error code %{public}s", ErrCodeToString(errRet).c_str());
+-
+-    if (state_ != nullptr) {
+-        SingleStagePolyphaseResamplerFree(state_);
+-    }
+-    state_ = SingleStagePolyphaseResamplerInit(channels_, inRate_, outRate_, quality_, &errRet);
+-    CHECK_AND_RETURN_RET_LOG(state_ && (errRet == RESAMPLER_ERR_SUCCESS), errRet,
+-        "error code %{public}s", ErrCodeToString(errRet).c_str());
+-    errRet = ConfigBufferSizeAndExpectedInFrameLen();
+-    CHECK_AND_RETURN_RET_LOG(errRet == RESAMPLER_ERR_SUCCESS, errRet,
+-        "ProResampler updateChannels reserve buff error code %{public}s", ErrCodeToString(errRet).c_str());
+-    return SingleStagePolyphaseResamplerSkipHalfTaps(state_);
++    int32_t ret = CheckRateAndChannelParam();
++    CHECK_AND_RETURN_RET_LOG(ret == EOK, ret, "invalid updated channels");
++    SingleStagePolyphaseResamplerFree(state_);
++    state_ = nullptr;
++    if (inRate_ == outRate_) {
++        tmpOutBuf_.clear();
++        lastDelayFrames_ = 0;
++        configurationValid_ = true;
++        return EOK;
++    }
++    state_ = SingleStagePolyphaseResamplerInit(channels_, inRate_, outRate_, quality_, &ret);
++    CHECK_AND_RETURN_RET_LOG(state_ != nullptr && ret == EOK,
++        ret == EOK ? RESAMPLER_ERR_ALLOC_FAILED : ret, "channel initialization failed");
++    ret = ConfigBufferSizeAndExpectedInFrameLen();
++    CHECK_AND_RETURN_RET_LOG(ret == EOK, ret, "channel buffer configuration failed");
++    ret = SingleStagePolyphaseResamplerSkipHalfTaps(state_);
++    configurationValid_ = (ret == EOK);
++    return ret;
+ }
+ 
+ ProResampler::ProResampler(ProResampler &&other) noexcept
+     : inRate_(other.inRate_), outRate_(other.outRate_), channels_(other.channels_),
+     quality_(other.quality_), expectedOutFrameLen_(other.expectedOutFrameLen_),
+-    expectedInFrameLen_(other.expectedInFrameLen_), state_(other.state_),
++    expectedInFrameLen_(other.expectedInFrameLen_), configurationValid_(other.configurationValid_), state_(other.state_),
+     tmpOutBuf_(std::move(other.tmpOutBuf_))
+ {
+     other.state_ = nullptr;
++    other.configurationValid_ = false;
+ }
+ 
+ ProResampler &ProResampler::operator=(ProResampler &&other) noexcept
+@@ -186,20 +210,39 @@
+         channels_ = other.channels_;
+         quality_ = other.quality_;
+         state_ = other.state_;
++        configurationValid_ = other.configurationValid_;
+         expectedOutFrameLen_ = other.expectedOutFrameLen_;
+         expectedInFrameLen_ = other.expectedInFrameLen_;
+         tmpOutBuf_ = std::move(other.tmpOutBuf_);
+         other.state_ = nullptr;
++    other.configurationValid_ = false;
+     }
+     return *this;
+ }
+ 
+ void ProResampler::Reset()
+ {
+-    CHECK_AND_RETURN_LOG(state_ != nullptr, "resampler is null");
+-    SingleStagePolyphaseResamplerResetMem(state_);
+-    SingleStagePolyphaseResamplerSkipHalfTaps(state_);
+-    lastDelayFrames_ = 0;
++    (void)ResetWithStatus();
++}
++
++int32_t ProResampler::ResetWithStatus()
++{
++    CHECK_AND_RETURN_RET_LOG(configurationValid_, RESAMPLER_ERR_INVALID_ARG,
++        "cannot reset a failed configuration");
++    if (inRate_ == outRate_) {
++        lastDelayFrames_ = 0;
++        return EOK;
++    }
++    CHECK_AND_RETURN_RET_LOG(state_ != nullptr, RESAMPLER_ERR_ALLOC_FAILED, "resampler is null");
++    int32_t ret = SingleStagePolyphaseResamplerResetMem(state_);
++    if (ret == EOK) {
++        ret = SingleStagePolyphaseResamplerSkipHalfTaps(state_);
++    }
++    configurationValid_ = (ret == EOK);
++    if (configurationValid_) {
++        lastDelayFrames_ = 0;
++    }
++    return ret;
+ }
+ 
+ uint32_t ProResampler::GetInRate() const
+--- a/foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/include/audio_proresampler.h
++++ b/foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/include/audio_proresampler.h
+@@ -31,6 +31,17 @@
+     ProResampler &operator=(const ProResampler &) = delete;
+     ProResampler(ProResampler &&) noexcept;
+     ProResampler &operator=(ProResampler &&) noexcept;
++    // Private concrete API: counts are per-channel frames, padding is not source.
++    struct ProcessResult {
++        uint32_t consumedFrames = 0;
++        uint32_t producedFrames = 0;
++        uint32_t paddingFrames = 0;
++        uint32_t outputFrames = 0;
++        bool valid = false;
++    };
++    int32_t ProcessWithCounts(const float *inBuffer, uint32_t inFrames, float *outBuffer,
++        uint32_t outFrames, ProcessResult &result);
++    int32_t ResetWithStatus();
+     void Reset() override;
+     int32_t Process(const float *inBuffer, uint32_t inFrameSize, float *outBuffer, uint32_t outFrameSize)
+         override;
+@@ -53,6 +64,7 @@
+     uint32_t expectedOutFrameLen_ = 0;
+     uint32_t expectedInFrameLen_ = 0;
+     uint32_t lastDelayFrames_ = 0;
++    bool configurationValid_ = false;
+     SingleStagePolyphaseResamplerState* state_ = nullptr;
+     std::vector<float> tmpOutBuf_;
+ };
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_audio_format_converter_node.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_audio_format_converter_node.cpp
+@@ -19,6 +19,8 @@
+ #include "hpae_audio_format_converter_node.h"
+ #include "audio_utils.h"
+ #include <cinttypes>
++#include <limits>
++#include <cmath>
+ #include "audio_effect_log.h"
+ #include "hpae_node_common.h"
+ #include "stream_dfx_manager.h"
+@@ -28,6 +30,7 @@
+ namespace HPAE {
+ namespace {
+ constexpr uint32_t REASAMPLE_QUAILTY = 1;
++constexpr uint32_t MAX_INPUT_FRAMES = SAMPLE_RATE_384000 * 10; // same bound as ProResampler
+ constexpr uint32_t CUSTOM_SAMPLE_RATE_MULTIPLES = 50;
+ constexpr uint32_t SAMPLE_RATE_11025 = 11025;
+ constexpr uint32_t FRAME_LEN_40MS = 40;
+@@ -106,6 +109,34 @@
+     auto len = "len[" + std::to_string(GetFrameLen()) + "]";
+     Trace trace("[" + std::to_string(GetSessionId()) + "]HpaeAudioFormatConverterNode::DoProcess "
+         + rate + ch + len);
++    if (resamplerFailed_ || resampler_ == nullptr) {
++        outputStream_.WriteDataToOutput(PrepareSilenceBuffer(silenceData_));
++        return;
++    }
++    // PullOutputData consumes the next block and exposes no size/peek contract.
++    // Drain cached work first, without guessing the next input's frame count.
++    if (enableProcess_) {
++        ProcessResampleLoop();
++        if (resamplerFailed_) {
++            outputStream_.WriteDataToOutput(PrepareSilenceBuffer(silenceData_));
++            return;
++        }
++        if (processedFrames_ >= outputFrameLen20ms_) {
++            converterOutput_.Reset();
++            if (ExtractOutputFromProcessedBuffer()) {
++                converterOutput_.SetBufferState(bufferedState_);
++                outputStream_.WriteDataToOutput(&converterOutput_);
++            } else {
++                outputStream_.WriteDataToOutput(PrepareSilenceBuffer(silenceData_));
++            }
++            return;
++        }
++        if (unprocessedFrames_ >= resamplerInputThreshold_) {
++            // A blocked output queue must not cause another consuming upstream pull.
++            outputStream_.WriteDataToOutput(PrepareSilenceBuffer(silenceData_));
++            return;
++        }
++    }
+     std::vector<HpaePcmBuffer *> &preOutputs = inputStream_.ReadPreOutputData();
+     bool hasPreOutput = !preOutputs.empty() && preOutputs[0] != nullptr;
+     bool hasValidInput = hasPreOutput && preOutputs[0]->IsValid();
+@@ -125,6 +156,10 @@
+     if (hasPreOutput) {
+         // make sure size of silenceData_, tmpOutput_, and ConverterOutput_ is correct
+         CheckAndUpdateInfo(preOutputs[0]);
++        if (resamplerFailed_) {
++            outputStream_.WriteDataToOutput(PrepareSilenceBuffer(silenceData_));
++            return;
++        }
+     }
+     if (hasValidInput && enableProcess_) {
+         HpaePcmBuffer *tempOut = SignalProcess(preOutputs);
+@@ -135,10 +170,7 @@
+     if (processedFrames_ >= outputFrameLen20ms_ && enableProcess_) {
+         converterOutput_.Reset();
+         if (ExtractOutputFromProcessedBuffer()) {
+-            if (hasPreOutput) {
+-                converterOutput_.SetBufferState(preOutputs[0]->GetBufferState());
+-                converterOutput_.SetBufferValid(true);
+-            }
++            converterOutput_.SetBufferState(bufferedState_);
+             AUDIO_DEBUG_LOG("NodeId %{public}d: drain processedBuffer_, "
+                 "remaining %{public}u frames", GetNodeId(), processedFrames_);
+             outputStream_.WriteDataToOutput(&converterOutput_);
+@@ -156,10 +188,19 @@
+     float *srcData = input->GetPcmDataBuffer();
+     uint32_t inputFrameLen = input->GetFrameLen();
+     uint32_t inputChannels = input->GetChannelCount();
++    if (inputChannels != channelConverter_.GetInChannelInfo().numChannels ||
++        !CanAcceptInputFrames(inputFrameLen, inputChannels) ||
++        static_cast<uint64_t>(inputFrameLen) * inputChannels * sizeof(float) > input->Size()) {
++        resamplerFailed_ = true;
++        return;
++    }
+ 
+     // Step 1: Append input data to unprocessedBuffer_
+-    CHECK_AND_RETURN_LOG(AppendToUnprocessedBuffer(srcData, inputFrameLen, inputChannels),
+-        "NodeId %{public}d: AppendToUnprocessedBuffer failed", GetNodeId());
++    if (!AppendToUnprocessedBuffer(srcData, inputFrameLen, inputChannels)) {
++        resamplerFailed_ = true;
++        return;
++    }
++    bufferedState_ = input->GetBufferState();
+ 
+     // Step 1b: Pull-Ahead -- if not enough data accumulated and credit available, actively pull from upstream
+     AudioChannelInfo inChannelInfo = channelConverter_.GetInChannelInfo();
+@@ -188,6 +229,9 @@
+ {
+     // Step 2: Conditionally resample -- drain unprocessedBuffer_ into processedBuffer_
+     ProcessResampleLoop();
++    if (resamplerFailed_) {
++        return PrepareSilenceBuffer(silenceData_);
++    }
+ 
+     // Step 3: Extract 20ms output from processedBuffer_ into converterOutput_
+     converterOutput_.Reset();
+@@ -209,7 +253,7 @@
+             converterOutput_.GetFrameLen() * sizeof(float) * channelConverter_.GetOutChannelInfo().numChannels);
+     }
+ #endif
+-    converterOutput_.SetBufferState(input->GetBufferState());
++    converterOutput_.SetBufferState(bufferedState_);
+     return &converterOutput_;
+ }
+ 
+@@ -227,6 +271,9 @@
+     }
+ #endif
+ 
++    if (resamplerFailed_) {
++        return PrepareSilenceBuffer(silenceData_);
++    }
+     AccumulateInputAndPullAhead(inputs[0]);
+     return ProcessAndExtractOutput(inputs[0]);
+ }
+@@ -248,7 +295,10 @@
+     uint32_t resampleChannels = std::min(channelConverter_.GetInChannelInfo().numChannels, numChannels);
+     if (resampleChannels != resampler_->GetChannels()) {
+         AUDIO_INFO_LOG("NodeId: %{public}d, Update resampler work channel from effectNode!", GetNodeId());
+-        resampler_->UpdateChannels(resampleChannels);
++        if (resampler_->UpdateChannels(resampleChannels) != EOK) {
++            resamplerFailed_ = true;
++            return false;
++        }
+     }
+     return true;
+ }
+@@ -294,7 +344,10 @@
+     if (oldOutRate != sampleRate) {
+         HILOG_COMM_INFO("[CheckUpdateOutInfo]NodeId: %{public}d, update output sample rate: "
+             "%{public}d -> %{public}d", GetNodeId(), oldOutRate, sampleRate);
+-        resampler_->UpdateRates(resampler_->GetInRate(), sampleRate);
++        if (resampler_->UpdateRates(resampler_->GetInRate(), sampleRate) != EOK) {
++            resamplerFailed_ = true;
++            return false;
++        }
+     }
+ 
+     HpaeNodeInfo nodeInfo = GetNodeInfo();
+@@ -329,14 +382,20 @@
+             .channelLayout = (AudioChannelLayout)channelLayout,
+             .numChannels = numChannels,
+         };
+-        channelConverter_.SetInChannelInfo(newInChannelInfo);
++        if (channelConverter_.SetInChannelInfo(newInChannelInfo) != MIX_ERR_SUCCESS) {
++            resamplerFailed_ = true;
++            return false;
++        }
+         preNodeInfo_.channelLayout = (AudioChannelLayout)channelLayout;
+         preNodeInfo_.channels = (AudioChannel)numChannels;
+ 
+         uint32_t resampleChannels = std::min(numChannels, channelConverter_.GetOutChannelInfo().numChannels);
+         if (resampleChannels != resampler_->GetChannels()) {
+             AUDIO_INFO_LOG("NodeId %{public}d: Update resampler work channel from effectNode!", GetNodeId());
+-            resampler_->UpdateChannels(resampleChannels);
++            if (resampler_->UpdateChannels(resampleChannels) != EOK) {
++            resamplerFailed_ = true;
++            return false;
++        }
+         }
+         isInfoUpdated = true;
+     }
+@@ -346,7 +405,10 @@
+             "%{public}d -> %{public}d", GetNodeId(), resampler_->GetInRate(), sampleRate);
+         preNodeInfo_.samplingRate = (AudioSamplingRate)sampleRate;
+         preNodeInfo_.frameLen = CalculateFrameLenBySampleRate(sampleRate);
+-        resampler_->UpdateRates(sampleRate, resampler_->GetOutRate());
++        if (resampler_->UpdateRates(sampleRate, resampler_->GetOutRate()) != EOK) {
++            resamplerFailed_ = true;
++            return false;
++        }
+         isInfoUpdated = true;
+     }
+     return isInfoUpdated;
+@@ -374,7 +436,7 @@
+ {
+     bool isInfoUpdated = CheckUpdateInInfo(input);
+     bool isOutInfoUpdated = CheckUpdateOutInfo();
+-    if ((!isInfoUpdated) && (!isOutInfoUpdated)) {
++    if (resamplerFailed_ || ((!isInfoUpdated) && (!isOutInfoUpdated))) {
+         return;
+     }
+ 
+@@ -442,7 +504,17 @@
+     if (resampler_ == nullptr) {
+         return;
+     }
+-    CHECK_AND_RETURN_LOG(resampler_->GetInRate() != 0, "NodeId %{public}d: inRate is zero", GetNodeId());
++    uint32_t inputChannels = channelConverter_.GetInChannelInfo().numChannels;
++    uint32_t outputChannels = channelConverter_.GetOutChannelInfo().numChannels;
++    if (resampler_->GetInRate() < SAMPLE_RATE_8000 || resampler_->GetInRate() > SAMPLE_RATE_384000 ||
++        resampler_->GetOutRate() < SAMPLE_RATE_8000 || resampler_->GetOutRate() > SAMPLE_RATE_384000 ||
++        inputChannels == 0 || inputChannels > 16 || outputChannels == 0 || outputChannels > 16 ||
++        !std::isfinite(frameLenInMs_) || frameLenInMs_ <= 0 ||
++        static_cast<double>(resampler_->GetInRate()) * frameLenInMs_ / MILLISECOND_PER_SECOND > MAX_INPUT_FRAMES ||
++        static_cast<double>(resampler_->GetOutRate()) * frameLenInMs_ / MILLISECOND_PER_SECOND > MAX_INPUT_FRAMES) {
++        resamplerFailed_ = true;
++        return;
++    }
+     resamplerInputThreshold_ = CalculateResamplerInputThreshold();
+     uint32_t outRate = resampler_->GetOutRate();
+     uint32_t inRate = resampler_->GetInRate();
+@@ -450,6 +522,13 @@
+     outputFrameLen20ms_ = (inRate == outRate) ? GetFrameLen() :
+         static_cast<uint32_t>(outRate * frameLenInMs_ / MILLISECOND_PER_SECOND);
+ 
++    uint64_t checkedMaxOut = static_cast<uint64_t>(resamplerInputThreshold_) * outRate / inRate;
++    if (resamplerInputThreshold_ == 0 || resamplerInputThreshold_ > MAX_INPUT_FRAMES ||
++        outputFrameLen20ms_ == 0 || outputFrameLen20ms_ > MAX_INPUT_FRAMES ||
++        checkedMaxOut == 0 || checkedMaxOut > MAX_INPUT_FRAMES) {
++        resamplerFailed_ = true;
++        return;
++    }
+     AudioChannelInfo inChannelInfo = channelConverter_.GetInChannelInfo();
+     AudioChannelInfo outChannelInfo = channelConverter_.GetOutChannelInfo();
+     uint32_t inCh = inChannelInfo.numChannels;
+@@ -460,6 +539,7 @@
+         UNPROCESSED_BUFFER_CAPACITY_MULTIPLIER * inCh;
+     unprocessedBuffer_.resize(unprocessedCapacity, 0.0f);
+     unprocessedFrames_ = 0;
++    bufferedState_ = PCM_BUFFER_STATE_INVALID;
+ 
+     // processedBuffer_ and resamplerOutBuf_ store data at outCh per frame
+     uint32_t maxOutFrames = static_cast<uint32_t>(
+@@ -517,11 +597,32 @@
+ bool HpaeAudioFormatConverterNode::AppendToUnprocessedBuffer(const float *data, uint32_t frameLen,
+     uint32_t channels)
+ {
+-    if (frameLen == 0 || data == nullptr) {
++    if (resamplerFailed_ || frameLen == 0 || data == nullptr || !CanAcceptInputFrames(frameLen, channels)) {
+         return false;
+     }
+     size_t samplesToAdd = static_cast<size_t>(frameLen) * channels;
+-    size_t requiredSize = static_cast<size_t>(unprocessedFrames_ + frameLen) * channels;
++    size_t requiredSize = (static_cast<size_t>(unprocessedFrames_) + frameLen) * channels;
++    uintptr_t source = reinterpret_cast<uintptr_t>(data);
++    uintptr_t storage = reinterpret_cast<uintptr_t>(unprocessedBuffer_.data());
++    size_t sourceBytes = samplesToAdd * sizeof(float);
++    size_t storageBytes = unprocessedBuffer_.capacity() * sizeof(float);
++    if (source > UINTPTR_MAX - sourceBytes || storage > UINTPTR_MAX - storageBytes ||
++        (source < storage + storageBytes && storage < source + sourceBytes)) {
++        return false; // growth must not invalidate an aliased source
++    }
++    if (requiredSize > unprocessedBuffer_.max_size()) {
++        return false;
++    }
++    // One actual input block may exceed the initial 2-threshold capacity.
++    // Retain the entire block; no further pull occurs until buffered work drains.
++    if (unprocessedBuffer_.size() < requiredSize) {
++        resamplerFailed_ = true; // also remains latched if allocation unwinds
++        unprocessedBuffer_.resize(requiredSize, 0.0f);
++        if (unprocessedBuffer_.size() < requiredSize) {
++            return false;
++        }
++        resamplerFailed_ = false; // acquired storage; the copy is still checked below
++    }
+     if (unprocessedBuffer_.size() < requiredSize) {
+         AUDIO_ERR_LOG("NodeId %{public}d: AppendToUnprocessedBuffer buffer overflow, "
+             "size=%{public}zu, required=%{public}zu", GetNodeId(), unprocessedBuffer_.size(), requiredSize);
+@@ -545,19 +646,13 @@
+ 
+ bool HpaeAudioFormatConverterNode::AppendToProcessedBuffer(const float *data, uint32_t frameLen, uint32_t channels)
+ {
+-    size_t writeOffset = static_cast<size_t>(processedReadPos_ + processedFrames_) * channels;
+-    size_t samplesToAdd = static_cast<size_t>(frameLen) * channels;
+-    if (processedBuffer_.size() < writeOffset + samplesToAdd) {
+-        AUDIO_ERR_LOG("NodeId %{public}d: AppendToProcessedBuffer buffer overflow, "
+-            "size=%{public}zu, required=%{public}zu", GetNodeId(), processedBuffer_.size(),
+-            writeOffset + samplesToAdd);
+-        return false;
+-    }
+-    errno_t ret = memcpy_s(processedBuffer_.data() + writeOffset,
+-        (processedBuffer_.size() - writeOffset) * sizeof(float),
+-        data, samplesToAdd * sizeof(float));
+-    if (ret != EOK) {
+-        AUDIO_ERR_LOG("NodeId %{public}d: AppendToProcessedBuffer memcpy_s failed", GetNodeId());
++    if (data == nullptr || !CanAppendProcessedFrames(frameLen, channels)) {
++        return false;
++    }
++    size_t offset = (static_cast<size_t>(processedReadPos_) + processedFrames_) * channels;
++    size_t samples = static_cast<size_t>(frameLen) * channels;
++    if (samples != 0 && memcpy_s(processedBuffer_.data() + offset,
++        (processedBuffer_.size() - offset) * sizeof(float), data, samples * sizeof(float)) != EOK) {
+         return false;
+     }
+     processedFrames_ += frameLen;
+@@ -566,14 +661,26 @@
+ 
+ bool HpaeAudioFormatConverterNode::TryPullOneFrame()
+ {
++    if (resamplerFailed_ || unprocessedFrames_ >= resamplerInputThreshold_) {
++        return false;
++    }
+     auto &newInputs = inputStream_.ReadPreOutputData();
+     if (newInputs.empty() || newInputs[0] == nullptr || !newInputs[0]->IsValid()) {
+         return false;
+     }
+-    float *data = newInputs[0]->GetPcmDataBuffer();
+-    uint32_t frameLen = newInputs[0]->GetFrameLen();
+-    uint32_t channels = newInputs[0]->GetChannelCount();
+-    return AppendToUnprocessedBuffer(data, frameLen, channels);
++    HpaePcmBuffer *input = newInputs[0];
++    uint32_t frames = input->GetFrameLen();
++    uint32_t channels = input->GetChannelCount();
++    if (channels != channelConverter_.GetInChannelInfo().numChannels ||
++        input->GetSampleRate() != resampler_->GetInRate() ||
++        !CanAcceptInputFrames(frames, channels) ||
++        static_cast<uint64_t>(frames) * channels * sizeof(float) > input->Size() ||
++        !AppendToUnprocessedBuffer(input->GetPcmDataBuffer(), frames, channels)) {
++        resamplerFailed_ = true;
++        return false;
++    }
++    bufferedState_ = input->GetBufferState();
++    return true;
+ }
+ 
+ void HpaeAudioFormatConverterNode::PullAheadUntilThresholdOrFailure(uint32_t inputFrameLen)
+@@ -603,75 +710,113 @@
+     }
+ }
+ 
++bool HpaeAudioFormatConverterNode::CanAppendProcessedFrames(uint32_t frames, uint32_t channels)
++{
++    if (channels == 0 || channels > 16 || processedFrames_ > UINT32_MAX - frames) {
++        resamplerFailed_ = true;
++        return false;
++    }
++    uint64_t endFrames = static_cast<uint64_t>(processedReadPos_) + processedFrames_ + frames;
++    if (endFrames > processedBuffer_.size() / channels && processedReadPos_ != 0) {
++        if (!CompactProcessedBuffer(channels)) {
++            resamplerFailed_ = true;
++            return false;
++        }
++        endFrames = static_cast<uint64_t>(processedFrames_) + frames;
++    }
++    return endFrames <= processedBuffer_.size() / channels;
++}
++
++bool HpaeAudioFormatConverterNode::CanAcceptInputFrames(uint32_t frames, uint32_t channels) const
++{
++    return channels != 0 && channels <= 16 && frames <= MAX_INPUT_FRAMES &&
++        resamplerInputThreshold_ != 0 &&
++        static_cast<uint64_t>(unprocessedFrames_) + frames <=
++        static_cast<uint64_t>(MAX_INPUT_FRAMES) + resamplerInputThreshold_ &&
++        frames <= UINT32_MAX - unprocessedFrames_ &&
++        static_cast<uint64_t>(unprocessedFrames_) + frames <=
++        std::numeric_limits<size_t>::max() / channels / sizeof(float);
++}
++
++
+ void HpaeAudioFormatConverterNode::ProcessSameRateChannelConversion(uint32_t inCh, uint32_t outCh)
+ {
++    if (resamplerFailed_ || resamplerInputThreshold_ == 0 || inCh == 0 || inCh > 16 || outCh == 0 || outCh > 16) {
++        resamplerFailed_ = true;
++        return;
++    }
+     while (unprocessedFrames_ >= resamplerInputThreshold_) {
+-        float *inPtr = unprocessedBuffer_.data();
+-        uint32_t inFrameLen = resamplerInputThreshold_;
+-        // Same rate => outFrameLen == inFrameLen
+-        uint32_t outFrameLen = inFrameLen;
+-
+-        size_t outSamplesNeeded = static_cast<size_t>(outFrameLen) * outCh;
+-        if (resamplerOutBuf_.size() < outSamplesNeeded) {
+-            resamplerOutBuf_.resize(outSamplesNeeded, 0.0f);
+-        }
+-
+-        int32_t ret = ResampleWithChannelConversion(
+-            inPtr, inFrameLen, resamplerOutBuf_.data(), outFrameLen,
+-            resampler_->GetChannels());
+-        if (ret != EOK) {
+-            AUDIO_ERR_LOG("NodeId %{public}d: Same-rate channel conversion "
+-                "failed, code %{public}d", GetNodeId(), ret);
++        uint32_t frames = resamplerInputThreshold_;
++        if (!CanAppendProcessedFrames(frames, outCh)) {
++            break; // bounded output backpressure, before processing input
++        }
++        size_t samples = static_cast<size_t>(frames) * outCh;
++        if (resamplerOutBuf_.size() < samples) {
++            resamplerOutBuf_.resize(samples, 0.0f);
++        }
++        ProResampler::ProcessResult result;
++        int32_t ret = ResampleWithChannelConversion(unprocessedBuffer_.data(), frames,
++            resamplerOutBuf_.data(), frames, resampler_->GetChannels(), result);
++        if (ret != EOK || !result.valid || result.consumedFrames != frames ||
++            !AppendToProcessedBuffer(resamplerOutBuf_.data(), result.outputFrames, outCh) ||
++            !RemoveConsumedInputFrames(result.consumedFrames, inCh)) {
++            resamplerFailed_ = true;
+             break;
+         }
+-        // Remove at inCh per frame
+-        CHECK_AND_BREAK_LOG(RemoveConsumedInputFrames(inFrameLen, inCh),
+-            "NodeId %{public}d: RemoveConsumedInputFrames failed", GetNodeId());
+-        CHECK_AND_BREAK_LOG(AppendToProcessedBuffer(resamplerOutBuf_.data(), outFrameLen, outCh),
+-            "NodeId %{public}d: AppendToProcessedBuffer failed", GetNodeId());
+     }
+ }
+ 
+ void HpaeAudioFormatConverterNode::ProcessDiffRateResample(uint32_t inCh, uint32_t outCh,
+     uint32_t inRate, uint32_t outRate)
+ {
+-    CHECK_AND_RETURN_LOG(inRate != 0, "NodeId %{public}d: inRate is zero, skip resample", GetNodeId());
++    if (resamplerFailed_ || inRate == 0 || outRate == 0 || resamplerInputThreshold_ == 0 ||
++        inCh == 0 || inCh > 16 || outCh == 0 || outCh > 16) {
++        resamplerFailed_ = true;
++        return;
++    }
+     while (unprocessedFrames_ >= resamplerInputThreshold_) {
+-        float *inPtr = unprocessedBuffer_.data();
+-        uint32_t inFrameLen = resamplerInputThreshold_;
+-        uint32_t outFrameLen = static_cast<uint32_t>(
+-            static_cast<uint64_t>(inFrameLen) * outRate / inRate);
+-
+-        AUDIO_DEBUG_LOG("NodeId %{public}d: inRate=%{public}u->outRate=%{public}u, "
+-            "inFrames=%{public}u, outFrames=%{public}u, inCh=%{public}u, outCh=%{public}u, "
+-            "resamplerChannels=%{public}u, unprocessedBefore=%{public}u",
+-            GetNodeId(), inRate, outRate, inFrameLen, outFrameLen, inCh, outCh,
+-            resampler_->GetChannels(), unprocessedFrames_);
+-
+-        size_t outSamplesNeeded = static_cast<size_t>(outFrameLen) * outCh;
+-        if (resamplerOutBuf_.size() < outSamplesNeeded) {
+-            resamplerOutBuf_.resize(outSamplesNeeded, 0.0f);
+-        }
+-
+-        int32_t ret = ResampleWithChannelConversion(
+-            inPtr, inFrameLen, resamplerOutBuf_.data(), outFrameLen,
+-            resampler_->GetChannels());
+-        if (ret != EOK) {
+-            AUDIO_ERR_LOG("NodeId %{public}d: Resample failed with code %{public}d",
+-                GetNodeId(), ret);
++        uint32_t requestedIn = resamplerInputThreshold_;
++        uint64_t requestedOut = static_cast<uint64_t>(requestedIn) * outRate / inRate;
++        if (requestedOut == 0 || requestedOut > UINT32_MAX) {
++            resamplerFailed_ = true;
+             break;
+         }
+-
+-        CHECK_AND_BREAK_LOG(RemoveConsumedInputFrames(inFrameLen, inCh),
+-            "NodeId %{public}d: RemoveConsumedInputFrames failed", GetNodeId());
+-        CHECK_AND_BREAK_LOG(AppendToProcessedBuffer(resamplerOutBuf_.data(), outFrameLen, outCh),
+-            "NodeId %{public}d: AppendToProcessedBuffer failed", GetNodeId());
++        uint32_t outFrames = static_cast<uint32_t>(requestedOut);
++        if (!CanAppendProcessedFrames(outFrames, outCh)) {
++            break; // no filter state advanced
++        }
++        if (outFrames > std::numeric_limits<size_t>::max() / outCh / sizeof(float)) {
++            resamplerFailed_ = true;
++            break;
++        }
++        size_t samples = static_cast<size_t>(outFrames) * outCh;
++        if (resamplerOutBuf_.size() < samples) {
++            resamplerOutBuf_.resize(samples, 0.0f);
++        }
++        ProResampler::ProcessResult result;
++        int32_t ret = ResampleWithChannelConversion(unprocessedBuffer_.data(), requestedIn,
++            resamplerOutBuf_.data(), outFrames, resampler_->GetChannels(), result);
++        if (ret != EOK || !result.valid || result.consumedFrames > requestedIn ||
++            result.outputFrames > outFrames || result.producedFrames > result.outputFrames ||
++            result.paddingFrames != result.outputFrames - result.producedFrames ||
++            (result.consumedFrames == 0 && result.producedFrames == 0)) {
++            resamplerFailed_ = true; // unknown progress; never manufacture a padding-only loop
++            break;
++        }
++        if (!AppendToProcessedBuffer(resamplerOutBuf_.data(), result.outputFrames, outCh) ||
++            !RemoveConsumedInputFrames(result.consumedFrames, inCh)) {
++            resamplerFailed_ = true; // state advanced: do not run this input again
++            break;
++        }
++        if (result.consumedFrames == 0) {
++            break; // finite history output without new consumption; no busy loop
++        }
+     }
+ }
+ 
+ void HpaeAudioFormatConverterNode::ProcessResampleLoop()
+ {
+-    if (resampler_ == nullptr) {
++    if (resampler_ == nullptr || resamplerFailed_) {
+         return;
+     }
+ 
+@@ -709,49 +854,63 @@
+ }
+ 
+ int32_t HpaeAudioFormatConverterNode::ResampleWithChannelConversion(float *srcData, uint32_t inFrameLen,
+-    float *dstData, uint32_t outFrameLen, uint32_t resamplerChannels)
+-{
+-    AudioChannelInfo inChannelInfo = channelConverter_.GetInChannelInfo();
+-    AudioChannelInfo outChannelInfo = channelConverter_.GetOutChannelInfo();
+-    uint32_t inRate = resampler_->GetInRate();
+-    uint32_t outRate = resampler_->GetOutRate();
++    float *dstData, uint32_t outFrameLen, uint32_t resamplerChannels, ProResampler::ProcessResult &result)
++{
++    result = {};
++    uint32_t inCh = channelConverter_.GetInChannelInfo().numChannels;
++    uint32_t outCh = channelConverter_.GetOutChannelInfo().numChannels;
++    if (srcData == nullptr || dstData == nullptr || inCh == 0 || inCh > 16 || outCh == 0 || outCh > 16 ||
++        resamplerChannels != std::min(inCh, outCh) ||
++        inFrameLen > std::numeric_limits<size_t>::max() / inCh / sizeof(float) ||
++        outFrameLen > std::numeric_limits<size_t>::max() / outCh / sizeof(float)) {
++        return RESAMPLER_ERR_INVALID_ARG;
++    }
++    size_t inBytes = static_cast<size_t>(inFrameLen) * inCh * sizeof(float);
++    size_t outBytes = static_cast<size_t>(outFrameLen) * outCh * sizeof(float);
++    bool sameRate = resampler_->GetInRate() == resampler_->GetOutRate();
+     int32_t ret = EOK;
+-
+-    const char *pathDesc = "unknown";
+-    if (inChannelInfo.numChannels == outChannelInfo.numChannels && inRate == outRate) {
+-        // Same rate, same channels -- passthrough
+-        pathDesc = "passthrough";
+-        uint32_t copyBytes = inFrameLen * inChannelInfo.numChannels * sizeof(float);
+-        ret = memcpy_s(dstData, copyBytes, srcData, copyBytes);
+-    } else if (inChannelInfo.numChannels == outChannelInfo.numChannels) {
+-        // Resample only (same channels)
+-        pathDesc = "resample_only";
+-        ret = resampler_->Process(srcData, inFrameLen, dstData, outFrameLen);
+-    } else if (inRate == outRate) {
+-        // Channel conversion only (same rate)
+-        pathDesc = "channel_convert_only";
+-        ret = channelConverter_.Process(inFrameLen, srcData,
+-            inFrameLen * inChannelInfo.numChannels * sizeof(float),
+-            dstData, outFrameLen * outChannelInfo.numChannels * sizeof(float));
+-    } else if (inChannelInfo.numChannels > outChannelInfo.numChannels) {
+-        // Downmix first, then resample
+-        pathDesc = "downmix_then_resample";
+-        ret = channelConverter_.Process(inFrameLen, srcData,
+-            inFrameLen * inChannelInfo.numChannels * sizeof(float),
++    if (sameRate) {
++        if (inFrameLen != outFrameLen) {
++            return RESAMPLER_ERR_INVALID_ARG;
++        }
++        ret = inCh == outCh ? memcpy_s(dstData, outBytes, srcData, inBytes) :
++            channelConverter_.Process(inFrameLen, srcData, inBytes, dstData, outBytes);
++        if (ret == EOK) {
++            result.consumedFrames = inFrameLen;
++            result.producedFrames = outFrameLen;
++            result.outputFrames = outFrameLen;
++            result.valid = true;
++        }
++        return ret;
++    }
++    if (inCh == outCh) {
++        return resampler_->ProcessWithCounts(srcData, inFrameLen, dstData, outFrameLen, result);
++    }
++    if (tmpOutBuf_.GetPcmDataBuffer() == nullptr) {
++        return RESAMPLER_ERR_INVALID_ARG;
++    }
++    if (inCh > outCh) {
++        ret = channelConverter_.Process(inFrameLen, srcData, inBytes,
+             tmpOutBuf_.GetPcmDataBuffer(), tmpOutBuf_.Size());
+-        ret += resampler_->Process(tmpOutBuf_.GetPcmDataBuffer(), inFrameLen, dstData, outFrameLen);
+-    } else {
+-        // Resample first, then upmix
+-        pathDesc = "resample_then_upmix";
+-        ret = resampler_->Process(srcData, inFrameLen, tmpOutBuf_.GetPcmDataBuffer(), outFrameLen);
+-        ret += channelConverter_.Process(outFrameLen, tmpOutBuf_.GetPcmDataBuffer(),
+-            tmpOutBuf_.Size(), dstData, outFrameLen * outChannelInfo.numChannels * sizeof(float));
+-    }
+-    AUDIO_DEBUG_LOG("NodeId %{public}d: path=%{public}s, "
+-        "inRate=%{public}u->outRate=%{public}u, inCh=%{public}u->outCh=%{public}u, "
+-        "inFrames=%{public}u, outFrames=%{public}u, ret=%{public}d",
+-        GetNodeId(), pathDesc, inRate, outRate, inChannelInfo.numChannels, outChannelInfo.numChannels,
+-        inFrameLen, outFrameLen, ret);
++        if (ret != EOK) {
++            return ret; // never advance the filter with failed channel-conversion data
++        }
++        return resampler_->ProcessWithCounts(tmpOutBuf_.GetPcmDataBuffer(), inFrameLen,
++            dstData, outFrameLen, result);
++    }
++    size_t tmpBytes = static_cast<size_t>(outFrameLen) * resamplerChannels * sizeof(float);
++    if (tmpBytes > tmpOutBuf_.Size()) {
++        return RESAMPLER_ERR_OVERFLOW;
++    }
++    ret = resampler_->ProcessWithCounts(srcData, inFrameLen, tmpOutBuf_.GetPcmDataBuffer(), outFrameLen, result);
++    if (ret != EOK) {
++        return ret;
++    }
++    ret = channelConverter_.Process(result.outputFrames, tmpOutBuf_.GetPcmDataBuffer(), tmpOutBuf_.Size(),
++        dstData, outBytes);
++    if (ret != EOK) {
++        result.valid = false; // input may already have been consumed
++    }
+     return ret;
+ }
+ 
+@@ -769,6 +928,7 @@
+         processedBuffer_.data() + static_cast<size_t>(processedReadPos_) * channels,
+         copySamples * sizeof(float));
+     if (ret != EOK) {
++        resamplerFailed_ = true;
+         AUDIO_ERR_LOG("NodeId %{public}d: ExtractOutput memcpy_s failed", GetNodeId());
+         return false;
+     }
+@@ -777,7 +937,10 @@
+     if (processedFrames_ == 0) {
+         processedReadPos_ = 0;
+     } else if (processedReadPos_ > processedBuffer_.size() / (channels * PROCESSED_BUFFER_COMPACTION_DIVISOR)) {
+-        CompactProcessedBuffer(channels);
++        if (!CompactProcessedBuffer(channels)) {
++            resamplerFailed_ = true;
++            return false;
++        }
+     }
+     AUDIO_DEBUG_LOG("NodeId %{public}d: ExtractOutput success, remaining processedFrames=%{public}u",
+         GetNodeId(), processedFrames_);
+@@ -790,6 +953,10 @@
+ 
+ bool HpaeAudioFormatConverterNode::RemoveConsumedInputFrames(uint32_t consumedFrames, uint32_t channels)
+ {
++    if (consumedFrames > unprocessedFrames_ || channels == 0 || channels > 16 ||
++        unprocessedFrames_ > unprocessedBuffer_.size() / channels) {
++        return false;
++    }
+     uint32_t remainingFrames = unprocessedFrames_ - consumedFrames;
+     if (remainingFrames == 0) {
+         unprocessedFrames_ = 0;
+@@ -797,49 +964,45 @@
+     }
+     size_t srcOffset = static_cast<size_t>(consumedFrames) * channels;
+     size_t remainingSamples = static_cast<size_t>(remainingFrames) * channels;
+-    errno_t ret = memmove_s(unprocessedBuffer_.data(), unprocessedBuffer_.size() * sizeof(float),
+-        unprocessedBuffer_.data() + srcOffset, remainingSamples * sizeof(float));
+-    if (ret != EOK) {
+-        AUDIO_ERR_LOG("NodeId %{public}d: RemoveConsumedInputFrames memmove_s failed", GetNodeId());
++    if (memmove_s(unprocessedBuffer_.data(), unprocessedBuffer_.size() * sizeof(float),
++        unprocessedBuffer_.data() + srcOffset, remainingSamples * sizeof(float)) != EOK) {
+         return false;
+     }
+     unprocessedFrames_ = remainingFrames;
+     return true;
+ }
+ 
+-void HpaeAudioFormatConverterNode::CompactProcessedBuffer(uint32_t channels)
+-{
+-    size_t remainingSamples = static_cast<size_t>(processedFrames_) * channels;
+-    size_t srcOffset = static_cast<size_t>(processedReadPos_) * channels;
+-    errno_t ret = memmove_s(processedBuffer_.data(), processedBuffer_.size() * sizeof(float),
+-        processedBuffer_.data() + srcOffset, remainingSamples * sizeof(float));
+-    if (ret != EOK) {
+-        AUDIO_ERR_LOG("NodeId %{public}d: CompactProcessedBuffer memmove_s failed", GetNodeId());
++bool HpaeAudioFormatConverterNode::CompactProcessedBuffer(uint32_t channels)
++{
++    if (channels == 0 || channels > 16 ||
++        static_cast<uint64_t>(processedReadPos_) + processedFrames_ > processedBuffer_.size() / channels) {
++        return false;
++    }
++    size_t samples = static_cast<size_t>(processedFrames_) * channels;
++    if (samples != 0 && memmove_s(processedBuffer_.data(), processedBuffer_.size() * sizeof(float),
++        processedBuffer_.data() + static_cast<size_t>(processedReadPos_) * channels,
++        samples * sizeof(float)) != EOK) {
++        return false;
+     }
+     processedReadPos_ = 0;
++    return true;
+ }
+ 
+ void HpaeAudioFormatConverterNode::MoveUnprocessedToProcessed(uint32_t channels)
+ {
+-    size_t samples = static_cast<size_t>(unprocessedFrames_) * channels;
+-    size_t writeOffset = static_cast<size_t>(processedReadPos_ + processedFrames_) * channels;
+-    if (processedBuffer_.size() < writeOffset + samples) {
+-        AUDIO_ERR_LOG("NodeId %{public}d: MoveUnprocessedToProcessed buffer overflow, "
+-            "size=%{public}zu, required=%{public}zu", GetNodeId(), processedBuffer_.size(),
+-            writeOffset + samples);
+-        return;
+-    }
+-    errno_t ret = memcpy_s(processedBuffer_.data() + writeOffset,
+-        (processedBuffer_.size() - writeOffset) * sizeof(float),
+-        unprocessedBuffer_.data(), samples * sizeof(float));
+-    if (ret != EOK) {
+-        AUDIO_ERR_LOG("NodeId %{public}d: MoveUnprocessedToProcessed memcpy_s failed", GetNodeId());
+-        return;
+-    }
+-    processedFrames_ += unprocessedFrames_;
+-    AUDIO_DEBUG_LOG("NodeId %{public}d: MoveUnprocessedToProcessed moved %{public}u frames, "
+-        "total processedFrames=%{public}u", GetNodeId(), unprocessedFrames_, processedFrames_);
+-    unprocessedFrames_ = 0;
++    if (channels == 0 || channels > 16 || unprocessedFrames_ > unprocessedBuffer_.size() / channels) {
++        resamplerFailed_ = true;
++        return;
++    }
++    if (!CanAppendProcessedFrames(0, channels)) {
++        return;
++    }
++    size_t freeFrames = processedBuffer_.size() / channels - processedReadPos_ - processedFrames_;
++    uint32_t frames = static_cast<uint32_t>(std::min(static_cast<size_t>(unprocessedFrames_), freeFrames));
++    if (frames != 0 && (!AppendToProcessedBuffer(unprocessedBuffer_.data(), frames, channels) ||
++        !RemoveConsumedInputFrames(frames, channels))) {
++        resamplerFailed_ = true;
++    }
+ }
+ 
+ void HpaeAudioFormatConverterNode::SetSourceBufferType(HpaeSourceBufferType type)
+@@ -906,9 +1069,8 @@
+     processedFrames_ = 0;
+     processedReadPos_ = 0;
+     pullAheadCredit_ = pullAheadMaxCredit_;
+-    if (resampler_ != nullptr) {
+-        resampler_->Reset();
+-    }
++    bufferedState_ = PCM_BUFFER_STATE_INVALID;
++    resamplerFailed_ = resampler_ == nullptr || resampler_->ResetWithStatus() != EOK;
+ }
+ } // Hpae
+ } // AudioStandard
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_audio_format_converter_node.h
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_audio_format_converter_node.h
+@@ -53,13 +53,15 @@
+     void ProcessResampleLoop();
+     bool ExtractOutputFromProcessedBuffer();
+     bool RemoveConsumedInputFrames(uint32_t consumedFrames, uint32_t channels);
+-    void CompactProcessedBuffer(uint32_t channels);
++    bool CompactProcessedBuffer(uint32_t channels);
++    bool CanAppendProcessedFrames(uint32_t frames, uint32_t channels);
++    bool CanAcceptInputFrames(uint32_t frames, uint32_t channels) const;
+     void MoveUnprocessedToProcessed(uint32_t channels);
+     bool TryPullOneFrame();
+     uint32_t CalculateResamplerInputThreshold() const;
+     void InitDualBuffer();
+     int32_t ResampleWithChannelConversion(float *srcData, uint32_t inFrameLen,
+-        float *dstData, uint32_t outFrameLen, uint32_t resamplerChannels);
++        float *dstData, uint32_t outFrameLen, uint32_t resamplerChannels, ProResampler::ProcessResult &result);
+ 
+     // --- Refactoring helpers (sub-50-line extraction targets) ---
+     void ProcessSameRateChannelConversion(uint32_t inCh, uint32_t outCh);
+@@ -72,7 +74,7 @@
+     PcmBufferInfo pcmBufferInfo_;
+     HpaePcmBuffer converterOutput_;
+     HpaeNodeInfo preNodeInfo_;
+-    std::unique_ptr<Resampler> resampler_ = nullptr;
++    std::unique_ptr<ProResampler> resampler_ = nullptr;
+     ChannelConverter channelConverter_;
+     HpaePcmBuffer tmpOutBuf_; // cache between resample and converter
+     // if there is render effect, the effect node decides the output format of converter node
+@@ -81,6 +83,8 @@
+     // Unprocessed input accumulation buffer (interleaved float, input sample rate)
+     std::vector<float> unprocessedBuffer_;
+     uint32_t unprocessedFrames_ = 0;
++    bool resamplerFailed_ = false;
++    uint32_t bufferedState_ = PCM_BUFFER_STATE_INVALID;
+ 
+     // Processed output buffer (interleaved float, output sample rate)
+     std::vector<float> processedBuffer_;

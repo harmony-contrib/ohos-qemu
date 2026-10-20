@@ -1,0 +1,19 @@
+{
+  "scope": "two unchanged actual494 checker source fixtures ONLY; no generated parts_info/build result",
+  "receipt": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-cfi-source495-copy-01/receipt.json",
+    "sha256": "48b0175856c306134b9f9ec17cce7988c98594b7ddda3dc9f2392038e1d1812f"
+  },
+  "files": [
+    {
+      "path": "build/templates/common/check_deps_handler.py",
+      "sha256": "033795041cb208910db1bad14b1c9370dbd31f6dfcc88928e9a56cd98c48ca9e",
+      "bytes": 8720
+    },
+    {
+      "path": "build/scripts/util/file_utils.py",
+      "sha256": "75d3688c12a75f0f7aa6c71a15a7aaca66f5b3558594a76800371eeb81c7d9a5",
+      "bytes": 4551
+    }
+  ]
+}

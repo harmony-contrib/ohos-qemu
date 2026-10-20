@@ -54,11 +54,30 @@ def decode(data):
     return json.loads(data, object_pairs_hook=pairs, parse_constant=lambda _: (_ for _ in ()).throw(ValueError('nonfinite JSON')))
 
 
+def source_pins(root):
+    actual = {relative: hashlib.sha256(regular(root/relative).read_bytes()).hexdigest()
+              for relative in SOURCE_PINS}
+    if actual == SOURCE_PINS:
+        return dict(SOURCE_PINS)
+    # Accept the successor only after all six loader/provider files authenticate.
+    import importlib.util
+    guard_path = Path(__file__).resolve().parents[5] / 'common/foundation/ability/ability_runtime/number_identity_native_trace495/verify_source.py'
+    need(hashlib.sha256(regular(guard_path).read_bytes()).hexdigest() == 'ce5b65b7fddf75f9aa7c5134ca05145a58c1755c32365e0337ab286104d9515b',
+         'fixed whole-sequence guard differs')
+    spec = importlib.util.spec_from_file_location('number_selection_trace_guard', guard_path)
+    guard = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(guard)
+    guard.preflight_sequence(root, require_patched=True)
+    expected = dict(SOURCE_PINS)
+    expected.update({'foundation/ability/ability_runtime/frameworks/native/appkit/app/main_thread.cpp': 'ed25c0dd5459e94c802aa9abcfb70baa3aba8110ae8b1f4a4f2ffd0bdb3b4528', 'base/telephony/number_identity/number_location/src/number_identity_datashare_stub_impl.cpp': 'ecc474085ce71a77b641c0d6962554fbb3400683a63ea45e3720feebfc7d6715', 'base/telephony/number_identity/number_location/src/number_location_ability.cpp': '371c44cc4d8387d95092ee1c073e7a6976149b361914c55f0b10eeb89b973dd4'})
+    need(actual == expected, 'public local source/config differs from complete successor')
+    return expected
+
+
 def configure(root, require_patched=False):
     root = Path(root)
     need(root.is_absolute() and root.resolve() == root and root.is_dir() and not root.is_symlink(), 'canonical real source root required')
-    for relative, expected in SOURCE_PINS.items():
-        need(hashlib.sha256(regular(root/relative).read_bytes()).hexdigest()==expected, 'public local source/config differs: '+relative)
+    source_pins(root)
     # Original profile SHA is retained by the helper as the immutable baseline.
     # Source package readiness requires the authenticated two-field renewal.
     verify_number_profile(root)

@@ -1,0 +1,220 @@
+--- a/kit411/candidate/number_owner411.py
++++ b/kit411/candidate/number_owner411.py
+@@ -8,6 +8,9 @@
+ import fcntl
+ import hashlib
+ import importlib.util
++import importlib.machinery
++import builtins
++import types
+ import json
+ import os
+ from pathlib import Path
+@@ -22,9 +25,9 @@
+ R = Path('/Volumes/PSSD/code/ohos-rs/ohos-qemu')
+ H = R / '.tmp/parallel-capability-20261016'
+ HERE = Path(__file__).resolve().parent
+-KIT = Path('/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-suite-after488-generated/kit-054d684-494')
+-KIT_SHA = '3adab8ddc8fc3afba5f42779ba0e8644187f1ed1e84b0267d1044f4bec7ee2f6'
+-SOURCE_COMMIT = '054d684589538d12f6e6c1981ccff80c5137f8a3'
++KIT = None  # Parent supplies the actual future full-suite sourcekit path.
++KIT_SHA = None  # Exact future full-suite manifest hash; old494 is not a substitute.
++SOURCE_COMMIT = None  # Actual future integrated HEAD, deliberately unresolved.
+ COLLECTOR = HERE.parent / 'number_local_collector411.py'
+ COLLECTOR_SHA = '6f9a1fff50af9c3111e70a9646fa8d1aab0836c1b7f9668a8eb8cca31feb84de'
+ HOST_PYTHON = '/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python'
+@@ -32,8 +35,8 @@
+ BOOT = R / 'ci/capability-audit/boot_package.py'
+ BOOT_SHA = 'c4faf147174534dcd50bdaa720777dd0281f5fb86056dea55892b8708b13db00'
+ HELPER_KIT = HERE / 'helper-kit'
+-HELPER_KIT_SHA = 'c5ae272eaa3c24f45c24f3010abecbe8dcf6fdc70a9c1ae286f62ea4f0e160a5'
+-ADMISSION_SHA = '3619c17e4d91db1e54106831ba4fd53f122e49be98d4c451ff8cc69710edc125'
++HELPER_KIT_SHA = '0df64c1b16f1a8fc8b21bbab9645b05b5bba7b8c7dfb9c7f6d386f9a922136fa'
++ADMISSION_SHA = 'dd902e6adc39c3f4c45fc6ebd15ee9810e7ebf1a3197ad8d85d67e5c14b3133b'
+ UUID = r'[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}'
+ IDENTITY_SCRIPT = 'id -u; param get const.product.devicetype; uname -m'
+ ACCOUNT_SCRIPT = 'echo "bootevent.account.ready=$(param get bootevent.account.ready)"; hidumper -s AccountMgr -a "-os_account_infos"'
+@@ -97,8 +100,161 @@
+     need(actual == wanted | {'manifest.json'}, 'unlisted private source/cache/evidence members')
+ 
+ 
++
++# Exact finite canonical vector, including the independently reviewed498
++# consumer/adapter successor. Future HEAD/KIT bindings remain pending.
++NATIVE496_CANONICAL_PINS = {'ci/capability-audit/fixtures/batch_apps/number_runtime/number_token_query395.cpp': {'sha256': 'b56d895cddd5dcc375b7b871e871b199540b43c0a495d7ec8b31ff1106a4e5ed',
++                                                                                      'bytes': 6767},
++ 'ci/capability-audit/number_native496/__init__.py': {'sha256': 'd47cad434d266fac6ebc5ca5f94aa3375b28cabcbdaaaf18b5a8cbcaf4348cd3',
++                                                      'bytes': 73},
++ 'ci/capability-audit/number_native496/candidate/native_observation411.py': {'sha256': 'e0cc7372d13c71d3d08269d42ea1c71738d9672761ba4cf17a66d47e8c236bb6',
++                                                                             'bytes': 15533},
++ 'ci/capability-audit/number_native496/candidate/number_token_query395.cpp': {'sha256': 'b56d895cddd5dcc375b7b871e871b199540b43c0a495d7ec8b31ff1106a4e5ed',
++                                                                              'bytes': 6767},
++ 'ci/capability-audit/number_native496/consumer496.py': {'sha256': '9c9719c41d50d8348b96e229bbcdc82f857109ff913c1b5704184aa40a0577cc', 'bytes': 19705},
++ 'ci/capability-audit/number_native496/evidence_join496.py': {'sha256': '021d564c75f95fa1e99f30814819bd7c961c4155e73d2c78886edeb9fc7f0c99', 'bytes': 36667},
++ 'ci/capability-audit/number_native496/support/guest_ui.py': {'sha256': '8f8fba0256492ff3d9d8bcfa526540954a8cafa42381cc16fd02c7cd48a4147f',
++                                                              'bytes': 7723},
++ 'ci/capability-audit/number_native496/support/napi_protocol411.py': {'sha256': '03ae5a3a5d5cdc4932e6421bc64c39e06880b701326682bb6dfaf0c4d7c5ec49',
++                                                                      'bytes': 8398},
++ 'ci/capability-audit/number_native496/support/number_local_collector411.py': {'sha256': '6f9a1fff50af9c3111e70a9646fa8d1aab0836c1b7f9668a8eb8cca31feb84de',
++                                                                               'bytes': 53733}}
++
++
++def integration497_ready():
++    need(type(SOURCE_COMMIT) is str and re.fullmatch('[0-9a-f]{40}', SOURCE_COMMIT) and
++         SOURCE_COMMIT != '054d684589538d12f6e6c1981ccff80c5137f8a3',
++         'actual future Number497 integrated HEAD pending; old494 cannot substitute')
++    need(isinstance(KIT, Path) and KIT.is_absolute() and KIT.resolve() == KIT and
++         type(KIT_SHA) is str and re.fullmatch('[0-9a-f]{64}', KIT_SHA),
++         'actual future full-suite sourcekit path/manifest hash pending')
++    for relative, row in NATIVE496_CANONICAL_PINS.items():
++        need(type(row) is dict and set(row) == {'sha256', 'bytes'} and
++             type(row['sha256']) is str and re.fullmatch('[0-9a-f]{64}', row['sha256']) and
++             type(row['bytes']) is int and row['bytes'] > 0,
++             'reviewed canonical successor pin pending: ' + relative)
++
++
++def _native_source_owner499():
++    """Keep source module ownership in this Owner's closure, never in DATA."""
++    owned = None
++    module_table = sys.modules
++    prefix = 'number_native496'
++    selected = (
++        (prefix, 'ci/capability-audit/number_native496/__init__.py'),
++        (prefix + '.consumer496', 'ci/capability-audit/number_native496/consumer496.py'),
++        (prefix + '.evidence_join496', 'ci/capability-audit/number_native496/evidence_join496.py'))
++
++    def namespace():
++        need(type(module_table) is dict and sys.modules is module_table, 'native module table identity changed')
++        names = set()
++        for name in module_table:
++            if isinstance(name, str) and (str.__eq__(name, prefix) is True or str.startswith(name, prefix + '.')):
++                need(type(name) is str, 'nonliteral native namespace key refused')
++                names.add(name)
++        return names
++
++    def verify(state):
++        modules, specs, loaders, paths, environments, imports, package_path, package_keys = state
++        need(namespace() == set(modules), 'foreign/new native namespace member refused')
++        for name, module in modules.items():
++            need(type(module) is types.ModuleType, 'owned native object changed module type: ' + name)
++            spec = specs[name]; values = module.__dict__
++            need(module_table.get(name) is module and
++                 type(values.get('__name__')) is str and values['__name__'] == name and
++                 type(values.get('__file__')) is str and values['__file__'] == paths[name] and
++                 type(values.get('__package__')) is str and values['__package__'] == prefix and
++                 values.get('__loader__') is loaders[name] and values.get('__spec__') is spec and
++                 '__cached__' in values and values['__cached__'] is None and
++                 values.get('__builtins__') is environments[name] and
++                 environments[name].get('__import__') is imports[name],
++                 'native module object/file/package/loader/spec ownership changed: ' + name)
++            need(type(spec) is importlib.machinery.ModuleSpec and type(spec.name) is str and spec.name == name and
++                 type(spec.origin) is str and spec.origin == paths[name] and spec.loader is loaders[name] and
++                 spec.loader_state is loaders[name] and spec.parent == prefix and
++                 spec.has_location is False and spec.cached is None and
++                 getattr(spec, '_initializing', None) is False,
++                 'native source ModuleSpec changed: ' + name)
++            if name == prefix:
++                need(values.get('__path__') is package_path is spec.submodule_search_locations and
++                     type(package_path) is tuple and package_path == (str(Path(paths[name]).parent),) and
++                     set(module.__dict__) == package_keys,
++                     'foreign native package path/children refused')
++            else:
++                need('__path__' not in module.__dict__ and spec.submodule_search_locations is None,
++                     'native source child changed into foreign package')
++        package = modules[prefix]
++        need(package.__dict__.get('consumer496') is modules[prefix + '.consumer496'] and
++             package.__dict__.get('evidence_join496') is modules[prefix + '.evidence_join496'] and
++             modules[prefix + '.evidence_join496'].__dict__.get('core') is modules[prefix + '.consumer496'],
++             'native parent child/core object differs from owned source modules')
++
++    def native_module496():
++        nonlocal owned
++        integration497_ready()
++        raw_sources = {}
++        for relative, row in NATIVE496_CANONICAL_PINS.items():
++            path = regular(R / relative)
++            before = path.stat(); raw = path.read_bytes(); after = path.stat()
++            need((before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns) ==
++                 (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns) and
++                 len(raw) == row['bytes'] and hashlib.sha256(raw).hexdigest() == row['sha256'],
++                 'exact reviewed canonical native source changed: ' + relative)
++            raw_sources[relative] = raw
++        if owned is not None:
++            verify(owned)
++            return owned[0][prefix + '.evidence_join496']
++        need(not namespace(), 'preexisting native namespace refused on first owned source load')
++        modules = {}; specs = {}; loaders = {}; paths = {}; environments = {}; imports = {}
++        inserted = []
++        try:
++            for name, relative in selected:
++                module = types.ModuleType(name); loader = object(); path = str(R / relative)
++                spec = importlib.machinery.ModuleSpec(name, loader, origin=path, is_package=(name == prefix))
++                spec.loader_state = loader; spec._initializing = False
++                if name == prefix: spec.submodule_search_locations = (str(Path(path).parent),)
++                module.__file__ = path; module.__package__ = prefix; module.__loader__ = loader
++                module.__spec__ = spec; module.__cached__ = None
++                if name == prefix: module.__path__ = spec.submodule_search_locations
++                modules[name] = module; specs[name] = spec; loaders[name] = loader; paths[name] = path
++                module_table[name] = module; inserted.append((name, module))
++            package = modules[prefix]
++            package.consumer496 = modules[prefix + '.consumer496']
++            package.evidence_join496 = modules[prefix + '.evidence_join496']
++            for name, relative in selected:
++                module = modules[name]
++                def fixed_import(import_name, globals=None, locals=None, fromlist=(), level=0,
++                                 module=module, name=name):
++                    if level == 1 and import_name == '' and tuple(fromlist) == ('consumer496',) and \
++                            name == prefix + '.evidence_join496' and globals is module.__dict__:
++                        need(module_table.get(prefix) is package and
++                             module_table.get(prefix + '.consumer496') is package.consumer496 is modules[prefix + '.consumer496'],
++                             'relative native core import lost owned object')
++                        return package
++                    need(level == 0 and not (import_name == prefix or import_name.startswith(prefix + '.')) and
++                         import_name != 'consumer496', 'unowned native import route refused')
++                    return builtins.__import__(import_name, globals, locals, fromlist, level)
++                environment = dict(vars(builtins)); environment['__import__'] = fixed_import
++                environments[name] = environment; imports[name] = fixed_import
++                module.__dict__['__builtins__'] = environment
++                exec(compile(raw_sources[relative], paths[name], 'exec', dont_inherit=True, optimize=0), module.__dict__)
++            state = (modules, specs, loaders, paths, environments, imports, package.__dict__['__path__'], set(package.__dict__))
++            verify(state)
++            owned = state  # Publish only after all exact source modules and metadata agree.
++            return modules[prefix + '.evidence_join496']
++        except BaseException:
++            for name, module in reversed(inserted):
++                if module_table.get(name) is module: del module_table[name]
++            raise  # A foreign replacement/new namespace member is never removed here.
++    return native_module496
++
++
++native_module496 = _native_source_owner499()
++
+ def source_modules():
+     need(sys.dont_write_bytecode, 'root must use Python -B/PYTHONDONTWRITEBYTECODE; frozen kits are read-only')
++    integration497_ready()
++    native_module496()  # Pin the complete canonical source vector before resource admission.
+     verify_frozen_kit(KIT_SHA, KIT, docker_alias=True)
+     verify_frozen_kit(HELPER_KIT_SHA, HELPER_KIT)
+     need(digest(regular(COLLECTOR)) == COLLECTOR_SHA and digest(regular(BOOT)) == BOOT_SHA and
+@@ -107,7 +263,7 @@
+          'fixed collector/boot/QMP/admission source changed')
+     for name,path,pin in ((
+         'napi_protocol411', HERE.parent/'napi_protocol411.py', '03ae5a3a5d5cdc4932e6421bc64c39e06880b701326682bb6dfaf0c4d7c5ec49'),
+-        ('native_observation411', HERE/'native_observation411.py', '0d3e7f9a238095e66fb9cd17806e62fa9ef518339940a376a515afa19f1571c5')):
++        ('native_observation411', HERE/'native_observation411.py', 'e0cc7372d13c71d3d08269d42ea1c71738d9672761ba4cf17a66d47e8c236bb6')):
+         need(digest(regular(path)) == pin,'fixed Number411 supplement changed')
+         if name in sys.modules: need(Path(sys.modules[name].__file__).resolve() == path,'foreign Number411 supplement')
+     sys.path.insert(0,str(HERE)); sys.path.insert(0,str(HERE.parent))
+@@ -672,6 +828,12 @@
+                 actual = bridge.leaf([owner.hdc, '-t', guest.target, 'install', path], 'number-role-install', 90)
+                 need(actual['exit_code'] == 0 and not bridge.calls[-1]['transport_failure'], 'actual role installation failed')
+             report = probe.collect()
++            native_index496 = native_module496().collect_bridge496(
++                bridge=bridge, probe=probe, admitted=admitted,
++                package_inputs=spec.get('native_consumer_inputs496'),
++                output=bridge.out / 'native-chain496')
++            report['native_chain496_reviews'] = write(
++                bridge.out / 'native-chain496-index.json', native_index496)
+             report['native_observations411'] = [v['evidence'] for v in bridge.native_observations]
+             report['native_callback_proven'] = False
+             write(output/'native-observations411-index.json',dict(observations=report['native_observations411'],

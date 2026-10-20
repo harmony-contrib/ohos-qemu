@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "scope": "source-only Number497 observer producer kit; original Builder/ABI/CFI/tools unchanged; no target compilation",
+  "manifest_excludes_only": "MANIFEST.json",
+  "members": [
+    {
+      "path": "helper-kit/ci/capability-audit/batch_system_build_runtime_helpers.py",
+      "kind": "file",
+      "mode": 420,
+      "sha256": "eb898a0590c1c5652d6dc10a2addecd5d25a62a77f3a8ca6266e889a7393998d",
+      "bytes": 64853
+    },
+    {
+      "path": "helper-kit/ci/capability-audit/build_number_observer396.py",
+      "kind": "file",
+      "mode": 420,
+      "sha256": "bf8fbc4038011a39a99974e811d3ab1518760a7a6a1608678a4a694b6c25b292",
+      "bytes": 3941
+    },
+    {
+      "path": "helper-kit/ci/capability-audit/fixtures/batch_apps/number_runtime/number_token_query395.cpp",
+      "kind": "file",
+      "mode": 420,
+      "sha256": "b56d895cddd5dcc375b7b871e871b199540b43c0a495d7ec8b31ff1106a4e5ed",
+      "bytes": 6767
+    },
+    {
+      "path": "helper-kit/manifest.json",
+      "kind": "file",
+      "mode": 420,
+      "sha256": "0df64c1b16f1a8fc8b21bbab9645b05b5bba7b8c7dfb9c7f6d386f9a922136fa",
+      "bytes": 1471
+    },
+    {
+      "path": "helper-kit/scripts/ext_image_entries.py",
+      "kind": "file",
+      "mode": 420,
+      "sha256": "c2dc7884536401de055aafa1ce3a759a00298d678f0925ec97d240841b1a3f77",
+      "bytes": 1358
+    },
+    {
+      "path": "helper-kit/scripts/verify_alsa_config_image.py",
+      "kind": "file",
+      "mode": 420,
+      "sha256": "567906080c0d1f63462aaa3e7240a2bdcc8b110a09f4e1c8d2b3d93bc40e5639",
+      "bytes": 6877
+    },
+    {
+      "path": "helper-kit/scripts/verify_runtime_elf_contract.py",
+      "kind": "file",
+      "mode": 420,
+      "sha256": "b8e466924e0f0daac70c4447637fcc211b843400ed3083fe849bfa174199c93b",
+      "bytes": 6017
+    },
+    {
+      "path": "observer_admission396.py",
+      "kind": "file",
+      "mode": 420,
+      "sha256": "dd902e6adc39c3f4c45fc6ebd15ee9810e7ebf1a3197ad8d85d67e5c14b3133b",
+      "bytes": 20530
+    }
+  ]
+}

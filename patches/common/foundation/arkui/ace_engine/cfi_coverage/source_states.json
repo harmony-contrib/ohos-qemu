@@ -32,11 +32,22 @@
       "relative": "frameworks/core/components_ng/pattern/smart_layout/engine/BUILD.gn",
       "original_sha256": "e8fd104ecdebbf974e942f3a619d06fd11f1898ab48464772ae1275f751f4657",
       "final_sha256": "7893c5214f6ddbe921cb1cd9c8b411b04ab7ca1b44cb89106fdf81e02d11a089"
+    },
+    {
+      "relative": "bundle.json",
+      "original_sha256": "a6795d1664a261e761326b3310d8e089e2a88085f5f6e133701674a7d9dbfe2c",
+      "final_sha256": "9e2e83c6709571e8b9a410b6d42c7bbbb5d21f4b2171364f22b102496de87898"
     }
   ],
   "patch": "0001-instrument-ACE-common-carrier-and-align-factory-types.patch",
-  "patch_sha256": "9923d92c776665cd521fab671508a2ed1656ecef39675c479b008127582d0a01",
+  "patch_sha256": "2278983eafefe0502f9774ec8aede4e5841ac54ec0116e744b34bab4f9e89d8e",
   "scope": "actual prepared ACE whole-file paired states; existing UIExtension CFI component is a prerequisite",
   "actual_gn_compile_solink_runtime_pending": true,
-  "first_artifact_behavior_gate_passed": false
+  "first_artifact_behavior_gate_passed": false,
+  "legacy_bundle_upgrade": {
+    "component": "legacy495",
+    "patch_sha256": "f32d152439ff41b20f9dc0d0227dc43015b0f76f15240fa196bd8391e4dfb58d",
+    "original_sha256": "a6795d1664a261e761326b3310d8e089e2a88085f5f6e133701674a7d9dbfe2c",
+    "final_sha256": "9e2e83c6709571e8b9a410b6d42c7bbbb5d21f4b2171364f22b102496de87898"
+  }
 }
