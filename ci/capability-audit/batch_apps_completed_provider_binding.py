@@ -352,8 +352,8 @@ def canonical_context(config):
 EXECUTED_EXPORT_SOURCE_SHA256={'F-provider-current-owner237-draft/provider46_common.py': '2051f1e528ae4df8761a6ab732b652fe7f4d5f72ec2c511fb8fab4472f69e6ba', 'F-provider-current-owner237-draft/provider_guard237.py': '257b20a3509643a4c7bb570b04b8cfdbd53db0da287bb477deb203c0f079e8bc', 'F-runtime-support35-draft/owned_resource35.py': '02dcc35db074c625cb070ca7af29446ba917e585d45cb015fc86ff4b8863e4eb', 'F-runtime-support35-draft/support_common35.py': '69c29368c72b503f5fe5165f2796fe5273f84e92098dfb5cc6bf8059770f6a43', 'F-location-inventory-owner227-draft/run_inventory227.py': 'c6b79831f3122b3050ee7074a6b99924591ef95fce359ae7ab38ec8f4d9a8ded'}
 # Protocol is deliberately one reviewed success path, not an arbitrary Docker
 # journal interpreter. Other producers/stages require their own reviewed protocol.
-NATIVE376_MANIFEST_SHA='aafeef136c7e5e16c5f843769379faa2a21877aa64fcec150d5c89a2f709214e'
-NATIVE376_WRAPPER_SHA='bac2d981c9b452b01105a6fdc9462199298fc4b810d010e3ef80040d58cbae48'
+NATIVE376_MANIFEST_SHA='d8f6cbb726636b15508404001c7250de2d1b8f35e14eb70c4bc4e77f2a884844'
+NATIVE376_WRAPPER_SHA='35b318375665659387584b467a97ce8e9a3a7ae2c3edd43f281582c4788c8c11'
 NATIVE376_IMAGE='sha256:8f7a960c7dc515a597d43a510d6d8a5e634e5c94a55aa5d9e22bfbf6b0f42c55'
 NATIVE376_NAME='ohos-qemu-phone-build'
 NATIVE376_SOURCE='ohos-qemu-7_0-release-source'
@@ -484,7 +484,7 @@ def native376_resources(value, launcher, expected, tree):
             'actual launcher argv/source pin missing')
     env=value['adopted_complete_host_environment'];out=launcher.parent
     template=dict(ENGINE376['adopted']);template.update(PACKAGE_ROOT=str(out/'packages'),LOG_DIR=str(out/'logs'),
-        PREPARE_ONLY='0',BUILD_JOBS='4',DOCKER_BUILD_CPUS='4',DOCKER_BUILD_MEMORY='10g')
+        PREPARE_ONLY='0',BUILD_JOBS='4',DOCKER_BUILD_CPUS='4',DOCKER_BUILD_MEMORY='14g')
     endpoint_env={k:env[k] for k in ('DOCKER_HOST','DOCKER_CONTEXT') if k in env}
     require({k:v for k,v in env.items() if k not in ('DOCKER_HOST','DOCKER_CONTEXT','DOCKER_CONFIG')}==
             {k:v for k,v in template.items() if k not in ('DOCKER_HOST','DOCKER_CONTEXT','DOCKER_CONFIG')},
@@ -504,7 +504,7 @@ def native376_resources(value, launcher, expected, tree):
     # Preserve complete engine defaults; dynamic bounds/mounts come from the
     # reviewed launcher's actual build environment and frozen source.
     host=dict(ENGINE376['host'],AutoRemove=True,ContainerIDFile='',ReadonlyRootfs=False,NetworkMode='bridge',
-        CapDrop=None,SecurityOpt=None,PidsLimit=None,Memory=10*1024**3,MemorySwap=20*1024**3,NanoCpus=4*10**9,
+        CapDrop=None,SecurityOpt=None,PidsLimit=None,Memory=14*1024**3,MemorySwap=28*1024**3,NanoCpus=4*10**9,
         Tmpfs={'/tmp':'exec,mode=1777,size=32g'},Binds=['/Volumes/PSSD/qemu:/Volumes/PSSD/qemu',str(frozen)+':/work:ro'])
     host['Mounts']=host_mount_options({dest:m for dest,m in mounts.items() if dest not in ('/work','/Volumes/PSSD/qemu')})
     # HostConfig.Mounts order is launch argv order, separate from unordered Mounts.
