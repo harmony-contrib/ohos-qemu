@@ -57,7 +57,7 @@ export default class EntryAbility extends UIAbility {
     const c = JSON.parse(value) as Command;
     if (c.run_id !== this.run || !/^[a-f0-9-]{36}$/.test(c.boot_id) ||
       !/^[a-f0-9]{32}$/.test(c.operation_id) || this.used.includes(c.operation_id) || this.used.length >= 256 ||
-      !['permissions', 'icon', 'supported', 'district', 'district-invalid', 'track-start', 'track-read', 'track-invalid',
+      !['context', 'permissions', 'icon', 'supported', 'district', 'district-invalid', 'track-start', 'track-read', 'track-invalid',
         'track-stop', 'fence-add', 'fence-remove', 'fence-invalid', 'ble-start-a', 'ble-start-b',
         'ble-stop-a', 'ble-stop-all', 'quiet', 'cleanup'].includes(c.action)) { throw new Error('Invalid fresh command'); }
     this.used.push(c.operation_id);
@@ -69,6 +69,16 @@ export default class EntryAbility extends UIAbility {
     try {
       let result: string = 'null';
       switch (c.action) {
+        case 'context': {
+          const journalStat = fs.statSync(this.context.filesDir + '/location-eight-' + this.run + '.jsonl');
+          const token = this.context.applicationInfo.accessTokenId;
+          const manager = abilityAccessCtrl.createAtManager();
+          result = JSON.stringify({ filesDir: this.context.filesDir, journalIno: journalStat.ino.toString(),
+            journalUid: journalStat.uid, tokenId: token,
+            permissionStatus: [manager.checkAccessTokenSync(token, 'ohos.permission.APPROXIMATELY_LOCATION'),
+              manager.checkAccessTokenSync(token, 'ohos.permission.LOCATION')] });
+          break;
+        }
         case 'permissions': {
           const grant = await abilityAccessCtrl.createAtManager().requestPermissionsFromUser(this.context,
             ['ohos.permission.APPROXIMATELY_LOCATION', 'ohos.permission.LOCATION']);

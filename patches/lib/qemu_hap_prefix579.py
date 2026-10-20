@@ -28,7 +28,10 @@ def prepare(root):
     path = root / name
     current = read(path)
     digest = hashlib.sha256(current).hexdigest()
-    if digest == pair[1]:
+    # The preceding composed graph was already applied by a completed normal
+    # preparation attempt. Rewind only this exact known graph or the current one.
+    previous = 'affe73589b6200a6c8e1a0d96f72d41ca8b5c94fc7d309cfa7ad7c0789e00ba6'
+    if digest in (previous, pair[1]):
         if read(path) != current:
             raise ValueError('HAP source changed before exact prefix preparation')
         replace(path, before)

@@ -50,7 +50,50 @@
  }
  
  ohos_prebuilt_etc("CallRecorder_hap") {
-@@ -573,11 +589,14 @@
+@@ -418,21 +434,39 @@
+ }
+ 
+ ohos_prebuilt_etc("Intelligent_Scene_hap") {
+-  source = hap_src_dir + "Intelligent_Scene.hap"
++  if (defined(product_name) &&
++      (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++       product_name == "x86_64_virt")) {
++    source = "qemu_ui_provider_inputs/Intelligent_Scene.hap"
++  } else {
++    source = hap_src_dir + "Intelligent_Scene.hap"
++  }
+   module_install_dir = "app/com.ohos.intelligentscene"
+   part_name = "prebuilt_hap"
+   subsystem_name = "applications"
+ }
+ 
+ ohos_prebuilt_etc("PortalLogin_hap") {
+-  source = hap_src_dir + "PortalLogin.hap"
++  if (defined(product_name) &&
++      (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++       product_name == "x86_64_virt")) {
++    source = "qemu_ui_provider_inputs/PortalLogin.hap"
++  } else {
++    source = hap_src_dir + "PortalLogin.hap"
++  }
+   module_install_dir = "app/com.wifiservice.portallogin"
+   part_name = "prebuilt_hap"
+   subsystem_name = "applications"
+ }
+ 
+ ohos_prebuilt_etc("mediacontroller_hap") {
+-  source = hap_src_dir + "mediacontroller.hap"
++  if (defined(product_name) &&
++      (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++       product_name == "x86_64_virt")) {
++    source = "qemu_ui_provider_inputs/mediacontroller.hap"
++  } else {
++    source = hap_src_dir + "mediacontroller.hap"
++  }
+   module_install_dir = "app/com.hmos.mediacontroller"
+   part_name = "prebuilt_hap"
+   subsystem_name = "applications"
+@@ -573,11 +607,14 @@
      deps +=
          [ "//applications/standard/admin_provisioning:adminprovisioning_hap" ]
    }

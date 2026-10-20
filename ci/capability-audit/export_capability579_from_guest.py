@@ -406,14 +406,17 @@ def make_deferred_inputs(*, package, services, native_export, caption_runtime_da
         io = OwnedIO(owner, owner.vm, owner.output / ('capability579-export-' + secrets.token_hex(8)),
             run_id=secrets.token_hex(16), package_inputs={}, prepare_callers=prepare_callers, https_factory=OwnedHTTPS)
         resources.append(io)  # BEFORE any producer command; original finish owns settlement.
-        exports = produce(io, package, services)  # Failure propagates with original raw IO retained.
-        deferred_inputs.exports = exports
-        request = {'schema': 'actual-root-capability579-input-request/v1',
-            'package_export': exports['package_export'], 'services_export': exports['services_export'],
-            'native_export': native_export, 'caption_runtime_data': caption_runtime_data,
-            'caption_product_assets': caption_product_assets, 'permission_ui': permission_ui}
-        request_ref = write(io.output / 'assembly-request.json', request)
-        return assemble(request_ref, recipes_root, profile, io.output / 'assembled-inputs')
+        try:
+            exports = produce(io, package, services)  # Original raw IO retained on failure.
+            deferred_inputs.exports = exports
+            request = {'schema': 'actual-root-capability579-input-request/v1',
+                'package_export': exports['package_export'], 'services_export': exports['services_export'],
+                'native_export': native_export, 'caption_runtime_data': caption_runtime_data,
+                'caption_product_assets': caption_product_assets, 'permission_ui': permission_ui}
+            request_ref = write(io.output / 'assembly-request.json', request)
+            return assemble(request_ref, recipes_root, profile, io.output / 'assembled-inputs')
+        finally:
+            io.close()  # Paired scope may start only after all prior IO is closed.
 
     deferred_inputs.exports = None
     return deferred_inputs

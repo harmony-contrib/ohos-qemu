@@ -1,13 +1,13 @@
 {
   "schema": "qemu579-hap-source-vector/v1",
-  "scope": "single root-composed whole HAP graph; CommunicationSetting, CallSetting and English caption source targets; QEMU runtime pending",
+  "scope": "single root-composed whole HAP graph; source Call/Communication/caption targets and payload-preserving OS-signed legacy UI inputs; QEMU runtime pending",
   "projects": {
     "applications/standard/hap": "f2e956a5dd26102f85c86e91d2bfd7c0998534f8"
   },
   "files": {
     "applications/standard/hap/BUILD.gn": [
       "d25f524ae8b82607c04ddd86b485b3940b40af14376cbf9c3d23f15d6655a83c",
-      "affe73589b6200a6c8e1a0d96f72d41ca8b5c94fc7d309cfa7ad7c0789e00ba6"
+      "a95ff1daedefc3cd597e4b389d93a9ca0d824b4876e74d1f20d3c3e92881b547"
     ]
   }
 }

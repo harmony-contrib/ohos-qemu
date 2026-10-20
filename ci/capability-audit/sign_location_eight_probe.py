@@ -11,7 +11,7 @@ PERMISSIONS = {'ohos.permission.LOCATION', 'ohos.permission.APPROXIMATELY_LOCATI
 def configure_profile(profile, role, udid, module):
     requests = module['module'].get('requestPermissions')
     abilities = module['module'].get('abilities')
-    if (role != 'system' or not re.fullmatch('[a-fA-F0-9]{64}', udid or '') or
+    if (role not in ('normal','system') or not re.fullmatch('[a-fA-F0-9]{64}', udid or '') or
             module['app'].get('bundleName') != BUNDLE or module['module'].get('type') != 'entry' or
             not isinstance(requests, list) or len(requests) != 2 or
             any(not isinstance(r, dict) or not {'name', 'reason', 'reasonId', 'usedScene'} <= set(r) or
@@ -23,8 +23,8 @@ def configure_profile(profile, role, udid, module):
             module['module'].get('extensionAbilities', []) != []):
         raise ValueError('Exact singleton Location8 Stage caller and two user permissions required')
     profile['bundle-info']['bundle-name'] = BUNDLE
-    profile['bundle-info']['apl'] = 'system_basic'
-    profile['bundle-info']['app-feature'] = 'hos_system_app'
+    profile['bundle-info']['apl'] = 'normal' if role=='normal' else 'system_basic'
+    profile['bundle-info']['app-feature'] = 'hos_normal_app' if role=='normal' else 'hos_system_app'
     profile['debug-info']['device-ids'] = [udid]
     profile['acls']['allowed-acls'] = []
     profile['permissions']['restricted-permissions'] = []
@@ -34,6 +34,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('signer-dist', 'jar', 'unsigned', 'output'):
         parser.add_argument('--' + name, type=Path, required=True)
-    parser.add_argument('--role', choices=('system',), required=True)
+    parser.add_argument('--role', choices=('normal','system'), required=True)
     parser.add_argument('--udid', required=True)
     sign(parser.parse_args(), configure_profile)

@@ -17,7 +17,7 @@ import traceback
 
 BUNDLE = 'org.harmonycontrib.capabilityaudit'
 PERMISSIONS = ['ohos.permission.APPROXIMATELY_LOCATION', 'ohos.permission.LOCATION']
-PROFILES = ('track', 'icon', 'fence')
+PROFILES = ('track', 'icon', 'fence', 'supported', 'invalid', 'ordinary', 'denied', 'switch-off')
 SDK_SOURCES = ('build_hap_probe.py', 'location_eight_contract.py', 'location_eight/EntryAbility.ets', 'location_eight/Index.ets')
 
 def require(value, message):
@@ -104,7 +104,7 @@ def native_points(window, sent):
     return points
 
 def run(*, config, settings, spec, qa, env, guest, capture, command, modules,
-        snapshot, complete_window, bind_provider, provider_proofs, streams, output):
+        snapshot, complete_window, bind_provider, provider_proofs, streams, output, switch_adapter=None):
     """Call after original public stop/quiet review, before original switch/fport cleanup."""
     qa = Path(qa).resolve(); output = Path(output); output.mkdir(exist_ok=False)
     prepared = preflight(config, qa=qa, tool_sources=settings['tool_sources'])
@@ -135,20 +135,23 @@ def run(*, config, settings, spec, qa, env, guest, capture, command, modules,
                 not re.search(r'(?<![A-Za-z0-9_.])' + re.escape(BUNDLE) + r'(?![A-Za-z0-9_.])', raw), 'Fresh caller absent BMS cut missing')
     save(); absent('initial-BMS')
     dist, jar, _ = shared.signer_inputs(spec['signer_dist'], spec['signer_jar'])
-    signed = output / 'location-eight-system.hap'
-    command([sys.executable, str(qa / 'ci/capability-audit/sign_location_eight_probe.py'), '--signer-dist', str(dist),
-             '--jar', str(jar), '--unsigned', prepared['unsigned_hap']['path'], '--output', str(signed),
-             '--role', 'system', '--udid', env['udid']], 'sign-location-eight-system')
-    shared.verify_signed_payload(Path(prepared['unsigned_hap']['path']), signed)
-    report['signed'] = shared.verify_signed_hap_artifacts(signed, BUNDLE, PERMISSIONS, env['udid'], dist, jar,
-        output / 'signature-verification', command, apl='system_basic', system_app=True)
-    save()
+    signed_roles = {}; report['signed_roles'] = {}
+    for role in ('system','normal'):
+        signed = output / ('location-eight-' + role + '.hap')
+        command([sys.executable, str(qa / 'ci/capability-audit/sign_location_eight_probe.py'), '--signer-dist', str(dist),
+                 '--jar', str(jar), '--unsigned', prepared['unsigned_hap']['path'], '--output', str(signed),
+                 '--role', role, '--udid', env['udid']], 'sign-location-eight-' + role)
+        shared.verify_signed_payload(Path(prepared['unsigned_hap']['path']), signed)
+        report['signed_roles'][role] = shared.verify_signed_hap_artifacts(signed, BUNDLE, PERMISSIONS, env['udid'], dist, jar,
+            output / ('signature-verification-' + role), command, apl='normal' if role=='normal' else 'system_basic', system_app=role=='system')
+        signed_roles[role] = signed; save()
     for profile in PROFILES:
         case = output / profile; case.mkdir()
-        item = {'profile': profile, 'requests': [], 'wire_session': None, 'cleanup_errors': []}
+        role = 'normal' if profile=='ordinary' else 'system'; signed = signed_roles[role]
+        item = {'profile': profile, 'role': role, 'requests': [], 'wire_session': None, 'cleanup_errors': []}
         report['profiles'].append(item); installed = False; stream = None; uid = None; pid = None; process_before = None
         remote = '/data/app/el2/100/base/' + BUNDLE + '/haps/entry/files/location-eight-' + prepared['run_id'] + '.jsonl'
-        counter = 0; raw_seen = False
+        counter = 0; raw_seen = False; commands = None; provider = {}; window = None; switch_lease = None; preparation_ids = []
         def raw_rows():
             nonlocal counter, raw_seen, pid
             counter += 1
@@ -185,24 +188,41 @@ def run(*, config, settings, spec, qa, env, guest, capture, command, modules,
             bms = shell('bm dump -n ' + BUNDLE, profile + '-BMS')
             app_identity = identity.bms_application_identity(bms, BUNDLE)
             bms_doc = oracle.decode(bms[bms.find('{'):])
-            require(bms_doc['applicationInfo'].get('isSystemApp') is True and
-                    bms_doc['applicationInfo'].get('appPrivilegeLevel') == 'system_basic', 'Actual installed system API role missing')
+            require(bms_doc['applicationInfo'].get('isSystemApp') == (role=='system') and
+                    bms_doc['applicationInfo'].get('appPrivilegeLevel') == ('system_basic' if role=='system' else 'normal'), 'Actual installed role/APL differs')
             uid = app_identity['uid']; item['BMS_identity'] = app_identity
             shell('test ! -e ' + shlex.quote(remote), profile + '-fresh-raw-path')
             source = vectors.challenge(time.time_ns() // 1000000)
             commands = factory.commands(profile, prepared['run_id'], env['boot_id'],
                 [secrets.token_hex(16) for _ in oracle.PROFILES[profile]], source)
-            consent = dict(commands[0], operation_id=secrets.token_hex(16), action='permissions')
-            issue(consent)
-            # A genuine system role still uses the existing user-grant dialogue.
-            action = capture.ui.click('com.ohos.permissionmanager', text=spec['permission_allow_text'], label='eight-consent-' + profile)
-            capture.report['ui_actions'].append(action)
-            rows = wait(consent, 90)
-            terminal = [r for r in rows if r['operation_id'] == consent['operation_id'] and r['kind'] == 'return']
-            require(len(terminal) == 1, 'Actual user consent return missing')
-            consent_value = terminal[0]['value']
-            require(type(consent_value) is dict and set(consent_value) == {'permissions', 'authResults', 'filesDir', 'journalIno', 'journalUid'} and
-                    consent_value['permissions'] == PERMISSIONS and consent_value['authResults'] == [0, 0], 'Actual user consent missing or denied')
+            context_request = dict(commands[0], operation_id=secrets.token_hex(16), action='context')
+            preparation_ids.append(context_request['operation_id']); issue(context_request)
+            rows = wait(context_request)
+            terminals = [r for r in rows if r['operation_id']==context_request['operation_id'] and r['kind']=='return']
+            require(len(terminals)==1,'actual pre-consent context/permission observation required')
+            context_value=terminals[0]['value']
+            require(set(context_value)=={'filesDir','journalIno','journalUid','tokenId','permissionStatus'} and
+                    type(context_value['tokenId']) is int and context_value['tokenId']==app_identity['token_id'] and
+                    context_value['permissionStatus']==[-1,-1], 'fresh install must have actual denied location user permissions')
+            item['actual_before_permissions']=context_value
+            consent_value=context_value
+            if profile not in ('denied','supported'):
+                consent = dict(commands[0], operation_id=secrets.token_hex(16), action='permissions')
+                preparation_ids.append(consent['operation_id']); issue(consent)
+                action = capture.ui.click('com.ohos.permissionmanager', text=spec['permission_allow_text'], label='eight-consent-' + profile)
+                capture.report['ui_actions'].append(action)
+                rows = wait(consent, 90)
+                terminal = [r for r in rows if r['operation_id'] == consent['operation_id'] and r['kind'] == 'return']
+                require(len(terminal) == 1, 'Actual user consent return missing')
+                consent_value = terminal[0]['value']
+                require(type(consent_value) is dict and set(consent_value) == {'permissions', 'authResults', 'filesDir', 'journalIno', 'journalUid'} and
+                        consent_value['permissions'] == PERMISSIONS and consent_value['authResults'] == [0, 0], 'Actual user consent missing or denied')
+                item['consent_operation_id'] = consent['operation_id']
+                after_context=dict(context_request,operation_id=secrets.token_hex(16));preparation_ids.append(after_context['operation_id']);issue(after_context)
+                rows=wait(after_context);observed=[r for r in rows if r['operation_id']==after_context['operation_id'] and r['kind']=='return']
+                require(len(observed)==1 and observed[0]['value']['permissionStatus']==[0,0] and observed[0]['value']['tokenId']==context_value['tokenId'],
+                    'actual same-token grants must be independently re-read after user consent')
+                item['actual_after_permissions']=observed[0]['value']
             files_dir = consent_value['filesDir']
             require(type(files_dir) is str and files_dir.startswith('/data/storage/') and
                     files_dir.endswith('/haps/entry/files') and str(Path(files_dir)) == files_dir and '..' not in Path(files_dir).parts and
@@ -214,17 +234,26 @@ def run(*, config, settings, spec, qa, env, guest, capture, command, modules,
             require(len(stats) == 2 and stats[0] == stats[1] and
                     re.fullmatch('[0-9]+:' + re.escape(consent_value['journalIno']) + ':' + str(uid) + ':regular file', stats[0]), 'App filesDir/root module/proc sandbox file identities differ')
             item['module_files_binding'] = {'caller': consent_value, 'root_path': remote, 'sandbox_path': sandbox_file, 'raw_stat': stat_raw}
-            item['consent_operation_id'] = consent['operation_id']
+            item['preparation_operation_ids'] = preparation_ids
             item['profile_operation_ids'] = [c['operation_id'] for c in commands]
             process_before = capture.mapping_snapshot('eight-' + profile + '-caller-before', pid=pid)
             p = process_before['snapshot']['processes'][pid]
             require(process_before['snapshot']['complete'] and p['complete'] and p['uids'] == [uid] * 4 and p['argv'][0] == BUNDLE, 'Actual caller PID/UID/argv cut differs')
             item['process_before'] = process_before['evidence']
+            if profile=='switch-off':
+                require(switch_adapter is not None,'original pinned Settings/Privacy switch adapter required')
+                switch_lease=switch_adapter.ensure_enabled(capture=capture,guest=guest,checked_shell=shell,
+                    output=case/'switch',report=report,save=save,settings=settings)
+                switch_adapter.navigate(capture=capture,guest=guest,checked_shell=shell,output=case/'switch/disable',
+                    report=report,save=save,lease=switch_lease,target=False,phase='eight_switch_off',settings=settings)
+                switch_adapter.return_caller(capture,shell,switch_lease,'eight_switch_off_public',settings)
+                item['actual_switch_off']=switch_adapter.read_state(capture,'eight_switch_off_read')
+                require(item['actual_switch_off']['location_enabled'] is False,'actual public location switch did not turn off')
             first_quiet = True; sent = []; before = after = None
             for c in commands:
-                if c['action'] == 'quiet': c['wait_ms'] = (5000 if profile == 'icon' else 30000) if first_quiet else 2500
+                if c['action'] == 'quiet': c['wait_ms'] = (5000 if profile == 'icon' else 30000) if first_quiet and profile in ('track','icon','fence') else 2500
                 issue(c)
-                if c['action'] == 'quiet' and first_quiet:
+                if c['action'] == 'quiet' and first_quiet and profile in ('track','icon','fence'):
                     first_quiet = False
                     before = snapshot('eight-' + profile + '-native-before')
                     stream, nonce, session = capture.connect('gnss', 'location-eight-' + profile); streams.append(stream)
@@ -253,9 +282,9 @@ def run(*, config, settings, spec, qa, env, guest, capture, command, modules,
                     stream.close(); stream = None
                 rows = wait(c)
             final = raw_rows()
-            # Preserve full raw bytes/sequence. Only the separately checked three
-            # permission-control rows are excluded from the fixed behavior body.
-            body = [r for r in final if r['operation_id'] != consent['operation_id']]
+            # Preserve full raw bytes/sequence. Separately checked context and
+            # permission operations are excluded only from the behavior view.
+            body = [r for r in final if r['operation_id'] not in preparation_ids]
             item['raw_review'] = oracle.review(body, profile, provider)
             item['reviewed_raw'] = item['raw_captures'][-1]
             process_after = capture.mapping_snapshot('eight-' + profile + '-caller-after', pid=pid)
@@ -265,7 +294,7 @@ def run(*, config, settings, spec, qa, env, guest, capture, command, modules,
                     p_after['before']['start_ticks'] == p['before']['start_ticks'], 'Caller process generation changed')
             require(identity.bms_application_identity(shell('bm dump -n ' + BUNDLE, profile + '-BMS-after'), BUNDLE) == app_identity, 'Caller BMS identity changed')
             item['process_after'] = process_after['evidence']
-            for index, provider_pid in enumerate(sorted(window['actual_provider_origins']['pids'])):
+            for index, provider_pid in enumerate(sorted(window['actual_provider_origins']['pids'] if window is not None else [])):
                 proof = bind_provider('eight-' + profile + '-provider-final-' + str(index), provider_pid)
                 require(all(proof[k] == provider_proofs[provider_pid][k] for k in ('pid', 'boot_id', 'start_ticks', 'uid', 'role')), 'Native provider process generation changed')
             item['status'] = 'raw_behavior_matched_NOT_capability_closure'
@@ -274,11 +303,16 @@ def run(*, config, settings, spec, qa, env, guest, capture, command, modules,
             item['traceback'] = traceback.format_exc(); report['failures'].append(profile + ': ' + item['error'])
         finally:
             if stream is not None: stream.close()
+            if switch_lease is not None:
+                try:
+                    item['switch_restored']=switch_adapter.restore(lease=switch_lease,capture=capture,guest=guest,checked_shell=shell,
+                        output=case/'switch',report=report,save=save,settings=settings)
+                except Exception as error:item['cleanup_errors'].append('actual switch restoration: '+str(error))
             if installed:
                 # Best-effort in-process API release remains observable; process
                 # disposal is still the original Owner's final fallback.
                 try:
-                    if uid is not None:
+                    if uid is not None and commands is not None:
                         cleanup = dict(commands[0], operation_id=secrets.token_hex(16), action='cleanup')
                         issue(cleanup); release_rows = wait(cleanup)
                         release = [r for r in release_rows if r['operation_id'] == cleanup['operation_id'] and r['kind'] in ('return', 'throw')]
@@ -302,8 +336,8 @@ def run(*, config, settings, spec, qa, env, guest, capture, command, modules,
             if item['cleanup_errors']:
                 report['cleanup_errors'].extend(profile + ': ' + e for e in item['cleanup_errors'])
             save()
-        if report['cleanup_errors'] or report['failures']:
-            break  # Never run another profile after an unresolved failure/cleanup.
+        if report['cleanup_errors']:
+            break  # Unsafe cleanup stops reuse; safely cleaned API failures are all retained.
     require(shell('cat /proc/sys/kernel/random/boot_id', 'final-boot').strip() == env['boot_id'], 'Original boot changed')
-    report['status'] = 'raw_profiles_matched_NOT_capability_closure' if not report['failures'] and not report['cleanup_errors'] and len(report['profiles']) == 3 else 'fail_raw_preserved'
+    report['status'] = 'raw_profiles_matched_NOT_capability_closure' if not report['failures'] and not report['cleanup_errors'] and len(report['profiles']) == len(PROFILES) else 'fail_raw_preserved'
     save(); return report

@@ -1,6 +1,6 @@
 {
   "schema": "qemu-only-batched-status579/v1",
-  "updated_utc": "2026-10-20T22:01:13.267187+00:00",
+  "updated_utc": "2026-10-20T22:22:06.925699+00:00",
   "acceptance": "only newly packaged actual QEMU business/boundary/regression/cleanup observations can close requirements",
   "base_source_commit": "db360951a13ce07c7e561d71344a34b6109b10cf",
   "completed_native_attempt": {
@@ -42,8 +42,7 @@
   "source_batch_scope": "provider/product wiring and real original-Owner guest stages; source completion is not capability acceptance",
   "pending": [
     "actual serial product/source/profile preparation and representative native package build",
-    "virtual SIM fixture and paired actual QEMU integration source completion",
-    "fresh same-package original-Owner runtime inputs/source-kit projection",
+    "fresh same-package actual native/helper/SDK input production and original-Owner runtime source kit",
     "new ARM64 phone complete actual QEMU business/boundary/regression/cleanup validation",
     "remaining five architecture/profile packages only after representative QEMU gate passes"
   ],
@@ -99,6 +98,27 @@
       "cleanup_verified": true,
       "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r67-canonical-first-arm64-phone-prepare-579-03/evidence.json",
       "retained_failed_provider_inputs": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r67-canonical-first-arm64-phone-prepare-579-03/failed-provider-inputs.json"
+    },
+    "host_tests_executed": false,
+    "actual_QEMU_runtime_pass": false
+  },
+  "latest_signing_and_runtime_source_batch": {
+    "parent_commit": "a8f7ec0024d7934fcf42cd6eae0244cefc1cd2f8",
+    "normal_build_inputs": [
+      "preserve exact original legacy HAP payloads and permission scope; prepare matching existing OS-signed app/profile",
+      "QEMU graph selects generated normal signing inputs; original official HAPs remain pinned",
+      "rewind only finite known complete HAP graph predecessors"
+    ],
+    "runtime_sources": [
+      "eight original-Owner Location8 profiles, actual normal/system roles and real permission/switch observations",
+      "close held-guest input export IO before later paired resource scope"
+    ],
+    "source_prepare04": {
+      "exit_code": 1,
+      "cleanup_verified": true,
+      "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r67-canonical-first-arm64-phone-prepare-579-04/evidence.json",
+      "failure": "Portal original authenticated embedded distribution certificate differs from actual OS application signer",
+      "preserved_inputs": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r67-canonical-first-arm64-phone-prepare-579-04/preserved-signing-input-failure.json"
     },
     "host_tests_executed": false,
     "actual_QEMU_runtime_pass": false
