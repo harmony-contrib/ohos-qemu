@@ -3059,8 +3059,8 @@ verify_audio_accepted_write_source() {
     qemu_phone_full_source|qemu_2in1_full_source) ;;
     *) return 0 ;;
   esac
-  python3 "${SCRIPT_DIR}/../patches/common/drivers/peripheral/audio/accepted_write/apply.py" \
-    --source-root "${SOURCE_ROOT}" --preflight --require-patched \
+  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/audio_onset579/apply.py" \
+    --source-root "${SOURCE_ROOT}" --action legacy --component accepted --operation verify \
     > "${SOURCE_ROOT}/out/${PRODUCT}/audio-accepted-write-source.json"
 }
 
@@ -3079,8 +3079,8 @@ verify_audio_resampler_counts_source() {
     qemu_phone_full_source|qemu_2in1_full_source) ;;
     *) return 0 ;;
   esac
-  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/audio_resampler_counts/apply.py" \
-    --source-root "${SOURCE_ROOT}" --preflight --require-patched \
+  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/audio_onset579/apply.py" \
+    --source-root "${SOURCE_ROOT}" --action legacy --component resampler --operation verify \
     > "${SOURCE_ROOT}/out/${PRODUCT}/audio-resampler-counts-source.json"
 }
 
@@ -3131,9 +3131,12 @@ verify_audio_haptic_sync_id_source() {
     *) return 0 ;;
   esac
   # This checks the prepared source, not presentation timing or runtime routing.
-  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/audio_haptic_sync_id/verify_source.py" \
-    --source-root "${SOURCE_ROOT}" --require-patched \
+  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/audio_onset579/apply.py" \
+    --source-root "${SOURCE_ROOT}" --action legacy --component sync --operation verify \
     > "${SOURCE_ROOT}/out/${PRODUCT}/audio-haptic-sync-id-source.json"
+  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/audio_onset579/apply.py" \
+    --source-root "${SOURCE_ROOT}" --action verify \
+    > "${SOURCE_ROOT}/out/${PRODUCT}/audio-onset579-source.json"
 }
 
 verify_ace_cfi_native_closure() {

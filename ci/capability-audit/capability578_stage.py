@@ -403,7 +403,7 @@ def run_on_owner(owner, inputs_ref, resources, **context):
     return report
 
 
-def install_on_original_children(children, inputs_ref=None, *, deferred_inputs=None, after_suite=None):
+def install_on_original_children(children, inputs_ref=None, *, deferred_inputs=None, held_stage=None, after_suite=None):
     """Add a fixed same-Owner hook; keep original suite validation and finish."""
     require((inputs_ref is None) != (deferred_inputs is None),
             'one immutable input Ref or fixed root deferred producer required')
@@ -412,6 +412,7 @@ def install_on_original_children(children, inputs_ref=None, *, deferred_inputs=N
     else:
         require(callable(deferred_inputs), 'fixed source-pinned root input producer required')
     require(after_suite is None or callable(after_suite), 'fixed root post-suite implementation required')
+    require(held_stage is None or callable(held_stage), 'fixed root held-guest implementation required')
     original_suite_function = children.suite_function
     require(getattr(original_suite_function, '__self__', None) is children,
             'original bound suite verifier required')
@@ -506,6 +507,8 @@ def install_on_original_children(children, inputs_ref=None, *, deferred_inputs=N
                 # Collect all safely cleaned additional cases even if Graphics
                 # subsequently records an independent business failure.
                 run_on_owner(owner, resolve_inputs(owner), installed['resources'], **context)
+                if held_stage is not None:
+                    held_stage(owner, installed['resources'], resolve_inputs(owner), **context)
                 return owned_graphics3d_hook(**context)
 
             def select_with_package_inputs(**context):

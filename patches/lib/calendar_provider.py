@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Verify CalendarData source/provider/signing wiring, not runtime behavior."""
 import argparse
+from contextlib import nullcontext
 import hashlib
 import importlib.util
 import json
@@ -126,21 +127,27 @@ def verify(root, require_editor=False, require_reminder_ui=False, require_filter
                 not (source / 'entry/src/main/ets/EditorUIExtensionAbility.ets').is_file() or
                 not (source / 'entry/src/main/ets/pages/EventEditor.ets').is_file()):
             raise ValueError('CalendarData editor source/page is missing from the real HAP')
-    if require_reminder_ui:
-        components = Path(__file__).resolve().parents[1] / 'common'
-        for name in ('applications/standard/calendardata/main_ui',
-                     'base/notification/distributed_notification_service/calendar_owner'):
-            spec = importlib.util.spec_from_file_location('calendar_reminder_guard',
-                                                         components / name / 'verify_source.py')
+    if require_business_ui:
+        from calendar_lifecycle579 import ancestor_view
+        source_view = ancestor_view(root)
+    else:
+        source_view = nullcontext(root)
+    with source_view as guard_root:
+        if require_reminder_ui:
+            components = Path(__file__).resolve().parents[1] / 'common'
+            for name in ('applications/standard/calendardata/main_ui',
+                         'base/notification/distributed_notification_service/calendar_owner'):
+                spec = importlib.util.spec_from_file_location('calendar_reminder_guard',
+                                                             components / name / 'verify_source.py')
+                guard = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(guard)
+                guard.validate(guard_root, require_patched=True)
+        if require_filter_async:
+            guard_path = Path(__file__).resolve().parents[1] / 'common/applications/standard/calendardata/filter_async_lifetime/verify_source.py'
+            spec = importlib.util.spec_from_file_location('calendar_filter_async_guard', guard_path)
             guard = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(guard)
-            guard.validate(root, require_patched=True)
-    if require_filter_async:
-        guard_path = Path(__file__).resolve().parents[1] / 'common/applications/standard/calendardata/filter_async_lifetime/verify_source.py'
-        spec = importlib.util.spec_from_file_location('calendar_filter_async_guard', guard_path)
-        guard = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(guard)
-        guard.validate(root, require_patched=True)
+            guard.validate(guard_root, require_patched=True)
     build = (root / 'applications/standard/hap/BUILD.gn').read_text()
     if re.search(r'calendarData_hap|CalendarData\.hap', build):
         raise ValueError('stale CalendarData prebuilt still exists in the HAP build graph')

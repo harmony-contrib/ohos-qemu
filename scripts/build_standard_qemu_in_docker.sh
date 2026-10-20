@@ -374,6 +374,7 @@ AUDIO_DEVICE_BLOCK_STATUS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/mult
 PHOTO_FUSION_ASSET_TYPE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/media_library/fusion_asset_type/apply.sh"
 ALSA_CONFIG_INSTALL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/alsa-lib/config_install/apply.sh"
 ALSA_PCM_ONSET_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/alsa-lib/pcm_onset/apply.sh"
+AUDIO_ONSET579_COMPONENT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/audio_onset579/apply.py"
 CALENDAR_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/source_provider/apply.sh"
 CALENDAR_EVENT_EDITOR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/event_editor/apply.sh"
 CALENDAR_EDITOR_CALLBACK_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/editor_callback_dispatch/apply.sh"
@@ -1651,8 +1652,8 @@ PY
   local pcm_onset_gn_arg
   # No new argument on pristine GN. A complete previously patched tree gets
   # explicit false when disabled, preventing an inherited args.gn true value.
-  pcm_onset_gn_arg="$(bash "${ALSA_PCM_ONSET_COMPONENT_SCRIPT}" \
-    --source-root "${OHOS_ROOT}" --gn-arg "${QEMU_PCM_ONSET_COMPONENT}")" || return 1
+  pcm_onset_gn_arg="$(python3 "${AUDIO_ONSET579_COMPONENT}" \
+    --source-root "${OHOS_ROOT}" --action legacy --component alsa --operation "gn${QEMU_PCM_ONSET_COMPONENT}")" || return 1
   if [ -n "${pcm_onset_gn_arg}" ]; then
     build_args+=(--gn-args "${pcm_onset_gn_arg}")
   fi
@@ -2142,9 +2143,9 @@ apply_sonic_defined_arithmetic() {
 }
 
 apply_audio_resampler_counts() {
-  bash "${AUDIO_RESAMPLER_COUNTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+  python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action legacy --component resampler --operation apply \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_resampler_counts.log"
-  bash "${AUDIO_RESAMPLER_COUNTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+  python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action legacy --component resampler --operation verify \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_resampler_counts.log"
 }
 
@@ -2175,9 +2176,9 @@ apply_qemu_audio_component() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_capture_component.log"
   bash "${QEMU_AUDIO_CAPTURE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_qemu_audio_capture_component.log"
-  bash "${QEMU_AUDIO_ACCEPTED_WRITE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+  python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action legacy --component accepted --operation apply \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_accepted_write_component.log"
-  bash "${QEMU_AUDIO_ACCEPTED_WRITE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
+  python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action legacy --component accepted --operation verify \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_qemu_audio_accepted_write_component.log"
 }
 
@@ -3501,11 +3502,11 @@ apply_qemu_capability_patch_plan() {
   bash "${ALSA_CONFIG_INSTALL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_alsa_config_install_component.log"
   if [ "${QEMU_PCM_ONSET_COMPONENT}" = "1" ]; then
-    bash "${ALSA_PCM_ONSET_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action legacy --component alsa --operation apply \
       2>&1 | tee "${CACHE_ROOT}/logs/apply_alsa_pcm_onset_component.log"
   else
     # Check the entire before/after tuple even when this hook is disabled.
-    bash "${ALSA_PCM_ONSET_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --gn-arg 0 \
+    python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action legacy --component alsa --operation gn0 \
       > "${CACHE_ROOT}/logs/verify_alsa_pcm_onset_disabled.log"
   fi
   bash "${CALENDAR_SOURCE_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3527,6 +3528,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_prebuilt_component.log"
   bash "${CALENDAR_SIGNING_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_signing_component.log"
+  bash "${PATCH_ROOT}/common/applications/standard/calendardata/lifecycle579/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_calendar_lifecycle579.log"
   python3 "${PATCH_ROOT}/lib/calendar_provider.py" --source-root "${OHOS_ROOT}" --require-editor --require-reminder-ui --require-filter-async --require-business-ui \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_calendar_source_provider.log"
   bash "${PHOTOS_SOURCE_PROVIDER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3829,10 +3832,14 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_jsframework_native_test_bridge.log"
   python3 "${JSFRAMEWORK_NATIVE_TEST_BRIDGE_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_jsframework_native_test_bridge.log"
-  bash "${AUDIO_HAPTIC_SYNC_ID_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+  python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action legacy --component sync --operation apply \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_haptic_sync_id_component.log"
-  python3 "${AUDIO_HAPTIC_SYNC_ID_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
+  python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action legacy --component sync --operation verify \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_audio_haptic_sync_id_component.log"
+  python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action apply \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_onset579_component.log"
+  python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action verify \
+    > "${CACHE_ROOT}/logs/verify_audio_onset579_component.json"
   # Hash actual, fully patched kernel/config/HDI sources before any traversal.
   # Directory mtimes and a shell environment flag cannot invalidate Ninja's
   # old Image output; the GN action now consumes this stable fingerprint.

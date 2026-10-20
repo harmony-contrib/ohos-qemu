@@ -1,0 +1,305 @@
+#!/usr/bin/env python3
+"""Exact post-549/513/526/511/443 AudioHaptic onset source component.
+This is product source wiring only. It cannot grant any runtime/onset claim.
+"""
+from pathlib import Path
+import argparse,fcntl,hashlib,json,os,stat,subprocess,sys,tempfile
+sys.dont_write_bytecode=True
+HERE=Path(__file__).resolve().parent
+PATCH_ROOT=HERE.parents[4]
+MANIFEST_SHA256='cc7d6ee5423faa55d75833bb44b2e95e0a3141afe30721a071433dd057fa0441'
+FILES={'drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_render.c': {'after': {'bytes': 36379,
+                                                                                       'sha256': '0cb97d7662f2d67e222e8e852b269af146c3e3c14476efe7b75d5820856845a5'},
+                                                                             'before': {'bytes': 35754,
+                                                                                        'sha256': '84df61e94415a48ebfd08837bec4e6849b548615233f1aecd3501391e316be7b'}},
+ 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/include/audio_effect_chain.h': {'after': {'bytes': 6317,
+                                                                                                                'sha256': 'e3a42cc5f7ffc4132e15f6f93f3dd25c4f520aa779126724f5064f539b004783'},
+                                                                                                      'before': {'bytes': 6173,
+                                                                                                                 'sha256': '9aaa77714aea71fac0e0a679102c045ceb82feffb9eea0fc70d3bccd8210f203'}},
+ 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/include/audio_effect_chain_manager.h': {'after': {'bytes': 18852,
+                                                                                                                        'sha256': 'ae359f66d16f8173442a5042a6fdfc150aa790dd908fb7df0d38957e39fc91aa'},
+                                                                                                              'before': {'bytes': 18818,
+                                                                                                                         'sha256': 'e47ed09cb5acc62fba59fd05bd265daa5acc1ec6ca80cea3acd8ec1b20d20345'}},
+ 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/src/audio_effect_chain.cpp': {'after': {'bytes': 33805,
+                                                                                                              'sha256': '8f65d51f593ece9cd66c980739df1503d8ec0f45e3473654ff90e7ea160696ad'},
+                                                                                                    'before': {'bytes': 33420,
+                                                                                                               'sha256': '307aeccab22a083bab8ecd98fd69328aa3cfb0ff6a1d6c8f40d6e5ccfb5e97be'}},
+ 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/src/audio_effect_chain_manager.cpp': {'after': {'bytes': 142357,
+                                                                                                                      'sha256': '15e92d3ffa070ff49558810b32f0e5b995f0d730154c1eb4b5c7c777dce4a120'},
+                                                                                                            'before': {'bytes': 142179,
+                                                                                                                       'sha256': '097cc47d402d1f0197a43382a26a884231a75f1c8651256ba97b3cfb9739cfe7'}},
+ 'foundation/multimedia/audio_framework/services/audio_engine/buffer/hpae_pcm_buffer.cpp': {'after': {'bytes': 10852,
+                                                                                                      'sha256': '3287eae2c813263646483c6b89c46824899bd7aa8482cddce039916a5259648d'},
+                                                                                            'before': {'bytes': 9221,
+                                                                                                       'sha256': 'b9c6525a27860986284faf5dbbc885ab1baa204bb45d70dea8b3fc59481fe52a'}},
+ 'foundation/multimedia/audio_framework/services/audio_engine/buffer/hpae_pcm_buffer.h': {'after': {'bytes': 8181,
+                                                                                                    'sha256': '9d642679ffeedc3537d175c3b723229e98e756272f91367e13380c04e5352cda'},
+                                                                                          'before': {'bytes': 7934,
+                                                                                                     'sha256': 'ceabe85cf50f0971e9f31056f0a861014badc0d29b0567b862607ed3d6127fbd'}},
+ 'foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_audio_format_converter_node.h': {'after': {'bytes': 5368,
+                                                                                                                           'sha256': '3c750daec6b0d5bcf70862cf3b9806345645d7eae4805106b084a27be3e2ed9f'},
+                                                                                                                 'before': {'bytes': 5282,
+                                                                                                                            'sha256': '6add879044a09fbe6f32457e9db2739d9a9bac68e52443178c062f2d39659d5c'}},
+ 'foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_sink_output_node.h': {'after': {'bytes': 5282,
+                                                                                                                'sha256': '0c993e036d1ed67145bb062ee36741d3bd774dac2766492bf48b24d26ad50b9b'},
+                                                                                                      'before': {'bytes': 5207,
+                                                                                                                 'sha256': '0cb13d69586da3a2de9fd478ede91b3d441b79cd275842fb80aa0bc377b3490c'}},
+ 'foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_audio_format_converter_node.cpp': {'after': {'bytes': 49098,
+                                                                                                                         'sha256': 'dd8392339e5304b4e1cd5cdfba9ab4ff153348f8b9ecf4613e1f5e0545a58dbc'},
+                                                                                                               'before': {'bytes': 48163,
+                                                                                                                          'sha256': '9403b4080b81ff628129de99badd8739bace3092814241f6658ee03f5e542849'}},
+ 'foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_limiter_node.cpp': {'after': {'bytes': 4213,
+                                                                                                          'sha256': '3c63df48f7fb61d16b230e4ee7b518e94dda148504f1cc42787172a942807180'},
+                                                                                                'before': {'bytes': 4139,
+                                                                                                           'sha256': 'cf95e2272498c63abda290a61a28dcb509ffcc2ad0a00fc559d65d827a5888f9'}},
+ 'foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_loudness_gain_node.cpp': {'after': {'bytes': 14216,
+                                                                                                                'sha256': '2c0d60be0a84dbdd39d6f0776e8ce3d917e004eed60d3f7e98df13a9676a55c8'},
+                                                                                                      'before': {'bytes': 14098,
+                                                                                                                 'sha256': 'dffdc31ae1b76a1e9eadde979586bbab0bd41ca504ae2257d875b8c7e39f5798'}},
+ 'foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_mixer_node.cpp': {'after': {'bytes': 10054,
+                                                                                                        'sha256': '5dc437b02f293b37431bf2d8e74eb3a63c320da562dcec87d65ca08e60f4f32d'},
+                                                                                              'before': {'bytes': 9978,
+                                                                                                         'sha256': '9deaf68aa028933d8d94ed506894e977e7b7b1a1a1e1182b9f61afff3eb7d9d9'}},
+ 'foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_render_effect_node.cpp': {'after': {'bytes': 40492,
+                                                                                                                'sha256': 'e5c7d7e360ddd6b148f762508f962429fa3a75f3ed2a821d50775eb355353969'},
+                                                                                                      'before': {'bytes': 40207,
+                                                                                                                 'sha256': '06aef094db3e03506da6bd2a8ff4967f8644ae5c34b9a473f517e9bcbbf1c2e6'}},
+ 'foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_session_effect_node.cpp': {'after': {'bytes': 39582,
+                                                                                                                 'sha256': '74903bd7f18e6b611d3d1588fc20fcd0a2252e050df9028a92c987cfe867a1d3'},
+                                                                                                       'before': {'bytes': 39406,
+                                                                                                                  'sha256': '0baf66f2c46002a687b37c722908a90a37861c152afdf84f0c401ad54c490b8e'}},
+ 'foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_sink_input_node.cpp': {'after': {'bytes': 16790,
+                                                                                                             'sha256': '405e54e82099d5d59d8715f89f2791f39c6e048035cd552701d26d51fec2f4eb'},
+                                                                                                   'before': {'bytes': 16557,
+                                                                                                              'sha256': 'a41efee416c218ba7eb59aa2a274086200343b582e4a112bac7152b483cc71ea'}},
+ 'foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_sink_output_node.cpp': {'after': {'bytes': 33634,
+                                                                                                              'sha256': '05cbf92d1687ca9f0218876bb459a7a04e842eb4df6567de2c934f2741297de1'},
+                                                                                                    'before': {'bytes': 32685,
+                                                                                                               'sha256': 'f745b31951504e60acbbf5fb8286d7f8b9a8f6c77112114cc773972f5913cab9'}},
+ 'foundation/multimedia/audio_framework/services/audio_service/BUILD.gn': {'after': {'bytes': 33848,
+                                                                                     'sha256': 'fe04e5d164b39218310440a1233d6c80b57fbbf62285d64c08f7d9a67aa98aca'},
+                                                                           'before': {'bytes': 33811,
+                                                                                      'sha256': 'efdb97383dce2334ca9b110171d949d49ba34ac97144e24fba77a7d6808f7454'}},
+ 'foundation/multimedia/audio_framework/services/audio_service/common/include/audio_onset579.h': {'after': {'bytes': 3233,
+                                                                                                            'sha256': '459629d5037fa3756ede76e937310c344c3847ad3344fd376175d7afb520bc0e'},
+                                                                                                  'before': None},
+ 'foundation/multimedia/audio_framework/services/audio_service/common/include/audio_onset579_wire.h': {'after': {'bytes': 471,
+                                                                                                                 'sha256': '869150565cf1a62cfd01d2a6d86380baa5209fb534d7a3208ed2b3c47d164967'},
+                                                                                                       'before': None},
+ 'foundation/multimedia/audio_framework/services/audio_service/common/include/limiter/audio_limiter.h': {'after': {'bytes': 2914,
+                                                                                                                   'sha256': '87423077ba759159e3fc868271088b30569c2d3efee0ce510568398246f1bd01'},
+                                                                                                         'before': {'bytes': 2718,
+                                                                                                                    'sha256': 'b16524c356bc7ec958d540464b2581964452863ae601156675f88b8ab2c9a787'}},
+ 'foundation/multimedia/audio_framework/services/audio_service/common/src/audio_onset579.cpp': {'after': {'bytes': 17305,
+                                                                                                          'sha256': '01156918b0a32bed09e987305df72f478a7a1ee19bf471cb4d4cc6f9e6ffdb31'},
+                                                                                                'before': None},
+ 'foundation/multimedia/audio_framework/services/audio_service/common/src/limiter/audio_limiter.cpp': {'after': {'bytes': 16006,
+                                                                                                                 'sha256': 'a5ebbdd29028279a5dd410be743cbc9970d6b2a23c9f6698b545432a52543665'},
+                                                                                                       'before': {'bytes': 14931,
+                                                                                                                  'sha256': '5df04013f0d2d9b49b3f9918f1490ce947371a745f796e10d513e123b0fc2313'}},
+ 'foundation/multimedia/audio_framework/services/audio_service/server/include/renderer_in_server.h': {'after': {'bytes': 18099,
+                                                                                                                'sha256': '66b4d0a29cf86c244da18ceb6255321a46c1dcc0b4ff5a60554cf63aedf0e0bb'},
+                                                                                                      'before': {'bytes': 18063,
+                                                                                                                 'sha256': '5211f48b1d12bebfb06bed00ffb6947f0a18b0129a5db5fc3591976358704a5f'}},
+ 'foundation/multimedia/audio_framework/services/audio_service/server/src/renderer_in_server.cpp': {'after': {'bytes': 157370,
+                                                                                                              'sha256': '745d7430d3c031d78dfa92d57ada3f7299bef8e769131494af4bc0fb74230f0a'},
+                                                                                                    'before': {'bytes': 156379,
+                                                                                                               'sha256': '7baf8439c6632196c378c956db6851d654954b597612b6762e6a7f48f29dd1ad'}},
+ 'third_party/alsa-lib/src/pcm/media398_onset.h': {'after': {'bytes': 35787,
+                                                             'sha256': 'e17c36c587e8513942922066c74ca31ec8a365c69e26fe4cbce14f0a73efca3d'},
+                                                   'before': {'bytes': 33433,
+                                                              'sha256': '7dd8cf8102dda20a9211e9d56e79416626fcaf5c8ddc449ace5bd37fcc9438d2'}},
+ 'third_party/alsa-lib/src/pcm/pcm_hw.c': {'after': {'bytes': 61797,
+                                                     'sha256': '04629c6ddf430fe129bc783d150eb3a716b2b0957b73e79dc135711aa89a9366'},
+                                           'before': {'bytes': 61029,
+                                                      'sha256': 'd6dfc03c36ec0d78414c39047e43e55d81f3d0497361235aea40c977ea949f71'}}}
+HEADS={'drivers/peripheral': '69094b77aa2200160207b1b06b3c0b586ae2157c',
+ 'foundation/multimedia/audio_framework': '6932fa64335b8272ca4a59de7808ab0d6c9eae7a',
+ 'third_party/alsa-lib': 'dececa15b19fba7445fbdb5559b60e88f53f6960'}
+LEGACY={'accepted': {'apply': 'apply.sh',
+              'path': 'common/drivers/peripheral/audio/accepted_write',
+              'paths': ['device/qemu/common/virt_full/audio_alsa/vendor_render.c',
+                        'drivers/peripheral/audio/hdi_service/primary_impl/BUILD.gn',
+                        'drivers/peripheral/audio/hdi_service/primary_impl/include/audio_internal.h',
+                        'drivers/peripheral/audio/hdi_service/primary_impl/src/audio_render.c',
+                        'drivers/peripheral/audio/hdi_service/supportlibs/BUILD.gn',
+                        'drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_lib_render.h',
+                        'drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_snd_render.h',
+                        'drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_soundcard.h',
+                        'drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_lib_render.c',
+                        'drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_render.c',
+                        'drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_render.c',
+                        'drivers/peripheral/audio/supportlibs/interfaces/include/audio_if_lib_common.h',
+                        'drivers/peripheral/audio/supportlibs/interfaces/include/audio_if_lib_render.h'],
+              'script_sha256': {'apply.py': 'c66884bd56eeb75f59b6a236d2f6713ba903389971a31ec1b6a1376ff4b4b100',
+                                'apply.sh': 'e9d74057c303b13d388011560450e4f86383d29be8765523f08f5e4b123f6217'},
+              'verify': 'apply.py',
+              'verify_args': ['--preflight', '--require-patched']},
+ 'alsa': {'apply': 'apply.sh',
+          'path': 'common/third_party/alsa-lib/pcm_onset',
+          'paths': ['third_party/alsa-lib/BUILD.gn',
+                    'third_party/alsa-lib/src/pcm/media398_onset.h',
+                    'third_party/alsa-lib/src/pcm/media398_wire.h',
+                    'third_party/alsa-lib/src/pcm/pcm_hw.c',
+                    'third_party/alsa-lib/src/pcm/pcm_local.h'],
+          'script_sha256': {'apply.py': '07c36a0c0e5d1bedaee219f9107e29e1daa9dc6072419218d743fcaa73734ff4',
+                            'apply.sh': 'e9d74057c303b13d388011560450e4f86383d29be8765523f08f5e4b123f6217'},
+          'verify': 'apply.py',
+          'verify_args': ['--require-patched']},
+ 'resampler': {'apply': 'apply.sh',
+               'path': 'common/foundation/multimedia/audio_framework/audio_resampler_counts',
+               'paths': ['foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_audio_format_converter_node.h',
+                         'foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_audio_format_converter_node.cpp',
+                         'foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/include/audio_proresampler.h',
+                         'foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/include/audio_proresampler_process.h',
+                         'foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/include/resampler.h',
+                         'foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/proresampler/audio_proresampler.cpp',
+                         'foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/proresampler/audio_proresampler_process.c'],
+               'script_sha256': {'apply.py': '46bf180665631c51ff0cbe70931a77c95d787e127745f3c8f608ca56a4266aa5',
+                                 'apply.sh': '53ae7fcb0a08f9514ed804cb4b35d89443522ffd33795889000332f15845d454'},
+               'verify': 'apply.py',
+               'verify_args': ['--preflight', '--require-patched']},
+ 'sync': {'apply': 'apply.sh',
+          'path': 'common/foundation/multimedia/audio_framework/audio_haptic_sync_id',
+          'paths': ['foundation/multimedia/audio_framework/config.gni',
+                    'foundation/multimedia/audio_framework/frameworks/native/audioutils/BUILD.gn',
+                    'foundation/multimedia/audio_framework/frameworks/native/audioutils/include/audio_speed.h',
+                    'foundation/multimedia/audio_framework/frameworks/native/audioutils/src/audio_speed.cpp',
+                    'foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include/ring_buffer_wrapper.h',
+                    'foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_sink_input_node.h',
+                    'foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_sink_output_node.h',
+                    'foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_sink_input_node.cpp',
+                    'foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_sink_output_node.cpp',
+                    'foundation/multimedia/audio_framework/services/audio_service/BUILD.gn',
+                    'foundation/multimedia/audio_framework/services/audio_service/client/include/renderer_in_client.h',
+                    'foundation/multimedia/audio_framework/services/audio_service/client/include/renderer_in_client_private.h',
+                    'foundation/multimedia/audio_framework/services/audio_service/client/src/renderer_in_client.cpp',
+                    'foundation/multimedia/audio_framework/services/audio_service/client/src/renderer_in_client_public.cpp',
+                    'foundation/multimedia/audio_framework/services/audio_service/common/include/audio_pitch_processor.h',
+                    'foundation/multimedia/audio_framework/services/audio_service/common/include/oh_audio_buffer.h',
+                    'foundation/multimedia/audio_framework/services/audio_service/common/src/audio_pitch_processor.cpp',
+                    'foundation/multimedia/audio_framework/services/audio_service/common/src/oh_audio_buffer.cpp',
+                    'foundation/multimedia/audio_framework/services/audio_service/common/src/oh_audio_buffer_base.cpp',
+                    'foundation/multimedia/audio_framework/services/audio_service/server/include/hpae_renderer_stream_impl.h',
+                    'foundation/multimedia/audio_framework/services/audio_service/server/include/i_stream.h',
+                    'foundation/multimedia/audio_framework/services/audio_service/server/include/i_stream_manager.h',
+                    'foundation/multimedia/audio_framework/services/audio_service/server/include/renderer_in_server.h',
+                    'foundation/multimedia/audio_framework/services/audio_service/server/src/hpae_adapter_manager.cpp',
+                    'foundation/multimedia/audio_framework/services/audio_service/server/src/hpae_renderer_stream_impl.cpp',
+                    'foundation/multimedia/audio_framework/services/audio_service/server/src/i_stream_manager.cpp',
+                    'foundation/multimedia/audio_framework/services/audio_service/server/src/renderer_in_server.cpp',
+                    'third_party/sonic/sonic.c',
+                    'third_party/sonic/sonic.h'],
+          'script_sha256': {'apply.sh': 'df3430be7357cc7f210c743daf50f9e5e1373eb4ea24a89f3a0b1aa44afa16f0',
+                            'verify_source.py': '74706fd0244ca88e275758cdd229270a67d66e79285c478b4f7ef8dd8739449d'},
+          'verify': 'verify_source.py',
+          'verify_args': ['--require-patched']}}
+def need(ok,message):
+    if not ok:raise ValueError(message)
+def descriptor(raw):return dict(sha256=hashlib.sha256(raw).hexdigest(),bytes=len(raw))
+def regular(path,missing=False):
+    path=Path(path)
+    need(path.is_absolute() and not any(p.is_symlink() for p in (path,*path.parents)),'alias source/payload refused: '+str(path))
+    try:before=path.lstat()
+    except FileNotFoundError:
+        if missing:return None
+        raise
+    need(stat.S_ISREG(before.st_mode) and before.st_nlink==1,'single regular source/payload required')
+    fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+    with os.fdopen(fd,'rb') as stream:
+        held=os.fstat(stream.fileno());raw=stream.read();after=os.fstat(stream.fileno())
+    named=path.lstat()
+    need((before.st_dev,before.st_ino)==(held.st_dev,held.st_ino)==(named.st_dev,named.st_ino) and
+         (held.st_size,held.st_mtime_ns)==(after.st_size,after.st_mtime_ns)==(named.st_size,named.st_mtime_ns),
+         'source changed while read')
+    return raw
+def payloads():
+    raw=regular(HERE/'source_states.json')
+    need(hashlib.sha256(raw).hexdigest()==MANIFEST_SHA256,'fixed product manifest changed')
+    m=json.loads(raw)
+    need(m['files']==FILES and m['projects']==HEADS and m['legacy_projection']==LEGACY,'manifest differs from fixed code vector')
+    result={}
+    for name,row in FILES.items():
+        final=regular(HERE/'files'/name);need(descriptor(final)==row['after'],'fixed final payload changed: '+name)
+        old=regular(HERE/'before'/name,True)
+        need((descriptor(old) if old is not None else None)==row['before'],'fixed before payload changed: '+name)
+        result[name]=(old,final)
+    return result
+def project_heads(root):
+    for name,head in HEADS.items():
+        path=root/name
+        need(not path.is_symlink() and (path/'.git').exists(),'actual pinned Git project required: '+name)
+        p=subprocess.run(['git','-C',str(path),'rev-parse','HEAD'],capture_output=True,text=True,check=False)
+        need(p.returncode==0 and p.stdout.strip()==head,'actual project HEAD differs: '+name)
+def state(root,require_after=False):
+    seen={}
+    for name in FILES:
+        raw=regular(root/name,True);seen[name]=None if raw is None else descriptor(raw)
+    before=all(seen[n]==r['before'] for n,r in FILES.items())
+    after=all(seen[n]==r['after'] for n,r in FILES.items())
+    need(before or after,'unknown/partial onset579 source tuple; preserving every file')
+    need(not require_after or after,'complete final onset579 source required')
+    return 'after' if after else 'before'
+def apply(root):
+    payloads();project_heads(root)
+    need(hashlib.sha256(regular(HERE/'0001-product-source.patch')).hexdigest()=='99df663c433629297f52e9040ec86d9ee0649356b353769493d036b28a14eda9',
+         'fixed complete publication patch changed')
+    sys.path.insert(0,str(PATCH_ROOT/'lib'))
+    from guarded_source_vector579 import apply as publish_vector
+    directory=root/'.ohos-qemu-patches';need(not directory.is_symlink(),'linked source lock directory')
+    directory.mkdir(exist_ok=True)
+    fd=os.open(directory/'audio-onset579.lock',os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW,0o600)
+    with os.fdopen(fd,'a') as held:
+        fcntl.flock(held,fcntl.LOCK_EX)
+        value={'projects':HEADS,'files':{name:[row['before']['sha256'] if row['before'] is not None else None,
+            row['after']['sha256']] for name,row in FILES.items()}}
+        publish_vector(root,HERE,value)
+def legacy(root,name,operation):
+    # Finite source-owned enumeration. Neither JSON nor command data selects code.
+    row=LEGACY[name];component=PATCH_ROOT/row['path']
+    for script,sha in row['script_sha256'].items():
+        need(hashlib.sha256(regular(component/script)).hexdigest()==sha,'fixed legacy source guard changed')
+    marker=[root/n for n,r in FILES.items() if r['before'] is None]
+    installed=any(p.exists() for p in marker)
+    if installed:
+        payloads();project_heads(root);state(root,True)
+    def argv(source,projected):
+        if operation.startswith('gn'):
+            need(name=='alsa','GN output only belongs to original ALSA component')
+            return [sys.executable,str(component/'apply.py'),'--source-root',str(source),'--gn-arg',operation[-1]]
+        if projected or operation=='verify':
+            return [sys.executable,str(component/row['verify']),'--source-root',str(source),*row['verify_args']]
+        return ['bash',str(component/row['apply']),'--source-root',str(source)]
+    if not installed:
+        # Original component retains its complete original/final/partial guards.
+        subprocess.run(argv(root,False),check=True);return
+    with tempfile.TemporaryDirectory(prefix='audio-onset579-projection-') as name_tmp:
+        projection=Path(name_tmp)
+        for name_src in row['paths']:
+            raw=regular(root/name_src)
+            # Actual final global vector is already checked. Reverse only this
+            # component's known overlap, without mutating any real source file.
+            if name_src in FILES:
+                raw=regular(HERE/'before'/name_src)
+                need(descriptor(raw)==FILES[name_src]['before'],'projection beforeimage differs')
+            target=projection/name_src;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(raw)
+        print(json.dumps(dict(scope='source-only exact reverse projection',component=row['path'],actual_onset579='after',
+            actual_heads=HEADS,legacy_guard_unchanged=True,onset_proven=False)),file=sys.stderr)
+        subprocess.run(argv(projection,True),check=True)
+def main():
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--source-root',type=Path,required=True)
+    p.add_argument('--action',choices=('apply','verify','legacy'),default='apply')
+    p.add_argument('--component',choices=tuple(LEGACY));p.add_argument('--operation',choices=('apply','verify','gn0','gn1'))
+    a=p.parse_args();root=Path(os.path.abspath(a.source_root));need(root.is_dir() and not root.is_symlink(),'actual source root required')
+    if a.action=='legacy':
+        need(a.component is not None and a.operation is not None,'finite legacy component and operation required')
+        legacy(root,a.component,a.operation);return
+    need(a.component is None and a.operation is None,'unexpected legacy selectors')
+    payloads();project_heads(root)
+    if a.action=='apply':apply(root)
+    state(root,True)
+    print(json.dumps(dict(schema='audio-onset579-source-result-v1',projects=HEADS,state='after',
+        manifest_sha256=MANIFEST_SHA256,files=FILES,compiled=False,new_QEMU_validated=False,
+        onset_proven=False,full82=False,first_artifact_behavior_gate_passed=False),sort_keys=True))
+if __name__=='__main__':main()

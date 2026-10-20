@@ -1,0 +1,1289 @@
+--- a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_render.c
++++ b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_render.c
+@@ -254,6 +254,18 @@
+     }
+ 
+     /* write the parameters to the playback device */
++    // Timestamp observation only: preserve this handle's existing audio and
++    // scheduling parameters, and commit the mode/type in the same SW_PARAMS.
++    ret = snd_pcm_sw_params_set_tstamp_type(handle, swParams, SND_PCM_TSTAMP_TYPE_MONOTONIC);
++    if (ret < 0) {
++        AUDIO_FUNC_LOGE("snd_pcm_sw_params_set_tstamp_type failed: %{public}d", ret);
++        return HDF_FAILURE;
++    }
++    ret = snd_pcm_sw_params_set_tstamp_mode(handle, swParams, SND_PCM_TSTAMP_ENABLE);
++    if (ret < 0) {
++        AUDIO_FUNC_LOGE("snd_pcm_sw_params_set_tstamp_mode failed: %{public}d", ret);
++        return HDF_FAILURE;
++    }
+     ret = snd_pcm_sw_params(handle, swParams);
+     if (ret < 0) {
+         AUDIO_FUNC_LOGE("Unable to set sw params for playback: %{public}s", snd_strerror(ret));
+--- a/foundation/multimedia/audio_framework/frameworks/native/audioeffect/include/audio_effect_chain.h
++++ b/foundation/multimedia/audio_framework/frameworks/native/audioeffect/include/audio_effect_chain.h
+@@ -56,6 +56,8 @@
+     void AddEffectHandle(AudioEffectHandle effectHandle, AudioEffectLibrary *libHandle, AudioEffectScene currSceneType,
+         const std::string &effectName, const std::string &property);
+     void ApplyEffectChain(float *bufIn, float *bufOut, uint32_t frameLen, AudioEffectProcInfo procInfo);
++    void ApplyEffectChainObserved579(float *bufIn, float *bufOut, uint32_t frameLen,
++        AudioEffectProcInfo procInfo, bool &identityCopy);
+     void UpdateBufferConfig(uint32_t &channels, uint64_t &channelLayout);
+     bool IsEmptyEffectHandles();
+     int32_t UpdateMultichannelIoBufferConfig(const uint32_t &channels, const uint64_t &channelLayout);
+--- a/foundation/multimedia/audio_framework/frameworks/native/audioeffect/include/audio_effect_chain_manager.h
++++ b/foundation/multimedia/audio_framework/frameworks/native/audioeffect/include/audio_effect_chain_manager.h
+@@ -96,6 +96,7 @@
+           outChannelLayout(outChannelLayout)
+     {
+     }
++    bool identityCopy579 = false;
+ };
+ 
+ enum SceneTypeOperation {
+--- a/foundation/multimedia/audio_framework/frameworks/native/audioeffect/src/audio_effect_chain.cpp
++++ b/foundation/multimedia/audio_framework/frameworks/native/audioeffect/src/audio_effect_chain.cpp
+@@ -365,6 +365,14 @@
+ 
+ void AudioEffectChain::ApplyEffectChain(float *bufIn, float *bufOut, uint32_t frameLen, AudioEffectProcInfo procInfo)
+ {
++    bool observed = false;
++    ApplyEffectChainObserved579(bufIn, bufOut, frameLen, procInfo, observed);
++}
++
++void AudioEffectChain::ApplyEffectChainObserved579(float *bufIn, float *bufOut, uint32_t frameLen,
++    AudioEffectProcInfo procInfo, bool &identityCopy)
++{
++    identityCopy = false;
+     Trace trace("AudioEffectChain::ApplyEffectChain");
+     size_t inTotlen = frameLen * ioBufferConfig_.inputCfg.channels * sizeof(float);
+     size_t outTotlen = frameLen * ioBufferConfig_.outputCfg.channels * sizeof(float);
+@@ -373,6 +381,7 @@
+ 
+     if (IsEmptyEffectHandles()) {
+         CHECK_AND_RETURN_LOG(memcpy_s(bufOut, outTotlen, bufIn, outTotlen) == 0, "memcpy error in apply effect");
++        identityCopy = ioBufferConfig_.inputCfg.channels == ioBufferConfig_.outputCfg.channels;
+         DumpFileUtil::WriteDumpFile(dumpFileOutput_, static_cast<void *>(bufOut), outTotlen);
+         return;
+     }
+--- a/foundation/multimedia/audio_framework/frameworks/native/audioeffect/src/audio_effect_chain_manager.cpp
++++ b/foundation/multimedia/audio_framework/frameworks/native/audioeffect/src/audio_effect_chain_manager.cpp
+@@ -578,6 +578,7 @@
+     Trace trace("AudioEffectChainManager::ApplyAudioEffectChain: " + sceneType + " frameLen: " +
+         std::to_string(bufferAttr->frameLen) + " numChans: " + std::to_string(bufferAttr->numChans));
+     std::string sceneTypeAndDeviceKey = sceneType + "_&_" + GetDeviceTypeName();
++    bufferAttr->identityCopy579 = false;
+     size_t totLen = static_cast<size_t>(bufferAttr->frameLen * bufferAttr->numChans * sizeof(float));
+     std::lock_guard<std::mutex> lock(dynamicMutex_);
+ 
+@@ -590,7 +591,8 @@
+ 
+     auto audioEffectChain = it->second;
+     AudioEffectProcInfo procInfo = {headTrackingEnabled_, btOffloadEnabled_};
+-    audioEffectChain->ApplyEffectChain(bufferAttr->bufIn, bufferAttr->bufOut, bufferAttr->frameLen, procInfo);
++    audioEffectChain->ApplyEffectChainObserved579(bufferAttr->bufIn, bufferAttr->bufOut,
++        bufferAttr->frameLen, procInfo, bufferAttr->identityCopy579);
+     audioEffectChain->UpdateBufferConfig(bufferAttr->outChannels, bufferAttr->outChannelLayout);
+     return SUCCESS;
+ }
+@@ -602,6 +604,7 @@
+         "_r_" + std::to_string(renderId) + " frameLen: " +
+         std::to_string(bufferAttr->frameLen) + " numChans: " + std::to_string(bufferAttr->numChans));
+     std::string sceneTypeAndDeviceKey = GenerateEffectChainKey(sceneType, deviceType, renderId);
++    bufferAttr->identityCopy579 = false;
+     size_t totLen = static_cast<size_t>(bufferAttr->frameLen * bufferAttr->numChans * sizeof(float));
+     std::lock_guard<std::mutex> lock(dynamicMutex_);
+ 
+@@ -614,7 +617,8 @@
+ 
+     auto audioEffectChain = it->second;
+     AudioEffectProcInfo procInfo = {headTrackingEnabled_, btOffloadEnabled_};
+-    audioEffectChain->ApplyEffectChain(bufferAttr->bufIn, bufferAttr->bufOut, bufferAttr->frameLen, procInfo);
++    audioEffectChain->ApplyEffectChainObserved579(bufferAttr->bufIn, bufferAttr->bufOut,
++        bufferAttr->frameLen, procInfo, bufferAttr->identityCopy579);
+     audioEffectChain->UpdateBufferConfig(bufferAttr->outChannels, bufferAttr->outChannelLayout);
+     return SUCCESS;
+ }
+--- a/foundation/multimedia/audio_framework/services/audio_engine/buffer/hpae_pcm_buffer.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_engine/buffer/hpae_pcm_buffer.cpp
+@@ -38,6 +38,10 @@
+         int32_t ret = memcpy_s(GetPcmDataBuffer(), bufferByteSize_, other.GetPcmDataBuffer(), bufferByteSize_);
+         if (ret != 0) {
+             AUDIO_ERR_LOG("memcpy failed when copy PcmBuffer");
++            origins579_.Unknown();
++        } else {
++            origins579_ = other.origins579_;
++            historyOrigins579_ = other.historyOrigins579_;
+         }
+     }
+     return *this;
+@@ -51,6 +55,9 @@
+     dataByteSize_ = other.dataByteSize_;
+     pcmDataBuffer_ = std::move(other.pcmDataBuffer_);
+     pcmProcessVec_ = std::move(other.pcmProcessVec_);
++    origins579_ = other.origins579_;
++    historyOrigins579_ = std::move(other.historyOrigins579_);
++    other.origins579_.Clear();
+     other.pcmBufferInfo_.frames = 0;
+     other.bufferByteSize_ = 0;
+     other.bufferFloatSize_ = 0;
+@@ -59,6 +66,8 @@
+ 
+ void HpaePcmBuffer::InitPcmProcess()
+ {
++    origins579_.Clear();
++    historyOrigins579_.assign(GetFrames(), Onset579::Spans{});
+     size_t ch = GetChannelCount();
+     size_t frameLen = GetFrameLen();
+     size_t frames = GetFrames();
+@@ -85,6 +94,9 @@
+ 
+ HpaePcmBuffer &HpaePcmBuffer::operator+=(HpaePcmBuffer &other)
+ {
++    if (GetFrameLen() == other.GetFrameLen() && GetSampleRate() == other.GetSampleRate()) {
++        origins579_.Append(other.origins579_);
++    } else { origins579_.Unknown(); }
+     for (size_t i = 0; i < pcmProcessVec_.size(); ++i) {
+         pcmProcessVec_[i] += other[i];
+     }
+@@ -93,6 +105,9 @@
+ 
+ HpaePcmBuffer &HpaePcmBuffer::operator-=(HpaePcmBuffer &other)
+ {
++    if (GetFrameLen() == other.GetFrameLen() && GetSampleRate() == other.GetSampleRate()) {
++        origins579_.Append(other.origins579_);
++    } else { origins579_.Unknown(); }
+     for (size_t i = 0; i < pcmProcessVec_.size(); ++i) {
+         pcmProcessVec_[i] -= other[i];
+     }
+@@ -101,6 +116,9 @@
+ 
+ HpaePcmBuffer &HpaePcmBuffer::operator*=(HpaePcmBuffer &other)
+ {
++    if (GetFrameLen() == other.GetFrameLen() && GetSampleRate() == other.GetSampleRate()) {
++        origins579_.Append(other.origins579_);
++    } else { origins579_.Unknown(); }
+     for (size_t i = 0; i < pcmProcessVec_.size(); ++i) {
+         pcmProcessVec_[i] *= other[i];
+     }
+@@ -109,6 +127,8 @@
+ 
+ HpaePcmBuffer &HpaePcmBuffer::operator=(const std::vector<std::vector<float>> &other)
+ {
++    origins579_.Unknown(); // unlabelled caller-supplied PCM cannot inherit stale lineage
++    for (auto &origin : historyOrigins579_) { origin.Unknown(); }
+     for (size_t i = 0; i < other.size() && i < pcmProcessVec_.size(); ++i) {
+         if (IsMultiFrames()) {
+             if (curFrames_.load() < GetFrames()) {
+@@ -127,6 +147,8 @@
+ 
+ HpaePcmBuffer &HpaePcmBuffer::operator=(const std::vector<float> &other)
+ {
++    origins579_.Unknown(); // unlabelled caller-supplied PCM cannot inherit stale lineage
++    for (auto &origin : historyOrigins579_) { origin.Unknown(); }
+     if (IsMultiFrames()) {
+         if (curFrames_.load() < GetFrames()) {
+             pcmProcessVec_[writePos_.load()] = other;
+@@ -143,6 +165,8 @@
+ 
+ void HpaePcmBuffer::Reset()
+ {
++    origins579_.Clear();
++    for (auto &origin : historyOrigins579_) { origin.Clear(); }
+     for (HpaePcmProcess &pcmProc : pcmProcessVec_) {
+         pcmProc.Reset();
+     }
+@@ -190,6 +214,7 @@
+     if (ret != 0) {
+         return false;
+     }
++    frameData.origins579_ = historyOrigins579_[readPos_.load()];
+     readPos_.store((readPos_.load() + 1) % GetFrames());
+     curFrames_.fetch_sub(1);
+     return true;
+@@ -197,6 +222,7 @@
+ 
+ bool HpaePcmBuffer::PushFrameData(std::vector<float> &frameData)
+ {
++    if (GetWritePos() < historyOrigins579_.size()) { historyOrigins579_[GetWritePos()].Unknown(); }
+     if (!IsMultiFrames()) {
+         return false;
+     }
+@@ -232,6 +258,7 @@
+         AUDIO_ERR_LOG("memcpy failed when PushFrameData");
+         return false;
+     }
++    historyOrigins579_[writePos_.load()] = frameData.origins579_;
+     writePos_.store((writePos_.load() + 1) % GetFrames());
+     curFrames_.fetch_add(1);
+     return true;
+@@ -249,6 +276,7 @@
+         AUDIO_ERR_LOG("memcpy failed when StoreFrameData");
+         return false;
+     }
++    historyOrigins579_[writePos_.load()] = frameData.origins579_;
+     writePos_.store((writePos_.load() + 1) % GetFrames());
+     readPos_.store((readPos_.load() + 1) % GetFrames());
+     return true;
+--- a/foundation/multimedia/audio_framework/services/audio_engine/buffer/hpae_pcm_buffer.h
++++ b/foundation/multimedia/audio_framework/services/audio_engine/buffer/hpae_pcm_buffer.h
+@@ -21,6 +21,7 @@
+ #include <algorithm>
+ #include "audio_stream_info.h"
+ #include "audio_info.h"
++#include "audio_onset579.h"
+ #include "hpae_pcm_process.h"
+ namespace OHOS {
+ namespace AudioStandard {
+@@ -202,6 +203,8 @@
+     HpaePcmBuffer &operator-=(HpaePcmBuffer &other);
+     HpaePcmBuffer &operator*=(HpaePcmBuffer &other);
+     void Reset();
++    Onset579::Spans &Origins579() { return origins579_; }
++    const Onset579::Spans &Origins579() const { return origins579_; }
+ 
+     std::vector<HpaePcmProcess>::iterator begin()
+     {
+@@ -292,6 +295,8 @@
+     std::atomic<size_t> readPos_;
+     std::atomic<size_t> writePos_;
+     std::atomic<size_t> curFrames_;
++    Onset579::Spans origins579_;
++    std::vector<Onset579::Spans> historyOrigins579_;
+     std::vector<HpaePcmProcess> pcmProcessVec_;
+     PcmBufferInfo pcmBufferInfo_;
+     HpaeSourceBufferType sourceBufferType_ = HPAE_SOURCE_BUFFER_TYPE_DEFAULT;
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_audio_format_converter_node.h
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_audio_format_converter_node.h
+@@ -82,6 +82,8 @@
+ 
+     // Unprocessed input accumulation buffer (interleaved float, input sample rate)
+     std::vector<float> unprocessedBuffer_;
++    Onset579::Spans unprocessedOrigins579_;
++    Onset579::Spans processedOrigins579_;
+     uint32_t unprocessedFrames_ = 0;
+     bool resamplerFailed_ = false;
+     uint32_t bufferedState_ = PCM_BUFFER_STATE_INVALID;
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_sink_output_node.h
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_sink_output_node.h
+@@ -105,6 +105,8 @@
+     uint32_t latency_ = 0;
+     uint64_t renderFrameTimes_ = 0;
+     size_t outputSize_ = 0;
++    uint64_t onsetOutput579_ = 0;
++    Onset579::Spans queuedOrigins579_;
+     size_t currentSize_ = 0;
+     size_t renderSize_ = 0;
+     size_t pendingRenderSize_ = 0;
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_audio_format_converter_node.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_audio_format_converter_node.cpp
+@@ -200,6 +200,7 @@
+         resamplerFailed_ = true;
+         return;
+     }
++    unprocessedOrigins579_.Append(input->Origins579(), unprocessedFrames_ - input->GetFrameLen());
+     bufferedState_ = input->GetBufferState();
+ 
+     // Step 1b: Pull-Ahead -- if not enough data accumulated and credit available, actively pull from upstream
+@@ -501,6 +502,8 @@
+ 
+ void HpaeAudioFormatConverterNode::InitDualBuffer()
+ {
++    unprocessedOrigins579_.Clear();
++    processedOrigins579_.Clear();
+     if (resampler_ == nullptr) {
+         return;
+     }
+@@ -655,6 +658,13 @@
+         (processedBuffer_.size() - offset) * sizeof(float), data, samples * sizeof(float)) != EOK) {
+         return false;
+     }
++    if (resampler_ != nullptr && resampler_->GetInRate() == resampler_->GetOutRate()) {
++        processedOrigins579_.Append(unprocessedOrigins579_.Slice(0, frameLen), processedFrames_);
++    } else {
++        // General resampler filter-history ownership is not a 1:1 frame map.
++        // Leave the selected route unproven rather than estimate its latency.
++        processedOrigins579_.Unknown();
++    }
+     processedFrames_ += frameLen;
+     return true;
+ }
+@@ -679,6 +689,7 @@
+         resamplerFailed_ = true;
+         return false;
+     }
++    unprocessedOrigins579_.Append(input->Origins579(), unprocessedFrames_ - input->GetFrameLen());
+     bufferedState_ = input->GetBufferState();
+     return true;
+ }
+@@ -932,6 +943,8 @@
+         AUDIO_ERR_LOG("NodeId %{public}d: ExtractOutput memcpy_s failed", GetNodeId());
+         return false;
+     }
++    converterOutput_.Origins579() = processedOrigins579_.Slice(0, outputFrameLen20ms_);
++    processedOrigins579_.Consume(outputFrameLen20ms_);
+     processedReadPos_ += outputFrameLen20ms_;
+     processedFrames_ -= outputFrameLen20ms_;
+     if (processedFrames_ == 0) {
+@@ -957,6 +970,7 @@
+         unprocessedFrames_ > unprocessedBuffer_.size() / channels) {
+         return false;
+     }
++    unprocessedOrigins579_.Consume(consumedFrames);
+     uint32_t remainingFrames = unprocessedFrames_ - consumedFrames;
+     if (remainingFrames == 0) {
+         unprocessedFrames_ = 0;
+@@ -1062,6 +1076,8 @@
+ 
+ void HpaeAudioFormatConverterNode::FlushBuffers()
+ {
++    unprocessedOrigins579_.Clear();
++    processedOrigins579_.Clear();
+     AUDIO_INFO_LOG("NodeId %{public}d: FlushBuffers, discarding "
+         "unprocessedFrames=%{public}u, processedFrames=%{public}u",
+         GetNodeId(), unprocessedFrames_, processedFrames_);
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_limiter_node.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_limiter_node.cpp
+@@ -102,7 +102,8 @@
+     }
+     uint32_t bufferSize = inputs[0]->GetFrameLen() * inputs[0]->GetChannelCount();
+     // Process with limiter
+-    limiter_->Process(bufferSize, inputs[0]->GetPcmDataBuffer(), limiterOutput_.GetPcmDataBuffer());
++    limiter_->ProcessObserved579(bufferSize, inputs[0]->GetPcmDataBuffer(), limiterOutput_.GetPcmDataBuffer(),
++        inputs[0]->Origins579(), limiterOutput_.Origins579());
+     limiterOutput_.SetBufferState(inputs[0]->GetBufferState());
+     return &limiterOutput_;
+ }
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_loudness_gain_node.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_loudness_gain_node.cpp
+@@ -112,10 +112,12 @@
+ 
+     CHECK_AND_RETURN_RET((!IsFloatValueEqual(loudnessGain_, 0.0f)), inputs[0]);
+     CheckUpdateInfo(inputs[0]);
++    loudnessGainOutput_.Origins579().Unknown();
+     if (!dlHandle_ || !audioEffectLibHandle_) {
+         float *pcmDataBuffer = inputs[0]->GetPcmDataBuffer();
+         uint32_t bufferSize = inputs[0]->GetFrameLen() * inputs[0]->GetChannelCount();
+         float *dataBuffer = loudnessGainOutput_.GetPcmDataBuffer();
++        loudnessGainOutput_.Origins579() = inputs[0]->Origins579();
+         for (uint32_t i = 0; i < bufferSize; i++) {
+             dataBuffer[i] = pcmDataBuffer[i] * linearGain_;
+         }
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_mixer_node.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_mixer_node.cpp
+@@ -158,8 +158,9 @@
+             tmpOutput_ += *input;
+             bufferState &= input->GetBufferState();
+         }
+-        limiter_->Process(GetFrameLen() * GetChannelCount(),
+-            tmpOutput_.GetPcmDataBuffer(), mixedOutput_.GetPcmDataBuffer());
++        limiter_->ProcessObserved579(GetFrameLen() * GetChannelCount(),
++            tmpOutput_.GetPcmDataBuffer(), mixedOutput_.GetPcmDataBuffer(),
++            tmpOutput_.Origins579(), mixedOutput_.Origins579());
+     }
+     DumpFileUtil::WriteDumpFile(dumpMix_, static_cast<void *>(mixedOutput_.GetPcmDataBuffer()),
+         mixedOutput_.DataSize());
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_render_effect_node.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_render_effect_node.cpp
+@@ -175,6 +175,7 @@
+     }
+ 
+     ReconfigOutputBuffer();
++    effectOutput_.Origins579().Unknown();
+ 
+     auto eBufferAttr = std::make_unique<EffectBufferAttr>(
+         inputs[0]->GetPcmDataBuffer(),
+@@ -199,6 +200,10 @@
+             "apply audio effect chain fail", false),
+         "apply audio effect chain fail, ret: %{public}d", ret);
+ 
++    if (eBufferAttr->identityCopy579 && effectOutput_.GetFrameLen() == inputs[0]->GetFrameLen() &&
++        effectOutput_.GetSampleRate() == inputs[0]->GetSampleRate()) {
++        effectOutput_.Origins579() = inputs[0]->Origins579();
++    }
+     effectOutput_.SetBufferState(inputs[0]->GetBufferState());
+     effectOutput_.SetBufferValid(true);
+     return &effectOutput_;
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_session_effect_node.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_session_effect_node.cpp
+@@ -841,6 +841,7 @@
+         &skipFrames);
+     ConsumePendingRawBypassBlocks(skipRequest, skipFrames);
+     if (ret > 0) {
++        inputBuf->Origins579().Unknown(); // actual opaque delayed/wet algorithm output
+         inputBuf->SetBufferValid(true);
+         inputBuf->SetBufferSilence(false);
+         ApplyInterceptingFadeIn(inputBuf->GetPcmDataBuffer(), interceptingRawData_.data(), sampleCount);
+@@ -986,6 +987,7 @@
+     int32_t ret = effectInstance_->ReadOutput(
+         reinterpret_cast<uint8_t *>(inputBuf->GetPcmDataBuffer()), byteLen);
+     if (ret > 0) {
++        inputBuf->Origins579().Unknown(); // actual opaque delayed/wet algorithm output
+         inputBuf->SetBufferValid(true);
+         inputBuf->SetBufferSilence(false);
+         return inputBuf;
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_sink_input_node.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_sink_input_node.cpp
+@@ -110,6 +110,7 @@
+         ret = ERR_OPERATION_FAILED;
+         AUDIO_WARNING_LOG("The session %{public}u offloadEnable is false, not request data", GetSessionId());
+     } else {
++        Onset579::ClearRead();
+         ret = GetDataFromSharedBuffer();
+         // if historyBuffer has enough data, write to outputStream
+         if (!streamInfo_.needData && historyBuffer_) {
+@@ -145,6 +146,10 @@
+         return;
+     }
+     
++    inputAudioBuffer_.Origins579().Clear();
++    if (ret == SUCCESS) {
++        inputAudioBuffer_.Origins579() = Onset579::TakeRead(appUid_, GetSessionId(), GetFrameLen());
++    }
+     ConvertToFloat(
+         GetBitWidth(), GetChannelCount() * GetFrameLen(), interleveData_.data(), inputAudioBuffer_.GetPcmDataBuffer());
+     AudioPipeType  pipeType = ConvertDeviceClassToPipe(GetDeviceClass());
+@@ -440,26 +445,26 @@
+     return isDrain_;
+ }
+ 
+-void HpaeSinkInputNode::SetSessionEffectAttachState(const SessionEffectAttachState &state)
+-{
+-    sessionEffectAttachState_ = state;
+-}
+-
+-void HpaeSinkInputNode::ClearSessionEffectAttachState()
+-{
+-    sessionEffectAttachState_.reset();
+-}
+-
+-bool HpaeSinkInputNode::HasSessionEffectAttachState() const
+-{
+-    return sessionEffectAttachState_.has_value();
+-}
+-
+-std::optional<SessionEffectAttachState> HpaeSinkInputNode::GetSessionEffectAttachState() const
+-{
+-    return sessionEffectAttachState_;
+-}
+-
++void HpaeSinkInputNode::SetSessionEffectAttachState(const SessionEffectAttachState &state)
++{
++    sessionEffectAttachState_ = state;
++}
++
++void HpaeSinkInputNode::ClearSessionEffectAttachState()
++{
++    sessionEffectAttachState_.reset();
++}
++
++bool HpaeSinkInputNode::HasSessionEffectAttachState() const
++{
++    return sessionEffectAttachState_.has_value();
++}
++
++std::optional<SessionEffectAttachState> HpaeSinkInputNode::GetSessionEffectAttachState() const
++{
++    return sessionEffectAttachState_;
++}
++
+ }  // namespace HPAE
+ }  // namespace AudioStandard
+ }  // namespace OHOS
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_sink_output_node.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_sink_output_node.cpp
+@@ -65,6 +65,8 @@
+       renderFrameScratch_(renderFrameData_.size()),
+       interleveData_(nodeInfo.frameLen * nodeInfo.channels)
+ {
++    Onset579::Initialize();
++    onsetOutput579_ = Onset579::NewInstance();
+     renderSize_ = renderFrameData_.size();
+     outputSize_ = renderSize_;
+     AUDIO_INFO_LOG("name is %{public}s renderSize = %{public}zu", sinkOutAttr_.adapterName.c_str(),
+@@ -153,6 +155,13 @@
+ 
+     CheckAndSetCollDelayForRenderFrameFailed();
+     if (countValid && writeLen != 0) {
++        // Record the actual post-RenderFrame PCM returned by this real sink,
++        // including its in-place mute/mono/balance transforms. Retried tails
++        // and zero accepted bytes cannot inherit a false acceptance record.
++        Onset579::Packet(onsetOutput579_, GetSampleRate(), GetChannelCount(), GetBitWidth(),
++            queuedOrigins579_.Slice(0, static_cast<uint32_t>(writeLen / frameSize)),
++            renderFrameData, static_cast<size_t>(writeLen));
++        queuedOrigins579_.Consume(static_cast<uint32_t>(writeLen / frameSize));
+         // Only successful transport makes the returned aligned prefix known.
+         RenderFrameForAuxiliarySink(renderFrameData, static_cast<size_t>(writeLen));
+         std::move(renderFrameData_.begin() + writeLen, renderFrameData_.begin() + currentSize_,
+@@ -206,6 +215,7 @@
+ void HpaeSinkOutputNode::ResetPendingRenderData()
+ {
+     currentSize_ = 0;
++    queuedOrigins579_.Clear();
+     pendingRenderSize_ = 0;
+     // Keep an unknown acceptance outcome latched for this node's lifetime.
+     renderFrameTimes_ = 0;
+@@ -727,6 +737,11 @@
+         }
+         ConvertFromFloat(
+             GetBitWidth(), channels * frameLen, outputData->GetPcmDataBuffer(), renderFrameData_.data() + currentSize_);
++        if (currentSize_ % frameSize != 0 || outputData->GetSampleRate() != GetSampleRate()) {
++            queuedOrigins579_.Unknown();
++        } else {
++            queuedOrigins579_.Append(outputData->Origins579(), static_cast<uint32_t>(currentSize_ / frameSize));
++        }
+         currentSize_ += outputSize_;
+     }
+     pendingRenderSize_ = renderSize_;
+--- a/foundation/multimedia/audio_framework/services/audio_service/BUILD.gn
++++ b/foundation/multimedia/audio_framework/services/audio_service/BUILD.gn
+@@ -57,6 +57,7 @@
+ 
+   sources = [
+     "common/src/audio_common_converter.cpp",
++    "common/src/audio_onset579.cpp",
+     "common/src/audio_down_mix_stereo.cpp",
+     "common/src/audio_dump_pcm.cpp",
+     "common/src/audio_highpass_filter.cpp",
+--- /dev/null
++++ b/foundation/multimedia/audio_framework/services/audio_service/common/include/audio_onset579.h
+@@ -0,0 +1,76 @@
++/* SPDX-License-Identifier: Apache-2.0
++ * Bounded, observational lineage. No audio samples, queue ownership, DSP mode,
++ * accepted-byte accounting or presentation clocks are changed by this header.
++ */
++#ifndef OHOS_AUDIO_ONSET579_H
++#define OHOS_AUDIO_ONSET579_H
++#include <array>
++#include <algorithm>
++#include <cstddef>
++#include <cstdint>
++#include <limits>
++namespace OHOS { namespace AudioStandard { namespace Onset579 {
++constexpr uint32_t MAX_SPANS = 64;
++constexpr uint32_t MAX_PCM = 16384;
++struct Span {
++    uint64_t cut = 0; // actual server read observation, never a queue timestamp
++    uint32_t begin = 0; // frame in the cut's pre-fade PCM
++    uint32_t out = 0;   // frame in the current actual PCM buffer
++    uint32_t frames = 0;
++};
++struct Spans {
++    std::array<Span, MAX_SPANS> spans {};
++    uint32_t count = 0;
++    bool valid = true;
++    void Clear() { count = 0; valid = true; }
++    void Unknown() { count = 0; valid = false; }
++    void Add(Span s)
++    {
++        if (!valid || !s.cut || !s.frames) { return; }
++        if (s.out > UINT32_MAX - s.frames || s.begin > UINT32_MAX - s.frames) { Unknown(); return; }
++        for (uint32_t i = 0; i < count; ++i) {
++            Span &p = spans[i];
++            if (p.cut == s.cut && p.out + p.frames == s.out && p.begin + p.frames == s.begin) {
++                p.frames += s.frames; return;
++            }
++        }
++        if (count == MAX_SPANS) { Unknown(); return; }
++        spans[count++] = s;
++    }
++    void Append(const Spans &other, uint32_t shift = 0)
++    {
++        if (!other.valid) { Unknown(); return; }
++        for (uint32_t i = 0; i < other.count; ++i) {
++            Span s = other.spans[i];
++            if (s.out > UINT32_MAX - shift) { Unknown(); return; }
++            s.out += shift; Add(s);
++        }
++    }
++    Spans Slice(uint32_t first, uint32_t frames) const
++    {
++        Spans result;
++        if (!valid || first > UINT32_MAX - frames) { result.Unknown(); return result; }
++        for (uint32_t i = 0; i < count; ++i) {
++            const Span &s = spans[i];
++            uint32_t lo = std::max(first, s.out), hi = std::min(first + frames, s.out + s.frames);
++            if (lo < hi) { result.Add({s.cut, s.begin + lo - s.out, lo - first, hi - lo}); }
++        }
++        return result;
++    }
++    void Consume(uint32_t frames) { *this = Slice(frames, UINT32_MAX - frames); }
++};
++enum class Kind : uint32_t { READ = 1, MIXED_PACKET = 2, READ_COMMIT = 3, UNKNOWN_PATH = 4 };
++// These symbols live once in the existing audio_common DSO. The thread-local
++// ReadCut is consumed on the same synchronous real OnStreamData call stack.
++void Initialize(); // constructors/control thread only, never RT callbacks
++uint64_t NewInstance();
++void ClearRead();
++uint64_t PrepareRead(uint64_t renderer, int32_t uid, uint32_t session, uint64_t ringFrame,
++    uint32_t frames, uint32_t rate, uint32_t channels, uint32_t format,
++    const void *first, size_t firstBytes, const void *second, size_t secondBytes);
++void CommitRead(uint64_t cut, bool committed);
++Spans TakeRead(int32_t uid, uint32_t session, uint32_t frames);
++void Packet(uint64_t outputInstance, uint32_t rate, uint32_t channels, uint32_t format,
++    const Spans &spans, const void *bytes, size_t byteCount);
++} } }
++#endif
+--- /dev/null
++++ b/foundation/multimedia/audio_framework/services/audio_service/common/include/audio_onset579_wire.h
+@@ -0,0 +1,18 @@
++/* SPDX-License-Identifier: Apache-2.0 */
++#ifndef OHOS_AUDIO_ONSET579_WIRE_H
++#define OHOS_AUDIO_ONSET579_WIRE_H
++#include <stdint.h>
++#define O579_MAGIC UINT32_C(0x4f353739)
++#define O579_VERSION 1U
++#define O579_ARM 1U
++#define O579_DISARM 2U
++struct o579_request {
++    uint32_t magic, version, op, pid;
++    uint64_t birth;
++    char run[32];
++};
++struct o579_ack {
++    uint32_t magic, version, error, state, pid, reserved;
++    uint64_t birth, produced, drained, lost;
++};
++#endif
+--- a/foundation/multimedia/audio_framework/services/audio_service/common/include/limiter/audio_limiter.h
++++ b/foundation/multimedia/audio_framework/services/audio_service/common/include/limiter/audio_limiter.h
+@@ -29,6 +29,7 @@
+ #include <cstdint>
+ #include <string>
+ #include <vector>
++#include "audio_onset579.h"
+ 
+ namespace OHOS {
+ namespace AudioStandard {
+@@ -40,6 +41,8 @@
+     int32_t SetConfig(int32_t inputFrameBytes, int32_t bytePerSample, int32_t sampleRate, int32_t channels);
+     int32_t Process(int32_t inputSampleCount, float *inBuffer, float *outBuffer);
+     uint32_t GetLatency();
++    int32_t ProcessObserved579(int32_t count, float *in, float *out,
++        const Onset579::Spans &origins, Onset579::Spans &output);
+ 
+ private:
+     float CalculateEnvelopeEnergy(float *inBuffer);
+@@ -65,6 +68,7 @@
+     float levelRelease_;
+     float gainAttack_;
+     float gainRelease_;
++    Onset579::Spans history579_;
+     std::vector<float> bufHis_;
+     uint32_t sampleRate_;
+     uint32_t channels_;
+--- /dev/null
++++ b/foundation/multimedia/audio_framework/services/audio_service/common/src/audio_onset579.cpp
+@@ -0,0 +1,314 @@
++/* SPDX-License-Identifier: Apache-2.0
++ * One root-armed, bounded, process-local diagnostic journal. RT producers only
++ * copy bounded bytes/lineage into a try-lock ring. The worker owns all IO.
++ */
++#ifndef _GNU_SOURCE
++#define _GNU_SOURCE 1
++#endif
++#include "audio_onset579.h"
++#include "audio_onset579_wire.h"
++#include <atomic>
++#include <cerrno>
++#include <cstdio>
++#include <cstring>
++#include <cstdlib>
++#include <fcntl.h>
++#include <poll.h>
++#include <pthread.h>
++#include <sstream>
++#include <sys/socket.h>
++#include <sys/stat.h>
++#include <sys/syscall.h>
++#include <sys/un.h>
++#include <time.h>
++#include <unistd.h>
++namespace OHOS { namespace AudioStandard { namespace Onset579 {
++namespace {
++constexpr uint64_t RING = 128, ROWS = 12000, RAW_LIMIT = 64U * 1024U * 1024U;
++struct Row {
++    Kind kind {}; uint64_t seq = 0, cut = 0, renderer = 0, ringFrame = 0, before = 0, after = 0;
++    int32_t uid = -1; uint32_t session = 0, frames = 0, rate = 0, channels = 0, format = 0;
++    bool committed = false; Spans spans; uint32_t size = 0; std::array<uint8_t, MAX_PCM> pcm {};
++};
++struct ReadCut { uint64_t id = 0; int32_t uid = -1; uint32_t session = 0, frames = 0; bool committed = false; };
++thread_local ReadCut readCut;
++struct Journal {
++    std::atomic<uint64_t> armed {0};
++    std::atomic<bool> stopping {false}, busy {false};
++    std::atomic_flag writer = ATOMIC_FLAG_INIT;
++    std::atomic<uint64_t> head {0}, tail {0}, serial {0}, instances {0}, lost {0};
++    std::array<Row, RING> rows;
++    std::atomic<uint64_t> produced {0}, raw {0};
++    uint64_t drained = 0, birth = 0, peerBirth = 0;
++    int listener = -1, peer = -1, peerPidFd = -1, journal = -1; pid_t pid = 0, peerPid = 0;
++    struct stat file {}, ns {}, peerNs {}; char boot[40] {}, run[33] {};
++    char used[64][32] {}; unsigned epochs = 0; int error = 0;
++    pthread_t thread {}; bool ready = false;
++};
++Journal state;
++pthread_once_t once = PTHREAD_ONCE_INIT;
++uint64_t Clock()
++{
++    struct timespec t {};
++    if (clock_gettime(CLOCK_MONOTONIC, &t) || t.tv_sec < 0 || t.tv_nsec < 0 || t.tv_nsec >= 1000000000L) { return 0; }
++    return static_cast<uint64_t>(t.tv_sec) * 1000000000U + static_cast<uint64_t>(t.tv_nsec);
++}
++uint64_t Birth(pid_t pid)
++{
++    char path[64], raw[4096]; snprintf(path, sizeof(path), "/proc/%ld/stat", static_cast<long>(pid));
++    FILE *f = fopen(path, "r"); if (!f) { return 0; }
++    bool ok = fgets(raw, sizeof(raw), f) != nullptr; int closed = fclose(f);
++    if (!ok || closed) { return 0; }
++    char *p = strrchr(raw, ')'); if (!p || p[1] != ' ') { return 0; } p += 2;
++    for (int i = 3; i < 22; ++i) { p = strchr(p, ' '); if (!p) { return 0; } ++p; }
++    char *end = nullptr; errno = 0; auto n = strtoull(p, &end, 10);
++    return errno || !end || *end != ' ' ? 0 : n;
++}
++bool Namespace(pid_t pid, struct stat &st)
++{
++    char path[64]; snprintf(path, sizeof(path), "/proc/%ld/ns/time", static_cast<long>(pid));
++    return stat(path, &st) == 0;
++}
++bool Write(const std::string &line)
++{
++    struct stat st {};
++    if (state.journal < 0 || fstat(state.journal, &st) || st.st_dev != state.file.st_dev ||
++        st.st_ino != state.file.st_ino || st.st_nlink != 1 || st.st_uid != 0 || (st.st_mode & 0777) != 0600) { return false; }
++    size_t offset = 0;
++    while (offset < line.size()) {
++        ssize_t n = write(state.journal, line.data() + offset, line.size() - offset);
++        if (n < 0 && errno == EINTR) { continue; }
++        if (n <= 0) { return false; } offset += static_cast<size_t>(n);
++    }
++    return true;
++}
++void Ack(int error)
++{
++    o579_ack a {O579_MAGIC, O579_VERSION, static_cast<uint32_t>(error), state.armed.load() ? 1U : 0U,
++        static_cast<uint32_t>(state.pid), 0, state.birth, state.produced.load(), state.drained, state.lost.load()};
++    if (state.peer >= 0 && send(state.peer, &a, sizeof(a), MSG_NOSIGNAL | MSG_DONTWAIT) != static_cast<ssize_t>(sizeof(a))) {
++        state.error = EIO; state.armed.store(false);
++    }
++}
++void Begin()
++{
++    std::ostringstream s;
++    s << "{\"kind\":\"begin579\",\"protocol\":579,\"run\":\"" << state.run
++      << "\",\"pid\":" << state.pid << ",\"birth\":" << state.birth << ",\"boot\":\"" << state.boot
++      << "\",\"uid\":" << getuid() << ",\"euid\":" << geteuid()
++      << ",\"time_dev\":" << state.ns.st_dev << ",\"time_ino\":" << state.ns.st_ino
++      << ",\"peer_pid\":" << state.peerPid << ",\"peer_birth\":" << state.peerBirth
++      << ",\"peer_uid\":0,\"peer_time_dev\":" << state.peerNs.st_dev << ",\"peer_time_ino\":" << state.peerNs.st_ino
++      << ",\"journal_dev\":" << state.file.st_dev << ",\"journal_ino\":" << state.file.st_ino
++      << ",\"source\":\"actual_renderer_read_and_HPAE_lineage\",\"onset_proven\":false}\n";
++    if (!Write(s.str())) { state.error = EIO; }
++}
++void Drain()
++{
++    uint64_t tail = state.tail.load(std::memory_order_relaxed);
++    if (tail == state.head.load(std::memory_order_acquire)) { return; }
++    const Row &r = state.rows[tail % RING];
++    std::ostringstream s;
++    s << "{\"kind\":\"row579\",\"protocol\":579,\"run\":\"" << state.run << "\",\"seq\":" << r.seq
++      << ",\"type\":" << static_cast<uint32_t>(r.kind) << ",\"cut\":" << r.cut << ",\"renderer\":" << r.renderer
++      << ",\"uid\":" << r.uid << ",\"session\":" << r.session << ",\"ring_frame\":" << r.ringFrame
++      << ",\"frames\":" << r.frames << ",\"rate\":" << r.rate << ",\"channels\":" << r.channels
++      << ",\"format\":" << r.format << ",\"before_ns\":" << r.before << ",\"after_ns\":" << r.after
++      << ",\"committed\":" << (r.committed ? "true" : "false")
++      << ",\"lineage_valid\":" << (r.spans.valid ? "true" : "false") << ",\"spans\":[";
++    for (uint32_t i = 0; i < r.spans.count; ++i) {
++        const Span &p = r.spans.spans[i]; if (i) { s << ','; }
++        s << '[' << p.cut << ',' << p.begin << ',' << p.out << ',' << p.frames << ']';
++    }
++    s << "],\"pcm_hex\":\"";
++    static constexpr char HEX[] = "0123456789abcdef";
++    for (uint32_t i = 0; i < r.size; ++i) { s << HEX[r.pcm[i] >> 4] << HEX[r.pcm[i] & 15]; }
++    s << "\",\"onset_proven\":false}\n";
++    if (r.seq != state.drained || !Write(s.str())) { state.error = EIO; }
++    ++state.drained; state.tail.store(tail + 1, std::memory_order_release);
++}
++void Seal(int reason)
++{
++    state.armed.store(false);
++    if (state.busy.load() || state.head.load() != state.tail.load()) { return; }
++    if (state.journal < 0) { return; }
++    pollfd alive {state.peerPidFd, POLLIN, 0};
++    if (state.peerPidFd < 0 || poll(&alive, 1, 0) != 0 || Birth(state.peerPid) != state.peerBirth) {
++        state.error = ESTALE;
++    }
++    std::ostringstream s;
++    s << "{\"kind\":\"end579\",\"protocol\":579,\"run\":\"" << state.run
++      << "\",\"produced\":" << state.produced.load() << ",\"drained\":" << state.drained
++      << ",\"raw_bytes\":" << state.raw.load() << ",\"lost\":" << state.lost.load()
++      << ",\"error\":" << (state.error ? state.error : reason)
++      << ",\"writer_quiescent\":true,\"onset_proven\":false}\n";
++    pollfd live {state.peerPidFd, POLLIN, 0};
++    if (state.peerPidFd < 0 || poll(&live, 1, 0) != 0 || Birth(state.peerPid) != state.peerBirth) {
++        state.error = ESTALE;
++    }
++    if (!Write(s.str()) || fsync(state.journal)) { state.error = EIO; }
++    if (close(state.journal)) { state.error = EIO; } state.journal = -1;
++    Ack(state.error ? state.error : reason);
++}
++int Request()
++{
++    o579_request r {}; int passed = -1; char control[CMSG_SPACE(sizeof(int) * 2)] {};
++    iovec iov {&r, sizeof(r)}; msghdr m {}; m.msg_iov = &iov; m.msg_iovlen = 1;
++    m.msg_control = control; m.msg_controllen = sizeof(control);
++    ssize_t n = recvmsg(state.peer, &m, MSG_DONTWAIT | MSG_CMSG_CLOEXEC);
++    if (n < 0 && (errno == EINTR || errno == EAGAIN)) { return 0; }
++    unsigned fds = 0;
++    for (cmsghdr *c = CMSG_FIRSTHDR(&m); c; c = CMSG_NXTHDR(&m, c)) {
++        if (c->cmsg_level != SOL_SOCKET || c->cmsg_type != SCM_RIGHTS || c->cmsg_len < CMSG_LEN(0)) { continue; }
++        size_t count = (c->cmsg_len - CMSG_LEN(0)) / sizeof(int); auto values = reinterpret_cast<int *>(CMSG_DATA(c));
++        for (size_t k = 0; k < count; ++k) { ++fds; if (passed < 0) { passed = values[k]; } else { close(values[k]); } }
++    }
++    int error = 0;
++    bool header = n == static_cast<ssize_t>(sizeof(r)) && !(m.msg_flags & (MSG_TRUNC | MSG_CTRUNC)) && r.magic == O579_MAGIC &&
++        r.version == O579_VERSION && r.pid == static_cast<uint32_t>(state.pid) && r.birth == state.birth;
++    if (!header) { error = EPROTO; }
++    else if (r.op == O579_DISARM && fds == 0 && !memcmp(r.run, state.run, 32) && state.journal >= 0) {
++        state.armed.store(false); return 1;
++    } else if (r.op == O579_ARM && fds == 1 && state.journal < 0 && !state.busy.load() && state.epochs < 64) {
++        for (char v : r.run) { if (!strchr("0123456789abcdef", v) || v == 0) { error = EINVAL; } }
++        for (unsigned k = 0; k < state.epochs; ++k) { if (!memcmp(state.used[k], r.run, 32)) { error = EALREADY; } }
++        struct stat st {}; int flags = fcntl(passed, F_GETFL);
++        if (fstat(passed, &st) || !S_ISREG(st.st_mode) || st.st_uid || st.st_nlink != 1 || st.st_size ||
++            (st.st_mode & 0777) != 0600 || flags < 0 || (flags & (O_APPEND | O_NONBLOCK)) ||
++            (flags & O_ACCMODE) != O_RDWR || lseek(passed, 0, SEEK_CUR) != 0) { error = EACCES; }
++        if (!error) {
++            state.journal = passed; passed = -1; state.file = st; state.error = 0;
++            memcpy(state.run, r.run, 32); state.run[32] = 0;
++            memcpy(state.used[state.epochs++], r.run, 32);
++            state.head.store(0); state.tail.store(0); state.produced.store(0); state.drained = 0; state.raw.store(0); state.lost.store(0);
++            Begin(); if (!state.error) { state.armed.store(state.epochs, std::memory_order_release); } error = state.error;
++        }
++    } else { error = EBUSY; }
++    if (passed >= 0) { close(passed); }
++    Ack(error); return header ? 0 : -1;
++}
++void *Worker(void *)
++{
++    int closing = 0;
++    while (!state.stopping.load()) {
++        while (state.tail.load() != state.head.load()) { Drain(); }
++        if (closing && !state.busy.load() && state.head.load() == state.tail.load()) { Seal(closing == 1 ? 0 : closing); closing = 0; }
++        pollfd p {state.peer < 0 ? state.listener : state.peer, POLLIN, 0};
++        int rc = poll(&p, 1, 2); if (rc < 0 && errno == EINTR) { continue; }
++        if (rc < 0) { state.error = errno; break; }
++        if (!rc) { continue; }
++        if (state.peer < 0) {
++            int fd = accept4(state.listener, nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK); if (fd < 0) { continue; }
++            ucred cred {}; socklen_t size = sizeof(cred); struct stat ns {};
++            if (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &cred, &size) || size != sizeof(cred) || cred.uid != 0 ||
++                !Namespace(cred.pid, ns) || ns.st_dev != state.ns.st_dev || ns.st_ino != state.ns.st_ino ||
++                !Birth(cred.pid)) { close(fd); continue; }
++            const uint64_t birth = Birth(cred.pid);
++#ifdef SYS_pidfd_open
++            int pidfd = static_cast<int>(syscall(SYS_pidfd_open, cred.pid, 0));
++#else
++            int pidfd = -1;
++#endif
++            pollfd live {pidfd, POLLIN, 0};
++            if (pidfd < 0 || !birth || Birth(cred.pid) != birth || poll(&live, 1, 0) != 0) {
++                if (pidfd >= 0) { close(pidfd); } close(fd); continue;
++            }
++            state.peer = fd; state.peerPid = cred.pid; state.peerBirth = birth; state.peerNs = ns;
++            state.peerPidFd = pidfd;
++        } else if (p.revents & (POLLHUP | POLLERR | POLLNVAL)) {
++            state.armed.store(false); closing = EPIPE; close(state.peer); state.peer = -1;
++            if (state.peerPidFd >= 0) { close(state.peerPidFd); state.peerPidFd = -1; }
++        } else if (p.revents & POLLIN) {
++            int result = Request(); if (result) { closing = result > 0 ? 1 : EPROTO; state.armed.store(false); }
++        }
++    }
++    state.armed.store(false);
++    while (state.busy.load()) { timespec t {0, 1000000}; nanosleep(&t, nullptr); }
++    while (state.tail.load() != state.head.load()) { Drain(); }
++    Seal(ECANCELED); if (state.peerPidFd >= 0) { close(state.peerPidFd); }
++    if (state.peer >= 0) { close(state.peer); } if (state.listener >= 0) { close(state.listener); }
++    return nullptr;
++}
++void Start()
++{
++    if (!state.head.is_lock_free() || !state.serial.is_lock_free() || !state.instances.is_lock_free()) { return; }
++    state.pid = getpid(); state.birth = Birth(state.pid); if (!state.birth || !Namespace(state.pid, state.ns)) { return; }
++    FILE *f = fopen("/proc/sys/kernel/random/boot_id", "r"); if (!f) { return; }
++    bool ok = fgets(state.boot, sizeof(state.boot), f) != nullptr; int closed = fclose(f);
++    state.boot[strcspn(state.boot, "\n")] = 0; if (!ok || closed || strlen(state.boot) != 36) { return; }
++    state.listener = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC | SOCK_NONBLOCK, 0); if (state.listener < 0) { return; }
++    sockaddr_un address {}; address.sun_family = AF_UNIX;
++    int count = snprintf(address.sun_path + 1, sizeof(address.sun_path) - 1, "ohos-audio579/%ld/%llu",
++        static_cast<long>(state.pid), static_cast<unsigned long long>(state.birth));
++    socklen_t len = static_cast<socklen_t>(offsetof(sockaddr_un, sun_path) + 1 + count);
++    if (count <= 0 || count >= static_cast<int>(sizeof(address.sun_path) - 1) ||
++        bind(state.listener, reinterpret_cast<sockaddr *>(&address), len) || listen(state.listener, 1) ||
++        pthread_create(&state.thread, nullptr, Worker, nullptr)) { close(state.listener); state.listener = -1; return; }
++    state.ready = true;
++}
++Row *Loan(Kind kind)
++{
++    const uint64_t epoch = state.armed.load(std::memory_order_acquire);
++    if (!epoch || state.pid != getpid()) { return nullptr; }
++    if (state.writer.test_and_set(std::memory_order_acquire)) { state.lost.fetch_add(1); return nullptr; }
++    state.busy.store(true);
++    uint64_t h = state.head.load(std::memory_order_relaxed), t = state.tail.load(std::memory_order_acquire);
++    if (state.armed.load() != epoch || h - t >= RING || state.produced.load() >= ROWS || state.serial.load() == UINT64_MAX) {
++        state.lost.fetch_add(1); state.busy.store(false); state.writer.clear(std::memory_order_release); return nullptr;
++    }
++    Row *r = &state.rows[h % RING];
++    r->kind = kind; r->seq = state.produced.load(); r->cut = 0; r->renderer = 0; r->ringFrame = 0;
++    r->uid = -1; r->session = r->frames = r->rate = r->channels = r->format = r->size = 0;
++    r->committed = false; r->spans.Clear(); r->before = Clock(); return r;
++}
++void Publish(Row *r)
++{
++    r->after = Clock();
++    if (!r->before || r->after < r->before || state.raw.load() > RAW_LIMIT - r->size) { state.lost.fetch_add(1); r->size = 0; }
++    state.raw.fetch_add(r->size); state.produced.fetch_add(1);
++    state.head.fetch_add(1, std::memory_order_release); state.busy.store(false); state.writer.clear(std::memory_order_release);
++}
++struct Shutdown { ~Shutdown() { if (state.ready && state.pid == getpid()) { state.stopping.store(true); pthread_join(state.thread, nullptr); } } } shutdown;
++} // namespace
++void Initialize() { pthread_once(&once, Start); }
++uint64_t NewInstance() { return state.instances.fetch_add(1) + 1; }
++void ClearRead() { readCut = {}; }
++uint64_t PrepareRead(uint64_t renderer, int32_t uid, uint32_t session, uint64_t ringFrame,
++    uint32_t frames, uint32_t rate, uint32_t channels, uint32_t format,
++    const void *first, size_t firstBytes, const void *second, size_t secondBytes)
++{
++    readCut = {};
++    Row *r = Loan(Kind::READ); if (!r) { return 0; }
++    if (!renderer || !first || (secondBytes && !second) || firstBytes > MAX_PCM || secondBytes > MAX_PCM - firstBytes) {
++        state.lost.fetch_add(1); Publish(r); return 0;
++    }
++    r->cut = state.serial.fetch_add(1) + 1; r->renderer = renderer; r->uid = uid; r->session = session;
++    r->ringFrame = ringFrame; r->frames = frames; r->rate = rate; r->channels = channels; r->format = format;
++    r->size = static_cast<uint32_t>(firstBytes + secondBytes);
++    memcpy(r->pcm.data(), first, firstBytes); if (secondBytes) { memcpy(r->pcm.data() + firstBytes, second, secondBytes); }
++    uint64_t id = r->cut; readCut = {id, uid, session, frames, false}; Publish(r); return id;
++}
++void CommitRead(uint64_t cut, bool committed)
++{
++    if (!cut || readCut.id != cut) { return; }
++    readCut.committed = committed; Row *r = Loan(Kind::READ_COMMIT); if (!r) { readCut = {}; return; }
++    r->cut = cut; r->committed = committed; Publish(r);
++}
++Spans TakeRead(int32_t uid, uint32_t session, uint32_t frames)
++{
++    Spans result;
++    if (readCut.id && readCut.committed && readCut.uid == uid && readCut.session == session && readCut.frames == frames) {
++        result.Add({readCut.id, 0, 0, frames});
++    }
++    readCut = {}; return result;
++}
++void Packet(uint64_t outputInstance, uint32_t rate, uint32_t channels, uint32_t format,
++    const Spans &spans, const void *bytes, size_t byteCount)
++{
++    Row *r = Loan(Kind::MIXED_PACKET); if (!r) { return; }
++    r->renderer = outputInstance; r->rate = rate; r->channels = channels; r->format = format; r->spans = spans;
++    if (!bytes || byteCount > MAX_PCM) { r->spans.Unknown(); state.lost.fetch_add(1); }
++    else { r->size = static_cast<uint32_t>(byteCount); memcpy(r->pcm.data(), bytes, byteCount); }
++    Publish(r);
++}
++} } }
+--- a/foundation/multimedia/audio_framework/services/audio_service/common/src/limiter/audio_limiter.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_service/common/src/limiter/audio_limiter.cpp
+@@ -92,6 +92,7 @@
+ 
+ int32_t AudioLimiter::AllocateHistoryBuffer(int32_t newAlgoFrameLen)
+ {
++    history579_.Clear();
+     if (bufHis_.capacity() < static_cast<size_t>(newAlgoFrameLen)) {
+         bufHis_.assign(newAlgoFrameLen + 1, 0);
+     } else {
+@@ -379,6 +380,28 @@
+     }
+ }
+ 
++int32_t AudioLimiter::ProcessObserved579(int32_t count, float *in, float *out,
++    const Onset579::Spans &origins, Onset579::Spans &output)
++{
++    output.Clear();
++    const int32_t ret = Process(count, in, out);
++    if (ret != SUCCESS || !origins.valid || channels_ == 0 || algoFrameLen_ <= 0 ||
++        algoFrameLen_ % channels_ != 0 || count != algoFrameLen_ * PROC_COUNT) {
++        // The odd sample-realignment branch has no frame-aligned lineage.
++        // Preserve its actual PCM behavior and refuse an anchor on that route.
++        history579_.Unknown(); output.Unknown(); return ret;
++    }
++    const uint32_t frames = static_cast<uint32_t>(algoFrameLen_) / channels_;
++    for (int32_t i = 0; i < PROC_COUNT; ++i) {
++        const uint32_t at = static_cast<uint32_t>(i) * frames;
++        // ProcessAlgo/ApplyGain* actually emitted bufHis_[0..algoFrameLen),
++        // then replaced those very history slots with this input chunk.
++        output.Append(history579_, at);
++        history579_ = origins.Slice(at, frames);
++    }
++    return ret;
++}
++
+ uint32_t AudioLimiter::GetLatency()
+ {
+     return latency_;
+--- a/foundation/multimedia/audio_framework/services/audio_service/server/include/renderer_in_server.h
++++ b/foundation/multimedia/audio_framework/services/audio_service/server/include/renderer_in_server.h
+@@ -224,6 +224,7 @@
+     int32_t CalculateCacheCount(uint32_t cacheSizeInFrame, uint32_t &cacheCount);
+     void ReportExceptionForOffload();
+ public:
++    uint64_t onsetRenderer579_ = 0;
+     AudioProcessConfig processConfig_;
+ private:
+     void OnStatusUpdateSub(IOperation operation);
+--- a/foundation/multimedia/audio_framework/services/audio_service/server/src/renderer_in_server.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_service/server/src/renderer_in_server.cpp
+@@ -17,6 +17,7 @@
+ #endif
+ 
+ #include "renderer_in_server.h"
++#include "audio_onset579.h"
+ #include <algorithm>
+ #include <chrono>
+ #include <cinttypes>
+@@ -142,6 +143,8 @@
+ RendererInServer::RendererInServer(AudioProcessConfig processConfig, std::weak_ptr<IStreamListener> streamListener)
+     : processConfig_(processConfig)
+ {
++    Onset579::Initialize(); // existing non-RT constructor, before any audio callbacks
++    onsetRenderer579_ = Onset579::NewInstance();
+     streamListener_ = streamListener;
+     managerType_ = PLAYBACK;
+     if (processConfig_.callerUid == MEDIA_UID) {
+@@ -1137,12 +1140,22 @@
+         HILOG_COMM_ERROR("[WriteData]data not enouth"));
+ 
+     ringBufferDesc.dataLength = requestDataLen;
++    // Copy the actual source frames before existing in-place fade/volume/clear.
++    // A failed copy/SetCurReadFrame is never marked as a consumed source cut.
++    const size_t onsetFirst579 = std::min(requestDataLen, ringBufferDesc.basicBufferDescs[0].bufLength);
++    const uint64_t onsetCut579 = Onset579::PrepareRead(onsetRenderer579_, processConfig_.appInfo.appUid,
++        streamIndex_, currentReadFrame, requestDataInFrame, processConfig_.streamInfo.GetEffectiveSampleRate(),
++        processConfig_.streamInfo.channels, processConfig_.streamInfo.format,
++        ringBufferDesc.basicBufferDescs[0].buffer, onsetFirst579,
++        ringBufferDesc.basicBufferDescs[1].buffer, requestDataLen - onsetFirst579);
+     ProcessFadeOutIfNeeded(ringBufferDesc, currentReadFrame, currentWriteFrame, requestDataInFrame);
+     ret = CopyDataToInputBuffer(inputData, requestDataLen, ringBufferDesc);
+     CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "input copy failed");
+     ringBufferDesc.SetBuffersValueWithSpecifyDataLen(0); // clear is needed for reuse.
+     uint64_t nextReadFrame = currentReadFrame + requestDataInFrame;
+-    return audioServerBuffer_->SetCurReadFrame(nextReadFrame, wakeFutex);
++    const int32_t onsetCommit579 = audioServerBuffer_->SetCurReadFrame(nextReadFrame, wakeFutex);
++    Onset579::CommitRead(onsetCut579, onsetCommit579 == SUCCESS);
++    return onsetCommit579;
+ }
+ 
+ int32_t RendererInServer::WriteDataInStaticMode(int8_t *inputData, size_t requestDataLen)
+--- a/third_party/alsa-lib/src/pcm/media398_onset.h
++++ b/third_party/alsa-lib/src/pcm/media398_onset.h
+@@ -39,6 +39,8 @@
+     _Atomic int live;
+     _Atomic unsigned users;
+     _Atomic uint64_t instance;
++    _Atomic uint64_t clock579_epoch, reset579_epoch;
++    _Atomic int clock579_type, clock579_mode;
+     int fd, card, device, subdevice;
+     struct stat file;
+ };
+@@ -47,6 +49,8 @@
+     struct m398_snapshot before, after;
+     int64_t accepted;
+     uint64_t requested;
++    uint64_t clock579_epoch, reset579_epoch, clock579_after_epoch, reset579_after_epoch;
++    int clock579_type, clock579_mode;
+     int error, empty_eagain, snapshot_valid;
+     unsigned bytes;
+     unsigned char pcm[M398_PCM_BYTES];
+@@ -319,10 +323,12 @@
+         "\"fd\":%d,\"dev\":%"PRIu64",\"ino\":%"PRIu64",\"rdev\":%"PRIu64",\"card\":%d,\"device\":%d,\"subdevice\":%d,"
+         "\"peer_pid\":%ld,\"peer_uid\":%ld,\"peer_gid\":%ld,\"peer_start_ticks\":%"PRIu64","
+         "\"holder_time_dev\":%"PRIu64",\"holder_time_ino\":%"PRIu64",\"peer_time_dev\":%"PRIu64",\"peer_time_ino\":%"PRIu64","
++        "\"clock579_epoch\":%"PRIu64",\"reset579_epoch\":%"PRIu64",\"clock579_type\":%d,\"clock579_mode\":%d,"
+         "\"arm_kcmp_rc\":0,\"arm_witness_closed_before_publish\":true,\"onset_proven\":false}\n",
+         (long)s->pid,s->ticks,s->boot,s->run,s->epoch,s->instance,h->fd,(uint64_t)h->file.st_dev,(uint64_t)h->file.st_ino,(uint64_t)h->file.st_rdev,
+         h->card,h->device,h->subdevice,(long)s->peer_pid,(long)s->peer_uid,(long)s->peer_gid,s->peer_ticks,
+-        (uint64_t)s->time_ns.st_dev,(uint64_t)s->time_ns.st_ino,(uint64_t)s->peer_time_ns.st_dev,(uint64_t)s->peer_time_ns.st_ino);
++        (uint64_t)s->time_ns.st_dev,(uint64_t)s->time_ns.st_ino,(uint64_t)s->peer_time_ns.st_dev,(uint64_t)s->peer_time_ns.st_ino,
++        atomic_load(&h->clock579_epoch),atomic_load(&h->reset579_epoch),atomic_load(&h->clock579_type),atomic_load(&h->clock579_mode));
+     return n>0 && n<(int)sizeof(line)?m398_line(s,line,n):EOVERFLOW;
+ }
+ static void m398_reset_epoch(struct m398_state *s,const struct m398_request *r,int chosen,uint64_t instance,
+@@ -404,10 +410,15 @@
+         "\"before_ns\":%"PRIu64",\"after_ns\":%"PRIu64",\"returned_ns\":%"PRIu64",\"appl_before\":%"PRIu64",\"appl_after\":%"PRIu64","
+         "\"hw_before\":%"PRIu64",\"hw_after\":%"PRIu64",\"state_before\":%d,\"state_after\":%d,\"accepted\":%"PRId64","
+         "\"requested\":%"PRIu64",\"tap_offset\":%"PRIu64",\"pcm_bytes\":%u,\"error\":%d,\"empty_eagain\":%d,"
++        "\"clock579_epoch\":%"PRIu64",\"reset579_epoch\":%"PRIu64",\"clock579_type\":%d,\"clock579_mode\":%d,"
++        "\"clock579_unchanged\":%d,"
+         "\"snapshot_valid\":%d,\"drain_fd_stat_rc\":%d,\"drain_fd_stat_errno\":%d,\"drain_identity\":%d,\"failed\":%d,\"onset_proven\":false}\n",
+         s->run,r->epoch,r->instance,r->seq,(long)s->pid,h->fd,r->before_ns,r->after_ns,r->returned_ns,
+         r->before.appl,r->after.appl,r->before.hw,r->after.hw,r->before.state,r->after.state,r->accepted,r->requested,r->offset,r->bytes,
+-        r->error,r->empty_eagain,r->snapshot_valid,stat_rc,stat_error,drain_identity,atomic_load(&s->failed));
++        r->error,r->empty_eagain,r->clock579_epoch,r->reset579_epoch,r->clock579_type,r->clock579_mode,
++        r->clock579_epoch!=0 && !(r->clock579_epoch&1) &&
++          r->clock579_epoch==r->clock579_after_epoch && r->reset579_epoch==r->reset579_after_epoch,
++        r->snapshot_valid,stat_rc,stat_error,drain_identity,atomic_load(&s->failed));
+     /* sink identity uses the actual post-tap size, including a failed short write.
+      * A short write causes the next identity check to fail; no success footer. */
+     if(n<=0 || n>=(int)sizeof(line) || m398_line(s,line,n))m398_fail(s,1);
+@@ -416,11 +427,15 @@
+ static void m398_seal(struct m398_state *s)
+ {
+     if(s->selected<0 || atomic_load(&s->busy) || atomic_load(&s->head)!=atomic_load(&s->tail))return;
+-    char line[1024];int n=snprintf(line,sizeof(line),
++    const struct m398_hw *h=&s->hw[s->selected];
++    char line[1536];int n=snprintf(line,sizeof(line),
+         "{\"kind\":\"end398\",\"protocol\":398,\"run\":\"%s\",\"epoch\":%"PRIu64",\"instance\":%"PRIu64","
+         "\"produced_rows\":%"PRIu64",\"drained_rows\":%"PRIu64",\"produced_pcm_bytes\":%"PRIu64",\"drained_pcm_bytes\":%"PRIu64","
++        "\"clock579_epoch\":%"PRIu64",\"reset579_epoch\":%"PRIu64",\"clock579_type\":%d,\"clock579_mode\":%d,"
+         "\"failed\":%d,\"reason_errno\":%d,\"writer_quiescent\":true,\"onset_proven\":false}\n",
+-        s->run,s->epoch,s->instance,s->produced_rows,s->drained_rows,s->produced_bytes,s->drained_bytes,atomic_load(&s->failed),s->close_error);
++        s->run,s->epoch,s->instance,s->produced_rows,s->drained_rows,s->produced_bytes,s->drained_bytes,
++        atomic_load(&h->clock579_epoch),atomic_load(&h->reset579_epoch),atomic_load(&h->clock579_type),atomic_load(&h->clock579_mode),
++        atomic_load(&s->failed),s->close_error);
+     if(n<=0 || n>=(int)sizeof(line) || m398_line(s,line,n))m398_fail(s,1);
+     int error=m398_close_one(&s->tap);if(m398_close_one(&s->journal))error=EIO;
+     if(error)m398_fail(s,1);
+@@ -555,12 +570,27 @@
+         struct m398_hw *h=&s->hw[i];struct stat st;
+         if(fstat(fd,&st) || !S_ISCHR(st.st_mode))break;
+         h->fd=fd;h->card=card;h->device=device;h->subdevice=subdevice;h->file=st;
++        atomic_store(&h->clock579_epoch,0); atomic_store(&h->reset579_epoch,0);
++        atomic_store(&h->clock579_type,-1); atomic_store(&h->clock579_mode,-1);
+         atomic_store(&h->instance,++s->next_instance);atomic_store_explicit(&h->live,1,memory_order_release);result=h;
+         if(s->selected>=0)m398_fail(s,1);break;
+     }
+     if(!result)m398_fail(s,1);
+ unlock: pthread_mutex_unlock(&s->registry);
+ done: errno=saved;return result;
++}
++static void m398_clock579(struct m398_hw *hw,int type,int mode)
++{
++    if(!hw)return;
++    uint64_t old=atomic_fetch_add_explicit(&hw->clock579_epoch,1,memory_order_acq_rel);
++    atomic_store(&hw->clock579_type,type); atomic_store(&hw->clock579_mode,mode);
++    atomic_fetch_add_explicit(&hw->clock579_epoch,1,memory_order_release);
++    if(old>UINT64_MAX-2 || (old&1))m398_fail(&m398,1);
++}
++static void m398_reset579(struct m398_hw *hw)
++{
++    if(hw && atomic_fetch_add_explicit(&hw->reset579_epoch,1,memory_order_acq_rel)==UINT64_MAX)
++        m398_fail(&m398,1);
+ }
+ /* RT region begins. Includes no IO/control primitive other than native clock. */
+ static void m398_retire_hw(struct m398_hw *hw)
+@@ -588,6 +618,9 @@
+     }
+     struct m398_record *r=&s->ring[head%M398_RING];
+     r->epoch=s->epoch;r->instance=expected;r->seq=s->produced_rows;r->offset=s->produced_bytes;
++    r->clock579_epoch=atomic_load_explicit(&hw->clock579_epoch,memory_order_acquire);
++    r->reset579_epoch=atomic_load_explicit(&hw->reset579_epoch,memory_order_acquire);
++    r->clock579_type=atomic_load(&hw->clock579_type); r->clock579_mode=atomic_load(&hw->clock579_mode);
+     r->bytes=0;r->snapshot_valid=0;loan->active=1;loan->hw=hw;loan->record=r;return 1;
+ }
+ static void m398_publish(struct m398_loan *loan,struct m398_snapshot after,const void *pcm,
+@@ -595,6 +628,8 @@
+ {
+     if(!loan->active)return;
+     struct m398_state *s=&m398;struct m398_record *r=loan->record;
++    r->clock579_after_epoch=atomic_load_explicit(&loan->hw->clock579_epoch,memory_order_acquire);
++    r->reset579_after_epoch=atomic_load_explicit(&loan->hw->reset579_epoch,memory_order_acquire);
+     r->after=after;r->requested=requested;r->accepted=accepted;r->error=original_error;r->returned_ns=returned_ns;
+     r->empty_eagain=original_error==-EAGAIN && accepted==0 && after.appl==r->before.appl;
+     int positive=original_error==0 && accepted>0;
+--- a/third_party/alsa-lib/src/pcm/pcm_hw.c
++++ b/third_party/alsa-lib/src/pcm/pcm_hw.c
+@@ -95,6 +95,8 @@
+ 
+ #ifdef MEDIA398_ONSET_DIAGNOSTIC
+ struct m398_hw;
++static void m398_clock579(struct m398_hw *hw, int type, int mode);
++static void m398_reset579(struct m398_hw *hw);
+ #endif
+ 
+ typedef struct {
+@@ -428,6 +430,9 @@
+ 		snd_checknum(PCM, "SNDRV_PCM_IOCTL_HW_PARAMS failed (%i)", err);
+ 		return err;
+ 	}
++#ifdef MEDIA398_ONSET_DIAGNOSTIC
++	m398_reset579(hw->onset398);
++#endif
+ 	params->info &= ~0xf0000000;
+ 	if (pcm->tstamp_type != SND_PCM_TSTAMP_TYPE_GETTIMEOFDAY)
+ 		params->info |= SND_PCM_INFO_MONOTONIC;
+@@ -542,6 +547,9 @@
+ 	snd_pcm_hw_t *hw = pcm->private_data;
+ 	int fd = hw->fd, err = 0;
+ 	int old_period_event = sw_get_period_event(params);
++#ifdef MEDIA398_ONSET_DIAGNOSTIC
++	int applied579 = 0;
++#endif
+ 	sw_set_period_event(params, 0);
+ 	if ((snd_pcm_tstamp_t) params->tstamp_mode == pcm->tstamp_mode &&
+ 	    (snd_pcm_tstamp_type_t) params->tstamp_type == pcm->tstamp_type &&
+@@ -572,6 +580,9 @@
+ 		snd_checknum(PCM, "SNDRV_PCM_IOCTL_SW_PARAMS failed (%i)", err);
+ 		goto out;
+ 	}
++#ifdef MEDIA398_ONSET_DIAGNOSTIC
++	applied579 = 1;
++#endif
+ 	hw->prepare_reset_sw_params = false;
+ 	if ((snd_pcm_tstamp_type_t) params->tstamp_type != pcm->tstamp_type) {
+ 		if (hw->version < SNDRV_PROTOCOL_VERSION(2, 0, 12)) {
+@@ -593,6 +604,10 @@
+ 		hw->period_event = old_period_event;
+ 	}
+  out:
++#ifdef MEDIA398_ONSET_DIAGNOSTIC
++	if (!err && applied579)
++		m398_clock579(hw->onset398, params->tstamp_type, params->tstamp_mode);
++#endif
+ 	sw_set_period_event(params, old_period_event);
+ 	return err;
+ }
+@@ -710,12 +725,18 @@
+ 			return err;
+ 		}
+ 		hw->prepare_reset_sw_params = false;
++#ifdef MEDIA398_ONSET_DIAGNOSTIC
++		m398_clock579(hw->onset398, sw_params.tstamp_type, sw_params.tstamp_mode);
++#endif
+ 	}
+ 	if (ioctl(fd, SNDRV_PCM_IOCTL_PREPARE) < 0) {
+ 		err = -errno;
+ 		snd_checknum(PCM, "SNDRV_PCM_IOCTL_PREPARE failed (%i)", err);
+ 		return err;
+ 	}
++#ifdef MEDIA398_ONSET_DIAGNOSTIC
++	m398_reset579(hw->onset398);
++#endif
+ 	return query_status_and_control_data(hw);
+ }
+ 
+@@ -728,6 +749,9 @@
+ 		snd_checknum(PCM, "SNDRV_PCM_IOCTL_RESET failed (%i)", err);
+ 		return err;
+ 	}
++#ifdef MEDIA398_ONSET_DIAGNOSTIC
++	m398_reset579(hw->onset398);
++#endif
+ 	return query_status_and_control_data(hw);
+ }
+ 
+@@ -761,6 +785,9 @@
+ 		snd_checknum(PCM, "SNDRV_PCM_IOCTL_DROP failed (%i)", err);
+ 		return err;
+ 	} else {
++#ifdef MEDIA398_ONSET_DIAGNOSTIC
++		m398_reset579(hw->onset398);
++#endif
+ 	}
+ 	return 0;
+ }

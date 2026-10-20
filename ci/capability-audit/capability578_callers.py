@@ -17,7 +17,7 @@ from capability578_owned_io import reference, require
 from sign_certificate_probe import sign
 
 FAMILIES = ('apps_ui578', 'communications578', 'system_services578', 'settings_idle579', 'apps_providers579',
-            'livecaptions579', 'apn579', 'apps_paired579', 'mms_share579')
+            'livecaptions579', 'apn579', 'apps_paired579', 'mms_share579', 'calendar579')
 
 
 def compiled_fields_match(actual, expected):

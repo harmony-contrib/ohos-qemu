@@ -1,6 +1,6 @@
 {
   "schema": "qemu-only-batched-status579/v1",
-  "updated_utc": "2026-10-20T22:57:44.633544+00:00",
+  "updated_utc": "2026-10-20T23:17:14.579512+00:00",
   "acceptance": "only newly packaged actual QEMU business/boundary/regression/cleanup observations can close requirements",
   "base_source_commit": "db360951a13ce07c7e561d71344a34b6109b10cf",
   "completed_native_attempt": {
@@ -158,5 +158,17 @@
     "provider_policy": "Four precise partial Location/Bluetooth positive backend boundaries; whole IDs remain in runtime acceptance",
     "host_tests_executed": false,
     "actual_QEMU_runtime_pass": false
+  },
+  "latest_calendar_and_onset_batch": {
+    "parent_commit": "5794511",
+    "calendar_product": "18 actual source files; error propagation, provider-authorized revision snapshots and atomic mutation, actual DataShare subscriptions, read-only SA3204 future reminder queue",
+    "calendar_root_fix": "SDK26 optional undefined filter/eventKey accepted without weakening wrong-type/null boundaries",
+    "calendar_resources": "same original Authority and first userdata inode across two real same-archive boots; main guest and resource owners are not replaced",
+    "onset_product": "27 actual files across AudioFramework, ALSA and driver; real source-frame/mixed-packet lineage, accepted prefixes and actual same-OFD MONOTONIC timestamp mode",
+    "source_publication": "Root composed existing exact rollback transactions and retained complete ancestor guards",
+    "runtime_inputs": "Calendar and onset private source-kit business callers still being completed; no product success claimed",
+    "host_tests_executed": false,
+    "actual_QEMU_runtime_pass": false,
+    "first_artifact_behavior_gate_passed": false
   }
 }

@@ -1,0 +1,81 @@
+{
+  "schema": "guarded-product-source-vector579/v1",
+  "projects": {
+    "applications/standard/calendardata": "f922427ca0dc20895a0e254ae41382e5b03299a4",
+    "base/notification/distributed_notification_service": "08a878a934511503bca88d3d69c686cc283c198c"
+  },
+  "files": {
+    "applications/standard/calendardata/calendarmanager/napi/include/calendar_napi.h": [
+      "feb38d325f6a2b77daea6bfa2ea6765dd49d803602f09cdef1b232b301b9e5ed",
+      "ddb65b2867515aefd5ee2cd564a16ee00140bc8f393b642914047fd70892ec8d"
+    ],
+    "applications/standard/calendardata/calendarmanager/napi/src/calendar_napi.cpp": [
+      "845238618114fad82dd02ad7574178af9bf6cb9ded45e5941d5f8f13509cb0e0",
+      "f812f2fe1474130a2471b8f961e3992d1d5ef5013818cbe8c4ddded43a770cc3"
+    ],
+    "applications/standard/calendardata/calendarmanager/native/include/native_calendar.h": [
+      "51ca701d75f130f5078f5310efc09a249df6e6e30f6cbfecf965cb8e01510da4",
+      "383b11aa0f951a36c08fe43cf3e44636c6489b8a56e3b03a6a3d25bf54e8ffa2"
+    ],
+    "applications/standard/calendardata/calendarmanager/native/src/native_calendar.cpp": [
+      "7ce15879c923441ee7ea211d02c2f8109cc16eea920b3a29735697d5fcf145d4",
+      "1485c9da40c830bbfe5b277e0cb716a6d1d739a2de154c16ea1ff0fba96e7606"
+    ],
+    "applications/standard/calendardata/datamanager/src/main/ets/processor/events/ConditionalEventMutation.ets": [
+      null,
+      "186b4dce4970c8425749cecd8d56daa8707d2b0a48f7f0515408163146aa6ad2"
+    ],
+    "applications/standard/calendardata/datamanager/src/main/ets/processor/events/EventsProcessor.ets": [
+      "9e6852677a4114c91345514bf979ea37a6fecaff8b0f3ccfb68d458a05d8fe03",
+      "c585bc289ad44cfc83ad8e23a3dcbb165e0de24afda41ad6f3d4016302458c67"
+    ],
+    "applications/standard/calendardata/datamanager/src/main/ets/utils/CalendarDataHelper.ets": [
+      "004ae04f45b7f37f931b312accde5ba608655c1689b440acf9d04c88aa4b9f0d",
+      "b0593462c26b505d74c338514c3d749b9a85eaedaea7078635d75e39809f3a9b"
+    ],
+    "applications/standard/calendardata/datamanager/src/main/ets/utils/CalendarMutationSchema.ets": [
+      null,
+      "7fff45170f1bd4988fbe7c2ddeedf21cf2e92a6c024080af01eaaa2193e93804"
+    ],
+    "applications/standard/calendardata/entry/src/main/ets/MainAbility/MainAbility.ets": [
+      "ada4728994501933eda37db97b7d75cf5c989394db6e39b3ebbe3c40f5db328b",
+      "8b673c964c2cb61cab39563d1775a965c509f437406676efd22f475de3be6c58"
+    ],
+    "applications/standard/calendardata/entry/src/main/ets/calendar/CalendarAtomic.ets": [
+      null,
+      "a045012a7fbeba9a75855e55e1e5c64405335c4719d0a3a9f891b6fca139a987"
+    ],
+    "applications/standard/calendardata/entry/src/main/ets/calendar/CalendarBusinessController.ets": [
+      "6f449f25261bbbdf9fa4c63a1a1151720528095dd8226d8fd614062239682dfb",
+      "449b8dd135c08a46b9fbc691121fcb9a21dd0678216e459596373302269bc96d"
+    ],
+    "applications/standard/calendardata/entry/src/main/ets/calendar/CalendarChangeSubscription.ets": [
+      null,
+      "752a681424dbf27b96a745b55d116a903f1f51e3ad2e84dbaf9594c7205a028d"
+    ],
+    "applications/standard/calendardata/entry/src/main/ets/pages/index.ets": [
+      "fa7dff6f63d47401de32869f69d95c23ba4040dac0951156c1072474e9240709",
+      "bef14e9fb24e29e626bc4c5d1bd923d743a38603918a8741ec0bf1044a7aeae8"
+    ],
+    "applications/standard/calendardata/entry/src/main/ets/reminder/CalendarReminderReader.ets": [
+      "560395625990d7172e2bfd2643d0f14acbca05b19a4ae267160ef6e12a13b246",
+      "dd3e1ea64d358f848f047f17ee2cd77c3343f4e34964e04886588d311040967d"
+    ],
+    "base/notification/distributed_notification_service/services/reminder/include/reminder_agent_service.h": [
+      "a2759f68c074b58a0d110b79c517326f76c9beb3142d588f057813259df5b849",
+      "299422c2d011108436c1fa5209f05e80b6b91443f59c09497ee3d4926eb9e978"
+    ],
+    "base/notification/distributed_notification_service/services/reminder/include/reminder_data_manager.h": [
+      "ffaf5321ec0df19da759bc48e1cc45b2d4e9dc7583854078c498df745bd15374",
+      "9146a3f690740bc8042c90c834d45528f7a074807d631b8dc332d940009285e6"
+    ],
+    "base/notification/distributed_notification_service/services/reminder/src/reminder_agent_service.cpp": [
+      "db8e4eb7417ea072084e2b1910c91fcae3364b04a3687ddbcf523f860c2b86e5",
+      "b06bb9aecd28df470373a4349873f5b021376ddadba564deac566ebc57e9d891"
+    ],
+    "base/notification/distributed_notification_service/services/reminder/src/reminder_data_manager_inner.cpp": [
+      "8a5db12b79aac4e29ed64bf6aa9bf0a7cb5f686367143f34075c5f0ceed759d6",
+      "7714a71a304bdd6068d9ea96b89bec2d246051d9eac15829c53d1af7b583d477"
+    ]
+  }
+}

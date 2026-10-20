@@ -1,0 +1,13 @@
+{
+  "schema": "root-audio579-atomic-source-composition/v1",
+  "frozen_delivery": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-audio-onset579-remaining-candidate/VECTOR-PRODUCT.json",
+    "sha256": "c3afd808a8c66dd772f9ecfc35353f826a26fbd21e84ddcb7ef15bdf22e0119e"
+  },
+  "product_payloads": "all original 27 final bytes retained",
+  "root_change": "publish via existing exact inode-preserving rollback transaction; four legacy projections retained",
+  "generated_patch_sha256": "99df663c433629297f52e9040ec86d9ee0649356b353769493d036b28a14eda9",
+  "helper_after_sha256": "46e7feab087fa5df34df3e098eacb781dad067b6d36ab1ccace367c4a6abbf66",
+  "host_tests_executed": false,
+  "runtime_pass": false
+}

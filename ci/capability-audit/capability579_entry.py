@@ -11,10 +11,11 @@ SOURCE_INPUTS = (
     'capability579_entry.py', 'capability578_stage.py', 'capability578_owned_io.py',
     'capability578_callers.py', 'assemble_capability579_inputs.py',
     'export_capability579_from_guest.py', 'capability579_mms_provider.py',
+    'capability579_calendar_integration.py', 'capability579_calendar_owner.py',
 )
 
 
-def install(children, request_ref, *, paired_stage):
+def install(children, request_ref, *, paired_stage, calendar_phase1, calendar_phase2):
     canonical = ROOT / 'ci/capability-audit'
     for name in SOURCE_INPUTS:
         path = canonical / name
@@ -26,6 +27,8 @@ def install(children, request_ref, *, paired_stage):
                 'only the fixed canonical capability entry modules may be loaded')
     ref = checked_ref(request_ref)
     require(callable(paired_stage), 'fixed root source-kit paired implementation required')
+    require(callable(calendar_phase1) and callable(calendar_phase2),
+            'fixed reviewed Calendar phase implementations required')
     value = json_ref(ref)
     require(type(value) is dict and set(value) == {'schema', 'package', 'services', 'native_export',
         'caption_runtime_data', 'caption_product_assets', 'permission_ui', 'recipes_root', 'profile'} and
@@ -40,4 +43,15 @@ def install(children, request_ref, *, paired_stage):
         owner.capability579_export_factory = factory
         return factory(owner, resources)
 
-    install_on_original_children(children, deferred_inputs=deferred, after_suite=paired_stage)
+    from capability579_calendar_integration import run_held_phase1, run_after_main
+
+    def held(owner, resources, inputs, **context):
+        return run_held_phase1(owner, resources, inputs, phase1=calendar_phase1, **context)
+
+    def after(owner, resources, inputs):
+        calendar = run_after_main(owner, resources, inputs, phase2=calendar_phase2)
+        paired = paired_stage(owner, resources, inputs)
+        return {'schema': 'actual-capability579-post-main-stages/v1', 'calendar': calendar, 'paired': paired,
+                'first_artifact_behavior_gate_passed': False}
+
+    install_on_original_children(children, deferred_inputs=deferred, held_stage=held, after_suite=after)

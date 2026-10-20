@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 from guarded_source_vector579 import apply
+from calendar_lifecycle579 import rewind_if_final as rewind_calendar
 
 PATCHES = Path(__file__).resolve().parents[1]
 COMPONENTS = (
@@ -23,6 +24,7 @@ def prepare(root):
     # The caller is the original serialized product build. These exact reverse
     # transactions precede the original guards, then the normal hooks reapply
     # the complete final vector before GN/compilation. Unknown/mixed bytes fail.
+    rewind_calendar(root)
     for relative, patch, count in COMPONENTS:
         component = PATCHES / relative
         value = json.loads((component / 'source_states.json').read_text())
