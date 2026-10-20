@@ -54,6 +54,9 @@ HELPERS = {
 COMMUNICATION_HELPER_NAMES = ('communications578_permission_controller', 'communications578_at_peer')
 SETTINGS_HELPER_NAMES = ('settings_idle579_napi',)
 WIFI_HELPER_NAMES = ('apps579_wifi_peer',)
+PRODUCTION_HELPER_NAMES579 = ('audio_haptic_sampler', 'audio_observation_clock', 'calendar_runtime_observer',
+    'gnss_existing_sa_dump', 'alsa_inject', 'audio_capture_token', 'netlink_snapshot',
+    'apn579_modem_peer', 'apps_paired579_net')
 C_ABI_GUARD = '/* C helper retains actual C GN flags; no C++ ABI assertion. */\n'
 ABI_GUARD = '''#include <string>
 #include <type_traits>
@@ -73,6 +76,12 @@ def helper_spec(name):
     """
     if name in HELPERS:
         return HELPERS[name]
+    if name in PRODUCTION_HELPER_NAMES579:
+        from production579_native import helper_recipes
+        recipes = helper_recipes()
+        if set(recipes) != set(PRODUCTION_HELPER_NAMES579):
+            raise ValueError('complete explicit original-kind and delivered579 recipes required')
+        return recipes[name]
     if name in WIFI_HELPER_NAMES:
         from apps_providers579_wifi_native import helper_recipes
         recipes = helper_recipes()
@@ -511,6 +520,15 @@ class Builder:
             self.report['settings_native_recipe'] = self.remember(HERE / 'settings_idle579_native.py', source=False)
         if set(helpers) & set(WIFI_HELPER_NAMES):
             self.report['wifi_native_recipe'] = self.remember(HERE / 'apps_providers579_wifi_native.py', source=False)
+        if set(helpers) & set(PRODUCTION_HELPER_NAMES579):
+            from production579_native import recipe_sources
+            self.report['production579_native_recipes'] = [self.remember(p, source=False) for p in recipe_sources()]
+            if set(helpers) & {'audio_haptic_sampler', 'audio_observation_clock'}:
+                self.report['audio_haptic_extension'] = self.remember(HERE / 'batch_media_audio_haptic_build_sampler.py', source=False)
+            if 'calendar_runtime_observer' in helpers:
+                self.report['calendar_runtime_extension'] = self.remember(HERE / 'batch_system_calendar_runtime_helper.py', source=False)
+            if 'gnss_existing_sa_dump' in helpers:
+                self.report['gnss_trace_extension'] = self.remember(HERE / 'batch_system_gnss_trace_helper.py', source=False)
         self.environment = dict(os.environ, LC_ALL='C', LC_CTYPE='C', LANG='C', TMPDIR=str(self.output / 'tmp'))
         for key in ('CPATH', 'C_INCLUDE_PATH', 'CPLUS_INCLUDE_PATH', 'OBJC_INCLUDE_PATH',
                     'LIBRARY_PATH', 'COMPILER_PATH', 'GCC_EXEC_PREFIX', 'CFLAGS', 'CXXFLAGS', 'LDFLAGS'):
@@ -669,11 +687,17 @@ class Builder:
         v['flags'] = compile_flags(lines[0], driver, (self.root / spec['source']).resolve(), self.build)
         v['selected_shared_dependencies'] = selected_shared_dependencies(text)
         v['actual_command'] = lines[0]; v['graph'] = self.remember(graph); v['object_target'] = spec['object']
+        if name.rpartition('-')[0] in PRODUCTION_HELPER_NAMES579:
+            from production579_native import anchor_contract
+            v = anchor_contract(self, spec, name, v)
         return v
 
     def check_elf(self, name, binary, direct, row):
         """Shared strict contract for fresh builds and immutable artifact rechecks."""
         spec = helper_spec(name)
+        if spec.get('production579_elf_contract') is not None:
+            from production579_native import check_elf
+            return check_elf(self, name, binary, direct, row, spec['production579_elf_contract'])
         shared = spec.get('kind') == 'shared_napi'
         row['elf'] = elf_header(binary, executable=not shared, shared=shared)
         if shared and elf_soname(binary) != spec['output_basename']:
@@ -896,8 +920,13 @@ class ExistingVerifier(Builder):
         if self.artifact_origin is None or str(self.artifact_origin) == '/':
             raise ValueError('original complete command logs absent')
         known = (set(HELPERS) | (set(old.get('helpers', {})) &
-            (set(COMMUNICATION_HELPER_NAMES) | set(SETTINGS_HELPER_NAMES) | set(WIFI_HELPER_NAMES))))
-        allowed_fixtures = {(HERE / 'fixtures' / helper_spec(name)['fixture']).resolve() for name in known}
+            (set(COMMUNICATION_HELPER_NAMES) | set(SETTINGS_HELPER_NAMES) | set(WIFI_HELPER_NAMES) |
+             set(PRODUCTION_HELPER_NAMES579))))
+        allowed_fixtures = {Path(helper_spec(name).get('source_file',
+            HERE / 'fixtures' / helper_spec(name)['fixture'])).resolve() for name in known}
+        if known & set(PRODUCTION_HELPER_NAMES579):
+            from production579_native import recipe_sources
+            allowed_fixtures.update(p.resolve() for p in recipe_sources())
         if known & set(COMMUNICATION_HELPER_NAMES):
             allowed_fixtures.add((HERE / 'communications578_native.py').resolve())
         if known & set(SETTINGS_HELPER_NAMES):
@@ -1005,7 +1034,7 @@ class ExistingVerifier(Builder):
                 raise ValueError('original private compile/link/ELF artifact binding mismatch')
             if old['private_source_sha256'] != old['source']['sha256'] or old['source'] != self.previous['inputs'].get(old['source']['path']):
                 raise ValueError('original fixture/private source hash binding mismatch')
-            if old['source']['path'] != str((HERE / 'fixtures' / spec['fixture']).resolve()):
+            if old['source']['path'] != str(Path(spec.get('source_file', HERE / 'fixtures' / spec['fixture'])).resolve()):
                 raise ValueError('original helper does not use current known fixture')
             row['reused_artifacts'] = {
                 'source': self.bound_artifact(source, old['source']['sha256']),
@@ -1042,6 +1071,8 @@ class ExistingVerifier(Builder):
                 row.update(installed_runtime_profile=old['installed_runtime_profile'],
                            actual_link_input_sonames=old['actual_link_input_sonames'])
                 for soname in old['DT_NEEDED']: runtime_link_records(row, soname)
+            if name in PRODUCTION_HELPER_NAMES579:
+                row.update(source=old['source'], private_source_sha256=old['private_source_sha256'])
             self.check_elf(name, Path(row['reused_artifacts']['binary']['path']), direct, row)
             row.update(status='pass_compile_link_ONLY', binary=row['reused_artifacts']['binary']['path'],
                 binary_sha256=row['reused_artifacts']['binary']['sha256'])
@@ -1055,7 +1086,7 @@ def main():
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--product', choices=[PRODUCT], required=True)
-    parser.add_argument('--helper', choices=tuple(HELPERS) + COMMUNICATION_HELPER_NAMES + SETTINGS_HELPER_NAMES + WIFI_HELPER_NAMES, action='append',
+    parser.add_argument('--helper', choices=tuple(HELPERS) + COMMUNICATION_HELPER_NAMES + SETTINGS_HELPER_NAMES + WIFI_HELPER_NAMES + PRODUCTION_HELPER_NAMES579, action='append',
                         help='Repeat to select; default original helpers only; communication helpers require explicit selection')
     parser.add_argument('--plan-only', action='store_true', help='Read/query existing GN only; never clang/build GN')
     parser.add_argument('--verify-existing', type=Path, help='Read-only original build.json; no Ninja/compiler/linker invocation')

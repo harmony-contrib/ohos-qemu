@@ -64,10 +64,17 @@ def verify_prebuilt(root, bundle, scratch, commands):
            'stdout': completed.stdout, 'stderr': completed.stderr}
     commands.append(row)
     text = completed.stdout + completed.stderr
-    required = ('verify codesign success', 'Digest verify result: true',
-                'verify permission sign success', 'verify-app success')
+    required = ('verify codesign success', 'Digest verify result: true', 'verify-app success')
+    # The pinned official Portal/Media/DND inputs can use the original v2
+    # signing block. The real signer verifies that block but emits the v3
+    # permission-sign marker only for v3. Its CMS profile is authenticated
+    # below and its distribution certificate must still match the app leaf.
+    profile_verified = ('verify permission sign success' in text or
+        re.search(r'version is: 2, number of block is: 1\b', text) is not None and
+        'verify: Verify success' in text)
     leaf = re.search(r'certificate\s*#0\b(?:(?!certificate\s*#\d).)*?SHA256:\s*([A-Fa-f0-9:]{64,95})', text, re.S)
-    if completed.returncode or not all(s in text for s in required) or not leaf or not leaf_file.is_file():
+    if (completed.returncode or not all(s in text for s in required) or not profile_verified or
+            not leaf or not leaf_file.is_file()):
         raise ValueError('actual provider cryptographic input verification failed: ' + bundle)
     signature = leaf[1].replace(':', '').upper()
     if not re.fullmatch('[A-F0-9]{64}', signature):

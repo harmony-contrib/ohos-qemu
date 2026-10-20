@@ -122,6 +122,10 @@ def run_on_owner(owner, inputs_ref, resources, **context):
         resources.append(io)  # Retain intent before a callback can open anything.
         io.environment.update(communications578_services=inputs['communications_services'],
                               permission_allow_text=inputs['permission_allow_text'])
+        if group == 'apps' and case == 'apn':
+            # Keep the Apps provider package's original exact three keys.
+            # Only the fixed virtual-SIM wrapper consumes this separate data.
+            io.apn579_native_helper = inputs['native_helpers']['apn579']
         if group == 'providers':
             package['native_helpers'] = inputs['native_helpers']
             # Only actual already-completed same-guest family documents can
@@ -250,6 +254,10 @@ def run_on_owner(owner, inputs_ref, resources, **context):
         bindings = {}
 
         def apps(io, c=case):
+            if c == 'apn':
+                from apn579_owned_runtime import run as run_apn_with_modem
+                return run_apn_with_modem(io, {'case': c, 'output': str(io.output / 'runtime'),
+                    'ui_plan': inputs['ui_plans'][c], 'full_blink': True}, bindings)
             bindings.update(bind_apps(io))
             return run_apps(guest, bindings, {'case': c, 'output': str(io.output / 'runtime'),
                 'ui_plan': inputs['ui_plans'].get(c), 'full_blink': True})
@@ -395,13 +403,37 @@ def run_on_owner(owner, inputs_ref, resources, **context):
     return report
 
 
-def install_on_original_children(children, inputs_ref):
+def install_on_original_children(children, inputs_ref=None, *, deferred_inputs=None, after_suite=None):
     """Add a fixed same-Owner hook; keep original suite validation and finish."""
-    data_file(inputs_ref)
+    require((inputs_ref is None) != (deferred_inputs is None),
+            'one immutable input Ref or fixed root deferred producer required')
+    if inputs_ref is not None:
+        data_file(inputs_ref)
+    else:
+        require(callable(deferred_inputs), 'fixed source-pinned root input producer required')
+    require(after_suite is None or callable(after_suite), 'fixed root post-suite implementation required')
     original_suite_function = children.suite_function
     require(getattr(original_suite_function, '__self__', None) is children,
             'original bound suite verifier required')
-    installed = {'owner': None, 'resources': []}
+    installed = {'owner': None, 'resources': [], 'inputs': inputs_ref, 'resolving': False}
+
+    def resolve_inputs(owner):
+        owner.held_binding(owner.vm)
+        if installed['inputs'] is None:
+            require(not installed['resolving'] and installed['owner'] is owner,
+                    'one nonrecursive producer on the original held Owner required')
+            installed['resolving'] = True
+            try:
+                actual = deferred_inputs(owner, installed['resources'])
+                require(type(actual) is dict and set(actual) == {'path', 'sha256'},
+                        'actual deferred producer must return an immutable input Ref')
+                data_file(actual)
+                read_inputs(actual, owner)
+                installed['inputs'] = dict(actual)
+            finally:
+                installed['resolving'] = False
+        read_inputs(installed['inputs'], owner)
+        return installed['inputs']
 
     def suite_function(original):
         canonical = original_suite_function(original)
@@ -445,7 +477,7 @@ def install_on_original_children(children, inputs_ref):
                             'one original live Knowledge actor requires fresh prepared consumers')
                     guest = owner.vm
                     owner.held_binding(guest)
-                    read_inputs(inputs_ref, owner)
+                    resolve_inputs(owner)
                     key = 'QEMU_TEST_APPS579_KNOWLEDGE_ARTIFACTS'
                     child_environment = dict(owner.env if env is None else env)
                     require(key not in child_environment, 'untrusted prior Photos artifact override')
@@ -473,11 +505,25 @@ def install_on_original_children(children, inputs_ref):
                 # The original blink batch is already complete at this seam.
                 # Collect all safely cleaned additional cases even if Graphics
                 # subsequently records an independent business failure.
-                run_on_owner(owner, inputs_ref, installed['resources'], **context)
+                run_on_owner(owner, resolve_inputs(owner), installed['resources'], **context)
                 return owned_graphics3d_hook(**context)
 
-            return canonical(args, owned_command=command_with_knowledge_inputs, owned_guest_factory=owned_guest_factory,
-                owned_select_hook=owned_select_hook, owned_graphics3d_hook=graphics_and_capabilities)
+            def select_with_package_inputs(**context):
+                # BMS and the original fresh guest are ready here. Export the
+                # actual installed system HAPs before Share/MMS or Knowledge
+                # consumers need their immutable package input descriptors.
+                resolve_inputs(owner)
+                return owned_select_hook(**context)
+
+            result = canonical(args, owned_command=command_with_knowledge_inputs, owned_guest_factory=owned_guest_factory,
+                owned_select_hook=select_with_package_inputs, owned_graphics3d_hook=graphics_and_capabilities)
+            if after_suite is not None:
+                require(installed['inputs'] is not None, 'paired stage needs the actual first guest input export')
+                pair = after_suite(owner, installed['resources'], installed['inputs'])
+                require(type(pair) is dict and pair.get('first_artifact_behavior_gate_passed') is False,
+                        'actual paired observations cannot replace the complete first-artifact gate')
+                (owner.output / 'paired579-after-suite.json').write_text(json.dumps(pair, indent=2) + '\n')
+            return result
 
         return full
 
