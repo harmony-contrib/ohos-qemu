@@ -1,0 +1,27 @@
+--- a/applications/standard/hap/BUILD.gn
++++ b/applications/standard/hap/BUILD.gn
+@@ -260,11 +260,19 @@
+   subsystem_name = "applications"
+ }
+ 
+-ohos_prebuilt_etc("CommunicationSetting_hap") {
+-  source = hap_src_dir + "CommunicationSetting.hap"
+-  module_install_dir = "app/com.ohos.communicationsetting"
+-  part_name = "prebuilt_hap"
+-  subsystem_name = "applications"
++if (defined(product_name) &&
++    (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++     product_name == "x86_64_virt")) {
++  group("CommunicationSetting_hap") {
++    deps = [ "//applications/standard/call/CommunicationSetting:communicationsetting_hap" ]
++  }
++} else {
++  ohos_prebuilt_etc("CommunicationSetting_hap") {
++    source = hap_src_dir + "CommunicationSetting.hap"
++    module_install_dir = "app/com.ohos.communicationsetting"
++    part_name = "prebuilt_hap"
++    subsystem_name = "applications"
++  }
+ }
+ 
+ ohos_prebuilt_etc("CallRecorder_hap") {

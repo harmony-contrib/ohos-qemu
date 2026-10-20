@@ -1,0 +1,17 @@
+{
+  "scope": "QEMU-only source candidate; NOT runtime acceptance",
+  "projects": {
+    "vendor/ohemu": "b56c5a95ec590543691278b85afe9fe228744163",
+    "base/telephony/core_service": "504dcba74da128ed446967e328e5c7162bfebbe2"
+  },
+  "files": {
+    "vendor/ohemu/virt/hdf_config/uhdf/device_info.hcs": [
+      "ba1f175276b5846425c6b28cd189e0d2304f026e57a312755de6e31c9e5a3a0f",
+      "7be7618204237cb064e21559cced598a4fe82445557998aebc1244424e4e1229"
+    ],
+    "base/telephony/core_service/services/etc/param/telephony.para": [
+      "86b07bf0dddd586797cdc3ce928fe7247da1e1c312f45b52dcdd65de17eea984",
+      "98d29ef2c9de11402fe80f47fb9968e2eeae4eaf05559c7e19674adf85cc222c"
+    ]
+  }
+}

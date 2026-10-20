@@ -1,0 +1,350 @@
+diff --git a/applications/standard/call/CommunicationSetting/BUILD.gn b/applications/standard/call/CommunicationSetting/BUILD.gn
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/call/CommunicationSetting/BUILD.gn
+@@ -0,0 +1,21 @@
++# Copyright (c) 2026 Harmony Contrib
++# SPDX-License-Identifier: Apache-2.0
++import("//build/ohos.gni")
++
++# Compile the complete fixed CommunicationSetting application; never reuse its
++# prebuilt ABC after changing its exported policy protocol.
++ohos_app("communicationsetting_hap") {
++  deps = []
++  certificate_profile = "signature/CommunicationSetting.p7b"
++  hap_name = "CommunicationSetting"
++  part_name = "prebuilt_hap"
++  subsystem_name = "applications"
++  module_install_dir = "app/com.ohos.communicationsetting"
++  sdk_home = "//prebuilts/ohos-sdk/linux"
++  sdk_type_name = [ "sdk.dir" ]
++  assemble_type = "assembleHap"
++  build_level = "module"
++  js_build_mode = "release"
++  build_modules = [ "entry" ]
++  hap_list = [ "CommunicationSetting-entry-default-unsigned:CommunicationSetting" ]
++}
+diff --git a/applications/standard/call/CommunicationSetting/build-profile.json5 b/applications/standard/call/CommunicationSetting/build-profile.json5
+--- a/applications/standard/call/CommunicationSetting/build-profile.json5
++++ b/applications/standard/call/CommunicationSetting/build-profile.json5
+@@ -1,63 +1,9 @@
+ {
+   "app": {
+-    "signingConfigs": [
+-      {
+-        "name": "release",
+-        "type":"OpenHarmony",
+-        "material": {
+-          "storeFile": "signature/OpenHarmony.p12",
+-          "storePassword": "00000016279AC68AA52A520D5DCF42D3E1CDF2FF13CB8CDC70218C2BF71B186C0C3308C570E0",
+-          "keyAlias": "OpenHarmony Application Release",
+-          "keyPassword": "00000016666551D5379998742624B8B28653CE4D38C088D251096ECAA8941E89BDD8E814DE42",
+-          "signAlg": "SHA256withECDSA",
+-          "profile": "signature/CommunicationSetting.p7b",
+-          "certpath": "signature/OpenHarmony.cer"
+-        }
+-      }
+-    ],
+-    "products": [
+-      {
+-        "name": "default",
+-        "signingConfig": "release",
+-        "compileSdkVersion": "26.0.0",
+-        "compatibleSdkVersion": 23,
+-        "runtimeOS": "OpenHarmony",
+-        "targetSdkVersion": 23
+-      }
+-    ],
+-    "buildModeSet": [
+-      {
+-        "name": "debug"
+-      },
+-      {
+-        "name": "release"
+-      }
+-    ]
++    "products": [{ "name": "default", "compileSdkVersion": "26.0.0",
++      "compatibleSdkVersion": 23, "targetSdkVersion": 23, "runtimeOS": "OpenHarmony" }],
++    "buildModeSet": [{ "name": "debug" }, { "name": "release" }]
+   },
+-  "modules": [
+-    {
+-      "name": "entry",
+-      "srcPath": "./entry",
+-      "targets": [
+-        {
+-          "name": "default",
+-          "applyToProducts": [
+-            "default"
+-          ]
+-        }
+-      ]
+-    },
+-    {
+-      "name": "wearable_communicationsetting",
+-      "srcPath": "./product/wearable",
+-      "targets": [
+-        {
+-          "name": "default",
+-          "applyToProducts": [
+-            "default"
+-          ]
+-        }
+-      ]
+-    }
+-  ]
+-}
+\ No newline at end of file
++  "modules": [{ "name": "entry", "srcPath": "./entry",
++    "targets": [{ "name": "default", "applyToProducts": ["default"] }] }]
++}
+diff --git a/applications/standard/call/CommunicationSetting/entry/src/main/ets/entryability/NetAccessPolicyUIExtension.ets b/applications/standard/call/CommunicationSetting/entry/src/main/ets/entryability/NetAccessPolicyUIExtension.ets
+--- a/applications/standard/call/CommunicationSetting/entry/src/main/ets/entryability/NetAccessPolicyUIExtension.ets
++++ b/applications/standard/call/CommunicationSetting/entry/src/main/ets/entryability/NetAccessPolicyUIExtension.ets
+@@ -43,7 +43,16 @@
+   onSessionCreate(want: Want, session: UIExtensionContentSession) {
+     this.fetchSystemFontSizeScale();
+     let storage: LocalStorage = new LocalStorage();
+-    let appUid: number = want.parameters?.appUid as number;
++    // AMS overwrites this target-specific value using the validated direct caller token.
++    // appUid remains a request, never an authority to edit another application.
++    const callerUid = want.parameters?.['ohos.net.policy.callerUid'] as number;
++    const appUid = want.parameters?.appUid as number;
++    if ((want.deviceId !== undefined && want.deviceId.length > 0) ||
++      !Number.isInteger(callerUid) || callerUid < 0 || !Number.isInteger(appUid) || appUid !== callerUid) {
++      LogUtil.error(TAG, 'Network policy caller identity mismatch');
++      session.terminateSelf();
++      return;
++    }
+     storage.setOrCreate('session', session);
+     storage.setOrCreate('appUid', appUid);
+     session.loadContent('pages/NetAccessPolicyDiagPage', storage);
+diff --git a/applications/standard/call/CommunicationSetting/entry/src/main/ets/pages/NetAccessPolicyDiagPage.ets b/applications/standard/call/CommunicationSetting/entry/src/main/ets/pages/NetAccessPolicyDiagPage.ets
+--- a/applications/standard/call/CommunicationSetting/entry/src/main/ets/pages/NetAccessPolicyDiagPage.ets
++++ b/applications/standard/call/CommunicationSetting/entry/src/main/ets/pages/NetAccessPolicyDiagPage.ets
+@@ -41,6 +41,7 @@
+   @StorageProp('fontSizeScale') fontSizeScale: number = 0;
+   controller: CustomDialogController
+   storage = LocalStorage.getShared();
++  private committing: boolean = false;
+ 
+   @Builder
+   wifiOnlyPart() {
+@@ -82,7 +83,7 @@
+             left: { anchor: '__container__', align: HorizontalAlign.Start },
+             right: { anchor: 'dividerCenter', align: HorizontalAlign.Start }
+           })
+-          .id('notAllow')
++          .id('net-policy-deny')
+ 
+         Button($r('app.string.allow'))
+           .onClick(() => {
+@@ -94,7 +95,7 @@
+             left: { anchor: 'dividerCenter', align: HorizontalAlign.End },
+             right: { anchor: '__container__', align: HorizontalAlign.End }
+           })
+-          .id('allow')
++          .id('net-policy-allow')
+       }
+       .width('100%')
+     }
+@@ -106,6 +107,7 @@
+   wifiOnlySeniorButtonPart() {
+     Column() {
+       Button($r('app.string.not_allow'))
++        .id('net-policy-deny')
+         .onClick(() => {
+           this.wifiOnlyNotAllowAction();
+         })
+@@ -116,6 +118,7 @@
+           '32vp')
+ 
+       Button($r('app.string.allow'))
++        .id('net-policy-allow')
+         .onClick(() => {
+           this.wifiOnlyAllowAction();
+         })
+@@ -131,61 +134,30 @@
+   normalButtonPart() {
+     Column() {
+       Button($r('app.string.mobile_data_and_WLAN'))
+-        .onClick(() => {
+-          let accessPolicy: policy.NetworkAccessPolicy = {
+-            allowWiFi: true,
+-            allowCellular: true,
+-          }
+-          LogUtil.info(TAG,`set wifi-mobile wifi: ${accessPolicy.allowWiFi}, cellular: ${accessPolicy.allowCellular}`);
+-          policy.setNetworkAccessPolicy(this.appUid, accessPolicy, true)
+-          DotUtil.getInstance().reportAllowWirelessDataDialog(PolicyDialogUsersOperation.MOBILE_DATA_AND_WLAN);
+-          this.controller.close()
+-          this.cancel()
+-        })
++        .id('net-policy-wifi-cellular')
++        .onClick(() => this.commitPolicy(true, true, PolicyDialogUsersOperation.MOBILE_DATA_AND_WLAN))
+         .fontSize($r('app.float.dialog_menu_font_size'))
+         .fontWeight(FontWeight.Medium)
+         .backgroundColor($r('sys.color.ohos_id_color_dialog_bg'))
+         .fontColor($r('sys.color.ohos_id_color_text_primary_activated'))
+         .margin({ bottom: 4 })
+-
+       Button($r('app.string.only_wlan'))
+-        .onClick(() => {
+-          let accessPolicy: policy.NetworkAccessPolicy = {
+-            allowWiFi: true,
+-            allowCellular: false,
+-          }
+-          LogUtil.info(TAG,`set only-wlan wifi: ${accessPolicy.allowWiFi}, cellular: ${accessPolicy.allowCellular}`);
+-          policy.setNetworkAccessPolicy(this.appUid, accessPolicy, true)
+-          DotUtil.getInstance().reportAllowWirelessDataDialog(PolicyDialogUsersOperation.WLAN_ONLY);
+-          this.controller.close()
+-          this.cancel()
+-        })
++        .id('net-policy-wifi-only')
++        .onClick(() => this.commitPolicy(true, false, PolicyDialogUsersOperation.WLAN_ONLY))
+         .fontSize($r('app.float.dialog_menu_font_size'))
+         .fontWeight(FontWeight.Medium)
++        .backgroundColor($r('sys.color.ohos_id_color_dialog_bg'))
+         .fontColor($r('sys.color.ohos_id_color_text_primary_activated'))
+-        .backgroundColor($r('sys.color.ohos_id_color_dialog_bg'))
+         .margin({ bottom: 4 })
+-
+       Button($r('app.string.not_allow'))
+-        .onClick(() => {
+-          let accessPolicy: policy.NetworkAccessPolicy = {
+-            allowWiFi: false,
+-            allowCellular: false,
+-          }
+-          LogUtil.info(TAG,`set deny wifi: ${accessPolicy.allowWiFi}, cellular: ${accessPolicy.allowCellular}`);
+-          policy.setNetworkAccessPolicy(this.appUid, accessPolicy, true)
+-          DotUtil.getInstance().reportAllowWirelessDataDialog(PolicyDialogUsersOperation.DENY);
+-          this.controller.close()
+-          this.cancel()
+-        })
++        .id('net-policy-deny')
++        .onClick(() => this.commitPolicy(false, false, PolicyDialogUsersOperation.DENY))
+         .fontSize($r('app.float.dialog_menu_font_size'))
+         .fontWeight(FontWeight.Medium)
++        .backgroundColor($r('sys.color.ohos_id_color_dialog_bg'))
+         .fontColor($r('sys.color.ohos_id_color_text_primary_activated'))
+-        .backgroundColor($r('sys.color.ohos_id_color_dialog_bg'))
+         .margin({ bottom: 8 })
+-    }
+-    .margin({ top: 8, bottom: 8 })
+-    .justifyContent(FlexAlign.Center)
++    }.margin({ top: 8, bottom: 8 }).justifyContent(FlexAlign.Center)
+   }
+ 
+   @Builder
+@@ -213,6 +185,7 @@
+       Column() {
+         this.ImagePart()
+         Text(this.appValue)
++          .id('net-policy-dialog-title')
+           .fontFamily('HarmonyHeiTi')
+           .fontSize($r('sys.float.ohos_id_text_size_headline8'))
+           .fontWeight(FontWeight.Bold)
+@@ -260,28 +233,31 @@
+   confirm() {
+   }
+ 
++  private async commitPolicy(allowWiFi: boolean, allowCellular: boolean,
++    operation: PolicyDialogUsersOperation): Promise<void> {
++    if (this.committing) {
++      return;
++    }
++    this.committing = true;
++    try {
++      await policy.setNetworkAccessPolicy(this.appUid, { allowWiFi, allowCellular }, true);
++      LogUtil.info(TAG, `Network policy committed uid:${this.appUid} wifi:${allowWiFi} cellular:${allowCellular}`);
++      DotUtil.getInstance().reportAllowWirelessDataDialog(operation);
++      this.controller.close();
++      this.cancel();
++    } catch (error) {
++      LogUtil.error(TAG, `Network policy commit failed uid:${this.appUid} error:${JSON.stringify(error)}`);
++    } finally {
++      this.committing = false;
++    }
++  }
++
+   wifiOnlyAllowAction() {
+-    let accessPolicy: policy.NetworkAccessPolicy = {
+-      allowWiFi: true,
+-      allowCellular: true
+-    }
+-    LogUtil.info(TAG,`set wifi-only allow wifi: ${accessPolicy.allowWiFi}, cellular: ${accessPolicy.allowCellular}`);
+-    policy.setNetworkAccessPolicy(this.appUid, accessPolicy, true)
+-    DotUtil.getInstance().reportAllowWirelessDataDialog(PolicyDialogUsersOperation.WLAN_ONLY);
+-    this.controller.close()
+-    this.cancel()
++    this.commitPolicy(true, true, PolicyDialogUsersOperation.WLAN_ONLY);
+   }
+ 
+   wifiOnlyNotAllowAction() {
+-    let accessPolicy: policy.NetworkAccessPolicy = {
+-      allowWiFi: false,
+-      allowCellular: false,
+-    }
+-    LogUtil.info(TAG,`set wifi-only notallow wifi: ${accessPolicy.allowWiFi}, cellular: ${accessPolicy.allowCellular}`);
+-    policy.setNetworkAccessPolicy(this.appUid, accessPolicy, true)
+-    DotUtil.getInstance().reportAllowWirelessDataDialog(PolicyDialogUsersOperation.DENY);
+-    this.controller.close()
+-    this.cancel()
++    this.commitPolicy(false, false, PolicyDialogUsersOperation.DENY);
+   }
+ }
+ 
+diff --git a/applications/standard/call/CommunicationSetting/entry/src/main/module.json5 b/applications/standard/call/CommunicationSetting/entry/src/main/module.json5
+--- a/applications/standard/call/CommunicationSetting/entry/src/main/module.json5
++++ b/applications/standard/call/CommunicationSetting/entry/src/main/module.json5
+@@ -134,7 +134,8 @@
+         "name": "UIExtensionProvider",
+         "srcEntry": "./ets/entryability/NetAccessPolicyUIExtension.ets",
+         "description": "UIExtensionProvider",
+-        "type": "sysDialog/common",
++        "type": "sys/commonUI",
++        "exported": true,
+         "icon": "$media:appIcon"
+       },
+       {
+diff --git a/applications/standard/call/CommunicationSetting/hvigor/hvigor-config.json5 b/applications/standard/call/CommunicationSetting/hvigor/hvigor-config.json5
+--- a/applications/standard/call/CommunicationSetting/hvigor/hvigor-config.json5
++++ b/applications/standard/call/CommunicationSetting/hvigor/hvigor-config.json5
+@@ -1,22 +1,4 @@
+ {
+   "modelVersion": "6.0.0",
+-  dependencies: {
+-//    "@ohos/hvigor-ohos-online-sign-plugin": "3.0.0",
+-//    '@ohos/hypium-plugin': '1.0.9-rc4',
+-//    // 1.0.7-rc5 1.0.9-rc3
+-//    "fs-extra": "10.0.1",
+-//    "execa": "5.1.1"
+-  },
+-  "execution": {
+-    // "daemon": true,                          /* Enable daemon compilation. Default: true */
+-    // "incremental": true,                     /* Enable incremental compilation. Default: true */
+-    // "parallel": true,                        /* Enable parallel compilation. Default: true */
+-    // "typeCheck": false,                      /* Enable typeCheck. Default: false */
+-  },
+-  "logging": {
+-    // "level": "info"                          /* Define the log level. Value: [ "debug" | "info" | "warn" | "error" ]. Default: "info" */
+-  },
+-  "debugging": {
+-    // "stacktrace": false                      /* Disable stacktrace compilation. Default: false */
+-  }
+-}
+\ No newline at end of file
++  "dependencies": {}
++}
+diff --git a/applications/standard/call/CommunicationSetting/oh-package.json5 b/applications/standard/call/CommunicationSetting/oh-package.json5
+--- a/applications/standard/call/CommunicationSetting/oh-package.json5
++++ b/applications/standard/call/CommunicationSetting/oh-package.json5
+@@ -9,7 +9,7 @@
+   "dependencies": {
+   },
+   "devDependencies": {
+-    "@ohos/hypium": "1.0.18"
++    
+   },
+   "dynamicDependencies": {}
+ }
+\ No newline at end of file

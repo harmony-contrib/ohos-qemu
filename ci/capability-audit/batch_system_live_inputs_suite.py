@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import zipfile
 
 from batch_system_live_inputs import (BUNDLE, FIXTURES, PERMISSIONS, SCOPE, digest,
     nonce, read_json, trace, verify_project, write_json)
@@ -30,7 +31,6 @@ CONTROLLED = 'controlled_virtual_protocol_vectors'
 TOOLS = ['batch_system_live_inputs_suite.py', 'batch_network_openvpn_runtime_collect.py',
     'batch_network_openvpn_runtime_project.py', 'batch_system_run_live_inputs.py',
     'batch_system_verify_live_inputs.py', 'batch_system_live_inputs.py', 'batch_system_live_mappings.py',
-    'batch_system_sdk_native_strip.py',
     'batch_system_gnss_controller.py', 'batch_system_qemu_sensor_controller.py',
     'batch_apps_contact_picker_coordinator.py', 'sign_web_probe.py', 'enclosing_acceptance_guest.py']
 
@@ -174,14 +174,40 @@ def sdk_caller(spec, sdk):
             re.fullmatch('[a-f0-9]{64}', build['compiler']['sha256']) and
             build['sdk_native_metadata_sha256'] == contract['sdk']['native_metadata']['sha256'],
             'actual native SDK source/compiler/header/metadata receipt missing')
-    # Official Hvigor NativeStrip changes the DSO's non-loadable sections.
-    # Independently replay the exact SDK tool into a private output and bind
-    # every main/runtime library to its actual packaged member, byte for byte.
-    # This reads the separately captured replay; it never rebuilds the caller
-    # or rewrites the original successful SDK report.
-    native_strip = importlib.import_module('batch_system_sdk_native_strip').verify(caller, build, binary)
+    # Keep the actual completed Hvigor HAP and its original member identities.
+    # The input DSO and the packaged DSO may differ after Hvigor's own strip task;
+    # no independent strip replay or guest behavior is asserted here.
+    require(contract['sdk']['native_metadata']['value'].get('version') == '26.0.0.39',
+            'actual original Native SDK39 required')
+    compile_rows = [row for row in commands if 'assembleHap' in row.get('argv', [])]
+    require(len(compile_rows) == 1, 'one actual Hvigor package command required')
+    plain = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', regular(compile_rows[0]['log']).read_text(errors='replace'))
+    require('BUILD SUCCESSFUL' in plain and re.search(r'Finished[^\n]*@CompileArkTS', plain) and
+            re.search(r'Finished[^\n]*@PackageHap', plain) and re.search(r'Finished[^\n]*@DoNativeStrip', plain),
+            'actual completed Hvigor compile/package/native tasks required')
+    hap = checked(caller['unsigned_hap'])
+    haps = [row for row in evidence['haps'] if row.get('project') == caller['sdk_project']]
+    require(len(haps) == 1 and checked(haps[0]) == hap, 'actual native HAP/project binding differs')
+    _, contents = api.hap_contents(hap)
+    packaged = {member: value for member, value in contents.items()
+                if member.startswith('libs/') and member.endswith('.so')}
+    expected = {'libs/arm64-v8a/libliveinputaudit.so'}
+    for library in build.get('runtime_libraries', []):
+        path = checked(library)
+        member = 'libs/arm64-v8a/' + path.name
+        require(path == regular(binary.parent / path.name) and member not in expected,
+                'actual native runtime library changed or duplicated')
+        expected.add(member)
+    require(set(packaged) == expected and packaged == build.get('packaged_members') == haps[0].get('packaged_native_members'),
+            'actual Hvigor HAP native member identities/coverage differ')
+    with zipfile.ZipFile(hap) as archive:
+        for member in packaged:
+            data = archive.read(member)
+            require(len(data) >= 64 and data[:7] == b'\x7fELF\x02\x01\x01' and
+                    struct.unpack_from('<HH', data, 16) == (3, 183), 'packaged runtime DSO ABI differs')
     result.update(source_project=str(project), contract=descriptor(project / 'live-inputs-contract.json'),
-        native_binary=elf64_arm64(binary), native_build_receipt=build, native_strip=native_strip,
+        native_binary=elf64_arm64(binary), native_build_receipt=build, native_packaged_members=packaged,
+        sdk_native_version=contract['sdk']['native_metadata']['value']['version'],
         native_tool_header_hash_scope='Actual Linux SDK reads recorded by the original frozen SDK runner, not host tool rereads',
         run_id=contract['run_id'])
     return result, commands, api.source_rows(evidence, caller['sdk_project'])
@@ -203,7 +229,7 @@ def capture_project(destination, spec, sdk_result, commands, rows):
         'scope': 'derived_verified_actual_SDK_receipts_NOT_new_compilation', 'original_sdk_evidence': spec['caller']['sdk_evidence'],
         'unsigned_hap': str(checked(spec['caller']['unsigned_hap'])), 'unsigned_hap_sha256': spec['caller']['unsigned_hap']['sha256'],
         'commands': commands, 'native_library': str(target), 'native_sha256': digest(target),
-        'native_strip': sdk_result['native_strip']})
+        'native_packaged_members': sdk_result['native_packaged_members']})
     return destination
 
 
@@ -219,9 +245,9 @@ def verify_capture_project(project, spec, sdk_result, commands, rows):
             'derived capture receipt differs from original verified SDK commands/HAP')
     contract = read_json(project / 'live-inputs-contract.json'); native = project / contract['native_packaging']['relative_library']
     require(regular(build['native_library']) == native and digest(native) == build['native_sha256'] == sdk_result['native_binary']['sha256'],
-            'private native library differs from actual SDK/HAP output')
-    require(build.get('native_strip') == sdk_result['native_strip'],
-            'private native strip proof differs from independently verified SDK replay')
+            'private native library differs from actual SDK build output')
+    require(build.get('native_packaged_members') == sdk_result['native_packaged_members'],
+            'private native member identities differ from actual Hvigor HAP')
 
 
 class Commands:

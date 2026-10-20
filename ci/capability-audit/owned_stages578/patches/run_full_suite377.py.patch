@@ -1,0 +1,33 @@
+--- a/run_full_suite377.py
++++ b/run_full_suite377.py
+@@ -3,6 +3,7 @@
+ import argparse
+ import os
+ import stat
++import sys
+ from pathlib import Path
+ from policy377 import sha,require,decode,KIT
+ from runner377 import RootReviewedFixedRunner
+@@ -36,12 +37,22 @@
+     parser.add_argument('--runtime-inputs-sha256',required=True)
+     parser.add_argument('--output',type=Path,required=True)
+     parser.add_argument('--kit-manifest-sha256',required=True)
++    parser.add_argument('--capability-inputs',type=Path,required=True)
++    parser.add_argument('--capability-inputs-sha256',required=True)
+     parser.add_argument('--execute',action='store_true')
+     args=parser.parse_args()
+     require(args.execute,'explicit root execution flag required; author never executes resources')
+     verify_kit(args.kit_manifest_sha256)
+     require(sha(args.runtime_inputs)==args.runtime_inputs_sha256,'actual reviewed runtime inputs changed')
+     children=RootReviewedFixedRunner(dict(path=str(args.runtime_inputs),sha256=args.runtime_inputs_sha256))
++    canonical=Path('/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit')
++    stage=canonical/'capability578_stage.py'
++    require(stage.resolve()==stage and sha(stage)==children.policy.sources[str(stage)],
++            'exact canonical same-Owner capability stage source required')
++    sys.path.insert(0,str(canonical))
++    from capability578_stage import install_on_original_children
++    install_on_original_children(children,dict(path=str(args.capability_inputs),
++                                             sha256=args.capability_inputs_sha256))
+     return run(args.config,args.config_sha256,args.output,children=children)
+ 
+ 

@@ -1,0 +1,15 @@
+--- a/config/assemble_config394.py
++++ b/config/assemble_config394.py
+@@ -102,8 +102,10 @@
+     completed(batch); completed(selection)
+     need(batch['requested_prepackage_stages_complete'] is True and batch['failures'] == [], 'all original14 SDK roles required')
+     stages = {row['label']: row for row in batch['stages']}
+-    need(len(stages) == len(batch['stages']) == 5 and all(type(row.get('exit_code')) is int and row['exit_code'] == 0
+-         for row in stages.values()), 'all five current main SDK stages required')
++    need(len(stages) == len(batch['stages']) == 4 and
++         set(stages) == {'apps15', 'audio-calendar26', 'knowledge26', 'live-sdk39-26'} and
++         all(type(row.get('exit_code')) is int and row['exit_code'] == 0
++             for row in stages.values()), 'all four actual caller build stages required')
+     roles = []
+ 
+     def add(role, evidence, project, source, expected_hap=None):

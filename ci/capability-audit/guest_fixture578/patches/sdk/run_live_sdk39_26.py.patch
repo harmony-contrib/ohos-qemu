@@ -1,0 +1,11 @@
+--- a/sdk/run_live_sdk39_26.py
++++ b/sdk/run_live_sdk39_26.py
+@@ -702,7 +702,7 @@
+         image=IMAGE, source_volume_readonly=SOURCE_VOLUME, out_volume_readonly=OUT_VOLUME,
+         SDK=str(SDK), SDK_native_version='26.0.0.39',
+         note='Preview UUID/run_id are not a launch. Execute creates its own fresh identities and records actual argv before Docker.',
+-        NativeStrip_required_after_success=True, signed=False, guest_executed=False,
++        NativeStrip_required_after_success=False, signed=False, guest_executed=False,
+         first_artifact_behavior_gate_passed=False)
+ 
+ 

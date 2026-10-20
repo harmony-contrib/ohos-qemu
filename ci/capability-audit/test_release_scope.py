@@ -24,7 +24,7 @@ class ReleaseScopeTests(unittest.TestCase):
                          'ac9426982dff3d7cb80050a6815eae92afb8f77c027b2d4319bc8d9423d6e93c')
 
     def test_only_user_decided_features_and_no_broad_ArkUI_or_storage_exclusion(self):
-        for device, count in (('phone', 19), ('2in1', 17)):
+        for device, count in (('phone', 18), ('2in1', 16)):
             expected = requirements(self.baseline['devices'][device])
             result = exclusion_record(device, expected)
             self.assertEqual(result['count'], count)

@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import re
 
-from batch_media_knowledge_project import FIX, ROLES, READ, WRITE, checked, record, require, sha
+from batch_media_knowledge_project import FIX, ROLES, READ, WRITE, PROFILES, REQUIRED_SYSCAPS, checked, record, require, sha
 from batch_media_knowledge_runtime import validate_challenge
 from batch_media_wallpaper_artifacts import elf_dependencies, mapped_record, installed_runtime_binding
 from batch_system_build_runtime_helpers import defined_symbol
@@ -62,7 +62,7 @@ def validate_plan(value, challenge):
     return value
 
 
-def project_binding(spec, role, challenge_path):
+def project_binding(spec, role, challenge_path, acceptance_device='phone'):
     result = signatures.verify_sdk_project(spec)
     data = validate_challenge(challenge_path)
     bundle, apl, permissions, template = ROLES[role]
@@ -71,13 +71,18 @@ def project_binding(spec, role, challenge_path):
     manifest_path = checked(spec['source_manifest'])
     require(manifest_path == source / 'knowledge-source-manifest.json', 'exact generated source manifest required')
     manifest = load(manifest_path)
+    require(acceptance_device in PROFILES, 'explicit actual phone/2in1 artifact profile required')
     require(manifest['role'] == role and manifest['run_id'] == data['run_id'] and manifest['bundle_name'] == bundle and
             manifest['challenge'] == record(challenge_path) and manifest['requested_permissions'] == permissions and
             manifest['apl_required_at_signing'] == apl and manifest['system_app_required_at_install'] is (apl != 'normal') and
-            manifest.get('sdk_device_types') == ['default'] and manifest.get('acceptance_device') == 'phone' and
+            manifest.get('sdk_device_types') == PROFILES[acceptance_device] and manifest.get('acceptance_device') == acceptance_device and
             manifest['allowed_acls'] == [] and manifest['restricted_permissions'] == [] and
             manifest['fixture_hashes'] == {p.name: sha(p) for p in sorted(FIX.iterdir()) if p.is_file()},
             'fixed compiled role/challenge/fixture/permission surface differs')
+    sdk_profile_key = 'device_default' if acceptance_device == 'phone' else 'device_2in1'
+    sdk_profile = checked(manifest['sdk'][sdk_profile_key])
+    require(sdk_profile.as_posix().endswith('/ets/api/device-define/' + PROFILES[acceptance_device][0] + '.json') and
+            REQUIRED_SYSCAPS <= set(load(sdk_profile)['SysCaps']), 'actual selected SDK device profile proof differs')
     rows = signatures.source_rows(load(checked(spec['sdk_evidence'])), spec['sdk_project'])
     require(rows.get('knowledge-source-manifest.json') == sha(manifest_path), 'SDK must freeze actual generated manifest')
     for name, checksum in manifest['source_hashes'].items():
@@ -91,26 +96,38 @@ def project_binding(spec, role, challenge_path):
     module, _ = signatures.hap_contents(checked(spec['unsigned_hap']))
     require(module['app']['bundleName'] == bundle and module['app'].get('debug') is False and
             module['module']['name'] == 'entry' and module['module'].get('extensionAbilities', []) == [] and
-            module['module'].get('deviceTypes') == ['default'] and
+            module['module'].get('deviceTypes') == PROFILES[acceptance_device] and
             module['module'].get('dependencies', []) == [] and
             [p['name'] for p in module['module'].get('requestPermissions', [])] == permissions,
             'actual HAP bundle/module/permission members differ')
     return result
 
 
+def artifact_profile(value):
+    selected = value.get('acceptance_device', 'phone')
+    require(selected in PROFILES, 'explicit actual phone/2in1 artifact profile required')
+    for spec in value['projects'].values():
+        manifest = load(checked(spec['source_manifest']))
+        require(manifest['acceptance_device'] == selected and manifest['sdk_device_types'] == PROFILES[selected],
+                'all actual caller sources must match the artifact profile')
+    return selected
+
+
 def artifacts(path):
     value = load(path)
-    require(set(value) == {'schema_version', 'challenge', 'projects', 'signer', 'helpers', 'ui_plan'} and
+    base_keys = {'schema_version', 'challenge', 'projects', 'signer', 'helpers', 'ui_plan'}
+    require(base_keys <= set(value) <= base_keys | {'acceptance_device'} and
             type(value['schema_version']) is int and value['schema_version'] == 1 and
             set(value['projects']) == set(ROLES), 'complete four-role prebuilt Knowledge artifact schema required')
     data = validate_challenge(checked(value['challenge']))
+    selected_profile = artifact_profile(value)
     validate_plan(load(checked(value['ui_plan'])), data)
     require(set(value['signer']) == {'dist', 'jar'}, 'exact signer distribution/jar required')
     signatures.signer_inputs(value['signer']['dist'], checked(value['signer']['jar']))
     for role, spec in value['projects'].items():
         require(set(spec) == {'sdk_evidence', 'sdk_project', 'source_project', 'source_manifest', 'unsigned_hap'},
                 'exact SDK project input fields required')
-        project_binding(spec, role, checked(value['challenge']))
+        project_binding(spec, role, checked(value['challenge']), selected_profile)
     require({'build', 'output_directory'} <= set(value['helpers']) <= {'build', 'output_directory', 'path_map'},
             'actual product helper builder receipt/output required')
     return value

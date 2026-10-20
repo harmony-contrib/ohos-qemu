@@ -1,0 +1,45 @@
+import("//build/ohos.gni")
+import("//foundation/ability/ability_runtime/ability_runtime.gni")
+
+# Installed only in the two signed fixture HAPs by the original caller builder.
+# Compile in the current platform tree/toolchain; never clone SDK C++ ABI flags.
+ohos_shared_library("settings_idle579_napi") {
+  # Same sanitizer policy as the actual frameworks/js/napi/application BUILD.gn.
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    cfi_policy = "adaptive"
+    debug = false
+  }
+  branch_protector_ret = "pac_ret"
+  sources = [ "SettingsIdleNative.cpp" ]
+  output_name = "settings_idle579"
+  output_extension = "so"
+  include_dirs = [
+    "//foundation/ability/ability_runtime/interfaces/kits/native/appkit/ability_runtime/context",
+  ]
+  deps = [
+    "//foundation/ability/ability_runtime/interfaces/inner_api/napi_base_context:napi_base_context",
+    "//foundation/ability/ability_runtime/interfaces/inner_api/runtime:runtime",
+  ]
+  external_deps = [
+    "ability_base:configuration",
+    "ability_base:want",
+    "bundle_framework:appexecfwk_base",
+    "c_utils:utils",
+    "ipc:ipc_core",
+    "ipc:ipc_napi",
+    "napi:ace_napi",
+    "samgr:samgr_proxy",
+    "resource_management:global_resmgr",
+  ]
+  if (ability_runtime_graphics) {
+    defines = [ "SUPPORT_GRAPHICS", "SUPPORT_SCREEN", "SUPPORT_APP_PREFERRED_LANGUAGE" ]
+  }
+  subsystem_name = "ability"
+  part_name = "ability_runtime"
+}

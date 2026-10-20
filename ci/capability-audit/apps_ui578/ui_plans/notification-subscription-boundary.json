@@ -1,0 +1,21 @@
+{
+  "schema": "actual-apps578-missing-provider-boundary/v1",
+  "kind": "notification-subscription",
+  "source_files": [
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/sceneboard/module.json5",
+      "sha256": "b06b117b8f5612efffd341f7229e5fc75cb1e7cebd68b84985e5c5de467959ee"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/sceneboard/notification-tree.json",
+      "sha256": "e38fd4be5c4d24a817a10e79ca124a4bbc8299c15e575d5288493c69036313b0"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-screen-control578-review/upstream/notification/frameworks/js/napi/src/extension_subscription/napi_notification_extension.cpp",
+      "sha256": "797f4f1301e0268209ab8c0e5ab97e86656cf0ddd0f23b03de130a9b6e541867"
+    }
+  ],
+  "provider_bundle": "com.ohos.sceneboard",
+  "actions": {},
+  "visible": null
+}

@@ -1,0 +1,68 @@
+--- a/family/prepare_first_runtime_inputs15.py
++++ b/family/prepare_first_runtime_inputs15.py
+@@ -14,7 +14,7 @@
+ COMMIT = PACKAGE_COMMIT = None
+ BASE = Path('/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006')
+ ARCHIVE_SHA = None
+-OUTPUT = OLD = CORE = SDK39 = KNOWLEDGE = STRIP = PACKAGE_RECEIPT = CALLERS = None
++OUTPUT = OLD = CORE = SDK39 = KNOWLEDGE = PACKAGE_RECEIPT = CALLERS = None
+ INTENT = None
+ ASSEMBLY_INTENT = None
+ SIGNER = BASE / 'r52-normal-signer-inputs-01'
+@@ -25,7 +25,7 @@
+     'batch_media_wallpaper_coordinator.py', 'batch_media_wallpaper_suite.py',
+     'batch_media_knowledge_artifacts.py', 'batch_media_knowledge_project.py',
+     'batch_media_knowledge_runtime.py', 'batch_system_live_inputs.py',
+-    'batch_system_live_inputs_suite.py', 'batch_system_sdk_native_strip.py',
++    'batch_system_live_inputs_suite.py',
+     'batch_system_build_runtime_helpers.py')
+ 
+ 
+@@ -108,8 +108,6 @@
+     callers = load(CALLERS); report = load(checked(callers['sdk_evidence']))
+     require(callers['source_commit'] == COMMIT and callers['sdk_version'] == '26.0.0.105' and callers['first_artifact_behavior_gate_passed'] is False and callers['capabilities_closed'] == 0 and type(report['exit_code']) is int and report['exit_code'] == 0 and report['source_commit'] == COMMIT and report['failures'] == [] and len(report['haps']) == 4, 'fresh F Contacts/Wallpaper four-caller batch required')
+     checked(callers['original_validator_checks'])
+-    strip = load(STRIP)
+-    require(strip.get('status') == 'pass_exact_SDK_NativeStrip_ONLY' and strip.get('failures') == [] and strip.get('sdk_read_only') is True and strip.get('runtime_validated') is False and strip.get('first_artifact_behavior_gate_passed') is False and len(strip.get('commands', [])) == 1 + len(strip.get('libraries', {})) and len(strip['libraries']) >= 1 and all(type(row.get('exit_code')) is int and row['exit_code'] == 0 for row in strip['commands']), 'actual new SDK39 NativeStrip replay required')
+     return sdk, knowledge, callers
+ 
+ 
+@@ -140,7 +138,7 @@
+         original_inputs={name: descriptor(path) for name, path in {
+             'package': PACKAGE_RECEIPT, 'helpers': CORE / 'evidence.json',
+             'helper_build': CORE / 'helpers/build.json', 'sdk39_fresh15': SDK39 / 'evidence.json',
+-            'knowledge_sdk105': KNOWLEDGE / 'evidence.json', 'native_strip': STRIP,
++            'knowledge_sdk105': KNOWLEDGE / 'evidence.json',
+             'fresh_callers': CALLERS}.items()})
+     report['assembly_intent'] = copy.deepcopy(ASSEMBLY_INTENT)
+     report['original_template_descriptors'] = copy.deepcopy(INTENT['templates'])
+@@ -205,14 +203,13 @@
+ 
+         live = load(OLD / 'live-inputs.json')
+         live['caller'] = sdk_spec(SDK39, sdk, 'live-inputs', 'live-inputs-contract.json')
+-        live['caller']['native_strip_receipt'] = descriptor(STRIP)
+         require(Path(live['sdk']) == BASE / 'r52-Linux-SDK39-runtime-contract-01',
+                 'retain the real SDK39 host metadata/declaration snapshot')
+         live_result, live_commands, live_sources = sdk_caller(live, Path(live['sdk']))
+-        report['pure_checks']['live_sdk39_and_exact_native_strip'] = live_result
++        report['pure_checks']['live_sdk39_actual_Hvigor_members'] = live_result
+         report['live_original_command_count'] = len(live_commands)
+         report['live_original_source_count'] = len(live_sources)
+-        require(report['pure_checks']['live_sdk39_and_exact_native_strip']['native_strip']['sdk_version'] == '26.0.0.39',
++        require(live_result['sdk_native_version'] == '26.0.0.39',
+                 'Native SDK39 must never be relabeled SDK105')
+         live['input_source']['vectors'] = descriptor(checked(live['input_source']['vectors']))
+         write('live-inputs.json', live)
+@@ -279,10 +276,10 @@
+     INTENT = inputs.load(inputs.checked(ASSEMBLY_INTENT))
+     COMMIT = PACKAGE_COMMIT = INTENT['product_commit']
+     require(type(COMMIT) is str and len(COMMIT) == 40 and all(c in '0123456789abcdef' for c in COMMIT) and COMMIT != 'c14e803c33f96f5fe01e04378c868fce32aa1487', 'explicit final F commit required')
+-    require(INTENT['schema'] == 'four-family-SDK-inputs15/v1' and INTENT['product_commit'] == INTENT['tools_commit'] == COMMIT, 'actual F input assembly intent required')
++    require(INTENT['schema'] == 'four-family-SDK-inputs15/v1' and INTENT['product_commit'] == INTENT['tools_commit'] == COMMIT and 'native_strip' not in INTENT, 'actual F guest-fixture input assembly intent required; no replay receipt')
+     PACKAGE_RECEIPT = inputs.checked(INTENT['package_receipt'])
+     CORE, SDK39, KNOWLEDGE = (inputs.directory(INTENT[key]) for key in ('core_root','SDK39_root','knowledge_root'))
+-    STRIP, CALLERS = (inputs.checked(INTENT[key]) for key in ('native_strip','fresh_callers'))
++    CALLERS = inputs.checked(INTENT['fresh_callers'])
+     templates = INTENT['templates']; require(set(templates) == {'contacts.json','wallpaper.json','live-inputs.json','capability-inputs.json'}, 'explicit original unchanged templates required')
+     paths = {name:inputs.checked(row) for name,row in templates.items()}; OLD = paths['contacts.json'].parent
+     require(all(path == OLD/name for name,path in paths.items()), 'same original template directory required')

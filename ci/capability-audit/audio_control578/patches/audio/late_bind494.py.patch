@@ -1,0 +1,23 @@
+--- a/audio/late_bind494.py
++++ b/audio/late_bind494.py
+@@ -90,8 +90,8 @@
+         ('archive','package_receipt','boot','preparation','sdk_inputs','signing','helpers')})
+     b.need(receipt['source_commit']==COMMIT,'old package/SDK/signing source refused')
+     inputs['control404']=value['control404']
+-    from control416_bridge480 import admit_input
+-    admitted,inventory=admit_input(inputs,archive_sha256=value['archive']['sha256'],profile=value['runtime_profile'])
++    from control416_bridge480 import admit_tools_input
++    admitted=admit_tools_input(inputs,archive_sha256=value['archive']['sha256'],profile=value['runtime_profile'])
+     control=b.load(b.checked(value['control404']))
+     helper_receipt(value,'control_receipt',CONTROL,b.record(b.H/'root-audio-control412/FROZEN.json'),
+                    control['tools'],value['runtime_profile'])
+@@ -104,7 +104,8 @@
+     # native evidence. Outer closure fields do not replace those verifiers.
+     return inputs,dict(scope='494 actual-file late binding ONLY_NOT_runtime_or_owner_authorization',
+         source_commit=COMMIT,request=value,original_runtime_assembly=receipt,
+-        native_control_admission=admitted.evidence,holder_inventory=inventory,
++        native_control_admission=admitted.evidence,holder_inventory=None,
++        inventory_stage='same fresh collector after prepare/observer, before original CONTROL ARM',
+         accepted=False,onset_proven=False,ledger_closed=False,first_artifact_behavior_gate_passed=False)
+ 
+ 

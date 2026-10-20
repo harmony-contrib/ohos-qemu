@@ -163,21 +163,31 @@ class QemuGuest:
         if FATAL.search((self.args.output / 'qemu.log').read_text(errors='replace')):
             raise ValueError('guest fatal service/kernel failure, even though QEMU may still be running')
 
-    def qmp(self, execute, arguments=None):
+    def qmp(self, execute, arguments=None, *, trace=None):
+        if trace is not None and not callable(trace):
+            raise ValueError('QMP trace must be an actual fixed callback')
         with socket.socket(socket.AF_UNIX) as connection:
             connection.settimeout(10)
             connection.connect(str(self.qmp_path))
             with connection.makefile('rb') as stream:
-                if 'QMP' not in json.loads(stream.readline()):
+                greeting = stream.readline()
+                if trace is not None:
+                    trace('response', greeting)
+                if 'QMP' not in json.loads(greeting):
                     raise ValueError('bad QMP greeting')
                 for identifier, name, parameters in (('capabilities', 'qmp_capabilities', None),
                                                      ('request', execute, arguments)):
                     request = {'execute': name, 'id': identifier}
                     if parameters is not None:
                         request['arguments'] = parameters
-                    connection.sendall(json.dumps(request).encode() + b'\n')
+                    encoded = json.dumps(request).encode() + b'\n'
+                    connection.sendall(encoded)
+                    if trace is not None:
+                        trace('request', encoded)
                     while True:
                         line = stream.readline()
+                        if trace is not None:
+                            trace('response', line)
                         if not line:
                             raise ValueError('QMP disconnected')
                         reply = json.loads(line)

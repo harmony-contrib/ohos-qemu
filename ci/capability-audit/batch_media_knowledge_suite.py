@@ -632,14 +632,15 @@ class Collector:
         with path.open('x') as stream: stream.write(text)
         return record(path)
 
-    def command(self, argv, label):
+    def command(self, argv, label, timeout=300):
+        require(type(timeout) is int and 1 <= timeout <= 300, 'bounded original collector command timeout required')
         self.guest.healthy(); argv = list(map(str, argv))
         path = self.args.output / (str(len(self.value['commands'])).zfill(4) + '-' + label + '.log')
-        row = dict(argv=argv, label=label, exit_code=None, timed_out=False)
+        row = dict(argv=argv, label=label, exit_code=None, timed_out=False, timeout_seconds=timeout)
         with path.open('x') as stream:
             self.capture_dispatch326(argv, label, row)  # Last check: no IO before the original Popen.
             child = subprocess.Popen(argv, stdout=stream, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
-            try: child.wait(timeout=300)
+            try: child.wait(timeout=timeout)
             except subprocess.TimeoutExpired:
                 row['timed_out'] = True; os.killpg(child.pid, signal.SIGTERM)
                 try: child.wait(timeout=5)
@@ -1180,7 +1181,8 @@ def run(args):
         value.update(artifacts_data=spec, ui_plan_data=inputs.validate_plan(signatures.load(checked(spec['ui_plan'])), data), run_id=data['run_id'])
         value['capture'] = dict(run_id=data['run_id'], archive=record(args.archive), archive_sha256=sha(args.archive), signer=spec['signer'], roles={})
         collector = Collector(args, value); env = collector.env
-        require((env['product'], env['guest_arch'], env['device_type']) == ('arm64_virt', 'arm64', 'phone'), 'representative ARM64 phone helpers required')
+        require((env['product'], env['guest_arch']) == ('arm64_virt', 'arm64') and
+                env['device_type'] == inputs.artifact_profile(spec), 'actual prepared phone/2in1 artifact and guest profile must match')
         value.update(boot_id=env['boot_id'], test_environment=env); value['capture']['boot_id'] = env['boot_id']
         collector.identity('wrapper-initial-same-boot')
         listing = collector.observe('bm dump -a', 'no-preexisting-owned-roles')
@@ -1214,7 +1216,11 @@ def run(args):
             remote = collector.files('importer') + '/' + case['file_name']
             collector.stage(case['image'], remote, collector.identities['importer']['uid'])
             collector.roles['importer']['private_source_readbacks'][case['case_id']] = collector.receive(remote, 'private-JPEG-' + case['case_id'], 4194304)
-        for phase, _, _ in runtime.STEPS: collector.phase(phase, collector.uris or None)
+        for phase, _, _ in runtime.STEPS:
+            collector.phase(phase, collector.uris or None)
+            if getattr(args, 'apps579_artifacts', None) is not None:
+                from apps_providers579_knowledge import after_phase
+                after_phase(collector, phase, args.apps579_artifacts)
         for role in project.ROLES:
             collector.roles[role]['journal'] = collector.journal(role, role + '-final-journal')
             collector.token(role, 'final')
@@ -1224,6 +1230,12 @@ def run(args):
         value['failures'].append(type(error).__name__ + ': ' + str(error))
     finally:
         if collector is not None:
+            if getattr(args, 'apps579_artifacts', None) is not None:
+                from apps_providers579_knowledge import cleanup as apps579_cleanup
+                try:
+                    apps579_cleanup(collector)
+                except Exception as error:
+                    value['failures'].append('Apps579 cleanup: ' + type(error).__name__ + ': ' + str(error))
             collector.cleanup()
         else:
             value['cleanup_complete'] = True  # No guest command or owned resource was created.
@@ -1401,9 +1413,13 @@ def verify_evidence(evidence_path, archive_path, boot_path):
             value.get('archive_sha256') == sha(archive_path) and checked(value['boot']) == boot_path,
             'complete exact current-archive/boot Knowledge collector required')
     require(value['tools'] == {name: record(HERE / name) for name in TOOLS}, 'fixed current verification/collector implementation changed')
+    if 'apps579_artifacts' in value or value.get('apps579_errors'):
+        from apps_providers579_knowledge import verify_hook
+        verify_hook(value)
     env = validate_binding(signatures.load(boot_path), sha(archive_path))
     require(value['test_environment'] == env and value['boot_id'] == env['boot_id'] and
-            (env['product'], env['guest_arch'], env['device_type']) == ('arm64_virt', 'arm64', 'phone'), 'same representative parent VM required')
+            (env['product'], env['guest_arch']) == ('arm64_virt', 'arm64') and
+            env['device_type'] == inputs.artifact_profile(value['artifacts_data']), 'same actual artifact-matched phone/2in1 parent VM required')
     spec = inputs.artifacts(checked(value['artifacts']))
     data = runtime.validate_challenge(checked(spec['challenge']))
     require(value['artifacts_data'] == spec and value['run_id'] == data['run_id'] and
@@ -1438,6 +1454,10 @@ def main():
         sign(parser.parse_args(sys.argv[2:]), configure=profile); return 0
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('boot', 'archive', 'artifacts', 'hdc', 'output'): parser.add_argument('--' + name, type=Path, required=True)
+    parser.add_argument('--apps579-artifacts', type=Path,
+                        default=Path(os.environ['QEMU_TEST_APPS579_KNOWLEDGE_ARTIFACTS'])
+                        if os.environ.get('QEMU_TEST_APPS579_KNOWLEDGE_ARTIFACTS') else None,
+        help='root prepared same-boot signed Apps579 Photos callers; original in-process phase hook only')
     args = parser.parse_args(); args.hdc = signatures.regular(args.hdc)
     value = run(args)
     print(json.dumps({key: value[key] for key in ('status', 'cleanup_complete', 'cleanup_errors', 'failures')}))

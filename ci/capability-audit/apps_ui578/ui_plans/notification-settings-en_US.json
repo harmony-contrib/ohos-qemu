@@ -1,0 +1,69 @@
+{
+  "schema": "actual-packaged-apps578-ui/v1",
+  "kind": "notification-settings",
+  "source_files": [
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/sceneboard/module.json5",
+      "sha256": "b06b117b8f5612efffd341f7229e5fc75cb1e7cebd68b84985e5c5de467959ee"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/sceneboard/NotificationMgmtHalfModeView.ets",
+      "sha256": "0515bd519e94679bfe929d4fb4c327a270ff92b3875d358f6f988a2d60760464"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/sceneboard/NotificationMgmtHalfModeViewEvent.ets",
+      "sha256": "eb215cca2366821ec00ad326c5a6a3a80028b7c23a800066b1a4edfe2ad7c5f4"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/sceneboard/NotificationMgmtCompments.ets",
+      "sha256": "c24c48f7ecdfc6257c30181e9b1dcb9b8186e73de972ecec659c9593675c3ded"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/sceneboard/fixed/feature/notification/notificationmanagement/src/main/ets/pages/NotificationMgmtContentComponent.ets",
+      "sha256": "a3d47b063e4a30b6ff491d866a2229672a9b04d2d3a339aff853bbd0d4ba19a7"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/sceneboard/fixed/feature/notification/managementcomponent/src/main/ets/com/ohos/view/component/headComponent.ets",
+      "sha256": "d459bb6773217e79b27264886b29ab026b83b877ce109b04a95e05b80609955e"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/sceneboard/fixed/feature/notification/managementcomponent/src/main/resources/base/element/string.json",
+      "sha256": "ee5fee6f0c86236213e3fe6d646a98b9e29df3f3dff77f4f378e8fb0b3464cd3"
+    }
+  ],
+  "provider_bundle": "com.ohos.sceneboard",
+  "actions": {
+    "enable": [
+      {
+        "bundle": "com.ohos.sceneboard",
+        "text": "Allow notifications",
+        "sibling_type": "Toggle",
+        "set_checked": true
+      }
+    ],
+    "disable": [
+      {
+        "bundle": "com.ohos.sceneboard",
+        "text": "Allow notifications",
+        "sibling_type": "Toggle",
+        "set_checked": false
+      }
+    ],
+    "close": [
+      {
+        "bundle": "com.ohos.sceneboard",
+        "identifier": "NotificationMgmtHalfMode_View_Button_Confirm"
+      }
+    ],
+    "cancel": [
+      {
+        "bundle": "com.ohos.sceneboard",
+        "identifier": "ManagementComponent-HeadComponent_Image_back"
+      }
+    ]
+  },
+  "visible": {
+    "bundle": "com.ohos.sceneboard",
+    "identifier": "NotificationMgmtView_BUNDLE_NAME"
+  }
+}

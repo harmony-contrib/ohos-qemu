@@ -22,6 +22,7 @@ WRITE = 'ohos.permission.WRITE_IMAGEVIDEO'
 # default for the phone family; the acceptance runner still requires phone.
 SDK_DEVICE_TYPES = ['default']
 ACCEPTANCE_DEVICE = 'phone'
+PROFILES = {'phone': ['default'], '2in1': ['2in1']}
 REQUIRED_SYSCAPS = {
     'SystemCapability.Base',
     'SystemCapability.ArkUI.ArkUI.Full',
@@ -125,16 +126,17 @@ def expected_entities(events, day):
                    for e in events if e['start'] <= day < e['end']], key=lambda e: e['id'])
 
 
-def check_device_profile(sdk):
+def check_device_profile(sdk, acceptance_device='phone'):
     """Read the real SDK profile; never synthesize or override capabilities."""
-    profile = Path(sdk) / 'ets/api/device-define/default.json'
+    require(acceptance_device in PROFILES, 'explicit actual phone/2in1 caller profile required')
+    profile = Path(sdk) / ('ets/api/device-define/' + PROFILES[acceptance_device][0] + '.json')
     capabilities = json.loads(profile.read_text()).get('SysCaps')
     require(isinstance(capabilities, list) and all(isinstance(value, str) for value in capabilities) and
-            REQUIRED_SYSCAPS <= set(capabilities), 'actual SDK105 default profile lacks a required caller capability')
+            REQUIRED_SYSCAPS <= set(capabilities), 'actual SDK105 selected profile lacks a required caller capability')
     return record(profile)
 
 
-def check_sdk(sdk):
+def check_sdk(sdk, acceptance_device='phone'):
     sdk = Path(sdk).resolve()
     metadata = sdk / 'ets/oh-uni-package.json'
     require(json.loads(metadata.read_text()).get('version') == '26.0.0.105', 'fixed actual SDK105 ETS required')
@@ -146,7 +148,7 @@ def check_sdk(sdk):
         require(text in source, 'actual SDK declaration missing: ' + text)
     return {'metadata': record(metadata), 'photoAccessHelper': record(declaration),
             'image': record(sdk / 'ets/api/@ohos.multimedia.image.d.ts'),
-            'device_default': check_device_profile(sdk)}
+            ('device_default' if acceptance_device == 'phone' else 'device_2in1'): check_device_profile(sdk, acceptance_device)}
 
 
 def make_challenge(output, calendar, provenance, run=None):
@@ -205,13 +207,14 @@ def make_challenge(output, calendar, provenance, run=None):
     return output / 'challenge.json'
 
 
-def prepare_project(output, role, challenge, sdk):
+def prepare_project(output, role, challenge, sdk, acceptance_device='phone'):
     require(role in ROLES, 'unknown exact caller role')
+    require(acceptance_device in PROFILES, 'explicit actual phone/2in1 caller profile required')
     challenge = Path(challenge).resolve()
     data = json.loads(challenge.read_text())
     run = data['run_id']
     require(re.fullmatch('[0-9a-f]{32}', run) is not None, 'challenge run invalid')
-    sdk_proof = check_sdk(sdk)
+    sdk_proof = check_sdk(sdk, acceptance_device)
     output = Path(output).resolve()
     require(not output.exists() and output != ROOT and ROOT not in output.parents, 'fresh private project outside repository required')
     output.mkdir(parents=True)
@@ -233,7 +236,7 @@ def prepare_project(output, role, challenge, sdk):
     put('entry/build-profile.json5', {'apiType': 'stageMode', 'targets': [{'name': 'default'}]})
     put('entry/oh-package.json5', {'name': 'entry', 'version': '1.0.0', 'dependencies': {}})
     put('entry/src/main/module.json5', {'module': {'name': 'entry', 'type': 'entry', 'mainElement': 'EntryAbility',
-        'deviceTypes': list(SDK_DEVICE_TYPES), 'deliveryWithInstall': True, 'installationFree': False,
+        'deviceTypes': list(PROFILES[acceptance_device]), 'deliveryWithInstall': True, 'installationFree': False,
         'pages': '$profile:main_pages', 'requestPermissions': [{'name': p, 'reason': '$string:permission_reason',
         'usedScene': {'abilities': ['EntryAbility'], 'when': 'inuse'}} for p in permissions],
         'abilities': [{'name': 'EntryAbility', 'srcEntry': './ets/entryability/EntryAbility.ets', 'launchType': 'singleton',
@@ -246,7 +249,7 @@ def prepare_project(output, role, challenge, sdk):
         put('entry/src/main/ets/' + target, (FIX / source).read_text().replace('__KNOWLEDGE_RUN__', run).replace('__KNOWLEDGE_ROLE__', role))
     manifest = {'schema_version': 1, 'role': role, 'run_id': run, 'bundle_name': bundle,
         'requested_permissions': permissions, 'apl_required_at_signing': apl, 'system_app_required_at_install': apl != 'normal',
-        'sdk_device_types': list(SDK_DEVICE_TYPES), 'acceptance_device': ACCEPTANCE_DEVICE,
+        'sdk_device_types': list(PROFILES[acceptance_device]), 'acceptance_device': acceptance_device,
         'allowed_acls': [], 'restricted_permissions': [], 'challenge': record(challenge), 'sdk': sdk_proof,
         'fixture_hashes': {p.name: sha(p) for p in sorted(FIX.iterdir()) if p.is_file()},
         'source_hashes': {str(p.relative_to(output)): sha(p) for p in sorted(output.rglob('*')) if p.is_file()},
@@ -267,11 +270,12 @@ def main():
     project.add_argument('--challenge', type=Path, required=True)
     project.add_argument('--sdk', type=Path, required=True)
     project.add_argument('--output', type=Path, required=True)
+    project.add_argument('--acceptance-device', choices=PROFILES, default='phone')
     args = parser.parse_args()
     if args.mode == 'challenge':
         print(make_challenge(args.output, args.calendar, args.provenance))
     else:
-        print(prepare_project(args.output, args.role, args.challenge, args.sdk))
+        print(prepare_project(args.output, args.role, args.challenge, args.sdk, args.acceptance_device))
 
 
 if __name__ == '__main__':

@@ -41,8 +41,9 @@ def configure_profile(profile, role, udid, module):
     return profile
 
 
-def sign(args, configure=configure_profile):
+def sign(args, configure=configure_profile, *, command=None):
     """Shared signing mechanics; each caller supplies an exact role contract."""
+    run = command or subprocess.run
     receipt = args.output.with_suffix('.signing.json')
     if (args.output.exists() or args.output.is_symlink() or args.unsigned.is_symlink() or
             not args.unsigned.is_file() or receipt.exists() or receipt.is_symlink()):
@@ -65,18 +66,18 @@ def sign(args, configure=configure_profile):
         with zipfile.ZipFile(args.unsigned) as original, zipfile.ZipFile(normalized, 'w', allowZip64=False) as output:
             for member in original.infolist():
                 data = original.read(member); member.extra = b''; output.writestr(member, data)
-        subprocess.run(['java', '-jar', jar, 'sign-profile', '-keyAlias', 'openharmony application profile debug',
+        run(['java', '-jar', jar, 'sign-profile', '-keyAlias', 'openharmony application profile debug',
             '-signAlg', 'SHA256withECDSA', '-mode', 'localSign', '-profileCertFile', str(dist / 'OpenHarmonyProfileDebug.pem'),
             '-inFile', str(profile_json), '-keystoreFile', keystore, '-outFile', str(profile_signed),
             '-keyPwd', '123456', '-keystorePwd', '123456'], check=True)
-        subprocess.run(['java', '-jar', jar, 'sign-app', '-keyAlias', 'openharmony application release',
+        run(['java', '-jar', jar, 'sign-app', '-keyAlias', 'openharmony application release',
             '-signAlg', 'SHA256withECDSA', '-mode', 'localSign', '-appCertFile', str(dist / 'OpenHarmonyApplication.pem'),
             '-profileFile', str(profile_signed), '-inFile', str(normalized), '-keystoreFile', keystore,
             '-outFile', str(args.output.resolve()), '-keyPwd', '123456', '-keystorePwd', '123456', '-signCode', '1'],
             check=True)
-        verify_signed_hap(jar, args.output.resolve(), work)
+        verify_signed_hap(jar, args.output.resolve(), work, command=run)
         extracted = work / 'verified-profile.json'
-        completed = subprocess.run(['java', '-jar', jar, 'verify-profile',
+        completed = run(['java', '-jar', jar, 'verify-profile',
             '-inFile', str(work / 'verified-profile.p7b'), '-outFile', str(extracted)],
             capture_output=True, text=True, check=True)
         if ('verify-profile success' not in completed.stdout + completed.stderr or

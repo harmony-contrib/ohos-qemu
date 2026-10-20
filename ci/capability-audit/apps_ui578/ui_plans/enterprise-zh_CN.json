@@ -1,0 +1,42 @@
+{
+  "schema": "actual-packaged-apps578-ui/v1",
+  "kind": "enterprise",
+  "source_files": [
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/admin-byodActivationPage.ets",
+      "sha256": "c87ad0d795d4073e9ee553e24c183378f7ea7ca78134696f13e419ab363fc83e"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/admin/fixed/entry/src/main/resources/zh_CN/element/string.json",
+      "sha256": "8dc2e8de4de680960f2fbba0d24c4bd320c0b0f49db818afeb120de49320d8a7"
+    }
+  ],
+  "provider_bundle": "com.ohos.adminprovisioning",
+  "actions": {
+    "byod-cancel": [
+      {
+        "bundle": "com.ohos.adminprovisioning",
+        "text": "不同意",
+        "ancestor": true
+      }
+    ],
+    "byod-agree": [
+      {
+        "bundle": "com.ohos.adminprovisioning",
+        "text": "同意",
+        "ancestor": true
+      }
+    ],
+    "byod-unsupported-confirm": [
+      {
+        "bundle": "com.ohos.adminprovisioning",
+        "text": "知道了",
+        "ancestor": true
+      }
+    ]
+  },
+  "visible": {
+    "bundle": "com.ohos.adminprovisioning",
+    "text": "是否激活您的设备？"
+  }
+}

@@ -51,6 +51,9 @@ HELPERS = {
         'libraries': ['security/access_token/libaccesstoken_sdk.z.so'], 'headers': [TOKEN['header']], 'extra_includes': []},
     'knowledge_token_query': {'fixture': 'batch_media/knowledge_runtime/knowledge_token_query.cpp', 'anchors': [TOKEN],
         'libraries': ['security/access_token/libaccesstoken_sdk.z.so'], 'headers': [TOKEN['header']], 'extra_includes': []}}
+COMMUNICATION_HELPER_NAMES = ('communications578_permission_controller', 'communications578_at_peer')
+SETTINGS_HELPER_NAMES = ('settings_idle579_napi',)
+C_ABI_GUARD = '/* C helper retains actual C GN flags; no C++ ABI assertion. */\n'
 ABI_GUARD = '''#include <string>
 #include <type_traits>
 #ifdef __EXCEPTIONS
@@ -59,6 +62,29 @@ ABI_GUARD = '''#include <string>
 static_assert(std::is_same<std::string, std::__h::basic_string<char>>::value,
     "Use actual system libc++ __h headers; never redefine the ABI namespace");
 '''
+
+
+def helper_spec(name):
+    """Communication helpers are available only by finite explicit selection.
+
+    Preserve the original HELPERS/default set and avoid requiring the new
+    recipe module for an ordinary original build or original artifact recheck.
+    """
+    if name in HELPERS:
+        return HELPERS[name]
+    if name in SETTINGS_HELPER_NAMES:
+        from settings_idle579_native import helper_recipes
+        recipes = helper_recipes()
+        if set(recipes) != set(SETTINGS_HELPER_NAMES):
+            raise ValueError('fixed settings shared-NAPI recipe required')
+        return recipes[name]
+    if name not in COMMUNICATION_HELPER_NAMES:
+        raise ValueError('unknown fixed helper selection')
+    from communications578_native import helper_recipes
+    recipes = helper_recipes()
+    if set(recipes) != set(COMMUNICATION_HELPER_NAMES) or set(recipes) & set(HELPERS):
+        raise ValueError('fixed explicit communications helper recipes required')
+    return recipes[name]
 
 
 def sha(path):
@@ -170,6 +196,23 @@ def validate_flags(flags):
             lto[-1].startswith('-fno-lto') or not exceptions or exceptions[-1] != '-fno-exceptions' or
             not effective_cfi(flags)):
         raise ValueError('actual ARM64 system sysroot/LTO/CFI/fno-exceptions flags required')
+
+
+def validate_c_flags(flags):
+    """Selected C graph flags still require real ARM64 musl/LTO/cross-DSO CFI."""
+    target = [x for x in flags if x.startswith('--target=')]
+    sysroots = [x for x in flags if x.startswith('--sysroot=')]
+    lto = [x for x in flags if x == '-flto' or x.startswith(('-flto=', '-fno-lto'))]
+    for index, word in enumerate(flags):
+        if word == '-x' and (index + 1 == len(flags) or flags[index + 1] != 'c'):
+            raise ValueError('actual C language selection required')
+        if word.startswith('-x') and word not in ('-x', '-xc'):
+            raise ValueError('non-C language override refused')
+    if (target != ['--target=aarch64-linux-ohos'] or len(sysroots) != 1 or not lto or
+            lto[-1].startswith('-fno-lto') or not effective_cfi(flags) or
+            any(x in ('-xc++', '-fexceptions') or x.startswith(('-std=c++', '-std=gnu++')) or
+                '_LIBCPP_ABI_NAMESPACE' in x or '__n1' in x for x in flags)):
+        raise ValueError('actual ARM64 C GN sysroot/LTO/cross-DSO CFI flags required; C++ ABI substitution refused')
 
 
 def link_flags(flags, private):
@@ -417,20 +460,23 @@ def argument(argv, option):
     return argv[positions[0] + 1]
 
 
-def elf_header(path, executable=False):
+def elf_header(path, executable=False, shared=False):
     data = Path(path).read_bytes()
     if len(data) < 64 or data[:7] != b'\x7fELF\x02\x01\x01' or struct.unpack_from('<H', data, 18)[0] != 183:
         raise ValueError('actual ELF64 little-endian AArch64 required')
     if struct.unpack_from('<H', data, 16)[0] != 3: raise ValueError('actual DSO/PIE ELF type required')
-    if executable:
+    if executable or shared:
         offset = struct.unpack_from('<Q', data, 32)[0]; size, count = struct.unpack_from('<HH', data, 54)
         if size != 56 or count == 0 or offset + count * size > len(data): raise ValueError('invalid actual program headers')
         interpreter = None
         for i in range(count):
             kind, flags, file_offset, _, _, file_size, _, _ = struct.unpack_from('<IIQQQQQQ', data, offset + i * size)
             if kind == 3: interpreter = data[file_offset:file_offset + file_size].rstrip(b'\0').decode('ascii')
-        if interpreter is None or not interpreter.startswith('/') or not interpreter.endswith('ld-musl-aarch64.so.1'):
+        if executable and (interpreter is None or not interpreter.startswith('/') or
+                           not interpreter.endswith('ld-musl-aarch64.so.1')):
             raise ValueError('actual ARM64 musl guest interpreter absent')
+        if shared and interpreter is not None:
+            raise ValueError('actual shared NAPI must not carry a program interpreter')
     return {'class': 64, 'machine': 183, 'type': 'ET_DYN', 'sha256': sha(path)}
 
 
@@ -452,6 +498,10 @@ class Builder:
             'product': PRODUCT, 'plan_only': plan_only, 'source_root': str(self.root), 'build_directory': str(self.build),
             'builder_sha256': sha(Path(__file__)), 'commands': [], 'helpers': {}, 'inputs': self.inputs,
             'requirements_closed': 0, 'first_artifact_behavior_gate_passed': False}
+        if set(helpers) & set(COMMUNICATION_HELPER_NAMES):
+            self.report['communications_native_recipe'] = self.remember(HERE / 'communications578_native.py', source=False)
+        if set(helpers) & set(SETTINGS_HELPER_NAMES):
+            self.report['settings_native_recipe'] = self.remember(HERE / 'settings_idle579_native.py', source=False)
         self.environment = dict(os.environ, LC_ALL='C', LC_CTYPE='C', LANG='C', TMPDIR=str(self.output / 'tmp'))
         for key in ('CPATH', 'C_INCLUDE_PATH', 'CPLUS_INCLUDE_PATH', 'OBJC_INCLUDE_PATH',
                     'LIBRARY_PATH', 'COMPILER_PATH', 'GCC_EXEC_PREFIX', 'CFLAGS', 'CXXFLAGS', 'LDFLAGS'):
@@ -614,12 +664,23 @@ class Builder:
 
     def check_elf(self, name, binary, direct, row):
         """Shared strict contract for fresh builds and immutable artifact rechecks."""
-        spec = HELPERS[name]
-        row['elf'] = elf_header(binary, executable=True)
+        spec = helper_spec(name)
+        shared = spec.get('kind') == 'shared_napi'
+        row['elf'] = elf_header(binary, executable=not shared, shared=shared)
+        if shared and elf_soname(binary) != spec['output_basename']:
+            raise ValueError('actual shared-NAPI SONAME differs from the HAP import')
+        row['elf_kind'] = 'shared_napi' if shared else 'executable'
         info = self.command([self.readelf, '-h', '-l', '-d', '--dyn-syms', '--wide', '--demangle', binary], name + '-actual-ELF-ABI')
-        if not defined_symbol(info, '__cfi_check') or 'std::__h::' not in info or 'std::__n1::' in info:
+        if spec.get('language') == 'c':
+            if (not defined_symbol(info, '__cfi_check') or not defined_symbol(info, 'main') or
+                    'std::' in info or '__n1' in info):
+                raise ValueError('actual C guest ELF lacks defined main/CFI or imports a C++/SDK ABI')
+            row['elf_language_contract'] = 'C_ARM64_musl_product_CFI_LTO_no_CXX_symbol_assertion'
+        elif not defined_symbol(info, '__cfi_check') or 'std::__h::' not in info or 'std::__n1::' in info:
             raise ValueError('actual guest ELF lacks system __h ABI/CFI or exposes SDK __n1 ABI')
         needed = dynamic_needed(info)
+        if spec.get('language') == 'c' and 'libc.so' not in needed:
+            raise ValueError('actual C helper must bind the installed product libc SONAME')
         if not {Path(n).name for n in spec['libraries']} <= needed:
             raise ValueError('actual helper does not bind its required product SONAMEs')
         row['DT_NEEDED'] = sorted(needed)
@@ -633,7 +694,7 @@ class Builder:
                 raise ValueError('actual product AccessToken DSO lacks its selected cross-DSO CFI')
 
     def helper(self, name):
-        spec = HELPERS[name]; private = self.output / name; private.mkdir()
+        spec = helper_spec(name); private = self.output / name; private.mkdir()
         row = {'status': 'fail', 'fixture': spec['fixture']}; self.report['helpers'][name] = row; self.save()
         try:
             fixture = Path(spec.get('source_file', HERE / 'fixtures' / spec['fixture']))
@@ -643,7 +704,7 @@ class Builder:
             c_language = spec.get('language') == 'c'
             driver = self.c_compiler if c_language else self.compiler
             guard = private / 'actual_system_abi.h'
-            guard.write_text('/* C helper retains actual C GN flags; no C++ ABI assertion. */\n' if c_language else ABI_GUARD)
+            guard.write_text(C_ABI_GUARD if c_language else ABI_GUARD)
             row['abi_guard_sha256'] = sha(guard); row['language'] = 'c' if c_language else 'c++'
             anchors = [self.anchor(s, name + '-' + str(i)) for i, s in enumerate(spec['anchors'])]
             flags = anchors[0]['flags'][:]; ld = anchors[0]['ldflags'][:]
@@ -662,10 +723,7 @@ class Builder:
                 flags += cfi_flags(anchors[-1]['flags']); ld += cfi_flags(anchors[-1]['ldflags'])
                 row['diagnostic_cfi_augmentation_from_actual_product_graph'] = spec['anchors'][-1]['graph']
             if c_language:
-                if ([x for x in flags if x.startswith('--target=')] != ['--target=aarch64-linux-ohos'] or
-                        len([x for x in flags if x.startswith('--sysroot=')]) != 1 or
-                        not any(x == '-flto' or x.startswith('-flto=') for x in flags)):
-                    raise ValueError('actual ARM64 C GN target/LTO flags required')
+                validate_c_flags(flags)
                 row['actual_C_GN_flags_preserved'] = True
             else: validate_flags(flags)
             sysroot = next(x.split('=', 1)[1] for x in flags if x.startswith('--sysroot='))
@@ -689,19 +747,22 @@ class Builder:
             self.remember(driver); self.remember(self.compiler); self.remember(self.readelf); self.remember(self.ninja)
             self.remember(self.build / 'toolchain.ninja')
             flags += [x for x in includes if x not in flags]
-            obj, binary, deps = private / (name + '.o'), private / name, private / 'headers.d'
-            compile_cmd = [driver, *flags, '-fPIE', *([] if c_language else ['-include', guard]), '-MD', '-MF', deps, '-c', source, '-o', obj]
+            shared = spec.get('kind') == 'shared_napi'
+            obj, binary, deps = private / (name + '.o'), private / spec.get('output_basename', name), private / 'headers.d'
+            compile_cmd = [driver, *flags, '-fPIC' if shared else '-fPIE', *([] if c_language else ['-include', guard]), '-MD', '-MF', deps, '-c', source, '-o', obj]
             ld, removed = link_flags(ld, private); row['removed_component_DSO_only_export_maps'] = removed
             crtroot = self.build / 'obj/third_party/musl/usr/lib/aarch64-linux-ohos'
-            crt = [crtroot / n for n in ('Scrt1.o', 'crti.o', 'crtn.o')]
+            crt = [crtroot / n for n in (('crti.o', 'crtn.o') if shared else ('Scrt1.o', 'crti.o', 'crtn.o'))]
             for p in crt: self.remember(p)
             # Preserve GN headers/CRT/safety flags. Explicit -nostdlib prevents
             # clang adding its prebuilt libc++ or sysroot libc after our inputs.
             if '-nostdlib' not in ld: raise ValueError('actual GN -nostdlib link policy required')
             searches = ['-Wl,-rpath-link=' + str(path) for path in dict.fromkeys(p.parent for p in direct)]
-            link_cmd = [driver, *ld, *searches, '-pie', '-Wl,--threads=2', '-Wl,--export-dynamic', '-o', binary,
-                *crt[:2], '-Wl,-t', '-Wl,--start-group', obj, *direct, *runtime_libs, '-Wl,--end-group', crt[2]]
-            if ((not c_language and not effective_cfi(ld)) or
+            output_flags = (['-shared', '-Wl,-soname=' + spec['output_basename']] if shared else
+                            ['-pie', '-Wl,--export-dynamic'])
+            link_cmd = [driver, *ld, *searches, *output_flags, '-Wl,--threads=2', '-o', binary,
+                *crt[:-1], '-Wl,-t', '-Wl,--start-group', obj, *direct, *runtime_libs, '-Wl,--end-group', crt[-1]]
+            if (not effective_cfi(ld) or
                     not any(x == '-flto' or x.startswith('-flto=') for x in ld)):
                 raise ValueError('actual link LTO/CFI must be retained too')
             row.update(compile_command=list(map(str, compile_cmd)), link_command=list(map(str, link_cmd)),
@@ -824,7 +885,13 @@ class ExistingVerifier(Builder):
             self.report['original_commands'].append(dict(command, verified_log=record))
         if self.artifact_origin is None or str(self.artifact_origin) == '/':
             raise ValueError('original complete command logs absent')
-        allowed_fixtures = {(HERE / 'fixtures' / spec['fixture']).resolve() for spec in HELPERS.values()}
+        known = (set(HELPERS) | (set(old.get('helpers', {})) &
+            (set(COMMUNICATION_HELPER_NAMES) | set(SETTINGS_HELPER_NAMES))))
+        allowed_fixtures = {(HERE / 'fixtures' / helper_spec(name)['fixture']).resolve() for name in known}
+        if known & set(COMMUNICATION_HELPER_NAMES):
+            allowed_fixtures.add((HERE / 'communications578_native.py').resolve())
+        if known & set(SETTINGS_HELPER_NAMES):
+            allowed_fixtures.add((HERE / 'settings_idle579_native.py').resolve())
         allowed_runtime = {}
         prior_runtime = old.get('installed_runtime_profile')
         if prior_runtime is not None:
@@ -888,21 +955,39 @@ class ExistingVerifier(Builder):
     def helper(self, name):
         row = {'status': 'fail', 'runtime_validated': False}; self.report['helpers'][name] = row; self.save()
         try:
-            old = self.previous['helpers'].get(name, {}); spec = HELPERS[name]
+            old = self.previous['helpers'].get(name, {}); spec = helper_spec(name)
             if old.get('fixture') != spec['fixture'] or not old.get('CFI_preserved'):
                 raise ValueError('original helper source/CFI receipt missing')
             compile_cmd, link_cmd = old['compile_command'], old['link_command']
-            validate_flags(compile_cmd)
+            c_language = spec.get('language') == 'c'
+            if c_language:
+                if old.get('language') != 'c' or old.get('actual_C_GN_flags_preserved') is not True:
+                    raise ValueError('original actual C graph/language receipt missing')
+                validate_c_flags(compile_cmd)
+            else:
+                validate_flags(compile_cmd)
             if not effective_cfi(link_cmd) or not any(w == '-flto' or w.startswith('-flto=') for w in link_cmd):
                 raise ValueError('original link CFI/LTO missing')
-            if Path(compile_cmd[0]).resolve() != self.compiler.resolve() or Path(link_cmd[0]).resolve() != self.compiler.resolve():
+            driver = self.c_compiler if c_language else self.compiler
+            if Path(compile_cmd[0]).resolve() != driver.resolve() or Path(link_cmd[0]).resolve() != driver.resolve():
                 raise ValueError('original actual compiler identity mismatch')
+            if c_language and (Path(compile_cmd[0]).absolute() != self.c_compiler.absolute() or
+                               Path(link_cmd[0]).absolute() != self.c_compiler.absolute()):
+                raise ValueError('actual C driver argv[0] required; clang++ symlink cannot select C')
             self.prior_command(name + '-compile', compile_cmd); self.prior_command(name + '-link', link_cmd)
             prior_elf = self.prior_command(name + '-actual-ELF-ABI')
             base = self.artifact_origin / name
             source = base / Path(spec['fixture']).name; guard = base / 'actual_system_abi.h'
-            obj = base / (name + '.o'); binary = base / name; deps = base / 'headers.d'
-            if (argument(compile_cmd, '-c') != str(source) or argument(compile_cmd, '-include') != str(guard) or
+            obj = base / (name + '.o'); binary = base / spec.get('output_basename', name); deps = base / 'headers.d'
+            if spec.get('kind') == 'shared_napi':
+                pic = [word for word in compile_cmd if word in ('-fPIC', '-fpic', '-fPIE', '-fpie')]
+                if (old.get('elf_kind') != 'shared_napi' or not pic or pic[-1] != '-fPIC' or
+                        link_cmd.count('-shared') != 1 or '-pie' in link_cmd or
+                        '-Wl,-soname=' + spec['output_basename'] not in link_cmd):
+                    raise ValueError('original actual shared-NAPI PIC/link/SONAME contract absent')
+            if (argument(compile_cmd, '-c') != str(source) or
+                    (c_language and '-include' in compile_cmd) or
+                    (not c_language and argument(compile_cmd, '-include') != str(guard)) or
                     argument(compile_cmd, '-o') != str(obj) or argument(compile_cmd, '-MF') != str(deps) or
                     argument(link_cmd, '-o') != str(binary) or str(obj) not in link_cmd or prior_elf['argv'][-1] != str(binary)):
                 raise ValueError('original private compile/link/ELF artifact binding mismatch')
@@ -916,8 +1001,9 @@ class ExistingVerifier(Builder):
                 'object_new_hash_capture': self.bound_artifact(obj),
                 'binary': self.bound_artifact(binary, old['elf']['sha256']),
                 'depfile': self.bound_artifact(deps, old['depfile_sha256'])}
-            if sha(row['reused_artifacts']['abi_guard']['path']) != hashlib.sha256(ABI_GUARD.encode()).hexdigest():
-                raise ValueError('original guard is not the actual system __h/fno-exceptions guard')
+            expected_guard = C_ABI_GUARD if c_language else ABI_GUARD
+            if sha(row['reused_artifacts']['abi_guard']['path']) != hashlib.sha256(expected_guard.encode()).hexdigest():
+                raise ValueError('original guard differs from the fixed actual C or system __h/fno-exceptions contract')
             dependencies = old.get('actual_compiler_dependencies', [])
             if not dependencies: raise ValueError('original complete compiler header dependencies absent')
             for record in dependencies:
@@ -936,6 +1022,8 @@ class ExistingVerifier(Builder):
                 compile_command=compile_cmd, link_command=link_cmd, original_ELF_log_sha256=prior_elf['sha256'],
                 linked_libraries=linked, actual_compiler_dependencies=dependencies,
                 CFI_preserved=True, actual_link_inputs=opened)
+            if c_language:
+                row.update(language='c', actual_C_GN_flags_preserved=True)
             if old.get('installed_runtime_profile') is not None:
                 if old['installed_runtime_profile'] != self.previous.get('installed_runtime_profile'):
                     raise ValueError('original helper installed profile did not belong to original build')
@@ -955,7 +1043,8 @@ def main():
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--product', choices=[PRODUCT], required=True)
-    parser.add_argument('--helper', choices=HELPERS, action='append', help='Repeat to select; default all registered helpers')
+    parser.add_argument('--helper', choices=tuple(HELPERS) + COMMUNICATION_HELPER_NAMES + SETTINGS_HELPER_NAMES, action='append',
+                        help='Repeat to select; default original helpers only; communication helpers require explicit selection')
     parser.add_argument('--plan-only', action='store_true', help='Read/query existing GN only; never clang/build GN')
     parser.add_argument('--verify-existing', type=Path, help='Read-only original build.json; no Ninja/compiler/linker invocation')
     parser.add_argument('--existing-report-sha256', help='Required external SHA256 binding of the original report')

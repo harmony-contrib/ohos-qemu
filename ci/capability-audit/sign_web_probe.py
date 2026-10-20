@@ -92,13 +92,14 @@ def fa_probe_config(path: Path) -> bytes:
     return content
 
 
-def verify_signed_hap(jar: str, signed: Path, directory: Path, *, fa_no_permissions=False) -> None:
+def verify_signed_hap(jar: str, signed: Path, directory: Path, *, fa_no_permissions=False, command=None) -> None:
     # The pinned signer accepts .cer, not .pem, for this output. Require the
     # actual verification markers as well as exit status and extracted files.
     if fa_no_permissions:
         fa_probe_config(signed)
     chain, profile = directory / "verified-chain.cer", directory / "verified-profile.p7b"
-    completed = subprocess.run([
+    run = command or subprocess.run
+    completed = run([
         "java", "-jar", jar, "verify-app", "-inFile", str(signed),
         "-outCertChain", str(chain), "-outProfile", str(profile),
     ], capture_output=True, text=True)

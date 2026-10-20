@@ -1,0 +1,128 @@
+--- a/control412/candidate/control_session404.py
++++ b/control412/candidate/control_session404.py
+@@ -29,6 +29,103 @@
+     need(inventory['holder_pid']>1 and inventory['fd']<2**31 and inventory['holder_uid']<2**32 and
+       inventory['holder_gid']<2**32,'actual native PID/credential/FD ranges')
+     return admitted,dict(inventory)
++
++
++def tools_configuration(path,*,archive_sha256,profile_descriptor):
++    """Pre-guest admission covers actual compiled tools/profile, never holder facts."""
++    value=tools.decode(path)
++    need(type(value) is dict and set(value)=={'tools','profile','inventory'} and
++         value['profile']==profile_descriptor and value['inventory'] is None,
++         'pre-ARM tool config must leave actual same-boot inventory null')
++    return tools.admit(value['tools'],profile_descriptor=value['profile'],archive_sha256=archive_sha256)
++
++def inventory_output(raw,*,run,boot):
++    """Derive all 13 facts from actual native raw cuts, never an expected inventory.
++
++    The original full configuration() remains unchanged and is called on the
++    freshly written bound config. This is not a PCM/frame-zero/onset anchor.
++    """
++    need(re.fullmatch('[a-f0-9]{32}',run) is not None and
++         re.fullmatch('[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}',boot) is not None,
++         'current native inventory run/boot required')
++    rows=verify.raw_lines(raw,4,line_bound=262143)
++    need(len(rows)==4 and [r.get('kind') for r in rows]==
++         ['inventory_begin','inventory_before','inventory_after','inventory_complete'],
++         'one complete actual inventory only; readiness failures reject')
++    head,before,after,end=rows
++    need(set(head)=={'kind','schema','run','boot','producer_pid','producer_ticks','before_ns','producer_time_ns'} and
++         set(end)=={'kind','schema','run','boot','after_ns','processes','fds','candidates',
++                   'duplicate_close_rc','pidfd_close_rc','ready','accepted','onset_proven'},
++         'exact native inventory envelope')
++    for row in (head,end):
++        need(row['schema']=='audio404-holder-inventory/v1' and row['run']==run and row['boot']==boot,
++             'actual native inventory epoch differs')
++    need(verify.integer(head,'producer_pid',2)<2**31 and verify.integer(head,'producer_ticks',1)>0,
++         'actual inventory producer incarnation')
++    need(end['ready'] is True and end['accepted'] is False and end['onset_proven'] is False and
++         type(end['duplicate_close_rc']) is int and end['duplicate_close_rc']==0 and
++         type(end['pidfd_close_rc']) is int and end['pidfd_close_rc']==0 and
++         verify.integer(end,'candidates',1,1)==1 and verify.integer(end,'processes',1,32768)>0 and
++         verify.integer(end,'fds',1,262144)>0,'actual unique inventory/duplicate closure required')
++    stat_keys={'dev','ino','rdev','mode','uid','gid','nlink'}
++    def stat_row(row):
++        need(type(row) is dict and set(row)==stat_keys,'actual complete stat fields required')
++        for key in stat_keys:verify.integer(row,key)
++        need(row['ino']>0,'actual inode required')
++        return row
++    producer_ns=stat_row(head['producer_time_ns'])
++    keys={'kind','pid','ticks','fd','borrowed_fd','before_ns','after_ns','kcmp_rc','uids','gids',
++          'descriptor_stat','proc_fd_stat','time_ns_stat','pcm_info_bytes','pcm_info_hex',
++          'boot','fd_link','exe','proc_stat_raw','proc_status_raw','fdinfo_raw','proc_net_unix_raw'}
++    derived=[]
++    for cut in (before,after):
++        need(set(cut)==keys and cut['boot']==boot,'exact same-boot native inventory cut')
++        pid=verify.integer(cut,'pid',2,2**31-1);ticks=verify.integer(cut,'ticks',1)
++        fd=verify.integer(cut,'fd',0,2**31-1)
++        need(pid!=head['producer_pid'] and verify.integer(cut,'borrowed_fd',0,2**31-1)>=0 and
++             type(cut['kcmp_rc']) is int and cut['kcmp_rc']==0,'actual foreign holder/OFD witness required')
++        for key in ('proc_stat_raw','proc_status_raw','fdinfo_raw','proc_net_unix_raw','fd_link','exe'):
++            need(type(cut[key]) is str and 0<len(cut[key].encode())<65536,'bounded actual native proc raw')
++        need(cut['proc_stat_raw'].split(' ',1)[0]==str(pid) and stat_ticks(cut['proc_stat_raw'])==ticks,
++             'native raw holder birth differs')
++        ids={}
++        for prefix,key in (('Uid','uids'),('Gid','gids')):
++            matches=re.findall(r'(?m)^'+prefix+r':\s+([0-9]+)\s+([0-9]+)\s+([0-9]+)\s+([0-9]+)\s*$',cut['proc_status_raw'])
++            need(len(matches)==1,'exact actual four credentials in raw status')
++            ids[key]=[int(n) for n in matches[0]]
++            need(type(cut[key]) is list and len(cut[key])==4 and
++                 all(type(n) is int and 0<=n<2**32 for n in cut[key]) and cut[key]==ids[key],
++                 'native credential fields must match observed proc status')
++        st=stat_row(cut['descriptor_stat']);nsrow=stat_row(cut['time_ns_stat'])
++        need(stat_row(cut['proc_fd_stat'])==st and st['mode']&0o170000==0o020000 and
++             (nsrow['dev'],nsrow['ino'])==(producer_ns['dev'],producer_ns['ino']),
++             'same original/borrowed char FD and actual time namespace required')
++        size=verify.integer(cut,'pcm_info_bytes',16,4096)
++        need(type(cut['pcm_info_hex']) is str and re.fullmatch('[a-f0-9]{'+str(size*2)+'}',cut['pcm_info_hex']) is not None,
++             'complete actual PCM INFO raw bytes')
++        info=bytes.fromhex(cut['pcm_info_hex'])
++        # Actual target is AArch64 little endian, already required by tool admission.
++        device=int.from_bytes(info[0:4],'little');subdevice=int.from_bytes(info[4:8],'little')
++        stream=int.from_bytes(info[8:12],'little',signed=True);card=int.from_bytes(info[12:16],'little',signed=True)
++        node=re.fullmatch(r'/dev/snd/pcmC([0-9]+)D([0-9]+)p',cut['fd_link'])
++        need(stream==0 and card>=0 and node is not None and [int(n) for n in node.groups()]==[card,device],
++             'actual observed playback node and PCM INFO must agree')
++        listener='@ohos-audio398/'+str(pid)+'/'+str(ticks)
++        matches=[line.split() for line in cut['proc_net_unix_raw'].splitlines() if len(line.split())==8 and line.split()[7]==listener]
++        need(len(matches)==1 and int(matches[0][3],16)&0x10000 and int(matches[0][4],16)==5,
++             'original same-holder CONTROL listener not ready')
++        derived.append(dict(holder_pid=pid,holder_ticks=ticks,holder_uid=ids['uids'][1],holder_gid=ids['gids'][1],
++            fd=fd,dev=st['dev'],ino=st['ino'],rdev=st['rdev'],card=card,device=device,subdevice=subdevice,
++            holder_time_dev=nsrow['dev'],holder_time_ino=nsrow['ino']))
++    stable=('pid','ticks','fd','borrowed_fd','uids','gids','descriptor_stat','proc_fd_stat','time_ns_stat',
++            'pcm_info_bytes','pcm_info_hex','boot','fd_link','exe')
++    need(all(before[k]==after[k] for k in stable) and derived[0]==derived[1],
++         'holder birth/credentials/OFD/INFO/namespace must be stable')
++    cuts=[verify.integer(head,'before_ns',1),verify.integer(before,'before_ns',1),verify.integer(before,'after_ns',1),
++          verify.integer(after,'before_ns',1),verify.integer(after,'after_ns',1),verify.integer(end,'after_ns',1)]
++    need(all(a<=z for a,z in zip(cuts,cuts[1:])) and cuts[-1]-cuts[0]<=15000000000,
++         'bounded actual monotonic inventory cuts; not an onset timestamp')
++    return derived[0]
+ 
+ def stat_ticks(raw):
+     # Linux /proc comm can contain spaces and parentheses; field22 follows last ).
+@@ -107,12 +204,19 @@
+                 if script is None:
+                     import batch_system_build_runtime_helpers as product
+                     script=product.runtime_guest_script(row['helper'],soname)
+-                raw=self.observation(script,name+'-DSO-'+soname)
++                raw=self.observation(script,name+'-DSO-'+soname.replace('.','-'))
+                 import batch_system_build_runtime_helpers as product
+                 product.verify_guest_runtime_raw(row['helper'],soname,raw,archive_sha256=c.value['archive_sha256'])
+         need(not hasattr(c,'_control404_staged'),'one fixed404 window per collector; no stale holder/epoch reuse')
+         for binary,name in ((self.admitted.control,'control404'),(self.admitted.status,'status377')):
+-            c.stage(dict(path=str(binary),sha256=tools.digest(binary)),c.remote+'/'+name,0,executable=True)
++            source=dict(path=str(binary),sha256=tools.digest(binary))
++            if name=='status377' and hasattr(c,'_control404_inventory_status'):
++                need(getattr(c,'_control404_inventory_status',None)==source,
++                     'status must be staged once by actual same-boot inventory producer')
++                raw=self.observation('test "$(stat -c "%u %a" '+c.remote+'/'+name+')" = "0 700" && sha256sum '+c.remote+'/'+name,
++                                     'inventory-status-still-exact')
++                need(raw.split()==[source['sha256'],c.remote+'/'+name],'inventory status bytes changed before ARM')
++            else:c.stage(source,c.remote+'/'+name,0,executable=True)
+         c._control404_staged=True
+         c.shell('test ! -e '+self.remote+' && test ! -L '+self.remote+' && mkdir -m 700 '+self.remote,'new-404-private-window')
+         args=[inv[k] for k in ('holder_pid','holder_ticks','holder_uid','holder_gid','fd','dev','ino','rdev')]

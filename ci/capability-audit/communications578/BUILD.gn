@@ -1,0 +1,18 @@
+# The parent copies these fixed helper sources into its existing probe staging
+# target, preserving actual product compiler/CFI/LTO/headers/link commands.
+import("//build/ohos.gni")
+
+ohos_executable("communications578_permission_controller") {
+  sources = [ "PermissionController.cpp" ]
+  install_enable = false
+  subsystem_name = "telephony"
+  part_name = "call_manager"
+  deps = [ "//base/security/access_token/interfaces/innerkits/accesstoken:libaccesstoken_sdk" ]
+}
+
+ohos_executable("communications578_at_peer") {
+  sources = [ "../communications578_at_peer.c" ]
+  install_enable = false
+  subsystem_name = "telephony"
+  part_name = "call_manager"
+}

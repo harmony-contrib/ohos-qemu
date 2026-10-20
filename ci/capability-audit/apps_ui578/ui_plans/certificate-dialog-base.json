@@ -1,0 +1,56 @@
+{
+  "schema": "actual-packaged-apps578-ui/v1",
+  "kind": "certificate-dialog",
+  "source_files": [
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/certificate/fixed/certmanager/src/main/module.json5",
+      "sha256": "957362f7abd60ba86a75c99c9ed25d54cd16764f42262f613720b2328f51424a"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/certificate/fixed/certmanager/src/main/ets/MainAbility/CertPickerUiExtAbility.ets",
+      "sha256": "cf91f64cf0bf2ea07abe6fb1b606f4b33fcd041462b4092a9ae017629916afbe"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/certificate/fixed/certmanager/src/main/ets/pages/RequestAuthSheet.ets",
+      "sha256": "09faf425a145158192f4d34ee4f8741eb35db46a761dcc0f50d683684ec63ff6"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/certificate/fixed/certmanager/src/main/ets/pages/requestAuth.ets",
+      "sha256": "42a1d43b16165a85e19b0e8bdf83a2ce36dc22332d7a7dc356ab52bd29c00e96"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/certificate/fixed/certmanager/src/main/ets/pages/CertificateInstallPage.ets",
+      "sha256": "3b2efd4c25c146d5a60a574b0a4e3fd64b07b8ed554ee6221269c36e551158ae"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/certificate/strings.json",
+      "sha256": "1afb1407e1a0ce2ec1f1cf32a846ec38bbc7935e019ebad1616abeba3773e2c8"
+    }
+  ],
+  "provider_bundle": "com.ohos.certmanager",
+  "actions": {
+    "select-own": [
+      {
+        "bundle": "com.ohos.certmanager",
+        "text": "{{certificate_alias}}",
+        "ancestor": true
+      }
+    ],
+    "authorize": [
+      {
+        "bundle": "com.ohos.certmanager",
+        "text": "授权",
+        "ancestor": true
+      }
+    ],
+    "cancel": [
+      {
+        "key": "Back"
+      }
+    ]
+  },
+  "visible": {
+    "bundle": "com.ohos.certmanager",
+    "text": "选择凭据"
+  }
+}

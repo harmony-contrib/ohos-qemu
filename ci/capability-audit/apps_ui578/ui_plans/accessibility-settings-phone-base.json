@@ -1,0 +1,114 @@
+{
+  "schema": "actual-packaged-apps578-ui/v1",
+  "kind": "accessibility-settings",
+  "source_files": [
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/settings/fixed/product/phone/src/main/resources/base/element/string.json",
+      "sha256": "d61c7fc0a57f6c0400db326abf854c6248387023b40adeb9f21c26bd35d01d58"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/IgnoreRepeatClickService.ets",
+      "sha256": "b0e94b08aaaba4414d41a175f047252e5b50be93e284a5ace50cc15592972d1f"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/accessibility/services/aams_ext/src/accessibility_notification_helper.cpp",
+      "sha256": "e0a5a687f6b5a273ad61923322eb51157327a44f3317b8b095c0716a1889e67d"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/accessibility/services/aams/src/accessibility_settings.cpp",
+      "sha256": "663094fb8acb642be8a0246e720ab2d08eabcbcd4bd561beda068ab1df11cc14"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-screen-control578-review/upstream/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/view/item/titleItem.ets",
+      "sha256": "f216aefdb27d348ca8644aad9c5575154003c3a55f07b2f0c3e256958b604722"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-screen-control578-review/upstream/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/view/item/longItem.ets",
+      "sha256": "52b819d947251318f1071474bbc236a0e60920142eea7af7463506331f4dda0d"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-screen-control578-review/upstream/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/view/item/generalItem.ets",
+      "sha256": "fdf5ecc333fb45f2b0fac987397e9a60dad6f99929b8c081f33ee1983b2c9d49"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-screen-control578-review/upstream/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/view/item/actionComponent.ets",
+      "sha256": "adc460e8511cb260dcd6751977174b48a32e9f8a9e567b26b22ff91771d0e354"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-screen-control578-review/handoff/after/applications/standard/systemui/product/phone/statusbar/src/main/ets/pages/index.ets",
+      "sha256": "c4c66967ec9ba481d9c806846a352d95621e6686195d410695ae2d0dfe90c202"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-screen-control578-review/handoff/after/applications/standard/systemui/features/statusbarcomponent/src/main/ets/com/ohos/pages/IconItemComponent.ets",
+      "sha256": "dfac31933d684016b2ca052ec94c34ea22449a7de67276b077b2590a1358d74b"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-settings579-idle-stop-candidate/candidate/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets",
+      "sha256": "e0358662d8a5d53c6627a8a2392243036b8fb23c222e2290b5245d7bbf2d7a50"
+    }
+  ],
+  "provider_bundle": "com.ohos.settings",
+  "actions": {
+    "back": [
+      {
+        "key": "Back"
+      }
+    ],
+    "expand-ignore": [
+      {
+        "bundle": "com.ohos.systemui",
+        "text": "Ignore repeated taps is on",
+        "card_title": true
+      }
+    ],
+    "expand-animation": [
+      {
+        "bundle": "com.ohos.systemui",
+        "text": "Transition animations are disabled",
+        "card_title": true
+      }
+    ],
+    "ignore-disable": [
+      {
+        "bundle": "com.ohos.systemui",
+        "text": "Turn this off",
+        "within_card": "Your device may seem less responsive. When this is on, multiple taps within a short space of time are treated as a single tap."
+      }
+    ],
+    "ignore-cancel": [
+      {
+        "bundle": "com.ohos.systemui",
+        "text": "Don't show again",
+        "within_card": "Your device may seem less responsive. When this is on, multiple taps within a short space of time are treated as a single tap."
+      }
+    ],
+    "animation-enable": [
+      {
+        "bundle": "com.ohos.systemui",
+        "text": "Turn on",
+        "within_card": "This feature helps make screen transitions and app launch and exit animations smoother. We recommend turning it on."
+      }
+    ],
+    "animation-cancel": [
+      {
+        "bundle": "com.ohos.systemui",
+        "text": "Don't show again",
+        "within_card": "This feature helps make screen transitions and app launch and exit animations smoother. We recommend turning it on."
+      }
+    ],
+    "drawer": [
+      {
+        "bundle": "com.ohos.systemui",
+        "identifier": "systemui-statusbar-swipe",
+        "swipe_to": {
+          "bundle": "org.harmonycontrib.appsui578.a",
+          "identifier": "apps578-surface"
+        }
+      }
+    ]
+  },
+  "visible": {
+    "bundle": "com.ohos.systemui",
+    "text": "Ignore repeated taps is on"
+  }
+}

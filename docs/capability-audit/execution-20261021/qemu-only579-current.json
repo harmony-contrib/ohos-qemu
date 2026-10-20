@@ -1,0 +1,51 @@
+{
+  "schema": "qemu-only-batched-status579/v1",
+  "updated_utc": "2026-10-20T20:29:37.280023+00:00",
+  "acceptance": "only newly packaged actual QEMU business/boundary/regression/cleanup observations can close requirements",
+  "base_source_commit": "db360951a13ce07c7e561d71344a34b6109b10cf",
+  "completed_native_attempt": {
+    "scope": "completed actual representative native attempt, not QEMU acceptance",
+    "source_commit": "db360951a13ce07c7e561d71344a34b6109b10cf",
+    "evidence": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r64-canonical-first-arm64-phone-build-578-02/evidence.json",
+      "sha256": "21d9dff98fe5cbf75deb26cf68854bc753cc711db0dc2f29d4dbe3d3de2cbc33",
+      "bytes": 15325
+    },
+    "native_log": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r64-canonical-first-arm64-phone-build-578-02/logs/phone_full_build_20261020T160944Z.log",
+      "sha256": "cb4c34dc158a161da0455dd76adc531bf069abf00cf99ff9af5cfc99ee2e3d62",
+      "bytes": 7675558
+    },
+    "failed_targets": [
+      "[OHOS INFO] [NINJA] FAILED: [code=1] obj/applications/standard/mms/mms_hap/unsigned_hap_path_list.json ",
+      "[OHOS INFO] [NINJA] FAILED: [code=1] arkui/ace_engine/libace_compatible.z.so lib.unstripped/arkui/ace_engine/libace_compatible.z.so "
+    ],
+    "actual_cgroup_oom_kill": 1,
+    "oom_source_observation": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-dnd-resource579-source-current.json",
+      "sha256": "e2069b9027ff2fc171088b4bd3a4453c7f8ca89a11c82885e6aa665111c414e3",
+      "bytes": 2025
+    },
+    "finished_utc": "2026-10-20T20:25:30.676726+00:00",
+    "exit_code": 1,
+    "package": null,
+    "cleanup_verified": true,
+    "owned_container_absent": true,
+    "owned_launcher_group_closed": true,
+    "resource_lease_held": false,
+    "first_artifact_behavior_gate_passed": false,
+    "remaining_five_started": false
+  },
+  "new_QEMU_capabilities_closed_this_batch": [],
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false,
+  "source_batch_scope": "provider/product wiring and real original-Owner guest stages; source completion is not capability acceptance",
+  "pending": [
+    "APN and CA full source selection/signing and business recovery",
+    "real caption ASR/provider/consent/model dependency preparation",
+    "independent WLAN radio/DHCP/data/portal flows or source-bounded unsupported dispositions",
+    "paired actual QEMU SoftBus/cast/distributed-hardware flows",
+    "fresh same-commit runtime input/source-kit projection",
+    "new ARM64 phone complete QEMU validation before five remaining artifacts"
+  ]
+}

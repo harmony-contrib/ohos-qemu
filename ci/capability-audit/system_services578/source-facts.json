@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "scope": "bounded primary-source implementation review and uncompiled candidate; no current image/provider absence is inferred from historical directories",
+  "runtime_pass": false,
+  "first_artifact_behavior_gate_passed": false,
+  "fixed_sources": [
+    {
+      "repository": "https://github.com/openharmony/advertising_ads_framework",
+      "revision": "a31d0874a5634771c57f1d875f596479628cdbd3",
+      "source_lock_path": "domains/advertising/advertising",
+      "paths": ["README_zh.md", "BUILD.gn", "bundle.json", "frameworks/js/napi/ads/resource/ad_service_config.json", "frameworks/js/napi/ads/src/ad_load_service.cpp", "frameworks/js/napi/ads/src/advertising.js", "frameworks/js/napi/adsservice_extension_ability/adsservice_extension.js"],
+      "facts": [
+        "README says OEM creates the advertisement platform; framework forwards requests and requires the platform to obtain content and return it.",
+        "Build selects framework/NAPI/component/config/extension runtime targets, not a provider HAP with manifest, signing, creative backend and UI entrypoints.",
+        "Default configured bundle is com.samples.AdsServiceDemo, with AdsCoreService, FullScreenAdAbility, AdsUIExtensionAbility and JsBridgeService.",
+        "The default config omits providerApiAbilityName, while AdLoadService::GetConfigItem requires that field before populating bundle/extension/API names.",
+        "AdsServiceExtensionAbility exposes overridable onLoadAd/onLoadAdWithMultiSlots hooks; the base implementation only logs, and is not an ad platform/content backend.",
+        "AdLoadService::LoadAd emits raw connection error 12 when it cannot connect; it does not promise 801 for absent default provider. JS processParamsNull rejects actual null with 401."
+      ],
+      "links": ["https://github.com/openharmony/advertising_ads_framework/blob/a31d0874a5634771c57f1d875f596479628cdbd3/README_zh.md", "https://github.com/openharmony/advertising_ads_framework/blob/a31d0874a5634771c57f1d875f596479628cdbd3/frameworks/js/napi/ads/resource/ad_service_config.json"]
+    },
+    {
+      "repository": "https://gitcode.com/openharmony-sig/manifest",
+      "revision": "d679e50d1ed091d9e07fc28d3ab7ceba5d385bc3",
+      "paths": ["cloud_advertising.xml"],
+      "facts": ["The real SIG manifest maps cloud_advertising into the same domains/advertising/advertising path. Catalog names are discovery evidence, not a provider-absence proof."],
+      "preserved_primary_evidence": ".tmp/parallel-capability-20261016/root-repair578-system/SIG-CATALOG.json"
+    },
+    {
+      "repository": "https://gitcode.com/openharmony-sig/cloud_advertising",
+      "revision": "bcc909b452cb89fffa83a9f36a7c81bae2e3eb1f",
+      "paths": ["BUILD.gn", "bundle.json", "README_zh.md", "frameworks/js/napi/ads/resource/ad_service_config.json", "frameworks/js/napi/adsservice_extension_ability/adsservice_extension.js", "patches/patches.json"],
+      "facts": [
+        "Previously retrieved complete fixed SIG tree has framework/common/NAPI/config/extension ABI code and OEM provider construction examples; no distributable provider HAP/source application with all service/UI/JS bridge/content pieces.",
+        "The native_packages group builds Ads framework, ad/autoad components, default config, AdsService extension modules; onLoadAd and multi-slot hooks only log until an OEM overrides them.",
+        "README example supplies sample RPC/response snippets; those snippets and placeholder ad IDs are not a complete provider integration.",
+        "patches/patches.json points to productdefine_common PR731; enabling the component does not supply a provider HAP, signature, service API entrypoint or legal creative backend."
+      ],
+      "preserved_primary_evidence": ".tmp/parallel-capability-20261016/root-repair578-system/cloud-advertising-SOURCE.json"
+    },
+    {
+      "repository": "https://github.com/openharmony/bundlemanager_app_domain_verify",
+      "revision": "4cb6b794a914e5712287eb5bb799969c3da6d140",
+      "source_lock_path": "foundation/bundlemanager/app_domain_verify",
+      "paths": ["services/src/agent/core/app_domain_verify_agent_service.cpp", "services/src/manager/core/app_domain_verify_mgr_service.cpp", "frameworks/verifier/src/verify_task.cpp", "frameworks/verifier/src/domain_verifier.cpp", "frameworks/verifier/include/constant/agent_constants.h"],
+      "facts": [
+        "Missing optional extension falls back to real VerifyTask/VerifyHttpTask for verification and refresh.",
+        "Asset is /.well-known/applinking.json with applinking.apps appIdentifier/bundleName/fingerprint records.",
+        "Fallback ConvertToExplicitWant returns empty TargetInfo. This alone does not prove normal public HTTP(S) App Linking failure; the real verified-state FilterAbilities path must be exercised.",
+        "Associated-domain/bundle queries require GET_APP_DOMAIN_BUNDLE_INFO and system-app identity."
+      ]
+    },
+    {
+      "repository": "https://github.com/openharmony/bundlemanager_bundle_framework",
+      "revision": "537bdea9ae5634a847db774fe00ba4d190cbcc65",
+      "paths": ["services/bundlemgr/src/base_bundle_installer.cpp"],
+      "facts": ["PrepareSkillUri selects domainVerify=true HTTPS skills only. Normal overwrite installation clears old domain status and invokes VerifyDomain using actual installed appIdentifier and certificate fingerprint."]
+    },
+    {
+      "repository": "https://github.com/openharmony/window_window_manager",
+      "revision": "c9e0c375301ef3fc5cb08d4e5ab69bc7fe04bf73",
+      "paths": ["sa_profile/4606.json", "window_scene/session_manager/src/scene_session_manager.cpp", "etc/BUILD.gn"],
+      "facts": ["Real SA4606/SceneSession implementation exists. Detailed dump binds WinId/Pid/Type/Mode/visibility/rectangle. The all-session table truncates names, so this caller uses a short nonce-bound window name and checks detailed IDs."]
+    },
+    {
+      "repository": "https://github.com/openharmony/communication_netstack",
+      "revision": "b1590759f4d279007ab979a1a61e37749e1fc1dc",
+      "paths": ["interfaces/innerkits/http_client/BUILD.gn", "frameworks/native/http/http_client/http_client_task.cpp", "frameworks/native/http/http_client/http_client_constant.cpp"],
+      "facts": ["Non-ohos-sdk products enable HTTP_MULTIPATH_CERT_ENABLE. Native HttpClient loads /etc/security/certificates and uses peer verification 1, hostname verification 2 unless an explicit request skip flag is set. The real VerifyTask request does not set that flag."]
+    },
+    {
+      "repository": "https://github.com/openharmony/third_party_musl",
+      "revision": "415a7e7e24c2e1a97ca1cc4c4122f3b12a032cee",
+      "paths": ["src/network/lookup_name.c", "porting/linux/user/src/network/lookup_name.c"],
+      "facts": ["Resolver reads /etc/hosts before DNS; root-owned temporary test FQDN mapping requires no process-private registry or curl resolve override."]
+    },
+    {
+      "repository": "https://github.com/openharmony/developtools_hdc",
+      "revision": "8ae22770c5d7758808ef7499b6957fcdb92d7fb4",
+      "paths": ["README_zh.md"],
+      "facts": ["rport device-port host-port creates guest-listener reverse transport to a high host port. It can carry real guest HTTPS requests to an independent root-owned peer without a host privileged 443 listener."]
+    },
+    {
+      "repository": "https://github.com/openharmony/account_os_account",
+      "revision": "da111cfa5b0d7eca6d327b05216a606b47a87546",
+      "paths": ["tools/acm/include/account_command.h", "tools/acm/src/account_command.cpp", "tools/BUILD.gn", "os_account.gni"],
+      "facts": ["Actual acm CLI creates normal accounts, switches by -i ID and dumps real state. Multiple OS accounts default enabled; multiple_active_accounts=false is distinct from sequential account switching."]
+    }
+  ],
+  "existing_product_wiring": [
+    "patches/phone/product_profile/apply.py: SessionManager maps to actual window_manager SceneBoard feature/runtime/signed HAP integration",
+    "patches/phone/product_profile/official_documented_syscaps.json: SystemCapability.Window.SessionManager",
+    "patches/2in1/product_profile/apply.py: actual window_manager_use_sceneboard=true",
+    "patches/lib/sceneboard_profile.py: runtime config, preinstall, unlock integration"
+  ],
+  "ads_bounded_exclusion_candidate": {
+    "id": "behavior:advertising-service-provider-missing",
+    "scope": "complete default bundled OEM Ads provider and creative/content backend in the inspected fixed official/SIG repositories and current declared default configuration",
+    "excludes_framework_or_api": false,
+    "excludes_external_private_providers": false,
+    "final_unsupported_decision": false,
+    "requires_new_image_confirmation": ["actual config and override discovery", "actual installed provider/service/entrypoint inspection", "ordinary caller malformed input/load/multi/restart raw behavior"],
+    "reopen_input": "complete redistributable provider source or verifiable signed HAP, exact five configured service/API/UI/UEA/JS entrypoints, signer/ACL, legal creative/backend and load/display/interaction/cancel protocol"
+  },
+  "new_product_patch": "none proposed: existing implementation/profile wiring is present; actual newly packaged behavior must decide any further product correction",
+  "validation": "not run; no parser, compiler, SDK, VM or resource operation by this agent"
+}

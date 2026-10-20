@@ -1,0 +1,64 @@
+--- a/applications/standard/settings_data/entry/src/main/ets/Utils/SettingsDBHelper.ets
++++ b/applications/standard/settings_data/entry/src/main/ets/Utils/SettingsDBHelper.ets
+@@ -149,7 +149,7 @@
+       this.DEFAULT_USER_ID + SettingsDBHelper.TABLE_CREATE_SUFFIX, []);
+     if (this.isFirstStartup) {
+       Log.info('loadDefaultSettingsData begin');
+-      this.loadDefaultSettingsData();
++      await this.loadDefaultSettingsData();
+       Log.info('loadDefaultSettingsData finish');
+       await this.initialInsert(SettingsDataConfig.TABLE_NAME);
+       await this.initialInsert(SettingsDataConfig.USER_TABLE_NAME + '_' + this.DEFAULT_USER_ID);
+@@ -197,13 +197,13 @@
+     }
+     switch (tableType) {
+       case TableType.SETTINGS:
+-        this.loadDefaultTaleData(content.settings, TableType.SETTINGS, userId);
++        await this.loadDefaultTaleData(content.settings, TableType.SETTINGS, userId);
+         return;
+       case TableType.USER:
+-        this.loadDefaultTaleData(content.user, TableType.USER, userId);
++        await this.loadDefaultTaleData(content.user, TableType.USER, userId);
+         return;
+       case TableType.USER_SECURE:
+-        this.loadDefaultTaleData(content.userSecure, TableType.USER_SECURE, userId);
++        await this.loadDefaultTaleData(content.userSecure, TableType.USER_SECURE, userId);
+         return;
+       default:
+         Log.error('invalid type');
+@@ -323,7 +323,7 @@
+   }
+   private async loadDefaultTaleData(tableData: Array<Map<string, string>>, tableType: TableType,
+                                     userID: number): Promise<void> {
+-    if (tableData?.length <= 0) {
++    if (!tableData || tableData.length === 0) {
+       Log.error(`${tableType} table data is empty`);
+       return;
+     }
+--- a/applications/standard/settings_data/entry/src/main/resources/rawfile/default_settings.json
++++ b/applications/standard/settings_data/entry/src/main/resources/rawfile/default_settings.json
+@@ -31,12 +31,21 @@
+     {
+       "name": "device_provisioned",
+       "value": "1"
+-      }
+-    ],
+-    "userSecure": [
++    }
++  ],
++  "user": [],
++  "userSecure": [
+     {
+       "name": "user_setup_complete",
+       "value": "1"
++    },
++    {
++      "name": "ignore_repeat_click_notification",
++      "value": "1"
++    },
++    {
++      "name": "transition_animations_notification",
++      "value": "1"
+     }
+   ]
+-}+}

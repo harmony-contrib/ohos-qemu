@@ -41,6 +41,7 @@ Environment:
   REPO_CHECKOUT_JOBS  repo checkout jobs, default: 4
   REPO_SYNC_RETRIES   repo sync retry attempts, default: 3
   BUILD_JOBS          build jobs, default: nproc
+  QEMU_LINK_JOBS      LLD/ThinLTO workers per full-product link, default: 2
   KERNEL_BUILD_JOBS   nested kernel make jobs, default: BUILD_JOBS
   CCACHE_MAXSIZE      ccache size limit, default: 100G
   CCACHE_DIR          ccache directory, default: $CACHE_ROOT/ccache
@@ -236,6 +237,7 @@ TELEPHONY_CORE_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/core_
 TELEPHONY_SMS_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/sms_mms/api26_enums/apply.sh"
 TELEPHONY_CALL_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/call_manager/api26_enums/apply.sh"
 TELEPHONY_RTT_LIFECYCLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/call_manager/api26_rtt_lifecycle/apply.sh"
+TELEPHONY_RTT_BOUNDARY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/telephony/call_manager/rtt_runtime_boundary/apply.sh"
 SCREENLOCK_ENUMS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/theme/screenlock_mgr/api26_enums/apply.sh"
 I18N_SUGGESTION_TYPE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/base/global/i18n/api26_suggestion_type/apply.sh"
 DEVICE_MANAGER_AUTH_FORM_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/distributedhardware/device_manager/api26_auth_form/apply.sh"
@@ -460,6 +462,11 @@ REPO_JOBS="${REPO_JOBS:-16}"
 REPO_CHECKOUT_JOBS="${REPO_CHECKOUT_JOBS:-4}"
 REPO_SYNC_RETRIES="${REPO_SYNC_RETRIES:-3}"
 BUILD_JOBS="${BUILD_JOBS:-$(nproc)}"
+QEMU_LINK_JOBS="${QEMU_LINK_JOBS:-2}"
+case "${QEMU_LINK_JOBS}" in
+  1|2|4|8|16) ;;
+  *) echo 'QEMU_LINK_JOBS must be one of 1, 2, 4, 8, 16' >&2; exit 2 ;;
+esac
 KERNEL_BUILD_JOBS="${KERNEL_BUILD_JOBS:-${BUILD_JOBS}}"
 CCACHE_MAXSIZE="${CCACHE_MAXSIZE:-100G}"
 CCACHE_DIR="${CCACHE_DIR:-${CACHE_ROOT}/ccache}"
@@ -1645,6 +1652,11 @@ PY
   if [ -n "${pcm_onset_gn_arg}" ]; then
     build_args+=(--gn-args "${pcm_onset_gn_arg}")
   fi
+  # All supported QEMU products share one bounded linker budget. Keep CFI
+  # enabled with ThinLTO; a later CFI -flto must not restore monolithic LTO.
+  build_args+=(--gn-args "concurrent_links=1")
+  build_args+=(--gn-args "qemu_link_jobs=${QEMU_LINK_JOBS}")
+  build_args+=(--gn-args "qemu_thin_cfi=true")
   if [ -n "${DEVICE_TYPE}" ]; then
     # Ensure GN sees device_type at compile time (init ohos.para generation).
     # --device-type is a post-image rewrite in hb. In load-only mode explicitly
@@ -1652,9 +1664,6 @@ PY
     # 2in1 device type and try to rewrite ohos.para before it has been built.
     # The GN argument still selects the compile-time device type.
     build_args+=(--gn-args "device_type=${DEVICE_TYPE}")
-    # One product linker at a time shares the coordinator's heavy-work lease.
-    # Ninja still uses BUILD_JOBS for compilation; target LTO/CFI stay enabled.
-    build_args+=(--gn-args "concurrent_links=1")
     if [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; then
       # Use HiCollie's existing suspend-aware scheduling for QEMU s2idle. This
       # retains real awake half/full checks and recovery; new guest wake/health
@@ -2945,6 +2954,7 @@ prepare_source_and_sdk() {
   echo "ccache max size: ${CCACHE_MAXSIZE}"
   echo "ccache dir: ${CCACHE_DIR}"
   echo "kernel build jobs: ${KERNEL_BUILD_JOBS}"
+  echo "QEMU LLD/ThinLTO workers per link: ${QEMU_LINK_JOBS}"
   echo "host GN explicit software CPU: ${QEMU_HOST_GN_QEMU_USER}"
   echo "skip prebuilts: ${SKIP_PREBUILTS}"
   echo "no prebuilt sdk: ${NO_PREBUILT_SDK}"
@@ -3251,6 +3261,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_call_enums_component.log"
   bash "${TELEPHONY_RTT_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_rtt_lifecycle_component.log"
+  bash "${TELEPHONY_RTT_BOUNDARY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_telephony_rtt_boundary_component.log"
   if [ "${DEVICE_TYPE}" = phone ] && [ "${QEMU_PHONE_PROFILE_COMPONENT}" != "0" ]; then
     # Authenticate the complete loader/provider vector before changing this family.
     python3 "${PATCH_ROOT}/common/foundation/ability/ability_runtime/number_identity_native_trace495/verify_source.py" \
@@ -3689,8 +3701,39 @@ apply_qemu_capability_patch_plan() {
   bash "${VULKAN_OHOS_SURFACE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_vulkan_ohos_surface_component.log"
   apply_qemu_absolute_pointer_component
+  bash "${PATCH_ROOT}/common/build/compiler/qemu_link_jobs/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_link_jobs.log"
+  bash "${PATCH_ROOT}/common/build/sanitizers/qemu_thin_cfi/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_thin_cfi.log"
   bash "${QEMU_SHORTKEY_PROFILE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_shortkey_profile_component.log"
+  # This transaction's Settings preimage includes both existing accessibility
+  # queue/lifecycle patches. Native AMS compares the real delivered startId.
+  bash "${PATCH_ROOT}/common/foundation/ability/ability_runtime/service_idle_startid/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_conditional_idle_stop.log"
+  bash "${PATCH_ROOT}/common/applications/standard/settings_data/accessibility_notification_defaults/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_notification_defaults.log"
+  bash "${PATCH_ROOT}/common/foundation/multimedia/av_session/qemu_panel_lifecycle/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_panel_lifecycle.log"
+  bash "${PATCH_ROOT}/common/foundation/communication/netmanager_base/net_policy_settings_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_net_policy_settings_provider.log"
+  bash "${PATCH_ROOT}/common/applications/standard/communicationsetting/source_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_communicationsetting_source_provider.log"
+  bash "${PATCH_ROOT}/common/applications/standard/settings/dnd_selection_ids/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_dnd_selection_ids.log"
+  bash "${PATCH_ROOT}/common/applications/standard/hap/qemu_provider_sources/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_provider_sources.log"
+  python3 "${PATCH_ROOT}/lib/qemu_ui_providers.py" --source-root "${OHOS_ROOT}" \
+    --cache-root "${CACHE_ROOT}/ui-provider-inputs" \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_ui_provider_inputs.log"
+  python3 "${PATCH_ROOT}/lib/communicationsetting_provider.py" --source-root "${OHOS_ROOT}" \
+    --cache-root "${CACHE_ROOT}/communicationsetting-source-profile" --prepare-profile \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_communicationsetting_source_profile.log"
+  # Load the real reference RIL only in this QEMU product preparation.
+  bash "${PATCH_ROOT}/common/vendor/ohemu/virt/ril_reference_transport/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_ril_reference_transport.log"
+  bash "${PATCH_ROOT}/common/base/security/selinux_adapter/qemu_ril_pty_transport/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_ril_pty_transport.log"
   fix_case_insensitive_selinux_version_header
   fix_case_insensitive_xmp_endian_header
   fix_case_insensitive_iptables_variants

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Upgrade only exact original, legacy-text, or final MMS source states."""
+"""Upgrade only exact original, legacy-text, previous-attachment, or final MMS source states."""
 import argparse
 import fcntl
 import hashlib
@@ -13,6 +13,7 @@ import verify_source
 
 COMPONENT = Path(__file__).resolve().parent
 LEGACY_PATCH_SHA256 = 'ce013527985c29208f0d60720572de4f877f3ae6ba92cd362cbe868f6ffd8106'
+PREVIOUS_PATCH_SHA256 = 'f5d0781e11ebed528d569b0310f3769a10e1a32827dac73218bc8174954cfe1d'
 
 
 def run(source):
@@ -41,14 +42,18 @@ def run(source):
             snapshots[name] = original.read_bytes() if original.exists() else None
             if snapshots[name] is not None:
                 target.write_bytes(snapshots[name])
-        # Convert the exact previous complete text component in scratch only.
+        # Convert only complete known predecessors in scratch; never reverse live source.
         # Unknown/partial states were refused before any source mutation.
         legacy = COMPONENT / 'legacy-text-receiver.patch'
         if hashlib.sha256(legacy.read_bytes()).hexdigest() != LEGACY_PATCH_SHA256:
             raise ValueError('legacy MMS reverse patch changed')
-        if state == 'legacy_text':
-            subprocess.run(['git', 'apply', '-R', '--check', str(legacy)], cwd=staged, check=True)
-            subprocess.run(['git', 'apply', '-R', str(legacy)], cwd=staged, check=True)
+        previous = COMPONENT / 'previous-attachment-receiver.patch'
+        if hashlib.sha256(previous.read_bytes()).hexdigest() != PREVIOUS_PATCH_SHA256:
+            raise ValueError('previous MMS attachment reverse patch changed')
+        reverse = legacy if state == 'legacy_text' else previous if state == 'previous_attachment' else None
+        if reverse is not None:
+            subprocess.run(['git', 'apply', '-R', '--check', str(reverse)], cwd=staged, check=True)
+            subprocess.run(['git', 'apply', '-R', str(reverse)], cwd=staged, check=True)
         if verify_source.state(staged) != 'original':
             raise ValueError('MMS scratch original state differs')
         for patch in sorted(COMPONENT.glob('[0-9][0-9][0-9][0-9]-*.patch')):

@@ -4,8 +4,10 @@
 imageGeneration. The immutable original audit remains intact. No CLI switches,
 environment flags or broad SysCap exclusions are allowed.
 2026-10-19: user instructed treating complete providers unavailable in inspected
-OpenHarmony/SIG sources as unsupported; nine exact findings and source evidence
+OpenHarmony/SIG sources as unsupported; exact findings and source evidence
 are separately pinned below. This never claims implementation/runtime success.
+2026-10-21: real local ASR was found in the fixed official SIG source. Reopen
+LiveCaptions; integration/licensing/new-QEMU behavior remain mandatory.
 """
 import hashlib
 import json
@@ -17,10 +19,9 @@ IMAGE_GENERATION = frozenset('arkts_export:@ohos.arkui.intelligence.imageGenerat
     'openGeneratorNodeGraph', 'PartialResultType', 'restoreGeneratorDialog', 'restoreGeneratorNodeGraph'))
 
 
-PROVIDER_POLICY = 'docs/capability-audit/execution-20261019/unsupported-public-providers.json'
-PROVIDER_POLICY_SHA256 = '11675572dc7108d9f1c1c485542d17a306d855f08c63f50239e9621b2f7bcb26'
+PROVIDER_POLICY = 'docs/capability-audit/execution-20261021/unsupported-public-providers.json'
+PROVIDER_POLICY_SHA256 = 'd0b930414b9ba46835ac2e217d614605a120fe04bd138979824ed2889ad81ce4'
 PROVIDER_IDS = {
-    'LiveCaptions': 'behavior:accessibility-caption-provider-missing',
     'NumberIdentity': 'behavior:telephony-number-identity-provider-missing',
     'DeviceAttest': 'behavior:device-attest-uninitialized',
     'SecurityGuardModels': 'behavior:security-guard-empty-model-config',
@@ -40,7 +41,7 @@ def provider_policy(device):
     if path.is_symlink() or hashlib.sha256(path.read_bytes()).hexdigest() != PROVIDER_POLICY_SHA256:
         raise ValueError('user-approved public provider boundary changed')
     value = json.loads(path.read_text())
-    if (value.get('schema') != 'user-approved-public-provider-boundary/20261019' or
+    if (value.get('schema') != 'user-approved-public-provider-boundary/20261021' or
             value.get('decision') != 'current_complete_provider_unsupported_not_fixed_not_runtime_validated' or
             {name: row['id'] for name, row in value['features'].items()} != PROVIDER_IDS or
             any(row['repaired'] is not False or row['runtime_pass'] is not False for row in value['features'].values())):
@@ -67,7 +68,7 @@ def exclusion_record(device, baseline_ids):
     if not excluded <= set(baseline_ids):
         raise ValueError('approved release exclusions do not match the immutable audit baseline')
     return {
-        'decision': 'user_2026-10-09_exclusions_and_2026-10-19_verified_public_provider_unsupported',
+        'decision': 'user_conditional_public_provider_scope_revised_2026-10-21_caption_reopened',
         'policy_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         'status': 'excluded_by_user_not_fixed_not_validated',
         'features': {'CloudSync': sorted(cloud), 'imageGeneration': sorted(IMAGE_GENERATION),

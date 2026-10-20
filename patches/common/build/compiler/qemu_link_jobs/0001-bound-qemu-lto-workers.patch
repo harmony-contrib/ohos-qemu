@@ -1,0 +1,39 @@
+--- a/build/config/compiler/BUILD.gn
++++ b/build/config/compiler/BUILD.gn
+@@ -30,6 +30,10 @@
+   import("//build/config/mac/mac_sdk.gni")
+ }
+ declare_args() {
++  # Zero preserves the original non-QEMU linker concurrency. QEMU sets a
++  # bounded worker budget independently from Ninja and concurrent_links.
++  qemu_link_jobs = 0
++
+   # Default to warnings as errors for default workflow, where we catch
+   # warnings with known toolchains. Allow overriding this e.g. for Chromium
+   # builds on Linux that could use a different version of the compiler.
+@@ -603,14 +607,23 @@
+         thinlto_cache_dir =
+             rebase_path("$root_out_dir/thinlto-cache", root_build_dir)
+       }
++      assert(qemu_link_jobs >= 0 && qemu_link_jobs <= 16,
++             "qemu_link_jobs must be zero or a bounded linker worker count")
++      lto_backend_jobs = 16
++      if (qemu_link_jobs > 0) {
++        lto_backend_jobs = qemu_link_jobs
++      }
+       if (use_lld) {
+         ldflags += [
+-          "-Wl,--thinlto-jobs=16",
++          "-Wl,--thinlto-jobs=$lto_backend_jobs",
+           "-Wl,--thinlto-cache-dir=$thinlto_cache_dir",
+           "-Wl,--thinlto-cache-policy=$thinlto_cache_policy",
+         ]
++        if (qemu_link_jobs > 0) {
++          ldflags += [ "-Wl,--threads=$qemu_link_jobs" ]
++        }
+       } else {
+-        ldflags += [ "-Wl,-plugin-opt,jobs=16" ]
++        ldflags += [ "-Wl,-plugin-opt,jobs=$lto_backend_jobs" ]
+       }
+ 
+       if (use_lld) {
