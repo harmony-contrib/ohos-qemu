@@ -77,6 +77,9 @@ parser.add_argument('--audio-capture-only', action='store_true',
                     help='Capture actual public MIC PCM; requires external producer and independent verification')
 parser.add_argument('--audio-capture-expect-denied', action='store_true',
                     help='Expect an independently observed denied microphone token in the capture persona')
+parser.add_argument('--media-pipeline-only', '--media-pipeline578-only', dest='media_pipeline578_only', action='store_true')
+parser.add_argument('--media578-scenario', choices=('screen-transcode', 'screen-deny', 'screen-revoke',
+                    'screen-death', 'transcode-cancel', 'transcode-death'), default='screen-transcode')
 parser.add_argument('--media-recorder-only', action='store_true')
 parser.add_argument('--media-recorder-expect-denied', action='store_true')
 parser.add_argument('--media-audio-event-only', action='store_true')
@@ -137,6 +140,10 @@ parser.add_argument('--settings-navigation-only', action='store_true',
                     help='Build ordinary public Settings callers; host UI verification is required separately')
 parser.add_argument('--optional-phone-profile-only', action='store_true',
                     help='Verify ordinary dynamic discovery of four outside-official-phone false declarations')
+parser.add_argument("--location-eight-only", action="store_true",
+                    help="Real Location API calls; original Owner/provider raw validation required")
+parser.add_argument('--graphics3d-only', action='store_true',
+                    help='Real GLB render/transform/recreate caller; original QMP raw pixel validation required')
 parser.add_argument("--enum-device", choices=('phone', '2in1'), default='phone')
 parser.add_argument("--worker-legacy-only", action="store_true",
                     help="Validate parentPort inside actual legacy Worker threads, in a separate HAP process")
@@ -146,12 +153,12 @@ parser.add_argument("--probe-run-id", help="Host challenge (32 lowercase hex dig
 args = parser.parse_args()
 args.sdk = args.sdk.resolve()
 worker_only = args.worker_legacy_only or args.worker_thread_only
-dedicated_contract_only = args.curve_only or args.binding_only or args.storage_stats_only or args.optional_phone_profile_only or args.photos_recent_only or args.photos_asset_only or args.settings_navigation_only
+dedicated_contract_only = args.graphics3d_only or args.location_eight_only or args.curve_only or args.binding_only or args.storage_stats_only or args.optional_phone_profile_only or args.photos_recent_only or args.photos_asset_only or args.settings_navigation_only
 dedicated_contract_only = dedicated_contract_only or args.completion_handler_only or args.thermal_only or args.rpc_runtime_only
 dedicated_contract_only = dedicated_contract_only or args.image_metadata_only or args.wifi_scan_only or args.network_accounting_only
 dedicated_contract_only = dedicated_contract_only or args.router_observer_only or args.observer_info_only
 dedicated_contract_only = dedicated_contract_only or args.spring_loading_only or args.arkui_components_only
-dedicated_contract_only = dedicated_contract_only or args.audio_capture_only or args.media_recorder_only or args.media_audio_event_only
+dedicated_contract_only = dedicated_contract_only or args.media_pipeline578_only or args.audio_capture_only or args.media_recorder_only or args.media_audio_event_only
 if args.media_recorder_expect_denied and not args.media_recorder_only:
     parser.error('Recorder denial expectation requires Recorder persona')
 if args.media_audio_event_mode and not args.media_audio_event_only:
@@ -163,8 +170,8 @@ if args.audio_capture_expect_denied and not args.audio_capture_only:
 if args.probe_run_id is not None and (not (args.userid_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.audio_stream_only or args.avc_media_only or args.audio_suite_effects_only or args.camera_only or args.const_enum_only or args.arkts_exports_only or worker_only or args.contact_sync_mode_only or args.runtime_enum_only or dedicated_contract_only) or
                                      not re.fullmatch(r"[0-9a-f]{32}", args.probe_run_id)):
     parser.error("--probe-run-id requires a nonce-bearing ordinary persona and exactly 32 lowercase hex digits")
-if sum((args.rpc_runtime_only, args.arkui_components_only, args.spring_loading_only, args.observer_info_only, args.router_observer_only, args.network_accounting_only, args.wifi_scan_only, args.image_metadata_only, args.thermal_only, args.completion_handler_only, args.provider_only, args.web_only, args.vulkan_window_only, args.i18n_only, args.matrix4_only, args.factory_objects_only, args.web_factory_only,
-        args.userid_only, args.audio_stream_only, args.audio_capture_only, args.media_recorder_only, args.media_audio_event_only, args.avc_media_only, args.audio_suite_effects_only, args.camera_only, args.const_enum_only, args.arkts_exports_only, args.worker_legacy_only, args.worker_thread_only, args.contact_sync_mode_only, args.runtime_enum_only, args.curve_only, args.binding_only, args.storage_stats_only, args.optional_phone_profile_only, args.photos_recent_only, args.photos_asset_only, args.settings_navigation_only)) > 1:
+if sum((args.graphics3d_only, args.location_eight_only, args.rpc_runtime_only, args.arkui_components_only, args.spring_loading_only, args.observer_info_only, args.router_observer_only, args.network_accounting_only, args.wifi_scan_only, args.image_metadata_only, args.thermal_only, args.completion_handler_only, args.provider_only, args.web_only, args.vulkan_window_only, args.i18n_only, args.matrix4_only, args.factory_objects_only, args.web_factory_only,
+        args.userid_only, args.audio_stream_only, args.audio_capture_only, args.media_pipeline578_only, args.media_recorder_only, args.media_audio_event_only, args.avc_media_only, args.audio_suite_effects_only, args.camera_only, args.const_enum_only, args.arkts_exports_only, args.worker_legacy_only, args.worker_thread_only, args.contact_sync_mode_only, args.runtime_enum_only, args.curve_only, args.binding_only, args.storage_stats_only, args.optional_phone_profile_only, args.photos_recent_only, args.photos_asset_only, args.settings_navigation_only)) > 1:
     parser.error("provider and ordinary probe personas are mutually exclusive")
 if args.image_metadata_only and args.image_metadata_fixtures is None:
     parser.error('--image-metadata-only requires --image-metadata-fixtures')
@@ -2139,6 +2146,7 @@ if args.arkui_components_only:
     challenge = args.probe_run_id or uuid.uuid4().hex
     write('entry/src/main/ets/entryability/EntryAbility.ets', components_ability(challenge))
     write('entry/src/main/ets/pages/Index.ets', components_source(challenge))
+if args.graphics3d_only or args.arkui_components_only or args.location_eight_only or args.media_pipeline578_only:
     # Imported @uicomponent factories require the official API26 UI transform.
     # Do not bypass the checker or replace these components with fake aliases.
     hvigor = args.hvigor_home.resolve()
@@ -2160,7 +2168,8 @@ if args.arkui_components_only:
     # HarmonyOS-only phone profile spelling. Do not alter SDK SysCaps.
     ordinary_module['module']['deviceTypes'] = ['default']
     write('entry/src/main/module.json5', ordinary_module)
-    write('arkui-components-probe-inputs.json', components_inputs(root, args.sdk, args.arch, challenge))
+    if args.arkui_components_only:
+        write('arkui-components-probe-inputs.json', components_inputs(root, args.sdk, args.arch, challenge))
 if args.storage_stats_only:
     from storage_stats_contract import TEMPLATE, inputs as storage_inputs
     challenge = args.probe_run_id or uuid.uuid4().hex
@@ -2297,6 +2306,14 @@ if args.audio_capture_only:
     microphone_module = json.loads((root / 'entry/src/main/module.json5').read_text())
     microphone_module['module']['requestPermissions'] = capture_permissions
     write('entry/src/main/module.json5', microphone_module)
+if args.media_pipeline578_only:
+    import media_pipeline578_contract as media578_contract
+    from media_pipeline578 import source as media578_source
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    write('entry/src/main/ets/pages/Index.ets', media578_source(challenge, args.media578_scenario))
+    media578_module = json.loads((root / 'entry/src/main/module.json5').read_text())
+    media578_module['module']['requestPermissions'] = media578_contract.PERMISSIONS
+    write('entry/src/main/module.json5', media578_module)
 if args.media_recorder_only or args.media_audio_event_only:
     import media_capture_contract as media_contract
     media_kind = 'recorder' if args.media_recorder_only else 'audio-event'
@@ -2326,6 +2343,15 @@ if args.avc_media_only:
     challenge = args.probe_run_id or uuid.uuid4().hex
     write("entry/src/main/ets/pages/Index.ets",
           Path(__file__).with_name("avc_media_probe.ets").read_text().replace("__AVC_RUN_ID__", challenge))
+
+if args.graphics3d_only:
+    from graphics3d_contract import install as install_graphics3d
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    install_graphics3d(root, challenge)
+if args.location_eight_only:
+    from location_eight_contract import install as install_location_eight
+    challenge = args.probe_run_id or uuid.uuid4().hex
+    install_location_eight(root, challenge)
 
 libs = root / "entry/libs" / abi
 libs.mkdir(parents=True, exist_ok=True)
@@ -2437,7 +2463,7 @@ if args.runtime_enum_only or args.curve_only:
                '-fno-exceptions', '-fno-rtti', '-nostdlib++',
                str(Path(__file__).with_name('runtime_enum_hap_probe.cpp')), '-lace_napi.z',
                '-o', str(libs / 'libruntimeenumprobe.so')]
-if not (args.rpc_runtime_only or args.arkui_components_only or args.spring_loading_only or args.observer_info_only or args.router_observer_only or args.network_accounting_only or args.wifi_scan_only or args.image_metadata_only or args.thermal_only or args.completion_handler_only or args.web_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.const_enum_only or worker_only or args.binding_only or args.storage_stats_only or args.optional_phone_profile_only or args.photos_recent_only or args.photos_asset_only or args.settings_navigation_only):
+if not (args.graphics3d_only or args.media_pipeline578_only or args.location_eight_only or args.rpc_runtime_only or args.arkui_components_only or args.spring_loading_only or args.observer_info_only or args.router_observer_only or args.network_accounting_only or args.wifi_scan_only or args.image_metadata_only or args.thermal_only or args.completion_handler_only or args.web_only or args.i18n_only or args.matrix4_only or args.factory_objects_only or args.web_factory_only or args.const_enum_only or worker_only or args.binding_only or args.storage_stats_only or args.optional_phone_profile_only or args.photos_recent_only or args.photos_asset_only or args.settings_navigation_only):
     subprocess.run(command, check=True)
     if not (args.vulkan_window_only or args.arkts_exports_only or args.contact_sync_mode_only or args.runtime_enum_only or args.curve_only):
         shutil.copy2(native / "llvm/lib" / triple / "libc++_shared.so", libs / "libc++_shared.so")
@@ -2454,7 +2480,7 @@ if not (args.rpc_runtime_only or args.arkui_components_only or args.spring_loadi
               media_kind, challenge, args.media_recorder_expect_denied, args.media_audio_event_mode, bundle))
 
 environment = dict(os.environ, OHOS_SDK_HOME=str(args.sdk))
-if args.arkui_components_only:
+if args.graphics3d_only or args.arkui_components_only or args.location_eight_only or args.media_pipeline578_only:
     subprocess.run([str(hvigor / 'bin/hvigorw'), 'assembleHap', '--no-daemon',
                    '-p', 'product=default', '-p', 'buildMode=debug'], cwd=root,
         env=dict(environment, OHOS_SDK_HOME=str(args.sdk.parent), NODE_HOME=str(args.node_home.resolve())), check=True)
@@ -2466,6 +2492,9 @@ else:
         check=True,
     )
 output = root / "entry/build/default/outputs/default"
+if args.media_pipeline578_only:
+    write('media-pipeline578-probe-inputs.json', media578_contract.inputs(root, args.sdk, args.arch,
+          challenge, args.media578_scenario, output / 'entry-default-unsigned.hap'))
 if minimal_app:
     # The Rust signing helper does not emit the code-sign block required by
     # the OHOS 7 guest. Sign this unsigned HAP with sign_web_probe.py instead.

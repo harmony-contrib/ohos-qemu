@@ -90,6 +90,16 @@ def select_node(layout, bundle, *, identifier=None, text=None, clickable=False):
     return selected[0]
 
 
+def swipe_down_points(start, end):
+    """Actual left-half status-bar start and visible application destination."""
+    sx, sy, sw, sh = start['rect']; ex, ey, ew, eh = end['rect']
+    left, right = max(sx, ex), min(sx+sw//2, ex+ew)
+    if right-left < 4 or ey+eh//2 <= sy+sh//2+max(sh, 18):
+        raise ValueError('actual status-bar/Canvas geometry cannot open the notification drawer')
+    x = left+(right-left)//2
+    return [x, sy+sh//2, x, ey+eh//2]
+
+
 class GuestUi:
     """Caller owns the VM and command evidence; each snapshot is nonce-scoped."""
     def __init__(self, command, hdc, target, output):
@@ -142,7 +152,19 @@ class GuestUi:
                    label + '-actual-node-center')
         return {'layout': str(path), 'selected_node': node}
 
+    def swipe_down(self, bundle, *, identifier, swipe_to, label='swipe-down'):
+        # A single unfiltered actual dump contains both windows. The end point
+        # comes from the caller's visible Canvas, never a fixed screen size.
+        layout, path = self.layout(label=label)
+        node = select_node(layout, bundle, identifier=identifier)
+        destination = select_node(layout, **swipe_to)
+        points = swipe_down_points(node, destination)
+        self.shell('uitest uiInput swipe ' + ' '.join(map(str, points)), label+'-actual-node-swipe')
+        return {'layout': str(path), 'selected_node': node, 'destination_node': destination,
+                'swipe_points': points}
+
     def screenshot(self, *, label='screen'):
+
         remote = self.remote('.png')
         self.shell('test ! -e ' + shlex.quote(remote) + ' && uitest screenCap -p ' + shlex.quote(remote),
                    label + '-compositor-capture')

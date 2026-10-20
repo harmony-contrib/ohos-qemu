@@ -1,33 +1,11 @@
-# Reuse the real MMS recipient/draft UI for plain-text sendData
+# Real text and bounded single-file sendData draft receiver candidate
 
-Pinned MMS project 26df98e3738f4219aa45efe6a3e7f6b1be55c051. The component
-changes only module.json5, WantUtil.ets and the new SendDataPayload.ets. Original
-entry identity, exports, permissions, skills and signature are retained. The new
-text/plain MIME-only skill advertises the behavior implemented by this patch.
-It does not replace the existing file/UTD skills or claim their unfinished path.
+Pinned MMS revision remains 26df98e3738f4219aa45efe6a3e7f6b1be55c051. This is one successor of the existing exact component, original -> final. The text parser and handlePlainSendData method are preserved. The existing entry identity, OS signer, permissions, preinstall policy and original skills remain; eight explicit file MIME skills advertise only the new single-file path.
 
-Previously the normal sendData branch required ability.picker.records, while
-the ordinary Browser caller sends a text stream directly. The fallback did not
-copy that stream into the existing TransmitMsg model. The new path validates a
-single non-empty bounded text stream, builds the existing buildThirdParam draft
-model, awaits the real DynamicLoader('TransmitMsg'), and navigates to the existing
-recipient/preview UI. Only its original user-operated send UI can send a message.
-No SMS API, synthetic success or forced destination is added. Incoming arbitrary
-recipient, content flags and isRcs values cannot enter this new draft route.
+A real READ-authorized file URI is opened through FileIO and copied completely in bounded chunks into a fresh MMS private cache directory. Invalid URI/count/MIME/size, absent READ, open/read/write/loader failures produce an honest error and do not enter message sending. Original unimplemented picker-record/UTD bodies are not enabled or claimed. Supported MIME: PNG/JPEG/GIF/BMP, MPEG/WAV audio, MP4, vCard. The existing 300 KiB MMS and 280 KiB audio limits are retained. No permission broker, synthetic provider, SMS API or automatic destination is added.
 
-String and single-string-array streams are accepted; empty/multi-text/invalid
-text is visibly refused. File URIs, non-text MIME and picker-record payloads
-remain on their original source path. Text parsing never opens a URI or treats
-it as granted file content. A later Want invalidates the old asynchronous draft
-navigation. Loader/validation failure shows an honest error and sends nothing.
+Only one attachment draft may be live. The existing recipient UI displays the actual imported filename and byte count. User cancellation deletes only this import; search overlays retain it. Cold process creation recovers only this helper's private staging directories. Graceful destruction disposes the current stage. Existing explicit recipient confirmation reserves the lease; Conversation performs a strict copied-file handoff before its existing send path. Thereafter the normal Conversation/DraftUtils ownership applies. No helper completion is a message-sent result.
 
-The fixed source's original attachment buildTransmitParam body is mostly
-commented and can return an empty list; this candidate does not certify file
-sharing into MMS. Bluetooth's actual ShareExtension additionally requires the
-absent HMS collaboration.systemShare runtime. Those are explicit remaining
-backend gaps, not solved by adding a manifest handler or a generic alias.
+Candidate only. Official API26 type checking, packaging/signing, real MMS URI denial, cancellation/death/recovery, sender/receiver lifetime, existing text routing and real send/no-send/telephony acceptance remain required in a new representative guest. Host tests cover actual helper functions with native host files; OHOS Context, URI authorization and restart are models.
 
-Main owns MMS source build packaging, all build metadata/GN, unchanged profile
-signing/preinstall authorization, real API26 compilation, and fresh phone
-recipient/draft/cancel/send validation. Unit fixtures execute the actual patched
-parser/router methods but do not prove HAP behavior or telephony delivery.
+The application step upgrades only the complete pinned original, previous text receiver, or final attachment receiver. It reverses the exact legacy patch in scratch, assembles the new component there, and checks every source byte again before replacement. Unknown or mixed source states remain rejected.

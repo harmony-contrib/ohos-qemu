@@ -21,6 +21,7 @@ from run_root_probe import digest, validate_identity
 from serial_host_attachment_control import AttachmentControl, endpoint_identity
 from verify_serial_results import verify as verify_basic
 from verify_serial_attachment_results import verify as verify_attachment
+from run_usb_manager_cases import run_cases as run_usb_manager_cases
 
 ROOT = Path(__file__).resolve().parents[2]
 BUNDLE = 'org.harmonycontrib.serialaudit'
@@ -106,8 +107,8 @@ def run(args):
             text = observed
         report['device_snapshots'].append({'label': label, 'present': present, 'actual': text})
 
-    def result(filename, case, label, wait=30):
-        remote = '/data/app/el2/100/base/' + BUNDLE + '/files/' + filename
+    def result(filename, case, label, wait=30, bundle=BUNDLE):
+        remote = '/data/app/el2/100/base/' + bundle + '/files/' + filename
         deadline = time.monotonic() + wait
         while time.monotonic() < deadline:
             text = ui.shell('if test -f ' + remote + '; then cat ' + remote + '; fi', label)
@@ -144,13 +145,14 @@ def run(args):
             time.sleep(0.5)
         raise ValueError('actual trusted Serial authorization UI missing: ' + label)
 
-    def build_install(scenario, nonce):
-        directory = args.output / scenario
+    def build_install(scenario, nonce, bundle=BUNDLE, scenario_key=None, usb_actor="owner"):
+        key = scenario_key or scenario
+        directory = args.output / key
         directory.mkdir()
         project = directory / 'project'
         command([sys.executable, Path(__file__).with_name('build_serial_hap_probe.py'),
             '--sdk', args.sdk, '--arch', environment['guest_arch'], '--output', project,
-            '--run-id', nonce, '--port-name', PORT, '--bundle-name', BUNDLE, '--scenario', scenario],
+            '--run-id', nonce, '--port-name', PORT, '--bundle-name', bundle, '--scenario', scenario, '--usb-actor', usb_actor],
             'build-fresh-ordinary-' + scenario, timeout=1800)
         unsigned = project / 'entry/build/default/outputs/default/entry-default-unsigned.hap'
         signed = directory / 'signed.hap'
@@ -162,23 +164,26 @@ def run(args):
             '--signer-dist', '/ohos/developtools/hapsigner/dist',
             '--jar', '/ohos/prebuilts/ohos-sdk/linux/26.0.0/toolchains/lib/hap-sign-tool.jar',
             '--unsigned', '/probe/' + unsigned.relative_to(directory).as_posix(),
-            '--output', '/probe/signed.hap', '--bundle-name', BUNDLE, '--udid', environment['udid'], '--sign-code', '1'],
+            '--output', '/probe/signed.hap', '--bundle-name', bundle, '--udid', environment['udid'], '--sign-code', '1'],
             'normal-no-ACL-sign-and-verify-' + scenario, timeout=300)
-        command([args.hdc, '-t', environment['target'], 'uninstall', BUNDLE], 'remove-only-own-Serial-app', allowed_failure=True)
+        command([args.hdc, '-t', environment['target'], 'uninstall', bundle], 'remove-only-own-Serial-app', allowed_failure=True)
         installed = command([args.hdc, '-t', environment['target'], 'install', signed], 'install-normal-' + scenario)
         if not re.search(r'success', installed, re.I):
             raise ValueError('real ordinary Serial HAP did not install')
-        identity = ui.shell('bm dump -n ' + BUNDLE, 'normal-Serial-identity')
-        uid = require_normal_identity(identity, BUNDLE)
+        identity = ui.shell('bm dump -n ' + bundle, 'normal-Serial-identity')
+        identity_command = dict(report['commands'][-1])
+        uid = require_normal_identity(identity, bundle)
         inputs = project / 'serial-probe-inputs.json'
         data = json.loads(inputs.read_text())
         if data['request_permissions'] != [] or data['run_id'] != nonce:
             raise ValueError('ordinary Serial test must remain permission-free and nonce-bound')
-        report['scenarios'][scenario] = {'run_id': nonce, 'ordinary_uid': uid, 'hap_sha256': digest(signed),
+        if data.get('bundle_name') != bundle or (scenario == 'usb-manager' and data.get('usb_actor') != usb_actor):
+            raise ValueError('actual USB/Serial SDK caller bundle/actor inputs changed')
+        report['scenarios'][key] = {'run_id': nonce, 'ordinary_uid': uid, 'identity_command': identity_command, 'hap_sha256': digest(signed),
             'build_inputs': str(inputs), 'build_inputs_sha256': digest(inputs)}
 
-    def launch():
-        text = ui.shell('aa start -a EntryAbility -b ' + BUNDLE, 'launch-own-normal-Serial-app')
+    def launch(bundle=BUNDLE):
+        text = ui.shell('aa start -a EntryAbility -b ' + bundle, 'launch-own-normal-Serial-app')
         if 'start ability successfully' not in text.lower():
             raise ValueError('real ordinary Serial ability did not launch')
 
@@ -288,6 +293,8 @@ def run(args):
             guest_sha256=digest(attachment_path), host_results=str(journal_path),
             host_sha256=digest(journal_path), case_count=15, status='pass')
         device(False, 'final-own-endpoint-detached')
+        run_usb_manager_cases(args, environment, report, endpoint, ui, command, dialog, device,
+                              same_boot, build_install, launch, result)
         same_boot('after')
         report.update(status='pass', kernel_boot_id_unchanged=True,
                       no_raw_node_permission_changes=True, no_authorization_IPC_shortcut=True)

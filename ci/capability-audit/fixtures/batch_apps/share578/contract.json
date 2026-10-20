@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "action": "ohos.want.action.sendData",
+  "mime": "application/vnd.harmonycontrib.share578",
+  "entity": "org.harmonycontrib.share578",
+  "roles": {
+    "caller": {
+      "bundle": "org.harmonycontrib.share578caller",
+      "apl": "normal",
+      "system_app": false,
+      "permissions": []
+    },
+    "target_a": {
+      "bundle": "org.harmonycontrib.share578targeta",
+      "apl": "normal",
+      "system_app": false,
+      "permissions": []
+    },
+    "target_b": {
+      "bundle": "org.harmonycontrib.share578targetb",
+      "apl": "normal",
+      "system_app": false,
+      "permissions": []
+    }
+  },
+  "cases": {
+    "read-a": {
+      "target": "target_a",
+      "flags": 1
+    },
+    "read-b": {
+      "target": "target_b",
+      "flags": 1
+    },
+    "write-a": {
+      "target": "target_a",
+      "flags": 3
+    },
+    "text-a": {
+      "target": "target_a",
+      "flags": 0
+    },
+    "no-grant-a": {
+      "target": "",
+      "flags": 0
+    },
+    "cancel": {
+      "target": "",
+      "flags": 1
+    },
+    "death": {
+      "target": "",
+      "flags": 1
+    },
+    "recovery-a": {
+      "target": "target_a",
+      "flags": 1
+    }
+  },
+  "permission_denied_file_code": 13900012,
+  "result_codes": {
+    "target_a": 57801,
+    "target_b": 57802
+  },
+  "full_gate": false,
+  "mms_cases": {
+    "mms-file-cancel": {
+      "flags": 1,
+      "scope": "real single vCard URI import, recipient UI, user cancel and actual staged-file cleanup ONLY"
+    }
+  }
+}

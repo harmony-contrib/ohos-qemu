@@ -1,0 +1,213 @@
+[
+  {
+    "id": "T-SIG",
+    "repo": "community",
+    "path": "sig/sig_telephony/sig_telephony_cn.md",
+    "lines": [
+      24,
+      26
+    ],
+    "finding": "Telephony SIG explicitly assigns IMS service implementation to chip vendors; framework is available.",
+    "source_head": "e1c6afd655a02cb52b853a8f5055a832b3e007eb",
+    "source_sha256": "90e6c0927f4d99b0c3cead3e768f07a49a4477dd471fbafc9d5bd0a95ca39fd1",
+    "source_local": "evidence/community/sig/sig_telephony/sig_telephony_cn.md",
+    "primary_url": "https://gitcode.com/openharmony/community/blob/e1c6afd655a02cb52b853a8f5055a832b3e007eb/sig/sig_telephony/sig_telephony_cn.md"
+  },
+  {
+    "id": "T-RIL",
+    "repo": "telephony_ril_adapter",
+    "path": "README.md",
+    "lines": [
+      38,
+      39
+    ],
+    "finding": "Modem vendor interface and independently communicating modem are required.",
+    "source_head": "81fac83292857fcd9bee90808a81d8ad7224b4e0",
+    "source_sha256": "a104e7458079e43dd965b5e1d45b09f12998dd4dc5c1309544a7c7fa96cefa2a",
+    "source_local": "evidence/telephony_ril_adapter/README.md",
+    "primary_url": "https://github.com/openharmony/telephony_ril_adapter/blob/81fac83292857fcd9bee90808a81d8ad7224b4e0/README.md"
+  },
+  {
+    "id": "T-AT",
+    "repo": "telephony_ril_adapter",
+    "path": "services/vendor/src/vendor_adapter.c",
+    "lines": [
+      47,
+      50,
+      339,
+      370
+    ],
+    "finding": "Reference vendor opens configured/default AT device and runs actual AT read loop/ModemInit; it is not a QEMU modem/SIM/IMS engine.",
+    "source_head": "81fac83292857fcd9bee90808a81d8ad7224b4e0",
+    "source_sha256": "ef04e99ece9ac924b4961de367e7a570481c9a52e9955f84bf62c1e23805883c",
+    "source_local": "evidence/telephony_ril_adapter/services/vendor/src/vendor_adapter.c",
+    "primary_url": "https://github.com/openharmony/telephony_ril_adapter/blob/81fac83292857fcd9bee90808a81d8ad7224b4e0/services/vendor/src/vendor_adapter.c"
+  },
+  {
+    "id": "T-DEMO",
+    "repo": "telephony_cellular_call",
+    "path": "vendor/ims/services/ims_call/src/ims_call.cpp",
+    "lines": [
+      38,
+      51,
+      737,
+      741
+    ],
+    "finding": "IMS sample Dial responds through a local default callback; capability updater returns success without a network/peer implementation.",
+    "source_head": "4e644b8a8f5e7c6be04261bd128fc71dfe9fa09c",
+    "source_sha256": "5317199654abedb677d519808a2ea3574c751701550c8a7193ebe0543b2a4367",
+    "source_local": "evidence/telephony_cellular_call/vendor/ims/services/ims_call/src/ims_call.cpp",
+    "primary_url": "https://github.com/openharmony/telephony_cellular_call/blob/4e644b8a8f5e7c6be04261bd128fc71dfe9fa09c/vendor/ims/services/ims_call/src/ims_call.cpp"
+  },
+  {
+    "id": "T-IMSPROXY",
+    "repo": "telephony_cellular_call",
+    "path": "services/ims_service_interaction/src/ims_call_client.cpp",
+    "lines": [
+      90,
+      101,
+      373,
+      380
+    ],
+    "finding": "RTT mode request needs actual IMS SA and call proxy.",
+    "source_head": "4e644b8a8f5e7c6be04261bd128fc71dfe9fa09c",
+    "source_sha256": "98f89706c2e5b999035910c811d37b14f700539fbfb81f5d49532cf91d4c3b0d",
+    "source_local": "evidence/telephony_cellular_call/services/ims_service_interaction/src/ims_call_client.cpp",
+    "primary_url": "https://github.com/openharmony/telephony_cellular_call/blob/4e644b8a8f5e7c6be04261bd128fc71dfe9fa09c/services/ims_service_interaction/src/ims_call_client.cpp"
+  },
+  {
+    "id": "T-RTTIF",
+    "repo": "telephony_cellular_call",
+    "path": "interfaces/innerkits/ims/ims_call_interface.h",
+    "lines": [
+      207,
+      216
+    ],
+    "finding": "RTT has a vendor-facing virtual method; fixed vendor sample header/source do not implement UpdateImsRttCallMode.",
+    "source_head": "4e644b8a8f5e7c6be04261bd128fc71dfe9fa09c",
+    "source_sha256": "319c3c3ec672c467e4cba56b826a822f1ee5cf4ac820141e9c8da2ecfb4ff4fe",
+    "source_local": "evidence/telephony_cellular_call/interfaces/innerkits/ims/ims_call_interface.h",
+    "primary_url": "https://github.com/openharmony/telephony_cellular_call/blob/4e644b8a8f5e7c6be04261bd128fc71dfe9fa09c/interfaces/innerkits/ims/ims_call_interface.h"
+  },
+  {
+    "id": "T-RTTDEV",
+    "repo": "telephony_call_manager",
+    "path": "services/rtt_call/include/ims_rtt_manager.h",
+    "lines": [
+      29,
+      31
+    ],
+    "finding": "RTT media requires /dev/voice_proxy_rtt and a dedicated ioctl.",
+    "source_head": "42f264011d0a44a300e3e8b825863754916cb6a8",
+    "source_sha256": "e24dcfb245e06ceed1c755cb048acc3bfb2cfa6a2bb8b484d255c871342e8293",
+    "source_local": "evidence/telephony_call_manager/services/rtt_call/include/ims_rtt_manager.h",
+    "primary_url": "https://github.com/openharmony/telephony_call_manager/blob/42f264011d0a44a300e3e8b825863754916cb6a8/services/rtt_call/include/ims_rtt_manager.h"
+  },
+  {
+    "id": "T-RTTIO",
+    "repo": "telephony_call_manager",
+    "path": "services/rtt_call/src/ims_rtt_manager.cpp",
+    "lines": [
+      43,
+      58,
+      80,
+      178,
+      237
+    ],
+    "finding": "Actual open/read/write/ioctl and worker lifecycle; open failure returns RTT_ERR_FAIL.",
+    "source_head": "42f264011d0a44a300e3e8b825863754916cb6a8",
+    "source_sha256": "bc656e8ed402d6ce3b36ba67c15654909032054374125f524bd4e94ac2de489a",
+    "source_local": "evidence/telephony_call_manager/services/rtt_call/src/ims_rtt_manager.cpp",
+    "primary_url": "https://github.com/openharmony/telephony_call_manager/blob/42f264011d0a44a300e3e8b825863754916cb6a8/services/rtt_call/src/ims_rtt_manager.cpp"
+  },
+  {
+    "id": "B-HDI",
+    "repo": "communication_bluetooth_service",
+    "path": "services/bluetooth/hardware/src/bluetooth_hdi.cpp",
+    "lines": [
+      25,
+      45,
+      51,
+      89
+    ],
+    "finding": "Real public stack requires IHciInterface service and real HCI traffic.",
+    "source_head": "c489d0aabf77624a4f5ca80ab8b5adefd2d5cfbf",
+    "source_sha256": "93d39cac74ee5cc8fc31f245e5dae895e1f6fdc08519186fdc765a05ce4ff5f8",
+    "source_local": "evidence/communication_bluetooth_service/services/bluetooth/hardware/src/bluetooth_hdi.cpp",
+    "primary_url": "https://github.com/openharmony/communication_bluetooth_service/blob/c489d0aabf77624a4f5ca80ab8b5adefd2d5cfbf/services/bluetooth/hardware/src/bluetooth_hdi.cpp"
+  },
+  {
+    "id": "B-VENDOR",
+    "repo": "drivers_peripheral",
+    "path": "bluetooth/hci/hdi_service/implement/vendor_interface.cpp",
+    "lines": [
+      65,
+      103,
+      105,
+      167,
+      170,
+      197
+    ],
+    "finding": "HDI dlopen/dlsym/vendor init/power-on/channel-open and H4/MCT transport; cleanup closes channel and powers off. Generic transport does not implement a controller.",
+    "source_head": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+    "source_sha256": "5447bee320e2603364172af6eaeace336431320e0cf1d0214a0e28bf27db5178",
+    "source_local": "evidence/drivers_peripheral/bluetooth/hci/hdi_service/implement/vendor_interface.cpp",
+    "primary_url": "https://raw.githubusercontent.com/openharmony/drivers_peripheral/69094b77aa2200160207b1b06b3c0b586ae2157c/bluetooth/hci/hdi_service/implement/vendor_interface.cpp"
+  },
+  {
+    "id": "B-ABI",
+    "repo": "drivers_peripheral",
+    "path": "bluetooth/hci/hdi_service/implement/bt_hal_constant.h",
+    "lines": [
+      27,
+      28
+    ],
+    "finding": "Required concrete library libbt_vendor.z.so and exported BLUETOOTH_VENDOR_LIB_INTERFACE.",
+    "source_head": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+    "source_sha256": "21c75507b3f285d77a9d2dc2d50b9f8fe419d4a5255eec6dea115ea6a4a93889",
+    "source_local": "evidence/drivers_peripheral/bluetooth/hci/hdi_service/implement/bt_hal_constant.h",
+    "primary_url": "https://raw.githubusercontent.com/openharmony/drivers_peripheral/69094b77aa2200160207b1b06b3c0b586ae2157c/bluetooth/hci/hdi_service/implement/bt_hal_constant.h"
+  },
+  {
+    "id": "B-PRODUCT",
+    "repo": "vendor_ohemu",
+    "path": "virt/hdf_config/uhdf/device_info.hcs",
+    "lines": [
+      44,
+      54
+    ],
+    "finding": "QEMU product supplies generic hci_interface_service loader, not the required vendor export/controller implementation.",
+    "source_head": "b56c5a95ec590543691278b85afe9fe228744163",
+    "source_sha256": "ba1f175276b5846425c6b28cd189e0d2304f026e57a312755de6e31c9e5a3a0f",
+    "source_local": "evidence/vendor_ohemu/virt/hdf_config/uhdf/device_info.hcs",
+    "primary_url": "https://github.com/openharmony/vendor_ohemu/blob/b56c5a95ec590543691278b85afe9fe228744163/virt/hdf_config/uhdf/device_info.hcs"
+  },
+  {
+    "id": "Q-CLOSURE",
+    "repo": "openharmony-sig/manifest",
+    "path": "chipsets/qemu/qemu.xml",
+    "lines": [
+      6,
+      8
+    ],
+    "finding": "SIG QEMU chipset closure selects device_qemu and vendor_ohemu. Full fixed trees plus content queries recorded; neither supplies the required RTT device/vendor export implementation.",
+    "source_head": "d679e50d1ed091d9e07fc28d3ab7ceba5d385bc3",
+    "source_sha256": "c95953992dea05c95a1aea07a1c1a9a578ce29989a18b871b1ee69d94da21dd2",
+    "source_local": "evidence/sig-manifest/chipsets/qemu/qemu.xml",
+    "primary_url": "https://gitcode.com/openharmony-sig/manifest/blob/d679e50d1ed091d9e07fc28d3ab7ceba5d385bc3/chipsets/qemu/qemu.xml"
+  },
+  {
+    "id": "B-SIG",
+    "repo": "community",
+    "path": "sig/sig_bluetooth/sig_bluetooth_cn.md",
+    "lines": [
+      9,
+      28
+    ],
+    "finding": "SIG has vendor porting and sample contribution remit; generic framework availability is not a complete default QEMU controller port.",
+    "source_head": "e1c6afd655a02cb52b853a8f5055a832b3e007eb",
+    "source_sha256": "f2ffdf268d1595f188046330446d9125c48ce66880ff19d2b95e48129d18d99d",
+    "source_local": "evidence/community/sig/sig_bluetooth/sig_bluetooth_cn.md",
+    "primary_url": "https://gitcode.com/openharmony/community/blob/e1c6afd655a02cb52b853a8f5055a832b3e007eb/sig/sig_bluetooth/sig_bluetooth_cn.md"
+  }
+]

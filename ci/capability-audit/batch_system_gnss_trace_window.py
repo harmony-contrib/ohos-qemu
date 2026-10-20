@@ -14,7 +14,7 @@ CAPACITY = 128
 WORD32 = re.compile(r"0x[0-9a-f]{8}\Z")
 WORD64 = re.compile(r"0x[0-9a-f]{16}\Z")
 MAX64 = 2**64 - 1
-MAX_SNAPSHOT_BYTES = (CAPACITY + 1) * 512
+MAX_SNAPSHOT_BYTES = (CAPACITY + 1) * 768
 
 def integer(value, low, high, name):
     if type(value) is not int or not low <= value <= high:

@@ -1,0 +1,404 @@
+{
+  "scope": "source support boundary, proposed for parent review; sole acceptance remains actual new QEMU image",
+  "telephone_count": 13,
+  "bluetooth_count": 2,
+  "rows": [
+    {
+      "id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
+      "scope": "current fixed default pure-QEMU phone product; complete positive IMS RTT session",
+      "source_decision": "bounded_unsupported_positive_provider",
+      "whole_id_exclusion_recommended": false,
+      "api_body_missing": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "T-SIG",
+        "T-DEMO",
+        "T-IMSPROXY",
+        "T-RTTIF",
+        "T-RTTDEV",
+        "T-RTTIO",
+        "Q-CLOSURE"
+      ],
+      "still_required_on_new_image": [
+        "public export and actual signed ordinary/system caller permission checks",
+        "parameter rejection and exact on/off contract; repeated off and environment teardown",
+        "no invented payload/success or false initial event when no provider",
+        "with a future real provider: payload/call binding, other listeners unaffected, queued old-generation silence after off/exit"
+      ],
+      "missing_for_positive": [
+        "complete IMS vendor service and reachable peer/SIM/network/session",
+        "actual voice_proxy_rtt device protocol and functioning RTT media transport"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttErrCause",
+      "scope": "current fixed default pure-QEMU phone product; complete positive IMS RTT session",
+      "source_decision": "bounded_unsupported_positive_provider",
+      "whole_id_exclusion_recommended": false,
+      "api_body_missing": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "T-SIG",
+        "T-DEMO",
+        "T-IMSPROXY",
+        "T-RTTIF",
+        "T-RTTDEV",
+        "T-RTTIO",
+        "Q-CLOSURE"
+      ],
+      "still_required_on_new_image": [
+        "public export and actual signed ordinary/system caller permission checks",
+        "parameter rejection and exact on/off contract; repeated off and environment teardown",
+        "no invented payload/success or false initial event when no provider",
+        "with a future real provider: payload/call binding, other listeners unaffected, queued old-generation silence after off/exit"
+      ],
+      "missing_for_positive": [
+        "complete IMS vendor service and reachable peer/SIM/network/session",
+        "actual voice_proxy_rtt device protocol and functioning RTT media transport"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttModifyInd",
+      "scope": "current fixed default pure-QEMU phone product; complete positive IMS RTT session",
+      "source_decision": "bounded_unsupported_positive_provider",
+      "whole_id_exclusion_recommended": false,
+      "api_body_missing": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "T-SIG",
+        "T-DEMO",
+        "T-IMSPROXY",
+        "T-RTTIF",
+        "T-RTTDEV",
+        "T-RTTIO",
+        "Q-CLOSURE"
+      ],
+      "still_required_on_new_image": [
+        "public export and actual signed ordinary/system caller permission checks",
+        "parameter rejection and exact on/off contract; repeated off and environment teardown",
+        "no invented payload/success or false initial event when no provider",
+        "with a future real provider: payload/call binding, other listeners unaffected, queued old-generation silence after off/exit"
+      ],
+      "missing_for_positive": [
+        "complete IMS vendor service and reachable peer/SIM/network/session",
+        "actual voice_proxy_rtt device protocol and functioning RTT media transport"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onReceiveRttMessage",
+      "scope": "current fixed default pure-QEMU phone product; complete positive IMS RTT session",
+      "source_decision": "bounded_unsupported_positive_provider",
+      "whole_id_exclusion_recommended": false,
+      "api_body_missing": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "T-SIG",
+        "T-DEMO",
+        "T-IMSPROXY",
+        "T-RTTIF",
+        "T-RTTDEV",
+        "T-RTTIO",
+        "Q-CLOSURE"
+      ],
+      "still_required_on_new_image": [
+        "public export and actual signed ordinary/system caller permission checks",
+        "parameter rejection and exact on/off contract; repeated off and environment teardown",
+        "no invented payload/success or false initial event when no provider",
+        "with a future real provider: payload/call binding, other listeners unaffected, queued old-generation silence after off/exit"
+      ],
+      "missing_for_positive": [
+        "complete IMS vendor service and reachable peer/SIM/network/session",
+        "actual voice_proxy_rtt device protocol and functioning RTT media transport"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttErrCause",
+      "scope": "current fixed default pure-QEMU phone product; complete positive IMS RTT session",
+      "source_decision": "bounded_unsupported_positive_provider",
+      "whole_id_exclusion_recommended": false,
+      "api_body_missing": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "T-SIG",
+        "T-DEMO",
+        "T-IMSPROXY",
+        "T-RTTIF",
+        "T-RTTDEV",
+        "T-RTTIO",
+        "Q-CLOSURE"
+      ],
+      "still_required_on_new_image": [
+        "public export and actual signed ordinary/system caller permission checks",
+        "parameter rejection and exact on/off contract; repeated off and environment teardown",
+        "no invented payload/success or false initial event when no provider",
+        "with a future real provider: payload/call binding, other listeners unaffected, queued old-generation silence after off/exit"
+      ],
+      "missing_for_positive": [
+        "complete IMS vendor service and reachable peer/SIM/network/session",
+        "actual voice_proxy_rtt device protocol and functioning RTT media transport"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttModifyInd",
+      "scope": "current fixed default pure-QEMU phone product; complete positive IMS RTT session",
+      "source_decision": "bounded_unsupported_positive_provider",
+      "whole_id_exclusion_recommended": false,
+      "api_body_missing": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "T-SIG",
+        "T-DEMO",
+        "T-IMSPROXY",
+        "T-RTTIF",
+        "T-RTTDEV",
+        "T-RTTIO",
+        "Q-CLOSURE"
+      ],
+      "still_required_on_new_image": [
+        "public export and actual signed ordinary/system caller permission checks",
+        "parameter rejection and exact on/off contract; repeated off and environment teardown",
+        "no invented payload/success or false initial event when no provider",
+        "with a future real provider: payload/call binding, other listeners unaffected, queued old-generation silence after off/exit"
+      ],
+      "missing_for_positive": [
+        "complete IMS vendor service and reachable peer/SIM/network/session",
+        "actual voice_proxy_rtt device protocol and functioning RTT media transport"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:sendRttMessage",
+      "scope": "current fixed default pure-QEMU phone product; complete positive IMS RTT session",
+      "source_decision": "bounded_unsupported_positive_provider",
+      "whole_id_exclusion_recommended": false,
+      "api_body_missing": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "T-SIG",
+        "T-DEMO",
+        "T-IMSPROXY",
+        "T-RTTIF",
+        "T-RTTDEV",
+        "T-RTTIO",
+        "Q-CLOSURE"
+      ],
+      "still_required_on_new_image": [
+        "public export, permission, callId/state/message and argument boundaries",
+        "real no-SIM/no-network/no-session errors; do not fabricate start/send/stop success",
+        "failed setup, stop and process exit leave no leaked RTT fd/thread/listener and do not affect another call",
+        "future actual provider: negotiation, peer text exchange, error/modify events and stopped-session silence"
+      ],
+      "missing_for_positive": [
+        "complete IMS vendor service and reachable peer/SIM/network/session",
+        "actual voice_proxy_rtt device protocol and functioning RTT media transport"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:setRttCapability",
+      "scope": "current fixed default pure-QEMU phone product; complete positive IMS RTT session",
+      "source_decision": "bounded_unsupported_positive_provider",
+      "whole_id_exclusion_recommended": false,
+      "api_body_missing": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "T-SIG",
+        "T-DEMO",
+        "T-IMSPROXY",
+        "T-RTTIF",
+        "T-RTTDEV",
+        "T-RTTIO",
+        "Q-CLOSURE"
+      ],
+      "still_required_on_new_image": [
+        "public export, permission, boolean/argument boundary and actual local setting readback where exposed",
+        "local capability setting must not be reported as negotiated IMS/session support",
+        "no-modem service and process-exit cleanup; future complete provider must verify actual negotiation"
+      ],
+      "missing_for_positive": [
+        "complete IMS vendor service and reachable peer/SIM/network/session",
+        "actual voice_proxy_rtt device protocol and functioning RTT media transport"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:startRtt",
+      "scope": "current fixed default pure-QEMU phone product; complete positive IMS RTT session",
+      "source_decision": "bounded_unsupported_positive_provider",
+      "whole_id_exclusion_recommended": false,
+      "api_body_missing": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "T-SIG",
+        "T-DEMO",
+        "T-IMSPROXY",
+        "T-RTTIF",
+        "T-RTTDEV",
+        "T-RTTIO",
+        "Q-CLOSURE"
+      ],
+      "still_required_on_new_image": [
+        "public export, permission, callId/state/message and argument boundaries",
+        "real no-SIM/no-network/no-session errors; do not fabricate start/send/stop success",
+        "failed setup, stop and process exit leave no leaked RTT fd/thread/listener and do not affect another call",
+        "future actual provider: negotiation, peer text exchange, error/modify events and stopped-session silence"
+      ],
+      "missing_for_positive": [
+        "complete IMS vendor service and reachable peer/SIM/network/session",
+        "actual voice_proxy_rtt device protocol and functioning RTT media transport"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:stopRtt",
+      "scope": "current fixed default pure-QEMU phone product; complete positive IMS RTT session",
+      "source_decision": "bounded_unsupported_positive_provider",
+      "whole_id_exclusion_recommended": false,
+      "api_body_missing": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "T-SIG",
+        "T-DEMO",
+        "T-IMSPROXY",
+        "T-RTTIF",
+        "T-RTTDEV",
+        "T-RTTIO",
+        "Q-CLOSURE"
+      ],
+      "still_required_on_new_image": [
+        "public export, permission, callId/state/message and argument boundaries",
+        "real no-SIM/no-network/no-session errors; do not fabricate start/send/stop success",
+        "failed setup, stop and process exit leave no leaked RTT fd/thread/listener and do not affect another call",
+        "future actual provider: negotiation, peer text exchange, error/modify events and stopped-session silence"
+      ],
+      "missing_for_positive": [
+        "complete IMS vendor service and reachable peer/SIM/network/session",
+        "actual voice_proxy_rtt device protocol and functioning RTT media transport"
+      ]
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
+      "scope": "current QEMU product; explicit controlled AT 5A stimulus, not physical carrier 5A claim",
+      "source_decision": "image_verifiable_existing_producer_chain_requires_real_AT_input",
+      "whole_id_exclusion_recommended": false,
+      "api_body_missing": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "T-AT",
+        "T-RIL"
+      ],
+      "canonical_source": "patches/common/base/telephony/state_registry/communication_state/README.md:3-24",
+      "still_required_on_new_image": [
+        "real configured AT device and externally controlled peer delivering independent +OHOS5A: 1 and 0 through AT read loop→HRil1412→inherited RIL V1_5 callback162→core→registry IPC14→observer callback13",
+        "preserve raw peer wire/AT/HDI/public evidence, slot/bool identity, invalid URC rejection and explicit reset/shutdown false discipline",
+        "mandatory callback/optional slot; native publisher SET_TELEPHONY_STATE identity and GET_NETWORK_INFO registration/delivery/revocation",
+        "off env/slot/function, queued-generation silence, repeated off and caller exit cleanup"
+      ],
+      "boundary": "No complete carrier modem is delivered, but an existing real AT producer chain can be stimulated without fabricating public callbacks. This source audit has not established its new-image operation."
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
+      "scope": "current QEMU product; explicit controlled AT 5A stimulus, not physical carrier 5A claim",
+      "source_decision": "image_verifiable_existing_producer_chain_requires_real_AT_input",
+      "whole_id_exclusion_recommended": false,
+      "api_body_missing": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "T-AT",
+        "T-RIL"
+      ],
+      "canonical_source": "patches/common/base/telephony/state_registry/communication_state/README.md:3-24",
+      "still_required_on_new_image": [
+        "real configured AT device and externally controlled peer delivering independent +OHOS5A: 1 and 0 through AT read loop→HRil1412→inherited RIL V1_5 callback162→core→registry IPC14→observer callback13",
+        "preserve raw peer wire/AT/HDI/public evidence, slot/bool identity, invalid URC rejection and explicit reset/shutdown false discipline",
+        "mandatory callback/optional slot; native publisher SET_TELEPHONY_STATE identity and GET_NETWORK_INFO registration/delivery/revocation",
+        "off env/slot/function, queued-generation silence, repeated off and caller exit cleanup"
+      ],
+      "boundary": "No complete carrier modem is delivered, but an existing real AT producer chain can be stimulated without fabricating public callbacks. This source audit has not established its new-image operation."
+    },
+    {
+      "id": "behavior:telephony-no-modem-or-sim",
+      "scope": "current default pure-QEMU product",
+      "source_decision": "bounded_unsupported_positive_cellular_transactions_but_image_negative_behavior_required",
+      "whole_id_exclusion_recommended": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "T-RIL",
+        "T-AT",
+        "T-SIG",
+        "T-DEMO",
+        "T-RTTDEV",
+        "Q-CLOSURE"
+      ],
+      "missing_for_positive": [
+        "complete modem/SIM/radio/network provisioning and actual calls/SMS/cellular-data/IMS peers"
+      ],
+      "still_required_on_new_image": [
+        "load real public framework and read actual SIM/network/radio/service state",
+        "call/SMS/data/RTT no-device/no-SIM/offline/permission errors remain truthful; no empty success",
+        "service reset and caller exit cleanup; no manufactured SIM, registration, peer transaction or historical state"
+      ],
+      "boundary": "Do not remove the aggregate no-modem behavior check: its negative behavior is directly verifiable on the image; only the positive cellular-service portion lacks a complete delivered provider."
+    },
+    {
+      "id": "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand",
+      "scope": "current fixed default pure-QEMU product; positive controller/peer pairing",
+      "source_decision": "bounded_unsupported_positive_controller_peer_pairing",
+      "whole_id_exclusion_recommended": false,
+      "api_body_missing": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "B-HDI",
+        "B-VENDOR",
+        "B-ABI",
+        "B-PRODUCT",
+        "Q-CLOSURE",
+        "B-SIG"
+      ],
+      "still_required_on_new_image": [
+        "public export, actual ordinary/system permission, power-off and invalid address/type/C/R/curve errors",
+        "precise current 801 boundaries: LE legacy P192, absent randomizer, virtual alias and local OOB generation; do not broaden all OOB forms to 801",
+        "one-time peer-bound C/R, failure cancellation, disable/exit cleanup and truthful failed final state where execution reaches these boundaries",
+        "a future full provider must drive actual P192/P256 HCI/GAP command completion, correct peer exchange, replay/wrong-peer/type/expiration/cancel and data/state cleanup"
+      ],
+      "missing_for_positive": [
+        "QEMU-specific vendor ABI implementation providing actual controller HCI channels and real initialization/completions",
+        "controller security/OOB capability plus independently controlled peer and raw HCI/GAP evidence"
+      ]
+    },
+    {
+      "id": "behavior:bluetooth-state-transition-false-success",
+      "scope": "current fixed default pure-QEMU product",
+      "source_decision": "image_verifiable_no_controller_failure_rollback_positive_pairing_provider_bounded_unsupported",
+      "whole_id_exclusion_recommended": false,
+      "formal_ledger_change": false,
+      "actual_guest_result": null,
+      "evidence": [
+        "B-HDI",
+        "B-VENDOR",
+        "B-PRODUCT",
+        "Q-CLOSURE"
+      ],
+      "still_required_on_new_image": [
+        "actual packaged vendor/HDI identity and service logs",
+        "enable with missing/failing vendor must fail and settle OFF, no invented ON/paired/data state",
+        "repeated enable/disable, permission loss, failure cleanup and caller/service restart; no stale callback or retained OOB secret",
+        "positive pairing/data/hot-unplug/peer tests only after a real controller/vendor transport is supplied"
+      ],
+      "boundary": "Missing default positive hardware backend does not exempt this false-success regression ID."
+    }
+  ],
+  "existing_nine_unsupported_changed": false,
+  "new_whole_id_exclusions": [],
+  "guest_pass_claim": false
+}

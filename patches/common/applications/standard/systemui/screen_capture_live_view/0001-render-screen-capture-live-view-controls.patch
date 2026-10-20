@@ -1,0 +1,225 @@
+--- a/applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/common/constants.ts
++++ b/applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/common/constants.ts
+@@ -122,6 +122,9 @@
+   deviceId?: string;
+   groupName?: string;
+   tapDismissed?: boolean;
++  systemLiveView?: notificationManager.NotificationSystemLiveViewContent;
++  systemLiveViewBundle?: notificationManager.BundleOption;
++  isNativeScreenCapture?: boolean;
+ }
+ 
+ export interface NotificationServiceListener {
+--- a/applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/model/NotificationManager.ts
++++ b/applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/model/NotificationManager.ts
+@@ -34,6 +34,7 @@
+   static readonly TYPE_LONG: number = NtfMgr.ContentType.NOTIFICATION_CONTENT_LONG_TEXT;
+   static readonly TYPE_MULTI: number = NtfMgr.ContentType.NOTIFICATION_CONTENT_MULTILINE;
+   static readonly TYPE_PICTURE: number = NtfMgr.ContentType.NOTIFICATION_CONTENT_PICTURE;
++  static readonly TYPE_SYSTEM_LIVE: number = NtfMgr.ContentType.NOTIFICATION_CONTENT_SYSTEM_LIVE_VIEW;
+   static notificationTemplateMap = new Map();
+ 
+   static subscribeNotification(tag: string, subscriber, asyncCallback): void {
+--- a/applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/model/ParseDataUtil.ts
++++ b/applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/model/ParseDataUtil.ts
+@@ -15,6 +15,7 @@
+  */
+ 
+ import Notification from '@ohos.notification';
++import notificationManager from '@ohos.notificationManager';
+ import BundleMgr from "@ohos.bundle.bundleManager";
+ import AccountManager from '@ohos.account.osAccount';
+ import Log from '../../../../../../../../../common/src/main/ets/default/Log';
+@@ -38,7 +39,8 @@
+   expandedTitle?: string,
+   longText?: string,
+   lines?: [],
+-  picture?: any
++  picture?: any,
++  systemLiveView?: notificationManager.NotificationSystemLiveViewContent
+ }
+ 
+ async function getUserId(uid): Promise<any> {
+@@ -57,7 +59,18 @@
+     }
+     Log.showInfo(TAG, `parse data start, want = ${JSON.stringify(request.wantAgent)} actionButtons = ${JSON.stringify(request.actionButtons)}`);
+     let userId = await getUserId(request.creatorUid);
+-    let appMessage = await ParseDataUtil.getAppData(request.creatorBundleName, userId);
++    // This is the native screen-capture service identity delivered by ANS,
++    // not an application impersonated by its label or notification title.
++    // ANS exposes the native owner through agentBundle, not an ownerUid field.
++    const isNativeScreenCapture = request.content?.contentType === NotificationManager.TYPE_SYSTEM_LIVE &&
++      request.content.systemLiveView?.typeCode === 1 && request.creatorUid === 1013 &&
++      request.agentBundle?.uid === 1013 && request.agentBundle?.bundle === '' &&
++      request.slotType === notificationManager.SlotType.LIVE_VIEW && request.isOngoing === true &&
++      request.isUnremovable === true;
++    let appMessage = isNativeScreenCapture ? {
++      appName: request.content.systemLiveView.title,
++      icon: request.smallIcon
++    } : await ParseDataUtil.getAppData(request.creatorBundleName, userId);
+     let notificationItem: NotificationItemData = {
+       id: request.id,
+       userId: userId,
+@@ -82,9 +95,11 @@
+       isRemoveAllowed: request.isRemoveAllowed,
+       distributedOption: request.distributedOption,
+       deviceId: request.deviceId,
+-      groupName: request.groupName??request.hashcode,
++      groupName: isNativeScreenCapture ? request.hashCode : (request.groupName??request.hashcode),
+       smallIcon: NotificationConfig.USE_NOTIFICATION_ICON ? (request?.smallIcon ?? appMessage.icon) : appMessage.icon,
+-      tapDismissed: request.tapDismissed
++      tapDismissed: request.tapDismissed,
++      isNativeScreenCapture: isNativeScreenCapture,
++      systemLiveViewBundle: request.agentBundle ?? { bundle: request.creatorBundleName, uid: request.creatorUid }
+     };
+     notificationItem = {
+       ...notificationItem, ...ParseDataUtil.getContentByType(request?.content?.contentType, request)
+@@ -164,6 +179,10 @@
+       getContentByKey([['title', ''], ['text', ''], ['additionalText', []], ['briefText', ''],
+         ['expandedTitle', ''], ['picture', '']], request.content.picture);
+       break;
++    case NotificationManager.TYPE_SYSTEM_LIVE:
++      getContentByKey([['title', ''], ['text', ''], ['additionalText', '']], request.content.systemLiveView);
++      content['systemLiveView'] = request.content.systemLiveView;
++      break;
+     default:
+       Log.showInfo(TAG, 'no match content type');
+       break;
+--- a/applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/model/rule/RuleController.ts
++++ b/applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/model/rule/RuleController.ts
+@@ -28,6 +28,21 @@
+      * @param {callback} Data of the type to show the notification
+      */
+   getNotificationData(notificationItemData: NotificationItemData, callback): void {
++    // ANS already accepted this exact native screen-capture LocalLiveView.
++    // It has no HAP bundle whose application switch/slot can be queried.
++    // Keep its user visibility check in NotificationService unchanged, and
++    // keep a genuine system stop control available without a sound/banner.
++    if (notificationItemData.isNativeScreenCapture === true) {
++      notificationItemData.ruleData = {
++        isAllowBanner: false,
++        isAllowSound: false,
++        isAllowVibrationValues: false,
++        isAllowStatusBarShow: true,
++        isAllowNotificationListShow: true
++      };
++      callback(notificationItemData);
++      return;
++    }
+     this.isAllowSendNotification(notificationItemData, (isSuccess) => {
+       if (!isSuccess) {
+         Log.showWarn(TAG, 'user is not allow this to send notification');
+--- a/applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/view/item/notificationItem.ets
++++ b/applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/view/item/notificationItem.ets
+@@ -15,6 +15,7 @@
+ 
+ import Constants, {NotificationLayout as Layout} from '../../common/constants';
+ import GeneralItem from './generalItem';
++import SystemLiveViewItem from './systemLiveViewItem';
+ import CustomItem from './customItem';
+ import Log from '../../../../../../../../../../common/src/main/ets/default/Log';
+ import NotificationViewModel from '../../viewmodel/NotificationViewModel';
+@@ -111,7 +112,9 @@
+ 
+   build() {
+     Column() {
+-      if (this.itemData.template?.name) {
++      if (this.itemData.systemLiveView) {
++        SystemLiveViewItem({ itemData: this.itemData })
++      } else if (this.itemData.template?.name) {
+         CustomItem({ customItemData: this.itemData, clickAction: (): void => this.showDevicesDialog(), isSubItem: this.isSubItem })
+       } else {
+         GeneralItem({ itemData: this.itemData, clickAction: (): void => this.showDevicesDialog(), isSubItem: this.isSubItem })
+--- /dev/null
++++ b/applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/view/item/systemLiveViewItem.ets
+@@ -0,0 +1,70 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import notificationManager from '@ohos.notificationManager';
++import { BusinessError } from '@ohos.base';
++import Log from '../../../../../../../../../../common/src/main/ets/default/Log';
++import { NotificationItemData, NotificationLayout as Layout } from '../../common/constants';
++
++const TAG = 'NoticeItem-SystemLiveViewItem';
++
++@Component
++export default struct SystemLiveViewItem {
++  @Prop itemData: NotificationItemData;
++  @State sending: boolean = false;
++
++  async trigger(buttonName: string): Promise<void> {
++    // Use only a button actually advertised by this delivered notification.
++    if (this.sending || !this.itemData.systemLiveView?.button?.names?.includes(buttonName) ||
++      !this.itemData.systemLiveViewBundle) {
++      return;
++    }
++    this.sending = true;
++    try {
++      await notificationManager.triggerSystemLiveView(this.itemData.systemLiveViewBundle,
++        Number(this.itemData.id), { buttonName: buttonName });
++    } catch (error) {
++      const failure = error as BusinessError;
++      Log.showError(TAG, `triggerSystemLiveView failed: ${failure.code} ${failure.message}`);
++    } finally {
++      this.sending = false;
++    }
++  }
++
++  build() {
++    Column() {
++      Text(this.itemData.title)
++        .fontSize($r("sys.float.ohos_id_text_size_body2"))
++        .fontColor($r("sys.color.ohos_fa_text_primary"))
++      Text(this.itemData.text)
++        .fontSize($r("sys.float.ohos_id_text_size_body2"))
++        .fontColor($r("sys.color.ohos_fa_text_secondary"))
++      Row() {
++        ForEach(this.itemData.systemLiveView?.button?.names?.slice(0, 3) ?? [], (name: string) => {
++          Button(name, { type: ButtonType.Capsule })
++            .id('system-live-view-button-' + name)
++            .enabled(!this.sending)
++            .height(Layout.ACTION_HEIGHT)
++            .margin({ right: Layout.ACTION_MARGIN })
++            .onClick(() => { this.trigger(name); })
++        }, (name: string) => name)
++      }
++      .width('100%')
++    }
++    .alignItems(HorizontalAlign.Start)
++    .padding(Layout.ITEM_MARGIN)
++    .width('100%')
++  }
++}
+--- a/applications/standard/systemui/features/statusbarcomponent/src/main/ets/com/ohos/pages/IconItemComponent.ets
++++ b/applications/standard/systemui/features/statusbarcomponent/src/main/ets/com/ohos/pages/IconItemComponent.ets
+@@ -92,6 +92,7 @@
+       .height(this.style.stackHeight)
+       .borderRadius(this.style.stackBorderRadius)
+       .backgroundColor(this.mItemStatus.selected ? this.style.stackBgColorSelected : this.style.stackBgColorUnSelected)
++      .id('systemui-statusbar-' + (this.mItemData.relationWindowId ?? this.keyId))
+       .onClick(this.onIconItemClick.bind(this))
+       .gesture(LongPressGesture({ repeat: false }).onAction(this.onIconItemLongPressGesture.bind(this)))
+       .onTouch(this.onIconItemTouch.bind(this))
+--- a/applications/standard/systemui/product/phone/statusbar/src/main/ets/pages/index.ets
++++ b/applications/standard/systemui/product/phone/statusbar/src/main/ets/pages/index.ets
+@@ -95,6 +95,7 @@
+     }
+     .width('100%')
+     .height('100%')
++    .id('systemui-statusbar-swipe')
+     .constraintSize({ minHeight: this.StatusMinH })
+     .onAreaChange((e, e2) => {
+       Log.showInfo(TAG, `onAreaChange, e: ${JSON.stringify(e)} e2: ${JSON.stringify(e2)}`);

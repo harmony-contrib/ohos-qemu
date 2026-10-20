@@ -51,8 +51,8 @@ def test_sdk():
     raise ValueError('set QEMU_TEST_SDK_HOME to a real host-compatible API26 Release SDK')
 
 
-def run(args, *, owned_command=None, owned_guest_factory=None, owned_select_hook=None):
-    for callback in (owned_command, owned_guest_factory, owned_select_hook):
+def run(args, *, owned_command=None, owned_guest_factory=None, owned_select_hook=None, owned_graphics3d_hook=None):
+    for callback in (owned_command, owned_guest_factory, owned_select_hook, owned_graphics3d_hook):
         if callback is not None and not callable(callback):
             raise TypeError('trusted in-process suite callbacks must be callable')
     args.evidence_output.parent.mkdir(parents=True, exist_ok=True)
@@ -120,6 +120,11 @@ def run(args, *, owned_command=None, owned_guest_factory=None, owned_select_hook
             raise ValueError('suite is no longer using the exact fresh package VM')
 
     try:
+        from verify_media_pipeline578_results import (BATCH as MEDIA578_BATCH,
+            PACKAGE_BATCH_SCOPE as MEDIA578_PACKAGE_SCOPE, media_suite_inputs,
+            verify_package_batch as verify_media578_package_batch)
+        # Explicit actual UI/decoder inputs are mandatory before any guest starts.
+        media578_inputs = media_suite_inputs(os.environ)
         hdc = shutil.which(os.environ.get('HDC', 'hdc'))
         if hdc is None:
             fallback = Path('/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/toolchains/hdc')
@@ -666,6 +671,23 @@ def run(args, *, owned_command=None, owned_guest_factory=None, owned_select_hook
             'ordinary-FA-service-constant-and-existing-calls', timeout=2400, env=child_env)
         check('fa-particle', work / 'fa-particle/evidence.json', [fa_record])
         same_guest('after-FA-service')
+        if owned_graphics3d_hook is not None:
+            graphics_output = work / 'graphics3d/evidence.json'
+            def graphics_health(label):
+                same_guest(label)
+                if label.startswith('after-'):
+                    if (not graphics_output.is_file() or graphics_output.is_symlink() or
+                            json.loads(graphics_output.read_text()).get('cleanup_complete') is not True):
+                        raise ValueError('Graphics3D application cleanup is uncertain; stop guest reuse')
+            with independent_probe(report, 'graphics3d-supplemental', graphics_health, save):
+                graphics_result = owned_graphics3d_hook(guest=guest, suite_report=report, suite_command=command,
+                    same_guest=same_guest, save_suite=save, suite_work=work,
+                    archive=args.package_archive.resolve(), sdk=sdk, process_env=child_env)
+                if (type(graphics_result) is not dict or not graphics_output.is_file() or
+                        json.loads(graphics_output.read_text()) != graphics_result or
+                        graphics_result.get('status') != 'pass' or graphics_result.get('cleanup_complete') is not True or
+                        graphics_result.get('closed_ids') != [] or graphics_result.get('full_graphics3d_verified') is not False):
+                    raise ValueError('actual supplemental Graphics3D render/lifecycle verification failed')
         # A denied generic audio error alone is ambiguous. Require actual PCM
         # controls on both sides of the real denied-token/UI case, all on this
         # unchanged newly packaged VM and with freshly installed normal callers.
@@ -706,6 +728,48 @@ def run(args, *, owned_command=None, owned_guest_factory=None, owned_select_hook
                 verify_batch(batch, args.package_archive, environment['boot_id'], arch)
                 batch_path.write_text(json.dumps(batch, indent=2) + '\n')
                 check(persona, batch_path, records)
+        # Additional mandatory media case. Original43/47 and full gap ledger
+        # remain separate requirements; closed=[] never closes a broad media ID.
+        media_batch_path = work / 'media-pipeline578-batch.json'
+        last_media_output = None
+        def media_health(label):
+            same_guest(label)
+            if label.startswith('after-') and last_media_output is not None:
+                if report['commands'][-1].get('timed_out'):
+                    raise ValueError('timed-out media child cleanup is not certified; stop batch')
+                runtime_path = last_media_output / 'capture/runtime.json'
+                if runtime_path.is_file():
+                    value = json.loads(runtime_path.read_text())
+                    if value.get('cleanup_errors') != [] or value.get('cleanup_complete') is not True:
+                        raise ValueError('owned media producer/app cleanup failed; stop batch')
+        with independent_probe(report, 'media-pipeline578', media_health, save):
+            media_cases, media_records = [], []
+            for index, scenario in enumerate(MEDIA578_BATCH):
+                if checksum(Path(media578_inputs['screen_ui_plan']['path'])) != media578_inputs['screen_ui_plan']['sha256']:
+                    raise ValueError('actual packaged screen UI input changed during media batch')
+                output = work / ('media-pipeline578-' + str(index))
+                last_media_output = output
+                argv = [sys.executable, Path(__file__).with_name('run_normal_hap_probe.py'),
+                    '--archive', args.package_archive, '--sdk', sdk, '--udid', guest.udid,
+                    '--persona', 'media-pipeline578', '--media578-scenario', scenario,
+                    '--media578-screen-ui', media578_inputs['screen_ui_plan']['path'],
+                    '--ffmpeg', media578_inputs['ffmpeg'], '--ffprobe', media578_inputs['ffprobe'],
+                    '--arch', arch, '--device', device, '--target', target,
+                    '--hdc', hdc, '--boot-id', environment['boot_id'], '--boot', work / 'boot/boot.json',
+                    '--output', output, '--source-volume', source_volume, '--docker-image', docker_image]
+                record = command(argv, 'ordinary-media-pipeline578-' + str(index) + '-' + scenario,
+                                 timeout=2400, env=child_env)
+                path = output / 'evidence.json'
+                media_records.append(record)
+                media_cases.append({'scenario': scenario, 'evidence': str(path), 'sha256': checksum(path)})
+                same_guest('after-ordinary-media-pipeline578-' + str(index))
+            media_batch = {'schema_version': 1, 'status': 'pass', 'scope': MEDIA578_PACKAGE_SCOPE,
+                'archive_sha256': report['package']['sha256'], 'boot_id': environment['boot_id'], 'arch': arch,
+                'screen_ui_plan': media578_inputs['screen_ui_plan'], 'cases': media_cases,
+                'closed_requirements': [], 'first_artifact_behavior_gate_passed': False}
+            verify_media578_package_batch(media_batch, args.package_archive, environment['boot_id'], arch)
+            media_batch_path.write_text(json.dumps(media_batch, indent=2) + '\n')
+            check('media-pipeline578', media_batch_path, media_records)
         focus_output = work / 'audio-focus'
         def focus_health(label):
             same_guest(label)

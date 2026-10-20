@@ -22,6 +22,7 @@ REQUIRED_CHECKS = frozenset(("boot", "arkweb", "vulkan", "issue20-library-exit",
 DEVICE_CHECKS = {"phone": frozenset(), "2in1": frozenset(("serial",))}
 REQUIRED_CHECKS |= frozenset(('child-default-profile',))
 REQUIRED_CHECKS |= frozenset(('audio-capture', 'media-recorder', 'audio-revoke', 'audio-focus'))
+REQUIRED_CHECKS |= frozenset(('media-pipeline578',))
 REPRESENTATIVE_CHECKS = frozenset(('contacts-picker', 'wallpaper', 'external-inputs', 'knowledge-holiday'))
 
 
@@ -353,6 +354,11 @@ def verified_payload(name, path, identity, environment):
             sys.path.insert(0, str(audit))
             from verify_media_recorder_results import verify_batch
             verify_batch(payload, Path(identity['archive']), environment['boot_id'], environment['guest_arch'])
+        elif name == 'media-pipeline578':
+            audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
+            sys.path.insert(0, str(audit))
+            from verify_media_pipeline578_results import verify_package_batch
+            verify_package_batch(payload, Path(identity['archive']), environment['boot_id'], environment['guest_arch'])
         elif name == 'audio-focus':
             audit = Path(__file__).resolve().parents[1] / 'ci/capability-audit'
             sys.path.insert(0, str(audit))

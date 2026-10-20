@@ -1660,6 +1660,9 @@ PY
       # retains real awake half/full checks and recovery; new guest wake/health
       # acceptance remains mandatory, including s2idle's dual-clock boundary.
       build_args+=(--gn-args "hicollie_suspend_check_enable=true")
+      # The upstream capture service owns the live notification and its real
+      # stop callback. Keep that user control available on both QEMU profiles.
+      build_args+=(--gn-args "player_framework_support_screen_capture_controller=true")
     fi
     case "${DEVICE_TYPE}" in
       phone) build_args+=(--gn-args "target_platform=phone") ;;
@@ -3178,6 +3181,10 @@ apply_qemu_capability_patch_plan() {
       --source-root "${OHOS_ROOT}" --native-source-revision "${privacy_source_revision}" \
       --device "${DEVICE_TYPE}" \
       2>&1 | tee "${CACHE_ROOT}/logs/verify_privacycenter_provider_component.log"
+  fi
+  if [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; then
+    bash "${PATCH_ROOT}/common/applications/standard/systemui/screen_capture_live_view/apply.sh" --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_systemui_screen_capture_live_view.log"
   fi
   apply_qemu_runtime_components
   bash "${NATIVE_CHILD_PROCESS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \

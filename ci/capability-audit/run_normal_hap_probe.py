@@ -28,6 +28,8 @@ BUNDLE = 'org.harmonycontrib.capabilityaudit'
 APP_BASE = '/data/app/el2/100/base/' + BUNDLE + '/'
 APP_FILES = APP_BASE + 'files/'
 PERSONAS = {
+    'media-pipeline578': ('--media-pipeline-only', 'media578-{run}-results.log',
+                          '"summary"', 'verify_media_pipeline578_results.py'),
     'rpc-runtime': ('--rpc-runtime-only', 'rpc-runtime-{run}-results.log',
                     '"summary"', 'verify_rpc_runtime_results.py'),
     'arkui-components': ('--arkui-components-only', 'arkui-components-{run}-results.log',
@@ -168,7 +170,7 @@ def verifier_arguments(persona, archive, results, identity, run_id, arch, output
         arguments += ['--application-identity', str(identity)]
     if persona in ('worker-legacy', 'worker-thread'):
         arguments += ['--mode', persona.removeprefix('worker-')]
-    if persona in ('audio-capture', 'media-recorder', 'audio-revoke', 'avc-media', 'rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
+    if persona in ('media-pipeline578', 'audio-capture', 'media-recorder', 'audio-revoke', 'avc-media', 'rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'photos-recent', 'photos-asset', 'settings-navigation', 'storage-stats'):
         arguments += ['--arch', arch, '--application-identity', str(identity)]
     return arguments
 
@@ -181,7 +183,7 @@ def preserve_microphone_failure(runtime, report):
     if runtime.actual_shell('cat /proc/sys/kernel/random/boot_id', 'MIC-partial-boot') != report['boot_id']:
         raise ValueError('partial microphone evidence belongs to another kernel')
     prefix = {'audio-capture': 'audio-capture-', 'media-recorder': 'recorder-',
-              'audio-revoke': 'audio-event-'}[report['persona']] + report['run_id'] + '-'
+              'audio-revoke': 'audio-event-', 'media-pipeline578': 'media578-'}[report['persona']] + report['run_id'] + '-'
     script = ('printf "BEGIN\\n"; for task_diag_file in ' + APP_FILES + prefix + '*; do '
         'if test ! -e "$task_diag_file" && test ! -L "$task_diag_file"; then continue; fi; '
         'test -f "$task_diag_file" && test ! -L "$task_diag_file" || exit 1; '
@@ -300,9 +302,15 @@ def run(args):
         return command([args.hdc, '-t', args.target, 'shell', script], label, accepted_failure=accepted_failure)
 
     try:
-        if args.persona in ('audio-capture', 'media-recorder', 'audio-revoke') and (
+        if args.persona in ('media-pipeline578', 'audio-capture', 'media-recorder', 'audio-revoke') and (
                 getattr(args, 'boot', None) is None or getattr(args, 'boot_id', None) is None):
             raise ValueError('microphone content requires the actual enclosing package-owned acceptance boot')
+        if args.persona == 'media-pipeline578':
+            from media_pipeline578_runtime import ui_plan
+            from media_pipeline578 import SCENARIOS
+            if getattr(args, 'media578_scenario', None) not in SCENARIOS:
+                raise ValueError('explicit screen/transcode scenario required')
+            ui_plan(args.media578_screen_ui)
         if args.persona == 'spring-loading' and (
                 getattr(args, 'boot', None) is None or getattr(args, 'boot_id', None) is None):
             raise ValueError('spring physical input requires the actual enclosing package-owned boot')
@@ -343,6 +351,8 @@ def run(args):
             build += ['--audio-capture-expect-denied']
         if args.persona == 'media-recorder' and getattr(args, 'media_recorder_expect_denied', False):
             build += ['--media-recorder-expect-denied']
+        if args.persona == 'media-pipeline578':
+            build += ['--media578-scenario', args.media578_scenario]
         if args.persona == 'network-accounting':
             from network_accounting_endpoint import Endpoint
             network_peer = Endpoint(challenge)
@@ -374,7 +384,7 @@ def run(args):
             '--bundle-name', BUNDLE, '--udid', args.udid, '--sign-code', '1']
         command(sign, 'docker-sign-and-verify', timeout=300)
         report['hap_sha256'] = checksum(signed)
-        if args.persona in ('audio-capture', 'media-recorder', 'audio-revoke'):
+        if args.persona in ('media-pipeline578', 'audio-capture', 'media-recorder', 'audio-revoke'):
             from audio_capture_runtime import CaptureRuntime
             if args.persona == 'media-recorder':
                 from media_recorder_runtime import RecorderRuntime
@@ -382,6 +392,9 @@ def run(args):
             elif args.persona == 'audio-revoke':
                 from audio_revoke_runtime import RevokeRuntime
                 runtime_type = RevokeRuntime
+            elif args.persona == 'media-pipeline578':
+                from media_pipeline578_runtime import Media578Runtime
+                runtime_type = Media578Runtime
             else:
                 runtime_type = CaptureRuntime
             capture_runtime = runtime_type(args, command, shell, report, challenge, boot_id)
@@ -510,8 +523,9 @@ def run(args):
             report['camera_native_results_sha256'] = checksum(native_results)
             # Photos only exist after the complete ArkTS sequence, below.
             ui_arguments += ['--native-results', str(native_results), '--captures', str(capture_file)]
-        result = components_result if components_result is not None else (
-            spring_result if spring_result is not None else poll_result(completion))
+        result = capture_runtime.result_text() if args.persona == 'media-pipeline578' else (
+            components_result if components_result is not None else (
+                spring_result if spring_result is not None else poll_result(completion)))
         if args.persona == 'camera':
             photo_root = receive_photos(command, args.hdc, args.target, app_files, args.output, challenge)
             ui_arguments += ['--photo-root', str(photo_root)]
@@ -543,7 +557,7 @@ def run(args):
             report.update(compiled_contract_inputs=str(inputs), compiled_contract_inputs_sha256=checksum(inputs),
                           capture_runtime=str(runtime), capture_runtime_sha256=checksum(runtime))
             ui_arguments += ['--inputs', str(inputs), '--runtime', str(runtime), '--hap', str(signed), '--boot-id', boot_id]
-            if args.persona == 'media-recorder':
+            if args.persona in ('media-recorder', 'media-pipeline578'):
                 ui_arguments += ['--decode-evidence', str(args.output / 'independent-decode'),
                                  '--ffmpeg', str(args.ffmpeg), '--ffprobe', str(args.ffprobe)]
         verification = args.output / 'verified-result.json'
@@ -618,7 +632,7 @@ def run(args):
             except Exception as error:
                 report['status'] = 'fail'
                 report['failures'].append('owned HTTP peer cleanup failed: ' + str(error))
-        if own_install_attempted and args.persona in ('audio-capture', 'media-recorder', 'audio-revoke'):
+        if own_install_attempted and args.persona in ('media-pipeline578', 'audio-capture', 'media-recorder', 'audio-revoke'):
             try:
                 def preserve_failure():
                     if report['status'] != 'pass' and capture_runtime is not None and 'ordinary_uid' in report:
@@ -631,6 +645,12 @@ def run(args):
                 report['failures'].append('owned microphone application cleanup failed: ' + str(error))
         (args.output / 'evidence.json').write_text(json.dumps(report, indent=2) + '\n')
     return report
+
+
+def run_graphics3d_on_owned_guest(**actual_bindings):
+    """Original ordinary-probe entry for the enclosing held QemuGuest only."""
+    from graphics3d_runtime import run_owned_graphics3d
+    return run_owned_graphics3d(**actual_bindings)
 
 
 def main():
@@ -650,6 +670,9 @@ def main():
     parser.add_argument('--out-volume', default='ohos-qemu-7_0-release-out')
     parser.add_argument('--audio-capture-expect-denied', action='store_true')
     parser.add_argument('--media-recorder-expect-denied', action='store_true')
+    from media_pipeline578 import SCENARIOS
+    parser.add_argument('--media578-scenario', choices=SCENARIOS)
+    parser.add_argument('--media578-screen-ui', type=Path)
     parser.add_argument('--ffmpeg', type=Path, default=Path('/opt/homebrew/bin/ffmpeg'))
     parser.add_argument('--ffprobe', type=Path, default=Path('/opt/homebrew/bin/ffprobe'))
     parser.add_argument('--docker-image', default='ohos-qemu-m144-build-env:7.0-release')
@@ -661,6 +684,11 @@ def main():
         parser.error('denied microphone expectation requires the public capture persona')
     if args.media_recorder_expect_denied and args.persona != 'media-recorder':
         parser.error('denied Recorder expectation requires the public Recorder persona')
+    if args.persona == 'media-pipeline578':
+        if args.media578_scenario is None or args.media578_screen_ui is None:
+            parser.error('screen/transcode persona requires actual scenario and packaged screen UI selectors')
+    elif args.media578_scenario is not None or args.media578_screen_ui is not None:
+        parser.error('screen/transcode inputs require its dedicated ordinary persona')
     report = run(args)
     print(json.dumps({'persona': report['persona'], 'status': report['status'], 'failures': report['failures']}))
     return 0 if report['status'] == 'pass' else 1

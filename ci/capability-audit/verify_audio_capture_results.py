@@ -269,7 +269,7 @@ def verify_guest_tool_runtimes(runtime, tools, *, parent_persona):
     """Replay exact MIC commands, including Focus's separately checked footer."""
     import batch_system_build_runtime_helpers as product
     from hdc_transport import failed
-    if (parent_persona not in ('audio-capture', 'media-recorder', 'audio-revoke', 'audio-focus') or
+    if (parent_persona not in ('audio-capture', 'media-recorder', 'audio-revoke', 'audio-focus', 'media-pipeline578') or
             runtime.get('parent_persona') != parent_persona):
         raise ValueError('MIC runtime belongs to a different parent protocol')
     hdc = runtime['hdc']

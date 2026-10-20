@@ -36,7 +36,7 @@ class ShareProviderTests(unittest.TestCase):
  def test_bounded_manifest_and_existing_permissions_profiles_retained(self):
   setting='applications/standard/settings/product/phone/src/main/module.json5';mms='applications/standard/mms/entry/src/main/module.json5';before=self.json5(setting)['module'];before_mms=self.json5(mms)['module'];self.prepare();after=self.json5(setting)['module'];after_mms=self.json5(mms)['module']
   self.assertEqual(after['extensionAbilities'][0],self.meta['added_extension']);after['extensionAbilities']=after['extensionAbilities'][1:];self.assertEqual(after,before)
-  old=next(a for a in before_mms['abilities'] if a['name']=='com.ohos.mms.MainAbility');new=next(a for a in after_mms['abilities'] if a['name']=='com.ohos.mms.MainAbility');self.assertEqual(new['skills'][0],{'actions':['ohos.want.action.sendData'],'uris':[{'type':'text/plain'}]});new['skills']=new['skills'][1:];self.assertEqual(after_mms,before_mms)
+  old=next(a for a in before_mms['abilities'] if a['name']=='com.ohos.mms.MainAbility');new=next(a for a in after_mms['abilities'] if a['name']=='com.ohos.mms.MainAbility');self.assertEqual(new['skills'][0],{'actions':['ohos.want.action.sendData'],'uris':[{'type':t,'scheme':'file'} for t in ('image/png','image/jpeg','image/gif','image/bmp','audio/mpeg','audio/wav','video/mp4','text/vcard')]});new['skills']=new['skills'][1:];self.assertEqual(new['skills'][0],{'actions':['ohos.want.action.sendData'],'uris':[{'type':'text/plain'}]});new['skills']=new['skills'][1:];self.assertEqual(after_mms,before_mms)
   extension=(self.root/'applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets').read_text();self.assertNotIn('setReceiveDataCallback',extension)
  def test_actual_picker_controller(self):
   self.prepare();source=self.root/'applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets'
@@ -48,6 +48,15 @@ class ShareProviderTests(unittest.TestCase):
   for case in ('draft','payload_validation','stale_request','loader_failure','invalid_text'):
    with self.subTest(case=case):
     r=subprocess.run(['node','--unhandled-rejections=strict',str(FIX/'mms.cjs'),str(self.root/'applications/standard/mms'),case],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+ def test_actual_attachment_copy_rollback_reservation_and_text_replacement(self):
+  self.prepare()
+  source=self.root/'applications/standard/mms/entry/src/main/ets/utils/SendDataAttachment.ets'
+  self.assertEqual(source.read_bytes(),(FIX/'candidate/SendDataAttachment.ets').read_bytes())
+  result=subprocess.run(['node','--unhandled-rejections=strict',str(FIX/'attachment_host.cjs'),str(self.root/'attachment-io'),str(source)],capture_output=True,text=True)
+  self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+  proof=json.loads(result.stdout);self.assertEqual(proof['checks'],10)
+  self.assertIs(proof['OHOS_URI_grants_verified'],False)
+  self.assertIs(proof['SDK_compiled'],False)
  def test_actual_extension_session_isolation_destroy_and_error_codes(self):
   self.prepare();source=self.root/'applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets'
   for case in ('isolated','invalid_duplicate','load_failure','destroy_while_loading','recreate_while_loading'):

@@ -1,0 +1,53 @@
+--- a/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp
++++ b/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp
+@@ -26,6 +26,9 @@
+     uint32_t horizontalAccuracyBits = 0;
+     uint64_t latitudeBits = 0;
+     uint64_t longitudeBits = 0;
++    uint64_t altitudeBits = 0;
++    uint32_t speedBits = 0;
++    uint32_t bearingBits = 0;
+     int64_t sourceUtcMs = 0;
+     int64_t sourceBootNs = 0;
+     int64_t receiptBootNs = -1;
+@@ -37,6 +40,9 @@
+ static_assert(sizeof(decltype(LocationInfo::latitude)) == sizeof(uint64_t) &&
+     sizeof(decltype(LocationInfo::longitude)) == sizeof(uint64_t) &&
+     std::numeric_limits<double>::is_iec559, "Actual HDI coordinates must remain IEEE binary64");
++static_assert(sizeof(decltype(LocationInfo::altitude)) == sizeof(uint64_t) &&
++    sizeof(decltype(LocationInfo::speed)) == sizeof(uint32_t) &&
++    sizeof(decltype(LocationInfo::bearing)) == sizeof(uint32_t), "Actual HDI altitude/speed/bearing widths changed");
+ static_assert(sizeof(decltype(LocationInfo::timeForFix)) == sizeof(int64_t) &&
+     sizeof(decltype(LocationInfo::timeSinceBoot)) == sizeof(int64_t), "Actual HDI source clocks must remain int64");
+ static_assert(sizeof(QemuGnssHdiTraceRecord) <= 96, "Fixed trace storage must remain bounded");
+@@ -84,6 +90,9 @@
+     std::memcpy(&record.horizontalAccuracyBits, &location.horizontalAccuracy, sizeof(record.horizontalAccuracyBits));
+     std::memcpy(&record.latitudeBits, &location.latitude, sizeof(record.latitudeBits));
+     std::memcpy(&record.longitudeBits, &location.longitude, sizeof(record.longitudeBits));
++    std::memcpy(&record.altitudeBits, &location.altitude, sizeof(record.altitudeBits));
++    std::memcpy(&record.speedBits, &location.speed, sizeof(record.speedBits));
++    std::memcpy(&record.bearingBits, &location.bearing, sizeof(record.bearingBits));
+     std::memcpy(&record.sourceUtcMs, &location.timeForFix, sizeof(record.sourceUtcMs));
+     std::memcpy(&record.sourceBootNs, &location.timeSinceBoot, sizeof(record.sourceBootNs));
+     record.receiptBootNs = QemuTraceBootNs();
+@@ -129,7 +138,7 @@
+     }
+     // Snapshot owns its values. Formatting/allocation and the caller's fd write
+     // happen after releasing the capture mutex; a slow Dump reader cannot hold it.
+-    constexpr size_t lineCapacity = 512;
++    constexpr size_t lineCapacity = 768;
+     output.clear();
+     output.reserve((count + 1) * lineCapacity);
+     char line[lineCapacity];
+@@ -149,9 +158,11 @@
+         length = std::snprintf(line, sizeof(line),
+             "{\"kind\":\"hdi_report_location\",\"localOrdinal\":%" PRIu64 ",\"fieldValidity\":%" PRIu32 ","
+             "\"horizontalAccuracyBits\":\"0x%08" PRIx32 "\",\"latitudeBits\":\"0x%016" PRIx64 "\","
++            "\"altitudeBits\":\"0x%016" PRIx64 "\",\"speedBits\":\"0x%08" PRIx32 "\",\"bearingBits\":\"0x%08" PRIx32 "\","
+             "\"longitudeBits\":\"0x%016" PRIx64 "\",\"sourceUtcMs\":%" PRId64 ",\"sourceBootNs\":%" PRId64 ","
+             "\"receiptBootNs\":%" PRId64 ",\"callbackCallerUid\":%" PRId32 ",\"callbackCallerPid\":%" PRId32 "}\n",
+             record.localOrdinal, record.fieldValidity, record.horizontalAccuracyBits, record.latitudeBits,
++            record.altitudeBits, record.speedBits, record.bearingBits,
+             record.longitudeBits, record.sourceUtcMs, record.sourceBootNs, record.receiptBootNs,
+             record.callerUid, record.callerPid);
+         if (length < 0 || static_cast<size_t>(length) >= sizeof(line)) return false;
