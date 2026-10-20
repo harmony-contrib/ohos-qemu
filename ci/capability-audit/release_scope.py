@@ -20,7 +20,7 @@ IMAGE_GENERATION = frozenset('arkts_export:@ohos.arkui.intelligence.imageGenerat
 
 
 PROVIDER_POLICY = 'ci/capability-audit/policy579/execution-20261021/unsupported-public-providers.json'
-PROVIDER_POLICY_SHA256 = 'd0b930414b9ba46835ac2e217d614605a120fe04bd138979824ed2889ad81ce4'
+PROVIDER_POLICY_SHA256 = '5aacbbd3a059604696c00fe5eae094ddd73a34f9a73c98086c5567d405148f92'
 PROVIDER_IDS = {
     'NumberIdentity': 'behavior:telephony-number-identity-provider-missing',
     'DeviceAttest': 'behavior:device-attest-uninitialized',
@@ -31,9 +31,15 @@ PROVIDER_IDS = {
     'ExpandedTextMenu': 'behavior:arkui-expanded-text-menu-providers-missing',
     'TextServicePlugins': 'behavior:arkui-text-service-runtime-plugins-missing',
 }
+PARTIAL_PROVIDER_IDS = {
+    'LocationDistrictGeocoder579': 'arkts_export:@ohos.geoLocationManager:getCurrentDistrict',
+    'LocationBluetoothScanController579': 'arkts_export:@ohos.geoLocationManager:startBluetoothSearch',
+    'LocationBluetoothStopOnLiveController579': 'arkts_export:@ohos.geoLocationManager:stopBluetoothSearch',
+    'QemuBluetoothStateController579': 'behavior:bluetooth-state-transition-false-success',
+}
 
 
-def provider_policy(device):
+def _provider_policy(device):
     if device not in ('phone', '2in1'):
         raise ValueError('unknown device profile for approved provider boundary')
     root = Path(__file__).resolve().parents[2]
@@ -46,6 +52,12 @@ def provider_policy(device):
             {name: row['id'] for name, row in value['features'].items()} != PROVIDER_IDS or
             any(row['repaired'] is not False or row['runtime_pass'] is not False for row in value['features'].values())):
         raise ValueError('exact unsupported provider IDs and non-success status required')
+    partial = value.get('partial_features', {})
+    if ({name: row['id'] for name, row in partial.items()} != PARTIAL_PROVIDER_IDS or
+            any(row['whole_id_unsupported'] is not False or row['repaired'] is not False or
+                row['runtime_pass'] is not False or row['new_formal_closure'] is not False or
+                row['passable_without_new_runtime'] is not False for row in partial.values())):
+        raise ValueError('partial provider boundaries cannot skip a whole ID or invent a runtime pass')
     for evidence in value['evidence']:
         name = evidence['path']
         aliases = {
@@ -56,7 +68,18 @@ def provider_policy(device):
         source = root / aliases.get(name, name)
         if source.is_symlink() or hashlib.sha256(source.read_bytes()).hexdigest() != evidence['sha256']:
             raise ValueError('public implementation boundary evidence changed')
+    return value
+
+
+def provider_policy(device):
+    value = _provider_policy(device)
     return {name: row for name, row in value['features'].items() if device in row['devices']}
+
+
+def partial_provider_policy(device):
+    """Source dispositions only; these IDs stay in actual runtime acceptance."""
+    value = _provider_policy(device)
+    return {name: row for name, row in value['partial_features'].items() if device in row['devices']}
 
 
 def exclusion_labels(device):
@@ -80,7 +103,8 @@ def exclusion_record(device, baseline_ids):
         'features': {'CloudSync': sorted(cloud), 'imageGeneration': sorted(IMAGE_GENERATION),
                      **{name: [row['id']] for name, row in providers.items()}},
         'unsupported_public_providers': {'policy_path': PROVIDER_POLICY, 'policy_sha256': PROVIDER_POLICY_SHA256,
-                                         'status': 'unsupported_not_fixed_not_runtime_validated', 'features': providers},
+                                         'status': 'unsupported_not_fixed_not_runtime_validated', 'features': providers,
+                                         'partial_features': partial_provider_policy(device)},
         'ids': sorted(excluded),
         'count': len(excluded),
     }

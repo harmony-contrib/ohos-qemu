@@ -513,7 +513,16 @@ def install_on_original_children(children, inputs_ref=None, *, deferred_inputs=N
                 # actual installed system HAPs before Share/MMS or Knowledge
                 # consumers need their immutable package input descriptors.
                 resolve_inputs(owner)
-                return owned_select_hook(**context)
+                original_result = owned_select_hook(**context)
+                factory = getattr(owner, 'capability579_export_factory', None)
+                require(deferred_inputs is not None and
+                    type(getattr(factory, 'exports', None)) is dict and
+                    'mms_facts' in factory.exports,
+                    'actual selected same-package MMS export required for new URI boundaries')
+                from mms_share579_integration import run_after_original_share
+                run_after_original_share(owner, installed['resources'], original_result,
+                    mms_facts=factory.exports['mms_facts'], context=context)
+                return original_result
 
             result = canonical(args, owned_command=command_with_knowledge_inputs, owned_guest_factory=owned_guest_factory,
                 owned_select_hook=select_with_package_inputs, owned_graphics3d_hook=graphics_and_capabilities)

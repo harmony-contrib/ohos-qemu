@@ -1,8 +1,8 @@
 {
   "schema": "user-approved-public-provider-boundary/20261021",
-  "user_instruction": "看下 openharmony 以及对应 sig 等仓库是否有，如果有就补齐，如果没有就认为是能力不支持",
+  "user_instruction": "\u770b\u4e0b openharmony \u4ee5\u53ca\u5bf9\u5e94 sig \u7b49\u4ed3\u5e93\u662f\u5426\u6709\uff0c\u5982\u679c\u6709\u5c31\u8865\u9f50\uff0c\u5982\u679c\u6ca1\u6709\u5c31\u8ba4\u4e3a\u662f\u80fd\u529b\u4e0d\u652f\u6301",
   "decision": "current_complete_provider_unsupported_not_fixed_not_runtime_validated",
-  "scope": "Eight exact complete-provider findings remain conditional unsupported. LiveCaptions is reopened because fixed official SIG source contains real local ASR and public inference payloads. Model license and actual system/QEMU behavior remain pending; reopening is not a fix or pass.",
+  "scope": "Eight exact complete-provider findings remain conditional unsupported. Four additional Location/Bluetooth provider-positive scopes are partial only: no whole-ID exclusions; every supported typed API/permission/invalid/OFF/restart/release boundary remains mandatory on newly packaged QEMU. LiveCaptions is reopened and remains mandatory.",
   "features": {
     "NumberIdentity": {
       "id": "behavior:telephony-number-identity-provider-missing",
@@ -112,6 +112,14 @@
     {
       "path": "docs/capability-audit/execution-20261021/livecaptions-har579.json",
       "sha256": "ef37e4cca0fe522875f799d7427745eacc8dfc0d91925131f1917a535c7e9f5b"
+    },
+    {
+      "path": "ci/capability-audit/policy579/execution-20261021/location-provider-source-facts579.json",
+      "sha256": "388756512a33fcc728ac2ec83b48871d65a273fa2414700445e304ee0582b2f5"
+    },
+    {
+      "path": "ci/capability-audit/policy579/execution-20261021/location-provider-source579.md",
+      "sha256": "d3c12d47c4491dcd98d1b9111691cfe6ef48b9f22e6132118129324372376e4a"
     }
   ],
   "reopen": "Supply a complete lawful provider/data/model/product identity, integrate it and restore that exact finding to runtime acceptance.",
@@ -126,6 +134,181 @@
       "repaired": false,
       "runtime_pass": false,
       "state": "required_unresolved"
+    }
+  },
+  "partial_features": {
+    "LocationDistrictGeocoder579": {
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "whole_id_unsupported": false,
+      "state": "conditional_partial_provider_scope_unsupported_not_runtime_validated",
+      "repaired": false,
+      "runtime_pass": false,
+      "new_formal_closure": false,
+      "passable_without_new_runtime": false,
+      "source_facts": {
+        "path": "ci/capability-audit/policy579/execution-20261021/location-provider-source-facts579.json",
+        "sha256": "388756512a33fcc728ac2ec83b48871d65a273fa2414700445e304ee0582b2f5",
+        "bytes": 20262
+      },
+      "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
+      "scope": "Only the independent address-conversion backend after a genuine caller-authorized fresh GNSS fix. The public getCurrentDistrict API, its typed request/Promise, permissions, invalid-argument handling, one-shot release and real location-switch boundary remain supported implementation paths and mandatory new-image acceptance.",
+      "reason": "Complete traced OH GeoConvert code is a configured remote-ability/parcel consumer; selected product config and fixed official prebuilt production GN provide no complete address backend. Fixed corresponding SIG Flutter geocoding implementation is an OS API consumer HAR. No mock/address stub or host HTTP is integrated.",
+      "not_unsupported": [
+        "actual caller role/permission checks",
+        "invalid timeout request rejection",
+        "actual location-switch OFF/restore",
+        "actual GNSS one-shot freshness and cleanup",
+        "public API linkage/typed body"
+      ],
+      "mandatory_new_image": {
+        "same_original_GNSS_Owner_profiles": [
+          "invalid",
+          "denied",
+          "switch-off",
+          "district-boundary"
+        ],
+        "required_actual_results": [
+          "fresh location permission/token/BMS/signature bindings",
+          "31.5s actual cache-expiration quiet",
+          "new QGN2 input and independent HDI plus public callback",
+          "public getCurrentDistrict exact 801 only after fresh input",
+          "public isGeocoderAvailable false before/after",
+          "native/API release, quiet and original cleanup"
+        ]
+      },
+      "related_aggregate_id": "behavior:api26-runtime-export-mismatches-phone"
+    },
+    "LocationBluetoothScanController579": {
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "whole_id_unsupported": false,
+      "state": "conditional_partial_provider_scope_unsupported_not_runtime_validated",
+      "repaired": false,
+      "runtime_pass": false,
+      "new_formal_closure": false,
+      "passable_without_new_runtime": false,
+      "source_facts": {
+        "path": "ci/capability-audit/policy579/execution-20261021/location-provider-source-facts579.json",
+        "sha256": "388756512a33fcc728ac2ec83b48871d65a273fa2414700445e304ee0582b2f5",
+        "bytes": 20262
+      },
+      "id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
+      "scope": "Only the RF-driven positive scan/filter/callback portion needing a real complete QEMU HCI/controller and independent LE advertisement endpoint. OHOS scanner/filter/callback registration exists and is not marked missing.",
+      "reason": "Complete fixed QEMU device/product source and traced build closure supply no compatible HCI vendor/controller. Complete BCM/Unisoc board implementations are hardware-specific, not virtual controllers. Fixed corresponding SIG sources do not supply a compatible QEMU controller. This is not inferred from absent fixture, OFF alone, an empty search, kernel BT_LE alone or remote access error.",
+      "not_unsupported": [
+        "typed public start API",
+        "actual permission 201 boundary",
+        "actual OFF 3301800 boundary",
+        "failed registration rollback and quiet",
+        "full OHOS BLE framework and physical-board vendor implementations"
+      ],
+      "mandatory_new_image": {
+        "same_original_GNSS_Owner_profiles": [
+          "denied",
+          "ble-off-boundary"
+        ],
+        "original_communications_profile": "bluetooth",
+        "required_actual_results": [
+          "actual granted-location start BluetoothSearch 3301800 while public state OFF",
+          "no callback throughout quiet/retry/cleanup",
+          "original Bluetooth family real permission/enable attempts before and after native service restart",
+          "actual HCI/vendor load/device failure and final OFF rollback, not getter-only proof",
+          "same new archive identity, actual guest/library cut, BMS/UID/boot/signature records and cleanup"
+        ]
+      },
+      "related_aggregate_id": "behavior:api26-runtime-export-mismatches-phone"
+    },
+    "LocationBluetoothStopOnLiveController579": {
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "whole_id_unsupported": false,
+      "state": "conditional_partial_provider_scope_unsupported_not_runtime_validated",
+      "repaired": false,
+      "runtime_pass": false,
+      "new_formal_closure": false,
+      "passable_without_new_runtime": false,
+      "source_facts": {
+        "path": "ci/capability-audit/policy579/execution-20261021/location-provider-source-facts579.json",
+        "sha256": "388756512a33fcc728ac2ec83b48871d65a273fa2414700445e304ee0582b2f5",
+        "bytes": 20262
+      },
+      "id": "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
+      "scope": "Only the callback-A stop / callback-B remains / stop-all silence positive scenario driven by independent actual LE advertisements on a real QEMU controller. Software stop/ownership/environment teardown and the OFF stop-all boundary remain implemented and mandatory.",
+      "reason": "Live callback isolation/filter/lifecycle positives require the same missing compatible QEMU HCI/controller and independent RF endpoint; actual OHOS callback ownership and stop implementation exists. A no-callback OFF interval cannot establish positive A/B stop semantics.",
+      "not_unsupported": [
+        "public stopBluetoothSearch() typed entry",
+        "OFF stop-all success plus actual quiet",
+        "per-environment ownership/cleanup implementation",
+        "permission/source identity and all supported API paths"
+      ],
+      "mandatory_new_image": {
+        "same_original_GNSS_Owner_profiles": [
+          "ble-off-boundary"
+        ],
+        "required_actual_results": [
+          "real start failures and their raw error codes",
+          "real public stop-all invocation",
+          "quiet interval without callbacks after failed registrations, stop-all and cleanup",
+          "actual BMS/process absence after uninstall"
+        ]
+      },
+      "related_aggregate_id": "behavior:api26-runtime-export-mismatches-phone"
+    },
+    "QemuBluetoothStateController579": {
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "whole_id_unsupported": false,
+      "state": "conditional_partial_provider_scope_unsupported_not_runtime_validated",
+      "repaired": false,
+      "runtime_pass": false,
+      "new_formal_closure": false,
+      "passable_without_new_runtime": false,
+      "source_facts": {
+        "path": "ci/capability-audit/policy579/execution-20261021/location-provider-source-facts579.json",
+        "sha256": "388756512a33fcc728ac2ec83b48871d65a273fa2414700445e304ee0582b2f5",
+        "bytes": 20262
+      },
+      "id": "behavior:bluetooth-state-transition-false-success",
+      "scope": "Only real-radio/controller-positive enable/pair/data/unplug behavior for the fixed QEMU product. Actual failed-enable final-state accuracy, no false ON, rollback, role rejection, restart, quiet and cleanup remain required; the original aggregate is not wholly excluded.",
+      "reason": "Fixed official QEMU product/source has no complete HCI vendor/controller adapter. Existing complete physical BCM and Unisoc implementations require their specific controller/serial/power/firmware. The software state machine must truthfully expose that product boundary on the actual new image.",
+      "not_unsupported": [
+        "actual public state transitions and error outcomes",
+        "no false successful ON after native failure",
+        "caller permissions/system identity",
+        "service restart rollback",
+        "original family cleanup"
+      ],
+      "mandatory_new_image": {
+        "original_communications_profile": "bluetooth",
+        "actual_finite_cases": [
+          "disable-baseline",
+          "off-baseline",
+          "enable-0",
+          "failed-enable-0",
+          "disable-0",
+          "final-off-0",
+          "enable-1 with native Bluetooth restart",
+          "failed-enable-1",
+          "disable-1",
+          "final-off-1"
+        ],
+        "required_actual_results": [
+          "raw actual enable/disable API outcomes",
+          "actual state remaining OFF after hardware failure on both service generations",
+          "actual HCI/vendor/device failure evidence",
+          "no OFF getter fallback used as service-presence proof",
+          "actual same-new-archive signature/boot/UID/process binding and cleanup"
+        ]
+      }
     }
   }
 }

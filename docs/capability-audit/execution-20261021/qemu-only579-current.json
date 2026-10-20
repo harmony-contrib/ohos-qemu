@@ -1,6 +1,6 @@
 {
   "schema": "qemu-only-batched-status579/v1",
-  "updated_utc": "2026-10-20T22:31:23.358191+00:00",
+  "updated_utc": "2026-10-20T22:57:44.633544+00:00",
   "acceptance": "only newly packaged actual QEMU business/boundary/regression/cleanup observations can close requirements",
   "base_source_commit": "db360951a13ce07c7e561d71344a34b6109b10cf",
   "completed_native_attempt": {
@@ -140,6 +140,22 @@
       "same original GNSS Owner ten profiles, including fresh-GNSS geocoder801 and actual Bluetooth-OFF diagnostics"
     ],
     "native_provider_positive_capabilities_closed": [],
+    "host_tests_executed": false,
+    "actual_QEMU_runtime_pass": false
+  },
+  "latest_batched_guest_boundaries": {
+    "parent_commit": "147644e02e4bef1a7015ec9f972a072d9ebc934f",
+    "completed_prepare06": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r67-canonical-first-arm64-phone-prepare-579-06/evidence.json",
+      "sha256": "75f6b04f3dc533179a35f9dfafe10f5914f3510f50e23b989c28e3a23dca7a7e",
+      "bytes": 12930
+    },
+    "scope": "normal source/signing preparation complete; no new package yet",
+    "runtime_sources": [
+      "fixed same-guest nine-case MMS/Share caller, target-exit and native URI release observations after original Share8/MMS1",
+      "Root stage reads actual export factory attached to original Owner"
+    ],
+    "provider_policy": "Four precise partial Location/Bluetooth positive backend boundaries; whole IDs remain in runtime acceptance",
     "host_tests_executed": false,
     "actual_QEMU_runtime_pass": false
   }
