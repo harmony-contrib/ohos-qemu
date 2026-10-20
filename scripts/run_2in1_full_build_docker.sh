@@ -470,10 +470,17 @@ set -- ${PRODUCTS}
 
 exec > >(tee -a "${LOG_FILE}") 2>&1
 
+# Docker's memory-swap limit includes RAM. Keep its default when unset.
+DOCKER_MEMORY_SWAP_ARGS=()
+if [ -n "${DOCKER_BUILD_MEMORY_SWAP:-}" ]; then
+  DOCKER_MEMORY_SWAP_ARGS=(--memory-swap "${DOCKER_BUILD_MEMORY_SWAP}")
+fi
+
 exec docker run --rm \
   --platform "${DOCKER_PLATFORM}" \
   --name "ohos-qemu-${DEVICE_TYPE}-build" \
   --cpus "${DOCKER_BUILD_CPUS:-2}" --memory "${DOCKER_BUILD_MEMORY:-5g}" \
+  ${DOCKER_MEMORY_SWAP_ARGS[@]+"${DOCKER_MEMORY_SWAP_ARGS[@]}"} \
   --ulimit nofile=1048576:1048576 \
   -e LANG=C.UTF-8 \
   -e LC_ALL=C.UTF-8 \
