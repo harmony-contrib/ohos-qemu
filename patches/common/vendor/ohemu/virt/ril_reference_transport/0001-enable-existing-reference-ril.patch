@@ -1,12 +1,9 @@
 --- a/vendor/ohemu/virt/hdf_config/uhdf/device_info.hcs
 +++ b/vendor/ohemu/virt/hdf_config/uhdf/device_info.hcs
-@@ -38,6 +38,22 @@
-                     preload = 2;
-                     moduleName = "libsample1_driver.z.so";
-                     serviceName = "sample1_driver_service";
-+                }
-+            }
-+        }
+@@ -41,6 +41,22 @@
+                 }
+             }
+         }
 +        ril :: host {
 +            hostName = "riladapter_host";
 +            priority = 50;
@@ -20,9 +17,12 @@
 +                    preload = 0;
 +                    moduleName = "libril_driver.z.so";
 +                    serviceName = "ril_service";
-                 }
-             }
-         }
++                }
++            }
++        }
+         bluetooth :: host {
+             hostName = "blue_host";
+             priority = 50;
 --- a/base/telephony/core_service/services/etc/param/telephony.para
 +++ b/base/telephony/core_service/services/etc/param/telephony.para
 @@ -18,4 +18,8 @@

@@ -17,10 +17,10 @@ def commands(profile, run, boot, operation_ids, stimulus, actual_ble_ids=None):
         raise ValueError('Explicit virtual input source required')
     if profile == 'ble' and not actual_ble_ids:
         raise ValueError('No made-up BLE device IDs: actual controller/peer discovery required')
-    # A denied call deliberately uses syntactically valid negative-test data.
+    # Denied/OFF calls deliberately use syntactically valid negative-test data.
     # It is never called discovered or used by the positive BLE scan oracle.
-    if profile == 'denied':
-        if actual_ble_ids: raise ValueError('Denied permission boundary does not claim peer discovery')
+    if profile in ('denied','ble-off-boundary'):
+        if actual_ble_ids: raise ValueError('Negative boundary does not claim peer discovery')
         actual_ble_ids = ['02:' + ':'.join(run[n:n+2] for n in range(0,10,2))]
     center = stimulus['center']
     return [dict(run_id=run, boot_id=boot, operation_id=op, action=action,

@@ -17,7 +17,7 @@ import traceback
 
 BUNDLE = 'org.harmonycontrib.capabilityaudit'
 PERMISSIONS = ['ohos.permission.APPROXIMATELY_LOCATION', 'ohos.permission.LOCATION']
-PROFILES = ('track', 'icon', 'fence', 'supported', 'invalid', 'ordinary', 'denied', 'switch-off')
+PROFILES = ('track', 'icon', 'fence', 'supported', 'invalid', 'ordinary', 'denied', 'switch-off', 'district-boundary', 'ble-off-boundary')
 SDK_SOURCES = ('build_hap_probe.py', 'location_eight_contract.py', 'location_eight/EntryAbility.ets', 'location_eight/Index.ets')
 
 def require(value, message):
@@ -114,7 +114,8 @@ def run(*, config, settings, spec, qa, env, guest, capture, command, modules,
     process_scan = modules['batch_network_openvpn_runtime_collect']
     report = {'schema': 1, 'scope': 'same-original-GNSS-Owner Location8 actual raw collection', 'sdk': prepared,
               'boot_id': env['boot_id'], 'archive': settings['archive'], 'profiles': [], 'failures': [], 'cleanup_errors': [],
-              'district': 'pending_actual_reverse_geocoder', 'ble': 'pending_actual_controller_and_peer',
+              'district': 'pending_reverse_geocoder_positive_with_actual_801_boundary',
+              'ble': 'pending_controller_and_independent_peer_positive_with_actual_OFF_boundary',
               'capability_ids_closed': [], 'first_artifact_behavior_gate_passed': False}
     sequence = 0
     def save():
@@ -249,18 +250,40 @@ def run(*, config, settings, spec, qa, env, guest, capture, command, modules,
                 switch_adapter.return_caller(capture,shell,switch_lease,'eight_switch_off_public',settings)
                 item['actual_switch_off']=switch_adapter.read_state(capture,'eight_switch_off_read')
                 require(item['actual_switch_off']['location_enabled'] is False,'actual public location switch did not turn off')
+            if profile == 'district-boundary':
+                # Expire the service's <=25s cache and the client's <=30s age
+                # bound with actual caller-timed quiet operations before the
+                # fresh continuous + district registrations. No cached/host fix
+                # may explain the later 801 geocoder boundary.
+                item['cache_expiration_operations'] = []
+                for wait_ms in (30000, 1500):
+                    quiet = dict(commands[0], operation_id=secrets.token_hex(16), action='quiet', wait_ms=wait_ms)
+                    preparation_ids.append(quiet['operation_id']); issue(quiet); observed = wait(quiet)
+                    begun = [r for r in observed if r['operation_id']==quiet['operation_id'] and r['kind']=='begin']
+                    returned = [r for r in observed if r['operation_id']==quiet['operation_id'] and r['kind']=='return']
+                    ended = [r for r in observed if r['operation_id']==quiet['operation_id'] and r['kind']=='end']
+                    require(len(begun)==len(returned)==len(ended)==1 and returned[0]['code']==0 and
+                        ended[0]['monotonic_ms']-begun[0]['monotonic_ms']>=wait_ms, 'actual cache-expiration quiet did not elapse')
+                    item['cache_expiration_operations'].append({'begin':begun[0], 'end':ended[0]}); save()
+            if profile in ('district-boundary','ble-off-boundary'):
+                item['actual_backend_cut'] = keep(case/'actual-backend-cut.raw', shell(
+                    'for p in const.location.geocode_service_name const.location.geocode_ability_name; do '
+                    'printf "PARAM %s\\n" "$p"; param get "$p"; printf "PARAM_STATUS %s %s\\n" "$p" "$?"; done; '
+                    'for p in /system/lib64/libbt_vendor.z.so /vendor/lib64/libbt_vendor.z.so /chip_prod/lib64/libbt_vendor.z.so /sys_prod/lib64/libbt_vendor.z.so /system/lib/libbt_vendor.z.so /vendor/lib/libbt_vendor.z.so /chip_prod/lib/libbt_vendor.z.so /sys_prod/lib/libbt_vendor.z.so /system/lib64/chipset-sdk/libbt_vendor.z.so /system/lib/chipset-sdk/libbt_vendor.z.so; do '
+                    'if test -e "$p"; then stat -c "%n:%d:%i:%s:%F" "$p" || exit 91; sha256sum "$p" || exit 92; else printf "NO_FILE %s\\n" "$p"; fi; done',
+                    profile+'-backend-cut')+'\n')
             first_quiet = True; sent = []; before = after = None
             for c in commands:
                 if c['action'] == 'quiet': c['wait_ms'] = (5000 if profile == 'icon' else 30000) if first_quiet and profile in ('track','icon','fence') else 2500
                 issue(c)
-                if c['action'] == 'quiet' and first_quiet and profile in ('track','icon','fence'):
+                if (c['action'] == 'quiet' and first_quiet and profile in ('track','icon','fence')) or (profile == 'district-boundary' and c['action'] == 'district'):
                     first_quiet = False
                     before = snapshot('eight-' + profile + '-native-before')
                     stream, nonce, session = capture.connect('gnss', 'location-eight-' + profile); streams.append(stream)
                     item['wire_session'] = session
                     session['capability_ack_hex'] = wire.negotiate_precision(stream, nonce).hex()
                     source = vectors.challenge(time.time_ns() // 1000000)
-                    source['measurements'] = source['measurements'][:2] if profile == 'icon' else source['measurements']
+                    source['measurements'] = source['measurements'][:2] if profile in ('icon','district-boundary') else source['measurements']
                     source['interval_ms'] = 1200
                     for i, row in enumerate(source['measurements']):
                         row['at_ms'] = i * 1200; row['utc_ms'] = source['measurements'][0]['utc_ms'] + i * 1200

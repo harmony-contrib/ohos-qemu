@@ -9,6 +9,7 @@ import process from '@ohos.process';
 import systemDateTime from '@ohos.systemDateTime';
 import { BusinessError, Callback } from '@ohos.base';
 import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
+import bluetoothAccess from '@ohos.bluetooth.access';
 
 interface Command {
   run_id: string; boot_id: string; operation_id: string; action: string;
@@ -57,7 +58,7 @@ export default class EntryAbility extends UIAbility {
     const c = JSON.parse(value) as Command;
     if (c.run_id !== this.run || !/^[a-f0-9-]{36}$/.test(c.boot_id) ||
       !/^[a-f0-9]{32}$/.test(c.operation_id) || this.used.includes(c.operation_id) || this.used.length >= 256 ||
-      !['context', 'permissions', 'icon', 'supported', 'district', 'district-invalid', 'track-start', 'track-read', 'track-invalid',
+      !['context', 'permissions', 'geocoder-available', 'bluetooth-state', 'icon', 'supported', 'district', 'district-invalid', 'track-start', 'track-read', 'track-invalid',
         'track-stop', 'fence-add', 'fence-remove', 'fence-invalid', 'ble-start-a', 'ble-start-b',
         'ble-stop-a', 'ble-stop-all', 'quiet', 'cleanup'].includes(c.action)) { throw new Error('Invalid fresh command'); }
     this.used.push(c.operation_id);
@@ -87,6 +88,8 @@ export default class EntryAbility extends UIAbility {
             filesDir: this.context.filesDir, journalIno: journalStat.ino.toString(), journalUid: journalStat.uid });
           break;
         }
+        case 'geocoder-available': result = JSON.stringify(geo.isGeocoderAvailable()); break;
+        case 'bluetooth-state': result = JSON.stringify(bluetoothAccess.getState()); break;
         case 'icon': result = JSON.stringify(geo.getLocationIconStatus()); break;
         case 'supported': result = JSON.stringify(geo.isFusionFenceSupported()); break;
         case 'district': result = JSON.stringify(await geo.getCurrentDistrict({ locale: 'en', timeoutMs: 10000 })); break;

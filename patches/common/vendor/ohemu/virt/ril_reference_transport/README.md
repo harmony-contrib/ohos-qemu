@@ -19,8 +19,12 @@ for non-QEMU products or apply it outside the parent's serialized source batch.
 
 Preimages come byte-for-byte from the sole actual running build CID exported by
 the parent in root-communications578-init-current and root-ril578-hdi-current.
-The two-file complete vector rejects unknown or mixed source states. Keep this
-component independent of the six-file CallManager RTT boundary component.
+The two-file complete vector rejects unknown or mixed source states. The exact
+HCS-before/parameter-final partial state retained by failed source preparation
+579-05 alone is restored to its pinned original prefix before entering the
+normal atomic transaction. That transaction preserves HCS CRLF bytes and stages
+both files before publishing either. Keep this component independent of the
+six-file CallManager RTT boundary component.
 
 The next freshly packaged representative image must prove generated init entry
 (vendor hdf_devhost executable, radio identity, riladapter_host domain), packaged

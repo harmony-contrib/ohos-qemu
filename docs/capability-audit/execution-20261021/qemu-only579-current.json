@@ -1,6 +1,6 @@
 {
   "schema": "qemu-only-batched-status579/v1",
-  "updated_utc": "2026-10-20T22:22:06.925699+00:00",
+  "updated_utc": "2026-10-20T22:31:23.358191+00:00",
   "acceptance": "only newly packaged actual QEMU business/boundary/regression/cleanup observations can close requirements",
   "base_source_commit": "db360951a13ce07c7e561d71344a34b6109b10cf",
   "completed_native_attempt": {
@@ -120,6 +120,26 @@
       "failure": "Portal original authenticated embedded distribution certificate differs from actual OS application signer",
       "preserved_inputs": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r67-canonical-first-arm64-phone-prepare-579-04/preserved-signing-input-failure.json"
     },
+    "host_tests_executed": false,
+    "actual_QEMU_runtime_pass": false
+  },
+  "latest_product_source_repairs": {
+    "parent_commit": "c05fab12398784a4766ce52461fad73256490d47",
+    "source_prepare05": {
+      "exit_code": 1,
+      "cleanup_verified": true,
+      "evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r67-canonical-first-arm64-phone-prepare-579-05/evidence.json",
+      "completed_UI_signing_inputs": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r67-canonical-first-arm64-phone-prepare-579-05/completed-provider-inputs/provider-inputs.json",
+      "failure": "RIL HCS diff did not preserve CRLF; direct patch retained exact HCS-before/parameter-final partial vector",
+      "native_source_failure_evidence": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r65-readonly-source-579-08/SOURCE.json"
+    },
+    "repairs": [
+      "preserve exact CRLF RIL target bytes and stage both source files atomically",
+      "restore only exact known prepare05 partial vector before normal original source transaction",
+      "observe actual target token policy release outcome without changing authorization or cleanup behavior",
+      "same original GNSS Owner ten profiles, including fresh-GNSS geocoder801 and actual Bluetooth-OFF diagnostics"
+    ],
+    "native_provider_positive_capabilities_closed": [],
     "host_tests_executed": false,
     "actual_QEMU_runtime_pass": false
   }

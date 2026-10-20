@@ -23,6 +23,8 @@ PROFILES = {
     'denied': ['district', 'track-read', 'fence-add', 'ble-start-a', 'cleanup', 'quiet'],
     'switch-off': ['district', 'track-read', 'cleanup', 'quiet'],
     'supported': ['supported', 'cleanup', 'quiet'],
+    'district-boundary': ['geocoder-available', 'track-start', 'district', 'track-stop', 'geocoder-available', 'cleanup', 'quiet'],
+    'ble-off-boundary': ['bluetooth-state', 'ble-start-a', 'ble-start-b', 'quiet', 'ble-stop-all', 'quiet', 'bluetooth-state', 'cleanup', 'quiet'],
 }
 FIELDS = {'schema', 'run_id', 'boot_id', 'operation_id', 'action', 'seq', 'monotonic_ms', 'pid', 'uid', 'kind', 'code', 'value_json'}
 
@@ -143,7 +145,9 @@ def review(rows, profile, provider):
     errors = {'invalid': {'district-invalid': 401, 'track-invalid': 3301200, 'fence-invalid': 401},
               'ordinary': {'icon': 202, 'supported': 202, 'fence-add': 202, 'fence-remove': 202},
               'denied': {'district': 201, 'track-read': 201, 'fence-add': 201, 'ble-start-a': 201},
-              'switch-off': {'district': 3301100, 'track-read': 3301100}}.get(profile, {})
+              'switch-off': {'district': 3301100, 'track-read': 3301100},
+              'district-boundary': {'district': 801},
+              'ble-off-boundary': {'ble-start-a': 3301800, 'ble-start-b': 3301800}}.get(profile, {})
     for index, (begin, terminal, end) in enumerate(operations):
         code = errors.get(begin['action'], 0)
         if profile == 'fence' and index == 4:
@@ -164,11 +168,24 @@ def review(rows, profile, provider):
         require(type(value) is dict and set(value) <= allowed and set(value) - {'locale'} and
                 all(type(v) is str and v for v in value.values()), 'Empty/invalid district result')
         require(provider.get('district') == value, 'District not equal to independent actual reverse-geocoder response')
-    if profile in ('track', 'icon', 'fence'):
+    if profile == 'district-boundary':
+        require([o[1]['value'] for o in operations if o[0]['action']=='geocoder-available']==[False,False],
+            'actual missing geocoder boundary changed; require a real provider positive case')
+        require(any(r['kind']=='location' for r in callbacks), 'district 801 without an actual fresh GNSS callback is insufficient')
+    if profile == 'ble-off-boundary':
+        require([o[1]['value'] for o in operations if o[0]['action']=='bluetooth-state']==[0,0] and not callbacks,
+            'actual OFF-only boundary changed; do not substitute it for a controller/peer positive')
+    if profile in ('track', 'icon', 'fence', 'district-boundary'):
         require(type(provider.get('gnss')) is list and len(provider['gnss']) >= 2, 'Independent actual native GNSS inputs required')
         for p in provider['gnss']:
             point(p)
             require(p.get('isFromMock') is False and p.get('sourceType') == 1, 'Mock/non-GNSS native input')
+        if profile == 'district-boundary':
+            start, district = operations[1], operations[2]
+            require(any(start[0]['monotonic_ms'] <= p['timeSinceBoot']/1e6 <= district[1]['monotonic_ms']
+                for p in provider['gnss']), 'district 801 preceded every fresh native input')
+            stop = operations[3][1]
+            require(all(r['seq'] < stop['seq'] for r in callbacks), 'callback after actual district-case continuous stop')
         for r in callbacks:
             if r['kind'] == 'location':
                 p = r['value']; point(p)

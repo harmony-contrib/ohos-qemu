@@ -3755,6 +3755,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_certificate_uninstall_native.log"
   bash "${PATCH_ROOT}/common/applications/standard/hap/livecaptions_provider/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_livecaptions_source_project.log"
+  bash "${PATCH_ROOT}/common/foundation/ability/ability_runtime/uri_target_release579/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_uri_target_release579.log"
   bash "${PATCH_ROOT}/common/applications/standard/hap/qemu_provider_sources/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_provider_sources.log"
   python3 "${PATCH_ROOT}/lib/qemu_ui_providers.py" --source-root "${OHOS_ROOT}" \
