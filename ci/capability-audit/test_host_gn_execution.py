@@ -1,10 +1,12 @@
 """Actual adapter-fragment and launcher fixtures, not OS or guest evidence."""
 import importlib.util
+import json
 import os
 from pathlib import Path
 import platform
 import re
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -122,6 +124,39 @@ class HostGnExecutionTests(unittest.TestCase):
             (root / 'build/first.py').write_bytes(b'unknown')
             with self.assertRaises(ValueError):
                 module.validate(root)
+
+    def test_translated_graph_generation_uses_one_worker_and_preserves_build_arguments(self):
+        source = (ROOT / 'scripts/build_standard_qemu_in_docker.sh').read_text()
+        start = source.index('  local build_args=(')
+        end = source.index('  local pcm_onset_gn_arg', start)
+        command = 'capture() {\n' + source[start:end]
+        command += '\nprintf "%s\\0" "${build_args[@]}"\n}\ncapture\n'
+        expected = ['./build.sh', '--product-name', 'arm64_virt', '--build-target', 'images',
+                    '--fast-rebuild=false', '--build-only-gn=false', '--ccache', '--ninja-args=-j4',
+                    '--keep-ninja-going', '--log-mode=normal', '--load-test-config=false', '--deps-guard=false']
+        for mode in ('0', '1'):
+            environment = dict(os.environ, product='arm64_virt', BUILD_JOBS='4', QEMU_HOST_GN_QEMU_USER=mode)
+            actual = subprocess.run(['/bin/bash', '-eu', '-c', command], env=environment,
+                                    capture_output=True, check=True).stdout.split(b'\0')[:-1]
+            suffix = ['--gn-flags=--threads=1'] if mode == '1' else []
+            self.assertEqual([x.decode() for x in actual], expected + suffix)
+
+    def test_persisted_graph_flags_cannot_leak_between_host_modes_or_attempts(self):
+        source = (ROOT / 'scripts/build_standard_qemu_in_docker.sh').read_text()
+        start = source.index('  python3 - "${OHOS_ROOT}/out/hb_args/buildargs.json"')
+        start = source.index("<<'PY'\n", start) + len("<<'PY'\n")
+        end = source.index('\nPY\n', start)
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / 'buildargs.json'
+            value = {key: {'argDefault': old, 'argName': key}
+                     for key, old in (('ninja_args', ['-j8']), ('build_target', ['stale']),
+                                      ('gn_flags', ['--threads=8', '--threads=1']), ('gn_args', ['is_debug=false']))}
+            path.write_text(json.dumps(value))
+            subprocess.run([sys.executable, '-B', '-c', source[start:end], str(path)], check=True)
+            actual = json.loads(path.read_text())
+            for key in ('ninja_args', 'build_target', 'gn_flags'):
+                self.assertEqual(actual[key], dict(value[key], argDefault=[]))
+            self.assertEqual(actual['gn_args'], value['gn_args'])
 
 
 if __name__ == '__main__':

@@ -1,0 +1,72 @@
+{
+  "schema": "representative577-host-GN-stall/v1",
+  "recorded_utc": "2026-10-20T12:38:33.871974+00:00",
+  "source_commit": "75da6c30c22cd8e7033551526cebf156f5fe714e",
+  "receipt": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r64-canonical-first-arm64-phone-build-577-01/evidence.json",
+    "sha256": "35f6c4a80a5d70449724ab9ad4a4ceda33969a78214a5931b1761bcf5365e584",
+    "bytes": 27736
+  },
+  "log": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r64-canonical-first-arm64-phone-build-577-01/logs/phone_full_build_20261020T120131Z.log",
+    "sha256": "14f288c06c24c8d20b2e96606818f017ad839c2c6133c9f996ef84a6b1dbdbd1",
+    "bytes": 171720
+  },
+  "launcher_log": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r64-canonical-first-arm64-phone-build-577-01/launcher.log",
+    "sha256": "76443597359aa08c530e7e2113091391c871df55a61139cf146ae6a296f63a6b",
+    "bytes": 175456
+  },
+  "failure": "GN parent and forked child stalled in futex waits; root requested original Owner SIGTERM",
+  "natural_completion": false,
+  "exit_code": 1,
+  "cleanup_verified": true,
+  "owned_container_absent": true,
+  "owned_launcher_group_closed": true,
+  "resource_lease_held": false,
+  "signals": [
+    {
+      "signal": 15,
+      "monotonic_ns": 1315109108354625,
+      "during_cleanup": false
+    }
+  ],
+  "actual_memory_gib": 14,
+  "actual_swap_only_gib": 24,
+  "actual_total_memory_swap_gib": 38,
+  "actual_VM_memory_gib": 24,
+  "observed_memory_current_bytes": 2230132736,
+  "observed_swap_current_bytes": 0,
+  "observed_oom_events": 0,
+  "observed_oom_kill_events": 0,
+  "forensic_process_snapshot": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-native577-stall-read/proc.stdout",
+    "sha256": "0b7b1e55ccb598c58cd76f5df578bc9cee439dede6cb0f58f4b010390d830786",
+    "bytes": 17873
+  },
+  "owner_stop_request": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-native577-stall-read/OWNER-STOP-REQUEST.json",
+    "sha256": "82fc690dde85f438c21cd3b88867846ec7b717da02a22cb618bc80573750ab60",
+    "bytes": 2378
+  },
+  "mitigation": "HB --gn-flags=--threads=1 only for translated host GN; clear persisted gn_flags; keep compiler/LTO/CFI settings",
+  "mitigation_verified_in_representative_build": false,
+  "host_checks": {
+    "test_host_gn_execution.py": {
+      "tests": 8,
+      "exit_code": 0
+    },
+    "bash -n scripts/build_standard_qemu_in_docker.sh": {
+      "exit_code": 0
+    }
+  },
+  "actual_package": null,
+  "actual_boot": null,
+  "actual_runtime": null,
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false,
+  "primary_references": {
+    "GN_worker_switch": "https://gn.googlesource.com/gn/+/9a48a2ef282600bbd55b507bb81e7667ebac731d/tools/gn/docs/reference.md",
+    "QEMU_fork_lock_background_not_proof_of_this_root_cause": "https://patchew.org/QEMU/20200612014606.147691-1-jkz@google.com/"
+  }
+}

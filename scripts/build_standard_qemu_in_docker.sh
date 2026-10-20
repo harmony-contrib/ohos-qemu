@@ -1596,7 +1596,7 @@ path = Path(sys.argv[1])
 if path.is_file():
     data = json.loads(path.read_text(encoding="utf-8"))
     changed = False
-    for name in ("ninja_args", "build_target"):
+    for name in ("ninja_args", "build_target", "gn_flags"):
         argument = data.get(name)
         if isinstance(argument, dict) and argument.get("argDefault"):
             argument["argDefault"] = []
@@ -1631,6 +1631,12 @@ PY
     --load-test-config=false
     --deps-guard=false
   )
+  if [ "${QEMU_HOST_GN_QEMU_USER}" = 1 ]; then
+    # Bound the worker pool when GN itself runs under CPU translation. A
+    # multi-worker gen stalled with a forked child waiting in futex. This is
+    # a host graph-generation setting; compiler/LTO/CFI options stay intact.
+    build_args+=(--gn-flags=--threads=1)
+  fi
   local pcm_onset_gn_arg
   # No new argument on pristine GN. A complete previously patched tree gets
   # explicit false when disabled, preventing an inherited args.gn true value.

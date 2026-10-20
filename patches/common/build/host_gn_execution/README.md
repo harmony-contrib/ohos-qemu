@@ -15,6 +15,15 @@ The full launcher automatically selects mode 1 for ARM hosts running amd64
 Docker; Intel/native builds retain mode 0. The runtime dependency is checked
 before the build and installed through normal Docker dependency setup.
 
+The full image launcher also passes HB's `--gn-flags=--threads=1` in mode 1.
+A representative attempt stalled during multi-worker GN generation: the parent
+and its forked child remained in futex waits while CPU counters and logs stopped,
+with no OOM events. The one-worker limit is a host execution mitigation, pending
+a new representative build; it does not prove a specific emulator lock bug was
+fixed. Persisted HB GN flags are cleared between invocations so this worker
+limit cannot leak into native mode. Target compiler, LTO and CFI settings remain
+unchanged.
+
 The two numbered patches modify only the fixed build project's two Python
 callers. `apply.sh` checks their complete original/repaired hashes and rejects
 unknown or partial edits. Real loader, GN graph, system compilation, packaging

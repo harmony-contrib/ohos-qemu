@@ -1,0 +1,3483 @@
+{
+  "schema": "current-original82-runtime-plan-coverage/v1",
+  "recorded_utc": "2026-10-20T12:38:33.871974+00:00",
+  "reviewed_source_commit": "75da6c30c22cd8e7033551526cebf156f5fe714e",
+  "scope": "Exact original historical IDs, source-plan audit only. No fresh runtime result or count of pure missing implementations.",
+  "original_requirement_count": 82,
+  "counts": {
+    "limited_plan": 20,
+    "missing_complete_runtime_plan": 51,
+    "exact_approved_unsupported": 9,
+    "onset_anchor_unknown": 1,
+    "missing_pipeline_output_case": 1
+  },
+  "source_freezes": {
+    "apps": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-coverage577-apps/FROZEN.json",
+      "sha256": "614166fccb6ad3ac8bfb9ea7b1d6b9e83db5bf876fa1c73761a9dd828d1897ef",
+      "bytes": 835
+    },
+    "location-network": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-coverage577-location-network/FROZEN.json",
+      "sha256": "f9748f58cab94230e41c3ea1696a15919d62e40941ed563335b5b03c0eafe45c",
+      "bytes": 1127
+    },
+    "system-media": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-coverage577-system-media/FROZEN.json",
+      "sha256": "072a968a6806c05b2625f3e18aa3b4e4107e4396e63e4f4cb5aaee31be16c71e",
+      "bytes": 667
+    }
+  },
+  "all9_source_report_members_root_verified": true,
+  "entrypoint_catalogs": {
+    "apps": {
+      "full47_cli": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-suite-after488-generated/kit-75da6c3-577/run_full_suite377.py",
+        "line": 31,
+        "note": "Original actual full-suite CLI; --config/--runtime-inputs/--kit-manifest-sha256/--output and --execute. Not executed by audit."
+      },
+      "mandatory47": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-suite-after488-generated/kit-75da6c3-577/MANDATORY_CHECKS.json",
+        "line": 47,
+        "note": "Exact original47 names; membership does not itself establish per-original-ID behavior coverage."
+      },
+      "unresolved_rule": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_gap_closure.py",
+        "line": 1229,
+        "note": "Missing registered same-new-package proofs remain unresolved; no generic pass or source check closes them."
+      },
+      "blink_command": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+        "line": 615,
+        "note": "Original run_screen_blink_probe.py command with archive/SDK/UDID/boot/source-volume; evidence screen-blink/evidence.json."
+      },
+      "blink_contracts": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_screen_blink_evidence.py",
+        "line": 17,
+        "note": "Registers only startBlinking and stopBlinking exact exports."
+      },
+      "blink_scope": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_screen_blink_evidence.py",
+        "line": 20,
+        "note": "Explicit NOT competing-token/account-switch proof; overall SCOPE also NOT complete lifecycle/full gate."
+      },
+      "blink_ledger": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_gap_closure.py",
+        "line": 1108,
+        "note": "Same archive/boot independent replay and exact returned contracts; not entire accessibility."
+      },
+      "contacts_command": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/parallel_runtime_suite.py",
+        "line": 15,
+        "note": "Original contact coordinator --full-boundaries dispatch; actual signer/observer/project/SDK/provider inputs required."
+      },
+      "family_contracts": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/parallel_runtime_suite.py",
+        "line": 117,
+        "note": "Exact family ID mapping: Contacts and Wallpaper only; external-inputs and knowledge-holiday return no aggregate original IDs."
+      },
+      "wallpaper_scope": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_wallpaper_suite.py",
+        "line": 34,
+        "note": "Actual Settings wallpaper wrapper on same packaged guest; not full package gate."
+      },
+      "settings_command": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+        "line": 573,
+        "note": "Original run_settings_all_navigation_probe.py actual command and same-guest caller cleanup check."
+      },
+      "settings_contract": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/build_settings_all_navigation_probe.py",
+        "line": 16,
+        "note": "Only behavior:settings-navigation-provider-mismatch; twelve routes/two rounds are not all other Settings UIExtension protocols."
+      },
+      "settings_ledger": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_gap_closure.py",
+        "line": 1089,
+        "note": "Same-new-package raw proof is replayed via verify_settings_all_navigation_evidence."
+      },
+      "cert_command": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+        "line": 403,
+        "note": "Original run_certificate_probe.py; empty/import/cleanup/normal-denial certificate manager scope."
+      },
+      "cert_not_dialog": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_gap_closure.py",
+        "line": 913,
+        "note": "Explicitly does not close certificate dialog UI; closes a different certificate-manager finding."
+      },
+      "export_command": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+        "line": 730,
+        "note": "Current normal personas include arkts-exports/camera/photos/settings; actual invocation is run_normal_hap_probe.py in this loop."
+      },
+      "normal_cli": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+        "line": 691,
+        "note": "Original actual persona command with same archive/SDK/UDID/boot; no unlisted persona or UI action is implied."
+      },
+      "export_scope": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_arkts_exports_results.py",
+        "line": 106,
+        "note": "Complete raw own-export discovery is not callable/class/provider aggregate behavior closure."
+      },
+      "export_ledger": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_gap_closure.py",
+        "line": 728,
+        "note": "Typed/reflection-specific contracts handled individually; no exact apps API26 aggregate closure registered."
+      },
+      "optional_command": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+        "line": 743,
+        "note": "Phone-only actual discovery persona is scheduled, but only for its fixed original optional contract set."
+      },
+      "optional_contracts": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_optional_phone_profile_results.py",
+        "line": 18,
+        "note": "Only Selection, FolderObtain, Serial and Print IDs; none is the six-name published-capability aggregate."
+      },
+      "photos_scope": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_photos_asset_results.py",
+        "line": 79,
+        "note": "Explicitly excludes gallery browsing/FA card/cloud/all Photos; same-package asset/picker subset cannot close 2in1 provider aggregate."
+      },
+      "photos_recent_scope": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_photos_recent_results.py",
+        "line": 44,
+        "note": "Explicitly excludes positive recent retrieval/picker/FA card/cloud provider."
+      },
+      "shortkey_entry": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_shortkey_keyboard_diagnostic.py",
+        "line": 177,
+        "note": "Existing standalone --archive/--output/--hdc CLI; not invoked by the current full47 orchestration."
+      },
+      "shortkey_scope": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_shortkey_keyboard_diagnostic.py",
+        "line": 22,
+        "note": "Real key routing diagnostic explicitly NOT privileged duration API/full gate; starts with closed=[] and has no exact-ID ledger registration."
+      },
+      "provider_inventory": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/audit_system_bundle_providers.py",
+        "line": 2,
+        "note": "Source/package/live BMS provider inventory utility, not full UI/result/cancel/lifecycle behavior acceptance."
+      },
+      "provider_build_docs": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/README.md",
+        "line": 284,
+        "note": "Existing build_hap_probe.py --provider-only build instructions; not an independent current47 runtime verifier."
+      },
+      "generic_dnd_calls": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/build_hap_probe.py",
+        "line": 1379,
+        "note": "Generic broad HAP code calls both DND queries; those broad calls are not a current listed run_normal persona or registered apps ID proof."
+      },
+      "generic_cert_support": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/build_hap_probe.py",
+        "line": 1299,
+        "note": "Generic support-query code only; lacks certificate choose/cancel/device UI result contract."
+      },
+      "select_supplement": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-suite-after488-generated/kit-75da6c3-577/select_integration376.py",
+        "line": 144,
+        "note": "Select375 additional same-guest raw slice may exercise URI/private-start/native choose; explicit non-registration, not Share aggregate closure."
+      },
+      "dedicated_audio": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-audio577-source/ROOT-CLI577.md",
+        "line": 82,
+        "note": "Original retained Owner Audio414/480 entry; three UID/raw CONTROL/focus/PCM/onset inputs, not VolumePanel/provider UI acceptance."
+      },
+      "dedicated_calendar": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/ROOT-RUN568.md",
+        "line": 33,
+        "note": "Original shared dedicated403 --case calendar; Calendar/HOLIDAY lifecycle with actual helper/SDK/UI inputs; no apps34 exact ID."
+      },
+      "dedicated_gnss": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-gnss577-source/ROOT-RUN568.md",
+        "line": 66,
+        "note": "Original GNSS case plus Privacy/twoTU/role prerequisites; not the broad LocationPrivacy Detail/UI provider ID."
+      },
+      "dedicated_number": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-number577-source/ROOT-RUN577.md",
+        "line": 41,
+        "note": "Original five DataShare phases/three NAPI roles/native review; local subset does not replace excluded full NumberIdentity/SpamShield/HSDR aggregate."
+      },
+      "dedicated_network": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-network577-source/ROOT-RUN577.md",
+        "line": 21,
+        "note": "Original six-descriptor fixed runner + full raw peer verifier/cleanup; TLS/TUN/backend scope is not VPN-dialog/WiFi UI provider aggregate registration."
+      },
+      "select_wiring": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-suite-after488-generated/kit-75da6c3-577/run_full_suite_owner376.py",
+        "line": 328,
+        "note": "Actual kit callback wires the supplemental Select stage; its raw slice still does not register the Share aggregate ID."
+      },
+      "select_dispatch": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+        "line": 247,
+        "note": "Original same-guest supplemental Select dispatch after original family prerequisites; not an extra first-artifact check."
+      }
+    },
+    "location-network": {
+      "full47": {
+        "entry": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-suite-after488-generated/kit-75da6c3-577/run_full_suite377.py",
+        "line": 31,
+        "call_template": [
+          "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+          "-B",
+          "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-suite-after488-generated/kit-75da6c3-577/run_full_suite377.py",
+          "--config",
+          "ACTUAL_CONFIG",
+          "--config-sha256",
+          "ACTUAL_CONFIG_SHA",
+          "--runtime-inputs",
+          "ACTUAL_INPUTS",
+          "--runtime-inputs-sha256",
+          "ACTUAL_INPUTS_SHA",
+          "--kit-manifest-sha256",
+          "d3eba24cc793b2fc5ce04485a8200a603133a9fe485b939b757cbfb9c15ea3c2",
+          "--execute",
+          "--output",
+          "FRESH_OWNER_OUTPUT"
+        ],
+        "scope": "Original representative47 plus existing canonical suite dispatch, held constructor/VM/cleanup gates. Its literal47 list contains no RTT/radio/SIM/IMS or eight new geoLocation APIs.",
+        "source_refs": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+            "line": 54
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/scripts/verify_first_artifact_gate.py",
+            "line": 519
+          }
+        ]
+      },
+      "GNSS_narrow": {
+        "entry": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/dedicated568/dedicated403.py",
+        "line": 303,
+        "original_plan": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-gnss577-source/ROOT-CALL-PLAN568.json",
+        "original_order": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-gnss577-source/ROOT-RUN568.md",
+        "call_template": [
+          "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+          "-B",
+          "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/dedicated568/dedicated403.py",
+          "--case",
+          "gnss",
+          "--source-manifest-sha256",
+          "450a179b9c7e3cd15dbdc08872e94537a5a9be6067333356fa0e903a92da8f72",
+          "--owner-config",
+          "ACTUAL_CONFIG",
+          "--owner-config-sha256",
+          "ACTUAL_CONFIG_SHA",
+          "--runtime-inputs",
+          "ACTUAL_RUNTIME_INPUTS",
+          "--runtime-inputs-sha256",
+          "ACTUAL_RUNTIME_INPUTS_SHA",
+          "--execution-config",
+          "ACTUAL_EXECUTION",
+          "--execution-config-sha256",
+          "ACTUAL_EXECUTION_SHA",
+          "--package-receipt",
+          "ACTUAL577_PACKAGE",
+          "--package-receipt-sha256",
+          "ACTUAL_PACKAGE_SHA",
+          "--profile-receipt",
+          "ACTUAL577_PROFILE",
+          "--profile-receipt-sha256",
+          "ACTUAL_PROFILE_SHA",
+          "--execute",
+          "--output",
+          "FRESH_GNSS_OUTPUT"
+        ],
+        "scope": "Existing GNSS callback/precision/wire-negative/public on/off controls, provider process/birth/boot identity, switch restoration and cleanup. No call/assertion for the eight ledger geoLocation APIs or telephony13.",
+        "scope_refs": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/dedicated568/gnss403/candidate/run_gnss_existing_trace_steps16.py",
+            "line": 54
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/dedicated568/gnss403/candidate/location-owned16/gnss_public_boundary16.py",
+            "line": 248
+          }
+        ],
+        "missing_real_inputs": "Same577 archive/profile; actual354/434/437 policy; two real TU witnesses with CFI/LTO/noRTTI; real GNSS role SDK/signing/UDID/image/Privacy inputs; raw provider/callback windows and Owner.finish."
+      },
+      "VPN_peer": {
+        "entry": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-network577-source/fixed_runner482.py",
+        "line": 40,
+        "original_plan": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-network577-source/ROOT-RUN577.md",
+        "required_flags": [
+          "--source-manifest-sha256",
+          "--owner-config",
+          "--runtime-inputs",
+          "--package-receipt",
+          "--profile-receipt",
+          "--peer-envelope",
+          "--root-binding",
+          "each descriptor companion -sha256",
+          "--execute",
+          "--output"
+        ],
+        "scope": "Original peer15 TLS/TUN, actual same-boot getter/config/two-bundle nonce/route observations and strict375 two-actor raw lifecycle. Does not close aggregate IDs. The ordinary second bundle is an INTERNET nonce caller, not a full MANAGE_VPN permission/account matrix.",
+        "scope_refs": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-network577-source/candidate/network464/network_owner393.py",
+            "line": 600
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-network-helper445/openvpn-owned-peer-guest15/guest_step12.py",
+            "line": 434
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_network/openvpn_owned_peer/VpnPeerEntryAbility.ets",
+            "line": 155
+          }
+        ],
+        "missing_real_inputs": "New577 package/profile; helper445/netlink helper; actual peer2 SDK/HAP/launcher; credentials; verified build case and immutable nine-operation prefix; exact root375 binding; same-boot UDID/signatures; raw before/connected/after plus final peer/owner/bundle cleanup."
+      },
+      "root_BPF": {
+        "entry": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_root_probe.py",
+        "line": 405,
+        "call_template": [
+          "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+          "-B",
+          "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_root_probe.py",
+          "--kind",
+          "bpf",
+          "--archive",
+          "ACTUAL577_ARCHIVE",
+          "--probe",
+          "ACTUAL_PRODUCT_BPF_ELF",
+          "--arch",
+          "arm64",
+          "--device",
+          "phone",
+          "--target",
+          "ACTUAL_TARGET",
+          "--hdc",
+          "ACTUAL_HDC",
+          "--boot-id",
+          "ACTUAL_BOOT_ID",
+          "--boot-evidence",
+          "ACTUAL_BOOT_JSON",
+          "--output",
+          "FRESH_OUTPUT"
+        ],
+        "scope": "Actual root BPF map/readback/out-of-range/bad-fd and socket-filter load/attach/drop/allow replacement; explicit NetManager service/policy false. Dispatched by original suite, outside literal47 name list.",
+        "scope_refs": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+            "line": 302
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_bpf_results.py",
+            "line": 36
+          }
+        ],
+        "missing_real_inputs": "Same new archive/unassisted owned boot and product-built ELF, raw challenge output/exit and complete cleanup."
+      },
+      "UID_accounting": {
+        "entry": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_normal_hap_probe.py",
+        "call_template": "Original suite run_normal_hap_probe.py --persona network-accounting with actual --archive --sdk --udid --arch --device --target --hdc --boot-id --boot --output, under full47 owner.",
+        "scope": "Mandatory47 own-UID real HTTP two-generation rx/tx and other-UID denial201. Explicit closed=[]; no complete NetManager policy/service BPF backend closure.",
+        "scope_refs": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+            "line": 737
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_network_accounting_results.py",
+            "line": 57
+          }
+        ],
+        "missing_real_inputs": "Same archive/boot; real normal-HAP SDK/sign/identity; owned HTTP nonce endpoint; raw byte/accounting logs; peer listener and caller cleanup."
+      },
+      "WiFi_scan": {
+        "entry": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_wifi_scan_diagnostic.py",
+        "line": 209,
+        "call_template": [
+          "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+          "-B",
+          "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_wifi_scan_diagnostic.py",
+          "--archive",
+          "ACTUAL577_ARCHIVE",
+          "--sdk",
+          "ACTUAL_SDK",
+          "--boot",
+          "ACTUAL_ENCLOSING_BOOT_JSON",
+          "--hdc",
+          "ACTUAL_HDC",
+          "--output",
+          "FRESH_WIFI_OUTPUT",
+          "--source-volume",
+          "ACTUAL_SOURCE_VOLUME",
+          "--docker-image",
+          "ACTUAL_REVIEWED_IMAGE"
+        ],
+        "scope": "Original suite dispatches real radio cycles/2.4+5GHz live bands/scans, permission denial and callback unregister/cleanup. Verifier closed=[]; association_proven=false/controlled_ssid_proven=false. Not a complete STA/AP/P2P plan.",
+        "scope_refs": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+            "line": 649
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_wifi_scan_results.py",
+            "line": 36
+          }
+        ],
+        "missing_real_inputs": "New archive/boot, actual WLAN service/interface/modules and real compatible AP/peer; SDK/signature/caller identity; radio/caller/power restoration."
+      },
+      "VPN_store_policy": {
+        "entry": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_sys_vpn_store_probe.py",
+        "source_refs": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+            "line": 429
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_sys_vpn_store_results.py",
+            "line": 13
+          }
+        ],
+        "scope": "47 sys-vpn-store and suite vpn-policy are real store/policy CRUD/restart/denials; explicit no connected/tunnel acceptance. Cannot stand in for connected getters/TLS/TUN or broad VPN."
+      },
+      "peer_LAN_primitive": {
+        "entry": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_network_peer_lan.py",
+        "line": 171,
+        "callable_entries": [
+          "prepare(args, owner=live_RootExecutor)",
+          "observe(args, owner=live_RootExecutor, exercise=actual_service_exercise)"
+        ],
+        "standalone_CLI_disabled": true,
+        "scope": "Existing root-only full-product two-guest stream-Ethernet prepare/observe primitive, independent identities/NIC/route cleanup. No577 service discovery/account/auth/distributed/cast acceptance binding was found. OpenVPN Docker peer is a different case.",
+        "source_refs": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_network_peer_lan.py",
+            "line": 1
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/scripts/package_standard_qemu.sh",
+            "line": 481
+          }
+        ],
+        "missing_real_inputs": "Same new independent full products, root-owned two guests and distinct identities/NIC/MAC/ports, actual service exercise and account/auth/distributed data assertions plus teardown."
+      },
+      "closure_registry": {
+        "entry": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_gap_closure.py",
+        "line": 1256,
+        "call_template": [
+          "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+          "-B",
+          "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_gap_closure.py",
+          "--archive",
+          "ACTUAL577_ARCHIVE",
+          "--boot",
+          "ACTUAL_RUNTIME_ROOT/boot/boot.json",
+          "--runtime-root",
+          "ACTUAL_RUNTIME_ROOT",
+          "--device",
+          "phone",
+          "--output",
+          "FRESH_CLOSURE_JSON"
+        ],
+        "scope": "Original registered actual same-new-package/boot closure verifier; source/reflection does not close callable/provider findings. No complete registered31 proof is supplied by five dedicated source freezes.",
+        "source_refs": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_gap_closure.py",
+            "line": 98
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_gap_closure.py",
+            "line": 1227
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/parallel_runtime_suite.py",
+            "line": 120
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    {
+      "id": "arkts_export:@ohos.accessibility.config:startBlinking",
+      "original_owner": "apps",
+      "category": "limited_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 1,
+        "id": "arkts_export:@ohos.accessibility.config:startBlinking",
+        "work_package": "screen-blink",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "screen-blink"
+        ],
+        "registered_entry_refs": [
+          "blink_command",
+          "blink_contracts",
+          "blink_ledger"
+        ],
+        "related_only_refs": [
+          "blink_scope"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "registered_exact_id_plan_with_explicit_scope_limits",
+        "gap": "原ID有注册窄API/像素/调用者退出入口；原更广义的competing token/account switch/完整生命周期并未由该入口证明。需要实际同包三角色、输入、帧和cleanup，不能将注册视为通过。",
+        "original_next_required": "同一新包完成真实输入、窗口像素/可访问节点、重复停止/调用者退出/重启及系统/普通权限边界；保留R50旧单项与本次完整结果的区别。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/foundation/barrierfree/accessibility/screen_blink/README.md",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": false
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.accessibility.config:stopBlinking",
+      "original_owner": "apps",
+      "category": "limited_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 2,
+        "id": "arkts_export:@ohos.accessibility.config:stopBlinking",
+        "work_package": "screen-blink",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "screen-blink"
+        ],
+        "registered_entry_refs": [
+          "blink_command",
+          "blink_contracts",
+          "blink_ledger"
+        ],
+        "related_only_refs": [
+          "blink_scope"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "registered_exact_id_plan_with_explicit_scope_limits",
+        "gap": "原ID有注册窄API/像素/调用者退出入口；原更广义的competing token/account switch/完整生命周期并未由该入口证明。需要实际同包三角色、输入、帧和cleanup，不能将注册视为通过。",
+        "original_next_required": "同一新包完成真实输入、窗口像素/可访问节点、重复停止/调用者退出/重启及系统/普通权限边界；保留R50旧单项与本次完整结果的区别。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/foundation/barrierfree/accessibility/screen_blink/README.md",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": false
+      }
+    },
+    {
+      "id": "behavior:ability-send-data-action-has-no-enabled-handler",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 3,
+        "id": "behavior:ability-send-data-action-has-no-enabled-handler",
+        "work_package": "send-data",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "provider_build_docs",
+          "provider_inventory"
+        ],
+        "dedicated577_refs": [
+          "dedicated_calendar"
+        ],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "未见原47/五dedicated中sendData原ID的独立验收链。需MMS真实text/plain收件人/草稿UI与取消不发送；UTD/文件URI授权/附件、有效handler与返回/退出仍需真实输入和语义verifier。Calendar/HOLIDAY不能替代sendData。",
+        "original_next_required": "先跑已构建/签名MMS text/plain收件人/草稿UI和取消不发送；按真实UTD/文件URI授权补附件链，Bluetooth/HMS后端缺失须另定合法实现。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/mms/send_data_text/README.md",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:ability-share-picker-system-provider-missing",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 4,
+        "id": "behavior:ability-share-picker-system-provider-missing",
+        "work_package": "share",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "select_supplement",
+          "provider_build_docs",
+          "provider_inventory",
+          "select_wiring",
+          "select_dispatch"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "Select375补充raw slice/Settings modal/native choose候选及SDK不是原ID注册闭环。需同包普通caller URI委托、真实选择/结果/取消/错误/退出、private-start与native guard/image证据；不把历史缺实现判断照搬为当前没源码。",
+        "original_next_required": "完成已交Settings modal路径的真实普通caller/URI委托验收；另实现旧ACTION_CHOOSE所需真实PickerDialog UIAbility与取消/结果协议，其他画像逐项验收。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/settings/share_picker/README.md",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": true,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:accessibility-caption-provider-missing",
+      "original_owner": "apps",
+      "category": "exact_approved_unsupported",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 5,
+        "id": "behavior:accessibility-caption-provider-missing",
+        "work_package": "caption",
+        "approved_exact_unsupported": true,
+        "unsupported_feature": "LiveCaptions",
+        "unsupported_policy_id": "behavior:accessibility-caption-provider-missing",
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [],
+        "dedicated577_refs": [],
+        "coverage_kind": "approved_exact_unsupported",
+        "gap": "仅按批准表精确原ID排除；不标记修复或runtime pass，不扩到框架/其他ID。",
+        "original_next_required": "先确认可复用的真实ASR引擎/模型与许可，再实现音频订阅、识别、字幕UI/权限/停止/重启；不能仅安装AiCaptionServiceExtAbility空壳。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": false,
+        "no_complete_original_ID_behavior_plan_identified": false
+      }
+    },
+    {
+      "id": "behavior:accessibility-qemu-input-e2e",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 6,
+        "id": "behavior:accessibility-qemu-input-e2e",
+        "work_package": "accessibility-input",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "screen-blink"
+        ],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "blink_command",
+          "blink_scope",
+          "unresolved_rule"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "screen-blink只注册两个exports，明确不覆盖entire accessibility。广义真实输入/可访问节点/多实例/Settings通知动作/账户显示边界无完整原ID计划。",
+        "original_next_required": "同一新包完成真实输入、窗口像素/可访问节点、重复停止/调用者退出/重启及系统/普通权限边界；保留R50旧单项与本次完整结果的区别。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/foundation/barrierfree/accessibility/README.md",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": true,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:accessibility-screen-reader-provider-missing",
+      "original_owner": "apps",
+      "category": "exact_approved_unsupported",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 7,
+        "id": "behavior:accessibility-screen-reader-provider-missing",
+        "work_package": "screen-reader",
+        "approved_exact_unsupported": true,
+        "unsupported_feature": "ScreenReader",
+        "unsupported_policy_id": "behavior:accessibility-screen-reader-provider-missing",
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [],
+        "dedicated577_refs": [],
+        "coverage_kind": "approved_exact_unsupported",
+        "gap": "仅按批准表精确原ID排除；不标记修复或runtime pass，不扩到框架/其他ID。",
+        "original_next_required": "实现可访问焦点/手势到真实TTS的reader生命周期、唯一bundle和设置启停协议；验证朗读内容/焦点变化及关闭后静默。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": false,
+        "no_complete_original_ID_behavior_plan_identified": false
+      }
+    },
+    {
+      "id": "behavior:accessibility-settings-entrypoints-unavailable",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 8,
+        "id": "behavior:accessibility-settings-entrypoints-unavailable",
+        "work_package": "accessibility-settings",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "settings-all-navigation"
+        ],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "settings_contract",
+          "provider_inventory"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "十二条公开导航不启动四类notification action/IgnoreRepeatClick服务的请求队列、pending/onDestroy/late continuation、idle-stop/重启边界；未见该原ID完整runtime入口。",
+        "original_next_required": "先验已修Promise/请求队列/真实四类notification action；继续实现安全idle-stop与新请求/销毁/重启边界，不能用提前成功或无startId terminateSelf结束。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/settings/accessibility_service_completion/README.md",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:api26-runtime-export-mismatches-phone",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 9,
+        "id": "behavior:api26-runtime-export-mismatches-phone",
+        "work_package": "api26-aggregate",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "export_command",
+          "normal_cli",
+          "export_scope",
+          "export_ledger"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "arkts-exports实际采集已排入persona循环，但发现成员不等于调用/后端行为，未见该phone API26聚合原ID的收口注册。需本包完整表面重采、逐模块typed行为及聚合重算。",
+        "original_next_required": "在新归档重采arkts-export-surface，按模块把仍缺的实际成员/值/行为分派唯一owner；引用既有分模块修复，不能按候选数量扣减此聚合ID。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": true,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:arkui-expanded-text-menu-providers-missing",
+      "original_owner": "apps",
+      "category": "exact_approved_unsupported",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 10,
+        "id": "behavior:arkui-expanded-text-menu-providers-missing",
+        "work_package": "expanded-menu",
+        "approved_exact_unsupported": true,
+        "unsupported_feature": "ExpandedTextMenu",
+        "unsupported_policy_id": "behavior:arkui-expanded-text-menu-providers-missing",
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [],
+        "dedicated577_refs": [],
+        "coverage_kind": "approved_exact_unsupported",
+        "gap": "仅按批准表精确原ID排除；不标记修复或runtime pass，不扩到框架/其他ID。",
+        "original_next_required": "实现与真实dlopen ABI匹配的expanded_menu和动作映射，复用Browser/Calendar/Maps/share真实handler，验文本/URI安全授权与取消/退出。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": false,
+        "no_complete_original_ID_behavior_plan_identified": false
+      }
+    },
+    {
+      "id": "behavior:arkui-text-service-runtime-plugins-missing",
+      "original_owner": "apps",
+      "category": "exact_approved_unsupported",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 11,
+        "id": "behavior:arkui-text-service-runtime-plugins-missing",
+        "work_package": "text-plugins",
+        "approved_exact_unsupported": true,
+        "unsupported_feature": "TextServicePlugins",
+        "unsupported_policy_id": "behavior:arkui-text-service-runtime-plugins-missing",
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [],
+        "dedicated577_refs": [],
+        "coverage_kind": "approved_exact_unsupported",
+        "gap": "仅按批准表精确原ID排除；不标记修复或runtime pass，不扩到框架/其他ID。",
+        "original_next_required": "按真实systemshare/translation/analyzer ABI补实际服务与有内容结果、取消/释放；先确定模型/数据/handler来源，不造空符号。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": false,
+        "no_complete_original_ID_behavior_plan_identified": false
+      }
+    },
+    {
+      "id": "behavior:avcast-media-controller-provider-mismatch",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 12,
+        "id": "behavior:avcast-media-controller-provider-mismatch",
+        "work_package": "cast-controller",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "provider_build_docs",
+          "provider_inventory"
+        ],
+        "dedicated577_refs": [
+          "dedicated_audio"
+        ],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "未见AVCast媒体controller提供者的真实Want/result/会话/设备选择/拒绝/取消入口；需真实cast peer与签名预装/BMS目标。Audio577 PCM/focus不等于cast controller UI。",
+        "original_next_required": "核对真实Want/结果和会话/音量协议，选唯一bundle/Ability并准确构建签名预装；新包验证选择/调整/拒绝/取消/关闭，cast正例共用独立peer。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:avsession-desktop-lyrics-provider-missing",
+      "original_owner": "apps",
+      "category": "exact_approved_unsupported",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 13,
+        "id": "behavior:avsession-desktop-lyrics-provider-missing",
+        "work_package": "desktop-lyrics",
+        "approved_exact_unsupported": true,
+        "unsupported_feature": "DesktopLyrics",
+        "unsupported_policy_id": "behavior:avsession-desktop-lyrics-provider-missing",
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [],
+        "dedicated577_refs": [],
+        "coverage_kind": "approved_exact_unsupported",
+        "gap": "仅按批准表精确原ID排除；不标记修复或runtime pass，不扩到框架/其他ID。",
+        "original_next_required": "实现DesktopLyricAbility、真实会话歌词订阅/显示/隐藏/关闭/重启；不靠bundle别名声称已有UI。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": false,
+        "no_complete_original_ID_behavior_plan_identified": false
+      }
+    },
+    {
+      "id": "behavior:camera-picker-entrypoint-missing-phone",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 14,
+        "id": "behavior:camera-picker-entrypoint-missing-phone",
+        "work_package": "camera-picker",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "export_command",
+          "normal_cli",
+          "provider_inventory"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "camera persona是Camera API/capture子集，不是phone CameraPicker UIAbility与caller URI结果。需真实camera输入、system picker目标、授权/取消/异常退出；未见该原ID注册链。",
+        "original_next_required": "把已有product/picker真实模块接入phone构建/签名/预装而非替换MainAbility；实际camera输入、结果URI授权、取消/异常退出单独验收。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": true,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:certificate-dialog-device-result",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 15,
+        "id": "behavior:certificate-dialog-device-result",
+        "work_package": "certificate-dialog",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "certificate-manager"
+        ],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "cert_command",
+          "cert_not_dialog",
+          "generic_cert_support"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "certificate-manager47关闭的是不同undefined-result ID，明确不含dialog UI；generic supportsCACertDialog查询也不是选择/取消/device分支。需保存真实支持值并运行证书对话完整结果/拒绝/空列表。",
+        "original_next_required": "沿certificate_manager支持判断运行证书选择/取消/拒绝/空列表/device分支；先保留supportsCACertDialog原始值和实际BMS目标。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": true,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:contacts-picker-entrypoint-missing-phone",
+      "original_owner": "apps",
+      "category": "limited_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 16,
+        "id": "behavior:contacts-picker-entrypoint-missing-phone",
+        "work_package": "contacts",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "contacts-picker"
+        ],
+        "registered_entry_refs": [
+          "contacts_command",
+          "family_contracts"
+        ],
+        "related_only_refs": [],
+        "dedicated577_refs": [],
+        "coverage_kind": "registered_exact_id_plan_with_explicit_scope_limits",
+        "gap": "有原ID完整ARM64-phone family入口并强制full-boundaries；实际零权限normal caller/205选择/100分批聚合/错误取消双session超时退出与源码→native→image/签名/observer输入仍需新包运行。",
+        "original_next_required": "使用严格contacts-picker family完整边界：普通normal零联系人权限签名caller、真实205选择/100分批聚合、取消/错误/双session/超时/退出后重开；同时保留JS→ABC→blob→native→image witness。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/contacts/picker_session_lifecycle/README.md",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_apps/contact_picker_seed/Index.ets",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/fixtures/batch_apps/contact_picker_runtime/Index.ets",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": false
+      }
+    },
+    {
+      "id": "behavior:distributed-hardware-ui-preinstall-path-mismatch",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 17,
+        "id": "behavior:distributed-hardware-ui-preinstall-path-mismatch",
+        "work_package": "dhardware",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "provider_inventory"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "未见DHardwareUIAbility/Mech UI提供者原ID完整验收命令。BMS注册/发起/错误取消退出与真实分布式peer须独立真实输入；存在bundle或external-inputs传感器不能替代。",
+        "original_next_required": "新包核对DHardwareUIAbility/Mech扩展BMS注册与真实发起/取消/错误/退出；与共同peer工程复用，不另造分布式后端通过结论。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/vendor/ohemu/virt/dhardware_preinstall/0001-register-dhardware-ui-actual-install-dir.patch",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:enterprise-provisioning-provider-missing",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 18,
+        "id": "behavior:enterprise-provisioning-provider-missing",
+        "work_package": "admin",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "provider_inventory",
+          "provider_build_docs"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "未见当前47/五dedicated的enableAdmin/disableAdmin普通APL/ACL/UI结果和状态持久化/super拒绝/取消双请求退出重启验收入口；现有源/SDK候选不算runtime。",
+        "original_next_required": "复核已交实际SDK候选及原normal APL/ACL精确签名预装；新包真实enableAdmin/disableAdmin和状态持久化、super拒绝、取消/错误/双请求/退出/重启。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/admin_provisioning/source_provider/README.md",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:intelligent-scene-notification-query-fails",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 19,
+        "id": "behavior:intelligent-scene-notification-query-fails",
+        "work_package": "intelligent-scene",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "generic_dnd_calls",
+          "export_command"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "两种DND调用在generic broad probe源码存在，但当前normal persona列表及原ID注册未提供独立同包结果/初始化/调用者/重启验收。导出存在或历史查询不补这个缺口。",
+        "original_next_required": "新包复测isDoNotDisturbEnabled和isNotifyAllowedInDoNotDisturb，保存真实初始化/数据/调用者/重启路径，再按具体失败决定源码修复。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:location-privacy-ui-providers-unavailable",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 20,
+        "id": "behavior:location-privacy-ui-providers-unavailable",
+        "work_package": "location-privacy",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "provider_inventory"
+        ],
+        "dedicated577_refs": [
+          "dedicated_gnss"
+        ],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "GNSS577含窄Privacy角色前置，不是LocationPrivacyExtAbility与Detail协议原ID的完整UI验收/注册。仍需精确签名预装、同意/拒绝/详情/取消/caller退出，区分PermissionManager弹窗。",
+        "original_next_required": "接线实际LocationPrivacyExtAbility签名预装并补缺失detail协议；验证同意/拒绝/详情/取消/caller退出，区分PermissionManager前台系统权限弹窗。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/hap/privacycenter_provider/README.md",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:media-control-volume-provider-activation",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 21,
+        "id": "behavior:media-control-volume-provider-activation",
+        "work_package": "volume-controller",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "provider_inventory",
+          "provider_build_docs"
+        ],
+        "dedicated577_refs": [
+          "dedicated_audio"
+        ],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "Audio577验证三UID/focus/raw CONTROL/PCM窄链；未见AVVolumePanel/真实媒体控制volume提供者Want/result/调整/拒绝取消关闭/重启的原ID验收。",
+        "original_next_required": "核对真实Want/结果和会话/音量协议，选唯一bundle/Ability并准确构建签名预装；新包验证选择/调整/拒绝/取消/关闭，cast正例共用独立peer。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:network-policy-settings-providers-missing",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 22,
+        "id": "behavior:network-policy-settings-providers-missing",
+        "work_package": "netpolicy",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "settings-all-navigation",
+          "network-accounting"
+        ],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "settings_contract",
+          "provider_inventory"
+        ],
+        "dedicated577_refs": [
+          "dedicated_network"
+        ],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "Settings network导航、accounting与TLS/TUN不等于NetAccessPolicySettingUIExtension契约。需实际UI/result、通知跳转、权限和策略持久化；未见原ID收口。",
+        "original_next_required": "按netpolicy模型实现NetAccessPolicySettingUIExtension真实UI/结果、通知跳转/权限/持久化；不能用普通Settings页替代协议。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:notification-extension-settings-entrypoint-missing",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 23,
+        "id": "behavior:notification-extension-settings-entrypoint-missing",
+        "work_package": "notification-grant",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "settings-all-navigation"
+        ],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "settings_contract",
+          "provider_inventory"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "未见NotificationAccessGrantUIExtensionAbility的普通caller允许/拒绝/取消/退出/重启及结果协议验收；导航不能代替UIExtension。",
+        "original_next_required": "补真实NotificationAccessGrantUIExtensionAbility与调用者结果契约，验证允许/拒绝/取消/caller退出/重启。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:notification-manager-settings-provider-missing-phone",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 24,
+        "id": "behavior:notification-manager-settings-provider-missing-phone",
+        "work_package": "notification-management",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "settings-all-navigation"
+        ],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "settings_contract",
+          "provider_inventory"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "未见phone NotificationManagement实际provider/UIExtension选择、通知修改/返回/权限/取消退出的原ID验收；十二导航契约只注册settings-navigation。",
+        "original_next_required": "明确phone到底选用哪个实际provider和UIExtension契约，接真实模块/配置并验证通知修改、返回、权限、取消/退出。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:phone-avinputcast-not-declared",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 25,
+        "id": "behavior:phone-avinputcast-not-declared",
+        "work_package": "cast-input",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "avc-media"
+        ],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "optional_contracts",
+          "provider_inventory"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "codec/media persona或canIUse不是AVInputCast真实会话。需phone声明/BMS provider、发送/接收两端、可发现网络、随机媒体挑战/取消/清理；未见原ID完整注册/计划。",
+        "original_next_required": "先确认新phone声明及provider协议，再提供实际发送端/接收端和共享可发现网络，以随机媒体挑战验证会话、数据、取消及清理。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/phone/product_profile/apply.py",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:phone-published-capabilities-not-declared",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 26,
+        "id": "behavior:phone-published-capabilities-not-declared",
+        "work_package": "retired-syscap-review",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "optional_command",
+          "optional_contracts"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "optional-phone-profile只验证Selection/FolderObtain/Serial/Print四个不同原ID；不能关闭DistributedFile/HiDumper/DataTransitManager/DeviceAuth/DeviceSecurityLevel/PinAuth六名聚合。需逐名当前官方/选件/插件/权限/真实镜像canIUse重核与原ID收口。",
+        "original_next_required": "逐项确认DistributedFile/HiDumper/DataTransitManager/DeviceAuth/DeviceSecurityLevel/PinAuth的真实选件、插件和权限，再同步SDK/声明/实际镜像canIUse；不能只添六个字符串。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/lib/device_contract.py",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": true,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:photo-provider-not-activated-2in1",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 27,
+        "id": "behavior:photo-provider-not-activated-2in1",
+        "work_package": "photos",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "photos-asset"
+        ],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "export_command",
+          "normal_cli",
+          "photos_scope",
+          "photos_recent_scope"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "photos-recent/asset各有明确not_claimed：正recent/FA card/cloud/全Photos等未覆盖，ARM64 phone47也不验证2in1画像。需2in1真实Recent/Info/DefaultAlbum、授权取消退出/FA/cloud协议；未见该聚合ID完整注册。",
+        "original_next_required": "验证真实Recent组件/Info/DefaultAlbum、授权/取消/退出、FA-card数据变更及cloud协议；首ARM64 phone后仍需2in1独立画像接受。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/applications/standard/photos/source_provider/README.md",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": true,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:settings-navigation-provider-mismatch",
+      "original_owner": "apps",
+      "category": "limited_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 28,
+        "id": "behavior:settings-navigation-provider-mismatch",
+        "work_package": "settings-navigation",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "settings-all-navigation",
+          "settings-navigation"
+        ],
+        "registered_entry_refs": [
+          "settings_command",
+          "settings_contract",
+          "settings_ledger"
+        ],
+        "related_only_refs": [],
+        "dedicated577_refs": [],
+        "coverage_kind": "registered_exact_id_plan_with_explicit_scope_limits",
+        "gap": "原ID有十二routes两轮/UI/controller/pixels/UID/PID/返回/退出与profile边界注册入口。仍需同包运行，并在后续2in1/其他画像独立完成隐式app-info等边界；不能用源码或phone一次结果跨画像。",
+        "original_next_required": "运行全部公开navigation、实际UI/controller、2in1隐式app-info、权限拒绝/取消/退出/重启。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": false
+      }
+    },
+    {
+      "id": "behavior:shortkey-empty-launch-config",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 29,
+        "id": "behavior:shortkey-empty-launch-config",
+        "work_package": "shortkey",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "shortkey_entry",
+          "shortkey_scope"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "已有独立真实键盘CLI，但不在当前47/五dedicated调用图，也不注册此ID；其自身明示NOT duration API/full gate。需businessId/setKeyDownDuration、普通caller拒绝、重启及真实Meta+I/短按/错误修饰键完整计划。",
+        "original_next_required": "新包验证businessId/setKeyDownDuration、Meta+I、短按/错误修饰键、普通caller拒绝及重启。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/foundation/multimodalinput/input/shortkey_profile/0001-register-qemu-settings-shortcut.patch",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/foundation/multimodalinput/input/shortkey_profile/0002-reserve-qemu-settings-shortcut.patch",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": true,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:telephony-apn-settings-provider-missing",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 30,
+        "id": "behavior:telephony-apn-settings-provider-missing",
+        "work_package": "apn",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "settings-all-navigation"
+        ],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "settings_contract",
+          "provider_inventory"
+        ],
+        "dedicated577_refs": [],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "mobile导航不是APN提供者Want/result权限协议与增删改/取消持久化；实际无线生效还需modem工程输入。未见此原ID独立验收/注册。",
+        "original_next_required": "定位真实APN Want/结果/权限并实现对应入口及增删改、取消/持久化；无线实际生效与modem工程共用。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:telephony-number-identity-provider-missing",
+      "original_owner": "apps",
+      "category": "exact_approved_unsupported",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 31,
+        "id": "behavior:telephony-number-identity-provider-missing",
+        "work_package": "number-identity",
+        "approved_exact_unsupported": true,
+        "unsupported_feature": "NumberIdentity",
+        "unsupported_policy_id": "behavior:telephony-number-identity-provider-missing",
+        "mandatory47": [],
+        "registered_entry_refs": [],
+        "related_only_refs": [],
+        "dedicated577_refs": [
+          "dedicated_number"
+        ],
+        "coverage_kind": "approved_exact_unsupported",
+        "gap": "仅按批准表精确原ID排除；不标记修复或runtime pass，不扩到框架/局部实现。Number577局部DataShare/NAPI不恢复完整provider聚合。",
+        "original_next_required": "分别指定numberlocation/numbermark DataShare、NumberIdentity、SpamShield、HSDR实际owner和合法数据/服务；验证更新/离线/未知号码/错误/权限，不能填固定分类。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": false,
+        "no_complete_original_ID_behavior_plan_identified": false
+      }
+    },
+    {
+      "id": "behavior:vpn-dialog-provider-prefix-mismatch",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 32,
+        "id": "behavior:vpn-dialog-provider-prefix-mismatch",
+        "work_package": "vpn-dialog",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "sys-vpn-store"
+        ],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "provider_inventory"
+        ],
+        "dedicated577_refs": [
+          "dedicated_network"
+        ],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "VPN store持久化与Network577 TLS/TUN/backend/多owner链不注册com.ohos.vpndialog这个UI提供者ID。需实际allow/deny/cancel、原caller返回及断连/重启UI证据，不能把backend连通当dialog验收。",
+        "original_next_required": "同新包验证实际com.ohos.vpndialog允许/拒绝/取消、真实caller结果与断连/重启；复用VPN真实TLS/多owner工程。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/foundation/communication/netmanager_ext/vpn_dialog_bundle/0001-use-packaged-vpn-dialog-bundle.patch",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": true,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "behavior:wallpaper-ui-provider-missing",
+      "original_owner": "apps",
+      "category": "limited_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 33,
+        "id": "behavior:wallpaper-ui-provider-missing",
+        "work_package": "wallpaper",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "wallpaper"
+        ],
+        "registered_entry_refs": [
+          "family_contracts",
+          "wallpaper_scope"
+        ],
+        "related_only_refs": [],
+        "dedicated577_refs": [],
+        "coverage_kind": "registered_exact_id_plan_with_explicit_scope_limits",
+        "gap": "有实际Settings wrapper与原ID注册family入口，强制native fallback/renderer验证。需新包Settings/PhotoPicker真实授权、两次home/lock挑战、持久数据/屏幕、default restore/取消策略重启与cleanup；后续画像仍独立。",
+        "original_next_required": "使用当前严格wallpaper family验证Settings真实PhotoPicker授权、两次挑战图home/lock持久数据及屏幕、native fallback/真实renderer连接、默认还原/取消/策略/重启。",
+        "current_source_related_only": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/base/theme/wallpaper_mgr/qemu_renderer/0002-recover-real-renderer-after-public-desktop-updates.patch",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/common/base/theme/wallpaper_mgr/qemu_renderer/0003-scope-legacy-extension-retry-to-stock-renderer.patch",
+            "line": 1,
+            "scope": "implementation/source candidate only, not behavior acceptance"
+          }
+        ],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": false
+      }
+    },
+    {
+      "id": "behavior:wifi-system-ui-providers-not-activated",
+      "original_owner": "apps",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "apps",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "index": 34,
+        "id": "behavior:wifi-system-ui-providers-not-activated",
+        "work_package": "wifi-ui",
+        "approved_exact_unsupported": false,
+        "unsupported_feature": null,
+        "unsupported_policy_id": null,
+        "mandatory47": [
+          "ethernet-control",
+          "network-accounting"
+        ],
+        "registered_entry_refs": [],
+        "related_only_refs": [
+          "provider_inventory"
+        ],
+        "dedicated577_refs": [
+          "dedicated_network"
+        ],
+        "coverage_kind": "no_exact_registered_plan",
+        "gap": "Ethernet/accounting/TLS peer不等于WiFi STA/AP/Portal UI；未见该原ID完整验收链。需LocationDialog/PortalLogin精确签名/BMS预装及真实AP/portal对端、取消退出/通知目标。",
+        "original_next_required": "接线LocationDialog/PortalLogin准确签名和预装目录；实际STA/AP/portal挑战共用WiFi对端工程，验证取消/退出和通知目标。",
+        "current_source_related_only": [],
+        "current_runtime_pass": false,
+        "formally_closed_by_this_audit": false,
+        "related_current_runtime_route_only": false,
+        "standalone_narrow_runtime_CLI_not_in_current47": false,
+        "requires_independent_real_inputs_for_full_original_scope": true,
+        "no_complete_original_ID_behavior_plan_identified": true
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand",
+      "original_owner": "network",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.bluetooth.connection:startPairOutOfBand",
+        "round373_owner": "network",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "真实controller/vendor/HDI与OOB peer challenge/实际本地OOB数据",
+          "virtual-to-raw alias、randomizer省略等原范围逐项处理；权限/参数/单次C/R/取消/失败/热拔及退出cleanup。"
+        ],
+        "missing_inputs": [
+          "当前controller/device/peer/provider及公共caller、SDK/签名、同新包boot的原始行为/边界/退出清理输入。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/network/REPORT.md",
+            "line": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:addFusionFence",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.geoLocationManager:addFusionFence",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [
+          "GNSS_narrow"
+        ],
+        "missing_behavior": [
+          "实际支持provider/轨迹触发 add 的进入/离开/重复/无效参数、权限、多caller、remove/off/死亡与重启静默；GNSS on/off不是围栏事件。"
+        ],
+        "missing_inputs": [
+          "该API的真实provider/正向与边界场景输入、公共caller/SDK/签名/权限和同包同boot raw判定/退出清理；GNSS577新包与实际SDK/两TU等也未到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/location/STATUS_LOCATION373.md",
+            "line": 5
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/dedicated568/gnss403/candidate/run_gnss_existing_trace_steps16.py",
+            "line": 54
+          }
+        ]
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.geoLocationManager:getCurrentDistrict",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [
+          "GNSS_narrow"
+        ],
+        "missing_behavior": [
+          "新包真实坐标→行政区provider/data链、有效/边界/无匹配/无效参数与权限，callback/Promise及caller退出。"
+        ],
+        "missing_inputs": [
+          "该API的真实provider/正向与边界场景输入、公共caller/SDK/签名/权限和同包同boot raw判定/退出清理；GNSS577新包与实际SDK/两TU等也未到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/location/STATUS_LOCATION373.md",
+            "line": 5
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/dedicated568/gnss403/candidate/run_gnss_existing_trace_steps16.py",
+            "line": 54
+          }
+        ]
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.geoLocationManager:getLocationIconStatus",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [
+          "GNSS_narrow"
+        ],
+        "missing_behavior": [
+          "公共方法实际图标状态与可观察UI/provider生命周期对齐，权限/参数、开始/停止/撤权/退出后的状态回归。"
+        ],
+        "missing_inputs": [
+          "该API的真实provider/正向与边界场景输入、公共caller/SDK/签名/权限和同包同boot raw判定/退出清理；GNSS577新包与实际SDK/两TU等也未到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/location/STATUS_LOCATION373.md",
+            "line": 5
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/dedicated568/gnss403/candidate/run_gnss_existing_trace_steps16.py",
+            "line": 54
+          }
+        ]
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.geoLocationManager:getPostProcessingTrack",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [
+          "GNSS_narrow"
+        ],
+        "missing_behavior": [
+          "真实轨迹输入/后处理provider、时序/结果/空及畸形边界、权限、多caller、取消/退出与重启清理。"
+        ],
+        "missing_inputs": [
+          "该API的真实provider/正向与边界场景输入、公共caller/SDK/签名/权限和同包同boot raw判定/退出清理；GNSS577新包与实际SDK/两TU等也未到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/location/STATUS_LOCATION373.md",
+            "line": 5
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/dedicated568/gnss403/candidate/run_gnss_existing_trace_steps16.py",
+            "line": 54
+          }
+        ]
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.geoLocationManager:isFusionFenceSupported",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [
+          "GNSS_narrow"
+        ],
+        "missing_behavior": [
+          "真实provider能力探测与实际可用围栏正向互证、回调/Promise/权限及不支持返回边界；不能据flag或host bool关闭。"
+        ],
+        "missing_inputs": [
+          "该API的真实provider/正向与边界场景输入、公共caller/SDK/签名/权限和同包同boot raw判定/退出清理；GNSS577新包与实际SDK/两TU等也未到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/location/STATUS_LOCATION373.md",
+            "line": 5
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/dedicated568/gnss403/candidate/run_gnss_existing_trace_steps16.py",
+            "line": 54
+          }
+        ]
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:removeFusionFence",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.geoLocationManager:removeFusionFence",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [
+          "GNSS_narrow"
+        ],
+        "missing_behavior": [
+          "实际已注册 fence 的删除/重复删除/无效ID/所有者隔离与排队callback删除后静默，退出清理。"
+        ],
+        "missing_inputs": [
+          "该API的真实provider/正向与边界场景输入、公共caller/SDK/签名/权限和同包同boot raw判定/退出清理；GNSS577新包与实际SDK/两TU等也未到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/location/STATUS_LOCATION373.md",
+            "line": 5
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/dedicated568/gnss403/candidate/run_gnss_existing_trace_steps16.py",
+            "line": 54
+          }
+        ]
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.geoLocationManager:startBluetoothSearch",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [
+          "GNSS_narrow"
+        ],
+        "missing_behavior": [
+          "真实BLE控制器/HDI与peer、公共开始/参数/权限、扫描结果/多监听、重复启动、设备变化与退出清理。"
+        ],
+        "missing_inputs": [
+          "该API的真实provider/正向与边界场景输入、公共caller/SDK/签名/权限和同包同boot raw判定/退出清理；GNSS577新包与实际SDK/两TU等也未到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/location/STATUS_LOCATION373.md",
+            "line": 5
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/dedicated568/gnss403/candidate/run_gnss_existing_trace_steps16.py",
+            "line": 54
+          }
+        ]
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.geoLocationManager:stopBluetoothSearch",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [
+          "GNSS_narrow"
+        ],
+        "missing_behavior": [
+          "已开始的真实BLE搜索停止/重复停止/无效参数/权限、排队callback停止后静默、其他listener隔离与进程退出。"
+        ],
+        "missing_inputs": [
+          "该API的真实provider/正向与边界场景输入、公共caller/SDK/签名/权限和同包同boot raw判定/退出清理；GNSS577新包与实际SDK/两TU等也未到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/location/STATUS_LOCATION373.md",
+            "line": 5
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/dedicated568/gnss403/candidate/run_gnss_existing_trace_steps16.py",
+            "line": 54
+          }
+        ]
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.net.vpn:getConnectedSysVpnConfig",
+      "original_owner": "network",
+      "category": "limited_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.net.vpn:getConnectedSysVpnConfig",
+        "round373_owner": "network",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "Partial actual runtime plan exists",
+        "available_entries": [
+          "VPN_peer",
+          "VPN_store_policy"
+        ],
+        "missing_behavior": [
+          "真实577 TLS/TUN CONNECTED前后nullable/nonempty getter与公共配置关联",
+          "permission/account隔离、并发owner/代际/health、失败/重连/死亡及清理的原完整矩阵未由固定single-owner/account100路径覆盖。"
+        ],
+        "missing_inputs": [
+          "New577 package/profile; helper445/netlink helper; actual peer2 SDK/HAP/launcher; credentials; verified build case and immutable nine-operation prefix; exact root375 binding; same-boot UDID/signatures; raw before/connected/after plus final peer/owner/bundle cleanup.",
+          "真实新包+同boot的SDK/身份/权限/raw行为与完整cleanup"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/network/REPORT.md",
+            "line": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.net.vpn:getConnectedVpnAppInfo",
+      "original_owner": "network",
+      "category": "limited_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.net.vpn:getConnectedVpnAppInfo",
+        "round373_owner": "network",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "Partial actual runtime plan exists",
+        "available_entries": [
+          "VPN_peer",
+          "VPN_store_policy"
+        ],
+        "missing_behavior": [
+          "真实577同TLS/TUN状态的app list、默认/指定/多个ID",
+          "无MANAGE_VPN caller/权限顺序、多个VPN owner/账号隔离、死亡/重连/cleanup；普通第二bundle仅做INTERNET nonce，不是全部getter权限矩阵。"
+        ],
+        "missing_inputs": [
+          "New577 package/profile; helper445/netlink helper; actual peer2 SDK/HAP/launcher; credentials; verified build case and immutable nine-operation prefix; exact root375 binding; same-boot UDID/signatures; raw before/connected/after plus final peer/owner/bundle cleanup.",
+          "真实新包+同boot的SDK/身份/权限/raw行为与完整cleanup"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/network/REPORT.md",
+            "line": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.telephony.call:offReceiveRttMessage",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "本新 phone 公共导出、普通/system caller 权限及错误边界。",
+          "真实 RttMessageInfo payload/call/session，与匹配 peer 事件。",
+          "optional/undefined/指定 callback off、额外参数拒绝、队列中事件注销静默，其他 listener/env 保持、退出释放。"
+        ],
+        "missing_inputs": [
+          "同新包实际AT device/vendor-HDI/radio/SIM身份与modem/IMS会话/匹配peer；对应公共caller/签名权限、真实事件payload/callId/slot和可审查raw/cleanup判定输入均未在当前47或五dedicated577计划中找到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/telephony/REPORT.md",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+            "line": 2
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_communication_runtime.py",
+            "line": 2
+          }
+        ],
+        "additional_boundary": "真实RttEventInfo/RttMessageInfo/RttErrorInfo匹配事件；optional/undefined/指定callback off、额外参数拒绝、排队注销静默、其它listener/env保持与退出释放。"
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttErrCause",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.telephony.call:offRttErrCause",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "本新 phone 公共导出、普通/system caller 权限及错误边界。",
+          "真实 RttErrorInfo payload/call/session，与匹配 peer 事件。",
+          "optional/undefined/指定 callback off、额外参数拒绝、队列中事件注销静默，其他 listener/env 保持、退出释放。"
+        ],
+        "missing_inputs": [
+          "同新包实际AT device/vendor-HDI/radio/SIM身份与modem/IMS会话/匹配peer；对应公共caller/签名权限、真实事件payload/callId/slot和可审查raw/cleanup判定输入均未在当前47或五dedicated577计划中找到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/telephony/REPORT.md",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+            "line": 2
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_communication_runtime.py",
+            "line": 2
+          }
+        ],
+        "additional_boundary": "真实RttEventInfo/RttMessageInfo/RttErrorInfo匹配事件；optional/undefined/指定callback off、额外参数拒绝、排队注销静默、其它listener/env保持与退出释放。"
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:offRttModifyInd",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.telephony.call:offRttModifyInd",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "本新 phone 公共导出、普通/system caller 权限及错误边界。",
+          "真实 RttEventInfo payload/call/session，与匹配 peer 事件。",
+          "optional/undefined/指定 callback off、额外参数拒绝、队列中事件注销静默，其他 listener/env 保持、退出释放。"
+        ],
+        "missing_inputs": [
+          "同新包实际AT device/vendor-HDI/radio/SIM身份与modem/IMS会话/匹配peer；对应公共caller/签名权限、真实事件payload/callId/slot和可审查raw/cleanup判定输入均未在当前47或五dedicated577计划中找到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/telephony/REPORT.md",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+            "line": 2
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_communication_runtime.py",
+            "line": 2
+          }
+        ],
+        "additional_boundary": "真实RttEventInfo/RttMessageInfo/RttErrorInfo匹配事件；optional/undefined/指定callback off、额外参数拒绝、排队注销静默、其它listener/env保持与退出释放。"
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onReceiveRttMessage",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.telephony.call:onReceiveRttMessage",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "本新 phone 公共导出、普通/system caller 权限及错误边界。",
+          "真实 RttMessageInfo payload/call/session，与匹配 peer 事件。",
+          "真实多 listener/env、重复注册、撤权/注销/退出与 queued-generation 边界。"
+        ],
+        "missing_inputs": [
+          "同新包实际AT device/vendor-HDI/radio/SIM身份与modem/IMS会话/匹配peer；对应公共caller/签名权限、真实事件payload/callId/slot和可审查raw/cleanup判定输入均未在当前47或五dedicated577计划中找到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/telephony/REPORT.md",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+            "line": 2
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_communication_runtime.py",
+            "line": 2
+          }
+        ],
+        "additional_boundary": "真实RttEventInfo/RttMessageInfo/RttErrorInfo匹配事件；optional/undefined/指定callback off、额外参数拒绝、排队注销静默、其它listener/env保持与退出释放。"
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttErrCause",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.telephony.call:onRttErrCause",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "本新 phone 公共导出、普通/system caller 权限及错误边界。",
+          "真实 RttErrorInfo payload/call/session，与匹配 peer 事件。",
+          "真实多 listener/env、重复注册、撤权/注销/退出与 queued-generation 边界。"
+        ],
+        "missing_inputs": [
+          "同新包实际AT device/vendor-HDI/radio/SIM身份与modem/IMS会话/匹配peer；对应公共caller/签名权限、真实事件payload/callId/slot和可审查raw/cleanup判定输入均未在当前47或五dedicated577计划中找到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/telephony/REPORT.md",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+            "line": 2
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_communication_runtime.py",
+            "line": 2
+          }
+        ],
+        "additional_boundary": "真实RttEventInfo/RttMessageInfo/RttErrorInfo匹配事件；optional/undefined/指定callback off、额外参数拒绝、排队注销静默、其它listener/env保持与退出释放。"
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:onRttModifyInd",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.telephony.call:onRttModifyInd",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "本新 phone 公共导出、普通/system caller 权限及错误边界。",
+          "真实 RttEventInfo payload/call/session，与匹配 peer 事件。",
+          "真实多 listener/env、重复注册、撤权/注销/退出与 queued-generation 边界。"
+        ],
+        "missing_inputs": [
+          "同新包实际AT device/vendor-HDI/radio/SIM身份与modem/IMS会话/匹配peer；对应公共caller/签名权限、真实事件payload/callId/slot和可审查raw/cleanup判定输入均未在当前47或五dedicated577计划中找到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/telephony/REPORT.md",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+            "line": 2
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_communication_runtime.py",
+            "line": 2
+          }
+        ],
+        "additional_boundary": "真实RttEventInfo/RttMessageInfo/RttErrorInfo匹配事件；optional/undefined/指定callback off、额外参数拒绝、排队注销静默、其它listener/env保持与退出释放。"
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:sendRttMessage",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.telephony.call:sendRttMessage",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "本新 phone 公共导出、system/ordinary permission 与非法参数/call 边界。",
+          "真实已协商 RTT session 的 UTF-8 消息往返、peer correlation，非法 call/权限/失败必须真实返回。",
+          "无实际网络/会话时保持真实错误，不从 setup/feature 开关推断成功。"
+        ],
+        "missing_inputs": [
+          "同新包实际AT device/vendor-HDI/radio/SIM身份与modem/IMS会话/匹配peer；对应公共caller/签名权限、真实事件payload/callId/slot和可审查raw/cleanup判定输入均未在当前47或五dedicated577计划中找到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/telephony/REPORT.md",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+            "line": 2
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_communication_runtime.py",
+            "line": 2
+          }
+        ],
+        "additional_boundary": "真实RTT capability/session/callId/text/peer及异步成功/错误/权限/参数、失败后状态、stop/撤权/退出；feature gate/导出/编译不能替代。"
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:setRttCapability",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.telephony.call:setRttCapability",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "本新 phone 公共导出、system/ordinary permission 与非法参数/call 边界。",
+          "真实 capability 设置与 IMS 协商边界、合法/非法参数和权限结果。",
+          "无实际网络/会话时保持真实错误，不从 setup/feature 开关推断成功。"
+        ],
+        "missing_inputs": [
+          "同新包实际AT device/vendor-HDI/radio/SIM身份与modem/IMS会话/匹配peer；对应公共caller/签名权限、真实事件payload/callId/slot和可审查raw/cleanup判定输入均未在当前47或五dedicated577计划中找到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/telephony/REPORT.md",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+            "line": 2
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_communication_runtime.py",
+            "line": 2
+          }
+        ],
+        "additional_boundary": "真实RTT capability/session/callId/text/peer及异步成功/错误/权限/参数、失败后状态、stop/撤权/退出；feature gate/导出/编译不能替代。"
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:startRtt",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.telephony.call:startRtt",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "本新 phone 公共导出、system/ordinary permission 与非法参数/call 边界。",
+          "真实 IMS call/session RTT start/协商、错误 call 与无 provider 的真实失败。",
+          "无实际网络/会话时保持真实错误，不从 setup/feature 开关推断成功。"
+        ],
+        "missing_inputs": [
+          "同新包实际AT device/vendor-HDI/radio/SIM身份与modem/IMS会话/匹配peer；对应公共caller/签名权限、真实事件payload/callId/slot和可审查raw/cleanup判定输入均未在当前47或五dedicated577计划中找到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/telephony/REPORT.md",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+            "line": 2
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_communication_runtime.py",
+            "line": 2
+          }
+        ],
+        "additional_boundary": "真实RTT capability/session/callId/text/peer及异步成功/错误/权限/参数、失败后状态、stop/撤权/退出；feature gate/导出/编译不能替代。"
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.call:stopRtt",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.telephony.call:stopRtt",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "本新 phone 公共导出、system/ordinary permission 与非法参数/call 边界。",
+          "真实 session stop 与随后消息/回调静默，不能终止其他 call/session。",
+          "无实际网络/会话时保持真实错误，不从 setup/feature 开关推断成功。"
+        ],
+        "missing_inputs": [
+          "同新包实际AT device/vendor-HDI/radio/SIM身份与modem/IMS会话/匹配peer；对应公共caller/签名权限、真实事件payload/callId/slot和可审查raw/cleanup判定输入均未在当前47或五dedicated577计划中找到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/telephony/REPORT.md",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+            "line": 2
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_communication_runtime.py",
+            "line": 2
+          }
+        ],
+        "additional_boundary": "真实RTT capability/session/callId/text/peer及异步成功/错误/权限/参数、失败后状态、stop/撤权/退出；feature gate/导出/编译不能替代。"
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.telephony.observer:offCommunicationStateChange",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "mandatory callback + optional slot（这里 off 不等于 RTT optional-callback 语义）、真实 bool/slot/非法 URC。",
+          "native telephony+SET_TELEPHONY_STATE 发布身份；GET_NETWORK_INFO 注册和每次投递权限/撤权边界。",
+          "off 按 env/slot/function，重复 off/env exit/queued old-generation 静默。",
+          "真实 radio/5A 状态结束与 reset 后不得把历史 true 当当前状态。"
+        ],
+        "missing_inputs": [
+          "同新包实际AT device/vendor-HDI/radio/SIM身份与modem/IMS会话/匹配peer；对应公共caller/签名权限、真实事件payload/callId/slot和可审查raw/cleanup判定输入均未在当前47或五dedicated577计划中找到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/telephony/REPORT.md",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+            "line": 2
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_communication_runtime.py",
+            "line": 2
+          }
+        ],
+        "additional_boundary": "显式+OHOS5A独立0/1→HRil1412→HDI V1_5 callback162→registry14→NAPI/ANI bool+slot；off必须callback+optional slot，不能混为RTT optional off；false/provider shutdown/reset/排队静默与退出需真实证明。"
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.telephony.observer:onCommunicationStateChange",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "mandatory callback + optional slot（这里 off 不等于 RTT optional-callback 语义）、真实 bool/slot/非法 URC。",
+          "native telephony+SET_TELEPHONY_STATE 发布身份；GET_NETWORK_INFO 注册和每次投递权限/撤权边界。",
+          "off 按 env/slot/function，重复 off/env exit/queued old-generation 静默。",
+          "真实 radio/5A 状态结束与 reset 后不得把历史 true 当当前状态。"
+        ],
+        "missing_inputs": [
+          "同新包实际AT device/vendor-HDI/radio/SIM身份与modem/IMS会话/匹配peer；对应公共caller/签名权限、真实事件payload/callId/slot和可审查raw/cleanup判定输入均未在当前47或五dedicated577计划中找到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/telephony/REPORT.md",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+            "line": 2
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_communication_runtime.py",
+            "line": 2
+          }
+        ],
+        "additional_boundary": "显式+OHOS5A独立0/1→HRil1412→HDI V1_5 callback162→registry14→NAPI/ANI bool+slot；off必须callback+optional slot，不能混为RTT optional off；false/provider shutdown/reset/排队静默与退出需真实证明。"
+      }
+    },
+    {
+      "id": "behavior:bluetooth-state-transition-false-success",
+      "original_owner": "network",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:bluetooth-state-transition-false-success",
+        "round373_owner": "network",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "真实controller/vendor/HDI及当前新包radio身份",
+          "enable/disable最终状态和失败回滚，pair/data/设备变化与注销/退出/恢复；不能只看API返回0或旧libbt_vendor日志。"
+        ],
+        "missing_inputs": [
+          "当前controller/device/peer/provider及公共caller、SDK/签名、同新包boot的原始行为/边界/退出清理输入。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/network/REPORT.md",
+            "line": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "behavior:location-provider-backends-missing",
+      "original_owner": "location",
+      "category": "limited_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:location-provider-backends-missing",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "Partial actual runtime plan exists",
+        "available_entries": [
+          "GNSS_narrow",
+          "full47"
+        ],
+        "missing_behavior": [
+          "真实GNSS链是广义定位后端子集；8个新增API、轨迹/行政区/fusion/BLE等provider及权限/异常/重启/cleanup仍未有完整新包行为计划。"
+        ],
+        "missing_inputs": [
+          "Same577 archive/profile; actual354/434/437 policy; two real TU witnesses with CFI/LTO/noRTTI; real GNSS role SDK/signing/UDID/image/Privacy inputs; raw provider/callback windows and Owner.finish."
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/parallel_runtime_suite.py",
+            "line": 120
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/location/STATUS_LOCATION373.md",
+            "line": 7
+          }
+        ]
+      }
+    },
+    {
+      "id": "behavior:netmanager-ebpf-backend",
+      "original_owner": "network",
+      "category": "limited_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:netmanager-ebpf-backend",
+        "round373_owner": "network",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "Partial actual runtime plan exists",
+        "available_entries": [
+          "root_BPF",
+          "UID_accounting"
+        ],
+        "missing_behavior": [
+          "实际新kernel/netmanager/netsys加载并attach的生产BPF程序/映射身份与UID数据",
+          "服务access-policy允许/拒绝、普通/越权caller、真实流量与卸载/cleanup；root socket filter和ownUID统计不自动证明生产service backend。"
+        ],
+        "missing_inputs": [
+          "Same new archive/unassisted owned boot and product-built ELF, raw challenge output/exit and complete cleanup.",
+          "Same archive/boot; real normal-HAP SDK/sign/identity; owned HTTP nonce endpoint; raw byte/accounting logs; peer listener and caller cleanup."
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/network/REPORT.md",
+            "line": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "behavior:peer-device-user-nat-isolation",
+      "original_owner": "network",
+      "category": "limited_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:peer-device-user-nat-isolation",
+        "round373_owner": "network",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "Partial actual runtime primitives exist; no complete577 service plan",
+        "available_entries": [
+          "peer_LAN_primitive",
+          "VPN_peer"
+        ],
+        "missing_behavior": [
+          "独立全产品guest真实共享网络/唯一设备身份与root custody（不是Docker VPN server或单管理NAT）",
+          "真实发现/账号/认证/distributed/cast数据及断连/重入/设备移除/cleanup的明确执行/判定输入。"
+        ],
+        "missing_inputs": [
+          "Same new independent full products, root-owned two guests and distinct identities/NIC/MAC/ports, actual service exercise and account/auth/distributed data assertions plus teardown.",
+          "New577 package/profile; helper445/netlink helper; actual peer2 SDK/HAP/launcher; credentials; verified build case and immutable nine-operation prefix; exact root375 binding; same-boot UDID/signatures; raw before/connected/after plus final peer/owner/bundle cleanup."
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/network/REPORT.md",
+            "line": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "behavior:telephony-no-modem-or-sim",
+      "original_owner": "location",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:telephony-no-modem-or-sim",
+        "round373_owner": "location",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "当前新包 modem/SIM/radio/AT provider 身份、真实 service 状态。",
+          "calls/SMS/cellular-data 实际事务，负向/权限/offline/device reset 与清理。",
+          "真正 IMS RTT 协商/消息、独立5A URCs/false reset 语义。"
+        ],
+        "missing_inputs": [
+          "同新包实际AT device/vendor-HDI/radio/SIM身份与modem/IMS会话/匹配peer；对应公共caller/签名权限、真实事件payload/callId/slot和可审查raw/cleanup判定输入均未在当前47或五dedicated577计划中找到。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/telephony/REPORT.md",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_rtt_lifecycle.py",
+            "line": 2
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/test_batch_location_communication_runtime.py",
+            "line": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "behavior:usb-manager-device-query",
+      "original_owner": "network",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:usb-manager-device-query",
+        "round373_owner": "network",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "No matching complete577 runtime plan found",
+        "available_entries": [],
+        "missing_behavior": [
+          "真实host设备fixture/passthrough、UDC/configfs device-mode、MTP/provider",
+          "设备/descriptor查询、普通授权与拒绝、open/读写、热拔与caller/provider退出cleanup；Serial可选发现/USB对话框不等于该ID。"
+        ],
+        "missing_inputs": [
+          "当前controller/device/peer/provider及公共caller、SDK/签名、同新包boot的原始行为/边界/退出清理输入。"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/network/REPORT.md",
+            "line": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "behavior:vpn-runtime-export-gaps",
+      "original_owner": "network",
+      "category": "limited_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:vpn-runtime-export-gaps",
+        "round373_owner": "network",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "Partial actual runtime plan exists",
+        "available_entries": [
+          "VPN_peer",
+          "VPN_store_policy"
+        ],
+        "missing_behavior": [
+          "同包真实TLS/TUN/DNS/IPv6/route/多owner/账号/getter/options/dialog完整行为矩阵",
+          "persist-tun reconfiguration、split/encrypted/nonstandard-port DNS、nonzero route metric等广义原范围仍需逐项实现/真实证明；不在指定9个unsupported排除内。"
+        ],
+        "missing_inputs": [
+          "New577 package/profile; helper445/netlink helper; actual peer2 SDK/HAP/launcher; credentials; verified build case and immutable nine-operation prefix; exact root375 binding; same-boot UDID/signatures; raw before/connected/after plus final peer/owner/bundle cleanup.",
+          "真实新包+同boot的SDK/身份/权限/raw行为与完整cleanup"
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/network/REPORT.md",
+            "line": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "behavior:wifi-sta-backend-unavailable",
+      "original_owner": "network",
+      "category": "limited_plan",
+      "source_mapping_group": "location-network",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:wifi-sta-backend-unavailable",
+        "round373_owner": "network",
+        "excluded_by_exact9": false,
+        "actual_new_package_closed": false,
+        "full_acceptance_planned": false,
+        "status": "Partial actual runtime plan exists",
+        "available_entries": [
+          "WiFi_scan"
+        ],
+        "missing_behavior": [
+          "真实新包服务/接口/模块与兼容AP/peer",
+          "STA/AP association、认证/失败、DHCP/IPv4/IPv6/双向数据/P2P、设备变化和teardown；原扫描明确不证明association。"
+        ],
+        "missing_inputs": [
+          "New archive/boot, actual WLAN service/interface/modules and real compatible AP/peer; SDK/signature/caller identity; radio/caller/power restoration."
+        ],
+        "evidence": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/integration-20261019/assessments/network/REPORT.md",
+            "line": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
+      "original_owner": "system",
+      "category": "limited_plan",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "arkts_export:@ohos.file.photoAccessHelper:KnowledgeContent",
+        "kit47_checks": [
+          "knowledge-holiday"
+        ],
+        "dedicated577": [],
+        "coverage": "partial_runtime_plan",
+        "existing_plan_scope": "22阶段holiday/JPEG、4UID、权限/查询/隐藏/恢复/删除/清理。",
+        "missing_full_scope_or_input": "缺同新包签名角色、产品observer和真实raw输入；非空people-analysis、跨账号隔离及完整class语义未覆盖，family不注册该ID。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/parallel_runtime_suite.py",
+            "line": 19
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_knowledge_runtime.py",
+            "line": 267
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_knowledge_suite.py",
+            "line": 1429
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "system",
+        "exact_unsupported": false
+      }
+    },
+    {
+      "id": "behavior:access-token-api26-kernel-abi",
+      "original_owner": "system",
+      "category": "limited_plan",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:access-token-api26-kernel-abi",
+        "kit47_checks": [],
+        "dedicated577": [],
+        "coverage": "partial_runtime_plan",
+        "existing_plan_scope": "47名称外，canonical全suite还调bitmap/userid根探针及普通userid HAP（AppSpawn账号/拒绝改标）。",
+        "missing_full_scope_or_input": "缺新包root/normal原始结果及真实受支持父HAP/child token、UID、kernel-userid、多账号/退出/revoke完整对应；raw bitmap与root fork子集不能代替。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+            "line": 306
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_access_token_results.py",
+            "line": 50
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_userid_results.py",
+            "line": 56
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "system",
+        "exact_unsupported": false
+      }
+    },
+    {
+      "id": "behavior:advertising-service-provider-missing",
+      "original_owner": "system",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:advertising-service-provider-missing",
+        "kit47_checks": [],
+        "dedicated577": [],
+        "coverage": "no_complete_runtime_plan",
+        "existing_plan_scope": "存在Ads provider inventory/4entrypoint审计。",
+        "missing_full_scope_or_input": "不是九项unsupported；未定位47/五dedicated577的完整load/display/callback/交互/取消/restart运行case。仍需真实provider、providerApiAbilityName、签名安装、creative/data及普通调用者；不据历史目录断言新image缺失。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/audit_system_bundle_providers.py",
+            "line": 166
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/audit_system_bundle_providers.py",
+            "line": 774
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "system",
+        "exact_unsupported": false
+      }
+    },
+    {
+      "id": "behavior:app-domain-verification-extension-missing",
+      "original_owner": "system",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:app-domain-verification-extension-missing",
+        "kit47_checks": [],
+        "dedicated577": [],
+        "coverage": "no_complete_runtime_plan",
+        "existing_plan_scope": "general HAP只有associated domains/bundles查询；inventory列optional DSO。",
+        "missing_full_scope_or_input": "不是unsupported，optional DSO缺失不能证明fallback失败。缺HTTP/HTTPS域归属/签名asset链接/refresh撤销重试/真实显式Want路由及跨bundle/account/权限完整case与独立网络响应。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/build_hap_probe.py",
+            "line": 948
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/audit_system_bundle_providers.py",
+            "line": 126
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "system",
+        "exact_unsupported": false
+      }
+    },
+    {
+      "id": "behavior:audio-capture-and-dependent-pipelines",
+      "original_owner": "media",
+      "category": "limited_plan",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:audio-capture-and-dependent-pipelines",
+        "kit47_checks": [
+          "audio-capture",
+          "audio-focus",
+          "audio-revoke"
+        ],
+        "dedicated577": [
+          "Audio577"
+        ],
+        "coverage": "partial_runtime_plan",
+        "existing_plan_scope": "MIC外部PCM挑战、2cycle、grant-deny-grant、VOIP focus/revoke；dedicated577为窄renderer/PCM/VDI三UID链。 canonical还包含ordinary audio-stream/audio-suite-effects persona，均是各自有限合同。",
+        "missing_full_scope_or_input": "缺新包签名调用者、真实音频设备/challenge、token/UI、clock/raw PCM及cleanup；原范围的MIDI/PlaybackCapture/Spatialization/Tone/IntelligentVoice/AudioPlayer/AudioRecorder/SoundPool及广义Communication未获完整数据/权限/生命周期case。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+            "line": 674
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_audio_capture_results.py",
+            "line": 391
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-audio577-source/ROOT-CLI577.md",
+            "line": 55
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "media",
+        "exact_unsupported": false
+      }
+    },
+    {
+      "id": "behavior:audio-interrupt-haptic-renderer-dependency",
+      "original_owner": "media",
+      "category": "onset_anchor_unknown",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:audio-interrupt-haptic-renderer-dependency",
+        "kit47_checks": [
+          "audio-focus",
+          "audio-revoke"
+        ],
+        "dedicated577": [
+          "Audio577"
+        ],
+        "coverage": "onset_unknown",
+        "existing_plan_scope": "保留三UID、Collector480 CONTROL/PCM/VDI、focus/revoke/release/recreate及独立verifier。",
+        "missing_full_scope_or_input": "实际三UID SDK/HAP、2个375 C++/CONTROL、同包profile、签名、held custody和boot/UDID/raw仍需补；stream frame0→mixedPCM→sameOFD HW MONOTONIC onset映射仍未知。no_onset_anchor拒绝任何供应的claim，现链无法完成同步接受。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-audio577-source/ROOT-CLI577.md",
+            "line": 82
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_audio_haptic_coordinator.py",
+            "line": 373
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_media_audio_haptic_coordinator.py",
+            "line": 341
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "media",
+        "exact_unsupported": false
+      }
+    },
+    {
+      "id": "behavior:audio-vivid-metadata-runtime-plugin-missing",
+      "original_owner": "media",
+      "category": "exact_approved_unsupported",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:audio-vivid-metadata-runtime-plugin-missing",
+        "kit47_checks": [],
+        "dedicated577": [],
+        "coverage": "exact_unsupported_complete_provider",
+        "existing_plan_scope": "精确命中AudioVividMetaBuilder complete-provider boundary。",
+        "missing_full_scope_or_input": "unsupported不等于修好或runtime pass；不能扩展为音频/codec/媒体管线免责。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/execution-20261019/unsupported-public-providers.json",
+            "line": 47
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "media",
+        "exact_unsupported": true
+      }
+    },
+    {
+      "id": "behavior:calendar-lifecycle-device-difference",
+      "original_owner": "system",
+      "category": "limited_plan",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:calendar-lifecycle-device-difference",
+        "kit47_checks": [],
+        "dedicated577": [
+          "Calendar577"
+        ],
+        "coverage": "partial_runtime_plan",
+        "existing_plan_scope": "原CRUD/独立读/通知Want/tap/read-only UI/guarded cleanup链，位于47之外。",
+        "missing_full_scope_or_input": "缺同包profile/helper、3role SDK/deep、full12 config/runtime、签名UDID/UI；九GAPS仍全部pending（冷暖/OnNewWant/跨boot/重授权/未知ID/因果刷新/CAS隔离/snooze/未来提醒清理）。full lifecycle verifier明示false。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/ROOT-RUN568.md",
+            "line": 33
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar577-source/dedicated568/calendar403/GAPS397.json",
+            "line": 3
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_system_calendar_runtime_verify.py",
+            "line": 440
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "system",
+        "exact_unsupported": false
+      }
+    },
+    {
+      "id": "behavior:device-attest-uninitialized",
+      "original_owner": "system",
+      "category": "exact_approved_unsupported",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:device-attest-uninitialized",
+        "kit47_checks": [],
+        "dedicated577": [],
+        "coverage": "exact_unsupported_complete_provider",
+        "existing_plan_scope": "精确命中DeviceAttest完整产品identity/provisioning provider。",
+        "missing_full_scope_or_input": "不是XTS/framework/API整体排除；没有有效票据或runtime pass，真实identity/token/provisioning可重新打开该ID。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/execution-20261019/unsupported-public-providers.json",
+            "line": 27
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "system",
+        "exact_unsupported": true
+      }
+    },
+    {
+      "id": "behavior:graphics3d-scene-manager-unavailable",
+      "original_owner": "system",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:graphics3d-scene-manager-unavailable",
+        "kit47_checks": [],
+        "dedicated577": [],
+        "coverage": "no_complete_runtime_plan",
+        "existing_plan_scope": "general HAP有Scene.load/factory/destroy；另有startup host shim/DSO边界检查。",
+        "missing_full_scope_or_input": "缺47/五dedicated577里的真实asset/可观测渲染像素/destroy-recreate/非法资源/retry完整guest case；真实product plugin/registry/renderer/TU+CFI来源未获新包结果，host明确requirements_closed=0。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/build_hap_probe.py",
+            "line": 1421
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_system_graphics3d_startup.py",
+            "line": 128
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "system",
+        "exact_unsupported": false
+      }
+    },
+    {
+      "id": "behavior:media-codec-base-partial",
+      "original_owner": "media",
+      "category": "limited_plan",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:media-codec-base-partial",
+        "kit47_checks": [
+          "avc-media"
+        ],
+        "dedicated577": [],
+        "coverage": "partial_runtime_plan",
+        "existing_plan_scope": "真实software AVC MIME/name、buffer/surface RGBA/YUV、offset/bitrate/IDR/EOS及decode像素，24cycles/96frames。",
+        "missing_full_scope_or_input": "缺新包ordinary HAP/SDK/identity/bitstream和decode结果；注册关闭的是另一个精确IDmedia-video-encoder-creation-failure，verifier明确不声称full codec enumeration/YUV-surface/HEVC，也不注册本CodecBase聚合。不能推导所有未声称codec都必须实现。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+            "line": 782
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_avc_media_results.py",
+            "line": 153
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_avc_media_results.py",
+            "line": 159
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "media",
+        "exact_unsupported": false
+      }
+    },
+    {
+      "id": "behavior:media-recording-input-backends-missing",
+      "original_owner": "media",
+      "category": "limited_plan",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:media-recording-input-backends-missing",
+        "kit47_checks": [
+          "media-recorder"
+        ],
+        "dedicated577": [],
+        "coverage": "partial_runtime_plan",
+        "existing_plan_scope": "AVRecorder真实MIC+Surface视频，2cycles/grant-deny-grant，MP4独立AAC/AVC decode。 canonical普通camera persona另有JPEG采集；不等于camera→VideoRecorder链。",
+        "missing_full_scope_or_input": "缺同包设备输入/签名token/UI/raw输出/ffmpeg+ffprobe/cleanup。未定位camera→VideoRecorder及广义输入/中断/生命周期完整聚合case，verifier closed_requirements为空；SDK或create成功不替代。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+            "line": 675
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_media_recorder_results.py",
+            "line": 80
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "media",
+        "exact_unsupported": false
+      }
+    },
+    {
+      "id": "behavior:msdp-device-status-mock-or-missing-clients",
+      "original_owner": "system",
+      "category": "limited_plan",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:msdp-device-status-mock-or-missing-clients",
+        "kit47_checks": [
+          "external-inputs"
+        ],
+        "dedicated577": [],
+        "coverage": "partial_runtime_plan",
+        "existing_plan_scope": "external GNSS/sensor挑战、public still回调和真实mapped DSO/source检查。",
+        "missing_full_scope_or_input": "缺实际sensor挑战/签名SDK/权限/数据与订退静默/lifetime/cleanup；physical immobility/relativeStill=false，广义client/modality/model未覆盖，dispatcher明确不注册本聚合ID。GNSS577专用定位链不补广义MSDP。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/parallel_runtime_suite.py",
+            "line": 18
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_system_live_inputs.py",
+            "line": 15
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_system_verify_live_inputs.py",
+            "line": 97
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/parallel_runtime_suite.py",
+            "line": 123
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "system",
+        "exact_unsupported": false
+      }
+    },
+    {
+      "id": "behavior:native-child-process-phone-boundary",
+      "original_owner": "system",
+      "category": "limited_plan",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:native-child-process-phone-boundary",
+        "kit47_checks": [
+          "child-default-profile"
+        ],
+        "dedicated577": [],
+        "coverage": "partial_runtime_plan",
+        "existing_plan_scope": "default-disabled画像C/ArkTS参数边界、零子进程/回调、caller退出和cleanup。",
+        "missing_full_scope_or_input": "缺新包签名HAP/SDK/参数状态；启用画像真实AppMgr/AppSpawn child生命周期、父子身份与退出不是disabled case。host lifecycle无guest/service证明，本ID也不在九unsupported内。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/run_packaged_qemu_suite.py",
+            "line": 593
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_child_default_profile_results.py",
+            "line": 63
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/batch_system_child_lifecycle.py",
+            "line": 127
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "system",
+        "exact_unsupported": false
+      }
+    },
+    {
+      "id": "behavior:security-guard-empty-model-config",
+      "original_owner": "system",
+      "category": "exact_approved_unsupported",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:security-guard-empty-model-config",
+        "kit47_checks": [],
+        "dedicated577": [],
+        "coverage": "exact_unsupported_complete_provider",
+        "existing_plan_scope": "精确命中SecurityGuard完整production model/config provider。",
+        "missing_full_scope_or_input": "framework/service/API不整体排除，不虚构model/result；完整合法model+collector/config/data可重新打开。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/docs/capability-audit/execution-20261019/unsupported-public-providers.json",
+            "line": 37
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "system",
+        "exact_unsupported": true
+      }
+    },
+    {
+      "id": "behavior:session-manager-profile-gap",
+      "original_owner": "system",
+      "category": "missing_complete_runtime_plan",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:session-manager-profile-gap",
+        "kit47_checks": [],
+        "dedicated577": [],
+        "coverage": "no_complete_runtime_plan",
+        "existing_plan_scope": "official phone已声明SessionManager并有SceneBoard接线；相邻UI/window样例不是聚合证明。",
+        "missing_full_scope_or_input": "缺目标明确的session create/update/foreground/background/destroy/PiP及适用float生命周期、SDK/image/canIUse/service/签名nativeABI/像素事件与恢复完整case。optional-phone-profile只测四个别的optional ID。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/patches/phone/product_profile/official_documented_syscaps.json",
+            "line": 235
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_optional_phone_profile_results.py",
+            "line": 18
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "system",
+        "exact_unsupported": false
+      }
+    },
+    {
+      "id": "behavior:video-encoder-dependent-media-pipelines",
+      "original_owner": "media",
+      "category": "missing_pipeline_output_case",
+      "source_mapping_group": "system-media",
+      "actual_new_image_runtime_pass": false,
+      "formally_closed": false,
+      "details": {
+        "id": "behavior:video-encoder-dependent-media-pipelines",
+        "kit47_checks": [
+          "avc-media",
+          "media-recorder"
+        ],
+        "dedicated577": [],
+        "coverage": "pipeline_output_cases_missing",
+        "existing_plan_scope": "AVC/AVRecorder是相关基础；general HAP的AVTranscoder/AVScreenCaptureRecorder只有create/release。",
+        "missing_full_scope_or_input": "未定位AVScreenCapture真实capture/consent/privacy/revoke/lifetime输出，以及AVTranscoder输入→输出→独立decode/pause/cancel/error/cleanup完整case；需新包输入媒体/屏幕和权限、实际输出验证。本ID不是unsupported，codec成功不等于端到端管线。",
+        "source_and_original_command_locations": [
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/build_hap_probe.py",
+            "line": 1104
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/build_hap_probe.py",
+            "line": 1111
+          },
+          {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/verify_avc_media_results.py",
+            "line": 159
+          }
+        ],
+        "runtime_pass": false,
+        "exact_original_ID_fully_closed": false,
+        "owner": "media",
+        "exact_unsupported": false
+      }
+    }
+  ],
+  "formal_ledger_recomputed_on_new_package": false,
+  "full47_plus_five_narrow_cases_suffice_for_all82": false,
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false
+}
