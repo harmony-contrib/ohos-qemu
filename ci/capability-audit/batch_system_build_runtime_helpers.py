@@ -795,7 +795,8 @@ class Builder:
             row['actual_link_inputs'] = [self.remember(p) for p in opened if within(p, self.root)]
             if not all(p.resolve() in opened for p in direct): raise ValueError('link trace omitted actual direct product DSO')
             self.bind_link_runtime(row, opened)
-            for soname in ('libc++.so', 'libc.so'): runtime_link_records(row, soname)
+            required_runtimes = ('libc.so',) if c_language else ('libc++.so', 'libc.so')
+            for soname in required_runtimes: runtime_link_records(row, soname)
             if any(not within(p, self.root) and not within(p, private) for p in opened):
                 raise ValueError('linker consumed an input outside read-only product/private helper')
             self.check_elf(name, binary, direct, row)

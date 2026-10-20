@@ -75,7 +75,9 @@
        ]
      }
    ]
--}+}
+-}
+\ No newline at end of file
++}
 --- a/applications/standard/call/CallSetting/common/src/main/ets/utils/ApnDataStorageCommon.ets
 +++ b/applications/standard/call/CallSetting/common/src/main/ets/utils/ApnDataStorageCommon.ets
 @@ -96,40 +96,26 @@
@@ -267,7 +269,9 @@
 -  "debugging": {
 -    // "stacktrace": false                      /* Disable stacktrace compilation. Default: false */
 -  }
--}+{"modelVersion":"6.0.0","dependencies":{},"execution":{"analyze":"normal","daemon":true,"incremental":true,"parallel":true,"typeCheck":true},"logging":{"level":"info"},"debugging":{"stacktrace":false},"nodeOptions":{"maxOldSpaceSize":4096}}
+-}
+\ No newline at end of file
++{"modelVersion":"6.0.0","dependencies":{},"execution":{"analyze":"normal","daemon":true,"incremental":true,"parallel":true,"typeCheck":true},"logging":{"level":"info"},"debugging":{"stacktrace":false},"nodeOptions":{"maxOldSpaceSize":4096}}
 --- a/applications/standard/call/CallSetting/oh-package.json5
 +++ b/applications/standard/call/CallSetting/oh-package.json5
 @@ -8,7 +8,5 @@
@@ -278,7 +282,9 @@
 -    "@ohos/hypium": "1.0.16"
 -  }
 +  "devDependencies": {}
- }--- a/applications/standard/call/CallSetting/product/default/oh-package.json5
+ }
+\ No newline at end of file
+--- a/applications/standard/call/CallSetting/product/default/oh-package.json5
 +++ b/applications/standard/call/CallSetting/product/default/oh-package.json5
 @@ -6,8 +6,8 @@
    "author": "",
