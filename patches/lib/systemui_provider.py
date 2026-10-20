@@ -21,6 +21,10 @@ BLOCKS_SHA = '3a13681f2c487c2bbc3bce3bd9d2f863dbdef263841417b4ddfaa36b1819da4c'
 ACLS = ['ohos.permission.CAPTURE_SCREEN', 'ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS_EXTENSION',
         'ohos.permission.MANAGE_WIFI_CONNECTION', 'ohos.permission.NOTIFICATION_CONTROLLER',
         'ohos.permission.START_INVISIBLE_ABILITY']
+# Original ACLS remains the exact original signed-profile guard. Both additions
+# are actual system_basic/system_grant/provisionEnable permissions; no APL change.
+CAPTION_ACLS = ACLS + ['ohos.permission.MANAGE_AUDIO_CONFIG',
+                       'ohos.permission.GET_BUNDLE_INFO_PRIVILEGED']
 CAPABILITY = {'bundleName': 'com.ohos.systemui', 'singleton': True, 'keepAlive': True,
     'runningResourcesApply': False, 'app_signature': [SIGNATURE], 'associatedWakeUp': False,
     'allowAppUsePrivilegeExtension': True}
@@ -58,6 +62,14 @@ def hap_state(raw):
 
 def normalize_hap_build(raw):
     """Optional parent hook: exact inverse only; legacy whole-file guards still apply."""
+    composed = PATCH_ROOT / 'common/applications/standard/hap/qemu_provider_sources'
+    states = json.loads(read(composed / 'source_states.json'), object_pairs_hook=unique)
+    pair = states['files']['applications/standard/hap/BUILD.gn']
+    if digest(raw) == pair[1]:
+        prefix = read(composed / 'before/BUILD.gn')
+        if digest(prefix) != pair[0]:
+            raise ValueError('complete QEMU source-HAP predecessor changed')
+        raw = prefix
     if not hap_state(raw): return raw
     text = raw.decode()
     for row in reversed(hap_blocks()): text = text.replace(row['after'], row['before'])
@@ -103,6 +115,7 @@ def desired_profile(original):
         original.get('acls', {}).get('allowed-acls') != ACLS):
         raise ValueError('fixed SystemUI identity/APL/ACL/signature changed')
     result = copy.deepcopy(original); result['validity']['not-after'] = 2208988800
+    result['acls']['allowed-acls'] = list(CAPTION_ACLS)
     return result
 
 def unchanged_policies(root):
@@ -118,6 +131,12 @@ def unchanged_policies(root):
 
 def source_ready(root):
     component('systemui/source_provider').validate(root, require_patched=True)
+    from guarded_source_vector579 import load, heads, vector
+    consent = PATCH_ROOT / 'common/applications/standard/systemui/playback_capture_consent579'
+    consent_sources = load(consent)
+    heads(root, consent_sources)
+    if vector(root, consent_sources) != 'final':
+        raise ValueError('complete actual playback-consent source required for its two ACLs')
     live = component('systemui/screen_capture_live_view')
     live.validate(root, require_patched=True); live.prerequisites(root)
     hap = read(root / 'applications/standard/hap/BUILD.gn')
@@ -150,8 +169,22 @@ def prepare(root, cache):
     with tempfile.TemporaryDirectory(prefix='systemui-profile-', dir=cache) as temporary:
         scratch = Path(temporary); original = scratch / 'original.p7b'; original.write_bytes(raw)
         desired = desired_profile(cms(original)); fingerprint = certificate_fingerprint(issuer[-1])
-        if before != raw: verify_profile(profile, desired, fingerprint, scratch)
-        else:
+        resign = before == raw
+        if before != raw:
+            # A retained source volume can contain the exact previous renewed
+            # five-ACL profile. Authenticate that complete predecessor before
+            # migrating it to the two new, source-required SystemUI ACLs.
+            prior = copy.deepcopy(desired)
+            prior['acls']['allowed-acls'] = list(ACLS)
+            observed = cms(profile)
+            if observed == desired:
+                verify_profile(profile, desired, fingerprint, scratch)
+            elif observed == prior:
+                verify_profile(profile, prior, fingerprint, scratch)
+                resign = True
+            else:
+                raise ValueError('unknown retained SystemUI profile preserved')
+        if resign:
             template, signed = scratch / 'profile.json', scratch / 'renewed.p7b'
             template.write_text(json.dumps(desired, indent=2) + '\n')
             subprocess.run(['java', '-jar', str(dist / 'hap-sign-tool.jar'), 'sign-profile',
@@ -165,7 +198,8 @@ def prepare(root, cache):
             replace(profile, read(signed))
     return {'scope': 'fixed source/profile readiness ONLY; GN still must compile/sign actual modules',
         'source_revision': REVISION, 'profile_sha256': digest(read(profile)), 'signer': SIGNATURE,
-        'APLs_ACLs_permissions_vendor_policies_unchanged': True, 'actual_compilation': False,
+        'APL_vendor_policies_unchanged': True, 'original_acls': list(ACLS),
+        'desired_acls': list(CAPTION_ACLS), 'actual_compilation': False,
         'runtime_validated': False, 'first_artifact_behavior_gate_passed': False}
 
 def verify(root):

@@ -34,7 +34,7 @@ def read_inputs(ref, owner):
     value = json.loads(data_file(ref).read_text())
     require(type(value) is dict and set(value) == {
         'schema', 'source_commit', 'archive', 'providers', 'native_helpers', 'native_addons',
-        'ui_plans', 'communications_services', 'permission_allow_text'},
+        'ui_plans', 'communications_services', 'permission_allow_text', 'livecaptions579'},
         'fixed capability fixture data required; no executable or expected-result field')
     require(value['schema'] == 'actual-qemu-capability578-inputs/v1' and
             data_file(value['archive']) == owner.archive and
@@ -72,6 +72,9 @@ def run_on_owner(owner, inputs_ref, resources, **context):
     from apps_providers579_bindings import bind as bind_providers
     from apps_providers579_project import IDS as PROVIDER_CASES
     from apps_providers579_runtime import run as run_providers
+    from apps_providers579_wifi_bindings import bind as bind_wifi
+    from apps_providers579_wifi_runtime import run as run_wifi
+    from livecaptions579_runtime import run as run_captions
     from verify_screen_blink_evidence import verify_evidence as replay_original_blink
 
     guest = context['guest']
@@ -111,6 +114,8 @@ def run_on_owner(owner, inputs_ref, resources, **context):
             package = {'native_helpers': inputs['native_helpers']}
         elif group == 'settings-idle':
             package = {'native_addons': inputs['native_addons'], 'settings_actions579': settings_actions}
+        elif group == 'livecaptions':
+            package = {'livecaptions579': inputs['livecaptions579']}
         io = OwnedIO(owner, guest, root / (group + '-' + case),
             run_id=secrets.token_hex(16), package_inputs=package,
             prepare_callers=prepare_callers, https_factory=OwnedHTTPS)
@@ -118,6 +123,7 @@ def run_on_owner(owner, inputs_ref, resources, **context):
         io.environment.update(communications578_services=inputs['communications_services'],
                               permission_allow_text=inputs['permission_allow_text'])
         if group == 'providers':
+            package['native_helpers'] = inputs['native_helpers']
             # Only actual already-completed same-guest family documents can
             # accompany these extra observations. Missing peer/owner work is
             # left unresolved by the provider's fixed runtime contract.
@@ -331,6 +337,24 @@ def run_on_owner(owner, inputs_ref, resources, **context):
 
     attempt('settings-idle', 'conditional', run_settings_idle, settings_idle_review)
 
+    def caption_case(io):
+        return {'evidence': run_captions(io), 'archive_sha256': archive_sha, 'boot_id': boot}
+
+    def caption_review(io, result):
+        observed = json.loads(data_file(result['evidence']).read_text())
+        require(observed.get('schema') == 'actual-livecaptions579-runtime/v1' and
+                observed.get('archive_sha256') == archive_sha and observed.get('boot_id') == boot and
+                observed.get('runtime_validated') is True and observed.get('cleanup_complete') is True and
+                observed.get('failures') == [] and len(observed.get('cases', [])) == 7,
+                'complete actual speech, consent, lifecycle and cleanup required')
+        actual = [io.ref_receipt(r) for r in io.receipts]
+        for receipt in observed['commands']:
+            require(receipt['receipt'] in actual, 'caption command is not the original held IO')
+        return {'actual_raw_behavior_matched': True, 'archive_sha256': archive_sha,
+                'boot_id': boot, 'whole_id_closure': False}
+
+    attempt('livecaptions', 'english', caption_case, caption_review)
+
     def provider_review(io, result):
         require(result.get('archive_sha256') == archive_sha and result.get('boot_id') == boot and
                 result.get('runtime_pass') is False and result.get('closed_requirement_ids') == [],
@@ -356,9 +380,11 @@ def run_on_owner(owner, inputs_ref, resources, **context):
             # Photos runs while the original Knowledge actor still holds its
             # assets. Recreating a fixture here would lose that real lifecycle.
             continue
-        attempt('providers', case, lambda io, c=case: run_providers(guest, bind_providers(io),
-            {'case': c, 'run_id': io.run_id,
-             'profile': guest.report['test_environment']['device_type']}), provider_review)
+        def provider_case(io, c=case):
+            runner, binder = (run_wifi, bind_wifi) if c == 'wifi' else (run_providers, bind_providers)
+            return runner(guest, binder(io), {'case': c, 'run_id': io.run_id,
+                'profile': guest.report['test_environment']['device_type']})
+        attempt('providers', case, provider_case, provider_review)
 
     read_inputs(inputs_ref, owner)
     report['cleanup_complete'] = True

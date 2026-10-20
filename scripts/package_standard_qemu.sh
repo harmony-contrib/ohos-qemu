@@ -422,8 +422,10 @@ from pathlib import Path
 import sys
 path = Path(sys.argv[1])
 text = path.read_text()
-if '# QEMU_PEER_LAN_V1' in text:
+if '# QEMU_PEER_LAN_V2_DATA_FIRST' in text:
     raise SystemExit(0)
+if '# QEMU_PEER_LAN_V1' in text:
+    raise SystemExit('repackage a clean source launcher; legacy peer-NIC order is not the paired candidate')
 nics = list(re.finditer(r'virtio-net-(?:pci|device),netdev=[A-Za-z0-9_-]+(?:,mac=[0-9a-fA-F:]+)?', text))
 serial = re.search(r'(?<![A-Za-z0-9_.])sn=([A-Za-z0-9_-]+)', text)
 original_serial = serial.group(1) if serial else ''
@@ -433,12 +435,23 @@ def nic(match):
     return re.sub(r',mac=[0-9a-fA-F:]+$', '', match.group()) + ',mac=${QEMU_MGMT_MAC}'
 if len(nics) == 1:
     text = re.sub(r'virtio-net-(?:pci|device),netdev=[A-Za-z0-9_-]+(?:,mac=[0-9a-fA-F:]+)?', nic, text)
+    # SoftBus's real default LNN Ethernet manager registers eth0 only and
+    # accepts one main IP subnet. In paired mode enumerate the data NIC first;
+    # management remains a separate NIC. The actual guests must still prove
+    # the mapping by configured MAC, not infer it from this source ordering.
+    text, peer_nic_slots = re.subn(
+        r'(?<!\S)-device([ \t]+)(virtio-net-(?:pci|device),netdev=[A-Za-z0-9_-]+,mac=\$\{QEMU_MGMT_MAC\})',
+        lambda match: '${QEMU_PEER_NIC_ARGS} -device' + match[1] + match[2], text)
+    if peer_nic_slots != 1:
+        raise SystemExit('unable to place the optional peer NIC before the unique management NIC')
 if serial and len(nics) == 1:
     text = re.sub(r'(?<![A-Za-z0-9_.])sn=[A-Za-z0-9_-]+', 'sn=${QEMU_GUEST_SERIAL}', text)
 block = r'''# QEMU_PEER_LAN_V1: optional real two-QEMU Ethernet link; user NIC remains management.
+# QEMU_PEER_LAN_V2_DATA_FIRST: paired data NIC precedes management; runtime must verify both actual MAC mappings.
 QEMU_PEER_MODE="${QEMU_PEER_MODE:-off}"
 QEMU_MGMT_MAC="${QEMU_MGMT_MAC:-@MGMT_MAC@}"
 QEMU_GUEST_SERIAL="${QEMU_GUEST_SERIAL:-@SERIAL@}"
+QEMU_PEER_NIC_ARGS=''
 if ! [[ "${QEMU_MGMT_MAC}" =~ ^[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}$ ]]; then
   echo "QEMU_MGMT_MAC must be a valid MAC address" >&2; exit 2
 fi
@@ -478,7 +491,8 @@ case "${QEMU_PEER_MODE}" in
     else
       QEMU_PEER_ENDPOINT="server=off,reconnect-ms=250"
     fi
-    QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -uuid ${QEMU_INSTANCE_UUID} -netdev stream,id=peer_lan,${QEMU_PEER_ENDPOINT},addr.type=inet,addr.host=127.0.0.1,addr.port=${QEMU_PEER_PORT} -device virtio-net-pci,id=peer_lan_nic,netdev=peer_lan,mac=${QEMU_PEER_MAC}"
+    QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -uuid ${QEMU_INSTANCE_UUID} -netdev stream,id=peer_lan,${QEMU_PEER_ENDPOINT},addr.type=inet,addr.host=127.0.0.1,addr.port=${QEMU_PEER_PORT}"
+    QEMU_PEER_NIC_ARGS="-device virtio-net-pci,id=peer_lan_nic,netdev=peer_lan,mac=${QEMU_PEER_MAC}"
     if [ -n "${QEMU_PEER_CAPTURE_FILE:-}" ]; then
       if ! [[ "${QEMU_PEER_CAPTURE_FILE}" =~ ^/[A-Za-z0-9_./-]+$ ]] || [ -e "${QEMU_PEER_CAPTURE_FILE}" ] || [ -L "${QEMU_PEER_CAPTURE_FILE}" ]; then
         echo "peer capture requires a new absolute path containing only safe characters" >&2; exit 2

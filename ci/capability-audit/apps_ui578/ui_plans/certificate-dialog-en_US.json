@@ -29,6 +29,14 @@
     {
       "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/certificate/strings-en_US.json",
       "sha256": "64ec127455734ce0ae2e9ee31cc3bb345b7ce4e43999269be105ddecdedd0c27"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/product-next/after/applications/standard/user_certificate_manager/certmanager/src/main/ets/MainAbility/CertPickerUiExtAbility.ets",
+      "sha256": "acb3c31862635adb4288b399f7d1d051db100c04bf8ff9387597daf5b3d160a0"
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/product-next/after/applications/standard/user_certificate_manager/certmanager/src/main/ets/pages/CertificateUninstallPage.ets",
+      "sha256": "3b86ce2e0fbd463f2671abbe6b6189a7dcca5bdfa7caa8700e3d717f782e268f"
     }
   ],
   "provider_bundle": "com.ohos.certmanager",
@@ -50,6 +58,49 @@
     "cancel": [
       {
         "key": "Back"
+      }
+    ],
+    "install-prompt": [
+      {
+        "bundle": "com.ohos.certmanager",
+        "text": "Continue"
+      }
+    ],
+    "uninstall-prompt": [
+      {
+        "bundle": "com.ohos.certmanager",
+        "identifier": "cert-uninstall-title"
+      }
+    ],
+    "cancel-install": [
+      {
+        "bundle": "com.ohos.certmanager",
+        "text": "Cancel",
+        "ancestor": true
+      }
+    ],
+    "confirm-install": [
+      {
+        "bundle": "com.ohos.certmanager",
+        "text": "Continue",
+        "ancestor": true
+      },
+      {
+        "bundle": "com.ohos.certmanager",
+        "text": "OK",
+        "ancestor": true
+      }
+    ],
+    "cancel-uninstall": [
+      {
+        "bundle": "com.ohos.certmanager",
+        "identifier": "cert-uninstall-cancel"
+      }
+    ],
+    "confirm-uninstall": [
+      {
+        "bundle": "com.ohos.certmanager",
+        "identifier": "cert-uninstall-confirm"
       }
     ]
   },

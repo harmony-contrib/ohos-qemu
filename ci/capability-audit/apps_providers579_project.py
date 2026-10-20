@@ -39,7 +39,7 @@ ACTIONS = {
     'input': ('identity', 'permissions', 'observe', 'show-input', 'hide-input', 'capture-start', 'capture-stop', 'restore', 'exit'),
     'dhardware': ('identity', 'discover', 'authenticate', 'trusted', 'unbind', 'stop-discover', 'invalid-auth', 'exit'),
     'vpn': ('identity', 'authorize', 'stop-vpn', 'exit'),
-    'wifi': ('identity', 'permissions', 'snapshot', 'sta-start', 'sta-state', 'sta-stop', 'ap-start', 'ap-state', 'ap-stop', 'restore', 'exit'),
+    'wifi': ('identity', 'permissions', 'snapshot', 'sta-start', 'sta-state', 'sta-stop', 'networks', 'detect', 'ap-start', 'ap-state', 'ap-stop', 'restore', 'exit'),
     'published': ('identity', 'declarations', 'exit'), 'exports': ('identity', 'matrix-modern', 'matrix-legacy', 'exit'),
     'imagegen': ('identity', 'graph-open', 'graph-hide', 'graph-restore', 'graph-close',
         'dialog-open', 'dialog-hide', 'dialog-restore', 'dialog-close', 'boundaries', 'exit'),
@@ -81,7 +81,7 @@ def permissions(case, role):
         'dhardware': ['ohos.permission.DISTRIBUTED_DATASYNC'],
         'ethernet': ['ohos.permission.CONNECTIVITY_INTERNAL', 'ohos.permission.GET_NETWORK_INFO'],
         'sysvpn': ['ohos.permission.MANAGE_VPN'], 'alwaysvpn': ['ohos.permission.MANAGE_VPN'],
-        'wifi': ['ohos.permission.GET_WIFI_INFO', 'ohos.permission.SET_WIFI_INFO', 'ohos.permission.SET_WIFI_CONFIG',
+        'wifi': ['ohos.permission.INTERNET', 'ohos.permission.GET_NETWORK_INFO', 'ohos.permission.GET_WIFI_INFO', 'ohos.permission.SET_WIFI_INFO', 'ohos.permission.SET_WIFI_CONFIG',
                  'ohos.permission.GET_WIFI_CONFIG', 'ohos.permission.MANAGE_WIFI_CONNECTION',
                  'ohos.permission.MANAGE_WIFI_HOTSPOT', 'ohos.permission.LOCATION', 'ohos.permission.APPROXIMATELY_LOCATION']}.get(case, [])
 

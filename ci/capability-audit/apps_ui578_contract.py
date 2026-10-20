@@ -31,7 +31,7 @@ PERMISSIONS = {
     'certificate-dialog': ('ACCESS_CERT_MANAGER',),
     'accessibility-input': (),
     'accessibility-settings': ('READ_ACCESSIBILITY_CONFIG', 'WRITE_ACCESSIBILITY_CONFIG', 'MANAGE_SECURE_SETTINGS'),
-    'network-policy': ('MANAGE_NET_STRATEGY',), 'apn': ('MANAGE_APN_SETTING',), 'shortkey': (),
+    'network-policy': ('MANAGE_NET_STRATEGY',), 'apn': ('MANAGE_APN_SETTING','GET_TELEPHONY_STATE'), 'shortkey': (),
     'enterprise': ('MANAGE_ENTERPRISE_DEVICE_ADMIN','START_PROVISIONING_MESSAGE'),
 }
 # UI-only aggregate protocols needing further implementation are never closed

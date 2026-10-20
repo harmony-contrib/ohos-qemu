@@ -1,0 +1,134 @@
+{
+  "scope": "actual production inputs prepared; no model inference, SDK test or capability acceptance",
+  "receipt": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r66-asr-product-inputs579-04/receipt.json",
+    "sha256": "dccf2c0277926175d36934eb4a0189b25e696cfd44d620381d6737273721dd46"
+  },
+  "owner_cleanup_verified": true,
+  "models_and_notices": {
+    "tiny.en-encoder.int8.onnx": {
+      "sha256": "0ce578b827c94a961aacb8fa14b02f096504b337e5c94be37c36238cbe3e8bc6",
+      "bytes": 12937772,
+      "source_url": "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny.en/resolve/d026532c022fa99fd789d6b32446a1df7b6bfc43/tiny.en-encoder.int8.onnx"
+    },
+    "tiny.en-decoder.int8.onnx": {
+      "sha256": "06c0e6ff6348d427e51839219d1c886c18cfdf411e629e33f5e1679bff9c1527",
+      "bytes": 89853865,
+      "source_url": "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny.en/resolve/d026532c022fa99fd789d6b32446a1df7b6bfc43/tiny.en-decoder.int8.onnx"
+    },
+    "tiny.en-tokens.txt": {
+      "sha256": "306cd27f03c1a714eca7108e03d66b7dc042abe8c258b44c199a7ed9838dd930",
+      "bytes": 835554,
+      "source_url": "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny.en/resolve/d026532c022fa99fd789d6b32446a1df7b6bfc43/tiny.en-tokens.txt"
+    },
+    "silero_vad.onnx": {
+      "sha256": "a35ebf52fd3ce5f1469b2a36158dba761bc47b973ea3382b3186ca15b1f5af28",
+      "bytes": 1807522,
+      "source_url": "https://raw.githubusercontent.com/snakers4/silero-vad/v4.0/files/silero_vad.onnx"
+    },
+    "sherpa_onnx-1.11.2.har": {
+      "sha256": "d196941c571f4bd7dd98e6c03097aa4873b9a934ceced64800fb85b25892e6a0",
+      "bytes": 13894230,
+      "source_url": "https://ohpm.openharmony.cn/ohpm/sherpa_onnx/-/sherpa_onnx-1.11.2.har"
+    },
+    "onnxruntime-ohos-armeabi-v7a-1.16.3.zip": {
+      "sha256": "cecbae2a8404a26ad1595f3ff0886e2e1353933c0883e2dfa846f063dfe34902",
+      "bytes": 5252542,
+      "source_url": "https://huggingface.co/csukuangfj/onnxruntime-libs/resolve/c5ad3699dbc2902c93b0128a1e427201cec95df4/onnxruntime-ohos-armeabi-v7a-1.16.3.zip"
+    },
+    "test-clean.tar.gz": {
+      "sha256": "39fde525e59672dc6d1551919b1478f724438a95aa55f874b576be21967e6c23",
+      "bytes": 346663984,
+      "source_url": "https://www.openslr.org/resources/12/test-clean.tar.gz"
+    },
+    "silero-v4-LICENSE": {
+      "sha256": "2e63e9a38b6e8fc0c7bc37ce174caca1862870856c6daf5697cfb785e925520b",
+      "bytes": 1075,
+      "source_url": "https://raw.githubusercontent.com/snakers4/silero-vad/v4.0/LICENSE"
+    },
+    "openai-v20250625-LICENSE": {
+      "sha256": "b5d65a59060e68c4ff940e1eddfa6f94b2d68fdf58ed7f4dd57721c997e35e9d",
+      "bytes": 1063,
+      "source_url": null
+    },
+    "sherpa-1.11.2-LICENSE": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "source_url": null
+    },
+    "ort-1.16.3-LICENSE": {
+      "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+      "bytes": 1073,
+      "source_url": null
+    },
+    "ort-1.16.3-ThirdPartyNotices.txt": {
+      "sha256": "d7d726424fc23a8395c139bbc7eb2aefa2b5bb2eb3332ec34ad0442d149d2308",
+      "bytes": 325358,
+      "source_url": null
+    },
+    "sherpa-1.11.2-whisper-export.py": {
+      "sha256": "13d9de9f93af181844b3f6c6db04a7ac7689fc2a5503e0705ece8d34570cf456",
+      "bytes": 19947,
+      "source_url": null
+    },
+    "hf-model-info.json": {
+      "sha256": "943def8dbc20fa8e33c42cd859547a6f7ac3c8651c3a413169150187a336dfab",
+      "bytes": 1954,
+      "source_url": null
+    },
+    "hf-ort-info.json": {
+      "sha256": "23ef3ee530649a77dcac3bce4403631883f102c3819902575e2068145e7a09cf",
+      "bytes": 147039,
+      "source_url": null
+    }
+  },
+  "speech": [
+    {
+      "utterance_id": "1089-134686-0000",
+      "speaker_id": "1089",
+      "original_transcript_line": "1089-134686-0000 HE HOPED THERE WOULD BE STEW FOR DINNER TURNIPS AND CARROTS AND BRUISED POTATOES AND FAT MUTTON PIECES TO BE LADLED OUT IN THICK PEPPERED FLOUR FATTENED SAUCE",
+      "source_flac_sha256": "30885601173f96b0d8ddd020dc959b055c6c1582b85a33e3fcab8c4b08ed94c2",
+      "wav_sha256": "0b1785dba56f22af426ccb25d318f7e103558fd40e1c3ab064b455dba2afae12",
+      "audio_metadata": {
+        "sample_rate": 16000,
+        "channels": 1,
+        "sample_width_bytes": 2,
+        "frames": 166960,
+        "pcm_sha256": "06b3e22db20760452d503a01d24cd7a7a23ddbeab07919c58e22eccb68cc03fb"
+      }
+    },
+    {
+      "utterance_id": "1188-133604-0000",
+      "speaker_id": "1188",
+      "original_transcript_line": "1188-133604-0000 YOU WILL FIND ME CONTINUALLY SPEAKING OF FOUR MEN TITIAN HOLBEIN TURNER AND TINTORET IN ALMOST THE SAME TERMS",
+      "source_flac_sha256": "4a10149395cb5af8aa5d04ef3adb49b3980baa93114d0851046e6343744b26cb",
+      "wav_sha256": "7103ea9b2746ea371e053c5e44aa65e3d69fdc84194e4af12722cd72a721c822",
+      "audio_metadata": {
+        "sample_rate": 16000,
+        "channels": 1,
+        "sample_width_bytes": 2,
+        "frames": 171600,
+        "pcm_sha256": "e75647265be26ada1467b4798dbb6d789d786fa99becf6e76635532a75198a60"
+      }
+    }
+  ],
+  "lottie_dependency": {
+    "scope": "actual primary production dependency only; NOT runtime acceptance",
+    "artifact": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r66-lottie-production-input579-06/lottie/lottie-2.0.23.har",
+      "sha256": "c05579c5378e6ac696a4c36e7ae0a1fde09f611bc47ec198fc91100c8db2cbc5",
+      "bytes": 193331
+    },
+    "registry_integrity": "sha512-SiVmsyllXLcvSrh98qsXtjSoVaxy1bm8sGZzmz94DZOjdQ2zSCnTzY627EevkCCFxAA5HIbqFPUWokhc8bp/3Q==",
+    "registry_metadata": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r66-lottie-production-input579-06/lottie/direct-registry.json",
+      "sha256": "39537f13ff346f2ba3cba0b3505b8fff842d6f4220e59c5c1c570d0956ab5c11"
+    },
+    "input_descriptor": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r66-lottie-production-input579-06/lottie-input.json",
+      "sha256": "a42bc70af6507e010c614799a3399a698ae42b1d8edaaf4662a87796899d91d3"
+    }
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "remaining_five_started": false
+}

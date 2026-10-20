@@ -30,7 +30,7 @@ def read_plan(ref, kind, run=None):
     expected = ('com.ohos.sceneboard' if kind in ('notification-settings','notification-subscription')
         else 'com.ohos.certmanager' if kind=='certificate-dialog'
         else 'com.ohos.adminprovisioning' if kind=='enterprise'
-        else 'com.huawei.hmos.callsetting' if kind=='apn'
+        else 'com.ohos.callsetting' if kind=='apn'
         else 'com.ohos.communicationsetting' if kind=='network-policy'
         else 'com.ohos.intelligentscene' if kind=='intelligent-scene'
         else 'com.ohos.settings' if kind in ('shortkey','accessibility-settings')
@@ -248,6 +248,15 @@ class Session:
         raise ValueError('actual public extension callback missing: '+event)
 
     def invoke(self, role, operation, action, *, wait=True, number=0, argument=''):
+        if self.kind=='apn' and action in ('read','environment'):
+            require(argument=='' and number==0,'fixed APN query request only')
+            begin=len(self.value['commands'])
+            self.launch(role,operation,argument='read-current-apn' if action=='read' else 'get-apn-environment')
+            self.value['actions'].append({'role':role,'operation':operation,'action':action,
+                'source_dispatch':'apn-onrequest-'+action,'commands':list(range(begin,len(self.value['commands'])))})
+            rows=self.wait(role,lambda v:any(r['operation']==operation and r['event']=='call.'+action for r in v),'actual_apn_query_call')
+            if not wait:return rows
+            return self.wait(role,lambda v:any(r['operation']==operation and r['event']=='return.'+action for r in v),'actual_apn_query_return')
         if self.kind=='intelligent-scene' and action=='read':
             require(argument=='' and number==0,'fixed DND query request only')
             begin=len(self.value['commands'])
@@ -323,7 +332,7 @@ class Session:
                 tree,path = self.ui.layout(bundle=self.plan['provider_bundle'],label='real_provider')
                 node = select_node(tree,**self.plan['visible'])
                 current_rows=self.rows(role)
-                require(self.kind in ('intelligent-scene','network-policy') or not any(r['operation']==operation and r['event'].startswith('return.') for r in current_rows),
+                require(self.kind in ('intelligent-scene','network-policy','apn') or not any(r['operation']==operation and r['event'].startswith('return.') for r in current_rows),
                     'with-result API resolved before its real provider UI closed')
                 self.value['actions'].append({'visible':operation,'role':role,'layout':json_ref(path),'node':node,
                     'commands':list(range(start,len(self.value['commands'])))})
@@ -350,7 +359,7 @@ class Session:
         expected = ('NotificationManangerUIExtensionAbility' if kind=='notification-settings'
             else 'NotificationAccessGrantUIExtensionAbility' if kind=='notification-subscription'
             else 'CertPickerUIExtAbility' if kind=='certificate-dialog'
-            else 'ByodAdminProvisionAbility' if kind=='enterprise' else 'IntelligentSceneUIExtSettingAbility' if kind=='intelligent-scene' else 'UIExtensionProvider' if kind=='network-policy' else 'IntelligentSceneAppSelectExtensionAbility' if kind=='intelligent-scene-settings' else 'com.ohos.settings.MainAbility')
+            else 'ByodAdminProvisionAbility' if kind=='enterprise' else 'IntelligentSceneUIExtSettingAbility' if kind=='intelligent-scene' else 'UIExtensionProvider' if kind=='network-policy' else 'GeneralCallSettingDialogAbility' if kind=='apn' else 'IntelligentSceneAppSelectExtensionAbility' if kind=='intelligent-scene-settings' else 'com.ohos.settings.MainAbility')
         declared=doc.get('extensionAbilityInfo',[])+doc.get('abilityInfos',[])
         target=[a for a in declared if a.get('name')==expected and a.get('moduleName') in proof['modules']]
         require(len(target)==1 and ((kind in ('enterprise','accessibility-settings') and target[0].get('visible') is True) or
@@ -625,7 +634,7 @@ class Session:
         self.same_guest()
         roles=('normal','system-denied','a','b','account') if self.kind=='blink' else (
             ('normal','system-denied','a','b') if self.kind in
-                ('intelligent-scene','certificate-dialog','network-policy','enterprise','accessibility-input') else ('normal','system-denied','a'))
+                ('intelligent-scene','certificate-dialog','network-policy','apn','enterprise','accessibility-input') else ('normal','system-denied','a'))
         try:
             self.prepared=self.callbacks['prepare_apps578'](self.guest,self.kind,self.run,roles)
             require(set(self.prepared)==set(roles),'original build/sign/install must provide every exact role')
@@ -653,6 +662,9 @@ class Session:
             elif self.kind=='network-policy':
                 from apps_ui578_followup import network_policy
                 network_policy(self)
+            elif self.kind=='apn':
+                from apps_ui578_apn import apn_case
+                apn_case(self)
             elif self.kind=='accessibility-settings':
                 from apps_ui578_extra import settings_case
                 settings_case(self)

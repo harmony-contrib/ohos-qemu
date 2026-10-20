@@ -1,5 +1,5 @@
 {
-  "scope": "whole product policy originals plus six finite signer-bound insertions; source-only",
+  "scope": "whole product policy originals plus seven finite install insertions and CertificateManager signer-only capability; source-only",
   "policies": {
     "install_list.json": {
       "before_sha256": "c373f96100e8b7263bd51d057f17b695d1a48890c3c48bc84f458a026b6c9ea5",
@@ -14,7 +14,8 @@
       "bytes": 9936
     }
   },
-  "actual_prebuilt_inputs": [
+  "first_artifact_behavior_gate_passed": false,
+  "historical_prebuilt_inputs": [
     {
       "path": "applications/standard/hap/sceneboard/PortalLogin.hap",
       "sha256": "d650d0a1bbd744d1bdf8cfcc4ca16ca51cecdc2b96c09d8f358897a54da00185",
@@ -64,5 +65,11 @@
       ]
     }
   ],
-  "first_artifact_behavior_gate_passed": false
+  "selected_source_providers": [
+    "com.ohos.locationdialog",
+    "com.ohos.communicationsetting",
+    "com.ohos.callsetting",
+    "com.ohos.certmanager",
+    "com.ohos.vassistant"
+  ]
 }

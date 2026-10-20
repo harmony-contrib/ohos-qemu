@@ -53,6 +53,7 @@ HELPERS = {
         'libraries': ['security/access_token/libaccesstoken_sdk.z.so'], 'headers': [TOKEN['header']], 'extra_includes': []}}
 COMMUNICATION_HELPER_NAMES = ('communications578_permission_controller', 'communications578_at_peer')
 SETTINGS_HELPER_NAMES = ('settings_idle579_napi',)
+WIFI_HELPER_NAMES = ('apps579_wifi_peer',)
 C_ABI_GUARD = '/* C helper retains actual C GN flags; no C++ ABI assertion. */\n'
 ABI_GUARD = '''#include <string>
 #include <type_traits>
@@ -72,6 +73,12 @@ def helper_spec(name):
     """
     if name in HELPERS:
         return HELPERS[name]
+    if name in WIFI_HELPER_NAMES:
+        from apps_providers579_wifi_native import helper_recipes
+        recipes = helper_recipes()
+        if set(recipes) != set(WIFI_HELPER_NAMES):
+            raise ValueError('fixed isolated-radio C helper recipe required')
+        return recipes[name]
     if name in SETTINGS_HELPER_NAMES:
         from settings_idle579_native import helper_recipes
         recipes = helper_recipes()
@@ -502,6 +509,8 @@ class Builder:
             self.report['communications_native_recipe'] = self.remember(HERE / 'communications578_native.py', source=False)
         if set(helpers) & set(SETTINGS_HELPER_NAMES):
             self.report['settings_native_recipe'] = self.remember(HERE / 'settings_idle579_native.py', source=False)
+        if set(helpers) & set(WIFI_HELPER_NAMES):
+            self.report['wifi_native_recipe'] = self.remember(HERE / 'apps_providers579_wifi_native.py', source=False)
         self.environment = dict(os.environ, LC_ALL='C', LC_CTYPE='C', LANG='C', TMPDIR=str(self.output / 'tmp'))
         for key in ('CPATH', 'C_INCLUDE_PATH', 'CPLUS_INCLUDE_PATH', 'OBJC_INCLUDE_PATH',
                     'LIBRARY_PATH', 'COMPILER_PATH', 'GCC_EXEC_PREFIX', 'CFLAGS', 'CXXFLAGS', 'LDFLAGS'):
@@ -886,12 +895,14 @@ class ExistingVerifier(Builder):
         if self.artifact_origin is None or str(self.artifact_origin) == '/':
             raise ValueError('original complete command logs absent')
         known = (set(HELPERS) | (set(old.get('helpers', {})) &
-            (set(COMMUNICATION_HELPER_NAMES) | set(SETTINGS_HELPER_NAMES))))
+            (set(COMMUNICATION_HELPER_NAMES) | set(SETTINGS_HELPER_NAMES) | set(WIFI_HELPER_NAMES))))
         allowed_fixtures = {(HERE / 'fixtures' / helper_spec(name)['fixture']).resolve() for name in known}
         if known & set(COMMUNICATION_HELPER_NAMES):
             allowed_fixtures.add((HERE / 'communications578_native.py').resolve())
         if known & set(SETTINGS_HELPER_NAMES):
             allowed_fixtures.add((HERE / 'settings_idle579_native.py').resolve())
+        if known & set(WIFI_HELPER_NAMES):
+            allowed_fixtures.add((HERE / 'apps_providers579_wifi_native.py').resolve())
         allowed_runtime = {}
         prior_runtime = old.get('installed_runtime_profile')
         if prior_runtime is not None:
@@ -1043,7 +1054,7 @@ def main():
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--product', choices=[PRODUCT], required=True)
-    parser.add_argument('--helper', choices=tuple(HELPERS) + COMMUNICATION_HELPER_NAMES + SETTINGS_HELPER_NAMES, action='append',
+    parser.add_argument('--helper', choices=tuple(HELPERS) + COMMUNICATION_HELPER_NAMES + SETTINGS_HELPER_NAMES + WIFI_HELPER_NAMES, action='append',
                         help='Repeat to select; default original helpers only; communication helpers require explicit selection')
     parser.add_argument('--plan-only', action='store_true', help='Read/query existing GN only; never clang/build GN')
     parser.add_argument('--verify-existing', type=Path, help='Read-only original build.json; no Ninja/compiler/linker invocation')

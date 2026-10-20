@@ -1,0 +1,16 @@
+{
+  "scope": "actual selected fixed HAP disassembly read only; no runtime pass",
+  "actual_disassembly": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-remaining579-source-current/payloads/Intelligent_Scene/ets/modules.abc.pa",
+    "sha256": "86298235748a8d759e6b690792299dd7b3940860dcc13d8ecf2a6a29e52c645d"
+  },
+  "functions": {
+    "ConfigParseUtil.getConfigSync": 195745,
+    "RawFileUtil.readJsonFile": 202989,
+    "PreloadManager.getVersionFromCcm": 230126,
+    "PreloadManager.getPresetModeIds": 229589,
+    "PreloadManager.getTemplateModeId": 229675,
+    "ModeDefaultDataManager.rawfile": 228950
+  },
+  "conclusion": "Missing optional etc/IntelligentScene/intelligent_scene_list.json falls back to embedded DND/SLEEP mode IDs and packaged rawfile/phone/defaultSceneConfigData.json; do not synthesize a product config. Actual first-boot database/UI behavior remains pending."
+}

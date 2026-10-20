@@ -1,6 +1,31 @@
 --- a/applications/standard/hap/BUILD.gn
 +++ b/applications/standard/hap/BUILD.gn
-@@ -260,11 +260,19 @@
+@@ -246,11 +246,19 @@
+   subsystem_name = "applications"
+ }
+ 
+-ohos_prebuilt_etc("CallSetting_hap") {
+-  source = hap_src_dir + "CallSetting.hap"
+-  module_install_dir = "app/com.ohos.callsetting"
+-  part_name = "prebuilt_hap"
+-  subsystem_name = "applications"
++if (defined(product_name) &&
++    (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++     product_name == "x86_64_virt")) {
++  group("CallSetting_hap") {
++    deps = [ "//applications/standard/call/CallSetting:callsetting_hap" ]
++  }
++} else {
++  ohos_prebuilt_etc("CallSetting_hap") {
++    source = hap_src_dir + "CallSetting.hap"
++    module_install_dir = "app/com.ohos.callsetting"
++    part_name = "prebuilt_hap"
++    subsystem_name = "applications"
++  }
+ }
+ 
+ ohos_prebuilt_etc("EmergencyCommunication_hap") {
+@@ -260,11 +268,19 @@
    subsystem_name = "applications"
  }
  
@@ -25,3 +50,23 @@
  }
  
  ohos_prebuilt_etc("CallRecorder_hap") {
+@@ -573,11 +589,14 @@
+     deps +=
+         [ "//applications/standard/admin_provisioning:adminprovisioning_hap" ]
+   }
+-  # QEMU's configured provisioning provider must have a real source-built HAP.
++  # QEMU providers are ordinary source-built OS applications.
+   if (defined(product_name) &&
+       (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
+        product_name == "x86_64_virt")) {
+-    deps += [ "//applications/standard/admin_provisioning:adminprovisioning_hap" ]
+-  }
+-
+-}
++    deps += [
++      "//applications/standard/admin_provisioning:adminprovisioning_hap",
++      "//applications/standard/hap/vassistant_livecaptions579:vassistant_livecaptions579",
++    ]
++  }
++
++}

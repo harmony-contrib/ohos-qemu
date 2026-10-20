@@ -1,0 +1,189 @@
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/constant/Constants.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/constant/Constants.ets
+@@ -198,12 +198,14 @@
+   $r('app.string.highContrast_text'),
+   $r('app.string.single_audio'),
+   $r('app.string.invert_color'),
++  $r('app.string.livecaptions579_title'),
+ ];
+ 
+ export enum FunctionSelectTargetNameValue {
+   HIGH_CONTRAST_TEXT = 'HIGH_CONTRAST_TEXT',
+   SINGLE_AUDIO = 'AUDIO_MONO',
+-  INVERT_COLOR = 'INVERT_COLOR'
++  INVERT_COLOR = 'INVERT_COLOR',
++  CAPTIONS_ASSISTANT = 'CAPTIONS_ASSISTANT'
+ }
+ 
+ export enum FunctionSelectOriginNameValue {
+@@ -211,12 +213,14 @@
+   SINGLE_AUDIO = 'AUDIO_MONO',
+   INVERT_COLOR = 'INVERT_COLOR',
+   SCREEN_READER = 'com.ohos.screenreader/AccessibilityExtAbility',
++  CAPTIONS_ASSISTANT = 'CAPTIONS_ASSISTANT',
+ }
+ 
+ export const FUNCTION_SELECT_TARGET_NAME_ARRAY: string[] = [
+   'HIGH_CONTRAST_TEXT',
+   'AUDIO_MONO',
+   'INVERT_COLOR',
++  'CAPTIONS_ASSISTANT',
+ ]
+ 
+ export interface ExtensionInfo {
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/controller/FunctionSelectMenuController.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/controller/FunctionSelectMenuController.ets
+@@ -38,7 +38,7 @@
+ export class FunctionSelectMenuController {
+   private dataHelper: dataShare.DataShareHelper | null = null;
+   private compId: string = '';
+-  public static accessibilitySystemServiceList: string[] = ['HIGH_CONTRAST_TEXT', 'AUDIO_MONO', 'INVERT_COLOR'];
++  public static accessibilitySystemServiceList: string[] = ['HIGH_CONTRAST_TEXT', 'AUDIO_MONO', 'INVERT_COLOR', 'CAPTIONS_ASSISTANT'];
+   public static shortKeyTargetsIdListCache: string[] = [];
+   public static shortKeyTargetsIdList: string[] = [];
+   public static selectExtensionService: string = '';
+@@ -89,6 +89,9 @@
+       case FunctionSelectTargetNameValue.INVERT_COLOR:
+         resourceStrValue = FUNCTION_SELECT_SERVICES_ARRAY[2];
+         break;
++      case FunctionSelectTargetNameValue.CAPTIONS_ASSISTANT:
++        resourceStrValue = FUNCTION_SELECT_SERVICES_ARRAY[3];
++        break;
+       default:
+         break;
+     }
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/dialog/controller/SelectFunctionController.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/dialog/controller/SelectFunctionController.ets
+@@ -20,7 +20,8 @@
+ import { LogUtil } from '@ohos/settings.common/src/main/ets/utils/LogUtil';
+ import { HiSysEventUtil } from '@ohos/settings.common/src/main/ets/systemEvent/HiSysEventUtil';
+ import { HiSysAccessibilityEventGroup } from '@ohos/settings.common/src/main/ets/systemEvent/BehaviorEventConsts';
+-import { AbilityUtils } from '@ohos/settings.common/src/main/ets/utils/AbilityUtils';
++import common from '@ohos.app.ability.common';
++import { AbilityContextManager } from '@ohos/settings.common/src/main/ets/ability/AbilityContextManager';
+ import { FunctionSelectOriginNameValue } from '../../constant/Constants';
+ import { HighContrastTextSwitchController } from '../../controller/HighContrastTextSwitchController';
+ 
+@@ -67,14 +68,18 @@
+     }
+   }
+ 
+-  private openCaptionAbility(state: boolean): void {
+-    let uriAddress: string = state ? 'hw://vassistant/caption?action=close' : '';
++  private async openCaptionAbility(state: boolean): Promise<void> {
++    let uriAddress: string = state ? 'ohos://vassistant/caption?action=close' : '';
+     let want: Want = {
+       'bundleName': 'com.ohos.vassistant',
+       'abilityName': 'AiCaptionServiceExtAbility',
+       'uri': uriAddress
+     };
+-    AbilityUtils.startAbility(want);
++    const context = AbilityContextManager.getContext() as common.UIExtensionContext;
++    if (context === undefined || context === null) {
++      throw new Error('Actual Settings accessibility dialog context is absent');
++    }
++    await context.startAbility(want);
+   }
+ 
+   async enabledSelectFunction(target: string, state: boolean): Promise<boolean> {
+@@ -90,6 +95,9 @@
+         break;
+       case FunctionSelectOriginNameValue.INVERT_COLOR:
+         await config.invertColor.set(!state);
++        break;
++      case FunctionSelectOriginNameValue.CAPTIONS_ASSISTANT:
++        await this.openCaptionAbility(state);
+         break;
+       default:
+         break;
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/dialog/view/AccessibilityReConfirmDialog.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/dialog/view/AccessibilityReConfirmDialog.ets
+@@ -65,6 +65,9 @@
+           case FunctionSelectOriginNameValue.INVERT_COLOR:
+             targetsString = targetsString + ResourceUtil.getStringSync($r('app.string.invert_color'));
+             break;
++          case FunctionSelectOriginNameValue.CAPTIONS_ASSISTANT:
++            targetsString = targetsString + ResourceUtil.getStringSync($r('app.string.livecaptions579_title'));
++            break;
+           default:
+             break;
+         }
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/dialog/view/AccessibilityShortKeyDialog.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/dialog/view/AccessibilityShortKeyDialog.ets
+@@ -98,6 +98,10 @@
+           targetId = ResourceUtil.getStringSync($r('app.string.invert_color'));
+           isEnabled = await config.invertColor.get();
+           break;
++        case FunctionSelectOriginNameValue.CAPTIONS_ASSISTANT:
++          targetId = ResourceUtil.getStringSync($r('app.string.livecaptions579_title'));
++          isEnabled = Settings.getValueSync(getContext(this), 'vassistant_ai_caption_enable', 'false', DOMAIN_NAME) === 'true';
++          break;
+         default:
+           break;
+       }
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/dialog/view/ReConfirmDialogComponent.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/dialog/view/ReConfirmDialogComponent.ets
+@@ -177,6 +177,7 @@
+         .margin({ left: 8, right: 8 })
+ 
+       Button($r('app.string.accessibility_enable'))
++        .id('accessibility-shortcut-confirm-enable')
+         .fontFamily('HarmonyHeiTi')
+         .fontWeight(FontWeight.Medium)
+         .fontSize($r('sys.float.Body_L'))
+@@ -229,6 +230,7 @@
+           .fontWeight(FontWeight.Regular)
+           .maxFontScale(2)
+       }
++      .id('accessibility-shortcut-confirm-enable')
+       .backgroundColor($r('app.color.transparent'))
+       .width('100%')
+       .onClick(() => {
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/utils/AccessibilityCommonModel.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/utils/AccessibilityCommonModel.ets
+@@ -72,6 +72,9 @@
+       case FunctionSelectOriginNameValue.INVERT_COLOR:
+         selectName = await ResourceUtil.getString($r('app.string.invert_color'));
+         break;
++      case FunctionSelectOriginNameValue.CAPTIONS_ASSISTANT:
++        selectName = await ResourceUtil.getString($r('app.string.livecaptions579_title'));
++        break;
+       default:
+         if (selectName) {
+           LogUtil.info(`${TAG} getSelectAbilityName  ${selectName}`);
+@@ -97,6 +100,9 @@
+         break;
+       case FunctionSelectOriginNameValue.INVERT_COLOR:
+         selectName = $r('app.string.invert_color');
++        break;
++      case FunctionSelectOriginNameValue.CAPTIONS_ASSISTANT:
++        selectName = $r('app.string.livecaptions579_title');
+         break;
+       default:
+         if (selectName) {
+--- a/applications/standard/settings/product/phone/src/main/resources/base/element/string.json
++++ b/applications/standard/settings/product/phone/src/main/resources/base/element/string.json
+@@ -9121,6 +9121,10 @@
+                        "attr":  {
+                                     "priority":  "LT"
+                                 }
++                   },
++                   {
++                       "name": "livecaptions579_title",
++                       "value": "Live captions (English)"
+                    }
+                ]
+ }
+--- a/applications/standard/settings/product/phone/src/main/resources/zh_CN/element/string.json
++++ b/applications/standard/settings/product/phone/src/main/resources/zh_CN/element/string.json
+@@ -9414,6 +9414,10 @@
+                        "attr":  {
+                                     "priority":  "translate"
+                                 }
++                   },
++                   {
++                       "name": "livecaptions579_title",
++                       "value": "实时字幕（英语）"
+                    }
+                ]
+ }

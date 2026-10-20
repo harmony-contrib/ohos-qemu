@@ -1,0 +1,14 @@
+# Source-only declaration for the original Owner's single platform fixture
+# build. The Owner may transplant this fixed C source into its existing
+# ril_vendor anchor while preserving the anchor's actual product/sysroot flags.
+import("//build/ohos.gni")
+
+ohos_executable("apps579_wifi_peer") {
+  sources = [ "wifi_peer.c" ]
+  cflags = [ "-std=gnu11" ]
+  # POSIX/musl + Linux UAPI only. No DHCP SA proxy, netconn IPC, custom .so,
+  # libnl, libcap or host-linked executable is used by this fixture.
+  install_enable = false
+  subsystem_name = "communication"
+  part_name = "wifi"
+}

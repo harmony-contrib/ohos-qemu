@@ -23,16 +23,15 @@ PROVIDERS = {
     'com.hmos.mediacontroller': '/system/app/com.hmos.mediacontroller',
     'com.ohos.intelligentscene': '/system/app/com.ohos.intelligentscene',
     'com.ohos.callsetting': '/system/app/com.ohos.callsetting',
-    'com.ohos.communicationsetting': '/system/app/com.ohos.communicationsetting'}
+    'com.ohos.communicationsetting': '/system/app/com.ohos.communicationsetting',
+    'com.ohos.vassistant': '/system/app/com.ohos.vassistant'}
 PREBUILT = {
     'com.wifiservice.portallogin': ('PortalLogin.hap',
         'd650d0a1bbd744d1bdf8cfcc4ca16ca51cecdc2b96c09d8f358897a54da00185', ('EntryAbility',)),
     'com.hmos.mediacontroller': ('mediacontroller.hap',
         '1118c178e106bfd49bcff5de099daa8f24166595acac24941077e4cde60cd2d3', ('UIExtAbility', 'AVVolumeExtension')),
     'com.ohos.intelligentscene': ('Intelligent_Scene.hap',
-        'b328caf535c073768f50d52fcea8d1ced786f13479706e8085fb0553d163b420', ('IntelligentSceneUIExtSettingAbility',)),
-    'com.ohos.callsetting': ('CallSetting.hap',
-        'dc3f070e7200c471a492db08f4ac335809dfa598b784161af706435232a592e0', ())}
+        'b328caf535c073768f50d52fcea8d1ced786f13479706e8085fb0553d163b420', ('IntelligentSceneUIExtSettingAbility',))}
 POLICIES = {
     'install_list.json': 'c373f96100e8b7263bd51d057f17b695d1a48890c3c48bc84f458a026b6c9ea5',
     'install_list_capability.json': '2ce081c3d8b929070f4ced1a46298c7d019afcba0e83a6c1e6973cd1df653701',
@@ -105,6 +104,13 @@ def prepare(root, cache):
         report['providers']['com.ohos.communicationsetting'] = {
             'signer': SIGNATURE, 'source_profile_preparation': 'communicationsetting_provider follows this transaction',
             'compiled_HAP_and_actual_guest_binding': 'pending'}
+        for bundle, helper in (
+                ('com.ohos.callsetting', 'dialog_providers579/callsetting'),
+                ('com.ohos.certmanager', 'dialog_providers579/certmanager'),
+                ('com.ohos.vassistant', 'livecaptions_provider')):
+            report['providers'][bundle] = {'signer': SIGNATURE,
+                'source_profile_preparation': helper + ' follows this transaction',
+                'compiled_HAP_and_actual_guest_binding': 'pending'}
         signatures = {bundle: value['signer'] for bundle, value in report['providers'].items()}
         before = {}
         originals = {}
@@ -119,12 +125,24 @@ def prepare(root, cache):
         paths = {row['app_dir'] for row in install['install_list']}
         cap_rows = capabilities['install_list']
         if (set(PROVIDERS.values()) & paths or
-                any(row.get('bundleName') in PROVIDERS for row in cap_rows)):
+                any(row.get('bundleName') in set(PROVIDERS) | {'com.ohos.certmanager'} for row in cap_rows)):
             raise ValueError('original provider activation predecessor is not empty')
         for bundle, directory in PROVIDERS.items():
             install['install_list'].append({'app_dir': directory, 'removable': False})
-            cap_rows.append({'bundleName': bundle, 'app_signature': [signatures[bundle]],
-                             'allowAppUsePrivilegeExtension': True})
+            capability = {'bundleName': bundle, 'app_signature': [signatures[bundle]]}
+            if bundle == 'com.ohos.vassistant':
+                capability.update(keepAlive=False, allowAppDesktopIconHide=True)
+            else:
+                capability['allowAppUsePrivilegeExtension'] = True
+            cap_rows.append(capability)
+        # The original CertificateManager directory and removability already
+        # select this source app; its actual bundle has a different spelling.
+        if [r for r in install['install_list'] if r.get('app_dir') ==
+                '/system/app/com.ohos.certificatemanager'] != [
+                    {'app_dir': '/system/app/com.ohos.certificatemanager', 'removable': True}]:
+            raise ValueError('original CertificateManager install selection changed')
+        cap_rows.append({'bundleName': 'com.ohos.certmanager',
+                         'app_signature': [signatures['com.ohos.certmanager']]})
         pending = {'install_list.json': (json.dumps(install, indent=2) + '\n').encode(),
                    'install_list_capability.json': (json.dumps(capabilities, indent=2) + '\n').encode()}
         # No broad privilege wildcard or new user-grant row is introduced.

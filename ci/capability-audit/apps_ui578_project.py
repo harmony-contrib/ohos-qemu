@@ -45,6 +45,7 @@ def provider_page(kind):
     for line in result.splitlines(keepends=True):
         if line.startswith('import { CertificateProgram }') and kind!='certificate-dialog':continue
         if line.startswith('import { SettingsProgram }') and kind!='accessibility-settings':continue
+        if line.startswith('import { ApnProgram }') and kind!='apn':continue
         imported=re.match(r'import (\w+) from ',line)
         if imported and imported[1] not in IMPORTS[kind]|{'common'}:
             continue
@@ -70,11 +71,13 @@ def source_files(run, kind, role):
         mapping['AccountProgram.ets'] = 'entry/src/main/ets/common/AccountProgram.ets'
     if kind == 'accessibility-settings':
         mapping['SettingsProgram.ets']='entry/src/main/ets/common/SettingsProgram.ets'
+    if kind == 'apn':
+        mapping['ApnProgram.ets'] = 'entry/src/main/ets/common/ApnProgram.ets'
     if kind == 'certificate-dialog':
         mapping['CertificateProgram.ets'] = 'entry/src/main/ets/common/CertificateProgram.ets'
     out = {}
     for src, dest in mapping.items():
-        text = provider_page(kind) if src=='ProviderPage.ets' else (ASSETS/src).read_text()
+        text = (provider_page(kind) if src=='ProviderPage.ets' else apn_program(role) if src=='ApnProgram.ets' else (ASSETS/src).read_text())
         for old, new in replacements.items():
             text = text.replace(old, new)
         out[dest] = text
@@ -84,6 +87,28 @@ def source_files(run, kind, role):
         out['AppScope/resources/base/element/apps578_dnd.json'] = json.dumps({
             'string': [{'name': label['resource_name'], 'value': label['label']}]}, indent=2) + '\n'
     return out
+
+
+
+def apn_program(role):
+    require(role in ('normal','system-denied','a','b'), 'fixed APN role only')
+    if role in ('a','b'):
+        return (ASSETS/'ApnProgram.ets').read_text()
+    # Public negative callers never load a system-only DataShare implementation.
+    return """import common from '@ohos.app.ability.common';
+import data from '@ohos.telephony.data';
+import sim from '@ohos.telephony.sim';
+export class ApnProgram {
+  constructor(context: common.UIAbilityContext) {}
+  async environment(): Promise<string> {
+    const slot = await data.getDefaultCellularDataSlotId();
+    const max = sim.getMaxSimCount();
+    const active = slot >= 0 && slot < max ? await sim.isSimActive(slot) : false;
+    return JSON.stringify({ slot, max, active });
+  }
+  async read(): Promise<string> { return JSON.stringify(await data.queryAllApns()); }
+}
+"""
 
 
 def label_overlay(run, kind, role):

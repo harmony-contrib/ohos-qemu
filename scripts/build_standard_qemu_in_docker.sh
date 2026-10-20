@@ -480,6 +480,10 @@ NO_PREBUILT_SDK="${NO_PREBUILT_SDK:-0}"
 BUILD_ONLY_LOAD="${BUILD_ONLY_LOAD:-0}"
 PREPARE_ONLY="${PREPARE_ONLY:-0}"
 SOURCE_PREPARE_ONLY="${SOURCE_PREPARE_ONLY:-0}"
+QEMU_LIVE_CAPTIONS_INPUTS="${QEMU_LIVE_CAPTIONS_INPUTS:-}"
+QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${QEMU_LIVE_CAPTIONS_INPUTS_SHA256:-}"
+QEMU_LIVE_CAPTIONS_ABI="${QEMU_LIVE_CAPTIONS_ABI:-}"
+QEMU_LOTTIE_INPUT="${QEMU_LOTTIE_INPUT:-}"
 PATCH_COMPONENTS_ONLY="${PATCH_COMPONENTS_ONLY:-0}"
 SKIP_APT="${SKIP_APT:-0}"
 export QEMU_HOST_GN_QEMU_USER="${QEMU_HOST_GN_QEMU_USER:-0}"
@@ -3070,6 +3074,20 @@ PYPLAN
 }
 
 apply_qemu_capability_patch_plan() {
+  # Re-enter the exact existing HAP pipeline from the known complete prefix.
+  # Unknown states remain untouched and are checked by their original guards.
+  python3 "${PATCH_ROOT}/lib/qemu_hap_prefix579.py" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_hap_prefix579.log"
+  python3 "${PATCH_ROOT}/lib/qemu_source_prefix579.py" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_source_prefix579.log"
+  # The complete prior vector is restored before its original overlapping
+  # components, then reapplied below. A partial/unknown state is never reset.
+  bash "${PATCH_ROOT}/common/applications/standard/settings/live_captions579/apply.sh" --source-root "${OHOS_ROOT}" --rewind \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_settings_live_captions579_prefix.log"
+  bash "${PATCH_ROOT}/common/applications/standard/systemui/playback_capture_consent579/apply.sh" --source-root "${OHOS_ROOT}" --rewind \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_systemui_playback_capture579_prefix.log"
+  bash "${PATCH_ROOT}/common/foundation/multimedia/audio_framework/playback_capture_consent579/apply.sh" --source-root "${OHOS_ROOT}" --rewind \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_audio_playback_capture579_prefix.log"
   for mesa_product in "${PRODUCTS[@]}"; do
     python3 "${SCRIPT_DIR}/qemu_mesa_llvm_artifacts.py" \
       --artifact-root "${QEMU_MESA_LLVM_ARTIFACTS}/${mesa_product}" --product "${mesa_product}"
@@ -3636,6 +3654,8 @@ apply_qemu_capability_patch_plan() {
   # Build the actual patched SystemUI modules, retaining independent ScreenLock.
   bash "${PATCH_ROOT}/common/applications/standard/systemui/source_provider/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_systemui_source_provider.log"
+  bash "${PATCH_ROOT}/common/applications/standard/systemui/playback_capture_consent579/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_systemui_playback_capture_consent579.log"
   bash "${PATCH_ROOT}/common/applications/standard/hap/systemui_provider/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_systemui_hap_provider.log"
   python3 "${PATCH_ROOT}/common/applications/standard/systemui/source_provider/prepare_dependencies.py" \
@@ -3721,6 +3741,20 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_communicationsetting_source_provider.log"
   bash "${PATCH_ROOT}/common/applications/standard/settings/dnd_selection_ids/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_dnd_selection_ids.log"
+  bash "${PATCH_ROOT}/common/applications/standard/settings/live_captions579/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_live_captions579.log"
+  bash "${PATCH_ROOT}/common/foundation/multimedia/audio_framework/playback_capture_consent579/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_playback_capture_consent579.log"
+  bash "${PATCH_ROOT}/common/applications/standard/callsetting/source_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_callsetting_source_provider.log"
+  bash "${PATCH_ROOT}/common/base/telephony/cellular_data/apn_settings_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_apn_settings_provider.log"
+  bash "${PATCH_ROOT}/common/applications/standard/user_certificate_manager/ca_uninstall/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_certificate_uninstall_provider.log"
+  bash "${PATCH_ROOT}/common/base/security/certificate_manager/ca_uninstall_dialog/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_certificate_uninstall_native.log"
+  bash "${PATCH_ROOT}/common/applications/standard/hap/livecaptions_provider/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_livecaptions_source_project.log"
   bash "${PATCH_ROOT}/common/applications/standard/hap/qemu_provider_sources/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_provider_sources.log"
   python3 "${PATCH_ROOT}/lib/qemu_ui_providers.py" --source-root "${OHOS_ROOT}" \
@@ -3729,6 +3763,30 @@ apply_qemu_capability_patch_plan() {
   python3 "${PATCH_ROOT}/lib/communicationsetting_provider.py" --source-root "${OHOS_ROOT}" \
     --cache-root "${CACHE_ROOT}/communicationsetting-source-profile" --prepare-profile \
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_communicationsetting_source_profile.log"
+  if [ -z "${QEMU_LOTTIE_INPUT}" ] || [ -z "${QEMU_LIVE_CAPTIONS_INPUTS}" ] || \
+     [ -z "${QEMU_LIVE_CAPTIONS_INPUTS_SHA256}" ]; then
+    echo "Actual pinned Lottie and Live Captions production input descriptors are required" >&2
+    return 1
+  fi
+  if [ -z "${QEMU_LIVE_CAPTIONS_ABI}" ]; then
+    case "${PRODUCTS}" in
+      arm64_virt) QEMU_LIVE_CAPTIONS_ABI=arm64-v8a ;;
+      armv7a_virt) QEMU_LIVE_CAPTIONS_ABI=armeabi-v7a ;;
+      x86_64_virt) QEMU_LIVE_CAPTIONS_ABI=x86_64 ;;
+      *) echo "Select the actual Live Captions ABI for the product input preparation" >&2; return 1 ;;
+    esac
+  fi
+  python3 "${PATCH_ROOT}/lib/dialog_providers579.py" --provider callsetting \
+    --source-root "${OHOS_ROOT}" --cache-root "${CACHE_ROOT}/callsetting-source-profile" \
+    --lottie-input "${QEMU_LOTTIE_INPUT}" --prepare-profile \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_callsetting_source_profile.log"
+  python3 "${PATCH_ROOT}/lib/dialog_providers579.py" --provider certmanager \
+    --source-root "${OHOS_ROOT}" --cache-root "${CACHE_ROOT}/certmanager-source-profile" --prepare-profile \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_certmanager_source_profile.log"
+  python3 "${PATCH_ROOT}/lib/livecaptions_provider.py" --source-root "${OHOS_ROOT}" \
+    --cache-root "${CACHE_ROOT}/livecaptions-source-profile" --inputs "${QEMU_LIVE_CAPTIONS_INPUTS}" \
+    --inputs-sha256 "${QEMU_LIVE_CAPTIONS_INPUTS_SHA256}" --abi "${QEMU_LIVE_CAPTIONS_ABI}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_livecaptions_source_profile.log"
   # Load the real reference RIL only in this QEMU product preparation.
   bash "${PATCH_ROOT}/common/vendor/ohemu/virt/ril_reference_transport/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_ril_reference_transport.log"

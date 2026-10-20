@@ -1,0 +1,37 @@
+{
+  "module": {
+    "name": "entry",
+    "type": "entry",
+    "deviceTypes": [
+      "default",
+      "phone",
+      "tablet"
+    ],
+    "deliveryWithInstall": true,
+    "installationFree": false,
+    "pages": "$profile:main_pages",
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.MANAGE_SETTINGS"
+      },
+      {
+        "name": "ohos.permission.SYSTEM_FLOAT_WINDOW"
+      },
+      {
+        "name": "ohos.permission.WRITE_ACCESSIBILITY_CONFIG"
+      }
+    ],
+    "extensionAbilities": [
+      {
+        "name": "AiCaptionServiceExtAbility",
+        "srcEntry": "./ets/service/AiCaptionServiceExtAbility.ets",
+        "type": "service",
+        "exported": true,
+        "permissions": [
+          "ohos.permission.WRITE_ACCESSIBILITY_CONFIG"
+        ]
+      }
+    ],
+    "abilities": []
+  }
+}

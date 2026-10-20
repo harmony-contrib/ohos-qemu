@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "scope": "wifi-next source-only frozen handoff",
+  "canonical_predecessor": "parent reported integrated main36+photoform fa3a117 / 67cf90e; complete touched predecessors checked by SHA only",
+  "files": [
+    {
+      "path": "ci/capability-audit/apps_providers579/WifiDriver.ets",
+      "before_sha256": "3389d96b7dace43cd99480c8952cde0d449a367b81ef430d50fd9af8671aa7cb",
+      "candidate_sha256": "2edb2875c09e03dcec11cc38f1d899cfd7d33e1b2b029159a0961a3e885fd12d",
+      "bytes": 7254
+    },
+    {
+      "path": "ci/capability-audit/apps_providers579/wifi_peer.c",
+      "before_sha256": null,
+      "candidate_sha256": "5d2a71682909fc8ff52563e377d52ab998971dd5b90805c37e799619d2292c9d",
+      "bytes": 31002
+    },
+    {
+      "path": "ci/capability-audit/apps_providers579/wifi_peer.gn",
+      "before_sha256": null,
+      "candidate_sha256": "60dc8288fc4de6cc61a5783b10b11a8fe0a712590f7abdfea875991fcc485468",
+      "bytes": 581
+    },
+    {
+      "path": "ci/capability-audit/apps_providers579_project.py",
+      "before_sha256": "acbaf6925174f7be3e43622a69c5221803826ada50dfb04df6c89d8da844cf69",
+      "candidate_sha256": "f4be1648354d5be16fdf1e6ec135d7a187159351ea45461c71f9e37a6783cc33",
+      "bytes": 9946
+    },
+    {
+      "path": "ci/capability-audit/apps_providers579_wifi_bindings.py",
+      "before_sha256": null,
+      "candidate_sha256": "2eaf01c30caf5fbd65d2678b3ebc8368dd719a48701311f5e228924142eadb75",
+      "bytes": 28194
+    },
+    {
+      "path": "ci/capability-audit/apps_providers579_wifi_runtime.py",
+      "before_sha256": null,
+      "candidate_sha256": "de55e1f830469f4a23571cce375f8ab2ef3105c237eb97793b4ae425fd846ada",
+      "bytes": 17995
+    }
+  ],
+  "source_diff": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps-providers579-candidate/wifi-next/source.diff",
+    "sha256": "e7cfcb43aa78632f2df56119860a681eddaab720321197c467165ee9b92b5cb8",
+    "bytes": 85555
+  },
+  "runtime_pass": false,
+  "first_artifact_behavior_gate_passed": false,
+  "closed_requirement_ids": [],
+  "executed_validation": []
+}

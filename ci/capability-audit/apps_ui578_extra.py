@@ -140,13 +140,8 @@ def certificate_case(session):
         for x in after['own']['credentialList']) and
         any(r['pid']!=old and r['operation']=='restarted.read' for r in session.rows('a')),
         'actual credential did not persist across caller death/recreation')
-    if baseline['supportsCA']:
-        session.value['certificate']['product_gap']='fixed CertPicker/CertificateInstallPage lacks operationType UNINSTALL dispatch'
-        raise ValueError('pending actual CA install/uninstall product protocol; refuse creating a global CA without its real dialog cleanup path')
-    else:
-        # Real generic-device support branch is a required observation. It does
-        # not turn a missing HAP, unrelated error or absent input into success.
-        session.api('a','ca.unsupported','install-ca',29700004)
+    from apps_ui578_ca import ca_cycle
+    ca_cycle(session,baseline)
     session.api('a','remove','remove');session.value['certificate']['private_installed']=False
     require(session.api('a','restored.read','read')==baseline,'nonce private/trusted certificate inventory did not restore')
 

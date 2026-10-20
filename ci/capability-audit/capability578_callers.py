@@ -16,7 +16,8 @@ from batch_system_calendar_runtime_binding import sdk_commands
 from capability578_owned_io import reference, require
 from sign_certificate_probe import sign
 
-FAMILIES = ('apps_ui578', 'communications578', 'system_services578', 'settings_idle579', 'apps_providers579')
+FAMILIES = ('apps_ui578', 'communications578', 'system_services578', 'settings_idle579', 'apps_providers579',
+            'livecaptions579')
 
 
 def compiled_fields_match(actual, expected):
@@ -93,6 +94,17 @@ def prepare_callers(io, family, case, run, roles, parameters):
             require(not rel.is_absolute() and '..' not in rel.parts and type(text) is str,
                     'fixed caller source overlay required')
             target = root / rel; target.parent.mkdir(parents=True, exist_ok=True); target.write_text(text)
+        if family == 'livecaptions579':
+            speech = io.package_inputs['livecaptions579']['speech']
+            require(set(speech) == {'a', 'b'}, 'two independent original speech inputs required')
+            for name, destination in module.asset_destinations(case, role).items():
+                key = name.removeprefix('license_')
+                artifact = speech[key]['license' if name.startswith('license_') else 'audio']
+                require(reference(artifact['path']) == artifact,
+                        'original speech/license bytes changed before fixture compilation')
+                target = root / destination
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(artifact['path'], target)
         if family == 'settings_idle579':
             native = io.package_inputs['native_addons']['settings_idle579']
             require(type(native) is dict and set(native) == {'binary', 'build', 'abi'} and
@@ -104,6 +116,15 @@ def prepare_callers(io, family, case, run, roles, parameters):
                     'fixed actual addon destination required')
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(native['binary']['path'], destination)
+            # Preserve the exact platform-built diagnostic addon through the
+            # ordinary HAP fixture packaging task. The shipped product's strip,
+            # CFI and optimization policies are unaffected. This option is the
+            # actual API26 Hvigor nativeLib.debugSymbol schema.
+            profile_path = root / 'entry/build-profile.json5'
+            profile_value = json.loads(profile_path.read_text())
+            profile_value.setdefault('buildOption', {})['nativeLib'] = {
+                'debugSymbol': {'strip': False}}
+            profile_path.write_text(json.dumps(profile_value, indent=2) + '\n')
         (root / 'local.properties').write_text('sdk.dir=' + str(sdk.parent) + '\nnodejs.dir=' + str(node.parent.parent) + '\n')
         inputs = {str(p.relative_to(root)): reference(p) for p in root.rglob('*') if p.is_file()}
         (root / 'capability578-source-inputs.json').write_text(json.dumps(inputs, indent=2) + '\n')
@@ -187,4 +208,8 @@ def prepare_callers(io, family, case, run, roles, parameters):
             native_helper_builds=native, receipts=io.receipts[command_start:])
     if family == 'settings_idle579':
         result['native_addons'] = {'settings_idle579': io.package_inputs['native_addons']['settings_idle579']}
+    if family == 'livecaptions579':
+        speech = io.package_inputs['livecaptions579']['speech']
+        result.update(audio_fixtures={k: speech[k]['audio'] for k in ('a', 'b')},
+                      license_fixtures={k: speech[k]['license'] for k in ('a', 'b')})
     return result

@@ -21,6 +21,7 @@ PROVIDERS = {
     'intelligent-scene': ('com.ohos.intelligentscene', 'IntelligentSceneUIExtSettingAbility'),
     'intelligent-scene-settings': ('com.ohos.settings','IntelligentSceneAppSelectExtensionAbility'),
     'network-policy': ('com.ohos.communicationsetting','UIExtensionProvider'),
+    'apn': ('com.ohos.callsetting','GeneralCallSettingDialogAbility'),
     'accessibility-settings': ('com.ohos.settings','com.ohos.settings.MainAbility'),
     'certificate-dialog': ('com.ohos.certmanager', 'CertPickerUIExtAbility'),
     'enterprise': ('com.ohos.adminprovisioning', 'ByodAdminProvisionAbility'),
@@ -187,13 +188,13 @@ class Bindings:
     def business(self,guest,session,action,parameters):
         require(guest is self.io.guest and session.kind in
             ('shortkey','accessibility-input','certificate-dialog','network-policy','apn','notification-subscription','intelligent-scene') and
-            action in ('shortcut-key','input-click','input-type','certificate-input','provider-probe','dnd-search'), 'fixed actual same-guest business boundary required')
+            action in ('shortcut-key','input-click','input-type','certificate-input','provider-probe','dnd-search','apn-type'), 'fixed actual same-guest business boundary required')
         self.session=session;self.boot()
         if action=='provider-probe':
             require(session.kind in ('network-policy','apn','notification-subscription','intelligent-scene') and parameters=={},
                 'only the fixed missing public-provider targets may be probed')
             targets={'network-policy':('com.ohos.communicationsetting','UIExtensionProvider'),
-                'apn':('com.huawei.hmos.callsetting','GeneralCallSettingDialogAbility'),
+                'apn':('com.ohos.callsetting','GeneralCallSettingDialogAbility'),
                 'notification-subscription':('com.ohos.sceneboard','NotificationAccessGrantUIExtensionAbility'),
                 'intelligent-scene':('com.ohos.intelligentscene','IntelligentSceneUIExtSettingAbility')}
             target,ability=targets[session.kind]
@@ -240,6 +241,18 @@ class Bindings:
             require('send-key' in schema, 'actual owned QEMU keyboard injection unsupported')
             records.append(self.qmp('send-key',{'keys':[{'type':'qcode','data':parameters['modifier']},
                 {'type':'qcode','data':'i'}],'hold-time':parameters['hold_ms']}))
+        elif action=='apn-type':
+            from apps_ui578_apn import names
+            require(session.kind=='apn' and set(parameters)=={'field','text'} and
+                parameters['field'] in ('name','apn') and parameters['text'] in names(session.run).values(),
+                'fixed actual nonce APN editor only')
+            require('send-key' in schema,'actual owned QEMU keyboard injection unavailable')
+            records.append(self.qmp('send-key',{'keys':[{'type':'qcode','data':'ctrl'},{'type':'qcode','data':'a'}],'hold-time':60}))
+            records.append(self.qmp('send-key',{'keys':[{'type':'qcode','data':'backspace'}],'hold-time':60}))
+            for letter in parameters['text']:
+                require(letter in 'abcdefghijklmnopqrstuvwxyz0123456789.','fixed nonce physical key alphabet')
+                records.append(self.qmp('send-key',{'keys':[{'type':'qcode','data':'dot' if letter=='.' else letter}],'hold-time':60}))
+                time.sleep(.12)
         elif action=='dnd-search':
             require(session.kind=='intelligent-scene' and set(parameters)=={'role','text'} and
                 parameters['role'] in ('a','b') and
@@ -379,17 +392,17 @@ class Bindings:
             elif self.kind=='network-policy' and 'network_policy' in session.value:
                 from apps_ui578_followup import restore_network
                 state['network_policy']=restore_network(session)
+            elif self.kind=='apn' and 'baseline' in session.value.get('apn',{}):
+                from apps_ui578_apn import restore_apn
+                state['apn']=restore_apn(session)
             elif self.kind=='shortkey':
                 session.api('a','cleanup.duration','invoke',number=500)
                 state['duration']=500
             elif self.kind=='certificate-dialog' and 'certificate' in session.value:
                 # Use only URIs created by this nonce. The typed program checks
                 # private alias/CA exact input bytes before any removal.
-                if session.value['certificate'].get('ca_installed') is True:
-                    session.invoke('a','cleanup.ca','remove-ca',wait=False);session.visible('a','cleanup.ca')
-                    session.system('confirm-uninstall')
-                    session.wait('a',lambda rows:any(r['operation']=='cleanup.ca' and r['event']=='return.remove-ca' for r in rows),'cleanup_ca')
-                    session.value['certificate']['ca_installed']=False
+                from apps_ui578_ca import cleanup_ca
+                cleanup_ca(session)
                 if session.value['certificate'].get('private_installed') is True:
                     session.api('a','cleanup.private','remove')
                     session.value['certificate']['private_installed']=False

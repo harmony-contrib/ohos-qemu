@@ -132,18 +132,21 @@ def ui(value,records,rows):
             except NodeNotReady:absent=True
             require(absent is entry['absent'], 'actual provider disappearance result differs')
         elif 'source_dispatch' in entry:
-            require(value['case']=='intelligent-scene' and entry['source_dispatch']=='dnd-onrequest-read' and
-                entry['action']=='read' and entry['role'] in rows and entry['commands'],
-                'only compiled DND public-query onRequest dispatch is permitted')
-            role=entry['role'];operation=entry['operation']
+            role=entry['role'];operation=entry['operation'];action=entry['action']
+            require(role in rows and entry['commands'] and ((value['case']=='intelligent-scene' and
+                entry['source_dispatch']=='dnd-onrequest-read' and action=='read') or
+                (value['case']=='apn' and action in ('read','environment') and
+                entry['source_dispatch']=='apn-onrequest-'+action)), 'fixed compiled public onRequest query required')
+            argument=('read-current-dnd' if value['case']=='intelligent-scene' else
+                'read-current-apn' if action=='read' else 'get-apn-environment')
             expected=shlex.join(['aa','start','-b',bundle(role),'-a','EntryAbility','--ps','run',value['run'],
-                '--ps','kind','intelligent-scene','--ps','operation',operation,'--ps','argument','read-current-dnd',
+                '--ps','kind',value['case'],'--ps','operation',operation,'--ps','argument',argument,
                 '--pi','numberArgument','0'])
             require(len([records[i] for i in entry['commands'] if records[i].get('script')==expected])==1,
                 'actual fixed AA Want did not dispatch this public query')
             requests=[r for r in rows[role] if r['operation']==operation and r['event']=='request']
-            require(len(requests)==1 and decode(requests[0]['value'])['argument']=='read-current-dnd' and
-                any(r['operation']==operation and r['event']=='call.read' for r in rows[role]),
+            require(len(requests)==1 and decode(requests[0]['value'])['argument']==argument and
+                any(r['operation']==operation and r['event']=='call.'+action for r in rows[role]),
                 'real typed onRequest query/caller journal missing')
         elif 'system' in entry:
             require(entry['system'] in plan['actions'] and entry['selector'] in plan['actions'][entry['system']],
@@ -160,7 +163,7 @@ def ui(value,records,rows):
             snapshots=[s for s in value['journal_reads'] if s['role']==entry['role'] and
                 s['command'] in entry['commands']]
             require(snapshots,'provider visibility lacks simultaneous raw caller observations')
-            require(value['case'] in ('intelligent-scene','network-policy') or not any(r['operation']==entry['visible'] and r['event'].startswith('return.')
+            require(value['case'] in ('intelligent-scene','network-policy','apn') or not any(r['operation']==entry['visible'] and r['event'].startswith('return.')
                 for s in snapshots for r in journal(records[s['command']]['body'],value['run'],value['case'],entry['role'])),
                 'with-result callback completed before user closed its actual provider')
         else:
@@ -185,7 +188,7 @@ def verify_provider(value,records,original_image_guard, auxiliary=None):
     expected=('NotificationManangerUIExtensionAbility' if kind=='notification-settings' else
         'NotificationAccessGrantUIExtensionAbility' if kind=='notification-subscription' else
         'CertPickerUIExtAbility' if kind=='certificate-dialog' else
-        'ByodAdminProvisionAbility' if kind=='enterprise' else 'IntelligentSceneUIExtSettingAbility' if kind=='intelligent-scene' else 'UIExtensionProvider' if kind=='network-policy' else 'IntelligentSceneAppSelectExtensionAbility' if kind=='intelligent-scene-settings' else 'com.ohos.settings.MainAbility')
+        'ByodAdminProvisionAbility' if kind=='enterprise' else 'IntelligentSceneUIExtSettingAbility' if kind=='intelligent-scene' else 'UIExtensionProvider' if kind=='network-policy' else 'GeneralCallSettingDialogAbility' if kind=='apn' else 'IntelligentSceneAppSelectExtensionAbility' if kind=='intelligent-scene-settings' else 'com.ohos.settings.MainAbility')
     targets=[a for a in doc.get('extensionAbilityInfo',[])+doc.get('abilityInfos',[])
         if a.get('name')==expected and a.get('moduleName') in proof['modules']]
     require(len(targets)==1 and ((kind in ('enterprise','accessibility-settings') and targets[0].get('visible') is True) or
@@ -526,6 +529,8 @@ def cleanup(actual,value,records,rows):
     elif value['case']=='intelligent-scene' and 'baseline' in value:
         require(actual['state'].get('provider')==value['baseline']==
             {r:returned(rows[r],'cleanup.read','read') for r in ('a','b')}, 'real DND/caller user state was not restored')
+    elif value['case']=='apn' and 'baseline' in value.get('apn',{}):
+        require(actual['state'].get('apn')==value['apn']['baseline'], 'actual APN finally state differs')
     elif value['case']=='shortkey':
         require(actual['state'].get('duration')==500 and returned(rows['a'],'cleanup.duration','invoke') is None,
             'real shortcut duration finally restoration failed')
@@ -643,10 +648,16 @@ def verify_observations(value, owner, *, archive_sha256, boot_id, hdc, target,
         verify_provider(value,records,original_image_guard)
         from apps_ui578_followup_verify import network
         network(value,rows)
+    elif value['case']=='apn':
+        verify_provider(value,records,original_image_guard)
+        from apps_ui578_apn_verify import verify_apn
+        verify_apn(value,rows,records,read_plan(value['ui_plan'],'apn',value['run']),original_qmp_replay)
     elif value['case'] in ('shortkey','accessibility-input'):
         extra(value,rows,original_qmp_replay)
     elif value['case']=='certificate-dialog':
         verify_provider(value,records,original_image_guard);certificate(value,rows)
+        from apps_ui578_ca_verify import verify_ca
+        verify_ca(value,rows,records,read_plan(value['ui_plan'],value['case'],value['run']))
     elif value['case']=='accessibility-settings':
         verify_provider(value,records,original_image_guard);settings(value,rows,records)
     elif value['case']=='enterprise':

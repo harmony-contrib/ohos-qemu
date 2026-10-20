@@ -1,6 +1,6 @@
 {
   "schema": "qemu-only-batched-status579/v1",
-  "updated_utc": "2026-10-20T20:29:37.280023+00:00",
+  "updated_utc": "2026-10-20T21:26:47.748011+00:00",
   "acceptance": "only newly packaged actual QEMU business/boundary/regression/cleanup observations can close requirements",
   "base_source_commit": "db360951a13ce07c7e561d71344a34b6109b10cf",
   "completed_native_attempt": {
@@ -41,11 +41,38 @@
   "remaining_five_started": false,
   "source_batch_scope": "provider/product wiring and real original-Owner guest stages; source completion is not capability acceptance",
   "pending": [
-    "APN and CA full source selection/signing and business recovery",
-    "real caption ASR/provider/consent/model dependency preparation",
-    "independent WLAN radio/DHCP/data/portal flows or source-bounded unsupported dispositions",
-    "paired actual QEMU SoftBus/cast/distributed-hardware flows",
-    "fresh same-commit runtime input/source-kit projection",
-    "new ARM64 phone complete QEMU validation before five remaining artifacts"
-  ]
+    "actual serial product/source/profile preparation and representative native package build",
+    "virtual SIM fixture and paired actual QEMU integration source completion",
+    "fresh same-package original-Owner runtime inputs/source-kit projection",
+    "new ARM64 phone complete actual QEMU business/boundary/regression/cleanup validation",
+    "remaining five architecture/profile packages only after representative QEMU gate passes"
+  ],
+  "integration_base_commit": "67cf90e2868d56111dcd6837a5d39a9711e13942",
+  "batched_source_integration": {
+    "apn_ca": "26 product sources and16 caller delta adopted; source-built real providers selected",
+    "live_captions": "22 existing product changes plus23-source normal release app adopted; English-only model assets prepared",
+    "wifi": "real independent hwsim netns/DORA/data/portal guest fixture adopted",
+    "root_shared_files": "single composed HAP graph, preinstall policies, normal source/signing hooks, fixture dispatch; exact known source-prefix preparation for repeat builds",
+    "validation_executed": "no independent host/parser/SDK/model/native test round; actual new QEMU pending"
+  },
+  "actual_input_production": {
+    "models_notices_speech": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r66-asr-product-assets579-05/receipt.json",
+      "sha256": "1a98ffeadc565bfa9f445069c181115961e43c9e7b09281dde8ecce947fcc718"
+    },
+    "lottie": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r66-lottie-production-input579-06/receipt.json",
+      "sha256": "32c532df4e06226e8b30e33819a0c5853b925d7304524373f04680b6cf8c7d9f"
+    }
+  },
+  "resource_reclaim": {
+    "scope": "disposable image copies only; original archives/logs/raw evidence retained",
+    "closed_guests": 20,
+    "deleted_disposable_image_copies": 160,
+    "allocated_bytes_reclaimed": 47962341376,
+    "receipt": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r65-derived-image-reclaim-579-01/reclaim.json",
+      "sha256": "7b33e65bb244db4c56bb37625c83f419809d66ac061e7029796b03a68f0014fa"
+    }
+  }
 }

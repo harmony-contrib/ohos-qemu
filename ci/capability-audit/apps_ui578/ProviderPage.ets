@@ -19,6 +19,7 @@ import { BusinessError } from '@ohos.base';
 import { Journal, CASE, BUNDLE, RUN } from '../common/Journal';
 import { CertificateProgram } from '../common/CertificateProgram';
 import { SettingsProgram } from '../common/SettingsProgram';
+import { ApnProgram } from '../common/ApnProgram';
 
 @Entry
 @Component
@@ -32,12 +33,13 @@ struct Index {
   private embeddedOperation: string = '';
   private lastQueryGeneration: number = -1;
   private requestChanged(): void {
-    if (CASE === 'intelligent-scene' && Journal.argument === 'read-current-dnd') {
+    if ((CASE === 'intelligent-scene' && Journal.argument === 'read-current-dnd') ||
+      (CASE === 'apn' && (Journal.argument === 'read-current-apn' || Journal.argument === 'get-apn-environment'))) {
       // Keep the REAL hosted provider alive while its asynchronous user choice
       // reaches ANS. This is an independent public API consumer, not a UI value.
       if (this.lastQueryGeneration !== Journal.requestGeneration) {
         this.lastQueryGeneration = Journal.requestGeneration;
-        this.call('read');
+        this.call(Journal.argument === 'get-apn-environment' ? 'environment' : 'read');
       }
       return;
     }
@@ -98,11 +100,9 @@ struct Index {
         }
         else { await policy.showAppNetPolicySettings(action === 'invalid' ? null as common.UIAbilityContext : context); }
       } else if (CASE === 'apn') {
-        if (action === 'read') {
-          const slot = await cellular.getDefaultCellularDataSlotId();
-          value = JSON.stringify({ slot, simActive: slot >= 0 ? await sim.isSimActive(slot) : null,
-            apns: await cellular.queryAllApns() });
-        } else { await cellular.showSystemApnSettings(action === 'invalid' ? null as common.UIAbilityContext : context); }
+        if (action === 'read') { value = await new ApnProgram(context).read(); }
+        else if (action === 'environment') { value = await new ApnProgram(context).environment(); }
+        else { await cellular.showSystemApnSettings(action === 'invalid' ? null as common.UIAbilityContext : context); }
       } else if (CASE === 'shortkey') {
         await shortKey.setKeyDownDuration(action === 'invalid' ? '' : 'qemu.settings', Journal.numberArgument);
       } else if (CASE === 'enterprise') {
@@ -171,18 +171,21 @@ struct Index {
       }
       if (CASE === 'certificate-dialog' || CASE === 'accessibility-settings') {
         Flex({ wrap: FlexWrap.Wrap }) {
-          ForEach(CASE === 'certificate-dialog' ? ['import','remove','install-ca','read-ca','remove-ca'] :
+          ForEach(CASE === 'certificate-dialog' ? ['import','remove','install-ca','read-ca','remove-ca',
+            'recover-ca','invalid-remove-ca','unsupported-remove-ca'] :
             ['settings-save','ignore-enable','animation-enable','settings-restore'], (action: string) => {
             Button(action).id('apps578-' + action).onClick(() => this.call(action)).margin(3)
           })
         }
       }
+      if (CASE !== 'certificate-dialog') {
       TextInput({ text: this.input }).id('apps578-input')
         .onChange((text: string) => { this.input = text; Journal.record('input.changed', 0, JSON.stringify(text)); })
       Button('Real input target').id('apps578-increment').accessibilityText('apps578 real input target')
         .onClick(() => { ++this.count; Journal.record('input.clicked', 0, JSON.stringify(this.count)); })
       Text(this.count.toString()).id('apps578-count')
       Column().id('apps578-surface').width('90%').height(200).backgroundColor('#203040')
+      }
     }.width('100%').height('100%').backgroundColor('#ffffff')
     if (CASE === 'intelligent-scene' && this.embeddedDnd) {
       UIExtensionComponent({ bundleName: 'com.ohos.intelligentscene',

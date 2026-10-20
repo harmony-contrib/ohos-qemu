@@ -1,0 +1,9 @@
+import("//build/ohos.gni")
+
+ohos_prebuilt_etc("vassistant_livecaptions579") {
+  source = "vassistant_livecaptions579.hap"
+  module_install_dir = "app/VAssistant"
+  subsystem_name = "applications"
+  part_name = "prebuilt_hap"
+  install_images = [ "system" ]
+}

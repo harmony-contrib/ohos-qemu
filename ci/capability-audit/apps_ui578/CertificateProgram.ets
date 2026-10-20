@@ -33,10 +33,36 @@ export class CertificateProgram {
     if (uri.length === 0 || uri.length > 256) { throw new Error('own nonce certificate URI required'); }
     return uri;
   }
+  private saveTrustedBaseline(uris: string[]): void {
+    const file = fs.openSync(this.files() + '/apps578-' + RUN + '-trusted-before.json',
+      fs.OpenMode.WRITE_ONLY | fs.OpenMode.CREATE | fs.OpenMode.TRUNC | fs.OpenMode.NOFOLLOW);
+    try { fs.writeSync(file.fd, JSON.stringify(uris)); } finally { fs.closeSync(file); }
+  }
+  private async recoverOwnCa(): Promise<string> {
+    const original = JSON.parse(fs.readTextSync(this.files() + '/apps578-' + RUN + '-trusted-before.json')) as string[];
+    const expected = this.bytes('.der');
+    const current = await certificate.getAllUserTrustedCertificates();
+    if (current.certList === undefined) { throw new Error('actual trusted inventory missing'); }
+    const found: string[] = [];
+    for (const item of current.certList) {
+      if (original.includes(item.uri)) { continue; }
+      const cert = await certificate.getUserTrustedCertificate(item.uri);
+      if (cert.certInfo !== undefined && cert.certInfo.cert.length === expected.length &&
+        expected.every((value: number, index: number) => value === cert.certInfo?.cert[index])) {
+        found.push(item.uri);
+      }
+    }
+    if (found.length > 1) { throw new Error('refuse ambiguous nonce CA recovery'); }
+    if (found.length === 1) { this.save('ca', found[0]); }
+    return JSON.stringify({ uri: found.length === 1 ? found[0] : '' });
+  }
   async run(action: string): Promise<string> {
     if (action === 'read') {
-      return JSON.stringify({ supportsCA: dialog.supportsCACertDialog(),
-        own: await certificate.getPrivateCertificates(), trusted: await certificate.getAllUserTrustedCertificates() });
+      const own = await certificate.getPrivateCertificates();
+      const trusted = await certificate.getAllUserTrustedCertificates();
+      if (trusted.certList === undefined) { throw new Error('actual trusted inventory missing'); }
+      if (Journal.operation === 'baseline') { this.saveTrustedBaseline(trusted.certList.map((item) => item.uri)); }
+      return JSON.stringify({ supportsCA: dialog.supportsCACertDialog(), own, trusted });
     }
     if (action === 'invalid') {
       await dialog.openCertificateManagerDialog(this.context, 0 as dialog.CertificateDialogPageType);
@@ -57,11 +83,19 @@ export class CertificateProgram {
       const uri = await dialog.openInstallCertificateDialog(this.context, dialog.CertificateType.CA_CERT,
         dialog.CertificateScope.CURRENT_USER, this.bytes('.der'));
       this.save('ca', uri);return JSON.stringify(uri);
+    } else if (action === 'recover-ca') {
+      return await this.recoverOwnCa();
+    } else if (action === 'invalid-remove-ca') {
+      await dialog.openUninstallCertificateDialog(this.context, dialog.CertificateType.CA_CERT, '');
+    } else if (action === 'unsupported-remove-ca') {
+      await dialog.openUninstallCertificateDialog(this.context, dialog.CertificateType.CA_CERT,
+        'apps578-unavailable-' + RUN);
     } else if (action === 'read-ca') {
       const actual = await certificate.getUserTrustedCertificate(this.uri('ca'));
       if (!actual.certInfo) { throw new Error('actual CA consumer returned no certificate'); }
       return JSON.stringify({ uri: actual.certInfo.uri, subject: actual.certInfo.subjectName,
-        serial: actual.certInfo.serial, bytes: Array.from(actual.certInfo.cert) });
+        serial: actual.certInfo.serial, fingerprint: actual.certInfo.fingerprintSha256,
+        bytes: Array.from(actual.certInfo.cert) });
     } else if (action === 'remove-ca') {
       const uri = this.uri('ca');
       const actual = await certificate.getUserTrustedCertificate(uri);
