@@ -1,3 +1,6 @@
+#if defined(__arm__) && !defined(__aarch64__)
+#include "media598_onset.h"
+#else
 /* SPDX-License-Identifier: LGPL-2.1-or-later
  * Include in pcm_hw.c. Fixed process-local diagnostic, enabled only by398 macro.
  * WRITEI side: bounded memory snapshot/copy + lock-free atomics + native clocks.
@@ -659,4 +662,5 @@ static void __attribute__((destructor)) m398_unload(void)
     /* No product FD is ever closed here. Actual process unload with active
      * audio writes violates ALSA object lifetime and cannot yield proof. */
 }
+#endif
 #endif

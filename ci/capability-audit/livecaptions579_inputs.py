@@ -38,7 +38,8 @@ def product_assets(inputs, abi):
         if len(data)!=size or assets[name]['sha256']!=sha:
             raise ValueError('actual pinned inference input differs: '+name)
     notices=raw(assets['notices'])
-    if len(notices)<100 or len(notices)>2*1024*1024:
+    notice_limit=12*1024*1024 if abi=='armeabi-v7a' else 2*1024*1024
+    if len(notices)<100 or len(notices)>notice_limit:
         raise ValueError('bounded complete user-visible notices required')
     for name,sha in LICENSES.items():
         data=raw(inputs['licenses'][name])
@@ -51,7 +52,8 @@ def product_assets(inputs, abi):
     if abi!='armeabi-v7a':
         if assets['har']['sha256']!='d196941c571f4bd7dd98e6c03097aa4873b9a934ceced64800fb85b25892e6a0':
             raise ValueError('exact existing actual two-ABI HAR required')
-    elif not raw(inputs['ohos32_source_build']) or not har:
-        raise ValueError('root-owned genuine OHOS32 source build receipt and real HAR required')
+    else:
+        from livecaptions579_arm32_contract import admit
+        admit(inputs)
     from livecaptions579_provider_project import asset_destinations
     return {destination: assets[name] for name,destination in asset_destinations().items()}

@@ -177,7 +177,7 @@
 +export const MAX_SEGMENT_SAMPLES: number = SAMPLE_RATE * 30;
 --- /dev/null
 +++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/ets/common/CaptionSession.ets
-@@ -0,0 +1,268 @@
+@@ -0,0 +1,287 @@
 +import { common } from '@kit.AbilityKit';
 +import { BusinessError } from '@kit.BasicServicesKit';
 +import audio from '@ohos.multimedia.audio';
@@ -190,11 +190,26 @@
 +import { CaptionActions } from './CaptionActions';
 +import { captionTrace } from './CaptionTrace';
 +
++interface CaptionStorageState {
++  session: string;
++  text: string;
++  status: string;
++  fontScale: number;
++  fontColor: string;
++  backgroundColor: string;
++}
++
 +// No public RPC exposes this class, the worker or its input. The only source of
 +// waveform input is the owned, user-authorized native AudioCapturer callback.
 +export class CaptionSession {
-+  readonly storage: LocalStorage = new LocalStorage({ session: '', text: '',
-+    status: '正在准备本地英语字幕', fontScale: 100, fontColor: '#FFFFFFFF', backgroundColor: '#EE000000' });
++  private readonly initialState: CaptionStorageState = { session: '', text: '',
++    status: '正在准备本地英语字幕', fontScale: 100, fontColor: '#FFFFFFFF', backgroundColor: '#EE000000' };
++  readonly storage: LocalStorage = new LocalStorage(this.initialState);
++  readonly id: string;
++  private readonly context: common.ServiceExtensionContext;
++  private readonly closeRequested: () => void;
++  private readonly becameVisible: () => void;
++  private readonly failed: (reason: Error) => void;
 +  private closed: boolean = false;
 +  private running: boolean = false;
 +  private capturer: audio.AudioCapturer | undefined = undefined;
@@ -246,9 +261,13 @@
 +    Promise.resolve().then((): void => { this.pump(); });
 +  };
 +
-+  constructor(readonly id: string, private readonly context: common.ServiceExtensionContext,
-+    private readonly closeRequested: () => void, private readonly becameVisible: () => void,
-+    private readonly failed: (reason: Error) => void) {
++  constructor(id: string, context: common.ServiceExtensionContext,
++    closeRequested: () => void, becameVisible: () => void, failed: (reason: Error) => void) {
++    this.id = id;
++    this.context = context;
++    this.closeRequested = closeRequested;
++    this.becameVisible = becameVisible;
++    this.failed = failed;
 +    this.storage.setOrCreate('session', id);
 +  }
 +  private active(): void { if (this.closed) { throw new Error('caption session was cancelled'); } }
@@ -519,20 +538,15 @@
 +}
 --- /dev/null
 +++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/ets/service/AiCaptionServiceExtAbility.ets
-@@ -0,0 +1,125 @@
+@@ -0,0 +1,120 @@
 +import ServiceExtensionAbility from '@ohos.app.ability.ServiceExtensionAbility';
-+import { common, Want } from '@kit.AbilityKit';
++import { Want } from '@kit.AbilityKit';
 +import { BusinessError } from '@kit.BasicServicesKit';
 +import settings from '@ohos.settings';
 +import util from '@ohos.util';
 +import { CaptionSession } from '../common/CaptionSession';
 +import { captionTrace } from '../common/CaptionTrace';
 +
-+// This is a declaration of the real native method added by the separate stable
-+// service_idle_startid product component, not an SDK stub or a JS implementation.
-+interface ConditionalServiceContext extends common.ServiceExtensionContext {
-+  terminateSelfIfStartId(expectedStartId: number): Promise<boolean>;
-+}
 +class ServiceEpoch {
 +  static owner: string = '';
 +}
@@ -629,7 +643,7 @@
 +  }
 +  private async stopIfCurrent(startId: number, generation: number): Promise<void> {
 +    if (!this.current(generation) || this.latestStartId !== startId || this.activeSession !== undefined) { return; }
-+    const accepted: boolean = await (this.context as ConditionalServiceContext).terminateSelfIfStartId(startId);
++    const accepted: boolean = await this.context.terminateSelfIfStartId(startId);
 +    // false means newer real AMS work exists; preserve it, never fall back to
 +    // the unconditioned terminateSelf API.
 +    captionTrace(this.instance, 'conditional_stop', 0, 0, 0, accepted ? startId : -startId);
@@ -770,8 +784,8 @@
 +    "type": "entry",
 +    "deviceTypes": [
 +      "default",
-+      "phone",
-+      "tablet"
++      "tablet",
++      "2in1"
 +    ],
 +    "deliveryWithInstall": true,
 +    "installationFree": false,

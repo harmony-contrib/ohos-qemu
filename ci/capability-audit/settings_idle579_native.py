@@ -52,10 +52,12 @@ def helper_recipes():
             'foundation/systemabilitymgr/samgr/interfaces/innerkits/samgr_proxy/include']}}
 
 
-def recipe():
+def recipe(arch='arm64'):
+    abi = {'arm64': 'arm64-v8a', 'armv7a': 'armeabi-v7a', 'x86_64': 'x86_64'}
+    if arch not in abi: raise ValueError('finite actual Settings native arch required')
     return {'schema': 'settings-idle579-platform-napi-source/v2',
         'kind': 'diagnostic_shared_napi_from_actual_product_graph',
         'helper': 'settings_idle579_napi', 'actual_GN_anchors': [dict(RUNTIME), dict(BASE), dict(IPC), dict(TOKEN)],
-        'output_basename': 'libsettings_idle579.so', 'platform_abi': 'arm64-v8a',
-        'hap_destination': 'entry/libs/arm64-v8a/libsettings_idle579.so',
+        'output_basename': 'libsettings_idle579.so', 'platform_abi': abi[arch],
+        'hap_destination': 'entry/libs/' + abi[arch] + '/libsettings_idle579.so',
         'new_product_GN_target_selected': False, 'source_only': True}

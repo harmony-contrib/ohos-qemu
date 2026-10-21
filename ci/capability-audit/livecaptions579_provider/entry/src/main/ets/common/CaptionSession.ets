@@ -10,11 +10,26 @@ import { CaptionInput, CaptionOutput, SAMPLE_RATE, MAX_BUFFERED_SAMPLES } from '
 import { CaptionActions } from './CaptionActions';
 import { captionTrace } from './CaptionTrace';
 
+interface CaptionStorageState {
+  session: string;
+  text: string;
+  status: string;
+  fontScale: number;
+  fontColor: string;
+  backgroundColor: string;
+}
+
 // No public RPC exposes this class, the worker or its input. The only source of
 // waveform input is the owned, user-authorized native AudioCapturer callback.
 export class CaptionSession {
-  readonly storage: LocalStorage = new LocalStorage({ session: '', text: '',
-    status: '正在准备本地英语字幕', fontScale: 100, fontColor: '#FFFFFFFF', backgroundColor: '#EE000000' });
+  private readonly initialState: CaptionStorageState = { session: '', text: '',
+    status: '正在准备本地英语字幕', fontScale: 100, fontColor: '#FFFFFFFF', backgroundColor: '#EE000000' };
+  readonly storage: LocalStorage = new LocalStorage(this.initialState);
+  readonly id: string;
+  private readonly context: common.ServiceExtensionContext;
+  private readonly closeRequested: () => void;
+  private readonly becameVisible: () => void;
+  private readonly failed: (reason: Error) => void;
   private closed: boolean = false;
   private running: boolean = false;
   private capturer: audio.AudioCapturer | undefined = undefined;
@@ -66,9 +81,13 @@ export class CaptionSession {
     Promise.resolve().then((): void => { this.pump(); });
   };
 
-  constructor(readonly id: string, private readonly context: common.ServiceExtensionContext,
-    private readonly closeRequested: () => void, private readonly becameVisible: () => void,
-    private readonly failed: (reason: Error) => void) {
+  constructor(id: string, context: common.ServiceExtensionContext,
+    closeRequested: () => void, becameVisible: () => void, failed: (reason: Error) => void) {
+    this.id = id;
+    this.context = context;
+    this.closeRequested = closeRequested;
+    this.becameVisible = becameVisible;
+    this.failed = failed;
     this.storage.setOrCreate('session', id);
   }
   private active(): void { if (this.closed) { throw new Error('caption session was cancelled'); } }

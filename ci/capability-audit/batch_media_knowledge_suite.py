@@ -1181,7 +1181,8 @@ def run(args):
         value.update(artifacts_data=spec, ui_plan_data=inputs.validate_plan(signatures.load(checked(spec['ui_plan'])), data), run_id=data['run_id'])
         value['capture'] = dict(run_id=data['run_id'], archive=record(args.archive), archive_sha256=sha(args.archive), signer=spec['signer'], roles={})
         collector = Collector(args, value); env = collector.env
-        require((env['product'], env['guest_arch']) == ('arm64_virt', 'arm64') and
+        from batch_system_build_runtime_helpers import target_spec
+        require(target_spec(env['product'])['arch'] == env['guest_arch'] and
                 env['device_type'] == inputs.artifact_profile(spec), 'actual prepared phone/2in1 artifact and guest profile must match')
         value.update(boot_id=env['boot_id'], test_environment=env); value['capture']['boot_id'] = env['boot_id']
         collector.identity('wrapper-initial-same-boot')
@@ -1219,7 +1220,7 @@ def run(args):
         for phase, _, _ in runtime.STEPS:
             collector.phase(phase, collector.uris or None)
             if getattr(args, 'apps579_artifacts', None) is not None:
-                from apps_providers579_knowledge import after_phase
+                from photos579_knowledge_capture import after_phase
                 after_phase(collector, phase, args.apps579_artifacts)
         for role in project.ROLES:
             collector.roles[role]['journal'] = collector.journal(role, role + '-final-journal')
@@ -1231,7 +1232,7 @@ def run(args):
     finally:
         if collector is not None:
             if getattr(args, 'apps579_artifacts', None) is not None:
-                from apps_providers579_knowledge import cleanup as apps579_cleanup
+                from photos579_knowledge_capture import cleanup as apps579_cleanup
                 try:
                     apps579_cleanup(collector)
                 except Exception as error:
@@ -1416,9 +1417,10 @@ def verify_evidence(evidence_path, archive_path, boot_path):
     if 'apps579_artifacts' in value or value.get('apps579_errors'):
         from apps_providers579_knowledge import verify_hook
         verify_hook(value)
+    from batch_system_build_runtime_helpers import target_spec
     env = validate_binding(signatures.load(boot_path), sha(archive_path))
     require(value['test_environment'] == env and value['boot_id'] == env['boot_id'] and
-            (env['product'], env['guest_arch']) == ('arm64_virt', 'arm64') and
+            target_spec(env['product'])['arch'] == env['guest_arch'] and
             env['device_type'] == inputs.artifact_profile(value['artifacts_data']), 'same actual artifact-matched phone/2in1 parent VM required')
     spec = inputs.artifacts(checked(value['artifacts']))
     data = runtime.validate_challenge(checked(spec['challenge']))

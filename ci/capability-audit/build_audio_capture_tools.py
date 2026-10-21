@@ -52,7 +52,8 @@ def configure():
 class CaptureToolsBuilder(product.Builder):
     def check_elf(self, name, binary, direct, row):
         if name != 'alsa_inject': return super().check_elf(name, binary, direct, row)
-        row['elf'] = product.elf_header(binary, executable=True)
+        row['elf'] = product.elf_header(binary, executable=True, product=self.product,
+            interpreter_path=None if self.normal_link is None else self.normal_link['interpreter'])
         info = self.command([self.readelf, '-h', '-l', '-d', '--dyn-syms', '--wide', '--demangle', binary],
                             name + '-actual-ELF-ABI')
         needed = product.dynamic_needed(info)
@@ -69,7 +70,7 @@ def verify_installed_tools(build, arch):
     """Read-only replay hook for collector and independent MIC verifiers."""
     from batch_media_wallpaper_artifacts import elf_dependencies
     path = Path(build); value = json.loads(path.read_text())
-    if (arch != 'arm64' or value.get('status') != 'pass' or value.get('arch') != arch or
+    if (arch not in ('arm64','armv7a','x86_64') or value.get('status') != 'pass' or value.get('arch') != arch or
             value.get('builder_sha256') != sha(Path(__file__)) or value.get('inputs_unchanged') is not True):
         raise ValueError('fresh actual product MIC tool builder receipt required')
     source = value['product_build']
@@ -93,19 +94,23 @@ def verify_installed_tools(build, arch):
     for command in report['commands']:
         if command.get('exit_code') != 0 or command.get('timed_out') or sha(relocated(command['log'])) != command['sha256']:
             raise ValueError('actual MIC product command failed or its complete log changed')
+    from native579_artifact_context import binding_context
     for name, source_path in SOURCES.items():
         tool = value['tools'][name]; row = report['helpers'][name]
         if (row['status'] != 'pass_compile_link_ONLY' or row['source']['sha256'] != sha(source_path) or
                 tool['source_sha256'] != sha(source_path) or sha(path.parent / name) != row['binary_sha256'] or
                 tool['binary_sha256'] != row['binary_sha256'] or
-                elf_dependencies(path.parent / name) != row['DT_NEEDED'] or
+                elf_dependencies(path.parent / name, product_name=report['product']) != row['DT_NEEDED'] or
                 any(tool.get(key) != row.get(key) for key in ('DT_NEEDED', 'installed_runtime_profile',
                     'actual_link_inputs', 'actual_link_input_sonames'))):
             raise ValueError('actual compiled MIC tool source/binary/runtime receipt differs: ' + name)
+        context579 = binding_context(report, row, path.parent / name,
+            lambda ref: relocated(ref['path']))
+        if context579['arch'] != arch: raise ValueError('actual MIC ELF/profile architecture differs')
         if '-nostdlib' not in row['link_command']: raise ValueError('MIC linker could select implicit prebuilt runtime libraries')
         verify_compile_command(report, name, row)
         if name == 'audio_capture_token':
-            product.validate_flags(row['compile_command'])
+            product.validate_flags(row['compile_command'], product=report['product'], actual_target=context579['compiler_target'])
             if not product.effective_cfi(row['link_command']): raise ValueError('MIC token actual link CFI missing')
         command = [r for r in report['commands'] if r['label'] == name + '-link']
         if len(command) != 1 or command[0]['argv'] != row['link_command'] or command[0]['exit_code'] != 0:
@@ -121,15 +126,18 @@ def verify_installed_tools(build, arch):
     return value
 
 
-def build(root, output, arch, runtime_profile, runtime_profile_sha256):
-    if arch != 'arm64': raise ValueError('installed-runtime profile currently requires an actual ARM64 product; no SDK fallback')
+def build(root, output, arch, runtime_profile, runtime_profile_sha256, *, normal_link_target=None):
+    from production579_target import bound_profile
+    actual_profile = bound_profile(runtime_profile, runtime_profile_sha256)
+    if actual_profile['arch'] != arch: raise ValueError('actual MIC product profile/arch differs; no SDK fallback')
     output = Path(output).resolve(); output.mkdir(parents=True, exist_ok=False)
     configure()
     builder = CaptureToolsBuilder(root, output / 'product-build', list(SOURCES),
-        runtime_profile=runtime_profile, runtime_profile_sha256=runtime_profile_sha256)
+        runtime_profile=runtime_profile, runtime_profile_sha256=runtime_profile_sha256,
+        product=actual_profile['product'], normal_link_target=normal_link_target)
     native = builder.run()
     report = {'status': 'fail', 'scope': 'real_root_PCM_producer_and_independent_AccessToken_tools_ONLY',
-        'arch': arch, 'product': product.PRODUCT, 'builder_sha256': sha(Path(__file__)),
+        'arch': arch, 'product': actual_profile['product'], 'builder_sha256': sha(Path(__file__)),
         'inputs_sha256': {p: v['sha256'] for p, v in native['inputs'].items()},
         'inputs_unchanged': native.get('changed_inputs') == [], 'tools': {},
         'product_build': {'path': str(builder.output / 'build.json'), 'sha256': sha(builder.output / 'build.json')},
@@ -158,8 +166,10 @@ def main():
     parser.add_argument('--arch', choices=('arm64', 'armv7a', 'x86_64'), required=True)
     parser.add_argument('--runtime-profile', type=Path, required=True)
     parser.add_argument('--runtime-profile-sha256', required=True)
+    parser.add_argument('--normal-link-target')
     args = parser.parse_args()
-    result = build(args.source_root, args.output, args.arch, args.runtime_profile, args.runtime_profile_sha256)
+    result = build(args.source_root, args.output, args.arch, args.runtime_profile, args.runtime_profile_sha256,
+        normal_link_target=args.normal_link_target)
     print(json.dumps({'status': result['status'], 'tools': result['tools']}))
     return result['status'] != 'pass'
 

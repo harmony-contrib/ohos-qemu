@@ -87,10 +87,22 @@ class Bindings:
         require(self.shell('sha256sum ' + shlex.quote(paths[0]), 'provider_hap_hash').strip() ==
             self.inputs['provider_hap']['sha256'] + '  ' + paths[0], 'actual packaged provider differs from built/signed input')
         self.provider['hap_path'] = paths[0]
+        device = self.shell('param get const.product.devicetype', 'guest_device_type').strip()
+        require(device in {'phone','2in1'}, 'actual phone/2in1 product device required')
+        modules = doc['hapModuleInfos']
+        require(len(modules)==1 and set(modules[0].get('deviceTypes',[]))=={'default','tablet','2in1'},
+                'actual BMS caption module SDK26 device contract differs')
+        self.provider['device_type'] = device
         kernel = self.shell('uname -m', 'guest_arch').strip()
         self.abi = {'aarch64':'arm64-v8a','x86_64':'x86_64','armv7l':'armeabi-v7a'}[kernel]
         require(self.inputs['abi'] == self.abi, 'actual guest/HAP native ABI differs')
         with zipfile.ZipFile(self.inputs['provider_hap']['path']) as hap:
+            document = strict_json(hap.read('module.json').decode('utf-8'))
+            module = document['module']
+            require(document['app']['bundleName']==BUNDLE and
+                (module.get('name'),module.get('type'),module.get('deviceTypes'))==
+                ('entry','entry',['default','tablet','2in1']),
+                'same installed signed HAP must retain the exact SDK26 caption module')
             require(hap.read('ets/modules.abc') and len(hap.namelist()) == len(set(hap.namelist())), 'actual signed product ABC required')
             for library, ref in self.inputs['libraries'].items():
                 require(library in {'libsherpa_onnx.so','libsherpa-onnx-c-api.so','libonnxruntime.so','libc++_shared.so'} and

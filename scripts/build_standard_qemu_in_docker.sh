@@ -3075,12 +3075,24 @@ PYPLAN
 }
 
 apply_qemu_capability_patch_plan() {
+  # Preserve input ages only for exact retained component bytes. Every normal
+  # guard still runs, and changed contents retain their new input timestamps.
+  local source_times_directory source_times_snapshot
+  source_times_directory="$(mktemp -d "${CACHE_ROOT}/logs/source-prefix-times579.XXXXXX")"
+  source_times_snapshot="${source_times_directory}/capture.json"
+  python3 "${PATCH_ROOT}/lib/qemu_preserve_source_times579.py" --source-root "${OHOS_ROOT}" \
+    --snapshot "${source_times_snapshot}" --action capture \
+    2>&1 | tee "${source_times_directory}/capture.log"
   # Re-enter the exact existing HAP pipeline from the known complete prefix.
   # Unknown states remain untouched and are checked by their original guards.
   python3 "${PATCH_ROOT}/lib/qemu_hap_prefix579.py" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_hap_prefix579.log"
   python3 "${PATCH_ROOT}/lib/qemu_source_prefix579.py" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_source_prefix579.log"
+  # Exact old72/corrected391 upgrades only; defer is not source admission.
+  # Every normal legacy guard and final full35 verification remains mandatory.
+  python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action migrate \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_audio_onset579_previous_upgrade.log"
   # The complete prior vector is restored before its original overlapping
   # components, then reapplied below. A partial/unknown state is never reset.
   bash "${PATCH_ROOT}/common/applications/standard/settings/live_captions579/apply.sh" --source-root "${OHOS_ROOT}" --rewind \
@@ -3734,6 +3746,9 @@ apply_qemu_capability_patch_plan() {
   # queue/lifecycle patches. Native AMS compares the real delivered startId.
   bash "${PATCH_ROOT}/common/foundation/ability/ability_runtime/service_idle_startid/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_conditional_idle_stop.log"
+  python3 "${PATCH_ROOT}/common/foundation/ability/ability_runtime/service_idle_startid/prepare_sdk26.py" \
+    --source-root "${OHOS_ROOT}" --sdk-ets-root "${OHOS_ROOT}/prebuilts/ohos-sdk/linux/26.0.0/ets" \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_service_idle_sdk26.log"
   bash "${PATCH_ROOT}/common/applications/standard/settings_data/accessibility_notification_defaults/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_notification_defaults.log"
   bash "${PATCH_ROOT}/common/foundation/multimedia/av_session/qemu_panel_lifecycle/apply.sh" --source-root "${OHOS_ROOT}" \
@@ -3773,6 +3788,10 @@ apply_qemu_capability_patch_plan() {
     echo "Actual pinned Lottie and Live Captions production input descriptors are required" >&2
     return 1
   fi
+  if [ "${#PRODUCTS[@]}" -ne 1 ]; then
+    echo "Caption source preparation requires one actual product/ABI per normal build invocation" >&2
+    return 1
+  fi
   if [ -z "${QEMU_LIVE_CAPTIONS_ABI}" ]; then
     case "${PRODUCTS}" in
       arm64_virt) QEMU_LIVE_CAPTIONS_ABI=arm64-v8a ;;
@@ -3791,6 +3810,7 @@ apply_qemu_capability_patch_plan() {
   python3 "${PATCH_ROOT}/lib/livecaptions_provider.py" --source-root "${OHOS_ROOT}" \
     --cache-root "${CACHE_ROOT}/livecaptions-source-profile" --inputs "${QEMU_LIVE_CAPTIONS_INPUTS}" \
     --inputs-sha256 "${QEMU_LIVE_CAPTIONS_INPUTS_SHA256}" --abi "${QEMU_LIVE_CAPTIONS_ABI}" \
+    --product "${PRODUCTS[0]}" --device "${DEVICE_TYPE}" \
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_livecaptions_source_profile.log"
   # Load the real reference RIL only in this QEMU product preparation.
   bash "${PATCH_ROOT}/common/vendor/ohemu/virt/ril_reference_transport/apply.sh" --source-root "${OHOS_ROOT}" \
@@ -3840,6 +3860,9 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_onset579_component.log"
   python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action verify \
     > "${CACHE_ROOT}/logs/verify_audio_onset579_component.json"
+  python3 "${PATCH_ROOT}/lib/qemu_preserve_source_times579.py" --source-root "${OHOS_ROOT}" \
+    --snapshot "${source_times_snapshot}" --action restore \
+    2>&1 | tee "${source_times_directory}/restore.log"
   # Hash actual, fully patched kernel/config/HDI sources before any traversal.
   # Directory mtimes and a shell environment flag cannot invalidate Ninja's
   # old Image output; the GN action now consumes this stable fingerprint.

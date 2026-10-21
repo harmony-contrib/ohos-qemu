@@ -268,8 +268,9 @@ class Capture:
             boot = read_json(a.boot); env = boot['test_environment']
             if (boot.get('status') != 'pass' or boot.get('purpose') != 'acceptance' or env.get('external_keepalive') is not False or
                     boot['archive_sha256'] != r['archive_sha256'] or env['target'] != a.target or
-                    env['guest_arch'] != a.arch or env['device_type'] != 'phone' or env['product'] != 'arm64_virt'):
-                raise ValueError('requires same newly packaged ARM64 phone acceptance boot')
+                    env['guest_arch'] != a.arch or env['device_type'] not in ('phone','2in1') or
+                    {'arm64':'arm64_virt','armv7a':'armv7a_virt','x86_64':'x86_64_virt'}.get(a.arch) != env['product']):
+                raise ValueError('requires same newly packaged actual product/profile acceptance boot')
             r['boot_id'] = env['boot_id']
             if self.shell('cat /proc/sys/kernel/random/boot_id', 'boot-before') != r['boot_id']:
                 raise ValueError('connected guest does not match enclosing acceptance boot')
@@ -340,6 +341,7 @@ class Capture:
                 paths = ['/vendor/lib64/vendorGnssAdapter.so', '/vendor/lib64/libgnss_interface_service_2.0.z.so',
                     '/system/lib64/liblbsservice_gnss.z.so', '/vendor/lib64/libhdi_sensor_impl.z.so', '/system/lib64/libdevicestatus_algo.z.so',
                     '/system/lib64/libdevicestatus_service.z.so']
+                paths = [path.replace('/lib64/', '/lib/' if a.arch == 'armv7a' else '/lib64/') for path in paths]
                 self.shell('sha256sum ' + ' '.join(paths), 'actual-image-libraries-' + str(generation))
                 inputs = self.supplied(generation)
                 begin = self.mark()
@@ -394,7 +396,7 @@ def main():
     for key in ['archive', 'boot', 'project', 'sdk', 'signed-hap', 'signer-jar', 'input-directory', 'output']:
         p.add_argument('--' + key, type=Path, required=True)
     p.add_argument('--hdc', required=True); p.add_argument('--target', required=True); p.add_argument('--run-id', required=True)
-    p.add_argument('--arch', choices=['arm64'], default='arm64'); p.add_argument('--input-wait', type=int, default=120)
+    p.add_argument('--arch', choices=['arm64','armv7a','x86_64'], default='arm64'); p.add_argument('--input-wait', type=int, default=120)
     p.add_argument('--permission-allow-text', help='Explicit actual trusted consent label, otherwise an operator handles the real dialog')
     a = p.parse_args()
     if not 1 <= a.input_wait <= 120: p.error('bounded external trace wait1..120seconds required')

@@ -1,11 +1,8 @@
-import { common, ServiceExtensionAbility, Want } from '@kit.AbilityKit';
+import { ServiceExtensionAbility, Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { Journal, Request } from './Journal';
 import { parameterBoundary } from './ParameterBoundary';
 
-interface ConditionalServiceContext extends common.ServiceExtensionContext {
-  terminateSelfIfStartId(expectedStartId: number): Promise<boolean>;
-}
 
 // A fixture-only retained closure preserves the OLD actual Context/token when
 // the real host process survives a service-instance destruction. It does not
@@ -40,7 +37,7 @@ export default class IdleService extends ServiceExtensionAbility {
     this.queue = this.queue.then(() => this.execute(request, startId));
   }
   private async attempt(request: Request, expectedStartId: number): Promise<void> {
-    const context = this.context as ConditionalServiceContext;
+    const context = this.context;
     Journal.write(context, request, 'stop.call', 0,
       JSON.stringify({ expectedStartId, latestStartId: this.latestStartId, generation: this.generation }));
     try {
@@ -70,7 +67,7 @@ export default class IdleService extends ServiceExtensionAbility {
             Journal.write(this.context, request, event, code, JSON.stringify({ label, raw }));
           });
       } else if (request.action === 'retain-context') {
-        const oldContext = this.context as ConditionalServiceContext;
+        const oldContext = this.context;
         const oldId: number = startId;
         retainedGeneration = this.generation;
         retainedStop = (): Promise<boolean> => oldContext.terminateSelfIfStartId(oldId);

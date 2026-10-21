@@ -74,10 +74,14 @@ def main():
     parser.add_argument('--plan-only', action='store_true')
     parser.add_argument('--runtime-profile', type=Path, required=True)
     parser.add_argument('--runtime-profile-sha256', required=True)
+    parser.add_argument('--normal-link-target')
     args = parser.parse_args()
     configure()
+    from production579_target import bound_profile
+    actual_profile = bound_profile(args.runtime_profile, args.runtime_profile_sha256)
     builder = product.Builder(args.source_root, args.output, [NAME,CLOCK_NAME], args.plan_only,
-                              runtime_profile=args.runtime_profile, runtime_profile_sha256=args.runtime_profile_sha256)
+                              runtime_profile=args.runtime_profile, runtime_profile_sha256=args.runtime_profile_sha256,
+                              product=actual_profile['product'], normal_link_target=args.normal_link_target)
     builder.report['audio_haptic_extension'] = record(Path(__file__))
     result = builder.run()
     print(json.dumps({'status': result['status'], 'helpers': result['helpers']}, indent=2))

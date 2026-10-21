@@ -141,6 +141,7 @@ def helper_binding(item):
     source = FIX / 'knowledge_token_query.cpp'
     mapping = item.get('path_map', {})
     row = report['helpers'][HELPER]; original = None
+    selected_product = row['installed_runtime_profile']['profile']['product']
     logs = []
     expected_scope = 'diagnostic_new_helpers_using_existing_actual_product_GN_flags_NOT_fresh_GN_target_selection_or_runtime'
     if report.get('verify_existing') is True:
@@ -148,7 +149,7 @@ def helper_binding(item):
         origin = report['original_report']; original = load(checked(mapped_record(origin, mapping)))
         require(origin.get('rewritten') is False and origin['status'] == original['status'] and
                 origin['builder_sha256'] == original['builder_sha256'] and original.get('plan_only') is False and
-                original.get('changed_inputs') == [] and original.get('product') == 'arm64_virt',
+                original.get('changed_inputs') == [] and original.get('product') == selected_product,
                 'unchanged actual original helper build receipt required')
         prior = original['helpers'][HELPER]
         require(all(row[k] == prior[k] for k in ('compile_command', 'link_command')), 'recheck changed original compile/link')
@@ -156,7 +157,7 @@ def helper_binding(item):
         require(checked(mapped_record(reused['binary'], mapping)) == binary and
                 sha(checked(mapped_record(reused['source'], mapping))) == sha(source), 'recheck reused different source/binary')
         row = {**prior, **row}
-    require(report.get('scope') == expected_scope and report.get('product') == 'arm64_virt' and
+    require(report.get('scope') == expected_scope and report.get('product') == selected_product and
             report.get('plan_only') is False and report.get('changed_inputs') == [] and
             report.get('builder_sha256') == sha(HERE / 'batch_system_build_runtime_helpers.py') and
             report.get('first_artifact_behavior_gate_passed') is False and
@@ -181,7 +182,7 @@ def helper_binding(item):
     for argv in (compile_argv, link_argv):
         require('-fsanitize-cfi-cross-dso' in argv and any(v.startswith('-fsanitize=') and 'cfi' in v for v in argv),
                 'real cross-DSO CFI command missing')
-    require('--target=aarch64-linux-ohos' in compile_argv and '-fno-exceptions' in compile_argv and
+    require('-fno-exceptions' in compile_argv and
             '-pie' in link_argv, 'actual ARM64 product ABI/PIE required')
     private_source = mapped_record({'path': compile_argv[compile_argv.index('-c')+1], 'sha256': sha(source)}, mapping)
     require(sha(checked(private_source)) == sha(source) and
@@ -200,7 +201,10 @@ def helper_binding(item):
     elf_log = checked(mapped_record({'path': elf[0]['log'], 'sha256': elf[0]['sha256']}, mapping)).read_text()
     require(defined_symbol(elf_log, '__cfi_check') and 'std::__h::' in elf_log and 'std::__n1::' not in elf_log,
             'actual CFI/system C++ ABI inspection differs')
-    needed = elf_dependencies(binary)
+    from native579_artifact_context import binding_context
+    native_context579 = binding_context(original if original is not None else report, row, binary,
+        lambda ref: checked(mapped_record(ref, mapping)))
+    needed = elf_dependencies(binary, product_name=selected_product)
     require(needed == row['DT_NEEDED'] and 'libaccesstoken_sdk.z.so' in needed, 'actual helper dynamic dependencies differ')
     inputs = original['inputs'] if original is not None else report['inputs']
     installed = installed_runtime_binding(row, needed, inputs)

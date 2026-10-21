@@ -1,21 +1,30 @@
-# Calendar lifecycle source preparation
+# Calendar typed ArkTS lifecycle successor
 
-The complete eighteen-file vector follows the actual CalendarData and reminder
-service revisions recorded in `source_states.json`. It retains native errors,
-adds provider-authorized revision snapshots and atomic conditional mutation,
-and binds both selected Calendar views to actual DataShare change notifications.
-The real reminder service SA 3204 gains a read-only native/shell diagnostic of
-its existing Calendar queue for observing future reminders and their removal.
+This keeps the complete eighteen-file lifecycle vector at the two fixed project
+revisions in source_states.json. Five ETS files change after the actual72 build:
+parameter errors now instantiate an Error subclass with the same code/name/message;
+caught errors keep the original object with Error type; four event write paths
+copy all permitted values except the same protected revision key; two self-referential
+constructor bindings gain explicit class types. Thirteen product files, including
+the root-composed optional-filter NAPI source, remain byte-exact.
 
-The normal source pipeline restores only this exact complete successor before
-re-entering the original Calendar components, then applies the whole vector once.
-`calendar_lifecycle579.ancestor_view` first requires both actual project HEADs
-and every final file. Only the original read-only ancestor guards receive a
-temporary sparse view with exact retained predecessor bytes. Unchanged inputs
-come from the actual tree; all dependencies and the complete final vector are
-checked again afterward. Build, signing and packaging use actual final files.
+apply.sh uses the source-pinned calendar_lifecycle579 helper. Default preparation
+accepts only the complete prefix, complete legacy72, or complete typed final.
+Legacy migration stages all eighteen files, checks the full staged final, replaces
+only the five changed files, preserves other metadata, and rolls back only its own
+known replacements on error. Mixed/unknown bytes reject without overwrite.
+--require-final is read-only and never migrates. --migrate accepts only complete
+legacy72 or an idempotent typed final.
 
-No source preparation result establishes capability success. The new packaged
-QEMU must exercise errors, stale/current concurrent edits, causal refresh,
-permission regrant, actual reminder actions, future queue cleanup and two real
-boots using the original userdata. See the retained source delivery identity.
+The original qemu_source_prefix579 hook still calls rewind_if_final before the
+original Calendar hooks. Complete legacy72 and complete new final reverse through
+their exact own whole patch into the same original prefix. Pristine/earlier/unknown
+states are untouched and explicitly deferred, not declared valid. All original
+normal source/signing/ancestor guards and the strict final eighteen-file gate must
+still complete before GN. ancestor_view requires only the new actual final and
+retains the same original read-only sparse predecessor projection and postchecks.
+
+No script, parser, SDK, compiler, host test or guest was executed for this candidate.
+This repairs known source diagnostics; new-image compilation, BMS installation,
+Calendar business/boundary/regression/cleanup, crossboot, original47/full82 and the
+first-artifact gate remain pending.

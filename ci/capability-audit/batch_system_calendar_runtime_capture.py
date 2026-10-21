@@ -30,11 +30,12 @@ def helper_proof(spec):
     import batch_system_build_runtime_helpers as product
     binary, receipt = checked(spec['binary']), checked(spec['receipt'])
     report = protocol.decode(receipt.read_text())
+    selected_product = report['installed_runtime_profile']['profile']['product']
     mapping = spec.get('path_map', {})
     require(not mapping or set(mapping) == {'/work', '/evidence/helpers'}, 'only original product helper witness mappings supported')
     def actual(item):
         return signatures.witness_artifact(item, mapping)
-    require(report.get('plan_only') is False and report.get('product') == 'arm64_virt' and
+    require(report.get('plan_only') is False and report.get('product') == selected_product and
             report.get('changed_inputs') == [] and report.get('builder_sha256') == sha(HERE / 'batch_system_build_runtime_helpers.py'),
             'current immutable product helper build receipt required')
     original = None
@@ -45,7 +46,7 @@ def helper_proof(spec):
         original = protocol.decode(actual(reference).read_text())
         require(reference.get('rewritten') is False and reference['status'] == original['status'] and
                 reference['builder_sha256'] == original['builder_sha256'] and original.get('plan_only') is False and
-                original.get('changed_inputs') == [] and original.get('product') == 'arm64_virt',
+                original.get('changed_inputs') == [] and original.get('product') == selected_product,
                 'actual immutable Calendar original helper receipt required')
         prior = original['helpers']['calendar_runtime_observer']
         require(all(row.get(k) == prior.get(k) for k in ('compile_command', 'link_command')),
@@ -77,12 +78,14 @@ def helper_proof(spec):
         else:
             actual({'path': commands[0]['log'], 'sha256': commands[0]['sha256']})
     compile_argv = row['compile_command']
-    require('--target=aarch64-linux-ohos' in compile_argv and '-fno-exceptions' in compile_argv and
+    require('-fno-exceptions' in compile_argv and
             '-fsanitize-cfi-cross-dso' in compile_argv and any(x.startswith('-fsanitize=') and 'cfi' in x for x in compile_argv) and
             product.effective_cfi(compile_argv) and product.effective_cfi(row['link_command']) and '-pie' in row['link_command'] and
             row.get('actual_compiler_dependencies') and row.get('actual_link_inputs') and row.get('anchors'),
             'actual product headers/DSO/CFI commands missing')
-    product.validate_flags(compile_argv)
+    from native579_artifact_context import binding_context
+    native_context579 = binding_context(original if original is not None else report, row, binary, actual)
+    product.validate_flags(compile_argv, product=selected_product, actual_target=native_context579['compiler_target'])
     require([a['object_target'] for a in row['anchors']] == [product.APP['object'], product.TOKEN['object']],
             'actual APP/TOKEN graph anchors differ')
     require({'libapp_manager.z.so', 'libaccesstoken_sdk.z.so'} <= set(row.get('DT_NEEDED', [])), 'real innerkit DSOs missing')
@@ -92,9 +95,9 @@ def helper_proof(spec):
     elf = actual({'path': commands[0]['log'], 'sha256': commands[0]['sha256']}).read_text()
     require('__cfi_check' in elf and 'std::__h::' in elf and 'std::__n1::' not in elf, 'actual ELF product libc++/CFI missing')
     from run_root_probe import validate_elf
-    validate_elf(binary, 'arm64')
+    validate_elf(binary, native_context579['arch'])
     from batch_media_wallpaper_artifacts import elf_dependencies, installed_runtime_binding
-    installed_runtime_binding(row, elf_dependencies(binary), original['inputs'] if original is not None else report['inputs'])
+    installed_runtime_binding(row, elf_dependencies(binary, product_name=selected_product), original['inputs'] if original is not None else report['inputs'])
     return row
 
 
@@ -147,7 +150,11 @@ class Collector:
         self.run = self.challenge['run_id']
         self.plan = protocol.decode(args.plan.read_text())
         self.guest = EnclosingAcceptanceGuest(args.boot, args.archive, args.hdc, self.output / 'guest').start()
-        require(self.guest.env['guest_arch'] == 'arm64' and self.guest.env['device_type'] == 'phone', 'representative ARM64 phone required')
+        product_name579 = self.guest.report['test_environment']['product']
+        import batch_system_build_runtime_helpers as product579
+        expected_arch579 = product579.target_spec(product_name579)['arch']
+        require(self.guest.report['test_environment']['guest_arch'] == expected_arch579 and self.guest.report['test_environment']['device_type'] in ('phone','2in1'),
+                'actual finite full-source Calendar guest product/profile required')
         self.boot = self.guest.env['boot_id']
         self.report = {'schema_version': 1, 'scope': 'actual_calendar_QA_stage_NOT_full_calendar_or_package_gate',
             'status': 'fail', 'run_id': self.run, 'boot_id': self.boot, 'archive': record(args.archive.resolve()),

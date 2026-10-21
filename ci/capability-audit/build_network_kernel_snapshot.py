@@ -36,40 +36,8 @@ def descriptor(path):
     return {'path': str(path), 'sha256': product.sha(path), 'bytes': path.stat().st_size}
 
 
-def elf_needed(path):
-    """Read DT_NEEDED from actual ARM64 ELF bytes, independent of readelf text."""
-    product.elf_header(path, executable=True)
-    data = Path(path).read_bytes(); offset = struct.unpack_from('<Q', data, 32)[0]
-    entry, count = struct.unpack_from('<HH', data, 54)
-    loads = []; dynamic = []; interpreters = []
-    for i in range(count):
-        kind, _, start, address, _, size, _, _ = struct.unpack_from('<IIQQQQQQ', data, offset + i * entry)
-        require(start + size <= len(data), 'truncated actual ELF segment')
-        if kind == 1: loads.append((address, start, size))
-        if kind == 2: dynamic.append((start, size))
-        if kind == 3: interpreters.append(data[start:start + size])
-    require(interpreters == [b'/lib/ld-musl-aarch64.so.1\0'], 'exact product musl interpreter')
-    require(len(dynamic) == 1 and dynamic[0][1] % 16 == 0, 'one complete ELF dynamic segment')
-    start, size = dynamic[0]; tags = {}; needed = []; ended = False
-    for i in range(start, start + size, 16):
-        kind, value = struct.unpack_from('<qQ', data, i)
-        if kind == 0: ended = True; break
-        if kind == 1: needed.append(value)
-        elif kind in (5, 10):
-            require(kind not in tags, 'duplicate ELF string table tag'); tags[kind] = value
-    require(ended and set(tags) == {5, 10} and 0 < len(needed) <= 128, 'complete ELF dynamic string table')
-    positions = [file + tags[5] - address for address, file, size in loads
-                 if address <= tags[5] and tags[5] + tags[10] <= address + size]
-    require(len(positions) == 1, 'ELF string table mapping')
-    table = data[positions[0]:positions[0] + tags[10]]; result = []
-    for index in needed:
-        end = table.find(b'\0', index)
-        require(0 <= index < end < len(table), 'ELF needed string bounds')
-        name = table[index:end].decode('ascii')
-        require(re.fullmatch(r'[A-Za-z0-9_.+\-]+\.so', name), 'ELF needed SONAME')
-        result.append(name)
-    require(len(set(result)) == len(result), 'duplicate DT_NEEDED')
-    return sorted(result)
+def elf_needed(path, *, product_name='arm64_virt'):
+    return product.elf_needed(path, product=product_name)
 
 
 def configure():
@@ -88,7 +56,8 @@ class KernelSnapshotBuilder(product.Builder):
         return row
 
     def check_elf(self, name, binary, direct, row):
-        row['elf'] = product.elf_header(binary, executable=True)
+        row['elf'] = product.elf_header(binary, executable=True, product=self.product,
+            interpreter_path=None if self.normal_link is None else self.normal_link['interpreter'])
         info = self.command([self.readelf, '-h', '-l', '-d', '--dyn-syms', '--wide', '--demangle', binary],
                             name + '-actual-ELF-ABI')
         needed = product.dynamic_needed(info)
@@ -100,14 +69,17 @@ class KernelSnapshotBuilder(product.Builder):
         row['system_ABI_proof'] = 'actual ALSA C GN flags/CRT/LTO/runtime selections and installed F image; no C++ assertion'
 
 
-def build(source_root, output, runtime_profile, runtime_profile_sha256, *, plan_only=False):
+def build(source_root, output, runtime_profile, runtime_profile_sha256, *, plan_only=False, normal_link_target=None):
+    from production579_target import bound_profile
+    actual_profile = bound_profile(runtime_profile, runtime_profile_sha256)
     output = Path(output).resolve(); output.mkdir(parents=True, exist_ok=False)
     configure()
     builder = KernelSnapshotBuilder(source_root, output / 'product-build', [NAME], plan_only=plan_only,
-        runtime_profile=runtime_profile, runtime_profile_sha256=runtime_profile_sha256)
+        runtime_profile=runtime_profile, runtime_profile_sha256=runtime_profile_sha256,
+        product=actual_profile['product'], normal_link_target=normal_link_target)
     native = builder.run()
     report = {'schema': 'network-kernel-helper-build/v1', 'status': 'fail',
-        'scope': 'actual_product_C_compile_link_ONLY_NOT_guest_or_VPN', 'arch': 'arm64',
+        'scope': 'actual_product_C_compile_link_ONLY_NOT_guest_or_VPN', 'arch': actual_profile['arch'],
         'plan_only': plan_only, 'tools': {p.relative_to(HERE).as_posix(): descriptor(p) for p in TOOLS},
         'actual_c_compiler': builder.inputs.get(str(builder.c_compiler.resolve())),
         'product_build': descriptor(builder.output / 'build.json'), 'artifacts': {},
@@ -142,9 +114,12 @@ def verify_existing(path, expected_sha256, *, archive_sha256=None):
     require(re.fullmatch('[0-9a-f]{64}', expected_sha256 or '') and product.sha(path) == expected_sha256,
             'external build receipt SHA required')
     value = json.loads(path.read_text()); root = path.parent
+    retained_profile = json.loads((root / 'runtime-profile.json').read_text())
+    product.validate_installed_profile(retained_profile, archive_sha256=archive_sha256)
+    selected_product = retained_profile['product']; selected_arch = product.target_spec(selected_product)['arch']
     require(value.get('schema') == 'network-kernel-helper-build/v1' and
             value.get('status') == 'pass_compile_link_ONLY' and value.get('plan_only') is False and
-            value.get('arch') == 'arm64' and value.get('requirements_closed') == 0 and
+            value.get('arch') == selected_arch and value.get('requirements_closed') == 0 and
             value.get('first_artifact_behavior_gate_passed') is False, 'successful compile-only receipt required')
     require(set(value['tools']) == {p.relative_to(HERE).as_posix() for p in TOOLS} and
             all(all(value['tools'][p.relative_to(HERE).as_posix()][k] == descriptor(p)[k]
@@ -199,7 +174,7 @@ def verify_existing(path, expected_sha256, *, archive_sha256=None):
             row['anchors'][0]['actual_command'] in logs[NAME + '-0-actual-GN-command'].splitlines(), 'actual C compiler/GN command identity')
     flags = product.compile_flags(anchor['actual_command'], compiler,
         Path(report['source_root']) / ALSA['source'], build_dir)
-    require(flags == anchor['flags'] and [f for f in flags if f.startswith('--target=')] == ['--target=aarch64-linux-ohos'] and
+    require(flags == anchor['flags'] and [f for f in flags if f.startswith('--target=')] == ['--target=' + product.compiler_target(anchor['flags'])] and
             [f for f in flags if f.startswith('--sysroot=')] == ['--sysroot=obj/third_party/musl'] and
             any(f in ('-flto','-flto=thin','-flto=full') for f in flags), 'actual C flags/target/LTO selection')
     flags += [x for x in anchor['include_dirs'] if x not in flags]
@@ -218,11 +193,12 @@ def verify_existing(path, expected_sha256, *, archive_sha256=None):
     require(dependencies == [Path(r['path']).resolve() for r in recorded] and
             all(r == inputs.get(r['path']) or r['path'] == str(old_private / SOURCE.name) and
                 r['sha256'] == product.sha(SOURCE) for r in recorded), 'complete real compiler dependency identities')
-    require(product.elf_header(paths['binary'], executable=True)['sha256'] == row['binary_sha256'] and
+    require(product.elf_header(paths['binary'], executable=True, product=selected_product,
+            interpreter_path=None if report.get('normal_link_contract') is None else report['normal_link_contract']['interpreter'])['sha256'] == row['binary_sha256'] and
             product.sha(root / NAME) == value['installed_tool']['sha256'] == row['binary_sha256'], 'actual ARM64 PIE binary')
     elf = logs[NAME + '-actual-ELF-ABI']; needed = product.dynamic_needed(elf)
     # Read actual ELF dynamic entries independently of the pretty-printer log.
-    require(elf_needed(paths['binary']) == row['DT_NEEDED'] == sorted(needed) and 'libc.so' in needed,
+    require(elf_needed(paths['binary'], product_name=selected_product) == row['DT_NEEDED'] == sorted(needed) and 'libc.so' in needed,
             'actual ELF DT_NEEDED differs')
     inspections = [c for c in commands if c['label'] == NAME + '-actual-ELF-ABI']
     require(len(inspections) == 1 and Path(inspections[0]['argv'][0]).name == 'llvm-readelf' and
@@ -237,9 +213,12 @@ def verify_existing(path, expected_sha256, *, archive_sha256=None):
     require(row['actual_runtime_libraries_from_anchors'] == list(dict.fromkeys(anchor['libs'])) and
             anchor['selected_shared_dependencies'] == [] and row['linked_libraries'] == [] and
             row['original_GN_direct_libraries'] == [], 'exact actual ALSA C GN/runtime selections retained')
-    crt = [str(build_dir / 'obj/third_party/musl/usr/lib/aarch64-linux-ohos' / n)
-           for n in ('Scrt1.o','crti.o','crtn.o')]
-    expected_link = [str(compiler), *ld, '-pie', '-Wl,--threads=2', '-Wl,--export-dynamic',
+    from native579_artifact_context import binding_context
+    binding_context(report, row, paths['binary'], relocated)
+    normal = report.get('normal_link_contract')
+    crt = ([record['path'] for record in normal['CRT']] if normal is not None else
+           [str(build_dir / 'obj/third_party/musl/usr/lib/aarch64-linux-ohos' / n) for n in ('Scrt1.o','crti.o','crtn.o')])
+    expected_link = [str(compiler), *ld, '-pie', '-Wl,--export-dynamic', '-Wl,--threads=2',
         '-o', str(old_private / NAME), *crt[:2], '-Wl,-t', '-Wl,--start-group',
         str(old_private / (NAME + '.o')), *runtime, '-Wl,--end-group', crt[2]]
     require(link_argv == expected_link, 'exact actual C GN link/CRT/runtime argv differs')
@@ -258,7 +237,7 @@ def verify_existing(path, expected_sha256, *, archive_sha256=None):
         for record in product.runtime_link_records(row, soname): require(record['path'] in opened, 'installed DSO absent from actual link trace')
         dump = image['dsos'][soname]; actual = relocated(dump); expected = profile['dsos'][soname]['staged']
         require(product.sha(actual) == expected['sha256'] and actual.stat().st_size == expected['bytes'] and
-                product.elf_soname(actual) == soname, 'independent image DSO redump differs')
+                product.elf_soname(actual, product=selected_product) == soname, 'independent image DSO redump differs')
         stat = commands[dump['stat_command']]
         entry = profile['dsos'][soname]
         require(stat['argv'] == [image['tools']['debugfs']['path'], '-R', 'stat ' + entry['image_member'],
@@ -278,6 +257,7 @@ def main():
     p.add_argument('--verify-existing', type=Path)
     p.add_argument('--expected-sha256')
     p.add_argument('--archive-sha256')
+    p.add_argument('--normal-link-target')
     a = p.parse_args()
     if a.verify_existing:
         require(not a.execute_build, 'build/replay modes are exclusive')
@@ -286,10 +266,11 @@ def main():
     require(all((a.source_root, a.output, a.runtime_profile, a.runtime_profile_sha256)), 'explicit actual source/output/profile and external SHA required')
     if not a.execute_build:
         print(json.dumps({'status': 'plan_ONLY_no_inputs_opened', 'source_root': str(a.source_root),
-            'output': str(a.output), 'anchor': ALSA, 'helper': str(SOURCE), 'arch': 'arm64',
+            'output': str(a.output), 'anchor': ALSA, 'helper': str(SOURCE), 'arch': None,
+            'actual_installed_profile_and_normal_target_required_before_execution': True,
             'runtime_profile': str(a.runtime_profile), 'runtime_profile_sha256': a.runtime_profile_sha256,
             'next': 'root resource lease plus --execute-build', 'requirements_closed': 0})); return 0
-    result = build(a.source_root, a.output, a.runtime_profile, a.runtime_profile_sha256)
+    result = build(a.source_root, a.output, a.runtime_profile, a.runtime_profile_sha256, normal_link_target=a.normal_link_target)
     print(json.dumps({'status': result['status'], 'guest_validated': False}))
     return result['status'] != 'pass_compile_link_ONLY'
 

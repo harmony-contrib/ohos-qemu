@@ -7,7 +7,7 @@ from pathlib import Path
 import stat
 import subprocess
 import tempfile
-from verify_source import HERE, heads, manifest, state, target, vector
+from verify_source import HERE, hashes_for_state, heads, manifest, state, target, vector
 
 
 def digest(content):
@@ -43,7 +43,7 @@ def replace(path, content, original, installed, name):
             temporary.unlink(missing_ok=True)
 
 
-def rollback(root, value, originals, installed):
+def rollback(root, value, originals, installed, initial_state):
     failures = []
     for name in reversed(list(value['files'])):
         try:
@@ -58,8 +58,8 @@ def rollback(root, value, originals, installed):
         except BaseException as error:
             failures.append(name + ': ' + str(error))
     try:
-        if state(root) != 'before':
-            raise ValueError('Rollback did not restore the complete actual before vector')
+        if state(root) != initial_state:
+            raise ValueError('Rollback did not restore the complete actual entry vector: ' + initial_state)
         for name, original in originals.items():
             if identity(target(root, name))[2:] != original['identity'][2:]:
                 raise ValueError('Rollback source mode/owner differs: ' + name)
@@ -71,14 +71,19 @@ def rollback(root, value, originals, installed):
 
 def apply(root):
     value = manifest()
-    if state(root) == 'final':
+    initial_state = state(root)
+    if initial_state == 'final':
         return
+    expected = hashes_for_state(value, initial_state)
+    patch_name = {'before': '0001-stop-only-the-current-service-request.patch',
+        'legacy_final': '0002-upgrade-legacy-napi-typeof.patch',
+        'previous_napi_final': '0003-upgrade-napi-to-sdk26-service-context.patch'}[initial_state]
     originals = {}
     for name in value['files']:
         path = target(root, name)
         observed = identity(path)
         content = path.read_bytes()
-        if identity(path) != observed or digest(content) != value['files'][name][0]:
+        if identity(path) != observed or digest(content) != expected[name]:
             raise ValueError('Actual source changed during snapshot: ' + name)
         originals[name] = {'bytes': content, 'identity': observed}
     with tempfile.TemporaryDirectory(prefix='settings579-source-') as directory:
@@ -90,16 +95,16 @@ def apply(root):
         # Scratch is only an exact finite byte copy, never a forged Git tree.
         # All three HEADs are checked against the actual live repositories.
         heads(root, value)
-        if vector(scratch, value) != 'before':
-            raise ValueError('Complete scratch preimage required')
+        if vector(scratch, value) != initial_state:
+            raise ValueError('Complete actual scratch entry vector required: ' + initial_state)
         subprocess.run(['patch', '--binary', '--batch', '--forward', '--fuzz=0', '-p1', '-i',
-            str(HERE / '0001-stop-only-the-current-service-request.patch')], cwd=scratch, check=True)
+            str(HERE / patch_name)], cwd=scratch, check=True)
         if vector(scratch, value) != 'final':
             raise ValueError('Complete final scratch vector required')
         if {p.relative_to(scratch).as_posix() for p in scratch.rglob('*') if p.is_file()} != set(value['files']):
             raise ValueError('Unexpected scratch file/reject/original output')
         finals = {name: target(scratch, name).read_bytes() for name in value['files']}
-        if state(root) != 'before':
+        if state(root) != initial_state:
             raise ValueError('Actual source vector changed before commit')
         for name, original in originals.items():
             path = target(root, name)
@@ -111,6 +116,8 @@ def apply(root):
                 path = target(root, name)
                 if identity(path) != original['identity'] or path.read_bytes() != original['bytes']:
                     raise ValueError('Source changed during finite commit: ' + name)
+                if finals[name] == original['bytes']:
+                    continue
                 replace(path, finals[name], original, installed, name)
             if state(root) != 'final':
                 raise ValueError('Complete final live vector required')
@@ -118,7 +125,7 @@ def apply(root):
                 if identity(target(root, name))[2:] != original['identity'][2:]:
                     raise ValueError('Final source mode/owner differs: ' + name)
         except BaseException:
-            rollback(root, value, originals, installed)
+            rollback(root, value, originals, installed, initial_state)
             raise
 
 

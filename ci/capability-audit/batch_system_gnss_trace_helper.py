@@ -45,7 +45,8 @@ class GnssDumpBuilder(product.Builder):
     def check_elf(self, name, binary, direct, row):
         if name != NAME:
             return super().check_elf(name, binary, direct, row)
-        row['elf'] = product.elf_header(binary, executable=True)
+        row['elf'] = product.elf_header(binary, executable=True, product=self.product,
+            interpreter_path=None if self.normal_link is None else self.normal_link['interpreter'])
         text = self.command([self.readelf, '-h', '-l', '-d', '--dyn-syms', '--syms', '--wide',
                              '--demangle', binary], name + '-actual-ELF-ABI')
         needed = validate_symbols(text)
@@ -79,10 +80,14 @@ def main():
     parser.add_argument('--plan-only', action='store_true')
     parser.add_argument('--runtime-profile', type=Path, required=True)
     parser.add_argument('--runtime-profile-sha256', required=True)
+    parser.add_argument('--normal-link-target')
     args = parser.parse_args()
     configure()
+    from production579_target import bound_profile
+    actual_profile = bound_profile(args.runtime_profile, args.runtime_profile_sha256)
     builder = GnssDumpBuilder(args.source_root, args.output, [NAME], args.plan_only,
-                              runtime_profile=args.runtime_profile, runtime_profile_sha256=args.runtime_profile_sha256)
+                              runtime_profile=args.runtime_profile, runtime_profile_sha256=args.runtime_profile_sha256,
+                              product=actual_profile['product'], normal_link_target=args.normal_link_target)
     builder.report['gnss_trace_extension'] = builder.remember(Path(__file__), source=False)
     builder.report['scope'] = 'actual diagnostic client compilation only; existing SA, UID and raw callback runtime pending'
     report = builder.run()

@@ -161,7 +161,9 @@ class Collector(shared.Collector):
         self.args, self.value = args, value
         self.guest = EnclosingAcceptanceGuest(args.boot, args.archive, args.hdc, args.output / 'guest').start()
         self.env = self.guest.env
-        require((self.env['guest_arch'], self.env['device_type']) == ('arm64', 'phone'), 'current representative ARM64 phone only')
+        from batch_system_build_runtime_helpers import target_spec
+        require(target_spec(self.env['product'])['arch'] == self.env['guest_arch'] and
+            self.env['device_type'] in ('phone','2in1'), 'actual supported product/profile boot required')
         self.data = project.validate_challenge(checked(value['artifacts_data']['challenge']))
         self.ui = GuestUi(self.command, args.hdc, self.guest.target, args.output / 'ui')
         self.remote = '/data/local/tmp/audio-haptic-' + self.data['run_id']

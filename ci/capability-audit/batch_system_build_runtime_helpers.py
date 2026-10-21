@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build read-only guest helpers with actual ARM64 product innerkit/CFI ABI.
+"""Build read-only guest helpers with actual selected-product innerkit/CFI ABI.
 
 Only root may run the compiler under its resource lease. --plan-only queries the
 existing Ninja graph but never invokes clang or regenerates/builds that graph.
@@ -24,6 +24,42 @@ import time
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 PRODUCT = 'arm64_virt'
+# Keep the original default for existing callers; never mutate this global to
+# select a different source/out tree. Targets are package identities, not SDK
+# triples. A new target's triple, float ABI and CRT come from its actual graph.
+TARGETS = {
+    'arm64_virt': {'arch': 'arm64', 'class': 64, 'machine': 183, 'kernel': 'Image',
+                   'qemu': 'qemu-system-aarch64'},
+    'armv7a_virt': {'arch': 'armv7a', 'class': 32, 'machine': 40, 'kernel': 'zImage',
+                    'qemu': 'qemu-system-arm'},
+    'x86_64_virt': {'arch': 'x86_64', 'class': 64, 'machine': 62, 'kernel': 'bzImage',
+                    'qemu': 'qemu-system-x86_64'}}
+
+
+def target_spec(product):
+    if not isinstance(product, str) or product not in TARGETS:
+        raise ValueError('one finite actual full-source product required')
+    return TARGETS[product]
+
+
+def compiler_target(flags):
+    values = [word.split('=', 1)[1] for word in flags if word.startswith('--target=')]
+    if len(values) != 1 or not re.fullmatch(r'[A-Za-z0-9_.+\-]+', values[0]):
+        raise ValueError('one literal target from the actual Ninja command required')
+    return values[0]
+
+
+def validate_compiler_target(flags, product, actual_target):
+    target_spec(product)
+    selected = compiler_target(flags)
+    if product == PRODUCT:
+        if selected != 'aarch64-linux-ohos':
+            raise ValueError('original actual AArch64 product target required')
+    elif actual_target is None:
+        raise ValueError('nondefault target needs a bound actual executable-link anchor')
+    if actual_target is not None and selected != actual_target:
+        raise ValueError('actual object and executable-link compiler targets differ')
+    return selected
 TOKEN = {
     'graph': 'obj/base/security/access_token/interfaces/innerkits/accesstoken/libaccesstoken_sdk.ninja',
     'object': 'obj/base/security/access_token/interfaces/innerkits/accesstoken/src/libaccesstoken_sdk/accesstoken_kit.o',
@@ -57,6 +93,8 @@ WIFI_HELPER_NAMES = ('apps579_wifi_peer',)
 PRODUCTION_HELPER_NAMES579 = ('audio_haptic_sampler', 'audio_observation_clock', 'calendar_runtime_observer',
     'gnss_existing_sa_dump', 'alsa_inject', 'audio_capture_token', 'netlink_snapshot',
     'apn579_modem_peer', 'apps_paired579_net')
+GLOBAL_CLOCK_HELPER_NAMES579 = ('audio_global579_control', 'audio_global579_status', 'audio_global579_af')
+GLOBAL_THREEUID_HELPER_NAMES579 = ('audio_global579_passive', 'audio_global579_token')
 C_ABI_GUARD = '/* C helper retains actual C GN flags; no C++ ABI assertion. */\n'
 ABI_GUARD = '''#include <string>
 #include <type_traits>
@@ -76,6 +114,18 @@ def helper_spec(name):
     """
     if name in HELPERS:
         return HELPERS[name]
+    if name in GLOBAL_THREEUID_HELPER_NAMES579:
+        from audio_threeuid_arm32_global579_native import helper_recipes
+        recipes = helper_recipes()
+        if set(recipes) != set(GLOBAL_THREEUID_HELPER_NAMES579):
+            raise ValueError('fixed two original-source global-clock AU helpers required')
+        return recipes[name]
+    if name in GLOBAL_CLOCK_HELPER_NAMES579:
+        from onset579_global_native import helper_recipes
+        recipes = helper_recipes()
+        if set(recipes) != set(GLOBAL_CLOCK_HELPER_NAMES579):
+            raise ValueError('fixed three global clock helpers required')
+        return recipes[name]
     if name in PRODUCTION_HELPER_NAMES579:
         from production579_native import helper_recipes
         recipes = helper_recipes()
@@ -203,20 +253,20 @@ def effective_cfi(flags):
     return any(x.startswith('cfi') for x in selected) and '-fsanitize-cfi-cross-dso' in flags
 
 
-def validate_flags(flags):
-    target = [x for x in flags if x.startswith('--target=')]
+def validate_flags(flags, *, product=PRODUCT, actual_target=None):
+    validate_compiler_target(flags, product, actual_target)
     sysroots = [x for x in flags if x.startswith('--sysroot=')]
     lto = [x for x in flags if x == '-flto' or x.startswith(('-flto=', '-fno-lto'))]
     exceptions = [x for x in flags if x in ('-fexceptions', '-fno-exceptions')]
-    if (target != ['--target=aarch64-linux-ohos'] or len(sysroots) != 1 or not lto or
+    if (len(sysroots) != 1 or not lto or
             lto[-1].startswith('-fno-lto') or not exceptions or exceptions[-1] != '-fno-exceptions' or
             not effective_cfi(flags)):
-        raise ValueError('actual ARM64 system sysroot/LTO/CFI/fno-exceptions flags required')
+        raise ValueError('actual selected system sysroot/LTO/CFI/fno-exceptions flags required')
 
 
-def validate_c_flags(flags):
-    """Selected C graph flags still require real ARM64 musl/LTO/cross-DSO CFI."""
-    target = [x for x in flags if x.startswith('--target=')]
+def validate_c_flags(flags, *, product=PRODUCT, actual_target=None):
+    """Selected C flags retain actual musl/LTO/cross-DSO CFI on every target."""
+    validate_compiler_target(flags, product, actual_target)
     sysroots = [x for x in flags if x.startswith('--sysroot=')]
     lto = [x for x in flags if x == '-flto' or x.startswith(('-flto=', '-fno-lto'))]
     for index, word in enumerate(flags):
@@ -224,11 +274,11 @@ def validate_c_flags(flags):
             raise ValueError('actual C language selection required')
         if word.startswith('-x') and word not in ('-x', '-xc'):
             raise ValueError('non-C language override refused')
-    if (target != ['--target=aarch64-linux-ohos'] or len(sysroots) != 1 or not lto or
+    if (len(sysroots) != 1 or not lto or
             lto[-1].startswith('-fno-lto') or not effective_cfi(flags) or
             any(x in ('-xc++', '-fexceptions') or x.startswith(('-std=c++', '-std=gnu++')) or
                 '_LIBCPP_ABI_NAMESPACE' in x or '__n1' in x for x in flags)):
-        raise ValueError('actual ARM64 C GN sysroot/LTO/cross-DSO CFI flags required; C++ ABI substitution refused')
+        raise ValueError('actual selected C GN sysroot/LTO/cross-DSO CFI flags required; C++ ABI substitution refused')
 
 
 def link_flags(flags, private):
@@ -287,28 +337,93 @@ def dynamic_needed(text):
     return set(re.findall(r'(?m)^\s*0x[0-9A-Fa-f]+\s+\(?NEEDED\)?\s+Shared library: \[([^\]\n]+)\]\s*$', text))
 
 
-def elf_soname(path):
-    """Read DT_SONAME from actual ELF bytes, without trusting a basename/tool claim."""
-    elf_header(path)
-    data = Path(path).read_bytes()
-    offset = struct.unpack_from('<Q', data, 32)[0]
-    size, count = struct.unpack_from('<HH', data, 54)
-    if size != 56 or not count or offset + size * count > len(data):
-        raise ValueError('invalid DSO program headers')
+def elf_segments(data, product):
+    """Decode the real class-specific file layout, never reinterpret ELF32 as 64."""
+    target = target_spec(product)
+    bits = target['class']; minimum = 64 if bits == 64 else 52
+    if (len(data) < minimum or data[:7] != b'\x7fELF' + bytes((2 if bits == 64 else 1, 1, 1)) or
+            struct.unpack_from('<H', data, 18)[0] != target['machine'] or
+            struct.unpack_from('<I', data, 20)[0] != 1):
+        raise ValueError('actual selected little-endian ELF class/machine/version required')
+    ehsize_offset = 52 if bits == 64 else 40
+    if struct.unpack_from('<H', data, ehsize_offset)[0] != minimum:
+        raise ValueError('invalid actual ELF header size')
+    if struct.unpack_from('<H', data, 16)[0] != 3:
+        raise ValueError('actual DSO/PIE ELF type required')
+    offset = struct.unpack_from('<Q' if bits == 64 else '<I', data, 32 if bits == 64 else 28)[0]
+    size, count = struct.unpack_from('<HH', data, 54 if bits == 64 else 42)
+    expected = 56 if bits == 64 else 32
+    if size != expected or not count or count == 0xffff or offset < minimum or offset + size * count > len(data):
+        raise ValueError('invalid actual program headers; extended numbering not admitted')
+    segments = []
+    for index in range(count):
+        if bits == 64:
+            kind, flags, start, va, _, length, memory, _ = struct.unpack_from('<IIQQQQQQ', data, offset + index * size)
+        else:
+            kind, start, va, _, length, memory, flags, _ = struct.unpack_from('<IIIIIIII', data, offset + index * size)
+        if start + length > len(data) or (kind == 1 and length > memory):
+            raise ValueError('actual ELF segment outside file or invalid load size')
+        segments.append((kind, start, va, length, flags))
+    return segments
+
+
+def elf_needed(path, *, product=PRODUCT):
+    """Decode DT_NEEDED using the selected actual class. No tool/process call.
+
+    This decodes bytes only; callers separately bind interpreter/machine ABI to
+    the retained actual normal executable through native579_artifact_context.
+    """
+    data = Path(path).read_bytes(); segments = elf_segments(data, product)
+    stride = 16 if target_spec(product)['class'] == 64 else 8
+    fmt = '<qQ' if stride == 16 else '<iI'
+    loads = [(va, start, length) for kind, start, va, length, _ in segments if kind == 1]
+    tables = [(start, length) for kind, start, _, length, _ in segments if kind == 2]
+    if len(tables) != 1 or not tables[0][1] or tables[0][1] % stride:
+        raise ValueError('one complete actual class-specific dynamic segment required')
+    start, length = tables[0]; tags = {}; needed = []; ended = False
+    for offset in range(start, start + length, stride):
+        tag, value = struct.unpack_from(fmt, data, offset)
+        if tag == 0: ended = True; break
+        if tag == 1: needed.append(value)
+        elif tag in (5, 10):
+            if tag in tags: raise ValueError('ambiguous actual dynamic string table')
+            tags[tag] = value
+    if not ended or set(tags) != {5, 10} or not 1 <= len(needed) <= 128 or not tags[10]:
+        raise ValueError('complete actual DT_NEEDED/string table required')
+    positions = [file + tags[5] - va for va, file, size in loads
+                 if va <= tags[5] and tags[5] + tags[10] <= va + size]
+    if len(positions) != 1: raise ValueError('actual ELF string table is not file backed')
+    table = data[positions[0]:positions[0] + tags[10]]; names = []
+    for index in needed:
+        if not 0 <= index < len(table): raise ValueError('DT_NEEDED offset outside actual strings')
+        end = table.find(b'\0', index)
+        if not index < end <= index + 256: raise ValueError('unterminated/oversize actual SONAME')
+        name = table[index:end].decode('ascii')
+        if not re.fullmatch(r'[A-Za-z0-9_.+\-]+\.so', name): raise ValueError('unsafe actual DT_NEEDED')
+        names.append(name)
+    if len(names) != len(set(names)): raise ValueError('duplicate actual DT_NEEDED')
+    return sorted(names)
+
+
+def elf_soname(path, *, product=PRODUCT):
+    """Read the actual class-specific DT_SONAME, not a basename/tool claim."""
+    data = Path(path).read_bytes(); segments = elf_segments(data, product)
+    bits = target_spec(product)['class']; stride = 16 if bits == 64 else 8
     loads, dynamic = [], []
-    for i in range(count):
-        kind, _, start, va, _, length, _, _ = struct.unpack_from('<IIQQQQQQ', data, offset + i * size)
-        if start + length > len(data): raise ValueError('DSO segment outside file')
+    for kind, start, va, length, _ in segments:
         if kind == 1: loads.append((va, start, length))
         if kind == 2:
-            if length % 16: raise ValueError('invalid DSO dynamic table size')
-            dynamic += [struct.unpack_from('<qQ', data, n) for n in range(start, start + length, 16)]
-    tags = {}
+            if dynamic or not length or length % stride:
+                raise ValueError('ambiguous or invalid DSO dynamic table')
+            dynamic = [struct.unpack_from('<qQ' if bits == 64 else '<iI', data, n)
+                       for n in range(start, start + length, stride)]
+    tags = {}; terminated = False
     for tag, value in dynamic:
-        if tag == 0: break
+        if tag == 0: terminated = True; break
         if tag in (5, 10, 14):
             if tag in tags: raise ValueError('ambiguous DSO SONAME/string table')
             tags[tag] = value
+    if dynamic and not terminated: raise ValueError('unterminated DSO dynamic table')
     if 14 not in tags: return None
     if not {5, 10} <= tags.keys() or tags[14] >= tags[10]: raise ValueError('invalid DSO SONAME table')
     tables = [start + tags[5] - va for va, start, length in loads
@@ -337,16 +452,35 @@ def validate_installed_profile(profile, *, archive_sha256=None, system_image_sha
     """Pure schema/binding check. File existence and ELF checks belong to Builder.
 
     Every DSO has independent image-dump bytes and its real installation source.
-    Guest paths are derived from packages/<device>/system, never collector input.
+    Version 1 keeps the original ARM64 paths. Version 2 binds the actual package
+    manifest and uses the product's physical packages/phone staging directory,
+    including for the full 2in1 profile. It never relabels an old profile.
     The root producer owns extraction of image_file from image_member; the whole
     archive/image and these independent dumped bytes are immutable build inputs.
     """
     keys = {'schema_version', 'kind', 'product', 'arch', 'device', 'source_root', 'archive', 'system_image', 'dsos'}
-    if (not isinstance(profile, dict) or not keys <= profile.keys() or set(profile) - keys - {'vendor_image'} or
-            type(profile['schema_version']) is not int or profile['schema_version'] != 1 or
-            profile['kind'] != 'installed_product_runtime' or profile['product'] != PRODUCT or
-            profile['arch'] != 'arm64' or profile['device'] not in ('phone', '2in1')):
-        raise ValueError('versioned actual ARM64 installed runtime profile required')
+    if not isinstance(profile, dict) or not keys <= profile.keys():
+        raise ValueError('versioned actual installed runtime profile required')
+    version = profile['schema_version']; product = profile['product']
+    target = target_spec(product)
+    extra = {'package_manifest', 'package_metadata'} if type(version) is int and version == 2 else set()
+    if (set(profile) - keys - {'vendor_image'} - extra or
+            type(version) is not int or version not in (1, 2) or
+            profile['kind'] != 'installed_product_runtime' or
+            profile['arch'] != target['arch'] or profile['device'] not in ('phone', '2in1') or
+            version == 1 and product != PRODUCT):
+        raise ValueError('finite product/arch and original-v1 or actual-package-v2 profile required')
+    package_root = 'openharmony-qemu-' + target['arch'] + '-' + product + '-' + profile['device']
+    if version == 2:
+        if not extra <= profile.keys(): raise ValueError('actual package manifest/data binding required')
+        manifest = _profile_record(profile['package_manifest']); metadata = profile['package_metadata']
+        if manifest.get('archive_member') != package_root + '/manifest.json' or not isinstance(metadata, dict):
+            raise ValueError('exact actual archive manifest member required')
+        expected = {'product': product, 'guest_arch': target['arch'], 'device_type': profile['device'],
+                    'device_type_profile': 'qemu_' + profile['device'] + '_full_source',
+                    'kernel': target['kernel'], 'qemu_unix': target['qemu']}
+        if any(metadata.get(key) != value for key, value in expected.items()):
+            raise ValueError('actual package manifest product/arch/full-device profile differs')
     root = profile['source_root']
     _profile_record(dict(path=root, sha256='0' * 64, bytes=1))
     archive = _profile_record(profile['archive']); image = _profile_record(profile['system_image'])
@@ -357,7 +491,7 @@ def validate_installed_profile(profile, *, archive_sha256=None, system_image_sha
         if (not re.fullmatch(r'[A-Za-z0-9_.+\-/]+/images/' + name + r'\.img', member) or
                 member.startswith('/') or any(p in ('', '.', '..') for p in member.split('/'))):
             raise ValueError('exact ' + name + '.img archive member required')
-        if member != 'openharmony-qemu-arm64-' + PRODUCT + '-' + profile['device'] + '/images/' + name + '.img':
+        if member != package_root + '/images/' + name + '.img':
             raise ValueError('archive member product/device differs from installed profile')
     if ((archive_sha256 is not None and archive['sha256'] != archive_sha256) or
             (system_image_sha256 is not None and image['sha256'] != system_image_sha256)):
@@ -365,7 +499,7 @@ def validate_installed_profile(profile, *, archive_sha256=None, system_image_sha
     entries = profile['dsos']
     if not isinstance(entries, dict) or not {'libc++.so', 'libc.so'} <= entries.keys():
         raise ValueError('installed system libc++ and musl loader profile required')
-    prefix = root.rstrip('/') + '/out/' + PRODUCT + '/packages/' + profile['device']
+    prefix = installed_prefix(profile)
     paths = set()
     for soname, entry in entries.items():
         if (not isinstance(soname, str) or not re.fullmatch(r'[A-Za-z0-9_.+\-]+', soname) or not isinstance(entry, dict) or
@@ -383,13 +517,23 @@ def validate_installed_profile(profile, *, archive_sha256=None, system_image_sha
             raise ValueError('installed staging/image member/full bytes binding differs: ' + soname)
         paths.add(staged['path'])
         basename = relative.rsplit('/', 1)[-1]
-        if basename != soname and not (soname == 'libc.so' and basename == 'ld-musl-aarch64.so.1'):
+        loader = (basename == 'ld-musl-aarch64.so.1' if version == 1 else
+                  re.fullmatch(r'ld-musl-[A-Za-z0-9_+\-]+\.so\.1', basename) is not None)
+        if basename != soname and not (soname == 'libc.so' and loader):
             raise ValueError('unproved installed SONAME/file alias: ' + soname)
-        if soname == 'libc.so' and basename != 'ld-musl-aarch64.so.1':
+        if soname == 'libc.so' and not loader:
             raise ValueError('use the actual installed musl loader, never a libc symbol proxy')
-        if soname == 'libc++.so' and relative != '/lib64/chipset-sdk-sp/libc++.so':
+        if (soname == 'libc++.so' and
+                relative not in (('/lib64/chipset-sdk-sp/libc++.so',) if version == 1 else
+                                 ('/lib/chipset-sdk-sp/libc++.so', '/lib64/chipset-sdk-sp/libc++.so'))):
             raise ValueError('actual system __h libc++ installation required')
     return entries
+
+
+def installed_prefix(profile):
+    # package_standard_qemu.sh selects packages/phone for all three products.
+    staging = profile['device'] if profile['schema_version'] == 1 else 'phone'
+    return profile['source_root'].rstrip('/') + '/out/' + profile['product'] + '/packages/' + staging
 
 
 def _runtime_profile(row, archive_sha256=None):
@@ -419,7 +563,7 @@ def runtime_link_records(row, soname):
 def runtime_guest_paths(row, soname):
     runtime_link_records(row, soname)
     profile = _runtime_profile(row); entry = profile['dsos'][soname]
-    prefix = profile['source_root'].rstrip('/') + '/out/' + PRODUCT + '/packages/' + profile['device'] + '/'
+    prefix = installed_prefix(profile) + '/'
     partition = entry['staged']['path'].removeprefix(prefix).split('/', 1)[0]
     return ('/' + partition + entry['image_member'],)
 
@@ -476,30 +620,73 @@ def argument(argv, option):
     return argv[positions[0] + 1]
 
 
-def elf_header(path, executable=False, shared=False):
+def elf_header(path, executable=False, shared=False, *, product=PRODUCT, interpreter_path=None):
+    data = Path(path).read_bytes(); segments = elf_segments(data, product)
+    target = target_spec(product)
+    interpreters = []
+    for kind, start, _, length, _ in segments:
+        if kind != 3: continue
+        value = data[start:start + length]
+        if not value.endswith(b'\0') or b'\0' in value[:-1]:
+            raise ValueError('invalid actual ELF interpreter string')
+        interpreters.append(value[:-1].decode('ascii'))
+    if len(interpreters) > 1: raise ValueError('ambiguous actual ELF interpreter')
+    if executable:
+        if interpreter_path is None:
+            if product != PRODUCT:
+                raise ValueError('selected target needs its actual installed loader path')
+            if len(interpreters) != 1 or not interpreters[0].startswith('/') or not interpreters[0].endswith('/ld-musl-aarch64.so.1'):
+                raise ValueError('original actual ARM64 musl guest interpreter absent')
+        elif interpreters != [interpreter_path]:
+            raise ValueError('actual executable interpreter differs from the installed image loader')
+    if shared and interpreters:
+        raise ValueError('actual shared NAPI must not carry a program interpreter')
+    return {'class': target['class'], 'machine': target['machine'], 'type': 'ET_DYN', 'sha256': sha(path)}
+
+
+def executable_interpreter(path, product):
     data = Path(path).read_bytes()
-    if len(data) < 64 or data[:7] != b'\x7fELF\x02\x01\x01' or struct.unpack_from('<H', data, 18)[0] != 183:
-        raise ValueError('actual ELF64 little-endian AArch64 required')
-    if struct.unpack_from('<H', data, 16)[0] != 3: raise ValueError('actual DSO/PIE ELF type required')
-    if executable or shared:
-        offset = struct.unpack_from('<Q', data, 32)[0]; size, count = struct.unpack_from('<HH', data, 54)
-        if size != 56 or count == 0 or offset + count * size > len(data): raise ValueError('invalid actual program headers')
-        interpreter = None
-        for i in range(count):
-            kind, flags, file_offset, _, _, file_size, _, _ = struct.unpack_from('<IIQQQQQQ', data, offset + i * size)
-            if kind == 3: interpreter = data[file_offset:file_offset + file_size].rstrip(b'\0').decode('ascii')
-        if executable and (interpreter is None or not interpreter.startswith('/') or
-                           not interpreter.endswith('ld-musl-aarch64.so.1')):
-            raise ValueError('actual ARM64 musl guest interpreter absent')
-        if shared and interpreter is not None:
-            raise ValueError('actual shared NAPI must not carry a program interpreter')
-    return {'class': 64, 'machine': 183, 'type': 'ET_DYN', 'sha256': sha(path)}
+    rows = [data[start:start + length] for kind, start, _, length, _ in elf_segments(data, product) if kind == 3]
+    if len(rows) != 1 or not rows[0].endswith(b'\0') or b'\0' in rows[0][:-1]:
+        raise ValueError('one actual normal executable interpreter required')
+    value = rows[0][:-1].decode('ascii')
+    if not re.fullmatch(r'/[A-Za-z0-9_./+\-]+', value) or any(p in ('', '.', '..') for p in value.split('/')[1:]):
+        raise ValueError('unsafe actual normal executable interpreter')
+    return value
+
+
+def machine_abi_flags(path, product):
+    # ARM e_flags carries EABI/float-call ABI. Use the complete actual value,
+    # not an inferred -mfloat-abi or a synthesized architecture default.
+    data = Path(path).read_bytes(); elf_segments(data, product)
+    return struct.unpack_from('<I', data, 36 if target_spec(product)['class'] == 32 else 48)[0]
+
+
+def abi_options(flags):
+    return [word for word in flags if word in ('-marm', '-mthumb', '-mbig-endian', '-mlittle-endian') or
+            word.startswith(('-mfloat-abi=', '-mfpu=', '-mabi='))]
 
 
 class Builder:
     def __init__(self, source, output, helpers, plan_only=False, *, runtime_profile=None,
-                 runtime_profile_sha256=None, _existing=False):
-        self.root = Path(source).resolve(); self.build = self.root / 'out' / PRODUCT
+                 runtime_profile_sha256=None, product=PRODUCT, normal_link_target=None, _existing=False):
+        self.product = product; self.target = target_spec(product)
+        if set(helpers) & set(GLOBAL_CLOCK_HELPER_NAMES579) and product != 'armv7a_virt':
+            raise ValueError('explicit global clock helpers belong only to actual ARM32 packages')
+        if set(helpers) & set(GLOBAL_THREEUID_HELPER_NAMES579) and product != 'armv7a_virt':
+            raise ValueError('explicit global-clock three-UID helpers belong only to actual ARM32 packages')
+        admitted = (set(HELPERS) | set(GLOBAL_CLOCK_HELPER_NAMES579) | set(GLOBAL_THREEUID_HELPER_NAMES579) |
+            set(COMMUNICATION_HELPER_NAMES) | set(SETTINGS_HELPER_NAMES) | set(WIFI_HELPER_NAMES) | set(PRODUCTION_HELPER_NAMES579))
+        if not set(helpers) <= admitted:
+            raise ValueError('only fixed source-defined helper recipes may select a target')
+        if normal_link_target is not None and (not isinstance(normal_link_target, str) or
+                not re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_./+\-]*', normal_link_target) or
+                normal_link_target.startswith('/') or any(part in ('', '.', '..') for part in normal_link_target.split('/'))):
+            raise ValueError('one existing relative normal executable Ninja output target required')
+        if product != PRODUCT and normal_link_target is None and not _existing:
+            raise ValueError('nondefault products require an actual normal executable link target; no guessed CRT/triple')
+        self.normal_link_target = normal_link_target; self.normal_link = None
+        self.root = Path(source).resolve(); self.build = self.root / 'out' / product
         self.output = Path(output).resolve(); self.helpers = helpers; self.plan_only = plan_only
         for p in (self.root, self.root / 'out', self.build): require_ro(p)
         if any(within(self.output, p) for p in (self.root, ROOT)):
@@ -511,9 +698,14 @@ class Builder:
         self.readelf = regular(self.compiler.parent / 'llvm-readelf')
         self.inputs = {}
         self.report = {'status': 'fail', 'scope': 'diagnostic_new_helpers_using_existing_actual_product_GN_flags_NOT_fresh_GN_target_selection_or_runtime',
-            'product': PRODUCT, 'plan_only': plan_only, 'source_root': str(self.root), 'build_directory': str(self.build),
+            'product': product, 'arch': self.target['arch'], 'plan_only': plan_only,
+            'source_root': str(self.root), 'build_directory': str(self.build),
             'builder_sha256': sha(Path(__file__)), 'commands': [], 'helpers': {}, 'inputs': self.inputs,
             'requirements_closed': 0, 'first_artifact_behavior_gate_passed': False}
+        if set(helpers) & set(GLOBAL_THREEUID_HELPER_NAMES579):
+            self.report['global_threeuid579_native_recipe'] = self.remember(HERE / 'audio_threeuid_arm32_global579_native.py', source=False)
+        if set(helpers) & set(GLOBAL_CLOCK_HELPER_NAMES579):
+            self.report['global_clock579_native_recipe'] = self.remember(HERE / 'onset579_global_native.py', source=False)
         if set(helpers) & set(COMMUNICATION_HELPER_NAMES):
             self.report['communications_native_recipe'] = self.remember(HERE / 'communications578_native.py', source=False)
         if set(helpers) & set(SETTINGS_HELPER_NAMES):
@@ -539,6 +731,8 @@ class Builder:
             try: self.load_runtime_profile(runtime_profile, runtime_profile_sha256)
             except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError, tarfile.TarError) as error:
                 self.report['preflight_error'] = type(error).__name__ + ': ' + str(error); self.save(); raise
+            if normal_link_target is not None:
+                self.load_normal_link(normal_link_target)
 
     def load_runtime_profile(self, path, expected_sha256):
         if path is None or not re.fullmatch(r'[0-9a-f]{64}', expected_sha256 or ''):
@@ -547,23 +741,36 @@ class Builder:
         if source['sha256'] != expected_sha256: raise ValueError('installed runtime profile SHA256 mismatch')
         profile = json.loads(Path(path).read_text())
         entries = validate_installed_profile(profile)
-        if profile['source_root'] != str(self.root): raise ValueError('installed runtime profile source root differs')
+        if profile['source_root'] != str(self.root) or profile['product'] != self.product:
+            raise ValueError('installed runtime profile source root/product differs')
         self.installed_runtime = {'source': source, 'profile': profile}
         self.report['installed_runtime_profile'] = self.installed_runtime
+        retained_profile = self.output / 'runtime-profile.raw.json'
+        retained_profile.write_bytes(Path(path).read_bytes())
+        if sha(retained_profile) != source['sha256'] or retained_profile.stat().st_size != source['bytes']:
+            raise ValueError('actual installed profile changed during raw retention')
+        self.report['profile_raw'] = {'path': str(retained_profile), 'sha256': sha(retained_profile), 'bytes': retained_profile.stat().st_size}
         archive = profile['archive']
         self.verify_profile_file(archive)
         # Read exact tar members without extracting paths, executing a guest or
         # trusting a prefilled hash. Each image file must equal its archive bytes.
         images = {name: profile[name + '_image'] for name in ('system', 'vendor') if name + '_image' in profile}
         for image in images.values(): self.verify_profile_file(image)
+        package_manifest = profile.get('package_manifest')
+        if package_manifest is not None:
+            self.verify_profile_file(package_manifest)
+            if json.loads(Path(package_manifest['path']).read_text()) != profile['package_metadata']:
+                raise ValueError('actual retained manifest bytes differ from the complete profile metadata')
         proofs = {}
         with tarfile.open(archive['path'], 'r:*') as package:
             selected = {image['archive_member']: name for name, image in images.items()}
+            if package_manifest is not None: selected[package_manifest['archive_member']] = 'manifest'
             seen = set()
             for member in package:
                 if member.name not in selected: continue
                 if member.name in seen or not member.isfile(): raise ValueError('ambiguous/nonregular archive image member')
-                seen.add(member.name); name = selected[member.name]; image = images[name]
+                seen.add(member.name); name = selected[member.name]
+                image = package_manifest if name == 'manifest' else images[name]
                 if member.size != image['bytes']: raise ValueError('archive image member size differs')
                 stream = package.extractfile(member); digest = hashlib.sha256()
                 if stream is None: raise ValueError('archive image stream absent')
@@ -584,11 +791,11 @@ class Builder:
                  'selector': self.remember(scripts / 'verify_alsa_config_image.py', source=False)}
         destination = self.output / 'installed-runtime-image'; destination.mkdir()
         dumps = {}
-        prefix = str(self.build / 'packages' / profile['device']) + '/'
+        prefix = installed_prefix(profile) + '/'
         for index, (soname, entry) in enumerate(entries.items()):
             for descriptor in (entry['staged'], entry['image_file']): self.verify_profile_file(descriptor)
             for descriptor in (entry['staged'], entry['image_file']):
-                if elf_soname(descriptor['path']) != soname: raise ValueError('actual ELF SONAME differs: ' + soname)
+                if elf_soname(descriptor['path'], product=self.product) != soname: raise ValueError('actual ELF SONAME differs: ' + soname)
             partition = entry['staged']['path'].removeprefix(prefix).split('/', 1)[0]
             image = images[partition]; private = destination / str(index); private.mkdir()
             stat = self.command([executable, '-R', 'stat ' + entry['image_member'], image['path']],
@@ -596,7 +803,7 @@ class Builder:
             dumped, identity = dump_unique_file(image['path'], (entry['image_member'],), private, str(executable))
             expected = entry['staged']
             if (dumped.stat().st_size != expected['bytes'] or sha(dumped) != expected['sha256'] or
-                    elf_soname(dumped) != soname or
+                    elf_soname(dumped, product=self.product) != soname or
                     not re.search(r'(?m)^Inode: ' + str(identity['image_inode']) + r'\s+Type: regular\s', stat)):
                 raise ValueError('independent actual image extraction differs from staged runtime: ' + soname)
             dumps[soname] = dict(identity, path=str(dumped), sha256=sha(dumped), bytes=dumped.stat().st_size,
@@ -610,11 +817,108 @@ class Builder:
             raise ValueError('actual immutable profile file differs: ' + descriptor['path'])
         return actual
 
+    def read_normal_file(self, path):
+        return Path(path)
+
+    def normal_link_contract(self, target, text):
+        """Read one actual direct-driver link; unknown wrappers/rsp fail closed.
+
+        No triple/CRT directory is guessed for a new product. This parser does
+        not execute the printed command. A new wrapper grammar needs the actual
+        fixed toolchain source and a separately reviewed finite adapter.
+        """
+        if (not isinstance(target, str) or not re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_./+\-]*', target) or
+                target.startswith('/') or any(part in ('', '.', '..') for part in target.split('/'))):
+            raise ValueError('one safe existing normal executable Ninja output required')
+        lines = [line for line in text.splitlines() if line.strip()]
+        if len(lines) != 1: raise ValueError('one actual final normal-executable link command required')
+        words = shlex.split(lines[0])
+        if (not words or any(word in ('&&', '||', ';', '|', '>', '<') or word.startswith('@') for word in words) or
+                Path(words[0]).name not in ('clang', 'clang++') or
+                (self.build / words[0]).resolve() not in (self.compiler.resolve(), self.c_compiler.resolve())):
+            raise ValueError('actual normal link uses an unreviewed wrapper/response grammar; source-specific adapter required')
+        if words.count('-o') != 1 or argument(words, '-o') is None or '-c' in words or '-shared' in words or '-pie' not in words:
+            raise ValueError('actual normal PIE executable link required')
+        binary = (self.build / argument(words, '-o')).resolve()
+        if binary != (self.build / target).resolve() or not within(binary, self.build):
+            raise ValueError('actual normal executable output differs from queried Ninja target')
+        selected = compiler_target(words)
+        roots = [word.split('=', 1)[1] for word in words if word.startswith('--sysroot=')]
+        if len(roots) != 1 or (self.build / roots[0]).resolve() != (self.build / 'obj/third_party/musl').resolve():
+            raise ValueError('normal link must use this product actual system musl sysroot')
+        lto = [word for word in words if word == '-flto' or word.startswith(('-flto=', '-fno-lto'))]
+        if '-nostdlib' not in words or not effective_cfi(words) or not lto or lto[-1].startswith('-fno-lto'):
+            raise ValueError('normal executable actual -nostdlib/LTO/cross-DSO CFI required; never disable a target gate')
+        startup = [Path(word).name for word in words if not word.startswith('-') and
+                   re.fullmatch(r'(?:[rS]?crt[^/]*|crtbegin[^/]*|crtend[^/]*)\.o', Path(word).name)]
+        if startup != ['Scrt1.o', 'crti.o', 'crtn.o']:
+            raise ValueError('unknown/additional or reordered normal executable startup objects need actual-source adapter')
+        crt = []
+        for name in ('Scrt1.o', 'crti.o', 'crtn.o'):
+            found = [word for word in words if not word.startswith('-') and Path(word).name == name]
+            if len(found) != 1: raise ValueError('actual normal executable CRT selection is not explicit: ' + name)
+            path = (self.build / found[0]).resolve()
+            if not within(path, self.build / 'obj/third_party/musl/usr/lib'):
+                raise ValueError('normal CRT is outside actual product musl output')
+            crt.append(self.remember(path))
+        if len({str(Path(row['path']).parent) for row in crt}) != 1:
+            raise ValueError('actual normal executable mixes CRT directories')
+        record = self.remember(binary)
+        retained_binary = self.read_normal_file(binary)
+        interpreter = executable_interpreter(retained_binary, self.product)
+        elf = elf_header(retained_binary, executable=True, product=self.product, interpreter_path=interpreter)
+        loader = Path(self.installed_runtime['profile']['dsos']['libc.so']['image_member']).name
+        if Path(interpreter).name != loader:
+            raise ValueError('normal executable interpreter differs from actual installed musl loader')
+        return {'target': target, 'actual_command': lines[0], 'compiler_target': selected,
+                'abi_options': abi_options(words), 'CRT': crt, 'binary': record, 'elf': elf,
+                'machine_abi_flags': machine_abi_flags(retained_binary, self.product), 'interpreter': interpreter}
+
+    def load_normal_link(self, target):
+        text = self.command([self.ninja, '-w', 'dupbuild=warn', '-C', self.build, '-t', 'commands', '-s', target],
+                            'actual-normal-executable-link-command', timeout=30)
+        self.normal_link = self.normal_link_contract(target, text)
+        self.report['normal_link_contract'] = self.normal_link
+        self.report['normal_link_tools'] = {name: {'literal': str(path), 'file': self.remember(path)}
+            for name, path in (('compiler', self.compiler), ('c_compiler', self.c_compiler), ('ninja', self.ninja))}
+        retained = self.output / 'normal-link-artifacts'; retained.mkdir()
+        records = {}
+        for key, source in [('binary', self.normal_link['binary']),
+                *[(str(i), item) for i, item in enumerate(self.normal_link['CRT'])]]:
+            path = Path(source['path']); copy = retained / key
+            data = path.read_bytes()
+            if sha(path) != source['sha256'] or len(data) != source['bytes']:
+                raise ValueError('normal executable/CRT changed before raw retention')
+            copy.write_bytes(data)
+            if sha(copy) != source['sha256'] or sha(path) != source['sha256']:
+                raise ValueError('normal executable/CRT changed during raw retention')
+            records[key] = {'source': source, 'retained': {'path': str(copy), 'sha256': sha(copy), 'bytes': len(data)}}
+        self.report['normal_link_artifacts'] = records
+        self.remember(self.build / 'toolchain.ninja')
+        for entry in self.installed_runtime['profile']['dsos'].values():
+            for key in ('staged', 'image_file'): self.check_target_abi(entry[key]['path'])
+        self.save()
+
+    def actual_target(self):
+        return None if self.normal_link is None else self.normal_link['compiler_target']
+
+    def validate_link_target(self, flags):
+        if self.normal_link is None: return
+        roots = [word.split('=', 1)[1] for word in flags if word.startswith('--sysroot=')]
+        if (compiler_target(flags) != self.actual_target() or abi_options(flags) != self.normal_link['abi_options'] or
+                len(roots) != 1 or (self.build / roots[0]).resolve() != (self.build / 'obj/third_party/musl').resolve()):
+            raise ValueError('actual link target/float-call ABI/system sysroot differs from normal executable')
+
+    def check_target_abi(self, path):
+        if self.product != PRODUCT and self.normal_link is not None:
+            if machine_abi_flags(path, self.product) != self.normal_link['machine_abi_flags']:
+                raise ValueError('actual ELF machine ABI flags differ from the normal executable')
+
     def installed_direct(self, paths, row):
         row['original_GN_direct_libraries'] = [self.remember(p) for p in paths]
         entries = self.installed_runtime['profile']['dsos']; result = []
         for path in paths:
-            soname = elf_soname(path)
+            soname = elf_soname(path, product=self.product)
             if soname in entries:
                 expected = entries[soname]['staged']
                 if sha(path) != expected['sha256'] or path.stat().st_size != expected['bytes']:
@@ -633,9 +937,10 @@ class Builder:
         for path in opened:
             with path.open('rb') as stream: magic = stream.read(4)
             if magic == b'\x7fELF' and struct.unpack_from('<H', path.read_bytes(), 16)[0] == 3:
-                names[str(path)] = elf_soname(path)
+                names[str(path)] = elf_soname(path, product=self.product)
+                self.check_target_abi(path)
                 if (path.name in self.installed_runtime['profile']['dsos'] and names[str(path)] != path.name or
-                        path.name == 'ld-musl-aarch64.so.1' and names[str(path)] != 'libc.so'):
+                        path.name.startswith('ld-musl-') and names[str(path)] != 'libc.so'):
                     raise ValueError('actual linker input file has an unexpected SONAME: ' + str(path))
         row['actual_link_input_sonames'] = names
         # Reject any wrong same-SONAME ELF, including hidden driver fallbacks.
@@ -699,8 +1004,11 @@ class Builder:
             from production579_native import check_elf
             return check_elf(self, name, binary, direct, row, spec['production579_elf_contract'])
         shared = spec.get('kind') == 'shared_napi'
-        row['elf'] = elf_header(binary, executable=not shared, shared=shared)
-        if shared and elf_soname(binary) != spec['output_basename']:
+        interpreter = None if self.normal_link is None else self.normal_link['interpreter']
+        row['elf'] = elf_header(binary, executable=not shared, shared=shared,
+                               product=self.product, interpreter_path=interpreter)
+        self.check_target_abi(binary)
+        if shared and elf_soname(binary, product=self.product) != spec['output_basename']:
             raise ValueError('actual shared-NAPI SONAME differs from the HAP import')
         row['elf_kind'] = 'shared_napi' if shared else 'executable'
         info = self.command([self.readelf, '-h', '-l', '-d', '--dyn-syms', '--wide', '--demangle', binary], name + '-actual-ELF-ABI')
@@ -708,7 +1016,8 @@ class Builder:
             if (not defined_symbol(info, '__cfi_check') or not defined_symbol(info, 'main') or
                     'std::' in info or '__n1' in info):
                 raise ValueError('actual C guest ELF lacks defined main/CFI or imports a C++/SDK ABI')
-            row['elf_language_contract'] = 'C_ARM64_musl_product_CFI_LTO_no_CXX_symbol_assertion'
+            label = 'ARM64' if self.product == PRODUCT else self.target['arch']
+            row['elf_language_contract'] = 'C_' + label + '_musl_product_CFI_LTO_no_CXX_symbol_assertion'
         elif not defined_symbol(info, '__cfi_check') or 'std::__h::' not in info or 'std::__n1::' in info:
             raise ValueError('actual guest ELF lacks system __h ABI/CFI or exposes SDK __n1 ABI')
         needed = dynamic_needed(info)
@@ -721,7 +1030,7 @@ class Builder:
             for soname in needed: runtime_link_records(row, soname)
         for p in direct:
             if p.name not in {Path(value).name for value in spec['libraries']}: continue
-            elf_header(p)
+            elf_header(p, product=self.product); self.check_target_abi(p)
             symbols = self.command([self.readelf, '-h', '-d', '--dyn-syms', '--wide', '--demangle', p], name + '-linked-' + p.name)
             if p.name == 'libaccesstoken_sdk.z.so' and not defined_symbol(symbols, '__cfi_check'):
                 raise ValueError('actual product AccessToken DSO lacks its selected cross-DSO CFI')
@@ -734,6 +1043,18 @@ class Builder:
             if not within(fixture, HERE): raise ValueError('helper source outside owned QA tools')
             row['source'] = self.remember(fixture, source=False)
             source = private / fixture.name; source.write_bytes(fixture.read_bytes())
+            private_headers = {}
+            if name in GLOBAL_CLOCK_HELPER_NAMES579 or name in GLOBAL_THREEUID_HELPER_NAMES579:
+                for filename, header in spec.get('private_headers', {}).items():
+                    if Path(filename).name != filename or not filename.endswith('.h') or not within(header, HERE):
+                        raise ValueError('fixed owned global clock header required')
+                    original_header = self.remember(header, source=False)
+                    copied = private / filename; copied.write_bytes(Path(header).read_bytes())
+                    if sha(copied) != original_header['sha256']:
+                        raise ValueError('fixed clock header changed during copy')
+                    private_headers[filename] = original_header
+                row['private_global_clock_headers'] = private_headers
+
             c_language = spec.get('language') == 'c'
             driver = self.c_compiler if c_language else self.compiler
             guard = private / 'actual_system_abi.h'
@@ -756,9 +1077,13 @@ class Builder:
                 flags += cfi_flags(anchors[-1]['flags']); ld += cfi_flags(anchors[-1]['ldflags'])
                 row['diagnostic_cfi_augmentation_from_actual_product_graph'] = spec['anchors'][-1]['graph']
             if c_language:
-                validate_c_flags(flags)
+                validate_c_flags(flags, product=self.product, actual_target=self.actual_target())
                 row['actual_C_GN_flags_preserved'] = True
-            else: validate_flags(flags)
+            else: validate_flags(flags, product=self.product, actual_target=self.actual_target())
+            if self.normal_link is not None:
+                self.validate_link_target(ld)
+                if abi_options(flags) != self.normal_link['abi_options']:
+                    raise ValueError('actual object and normal-link float-call ABI options differ')
             sysroot = next(x.split('=', 1)[1] for x in flags if x.startswith('--sysroot='))
             if (self.build / sysroot).resolve() != (self.build / 'obj/third_party/musl').resolve():
                 raise ValueError('actual system product musl sysroot required; SDK sysroot refused')
@@ -776,7 +1101,8 @@ class Builder:
             direct = list(dict.fromkeys(direct))
             direct = self.installed_direct(direct, row)
             row['linked_libraries'] = [self.remember(p) for p in direct]
-            for p in direct: elf_header(p)
+            for p in direct:
+                elf_header(p, product=self.product); self.check_target_abi(p)
             self.remember(driver); self.remember(self.compiler); self.remember(self.readelf); self.remember(self.ninja)
             self.remember(self.build / 'toolchain.ninja')
             flags += [x for x in includes if x not in flags]
@@ -784,8 +1110,16 @@ class Builder:
             obj, binary, deps = private / (name + '.o'), private / spec.get('output_basename', name), private / 'headers.d'
             compile_cmd = [driver, *flags, '-fPIC' if shared else '-fPIE', *([] if c_language else ['-include', guard]), '-MD', '-MF', deps, '-c', source, '-o', obj]
             ld, removed = link_flags(ld, private); row['removed_component_DSO_only_export_maps'] = removed
-            crtroot = self.build / 'obj/third_party/musl/usr/lib/aarch64-linux-ohos'
-            crt = [crtroot / n for n in (('crti.o', 'crtn.o') if shared else ('Scrt1.o', 'crti.o', 'crtn.o'))]
+            if self.normal_link is None:
+                # Original ARM64 behavior only; a new target cannot enter this
+                # fallback or synthesize a CRT directory from a guessed triple.
+                if self.product != PRODUCT: raise ValueError('actual normal-link CRT receipt absent')
+                crtroot = self.build / 'obj/third_party/musl/usr/lib/aarch64-linux-ohos'
+                crt = [crtroot / n for n in (('crti.o', 'crtn.o') if shared else ('Scrt1.o', 'crti.o', 'crtn.o'))]
+            else:
+                crt = [Path(record['path']) for record in self.normal_link['CRT']]
+                if shared: crt = crt[1:]
+                row['normal_link_contract'] = self.normal_link
             for p in crt: self.remember(p)
             # Preserve GN headers/CRT/safety flags. Explicit -nostdlib prevents
             # clang adding its prebuilt libc++ or sysroot libc after our inputs.
@@ -811,7 +1145,8 @@ class Builder:
             self.command(compile_cmd, name + '-compile')
             headers = []
             for p in dep_paths(deps, self.build):
-                if p in (source.resolve(), guard.resolve()): headers.append({'path': str(p), 'sha256': sha(p)})
+                if p in (source.resolve(), guard.resolve()) or p in {(private / h).resolve() for h in private_headers}:
+                    headers.append({'path': str(p), 'sha256': sha(p)})
                 else: headers.append(self.remember(p))
             row['actual_compiler_dependencies'] = headers; row['depfile_sha256'] = sha(deps)
             trace = self.command(link_cmd, name + '-link')
@@ -826,6 +1161,9 @@ class Builder:
             self.check_elf(name, binary, direct, row)
             if sha(source) != row['source']['sha256'] or sha(guard) != row['abi_guard_sha256']:
                 raise ValueError('private source/ABI guard changed during compiler invocation')
+            for filename, original_header in private_headers.items():
+                if sha(private / filename) != original_header['sha256'] or sha(spec['private_headers'][filename]) != original_header['sha256']:
+                    raise ValueError('fixed global clock header changed during compilation')
             row.update(status='pass_compile_link_ONLY', binary=str(binary), binary_sha256=sha(binary), runtime_validated=False)
         except (OSError, ValueError, KeyError, TypeError, struct.error, subprocess.SubprocessError) as e:
             row['error'] = type(e).__name__ + ': ' + str(e)
@@ -863,7 +1201,7 @@ def verify_direct_selection(row, inputs, required):
         mapped = []
         for record in original:
             if inputs.get(record['path']) != record: raise ValueError('original GN direct input not hash-bound')
-            soname = elf_soname(record['path']); entry = profile['dsos'].get(soname)
+            soname = elf_soname(record['path'], product=profile['product']); entry = profile['dsos'].get(soname)
             if entry is None:
                 mapped.append(Path(record['path'])); continue
             installed = entry['staged']
@@ -886,20 +1224,21 @@ def verify_direct_selection(row, inputs, required):
 
 class ExistingVerifier(Builder):
     """No compilation: bind old receipts, immutable artifacts and unchanged DSOs."""
-    def __init__(self, source, output, helpers, report, expected_sha256):
+    def __init__(self, source, output, helpers, report, expected_sha256, *, product=PRODUCT):
         self.previous_path = regular(report).resolve(); self.previous_root = self.previous_path.parent
         require_ro(self.previous_path)
         if not re.fullmatch(r'[0-9a-f]{64}', expected_sha256 or '') or sha(self.previous_path) != expected_sha256:
             raise ValueError('original build report SHA256 mismatch')
         self.previous = json.loads(self.previous_path.read_text())
         old = self.previous
-        if (old.get('product') != PRODUCT or old.get('plan_only') is not False or old.get('changed_inputs') != [] or
+        target_spec(product)
+        if (old.get('product') != product or old.get('plan_only') is not False or old.get('changed_inputs') != [] or
                 old.get('source_root') != str(Path(source).resolve()) or
-                old.get('build_directory') != str(Path(source).resolve() / 'out' / PRODUCT) or
+                old.get('build_directory') != str(Path(source).resolve() / 'out' / product) or
                 not re.fullmatch(r'[0-9a-f]{64}', old.get('builder_sha256', ''))):
             raise ValueError('original product/source/complete unchanged-input receipt required')
         if within(output, self.previous_root): raise ValueError('new recheck output must be outside original artifacts')
-        super().__init__(source, output, helpers, _existing=True)
+        super().__init__(source, output, helpers, product=product, _existing=True)
         self.report.update(scope='read_only_recheck_of_prior_compile_link_artifacts_and_actual_product_DSO_ELF_ONLY_NOT_runtime',
             verify_existing=True, original_report={'path': str(self.previous_path), 'sha256': expected_sha256,
                 'status': old['status'], 'builder_sha256': old['builder_sha256'], 'rewritten': False},
@@ -921,12 +1260,18 @@ class ExistingVerifier(Builder):
             raise ValueError('original complete command logs absent')
         known = (set(HELPERS) | (set(old.get('helpers', {})) &
             (set(COMMUNICATION_HELPER_NAMES) | set(SETTINGS_HELPER_NAMES) | set(WIFI_HELPER_NAMES) |
-             set(PRODUCTION_HELPER_NAMES579))))
+             set(PRODUCTION_HELPER_NAMES579) | set(GLOBAL_CLOCK_HELPER_NAMES579) | set(GLOBAL_THREEUID_HELPER_NAMES579))))
         allowed_fixtures = {Path(helper_spec(name).get('source_file',
             HERE / 'fixtures' / helper_spec(name)['fixture'])).resolve() for name in known}
         if known & set(PRODUCTION_HELPER_NAMES579):
             from production579_native import recipe_sources
             allowed_fixtures.update(p.resolve() for p in recipe_sources())
+        for group, module_name in ((GLOBAL_CLOCK_HELPER_NAMES579, 'onset579_global_native.py'),
+                (GLOBAL_THREEUID_HELPER_NAMES579, 'audio_threeuid_arm32_global579_native.py')):
+            if known & set(group):
+                allowed_fixtures.add((HERE / module_name).resolve())
+                for name in known & set(group):
+                    allowed_fixtures.update(Path(p).resolve() for p in helper_spec(name).get('private_headers', {}).values())
         if known & set(COMMUNICATION_HELPER_NAMES):
             allowed_fixtures.add((HERE / 'communications578_native.py').resolve())
         if known & set(SETTINGS_HELPER_NAMES):
@@ -937,14 +1282,19 @@ class ExistingVerifier(Builder):
         prior_runtime = old.get('installed_runtime_profile')
         if prior_runtime is not None:
             profile = _runtime_profile({'installed_runtime_profile': prior_runtime})
+            if profile['product'] != product or profile['source_root'] != str(self.root):
+                raise ValueError('original installed runtime profile product/source differs')
             descriptors = [prior_runtime['source'], profile['archive'], profile['system_image']]
             if 'vendor_image' in profile: descriptors.append(profile['vendor_image'])
+            if 'package_manifest' in profile: descriptors.append(profile['package_manifest'])
             descriptors += [entry['image_file'] for entry in profile['dsos'].values()]
             descriptors += list(old.get('installed_runtime_image_proof', {}).get('tools', {}).values())
             allowed_runtime = {r['path']: {k: r[k] for k in ('path', 'sha256', 'bytes')} for r in descriptors}
             if (sha(prior_runtime['source']['path']) != prior_runtime['source']['sha256'] or
                     json.loads(Path(prior_runtime['source']['path']).read_text()) != profile):
                 raise ValueError('original installed profile file/receipt changed; no replacement is allowed')
+            self.installed_runtime = prior_runtime
+            self.report['installed_runtime_profile'] = prior_runtime
         if not old.get('inputs'): raise ValueError('original complete source/header/DSO input hashes absent')
         for key, record in old['inputs'].items():
             path = Path(key)
@@ -959,6 +1309,22 @@ class ExistingVerifier(Builder):
             if str(tool.resolve()) not in old['inputs']:
                 raise ValueError('current actual tool identity missing from original input receipt')
             self.remember(tool)
+        normal = old.get('normal_link_contract')
+        if normal is not None:
+            if prior_runtime is None: raise ValueError('normal-link recheck requires original installed runtime profile')
+            self.installed_runtime = prior_runtime
+            query = self.prior_command('actual-normal-executable-link-command')
+            expected = list(map(str, [self.ninja, '-w', 'dupbuild=warn', '-C', self.build, '-t', 'commands', '-s', normal['target']]))
+            if query['argv'] != expected: raise ValueError('original actual normal Ninja query differs')
+            bound = self.bound_artifact(query['log'], query['sha256'])
+            self.normal_link = self.normal_link_contract(normal['target'], Path(bound['path']).read_text())
+            if self.normal_link != normal:
+                raise ValueError('original normal executable/CRT/target/interpreter contract changed')
+            self.report['normal_link_contract'] = normal
+            for entry in profile['dsos'].values():
+                for key in ('staged', 'image_file'): self.check_target_abi(entry[key]['path'])
+        elif product != PRODUCT:
+            raise ValueError('nondefault original report has no actual normal-link target/CRT contract')
         self.save()
 
     def command(self, argv, label, timeout=60):
@@ -1004,9 +1370,18 @@ class ExistingVerifier(Builder):
             if c_language:
                 if old.get('language') != 'c' or old.get('actual_C_GN_flags_preserved') is not True:
                     raise ValueError('original actual C graph/language receipt missing')
-                validate_c_flags(compile_cmd)
+                validate_c_flags(compile_cmd, product=self.product, actual_target=self.actual_target())
             else:
-                validate_flags(compile_cmd)
+                validate_flags(compile_cmd, product=self.product, actual_target=self.actual_target())
+            if self.normal_link is not None:
+                self.validate_link_target(link_cmd)
+                if (old.get('normal_link_contract') != self.normal_link or
+                        abi_options(compile_cmd) != self.normal_link['abi_options']):
+                    raise ValueError('original helper differs from actual normal target/float ABI/CRT receipt')
+                crts = [record['path'] for record in self.normal_link['CRT']]
+                if spec.get('kind') == 'shared_napi': crts = crts[1:]
+                if any(link_cmd.count(path) != 1 for path in crts):
+                    raise ValueError('original helper link lacks exact normal executable CRT inputs')
             if not effective_cfi(link_cmd) or not any(w == '-flto' or w.startswith('-flto=') for w in link_cmd):
                 raise ValueError('original link CFI/LTO missing')
             driver = self.c_compiler if c_language else self.compiler
@@ -1045,13 +1420,26 @@ class ExistingVerifier(Builder):
             expected_guard = C_ABI_GUARD if c_language else ABI_GUARD
             if sha(row['reused_artifacts']['abi_guard']['path']) != hashlib.sha256(expected_guard.encode()).hexdigest():
                 raise ValueError('original guard differs from the fixed actual C or system __h/fno-exceptions contract')
+            private_headers = old.get('private_global_clock_headers', {})
+            if name in GLOBAL_CLOCK_HELPER_NAMES579 or name in GLOBAL_THREEUID_HELPER_NAMES579:
+                if set(private_headers) != set(spec.get('private_headers', {})):
+                    raise ValueError('complete actual global header set required')
+                for filename, header in spec.get('private_headers', {}).items():
+                    record = private_headers[filename]
+                    if (record != self.previous['inputs'].get(record['path']) or
+                            record['path'] != str(Path(header).resolve()) or sha(header) != record['sha256']):
+                        raise ValueError('fixed original clock header binding changed')
+                    self.bound_artifact(base / filename, record['sha256'])
+                row['private_global_clock_headers'] = private_headers
+            elif private_headers:
+                raise ValueError('unexpected global headers in another helper')
             dependencies = old.get('actual_compiler_dependencies', [])
             if not dependencies: raise ValueError('original complete compiler header dependencies absent')
             for record in dependencies:
                 path = Path(record['path'])
                 if within(path, self.root):
                     if self.previous['inputs'].get(str(path)) != record: raise ValueError('original dependency not hash-bound')
-                elif path in (source, guard): self.bound_artifact(path, record['sha256'])
+                elif path in (source, guard) or path in {base / n for n in private_headers}: self.bound_artifact(path, record['sha256'])
                 else: raise ValueError('original dependency outside actual source/private helper')
             actual_deps = dep_paths(Path(row['reused_artifacts']['depfile']['path']), self.build)
             if actual_deps != [Path(r['path']).resolve() for r in dependencies]:
@@ -1071,7 +1459,7 @@ class ExistingVerifier(Builder):
                 row.update(installed_runtime_profile=old['installed_runtime_profile'],
                            actual_link_input_sonames=old['actual_link_input_sonames'])
                 for soname in old['DT_NEEDED']: runtime_link_records(row, soname)
-            if name in PRODUCTION_HELPER_NAMES579:
+            if name in PRODUCTION_HELPER_NAMES579 or name in GLOBAL_CLOCK_HELPER_NAMES579 or name in GLOBAL_THREEUID_HELPER_NAMES579:
                 row.update(source=old['source'], private_source_sha256=old['private_source_sha256'])
             self.check_elf(name, Path(row['reused_artifacts']['binary']['path']), direct, row)
             row.update(status='pass_compile_link_ONLY', binary=row['reused_artifacts']['binary']['path'],
@@ -1085,8 +1473,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--product', choices=[PRODUCT], required=True)
-    parser.add_argument('--helper', choices=tuple(HELPERS) + COMMUNICATION_HELPER_NAMES + SETTINGS_HELPER_NAMES + WIFI_HELPER_NAMES + PRODUCTION_HELPER_NAMES579, action='append',
+    parser.add_argument('--product', choices=tuple(TARGETS), required=True)
+    parser.add_argument('--normal-link-target', help='Actual existing PIE executable Ninja output; required for nondefault products; never an SDK triple or CRT override')
+    parser.add_argument('--helper', choices=tuple(HELPERS) + GLOBAL_CLOCK_HELPER_NAMES579 + GLOBAL_THREEUID_HELPER_NAMES579 + COMMUNICATION_HELPER_NAMES + SETTINGS_HELPER_NAMES + WIFI_HELPER_NAMES + PRODUCTION_HELPER_NAMES579, action='append',
                         help='Repeat to select; default original helpers only; communication helpers require explicit selection')
     parser.add_argument('--plan-only', action='store_true', help='Read/query existing GN only; never clang/build GN')
     parser.add_argument('--verify-existing', type=Path, help='Read-only original build.json; no Ninja/compiler/linker invocation')
@@ -1099,13 +1488,15 @@ def main():
     if args.verify_existing and (args.plan_only or not args.existing_report_sha256):
         parser.error('--verify-existing requires --existing-report-sha256 and excludes --plan-only')
     if args.existing_report_sha256 and not args.verify_existing: parser.error('--existing-report-sha256 requires --verify-existing')
-    if args.verify_existing and (args.runtime_profile or args.runtime_profile_sha256):
+    if args.verify_existing and (args.runtime_profile or args.runtime_profile_sha256 or args.normal_link_target):
         parser.error('--verify-existing cannot add or replace an installed runtime profile')
     try:
         if args.verify_existing:
-            builder = ExistingVerifier(args.source_root, args.output, helpers, args.verify_existing, args.existing_report_sha256)
+            builder = ExistingVerifier(args.source_root, args.output, helpers, args.verify_existing, args.existing_report_sha256,
+                                       product=args.product)
         else: builder = Builder(args.source_root, args.output, helpers, args.plan_only,
-                               runtime_profile=args.runtime_profile, runtime_profile_sha256=args.runtime_profile_sha256)
+                               runtime_profile=args.runtime_profile, runtime_profile_sha256=args.runtime_profile_sha256,
+                               product=args.product, normal_link_target=args.normal_link_target)
         report = builder.run()
         print(json.dumps({'status': report['status'], 'helpers': {n: r['status'] for n, r in report['helpers'].items()}}))
         return 1 if report['status'] == 'fail' else 0

@@ -527,7 +527,9 @@ def run(args):
         plan=validate_plan(json.loads(checked(artifacts['ui_plan']).read_text()));plan_path=args.output/'actual-ui-plan.json';write_json(plan_path,plan)
         transport=Transport(args,plan);transport.wake_if_asleep('requested-wallpaper-suite-start');transport.guest.start();transport.identity('wrapper-initial')
         env=transport.guest.env;report.update(boot_id=env['boot_id'],arch=env['guest_arch'],device=env['device_type'],target=env['target'],udid=env['udid'])
-        if env['guest_arch']!='arm64':raise ValueError('provided actual product helper builder currently supports arm64 only')
+        from batch_system_build_runtime_helpers import target_spec
+        if target_spec(env['product'])['arch'] != env['guest_arch'] or env['device_type'] not in ('phone','2in1'):
+            raise ValueError('actual supported product/profile boot required')
         native=native_binding.archive_native(args.archive,args.boot,args.output/'native-archive')
         write_json(args.output/'native-archive.json',native)
         report.update(native_archive=record(args.output/'native-archive.json'),native_verifier=record(Path(native_binding.__file__)))

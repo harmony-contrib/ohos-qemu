@@ -448,6 +448,9 @@ def inspected(row,cid,name,image,config,host,mounts,*,native=False,running=None,
 
 def native376_resources(value, launcher, expected, tree):
     """Replay actual v17 run--rm/held-Popen protocol; no synthetic Owner35 format."""
+    if value.get('schema') in ('F-representative-source-owner/v18', 'remaining579-one-target-source-owner/v1'):
+        from production579_native_resources import native_resources
+        return native_resources(value, launcher, expected, tree)
     require(value.get('schema')=='F-representative-owner/v17' and value.get('source_commit')==expected and
             type(value.get('exit_code'))is int and value['exit_code']==0 and value.get('tree_sha256')==tree and
             checked(value['launcher_log'])==launcher and value.get('owned_resources_closed_while_lease_held')is True and

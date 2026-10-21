@@ -1,25 +1,6 @@
 --- a/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets
 +++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets
-@@ -15,7 +15,7 @@
-  
- import Want from '@ohos.app.ability.Want';
- import config from '@ohos.accessibility.config';
--import { ServiceExtensionAbility } from '@kit.AbilityKit';
-+import { ServiceExtensionAbility, common } from '@kit.AbilityKit';
- import { LogUtil } from '@ohos/settings.common/src/main/ets/utils/LogUtil';
- import { SettingsDataUtils } from '@ohos/settings.common/src/main/ets/utils/SettingsDataUtils';
- import { HiSysEventUtil } from '@ohos/settings.common/src/main/ets/systemEvent/HiSysEventUtil';
-@@ -32,13 +32,21 @@
- const DISABLE_TRANSITION_ANIMATIONS_NOTIFICATION: string = 'disableTransitionAnimationsNotification';
- const DISABLE_TRANSITION_ANIMATIONS_NOTIFICATION_KEY: string = 'transition_animations_notification';
-  
-+// SDK26 does not yet declare this implemented native method. This is a type
-+// declaration only; the same image's ServiceExtensionContext supplies the method.
-+interface ConditionalServiceExtensionContext extends common.ServiceExtensionContext {
-+  terminateSelfIfStartId(expectedStartId: number): Promise<boolean>;
-+}
-+
- export default class IgnoreRepeatClickService extends ServiceExtensionAbility {
+@@ -36,9 +36,11 @@
    private requestQueue: Promise<void> = Promise.resolve();
    private active: boolean = true;
    private lifecycle: number = 0;
@@ -31,7 +12,7 @@
      ++this.lifecycle;
      LogUtil.showInfo(TAG, 'onCreate');
    }
-@@ -48,10 +56,30 @@
+@@ -48,10 +50,30 @@
        return;
      }
      const lifecycle: number = this.lifecycle;
@@ -49,7 +30,7 @@
 +      return;
 +    }
 +    try {
-+      const context = this.context as ConditionalServiceExtensionContext;
++      const context = this.context;
 +      const stopped: boolean = await context.terminateSelfIfStartId(startId);
 +      if (this.active && lifecycle === this.lifecycle) {
 +        LogUtil.info(`${TAG} conditional idle stop startId:${startId} accepted:${stopped}`);
@@ -103,14 +84,16 @@
      static napi_value ConnectAbility(napi_env env, napi_callback_info info)
      {
          GET_NAPI_INFO_AND_CALL(env, info, JsServiceExtensionContext, OnConnectAbility);
-@@ -1035,6 +1042,48 @@
+@@ -1035,6 +1042,50 @@
          return result;
      }
  
 +    napi_value OnTerminateAbilityIfStartId(napi_env env, NapiCallbackInfo& info)
 +    {
 +        double supplied = 0;
-+        if (info.argc != ARGC_ONE || GetType(env, info.argv[INDEX_ZERO]) != napi_number ||
++        napi_valuetype suppliedType = napi_undefined;
++        if (info.argc != ARGC_ONE ||
++            napi_typeof(env, info.argv[INDEX_ZERO], &suppliedType) != napi_ok || suppliedType != napi_number ||
 +            napi_get_value_double(env, info.argv[INDEX_ZERO], &supplied) != napi_ok ||
 +            !std::isfinite(supplied) || supplied <= 0 ||
 +            supplied > std::numeric_limits<int32_t>::max() || std::floor(supplied) != supplied) {
@@ -152,7 +135,7 @@
      napi_value OnConnectAbility(napi_env env, NapiCallbackInfo& info)
      {
          HITRACE_METER_NAME(HITRACE_TAG_ABILITY_MANAGER, __PRETTY_FUNCTION__);
-@@ -1704,6 +1753,8 @@
+@@ -1704,6 +1755,8 @@
      BindNativeFunction(env, object, "startAbilityAsCaller",
          moduleName, JsServiceExtensionContext::StartAbilityAsCaller);
      BindNativeFunction(env, object, "terminateSelf", moduleName, JsServiceExtensionContext::TerminateAbility);

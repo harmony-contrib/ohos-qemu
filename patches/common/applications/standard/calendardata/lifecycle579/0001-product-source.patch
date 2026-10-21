@@ -433,7 +433,7 @@
  int Calendar::UpdateEvents(const std::vector<Event>& events)
 --- /dev/null
 +++ b/applications/standard/calendardata/datamanager/src/main/ets/processor/events/ConditionalEventMutation.ets
-@@ -0,0 +1,126 @@
+@@ -0,0 +1,135 @@
 +/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
 +import rdb from '@ohos.data.relationalStore';
 +import dataSharePredicates from '@ohos.data.dataSharePredicates';
@@ -452,8 +452,17 @@
 +  operation: string;
 +}
 +
-+function invalid(message: string): BusinessError {
-+  return { code: 401, name: 'CalendarConditionalMutationParameterError', message: message };
++class CalendarConditionalMutationParameterError extends Error implements BusinessError {
++  code: number;
++  constructor(message: string) {
++    super(message);
++    this.code = 401;
++    this.name = 'CalendarConditionalMutationParameterError';
++  }
++}
++
++function invalid(message: string): CalendarConditionalMutationParameterError {
++  return new CalendarConditionalMutationParameterError(message);
 +}
 +
 +/** Invoked only after the existing DataShare authentication and creator filter. */
@@ -557,12 +566,12 @@
 +    return { id: id, count: count, operation: operation };
 +  } catch (error) {
 +    if (!finished) { await tx.rollback(); }
-+    throw error; // Actual RDB/provider errors must not become stale=false.
++    throw error as Error; // Actual RDB/provider errors must not become stale=false.
 +  }
 +}
 --- a/applications/standard/calendardata/datamanager/src/main/ets/processor/events/EventsProcessor.ets
 +++ b/applications/standard/calendardata/datamanager/src/main/ets/processor/events/EventsProcessor.ets
-@@ -40,6 +40,10 @@
+@@ -40,8 +40,23 @@
  import { parseEventByIndex } from '@ohos/datastructure';
  import { GlobalPackageName } from '@ohos/common';
  
@@ -572,29 +581,45 @@
 +
  const TAG: string = 'EventsProcessor';
  const CHANNEL_ID: string = 'channel_id';
++
++/** Copy every permitted value without allowing callers to write the CAS revision. */
++function filterMutableEventValues(value: data_rdb.ValuesBucket): data_rdb.ValuesBucket {
++  const filtered: data_rdb.ValuesBucket = filterValuesBucket(value, CHANNEL_ID);
++  const values: data_rdb.ValuesBucket = {};
++  for (const key of Object.keys(filtered)) {
++    if (key !== MUTATION_COLUMN) { values[key] = filtered[key]; }
++  }
++  return values;
++}
++
  
-@@ -52,6 +56,7 @@
+ /**
+  * the Events table processor
+@@ -51,7 +66,7 @@
+ export class EventsProcessor extends DefaultProcessor {
    async insertByHighAuthority(rdbStore: data_rdb.RdbStore, uri: string,
                                value: data_rdb.ValuesBucket, callback: Function) {
-     let values = filterValuesBucket(value, CHANNEL_ID);
-+    delete values[MUTATION_COLUMN];
+-    let values = filterValuesBucket(value, CHANNEL_ID);
++    let values = filterMutableEventValues(value);
      if (!this.isFromMigrate) {
        const callerName = getBundleNameByUri(uri);
        initValueCreator(values, callerName);
-@@ -75,6 +80,7 @@
+@@ -74,7 +89,7 @@
+ 
    async insertByLowAuthority(rdbStore: data_rdb.RdbStore, uri: string,
                               value: data_rdb.ValuesBucket, callback: Function) {
-     let values = filterValuesBucket(value, CHANNEL_ID);
-+    delete values[MUTATION_COLUMN];
+-    let values = filterValuesBucket(value, CHANNEL_ID);
++    let values = filterMutableEventValues(value);
      if (!this.isFromMigrate) {
        const callerName = getBundleNameByUri(uri);
        initValueCreator(values, callerName);
-@@ -126,17 +132,46 @@
+@@ -125,18 +140,45 @@
+ 
    async updateByHighAuthority(rdbStore: data_rdb.RdbStore, uri: string, value: data_rdb.ValuesBucket,
                                predicates: dataSharePredicates.DataSharePredicates, callback: Function) {
-     let values = filterValuesBucket(value, CHANNEL_ID);
+-    let values = filterValuesBucket(value, CHANNEL_ID);
 -    deleteValueCreator(values);
-+    delete values[MUTATION_COLUMN];
++    let values = filterMutableEventValues(value);
 +    values = deleteValueCreator(values);
 +    if (values[MUTATION_KIND] !== undefined) {
 +      await this.conditionalMutation(rdbStore, values, predicates, callback);
@@ -605,8 +630,8 @@
  
    async updateByLowAuthority(rdbStore: data_rdb.RdbStore, uri: string, value: data_rdb.ValuesBucket,
                               predicates: dataSharePredicates.DataSharePredicates, callback: Function) {
-     let values = filterValuesBucket(value, CHANNEL_ID);
-+    delete values[MUTATION_COLUMN];
+-    let values = filterValuesBucket(value, CHANNEL_ID);
++    let values = filterMutableEventValues(value);
      const callerName = getBundleNameByUri(uri);
 -    deleteValueCreator(values);
 +    values = deleteValueCreator(values);
@@ -690,7 +715,7 @@
      } catch (err) {
        Log.error(TAG, `initRdbStore err:${err.message}`);
 -    }
-+      throw err;
++      throw err as Error;
 +    }
 +    await ensureCalendarMutationSchema(this.rdbStore);
    }
@@ -1111,7 +1136,7 @@
 +      this.helper = helper;
 +      console.info('CALENDAR579 ' + JSON.stringify({ event: 'subscribe', instance: this.instance,
 +        timestamp: Date.now(), uri: URI }));
-+    } catch (error) { await helper.close(); throw error; }
++    } catch (error) { await helper.close(); throw error as Error; }
 +  }
 +
 +  stop(): void {
@@ -1166,13 +1191,13 @@
      this.appearing = false;
      this.generation++;
      this.reader?.dispose();
-@@ -71,24 +75,37 @@
+@@ -71,19 +75,15 @@
      }
      this.reminderStatus = '正在读取日程';
      try {
 -      const reader = new CalendarReminderReader(getContext(this) as common.UIAbilityContext);
 +      this.bindObserverStop();
-+      const reader = new CalendarReminderReader(getContext(this) as common.UIAbilityContext, this.instance,
++      const reader: CalendarReminderReader = new CalendarReminderReader(getContext(this) as common.UIAbilityContext, this.instance,
 +        () => this.publishReminder(reader, generation));
        this.reader = reader;
        await reader.open(this.route);
@@ -1190,10 +1215,10 @@
      } catch (error) {
        if (generation === this.generation && this.foreground && this.appearing) {
          this.reminderStatus = '日历初始化失败：' + (error as BusinessError).message;
-       }
+@@ -91,21 +91,39 @@
      }
-+  }
-+
+   }
+ 
 +  private bindObserverStop(): void {
 +    this.observerLifetime.bind(() => {
 +      this.generation++;
@@ -1209,10 +1234,18 @@
 +    this.reminderStart = reader.event === undefined ? '' : new Date(reader.event.startTime).toLocaleString();
 +    this.reminderEnd = reader.event === undefined ? '' : new Date(reader.event.endTime).toLocaleString();
 +    this.reminderDescription = reader.event?.description ?? '';
-   }
- 
++  }
++
    private startBusiness(): void {
-@@ -103,9 +120,10 @@
+     if (!this.appearing || !this.foreground) {
+       return;
+     }
+     try {
+       if (this.controller === undefined) {
+-        const controller = new CalendarBusinessController(getContext(this) as common.UIAbilityContext,
++        const controller: CalendarBusinessController = new CalendarBusinessController(getContext(this) as common.UIAbilityContext,
+           (view: CalendarView) => {
+             if (this.controller === controller) {
                this.view = view;
                this.viewChanged();
              }

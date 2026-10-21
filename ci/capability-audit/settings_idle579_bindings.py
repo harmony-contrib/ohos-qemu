@@ -77,7 +77,8 @@ class Bindings:
         self.boot()
         native = self.io.package_inputs['native_addons']['settings_idle579']
         require(type(native) is dict and set(native) == {'binary', 'build', 'abi'} and
-                native['abi'] == 'arm64-v8a' and load_ref(native['binary'])[:4] == b'\x7fELF' and
+                native['abi'] == {'arm64': 'arm64-v8a', 'armv7a': 'armeabi-v7a', 'x86_64': 'x86_64'}[self.io.guest.report['test_environment']['guest_arch']] and
+                load_ref(native['binary'])[:4] == b'\x7fELF' and
                 load_ref(native['build']), 'original pre-VM actual platform shared-NAPI build required')
         self.native = native
         value = self.io.prepare_callers('settings_idle579', 'conditional', self.run,
@@ -97,7 +98,7 @@ class Bindings:
             for kind in ('unsigned', 'signed'):
                 with zipfile.ZipFile(row[kind]['path']) as hap:
                     require(len(hap.namelist()) == len(set(hap.namelist())) and
-                        hap.read('libs/arm64-v8a/libsettings_idle579.so') == load_ref(native['binary']) and
+                        hap.read('libs/' + native['abi'] + '/libsettings_idle579.so') == load_ref(native['binary']) and
                         hap.read('ets/modules.abc'), 'actual signed HAP native/Ark bytes differ')
             self.roles[role] = {'prepared': row}
         return value

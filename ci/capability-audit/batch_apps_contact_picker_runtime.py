@@ -520,8 +520,10 @@ def verify_runtime(journal_path, seed_path, cleanup_path, ui_path, identity_path
     build, ui = document(build_path), document(ui_path)
     require(build.get('run_id') == run_id and ui.get('run_id') == run_id, 'build/UI run mismatch')
     package = artifact(build['representative_package'])
-    require(build.get('architecture') == 'arm64' and build.get('device_profile') == 'phone' and
-            build.get('booted_package_sha256') == sha(package), 'representative fresh ARM64 phone boot identity missing')
+    from production579_target import archive_manifest
+    package_target = archive_manifest(package)['context']
+    require(build.get('architecture') == package_target['arch'] and build.get('device_profile') == package_target['device'] and
+            build.get('booted_package_sha256') == sha(package), 'actual fresh product/profile package boot identity missing')
     require(build.get('boot_session_id') and ui.get('boot_session_id') == build['boot_session_id'], 'UI from a different boot')
     artifact(build['provider_hap'])
     require(build.get('caller_fixture_hashes') == {p.name: sha(p) for p in sorted(FIX.iterdir()) if p.is_file()},

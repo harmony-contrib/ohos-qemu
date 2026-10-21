@@ -20,12 +20,22 @@ PATCH_ROOT=Path(__file__).resolve().parents[1]
 PROJECT='applications/standard/hap/vassistant_livecaptions579'
 BUNDLE='com.ohos.vassistant'
 LABEL='//applications/standard/hap/vassistant_livecaptions579:vassistant_livecaptions579'
+DEVICE_TYPES=['default','tablet','2in1']
+PRODUCT_ABIS={'arm64_virt':'arm64-v8a','armv7a_virt':'armeabi-v7a','x86_64_virt':'x86_64'}
 PERMISSIONS=['ohos.permission.MANAGE_SETTINGS','ohos.permission.SYSTEM_FLOAT_WINDOW',
              'ohos.permission.WRITE_ACCESSIBILITY_CONFIG']
 CAPABILITY={'bundleName':BUNDLE,'app_signature':[SIGNATURE],'keepAlive':False,'allowAppDesktopIconHide':True}
 
 
 def digest(data): return hashlib.sha256(data).hexdigest()
+
+
+def target_contract(product, device, abi):
+    # Build target context only. Actual selected HAP/BMS/boot remains a guest gate.
+    if product not in PRODUCT_ABIS or device not in ('phone','2in1') or PRODUCT_ABIS[product]!=abi:
+        raise ValueError('exact three-product by two-device caption ABI context required')
+    return {'product':product,'device':device,'abi':abi,
+        'sdk_device':'default' if device=='phone' else '2in1','module_device_types':list(DEVICE_TYPES)}
 
 
 def source_ready(root):
@@ -40,6 +50,9 @@ def source_ready(root):
     actual_sources={p.relative_to(root/PROJECT).as_posix() for p in (root/PROJECT/'entry/src/main/ets').rglob('*.ets')}
     expected_sources={p for p in manifest['files'] if p.startswith('entry/src/main/ets/') and p.endswith('.ets')}
     if actual_sources!=expected_sources: raise ValueError('unexpected/lost production source closure')
+    module=json.loads(read(root/PROJECT/'entry/src/main/module.json5'),object_pairs_hook=unique)['module']
+    if (module.get('name'),module.get('type'),module.get('deviceTypes'))!=('entry','entry',DEVICE_TYPES):
+        raise ValueError('exact SDK26 default/tablet/2in1 source module required')
     hap=read(root/'applications/standard/hap/BUILD.gn').decode()
     if hap.count('"'+LABEL+'"')!=1 or 'ohos_prebuilt_etc("vassistant_livecaptions579")' in hap:
         raise ValueError('select exactly the real source target, never the prototype prebuilt')
@@ -88,17 +101,85 @@ def install(path, data):
         if pending is not None: pending.unlink(missing_ok=True)
 
 
-def prepare(root, cache, inputs, abi):
+def select_assets(root, mapping, inputs, abi):
+    """A complete known ABI-data vector may replace another complete known one.
+
+    Normal matrix builds share a source tree. Only HAR/notices differ between
+    fixed 64-bit inputs and the sealed actual ARM32 input. Unknown/mixed data is
+    rejected, and an ordinary failed transaction restores its exact preimage.
+    """
+    from livecaptions579_inputs import product_assets, raw
+    from livecaptions579_arm32_sources import BASE_HAR_SHA, BASE_NOTICES_SHA
+    directory=root/PROJECT; marker=directory/'.assets-selection579.json'
+    if any(p.is_symlink() for p in (marker,*marker.parents)): raise ValueError('no symlink ABI-data selection')
+    desired_data={relative:raw(value) for relative,value in mapping.items()}
+    paths={relative:directory/relative for relative in mapping}
+    before={relative:read(path) if path.exists() else None for relative,path in paths.items()}
+    marker_before=read(marker) if marker.exists() else None
+    if marker_before is not None:
+        old=json.loads(marker_before,object_pairs_hook=unique)
+        if set(old)!={'schema','abi','inputs','assets'} or old['schema']!='actual-caption579-source-assets/v1':
+            raise ValueError('unknown source ABI-data selection marker')
+        old_mapping=product_assets(old['inputs'],old['abi'])
+        expected={relative:digest(raw(value)) for relative,value in old_mapping.items()}
+        if set(old_mapping)!=set(mapping) or old['assets']!=expected or any(
+            before[p] is None or digest(before[p])!=checksum for p,checksum in expected.items()):
+            raise ValueError('unknown/mixed prior complete caption input vector')
+    else:
+        har='sherpa_onnx-1.11.2.har'
+        notice='entry/src/main/resources/rawfile/LIVE_CAPTIONS_NOTICES.txt'
+        if har not in before or notice not in before: raise ValueError('fixed product data destinations changed')
+        pair=(before[har],before[notice])
+        if (pair[0] is None)!=(pair[1] is None): raise ValueError('partial unmarked ABI-data vector')
+        if pair[0] is not None and (digest(pair[0]),digest(pair[1]))!=(BASE_HAR_SHA,BASE_NOTICES_SHA):
+            raise ValueError('only the exact historical R66 two-ABI vector can bootstrap an unmarked source')
+        for relative,data in before.items():
+            if relative not in (har,notice) and data is not None and data!=desired_data[relative]:
+                raise ValueError('model/notice source input is not the fixed common vector')
+    wanted={'schema':'actual-caption579-source-assets/v1','abi':abi,'inputs':inputs,
+        'assets':{relative:digest(data) for relative,data in desired_data.items()}}
+    marker_data=(json.dumps(wanted,ensure_ascii=False,indent=2)+'\n').encode()
+    written=[]
+    def replace(path, expected, data):
+        current=read(path) if path.exists() else None
+        if current!=expected: raise ValueError('source data changed before atomic replacement: '+str(path))
+        if expected==data: return
+        path.parent.mkdir(parents=True,exist_ok=True)
+        mode=path.stat().st_mode&0o777 if path.exists() else 0o644
+        temporary=None
+        try:
+            with tempfile.NamedTemporaryFile(prefix='.caption-abi-',dir=path.parent,delete=False) as out:
+                temporary=Path(out.name);out.write(data);out.flush();os.fchmod(out.fileno(),mode);os.fsync(out.fileno())
+            if (read(path) if path.exists() else None)!=expected: raise ValueError('source ABI vector changed during preparation')
+            os.replace(temporary,path)
+        finally:
+            if temporary is not None: temporary.unlink(missing_ok=True)
+    try:
+        for relative,data in desired_data.items():
+            path=paths[relative];replace(path,before[relative],data);written.append((path,before[relative],data))
+        replace(marker,marker_before,marker_data);written.append((marker,marker_before,marker_data))
+        for relative,data in desired_data.items():
+            if read(paths[relative])!=data: raise ValueError('complete selected ABI-data vector changed')
+    except BaseException:
+        for path,previous,data in reversed(written):
+            if read(path)!=data: raise ValueError('unknown concurrent source input; preserve it and stop')
+            if previous is None:path.unlink()
+            else:replace(path,data,previous)
+        if any((read(paths[p]) if paths[p].exists() else None)!=data for p,data in before.items()) or \
+            (read(marker) if marker.exists() else None)!=marker_before:
+            raise ValueError('source ABI-data rollback incomplete')
+        raise
+    return {relative:{'path':str(paths[relative]),'sha256':digest(data)} for relative,data in desired_data.items()}
+
+
+def prepare(root, cache, inputs, abi, *, product, device):
+    context=target_contract(product,device,abi)
     policies=source_ready(root)
     # Fixed source module, not a JSON-supplied code path or a live guest factory.
     sys.path.insert(0,str(PATCH_ROOT.parent/'ci/capability-audit'))
     from livecaptions579_inputs import product_assets, raw
     mapping=product_assets(inputs,abi)
-    assets={}
-    for relative,ref in mapping.items():
-        path=root/PROJECT/relative
-        data=raw(ref);install(path,data)
-        assets[relative]={'path':str(path),'sha256':digest(read(path))}
+    assets=select_assets(root,mapping,inputs,abi)
     dist=root/'developtools/hapsigner/dist'
     for name,sha in SIGNING_INPUTS.items():
         if digest(read(dist/name))!=sha: raise ValueError('fixed public OS signing input changed: '+name)
@@ -132,13 +213,14 @@ def prepare(root, cache, inputs, abi):
             if done.returncode: raise ValueError('actual source profile signing failed: '+json.dumps(row))
             verify(signed);install(path,read(signed));verify(path)
     return {'scope':'release OS source/profile/data preparation only; normal GN builds/signs/packages HAP',
-        'project':PROJECT,'label':LABEL,'abi':abi,'assets':assets,'profile':{'path':str(path),'sha256':digest(read(path))},
+        'project':PROJECT,'label':LABEL,'abi':abi,'target':context,'assets':assets,'profile':{'path':str(path),'sha256':digest(read(path))},
         'signer':SIGNATURE,'policies':policies,'commands':commands,'guest_or_udid_required':False,
         'actual_compilation':False,'runtime_validated':False,'first_artifact_behavior_gate_passed':False}
 
 
-def payload(hap, root, scratch, inputs, abi):
+def payload(hap, root, scratch, inputs, abi, *, product, device):
     """Actual compiled-byte/signature admission; never functional acceptance."""
+    context=target_contract(product,device,abi)
     import zipfile
     from pathlib import PurePosixPath
     sys.path.insert(0,str(PATCH_ROOT.parent/'scripts'))
@@ -159,6 +241,8 @@ def payload(hap, root, scratch, inputs, abi):
         app,module=document['app'],document['module']
         if (app.get('bundleName'),app.get('versionCode'),app.get('versionName'),app.get('debug'))!=(BUNDLE,1000000,'1.0.0',False):
             raise ValueError('real release product app identity differs')
+        if (module.get('name'),module.get('type'),module.get('deviceTypes'))!=('entry','entry',DEVICE_TYPES):
+            raise ValueError('compiled caption SDK26 device/module contract differs')
         if module.get('abilities',[]) or [p['name'] for p in module.get('requestPermissions',[])]!=PERMISSIONS:
             raise ValueError('compiled provider permission/ability boundary differs')
         extensions=module.get('extensionAbilities',[])
@@ -174,8 +258,13 @@ def payload(hap, root, scratch, inputs, abi):
                 raise ValueError('compiled model/notices bytes differ from actual admitted source: '+relative)
         expected={'libsherpa_onnx.so','libsherpa-onnx-c-api.so','libonnxruntime.so','libc++_shared.so'}
         libraries={name:digest(archive.read('libs/'+abi+'/'+name)) for name in expected}
+        if abi=='armeabi-v7a':
+            from livecaptions579_arm32_contract import admit
+            actual=admit(inputs)
+            if libraries!={name:row['file']['sha256'] for name,row in actual['libraries'].items()}:
+                raise ValueError('actual compiled ARM32 HAP does not contain the admitted native outputs')
     signature=verify_signature(hap,root,scratch,PROJECT+'/signature/vassistant.p7b')
-    return {'bundle':BUNDLE,'abi':abi,'hap_sha256':digest(read(hap)),'libraries':libraries,**signature,
+    return {'bundle':BUNDLE,'abi':abi,'target':context,'hap_sha256':digest(read(hap)),'libraries':libraries,**signature,
         'scope':'actual compiled product byte/signature admission only',
         'provider_runtime_validated':False,'first_artifact_behavior_gate_passed':False}
 
@@ -189,17 +278,21 @@ def main():
     parser.add_argument('--inputs-sha256',required=True)
     parser.add_argument('--abi',choices=('arm64-v8a','x86_64','armeabi-v7a'),required=True)
     parser.add_argument('--hap',type=Path)
+    parser.add_argument('--product',choices=tuple(PRODUCT_ABIS),required=True)
+    parser.add_argument('--device',choices=('phone','2in1'),required=True)
     args=parser.parse_args()
     source=read(args.inputs)
     if digest(source)!=args.inputs_sha256: raise ValueError('actual root dependency descriptor changed')
     inputs=json.loads(source,object_pairs_hook=unique)
     if args.hap is None:
-        result=prepare(args.source_root.resolve(),args.cache_root.resolve(),inputs,args.abi)
+        result=prepare(args.source_root.resolve(),args.cache_root.resolve(),inputs,args.abi,
+            product=args.product,device=args.device)
     else:
         source_ready(args.source_root.resolve())
         args.cache_root.mkdir(parents=True,exist_ok=True)
         with tempfile.TemporaryDirectory(prefix='caption-product-payload-',dir=args.cache_root) as directory:
-            result=payload(args.hap.resolve(),args.source_root.resolve(),Path(directory),inputs,args.abi)
+            result=payload(args.hap.resolve(),args.source_root.resolve(),Path(directory),inputs,args.abi,
+                product=args.product,device=args.device)
     print(json.dumps(result,indent=2))
 
 

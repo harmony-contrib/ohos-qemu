@@ -409,6 +409,11 @@ def verify_historical_provider(config, *, provider_name, device, signed_hap, sys
 
 def verify_production_provider(config, *, provider_name, device, signed_hap, system_image_sha256):
     """Exact schema dispatch; never relabel historical bytes as a fresh package."""
+    if isinstance(config, dict) and config.get('kind') in ('completed_same_source_2in1_wallpaper_provider579/v1',
+            'completed_same_source_nondefault_phone_provider579/v1'):
+        from production579_completed_2in1_provider import verify_completed_provider as verify_2in1
+        return verify_2in1(config, provider_name=provider_name, device=device,
+            signed_hap=signed_hap, system_image_sha256=system_image_sha256)
     if isinstance(config, dict) and 'kind' in config:
         from batch_apps_completed_provider_binding import KIND, verify_completed_provider
         require(config['kind'] == KIND, 'unknown production provider lineage kind')

@@ -1,16 +1,11 @@
 import ServiceExtensionAbility from '@ohos.app.ability.ServiceExtensionAbility';
-import { common, Want } from '@kit.AbilityKit';
+import { Want } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import settings from '@ohos.settings';
 import util from '@ohos.util';
 import { CaptionSession } from '../common/CaptionSession';
 import { captionTrace } from '../common/CaptionTrace';
 
-// This is a declaration of the real native method added by the separate stable
-// service_idle_startid product component, not an SDK stub or a JS implementation.
-interface ConditionalServiceContext extends common.ServiceExtensionContext {
-  terminateSelfIfStartId(expectedStartId: number): Promise<boolean>;
-}
 class ServiceEpoch {
   static owner: string = '';
 }
@@ -107,7 +102,7 @@ export default class AiCaptionServiceExtAbility extends ServiceExtensionAbility 
   }
   private async stopIfCurrent(startId: number, generation: number): Promise<void> {
     if (!this.current(generation) || this.latestStartId !== startId || this.activeSession !== undefined) { return; }
-    const accepted: boolean = await (this.context as ConditionalServiceContext).terminateSelfIfStartId(startId);
+    const accepted: boolean = await this.context.terminateSelfIfStartId(startId);
     // false means newer real AMS work exists; preserve it, never fall back to
     // the unconditioned terminateSelf API.
     captionTrace(this.instance, 'conditional_stop', 0, 0, 0, accepted ? startId : -startId);

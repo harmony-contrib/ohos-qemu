@@ -305,20 +305,22 @@ def witness_artifact(record, path_map):
 def verify_observer(binary, receipt, path_map=None):
     binary = regular(binary); receipt = regular(receipt); report = load(receipt)
     path_map = path_map or {}
+    selected_product = report['installed_runtime_profile']['profile']['product']
     require(not path_map or set(path_map) == {'/evidence/helpers', '/work'}, 'only the two explicit original helper prefix mappings are supported')
     for destination in path_map.values():
         p = Path(destination)
         require(p.is_absolute() and p.is_dir() and not p.is_symlink() and '..' not in p.parts, 'actual retained helper mapping directory required')
-    require(report.get('plan_only') is False and report.get('product') == 'arm64_virt' and
+    require(report.get('plan_only') is False and report.get('product') == selected_product and
             report.get('changed_inputs') == [], 'actual immutable product helper build required')
     builder = HERE / 'batch_system_build_runtime_helpers.py'
     require(builder.is_file() and report.get('builder_sha256') == verifier.sha(builder), 'helper builder source differs')
-    row = report['helpers']['contact_picker_observer']; fixture = driver.FIX / 'observer.cpp'
+    row = report['helpers']['contact_picker_observer']
+    selected_product = row['installed_runtime_profile']['profile']['product']; fixture = driver.FIX / 'observer.cpp'
     original = None
     if report.get('verify_existing') is True:
         origin = report['original_report']; original = load(witness_artifact(origin, path_map))
         require(origin.get('rewritten') is False and origin.get('status') == original.get('status') and
-                original.get('plan_only') is False and original.get('product') == 'arm64_virt' and original.get('changed_inputs') == [] and
+                original.get('plan_only') is False and original.get('product') == selected_product and original.get('changed_inputs') == [] and
                 original.get('builder_sha256') == origin.get('builder_sha256'), 'original helper build receipt changed')
         old = original['helpers']['contact_picker_observer']
         require(row.get('compile_command') == old.get('compile_command') and row.get('link_command') == old.get('link_command'),
@@ -355,27 +357,22 @@ def verify_observer(binary, receipt, path_map=None):
     require(row.get('anchors') and row.get('actual_compiler_dependencies') and row.get('actual_link_inputs') and
             {'libapp_manager.z.so', 'libaccesstoken_sdk.z.so'} <= set(row.get('DT_NEEDED', [])), 'helper actual innerkit/header/link evidence missing')
     compile_argv = row['compile_command']; link_argv = row['link_command']
-    require('--target=aarch64-linux-ohos' in compile_argv and '-fno-exceptions' in compile_argv and
+    require('-fno-exceptions' in compile_argv and
             '-fsanitize-cfi-cross-dso' in compile_argv and any(x.startswith('-fsanitize=') and 'cfi' in x for x in compile_argv) and
             '-pie' in link_argv and (original is not None or witness_path(link_argv[link_argv.index('-o') + 1], path_map).resolve() == binary),
             'helper product ABI/CFI command missing')
     compiled_source = witness_artifact(row['reused_artifacts']['source'], path_map) if original is not None else regular(witness_path(compile_argv[compile_argv.index('-c') + 1], path_map))
     require(verifier.sha(compiled_source) == verifier.sha(fixture), 'actual helper compiled source differs from frozen observer')
-    data = binary.read_bytes()
-    require(len(data) >= 64 and data[:7] == b'\x7fELF\x02\x01\x01' and
-            struct.unpack_from('<HH', data, 16) == (3, 183), 'actual ARM64 PIE ELF required')
-    offset = struct.unpack_from('<Q', data, 32)[0]; size, count = struct.unpack_from('<HH', data, 54)
-    require(size == 56 and count > 0 and offset + size * count <= len(data), 'helper real program headers absent')
-    interpreters = []; executable = False
-    for i in range(count):
-        kind, flags, start, _, _, length, _, _ = struct.unpack_from('<IIQQQQQQ', data, offset + i * size)
-        require(start + length <= len(data), 'helper program segment exceeds ELF')
-        if kind == 3: interpreters.append(data[start:start + length].rstrip(b'\0').decode('ascii'))
-        executable |= kind == 1 and bool(flags & 1) and length > 0
-    require(interpreters == ['/lib/ld-musl-aarch64.so.1'] and executable, 'helper actual guest loader/code absent')
+    from native579_artifact_context import binding_context
+    import batch_system_build_runtime_helpers as product579
+    native_context579 = binding_context(original if original is not None else report, row, binary,
+        lambda ref: witness_artifact(ref, path_map))
+    segments579 = product579.elf_segments(binary.read_bytes(), selected_product)
+    require(any(kind == 1 and flags & 1 and length > 0 for kind, _, _, length, flags in segments579),
+            'actual helper executable code absent')
     from batch_system_build_runtime_helpers import runtime_link_records
     from batch_media_knowledge_artifacts import elf_dependencies
-    needed = elf_dependencies(binary)
+    needed = elf_dependencies(binary, product_name=selected_product)
     require(needed == row['DT_NEEDED'], 'observer actual ELF DT_NEEDED differs from link receipt')
     for name in needed:
         runtime_link_records(row, name)
@@ -816,7 +813,9 @@ def run(args):
             'seed': verify_sdk_project(spec['seed'], fixture=driver.FIX, source_manifest='seed-source-manifest.json')}
         report['observer'] = verify_observer(args.observer_local, args.observer_receipt, spec.get('helper_path_map'))
         guest = EnclosingAcceptanceGuest(args.boot, args.archive, args.hdc, output / 'guest').start()
-        require(guest.env['guest_arch'] == 'arm64' and guest.env['device_type'] == 'phone', 'representative ARM64 phone guest required')
+        from batch_system_build_runtime_helpers import target_spec
+        require(target_spec(guest.env['product'])['arch'] == guest.env['guest_arch'] and
+            guest.env['device_type'] in ('phone','2in1'), 'actual supported product/profile boot required')
         report['boot_id'] = guest.env['boot_id']
         report['cleanup']['target'] = guest.target
         command = Commands(output / 'commands', report['commands'], guest)
@@ -858,7 +857,7 @@ def run(args):
             identity = {**proofs[key], 'installed_remote_hap': installed_path(raw, bundle)}
             write_json(output / (key + '-signed-identity.json'), identity)
         build = {'run_id': run_id, 'representative_package': descriptor(args.archive), 'booted_package_sha256': verifier.sha(args.archive),
-            'boot_session_id': guest.env['boot_id'], 'architecture': 'arm64', 'device_profile': 'phone',
+            'boot_session_id': guest.env['boot_id'], 'architecture': guest.env['guest_arch'], 'device_profile': guest.env['device_type'],
             'caller_hap': proofs['caller']['signed_hap'], 'seed_hap': proofs['seed']['signed_hap'], 'provider_hap': report['provider']['hap'],
             'caller_source_manifest': spec['caller']['source_manifest'], 'seed_source_manifest': spec['seed']['source_manifest'],
             'caller_fixture_hashes': {p.name: verifier.sha(p) for p in sorted(verifier.FIX.iterdir()) if p.is_file()}}

@@ -33,7 +33,9 @@ def archive_inputs(archive, image):
         inputs_raw = package.extractfile(one('build-inputs.json', 16777216)).read()
         manifest_raw = package.extractfile(one('manifest.json', 1024**2)).read()
         inputs, manifest = protocol.decode(inputs_raw), protocol.decode(manifest_raw)
-        validate_manifest(manifest, 'arm64', 'phone')
+        from production579_target import context
+        target = context(manifest)
+        validate_manifest(manifest, target['arch'], target['device'])
     return system, inputs_raw, manifest_raw, inputs, manifest
 
 

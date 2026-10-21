@@ -97,7 +97,7 @@ def compare_still(rows, samples, generation):
         'physical_immobility_accuracy_verified': False, 'relativeStill_verified': False}
 
 
-def verify_msdp_inventory(directory):
+def verify_msdp_inventory(directory, product='arm64_virt'):
     """Check the root-owned actual source/GN/CFI/DSO package contract."""
     directory = Path(directory)
     repository = Path(__file__).resolve().parents[2]
@@ -111,7 +111,7 @@ def verify_msdp_inventory(directory):
             'actual MSDP component/source binding absent/stale')
     sys.path.insert(0, str(repository / 'scripts'))
     import verify_qemu_msdp_image as guard
-    guard.check_inventory(value, 'arm64_virt', directory)
+    guard.check_inventory(value, product, directory)
     require(all(value['graphs'][name]['cross_dso_cfi'] is True for name in ('algo', 'service')),
             'actual product MSDP cross-DSO CFI must be preserved')
     return value
@@ -205,8 +205,9 @@ def verify(root, archive, boot_path, sdk):
     require(report['archive_sha256'] == digest(archive) == boot['archive_sha256'] and
         report['enclosing_boot_sha256'] == digest(boot_path) and report['boot_id'] == env['boot_id'] and
         boot.get('purpose') == 'acceptance' and boot.get('status') == 'pass' and env.get('external_keepalive') is False and
-        env['device_type'] == 'phone' and env['guest_arch'] == 'arm64' and env['product'] == 'arm64_virt',
-        'not same new ARM64 phone archive/acceptance boot')
+        env['device_type'] in ('phone','2in1') and report['arch'] == env['guest_arch'] and
+        {'arm64':'arm64_virt','armv7a':'armv7a_virt','x86_64':'x86_64_virt'}.get(env['guest_arch']) == env['product'],
+        'not same new actual product/profile archive/acceptance boot')
     for rel, value in report['files_sha256'].items():
         path = root / rel
         require(not Path(rel).is_absolute() and '..' not in Path(rel).parts and path.is_file() and not path.is_symlink() and digest(path) == value, 'captured evidence changed: ' + rel)
@@ -277,10 +278,11 @@ def verify(root, archive, boot_path, sdk):
     import verify_qemu_gnss_image as gnss_guard
     import verify_qemu_runtime_assets_image as sensor_guard
     gi = read_json(package / 'gnss-source/inventory.json'); si = read_json(package / 'runtime-assets-source/inventory.json')
-    gnss_guard.check_inventory(gi, 'arm64_virt', package / 'gnss-source')
-    sensor_guard.check_inventory(si, 'arm64_virt', package / 'runtime-assets-source')
+    gnss_guard.check_inventory(gi, env['product'], package / 'gnss-source')
+    sensor_guard.check_inventory(si, env['product'], package / 'runtime-assets-source')
     for name in ['gnss-source/inventory.json', 'runtime-assets-source/inventory.json']:
         require(boot['initial_package_file_sha256'].get(name) == digest(package / name), 'boot did not bind this source/feature inventory')
+    libdir579 = 'lib' if env['guest_arch'] == 'armv7a' else 'lib64'
     results = {'wire_rejections': wire, 'ordinary_uid_socket_boundary': uid}
     for component, compare in [('gnss', compare_location), ('sensor', compare_sensor)]:
         try:
@@ -297,12 +299,13 @@ def verify(root, archive, boot_path, sdk):
                     '/vendor/lib64/libgnss_interface_service_2.0.z.so': gi['files_sha256']['bridge.so'],
                     '/system/lib64/liblbsservice_gnss.z.so': gi['files_sha256']['service.so'],
                     '/vendor/lib64/libhdi_sensor_impl.z.so': si['files_sha256']['sensor.so']}
+                expected = {name.replace('/lib64/','/' + libdir579 + '/'):value for name,value in expected.items()}
                 require(all(observed.get(value) == name for name, value in expected.items()), 'actual guest DSO bytes differ from this new package')
                 results[component + '_generation' + str(generation)] = compare(rows, inputs[generation][component], generation)
             results[component] = {'status': 'pass'}
         except Exception as e: results[component] = {'status': 'fail', 'reason': str(e)}
     try:
-        inventory = verify_msdp_inventory(package / 'msdp-source')
+        inventory = verify_msdp_inventory(package / 'msdp-source', env['product'])
         require(boot['initial_package_file_sha256'].get('msdp-source/inventory.json') == digest(package / 'msdp-source/inventory.json'),
                 'boot did not bind current actual MSDP source/build inventory')
         for generation in (1, 2):
@@ -312,8 +315,8 @@ def verify(root, archive, boot_path, sdk):
             require(not any('libdevicestatus_mock.z.so' in b for _, b in maps), 'mock MSDP library mapped during real challenge')
             record = next(c for c in report['commands'] if c['label'] == 'actual-image-libraries-' + str(generation))
             observed = dict(re.findall(r'^([a-f0-9]{64})\s+(\S+)\s*$', Path(record['log']).read_text(), re.M))
-            require(observed.get(inventory['files_sha256']['libdevicestatus_algo.z.so']) == '/system/lib64/libdevicestatus_algo.z.so' and
-                    observed.get(inventory['files_sha256']['libdevicestatus_service.z.so']) == '/system/lib64/libdevicestatus_service.z.so',
+            require(observed.get(inventory['files_sha256']['libdevicestatus_algo.z.so']) == '/system/' + libdir579 + '/libdevicestatus_algo.z.so' and
+                    observed.get(inventory['files_sha256']['libdevicestatus_service.z.so']) == '/system/' + libdir579 + '/libdevicestatus_service.z.so',
                     'real mapped MSDP DSO differs from source-bound package')
             results['msdp_public_still_generation' + str(generation)] = compare_still(rows, inputs[generation]['sensor'], generation)
         results['msdp_public_still'] = {'status': 'pass', 'physical_immobility_accuracy_verified': False, 'relativeStill_verified': False}

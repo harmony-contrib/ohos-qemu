@@ -308,7 +308,7 @@
  //    "@hms-security/agoh-base-sdk": "1.4.6-300",
 --- /dev/null
 +++ b/applications/standard/call/CallSetting/product/default/src/main/ets/CallSettingDialogAbility/GeneralCallSettingDialogAbility.ets
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,65 @@
 +/*
 + * Copyright (c) 2026 Harmony Contrib
 + * SPDX-License-Identifier: Apache-2.0
@@ -321,6 +321,11 @@
 +import sim from '@ohos.telephony.sim';
 +import { BusinessError } from '@ohos.base';
 +import { Constants, LogUtils, MobileDataGlobalContextHelper } from '@ohos/common/CommonIndex';
++
++interface SystemApnSessionState {
++  session: UIExtensionContentSession;
++  slotId: number;
++}
 +
 +const TAG: string = 'GeneralCallSettingDialogAbility';
 +
@@ -352,7 +357,8 @@
 +      if (this.currentSession !== session) { return; }
 +      MobileDataGlobalContextHelper.getContext().set<common.UIExtensionContext>(
 +        Constants.SETTINGS_ABILITY_CONTEXT, this.context);
-+      const storage: LocalStorage = new LocalStorage({ session: session, slotId: current });
++      const initialState: SystemApnSessionState = { session: session, slotId: current };
++      const storage: LocalStorage = new LocalStorage(initialState);
 +      session.loadContent('pages/SystemApnDialogPage', storage);
 +      session.setWindowBackgroundColor('#00000000');
 +      LogUtils.i(TAG, `System APN modal opened slot:${current}`);
@@ -539,7 +545,7 @@
              }
 --- /dev/null
 +++ b/applications/standard/call/CallSetting/product/default/src/main/ets/pages/SystemApnDialogPage.ets
-@@ -0,0 +1,42 @@
+@@ -0,0 +1,47 @@
 +/*
 + * Copyright (c) 2026 Harmony Contrib
 + * SPDX-License-Identifier: Apache-2.0
@@ -547,6 +553,10 @@
 +import UIExtensionContentSession from '@ohos.app.ability.UIExtensionContentSession';
 +import ApnList from './ApnList';
 +import ApnDetails from './ApnDetails';
++
++interface SystemApnNavigationParams {
++  cardType: number;
++}
 +
 +const storage: LocalStorage = LocalStorage.getShared();
 +
@@ -576,7 +586,8 @@
 +    .onAppear(() => {
 +      if (!this.started) {
 +        this.started = true;
-+        this.pathInfos.pushPathByName('apnIndex', { cardType: this.slotId });
++        const parameters: SystemApnNavigationParams = { cardType: this.slotId };
++        this.pathInfos.pushPathByName('apnIndex', parameters);
 +      }
 +    })
 +    .width('100%').height('100%')

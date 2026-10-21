@@ -1,3 +1,6 @@
+#if defined(__arm__) && !defined(__aarch64__)
+#include "audio_onset579_global.inc"
+#else
 /* SPDX-License-Identifier: Apache-2.0
  * One root-armed, bounded, process-local diagnostic journal. RT producers only
  * copy bounded bytes/lineage into a try-lock ring. The worker owns all IO.
@@ -127,11 +130,11 @@ void Drain()
     if (r.seq != state.drained || !Write(s.str())) { state.error = EIO; }
     ++state.drained; state.tail.store(tail + 1, std::memory_order_release);
 }
-void Seal(int reason)
+bool Seal(int reason)
 {
     state.armed.store(false);
-    if (state.busy.load() || state.head.load() != state.tail.load()) { return; }
-    if (state.journal < 0) { return; }
+    if (state.busy.load() || state.head.load() != state.tail.load()) { return false; }
+    if (state.journal < 0) { return true; }
     pollfd alive {state.peerPidFd, POLLIN, 0};
     if (state.peerPidFd < 0 || poll(&alive, 1, 0) != 0 || Birth(state.peerPid) != state.peerBirth) {
         state.error = ESTALE;
@@ -149,6 +152,7 @@ void Seal(int reason)
     if (!Write(s.str()) || fsync(state.journal)) { state.error = EIO; }
     if (close(state.journal)) { state.error = EIO; } state.journal = -1;
     Ack(state.error ? state.error : reason);
+    return true;
 }
 int Request()
 {
@@ -192,7 +196,8 @@ void *Worker(void *)
     int closing = 0;
     while (!state.stopping.load()) {
         while (state.tail.load() != state.head.load()) { Drain(); }
-        if (closing && !state.busy.load() && state.head.load() == state.tail.load()) { Seal(closing == 1 ? 0 : closing); closing = 0; }
+        if (closing && !state.busy.load() && state.head.load() == state.tail.load() &&
+            Seal(closing == 1 ? 0 : closing)) { closing = 0; }
         pollfd p {state.peer < 0 ? state.listener : state.peer, POLLIN, 0};
         int rc = poll(&p, 1, 2); if (rc < 0 && errno == EINTR) { continue; }
         if (rc < 0) { state.error = errno; break; }
@@ -312,3 +317,4 @@ void Packet(uint64_t outputInstance, uint32_t rate, uint32_t channels, uint32_t 
     Publish(r);
 }
 } } }
+#endif

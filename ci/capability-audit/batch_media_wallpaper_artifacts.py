@@ -30,43 +30,10 @@ def caller_sources(item):
     return dict(item, compiled_page=record(project/'entry/src/main/ets/pages/Index.ets'))
 
 
-def elf_dependencies(path):
-    """Read the actual ELF64 PIE interpreter/DT_NEEDED without a host tool."""
-    data = Path(path).read_bytes()
-    if (len(data)<64 or data[:7]!=b'\x7fELF\x02\x01\x01' or
-            struct.unpack_from('<HH',data,16)!=(3,183)):
-        raise ValueError('actual ARM64 ELF64 little-endian PIE required')
-    start=struct.unpack_from('<Q',data,32)[0]; size,count=struct.unpack_from('<HH',data,54)
-    if size!=56 or not 1<=count<=128 or start+size*count>len(data):raise ValueError('invalid ELF program headers')
-    loads=[];dynamic=None;interpreter=None
-    for i in range(count):
-        kind,_,offset,address,_,filesize,_,_=struct.unpack_from('<IIQQQQQQ',data,start+i*size)
-        if offset+filesize>len(data):raise ValueError('truncated ELF segment')
-        if kind==1:loads.append((address,offset,filesize))
-        if kind==2:dynamic=(offset,filesize)
-        if kind==3:interpreter=data[offset:offset+filesize].rstrip(b'\0').decode('ascii')
-    if interpreter!='/lib/ld-musl-aarch64.so.1' or dynamic is None:raise ValueError('actual product musl dynamic executable required')
-    offset,size=dynamic;strings=None;string_size=None;needed=[];ended=False
-    if size%16:raise ValueError('malformed ELF dynamic entries')
-    for i in range(offset,offset+size,16):
-        tag,value=struct.unpack_from('<qQ',data,i)
-        if tag==0:ended=True;break
-        if tag==1:needed.append(value)
-        if tag==5:strings=value
-        if tag==10:string_size=value
-    if not ended or strings is None or string_size is None or not 1<=len(needed)<=128:
-        raise ValueError('incomplete actual dynamic dependencies')
-    tables=[o+strings-a for a,o,n in loads if a<=strings and strings+string_size<=a+n]
-    if len(tables)!=1:raise ValueError('ambiguous/truncated ELF string table')
-    table=data[tables[0]:tables[0]+string_size]; names=[]
-    for value in needed:
-        end=table.find(b'\0',value)
-        if end<0 or not 1<=end-value<=256:raise ValueError('invalid needed SONAME')
-        name=table[value:end].decode('ascii')
-        if '/'in name or not name.endswith('.so'):raise ValueError('unexpected dynamic library path')
-        names.append(name)
-    if len(names)!=len(set(names)):raise ValueError('duplicate dynamic dependencies')
-    return sorted(names)
+def elf_dependencies(path, *, product_name='arm64_virt'):
+    """Actual class-specific DT_NEEDED; target is bound by the owning raw oracle."""
+    import batch_system_build_runtime_helpers as product
+    return product.elf_needed(path, product=product_name)
 
 
 def mapped_record(value,path_map,output_root=None):
@@ -131,6 +98,7 @@ def helper_binding(name, binary, source, build_file, output_root, path_map=None)
     build_file=checked(build_file); report=json.loads(build_file.read_text()); root=Path(output_root).resolve()
     builder=HERE/'batch_system_build_runtime_helpers.py'
     path_map=path_map or {}; row=report['helpers'][selector];original=None
+    selected_product = row['installed_runtime_profile']['profile']['product']
     scope='diagnostic_new_helpers_using_existing_actual_product_GN_flags_NOT_fresh_GN_target_selection_or_runtime'
     original_ref=None
     if report.get('verify_existing')is True:
@@ -140,7 +108,7 @@ def helper_binding(name, binary, source, build_file, output_root, path_map=None)
         if (origin.get('rewritten')is not False or origin.get('status')!=original.get('status')or
                 original.get('builder_sha256')!=origin.get('builder_sha256')or
                 original.get('plan_only')is not False or original.get('changed_inputs')!=[]or
-                original.get('product')!='arm64_virt' or
+                original.get('product')!=selected_product or
                 any(row.get(k)!=old.get(k)for k in ('compile_command','link_command'))):
             raise ValueError('original failed receipt/compile/link history must remain unchanged')
         reused=row['reused_artifacts']
@@ -149,14 +117,17 @@ def helper_binding(name, binary, source, build_file, output_root, path_map=None)
             raise ValueError('recheck reused another binary or source')
         row={**old,**row}
     if (report.get('scope')!=scope or
-            report.get('product')!='arm64_virt' or report.get('plan_only')is not False or report.get('changed_inputs')!=[] or
+            report.get('product')!=selected_product or report.get('plan_only')is not False or report.get('changed_inputs')!=[] or
             report.get('builder_sha256')!=sha(builder) or report.get('first_artifact_behavior_gate_passed')is not False or
             row.get('status')!='pass_compile_link_ONLY' or row.get('fixture')!='batch_media/'+fixture or
             row.get('source',{}).get('sha256')!=sha(source) or row.get('private_source_sha256')!=sha(source) or
             sha(source)!=sha(HERE/'fixtures/batch_media'/fixture) or row.get('binary_sha256')!=sha(binary) or
             row.get('CFI_preserved')is not True or row.get('runtime_validated')is not False):
         raise ValueError('actual unchanged product helper builder/source/CFI proof required')
-    needed=elf_dependencies(binary)
+    from native579_artifact_context import binding_context
+    native_context579 = binding_context(original if original is not None else report, row, binary,
+        lambda ref: checked(mapped_record(ref, path_map, root)))
+    needed=elf_dependencies(binary, product_name=selected_product)
     if needed!=row.get('DT_NEEDED') or not required<=set(needed) or row.get('elf',{}).get('sha256')!=sha(binary):
         raise ValueError('actual helper ELF differs from recorded product dependencies')
     logs=[];commands=[c for c in report['commands']if c['label'].startswith(selector+'-')]
@@ -180,7 +151,7 @@ def helper_binding(name, binary, source, build_file, output_root, path_map=None)
         logs.append(mapped_record({'path':command['log'],'sha256':command['sha256']},path_map,root))
     inputs=original['inputs']if original is not None else report['inputs']
     runtime=installed_runtime_binding(row,needed,inputs)
-    return {'status':'pass','source_sha256':sha(source),'binary_sha256':sha(binary),'arch':'arm64',
+    return {'status':'pass','source_sha256':sha(source),'binary_sha256':sha(binary),'arch':native_context579['arch'],
             'actual_builder_report':record(build_file),'actual_builder_output':str(root),
             'actual_builder_path_map':path_map,'original_build_report':original_ref,
             'original_build_status':original.get('status')if original is not None else report.get('status'),

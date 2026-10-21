@@ -1,21 +1,35 @@
 {
-  "schema": "root-adopted-calendar579-source/v1",
-  "delivery": {
-    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar579-complete-candidate/PRODUCT-DELIVERY579.json",
-    "sha256": "9be24c3bae419a163550e52fa4aeda774210c6358d09bd0af0c7a4daf0f9728f"
+  "schema": "root-adoptable-calendar579-typed-arkts-source/v2",
+  "predecessor": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar579-arkts-build-fix-candidate/R-before/patches/common/applications/standard/calendardata/lifecycle579/SOURCE-DELIVERY.json",
+    "sha256": "d0e44c7dcfb318fa5751e6d40c0f138eed435ec86d70acc6ce47427a85c304b7",
+    "bytes": 1065
   },
-  "original_vector": {
-    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar579-complete-candidate/product/component/source_states.json",
-    "sha256": "8f403eb82f433c8e9789e092eced0dde2ce1ce8ef8463b3fb70875f0bdb1ad02",
-    "bytes": 7134
+  "actual_failure": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar579-arkts-build-fix-candidate/EVIDENCE-INPUT.json",
+    "sha256": "9721951bf3a67cf06bc79d50bfc79452554e4be1580d16975f7253d7ccd2df9e",
+    "bytes": 659
+  },
+  "full_product_vector": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar579-arkts-build-fix-candidate/PRODUCT-VECTOR.json",
+    "sha256": "a1754a29cb5512b45ecc9435b09a95ad81fb8b793f2ec14ff834eba6655831f8",
+    "bytes": 24714
+  },
+  "private_admission": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-calendar579-arkts-build-fix-candidate/PRIVATE-ADMISSION.json",
+    "sha256": "5ede616e3cf0d8d5aa02c5b74348baa6a369a19680c0d2959bf5be46ca711792",
+    "bytes": 6930
+  },
+  "projects": {
+    "applications/standard/calendardata": "f922427ca0dc20895a0e254ae41382e5b03299a4",
+    "base/notification/distributed_notification_service": "08a878a934511503bca88d3d69c686cc283c198c"
   },
   "whole_product_files": 18,
-  "host_tests_executed": false,
+  "changed_from_legacy72": 5,
+  "preserved_from_legacy72": 13,
+  "source_only": true,
+  "candidate_executed": false,
+  "compile_pass": false,
   "runtime_pass": false,
-  "root_composition": {
-    "scope": "Accept SDK26 optional undefined EventFilter/eventKey while retaining actual async native ownership and invalid null/type rejection",
-    "source_after_sha256": "f812f2fe1474130a2471b8f961e3992d1d5ef5013818cbe8c4ddded43a770cc3",
-    "caller_regression": "original getEvents(undefined, READ_EVENT_KEYS) remains unchanged",
-    "runtime_pass": false
-  }
+  "first_artifact_behavior_gate_passed": false
 }

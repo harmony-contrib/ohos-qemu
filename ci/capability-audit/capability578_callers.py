@@ -108,11 +108,12 @@ def prepare_callers(io, family, case, run, roles, parameters):
         if family == 'settings_idle579':
             native = io.package_inputs['native_addons']['settings_idle579']
             require(type(native) is dict and set(native) == {'binary', 'build', 'abi'} and
-                    native['abi'] == 'arm64-v8a', 'actual first-artifact platform addon required')
+                    native['abi'] == {'arm64': 'arm64-v8a', 'armv7a': 'armeabi-v7a', 'x86_64': 'x86_64'}[io.guest.report['test_environment']['guest_arch']],
+                    'actual same-boot platform addon ABI required')
             for kind in ('binary', 'build'):
                 require(reference(native[kind]['path']) == native[kind], 'actual platform addon input changed')
-            destination = root / module.native_artifact_destination()
-            require(destination == root / 'entry/libs/arm64-v8a/libsettings_idle579.so',
+            destination = root / module.native_artifact_destination(io.guest.report['test_environment']['guest_arch'])
+            require(destination == root / ('entry/libs/' + native['abi'] + '/libsettings_idle579.so'),
                     'fixed actual addon destination required')
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(native['binary']['path'], destination)
@@ -143,7 +144,7 @@ def prepare_callers(io, family, case, run, roles, parameters):
             require(len(names) == len(set(names)) and hap.read('ets/modules.abc'), 'actual complete caller HAP required')
             compiled = json.loads(hap.read('module.json'))
             if family == 'settings_idle579':
-                require(hap.read('libs/arm64-v8a/libsettings_idle579.so') ==
+                require(hap.read('libs/' + native['abi'] + '/libsettings_idle579.so') ==
                         Path(native['binary']['path']).read_bytes(), 'Hvigor changed the actual platform addon')
         require(compiled['app']['bundleName'] == bundle and compiled_fields_match(compiled['module'], fields),
                 'compiled caller role fields differ from actual source recipe')
@@ -166,7 +167,7 @@ def prepare_callers(io, family, case, run, roles, parameters):
         sign(arguments, configure=module.configure_profile(case), command=actual_sign_command)
         if family == 'settings_idle579':
             with zipfile.ZipFile(signed) as hap:
-                require(hap.read('libs/arm64-v8a/libsettings_idle579.so') ==
+                require(hap.read('libs/' + native['abi'] + '/libsettings_idle579.so') ==
                         Path(native['binary']['path']).read_bytes(), 'signer changed the actual platform addon')
         signing = signed.with_suffix('.signing.json')
         signed_record = json.loads(signing.read_text())

@@ -5,6 +5,7 @@ requirements. Never downloads, executes, constructs a process or owns resources.
 The admitted existing HAR supplies arm64-v8a/x86_64; ARMv7 is a real new build.
 """
 from pathlib import Path
+from livecaptions579_arm32_sources import RPATH_SOURCE, RPATH_SOURCE_SHA, RPATH_PATCH
 
 SHERPA = '419f7fea0a9a3f7b047dee53ad7da266767a425f'
 NODE_ADDON = 'c679f6f4c9dc6bf9fc0d99cbe5982bd24a5e2c7b'
@@ -26,8 +27,15 @@ def recipe(abi, paths):
     sdk=p['sdk_native']; cmake=str(sdk/'build-tools/cmake/bin/cmake')
     toolchain='-DCMAKE_TOOLCHAIN_FILE='+str(sdk/'build/cmake/ohos.toolchain.cmake')
     arch=['-DOHOS_ARCH=armeabi-v7a',toolchain,'-DCMAKE_BUILD_TYPE=Release',
-          '-DCMAKE_C_FLAGS=-mfloat-abi=hard','-DCMAKE_CXX_FLAGS=-mfloat-abi=hard']
-    capi=[cmake,'-S',str(p['source']),'-B',str(p['c_api_build']),*arch,
+          '-DCMAKE_C_FLAGS=-mfloat-abi=hard','-DCMAKE_CXX_FLAGS=-mfloat-abi=hard',
+          '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON','-DFETCHCONTENT_UPDATES_DISCONNECTED=ON',
+          '-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON','-DCMAKE_INSTALL_RPATH=$ORIGIN']
+    # Initial archive extraction remains enabled. The original owned worker has
+    # network=none, all twelve upstream-SHA archives staged at CMAKE_SOURCE_DIR,
+    # and trace replay rejects any unseen dependency/declaration/source path.
+    capi=[cmake,'--trace-expand','--trace-format=json-v1',
+        '--trace-redirect='+str(p['c_api_build'].parent/'c-api-trace.jsonl'),
+        '-S',str(p['source']),'-B',str(p['c_api_build']),*arch,
         '-DSHERPA_ONNX_ENABLE_TTS=ON','-DSHERPA_ONNX_ENABLE_SPEAKER_DIARIZATION=ON',
         '-DSHERPA_ONNX_ENABLE_BINARY=OFF','-DBUILD_PIPER_PHONMIZE_EXE=OFF',
         '-DBUILD_PIPER_PHONMIZE_TESTS=OFF','-DBUILD_ESPEAK_NG_EXE=OFF','-DBUILD_ESPEAK_NG_TESTS=OFF',
@@ -35,7 +43,9 @@ def recipe(abi, paths):
         '-DSHERPA_ONNX_ENABLE_CHECK=OFF','-DSHERPA_ONNX_ENABLE_PORTAUDIO=OFF','-DSHERPA_ONNX_ENABLE_JNI=OFF',
         '-DSHERPA_ONNX_ENABLE_C_API=ON','-DCMAKE_INSTALL_PREFIX='+str(p['install'])]
     native=p['source']/PREFIX/'src/main/cpp'
-    napi=[cmake,'-S',str(native),'-B',str(p['napi_build']),*arch,
+    napi=[cmake,'--trace-expand','--trace-format=json-v1',
+          '--trace-redirect='+str(p['napi_build'].parent/'napi-trace.jsonl'),
+          '-S',str(native),'-B',str(p['napi_build']),*arch,
           '-DFETCHCONTENT_SOURCE_DIR_NODE_ADDON_API='+str(p['node_addon']),
           '-DFETCHCONTENT_FULLY_DISCONNECTED=ON']
     return {'schema':'source-only-livecaptions579-ohos32/v1','abi':abi,
@@ -43,6 +53,8 @@ def recipe(abi, paths):
                    'node_addon':{'url':'https://github.com/nodejs/node-addon-api.git','commit':NODE_ADDON,
                      'patch':PREFIX+'/src/main/cpp/my-patch.diff','apply_once_in_fresh_private_copy':True}},
         'ort':dict(ORT),'upstream_recipe':'build-ohos-armeabi-v7a.sh',
+        'c_api_source_adaptation':{'path':RPATH_SOURCE,'before_sha256':RPATH_SOURCE_SHA,
+            'patch':RPATH_PATCH,'purpose':'Keep origin-relative RPATH; never append private ORT link directory'},
         'environment':{'SHERPA_ONNXRUNTIME_LIB_DIR':str(p['ort']/'lib'),
                        'SHERPA_ONNXRUNTIME_INCLUDE_DIR':str(p['ort']/'include')},
         'commands':{'c_api_configure':capi,'c_api_build':[cmake,'--build',str(p['c_api_build']),'--parallel','2'],

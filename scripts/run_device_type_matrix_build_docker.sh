@@ -45,6 +45,8 @@ MATRIX_DEPENDENCY_ROOT="${MATRIX_DEPENDENCY_ROOT:-${CACHE_ROOT}/artifacts/m144-7
 matrix_jsvm_shared="${JSVM_ENGINE_ARTIFACTS:-}"
 matrix_vulkan_shared="${QEMU_VULKAN_ARTIFACTS:-}"
 matrix_avc_shared="${QEMU_AVC_ARTIFACTS:-}"
+matrix_caption_shared="${QEMU_LIVE_CAPTIONS_INPUTS:-}"
+matrix_caption_shared_sha="${QEMU_LIVE_CAPTIONS_INPUTS_SHA256:-}"
 export QEMU_ARKWEB_CORE_ARTIFACTS="${QEMU_ARKWEB_CORE_ARTIFACTS:-${CACHE_ROOT}/artifacts/arkweb-m144-7.0/${dependency_recipe}}"
 mesa_llvm_recipe="$(python3 "${SCRIPT_DIR}/qemu_mesa_llvm_artifacts.py" --recipe-hash)"
 export QEMU_MESA_LLVM_ARTIFACTS="${QEMU_MESA_LLVM_ARTIFACTS:-${CACHE_ROOT}/artifacts/qemu-mesa-llvm/${mesa_llvm_recipe}}"
@@ -93,12 +95,40 @@ verify_package() {
     ${scene_args[@]+"${scene_args[@]}"}
 }
 
+select_caption_inputs() {
+  case "$1" in
+    arm64_virt)
+      export QEMU_LIVE_CAPTIONS_ABI=arm64-v8a
+      export QEMU_LIVE_CAPTIONS_INPUTS="${MATRIX_LIVE_CAPTIONS_ARM64_INPUTS:-${matrix_caption_shared}}"
+      export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${MATRIX_LIVE_CAPTIONS_ARM64_INPUTS_SHA256:-${matrix_caption_shared_sha}}"
+      ;;
+    x86_64_virt)
+      export QEMU_LIVE_CAPTIONS_ABI=x86_64
+      export QEMU_LIVE_CAPTIONS_INPUTS="${MATRIX_LIVE_CAPTIONS_X86_64_INPUTS:-${matrix_caption_shared}}"
+      export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${MATRIX_LIVE_CAPTIONS_X86_64_INPUTS_SHA256:-${matrix_caption_shared_sha}}"
+      ;;
+    armv7a_virt)
+      export QEMU_LIVE_CAPTIONS_ABI=armeabi-v7a
+      # No global/two-ABI fallback for ARM32. This descriptor must carry the
+      # genuine completed build and final original-Owner seal, replayed normally.
+      export QEMU_LIVE_CAPTIONS_INPUTS="${MATRIX_LIVE_CAPTIONS_ARM32_INPUTS:-}"
+      export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${MATRIX_LIVE_CAPTIONS_ARM32_INPUTS_SHA256:-}"
+      ;;
+    *) return 2 ;;
+  esac
+  [ -n "${QEMU_LIVE_CAPTIONS_INPUTS}" ] && [ -n "${QEMU_LIVE_CAPTIONS_INPUTS_SHA256}" ] || {
+    echo "missing actual caption descriptor/checksum for $1 (no planned or cross-ABI fallback)" >&2
+    return 2
+  }
+}
+
 select_arch_dependencies() {
   local dependency_arch
   case "$1" in armv7a_virt) dependency_arch=arm ;; arm64_virt) dependency_arch=arm64 ;; x86_64_virt) dependency_arch=x86_64 ;; *) return 2 ;; esac
   export JSVM_ENGINE_ARTIFACTS="${matrix_jsvm_shared:-${MATRIX_DEPENDENCY_ROOT}/${dependency_arch}/jsvm}"
   export QEMU_VULKAN_ARTIFACTS="${matrix_vulkan_shared:-${MATRIX_DEPENDENCY_ROOT}/${dependency_arch}/swiftshader}"
   export QEMU_AVC_ARTIFACTS="${matrix_avc_shared:-${MATRIX_DEPENDENCY_ROOT}/${dependency_arch}/avc}"
+  select_caption_inputs "$1"
 }
 
 prepare_arch_dependencies() {
@@ -189,6 +219,7 @@ first_arch="$(product_arch "${MATRIX_FIRST_PRODUCT}")"
 first_name="openharmony-qemu-${first_arch}-${MATRIX_FIRST_PRODUCT}-${MATRIX_FIRST_DEVICE_TYPE}"
 first_dir="${PACKAGE_ROOT}/${first_name}"
 first_tar="${first_dir}.tar.gz"
+select_caption_inputs "${MATRIX_FIRST_PRODUCT}"
 
 # Bootstrap source/SDK without requiring already-built M144 dependencies.
 # Other ABIs' dependencies and profile traversal wait for the real first gate.

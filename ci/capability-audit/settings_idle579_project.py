@@ -58,10 +58,12 @@ def source_files(case, run, role, parameters=None):
     return out
 
 
-def native_artifact_destination():
+def native_artifact_destination(arch='arm64'):
+    abi = {'arm64': 'arm64-v8a', 'armv7a': 'armeabi-v7a', 'x86_64': 'x86_64'}
+    if arch not in abi: raise ValueError('finite actual Settings native arch required')
     # The parent copies its platform-built actual ELF BEFORE compile/sign. A Ref
     # cannot select code or a destination. Both roles consume identical bytes.
-    return 'entry/libs/arm64-v8a/libsettings_idle579.so'
+    return 'entry/libs/' + abi[arch] + '/libsettings_idle579.so'
 
 
 def configure_profile(case):

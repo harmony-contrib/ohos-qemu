@@ -548,7 +548,7 @@ def verify_evidence(path, archive, boot, *, command):
             expected_paths = set(product.runtime_guest_paths(helper, soname))
             paths = {line.split()[-1] for line in maps.splitlines() if line.split() and
                 (line.split()[-1] in expected_paths or line.split()[-1].endswith('/' + soname) or
-                 soname == 'libc.so' and line.split()[-1].endswith('/ld-musl-aarch64.so.1'))}
+                 soname == 'libc.so' and re.fullmatch(r'/[^\s]*/ld-musl-[A-Za-z0-9_+\-]+\.so\.1',line.split()[-1]) is not None)}
             require(paths == expected_paths and any(next(iter(paths)) in observed(p['observation']) for p in value['helper_guest_DSOs'] if p['soname'] == soname),
                     'sampler did not actually map the hashed product DSO: ' + soname)
         result = {'phase': segment['phase'], 'metrics': segment_metrics(segment, data, env['boot_id'])}

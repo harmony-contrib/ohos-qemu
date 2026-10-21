@@ -5,21 +5,37 @@
     "applications/standard/systemui": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01"
   },
   "files": {
+    "applications/standard/systemui/product/default/dialog/src/main/ets/Application/AbilityStage.ts": [
+      "69b84341fe0a75132a17ba39f85dc78a8142c6c1e2885b222f007ec54afab65e",
+      "8f5f97b89900e3fa54dc8c3246833ca0117a22003e3e7626913d9cd833ab1ac5"
+    ],
     "applications/standard/systemui/product/default/dialog/src/main/ets/ServiceExtAbility/ExtAbility.ts": [
       "930da12650671e6f89ba43c0e19533fdc368ea1e7689e81767b75f91a9455e55",
-      "7dc74b1fa55e0e911081377a3e46c2773caa8d49f87100f1ea7af4ae0ac3611e"
+      "231dab0681295b6c7be9436443b21df239d9594c73016bc6c9c634afd7319dd3"
     ],
     "applications/standard/systemui/product/default/dialog/src/main/ets/ServiceExtAbility/PlaybackCaptureConsentExtension.ets": [
       null,
-      "74376a46989234912550c9e1d837172dc9f6c6f6565576a55c7d0fbe4e965caa"
+      "a5259be8550b1de28a6107592e9eae364c1096d261d741efc61246489f358629"
+    ],
+    "applications/standard/systemui/product/default/dialog/src/main/ets/common/Log.ts": [
+      null,
+      "5a6ad08fe269488a91b334656db18d9831b719e775dd017939a22572a67f17a1"
     ],
     "applications/standard/systemui/product/default/dialog/src/main/ets/common/PlaybackCaptureConsent.ets": [
       null,
-      "b6fe5f08a2cff8988dfa6d1694bcd2b2a36681667dc7b613104087bcaa4f4e7d"
+      "139d667185359052d99b687173ce46c51068068ee9b67a35f8091dbae687fc8a"
+    ],
+    "applications/standard/systemui/product/default/dialog/src/main/ets/controller/Controller.ts": [
+      "9e66e46c7609144a42bd0d24db1b49a56d3cf9b5a3bc7c6b95a75ef0a3237063",
+      "d0874f396697a0b4f15efa8a80b64901a6242368ae7f09792f51162997e49eda"
+    ],
+    "applications/standard/systemui/product/default/dialog/src/main/ets/pages/ExtIndex.ets": [
+      "34d64fb90becb25789f4809e88df259cb322a225a5ae6c765e137953f17c25db",
+      "78cc449daae54500d3b1a7235f0953b33d7054e18f38e2bc8c12ae0be033525a"
     ],
     "applications/standard/systemui/product/default/dialog/src/main/ets/pages/PlaybackCaptureConsentPage.ets": [
       null,
-      "a29a547f3c9277356c5957f26953955f6203f4b5d90f94f0c6707c213adbee2d"
+      "90412f4e56f809a672f2b0acbb2a2284e543e79a8e77236721f9f20bb32df88e"
     ],
     "applications/standard/systemui/product/default/dialog/src/main/module.json5": [
       "a891ed6ed9be15faba65351b8266a391c2fa5782d23a7f28b1e1017f075302d2",
@@ -37,5 +53,23 @@
       "d7cddf68a9795773a42be73929ba03a0b3ab616754e7d1f2b5d30255482126fa",
       "f46cf4ecb33a6e43c0fd87320b4f6c04197edd69d7f7cb5cea68bf1aa62e71c4"
     ]
-  }
+  },
+  "legacy_final": {
+    "applications/standard/systemui/product/default/dialog/src/main/ets/Application/AbilityStage.ts": "69b84341fe0a75132a17ba39f85dc78a8142c6c1e2885b222f007ec54afab65e",
+    "applications/standard/systemui/product/default/dialog/src/main/ets/ServiceExtAbility/ExtAbility.ts": "7dc74b1fa55e0e911081377a3e46c2773caa8d49f87100f1ea7af4ae0ac3611e",
+    "applications/standard/systemui/product/default/dialog/src/main/ets/ServiceExtAbility/PlaybackCaptureConsentExtension.ets": "74376a46989234912550c9e1d837172dc9f6c6f6565576a55c7d0fbe4e965caa",
+    "applications/standard/systemui/product/default/dialog/src/main/ets/common/Log.ts": null,
+    "applications/standard/systemui/product/default/dialog/src/main/ets/common/PlaybackCaptureConsent.ets": "b6fe5f08a2cff8988dfa6d1694bcd2b2a36681667dc7b613104087bcaa4f4e7d",
+    "applications/standard/systemui/product/default/dialog/src/main/ets/controller/Controller.ts": "9e66e46c7609144a42bd0d24db1b49a56d3cf9b5a3bc7c6b95a75ef0a3237063",
+    "applications/standard/systemui/product/default/dialog/src/main/ets/pages/ExtIndex.ets": "34d64fb90becb25789f4809e88df259cb322a225a5ae6c765e137953f17c25db",
+    "applications/standard/systemui/product/default/dialog/src/main/ets/pages/PlaybackCaptureConsentPage.ets": "a29a547f3c9277356c5957f26953955f6203f4b5d90f94f0c6707c213adbee2d",
+    "applications/standard/systemui/product/default/dialog/src/main/module.json5": "adf36413d8e5f0cdfa037ffc731be2edd5595f3a70de9820b4fff64965d54d49",
+    "applications/standard/systemui/product/default/dialog/src/main/resources/base/element/string.json": "ce82a1c0c1dd5755cec65533786ddae22a355c3832967d3e7c4bfb44b51bbe5b",
+    "applications/standard/systemui/product/default/dialog/src/main/resources/base/profile/main_pages.json": "e726110f24712cf62e3711e66769a36b91921b3e54fe7ebf8a02554c3762c90c",
+    "applications/standard/systemui/product/default/dialog/src/main/resources/zh_CN/element/string.json": "f46cf4ecb33a6e43c0fd87320b4f6c04197edd69d7f7cb5cea68bf1aa62e71c4"
+  },
+  "readonly": {
+    "applications/standard/systemui/common/src/main/ets/default/Log.ts": "5a6ad08fe269488a91b334656db18d9831b719e775dd017939a22572a67f17a1"
+  },
+  "migration": "Only complete before/legacy_final/final 12-file states; no mixed vector; all source-only"
 }

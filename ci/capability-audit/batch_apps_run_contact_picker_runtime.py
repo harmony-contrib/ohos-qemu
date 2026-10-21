@@ -690,12 +690,13 @@ def run(args):
     guest = None
     try:
         guest = EnclosingAcceptanceGuest(args.boot, args.archive, args.hdc, args.output / 'guest-commands').start()
-        verifier.require(guest.env['guest_arch'] == 'arm64' and guest.env['device_type'] == 'phone',
-                         'representative ARM64 phone enclosing acceptance guest required')
+        from batch_system_build_runtime_helpers import target_spec
+        verifier.require(target_spec(guest.env['product'])['arch'] == guest.env['guest_arch'] and
+                         guest.env['device_type'] in ('phone','2in1'), 'actual product/profile enclosing acceptance guest required')
         build = verifier.document(args.build)
         verifier.require(verifier.sha(verifier.artifact(build['representative_package'])) == verifier.sha(args.archive) and
                          build['booted_package_sha256'] == verifier.sha(args.archive), 'root build/package binding mismatch')
-        build.update(run_id=run_id, boot_session_id=guest.env['boot_id'], architecture='arm64', device_profile='phone')
+        build.update(run_id=run_id, boot_session_id=guest.env['boot_id'], architecture=guest.env['guest_arch'], device_profile=guest.env['device_type'])
         write_json(args.output / 'build.json', build)
         cases = [case['id'] for case in verifier.MATRIX.values() if case['required']] + list(args.optional_case)
         verifier.require(len(cases) == len(set(cases)), 'duplicate requested cases')
@@ -715,7 +716,7 @@ def run(args):
                          'absolute installed observer path required')
         remote_hash = driver.raw('sha256sum ' + shlex.quote(args.observer), 'actual-readonly-observer-hash')[0].split()[0]
         verifier.require(remote_hash == verifier.sha(args.observer_local), 'guest observer differs from product-built artifact')
-        validate_elf(args.observer_local, 'arm64')
+        validate_elf(args.observer_local, guest.env['guest_arch'])
         report['observer'] = descriptor(args.observer_local)
         report['observer_remote'] = args.observer
         seed_manifest = verifier.raw_json(verifier.artifact(build['seed_source_manifest']))

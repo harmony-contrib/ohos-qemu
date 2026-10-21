@@ -23,7 +23,7 @@ import time
 import zipfile
 
 from batch_system_live_inputs import (BUNDLE, FIXTURES, PERMISSIONS, SCOPE, digest,
-    nonce, read_json, trace, verify_project, write_json)
+    nonce, read_json, trace, verify_project, write_json, NATIVE_TARGETS)
 
 HERE = Path(__file__).resolve().parent
 FAMILY = 'external-inputs'
@@ -143,10 +143,18 @@ def publish_controlled(artifacts, capture, inputs, run_id, output, wait=600):
     return 0 if result['status'] == 'published_NOT_guest_verified' else 1
 
 
-def elf64_arm64(path):
-    data = regular(path).read_bytes()
-    require(len(data) >= 64 and data[:7] == b'\x7fELF\x02\x01\x01' and struct.unpack_from('<HH', data, 16) == (3, 183),
-            'actual ARM64 SDK native DSO required')
+def native_header(data, arch):
+    targets = {'arm64': (2, 183), 'armv7a': (1, 40), 'x86_64': (2, 62)}
+    require(arch in targets, 'finite actual SDK target required')
+    klass, machine = targets[arch]
+    require(len(data) >= (64 if klass == 2 else 52) and
+            data[:7] == bytes((127, 69, 76, 70, klass, 1, 1)) and
+            struct.unpack_from('<HH', data, 16) == (3, machine),
+            'actual SDK DSO class/machine differs from caller contract')
+
+
+def native_binary(path, arch):
+    path = regular(path); native_header(path.read_bytes(), arch)
     return descriptor(path)
 
 
@@ -155,7 +163,9 @@ def sdk_caller(spec, sdk):
     checked(caller['source_manifest'])
     result = api.verify_sdk_project(caller, fixture=FIXTURES, source_manifest='live-inputs-contract.json')
     project = Path(caller['source_project']).resolve(); contract = read_json(project / 'live-inputs-contract.json')
-    verify_project(project, sdk, nonce(contract['run_id']), 'arm64')
+    arch = contract['arch']; require(arch in NATIVE_TARGETS, 'finite original native contract arch required')
+    abi, triple = NATIVE_TARGETS[arch]
+    verify_project(project, sdk, nonce(contract['run_id']), arch)
     evidence = read_json(checked(caller['sdk_evidence'])); commands = [c for c in evidence['commands'] if c.get('project') == caller['sdk_project']]
     native = [c for c in commands if c.get('label') == 'compile-native']
     builds = [r for r in evidence.get('native_builds', []) if r.get('project') == caller['sdk_project']]
@@ -163,9 +173,9 @@ def sdk_caller(spec, sdk):
     command, build = native[0], builds[0]; argv = command['argv']
     binary = project / contract['native_packaging']['relative_library']; source = project / 'socket_probe.cpp'
     require(build.get('command_label') == 'compile-native' and command.get('exit_code') == 0 and
-            '--target=aarch64-linux-ohos' in argv and '-shared' in argv and '-fPIC' in argv and '-Werror' in argv and
+            ('--target=' + triple) in argv and '-shared' in argv and '-fPIC' in argv and '-Werror' in argv and
             str(source) in argv and argv.count('-o') == 1 and argv[argv.index('-o') + 1] == str(binary),
-            'actual native source/ARM64 output/SDK command binding differs')
+            'actual native source/target output/SDK command binding differs')
     require(checked(build['source']) == source and digest(source) == digest(FIXTURES / 'socket_probe.cpp') and
             checked(build['binary']) == binary and build.get('headers') and
             all(Path(name).is_absolute() and re.fullmatch('[a-f0-9]{64}', value) for name, value in build['headers'].items()) and
@@ -191,10 +201,10 @@ def sdk_caller(spec, sdk):
     _, contents = api.hap_contents(hap)
     packaged = {member: value for member, value in contents.items()
                 if member.startswith('libs/') and member.endswith('.so')}
-    expected = {'libs/arm64-v8a/libliveinputaudit.so'}
+    expected = {'libs/' + abi + '/libliveinputaudit.so'}
     for library in build.get('runtime_libraries', []):
         path = checked(library)
-        member = 'libs/arm64-v8a/' + path.name
+        member = 'libs/' + abi + '/' + path.name
         require(path == regular(binary.parent / path.name) and member not in expected,
                 'actual native runtime library changed or duplicated')
         expected.add(member)
@@ -203,10 +213,9 @@ def sdk_caller(spec, sdk):
     with zipfile.ZipFile(hap) as archive:
         for member in packaged:
             data = archive.read(member)
-            require(len(data) >= 64 and data[:7] == b'\x7fELF\x02\x01\x01' and
-                    struct.unpack_from('<HH', data, 16) == (3, 183), 'packaged runtime DSO ABI differs')
+            native_header(data, arch)
     result.update(source_project=str(project), contract=descriptor(project / 'live-inputs-contract.json'),
-        native_binary=elf64_arm64(binary), native_build_receipt=build, native_packaged_members=packaged,
+        native_binary=native_binary(binary, arch), native_arch=arch, native_build_receipt=build, native_packaged_members=packaged,
         sdk_native_version=contract['sdk']['native_metadata']['value']['version'],
         native_tool_header_hash_scope='Actual Linux SDK reads recorded by the original frozen SDK runner, not host tool rereads',
         run_id=contract['run_id'])
@@ -318,8 +327,9 @@ def decode_uid_process_scan(raw, uid, nonce, boot_id):
 def binding(archive, boot):
     from enclosing_acceptance_guest import validate_binding
     value = read_json(regular(boot)); env = validate_binding(value, digest(regular(archive)))
-    require(env['guest_arch'] == 'arm64' and env['device_type'] == 'phone' and env['product'] == 'arm64_virt',
-            'new representative ARM64 phone acceptance boot required')
+    from batch_system_build_runtime_helpers import target_spec
+    require(target_spec(env['product'])['arch'] == env['guest_arch'] and env['device_type'] in ('phone', '2in1'),
+            'new actual product/profile acceptance boot required')
     return env
 
 
@@ -425,7 +435,8 @@ def verify_evidence(evidence_path, archive_path, boot_path):
     spec = read_json(checked(report['artifacts']))
     require(type(spec.get('schema_version')) is int and spec['schema_version'] == 1, 'actual artifacts schema1 required')
     sdk_result, commands, source_rows = sdk_caller(spec, spec['sdk'])
-    require(sdk_result == report['sdk'], 'stored actual SDK proof differs on independent recomputation')
+    require(sdk_result == report['sdk'] and sdk_result['native_arch'] == env['guest_arch'],
+            'stored actual SDK proof/owning boot ABI differs on independent recomputation')
     for row in report['commands']: checked_command(row)
     cleanup = verify_cleanup(report, env['target'])
     capture = checked(report['capture']).parent
@@ -470,6 +481,7 @@ def run(args):
         report.update(archive=descriptor(args.archive), archive_sha256=digest(args.archive), boot=descriptor(args.boot),
             boot_id=env['boot_id'], artifacts=descriptor(args.artifacts), tools_sha256=tool_hashes(), hdc=str(Path(args.hdc).resolve()))
         sdk_result, commands, source_rows = sdk_caller(spec, spec['sdk']); report['sdk'] = sdk_result; report['run_id'] = sdk_result['run_id']
+        require(sdk_result['native_arch'] == env['guest_arch'], 'actual SDK caller differs from owning boot ABI')
         from enclosing_acceptance_guest import EnclosingAcceptanceGuest
         guest = EnclosingAcceptanceGuest(args.boot, args.archive, args.hdc, output / 'guest').start()
         command = Commands(output / 'commands', report['commands'], env['target'], args.hdc)
@@ -493,7 +505,7 @@ def run(args):
         require(not any((inputs / ('generation' + str(g) + '.json')).exists() for g in (1, 2)), 'input manifest existed before actual ready')
         driver = importlib.import_module('batch_system_run_live_inputs')
         capture = driver.Capture(argparse.Namespace(output=capture_dir, archive=Path(args.archive), boot=Path(args.boot),
-            project=project, sdk=Path(spec['sdk']), arch='arm64', signed_hap=checked(signed['signed_hap']), signer_jar=Path(spec['signer_jar']),
+            project=project, sdk=Path(spec['sdk']), arch=env['guest_arch'], signed_hap=checked(signed['signed_hap']), signer_jar=Path(spec['signer_jar']),
             hdc=str(args.hdc), target=env['target'], run_id=report['run_id'], input_directory=inputs,
             input_wait=120, permission_allow_text=spec.get('permission_allow_text')))
         attempted = True; raw = capture.run(); report['capture'] = descriptor(capture_dir / 'capture.json')
