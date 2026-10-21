@@ -13,10 +13,10 @@ import stat
 ROOT = Path('/Volumes/PSSD/code/ohos-rs/ohos-qemu')
 H = ROOT / '.tmp/parallel-capability-20261016'
 CANONICAL = ROOT / 'ci/capability-audit'
-CAPSULE = H / 'root-photos579-callers-pin-successor/candidate/photos'
-FROZEN_SHA = 'c3e9ae6b4e6ec1a6125b11f9cd4dd92891e84721ac1d414f359dbd7c5496d734'
-PINS_SHA = '91e17cd35ea3ec06d03a3a781380ad7793ef16572db1990cfc03832d438fbc27'
-MIGRATION_SHA = '8df16555690a3f2716249aedcaf29268c4e6df21b89e392fa2d844219c904c6a'
+CAPSULE = H / 'root-normal-link579-private-source-successors/photos'
+FROZEN_SHA = 'b07ae6448fe854215948cc9bacbc4a0eefa26cab8d5a5ea98c71edc7197cace0'
+PINS_SHA = 'e5863a8463a72243c1f7928c1db4853b21824e965762b9e8ef160e17a80a32e6'
+MIGRATION_SHA = 'e01942f67dc8ff68514ef50c6aabfa1917e1b15d7f2decd3c3a8031c88eb2f79'
 _installed = False
 
 

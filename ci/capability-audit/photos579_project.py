@@ -7,7 +7,7 @@ import apps_providers579_project as original
 
 HERE = Path(__file__).resolve().parent
 ROOT = Path('/Volumes/PSSD/code/ohos-rs/ohos-qemu')
-PINS = ROOT / '.tmp/parallel-capability-20261016/root-photos579-callers-pin-successor/candidate/photos/SOURCE-PINS.json'
+PINS = ROOT / '.tmp/parallel-capability-20261016/root-normal-link579-private-source-successors/photos/SOURCE-PINS.json'
 ROLES = {'photos': ('normal', 'foreign', 'janitor')}
 ACTIONS = {'photos': original.ACTIONS['photos']}
 IDS = {'photos': ('behavior:photo-provider-not-activated-2in1',)}
