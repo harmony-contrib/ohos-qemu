@@ -254,6 +254,7 @@ ARKUI_IDENTITY_CFI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_e
 QRCODE_CFI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/commonlibrary/qrcode_generator/cfi_metadata/apply.sh"
 ACE_SEC_CFI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/bounds_checking_function/ace_cfi/apply.sh"
 ARKUI_CFI_COVERAGE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/cfi_coverage/apply.sh"
+ARKUI_NATIVE_DSO_EXPORTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/native_dso_exports579/apply.sh"
 METADATA_FETCH_RESULT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/api26_fetch_result/apply.sh"
 INSIGHT_CONFIGURATION_MODE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_insight_configuration_mode/apply.sh"
 CLI_SESSION_STATUS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_cli_session_status/apply.sh"
@@ -3083,6 +3084,9 @@ apply_qemu_capability_patch_plan() {
   python3 "${PATCH_ROOT}/lib/qemu_preserve_source_times579.py" --source-root "${OHOS_ROOT}" \
     --snapshot "${source_times_snapshot}" --action capture \
     2>&1 | tee "${source_times_directory}/capture.log"
+  # Reverse the complete native DSO export map before re-entering any older source guard.
+  bash "${ARKUI_NATIVE_DSO_EXPORTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --rewind \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_arkui_native_dso_exports579_prefix.log"
   # Re-enter the exact existing HAP pipeline from the known complete prefix.
   # Unknown states remain untouched and are checked by their original guards.
   python3 "${PATCH_ROOT}/lib/qemu_hap_prefix579.py" --source-root "${OHOS_ROOT}" \
@@ -3621,6 +3625,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/verify_arkui_cfi_coverage.log"
   python3 "${SCRIPT_DIR}/verify_ui_extension_identity_batch.py" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_ui_extension_identity_batch.log"
+  bash "${ARKUI_NATIVE_DSO_EXPORTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_arkui_native_dso_exports579.log"
   python3 "${PATCH_ROOT}/common/applications/standard/settings/source_provider/prepare_dependencies.py" \
     --source-root "${OHOS_ROOT}" --cache-root "${CACHE_ROOT}/settings-source-dependencies" \
     --evidence "${CACHE_ROOT}/logs/settings-source-preparation.json" \
@@ -3860,6 +3866,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_onset579_component.log"
   python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action verify \
     > "${CACHE_ROOT}/logs/verify_audio_onset579_component.json"
+  bash "${ARKUI_NATIVE_DSO_EXPORTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-final \
+    2>&1 | tee "${CACHE_ROOT}/logs/verify_arkui_native_dso_exports579_final.log"
   python3 "${PATCH_ROOT}/lib/qemu_preserve_source_times579.py" --source-root "${OHOS_ROOT}" \
     --snapshot "${source_times_snapshot}" --action restore \
     2>&1 | tee "${source_times_directory}/restore.log"

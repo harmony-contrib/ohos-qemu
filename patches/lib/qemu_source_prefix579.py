@@ -16,7 +16,7 @@ COMPONENTS = (
     ('common/applications/standard/settings_data/accessibility_notification_defaults',
      '0001-initialize-real-notification-preferences.patch', 2),
     ('common/foundation/multimedia/av_session/qemu_panel_lifecycle',
-     '0001-connect-actual-panels-and-guard-session-events.patch', 3),
+     '0001-connect-actual-panels-and-guard-session-events.patch', 4),
     ('common/applications/standard/settings/dnd_selection_ids',
      '0001-compose-product-provider-source.patch', 3),
 )
@@ -32,6 +32,10 @@ def prepare(root):
         value = json.loads((component / 'source_states.json').read_text())
         if len(value['files']) != count or not value['projects']:
             raise ValueError('fixed complete product source vector required: ' + relative)
+        if relative == 'common/foundation/multimedia/av_session/qemu_panel_lifecycle':
+            # Complete before/previous/previous-owned/new four-source epochs.
+            subprocess.run(['bash', str(component / 'apply.sh'), '--source-root', str(root), '--rewind'], check=True)
+            continue
         if relative == 'common/foundation/ability/ability_runtime/service_idle_startid':
             # The original prefix guard runs before the normal component hook.
             # Normalize only the exact complete known legacy final through that

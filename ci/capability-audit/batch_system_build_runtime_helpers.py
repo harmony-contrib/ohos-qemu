@@ -667,6 +667,182 @@ def abi_options(flags):
             word.startswith(('-mfloat-abi=', '-mfpu=', '-mabi='))]
 
 
+# Actual RO R71 build-project source; these are grammar identities, never an
+# executable selection supplied by JSON. New source revisions need a reviewed
+# grammar successor rather than silently accepting another wrapper.
+NORMAL_LINK_GRAMMAR579 = (
+    ('build/toolchain/gcc_toolchain.gni', '131c19f86c59bf81dc71a7c8eeeefa7a5ea4ad08f204fe7a73af1ec37d224e70'),
+    ('build/toolchain/ohos/ohos_toolchain.gni', '60e3ddf4b11479b0dc8a2a6af1aa13f54e8a62e2c1f71acd043af8c797c3287f'),
+    ('build/toolchain/gcc_link_wrapper.py', '3866b8cc7548881f11d74b6003a0ac447df4c1b93e6b303c486ec4fcf8694816'),
+    ('build/toolchain/wrapper_utils.py', '93a167722959994276fe0a23db583c5f372290227e05c2771726f0f6c8b43e24'))
+
+
+def normal_query_streams579(row):
+    """Original successful readonly query; both actual full streams required."""
+    if (row.get('stream_mode') != 'normal-query-separate-stdio579/v1' or
+            type(row.get('exit_code')) is not int or row['exit_code'] != 0 or row.get('timed_out') is not False):
+        raise ValueError('actual normal readonly query status/split-stream identity differs')
+    for key in ('stdout', 'stderr'):
+        ref = row.get(key)
+        if (type(ref) is not dict or set(ref) != {'path', 'sha256', 'bytes'} or
+                not isinstance(ref['path'], str) or not Path(ref['path']).is_absolute() or
+                '..' in Path(ref['path']).parts or not re.fullmatch('[a-f0-9]{64}', ref.get('sha256', '')) or
+                type(ref['bytes']) is not int or ref['bytes'] < 0):
+            raise ValueError('complete original normal query stdout/stderr Ref3 required')
+    if (row['stdout']['path'] == row['stderr']['path'] or
+            row.get('log') != row['stdout']['path'] or row.get('sha256') != row['stdout']['sha256']):
+        raise ValueError('legacy normal query log aliases must equal the complete stdout, never merge')
+    return row['stdout'], row['stderr']
+
+
+def normal_edge579(target, text):
+    """One actual Ninja -t query edge; explicit inputs are not shell flags."""
+    if len(text.encode()) > 2 * 1024 * 1024: raise ValueError('normal query exceeds finite edge bound')
+    lines = text.splitlines()
+    if len(lines) < 3 or lines[0] != target + ':' or not re.fullmatch(r'  input: (?:[A-Za-z0-9_]+_)?link', lines[1]):
+        raise ValueError('one actual executable-link input edge required')
+    rule = lines[1].split(': ', 1)[1]
+    groups = {'explicit': [], 'implicit': [], 'order_only': []}; pos = 2; stage = 0
+    while pos < len(lines) and lines[pos].startswith('    '):
+        token = lines[pos][4:]; kind = 'explicit'
+        if token.startswith('|| '): token = token[3:]; kind = 'order_only'; next_stage = 2
+        elif token.startswith('| '): token = token[2:]; kind = 'implicit'; next_stage = 1
+        else: next_stage = 0
+        if (next_stage < stage or not re.fullmatch(r'[A-Za-z0-9_./+\-]+', token) or
+                token.startswith(('/', '-')) or '$' in token or '@' in token):
+            raise ValueError('unreviewed normal input edge grammar')
+        stage = next_stage; groups[kind].append(token); pos += 1
+    if pos >= len(lines) or lines[pos] != '  outputs:' or not groups['explicit']:
+        raise ValueError('normal query output/explicit-input boundary missing')
+    # Consumers/validation edges are data only. Do not interpret them as inputs.
+    for line in lines[pos + 1:]:
+        if line and not (line.startswith('    ') or line == '  validation for:'):
+            raise ValueError('unknown trailing normal query grammar')
+    if sum(map(len, groups.values())) > 8192: raise ValueError('normal edge exceeds finite input count')
+    return {'target': target, 'rule': rule, **groups}
+
+
+def normal_rule579(path, rule):
+    """Read one generated rule, retaining its complete file identity separately.
+
+    The 97 MiB toolchain is streamed, never copied or executed. Duplicate rule
+    definitions and unbounded source lines fail instead of selecting a match.
+    """
+    if Path(path).stat().st_size > 256 * 1024 * 1024: raise ValueError('generated toolchain exceeds finite read bound')
+    blocks = []; current = None
+    with Path(path).open('r', encoding='utf-8', newline='') as stream:
+        for number, line in enumerate(stream, 1):
+            if len(line.encode()) > 1024 * 1024: raise ValueError('generated Ninja line exceeds finite bound')
+            if current is not None and line.strip() and not line.startswith((' ', '\t')):
+                blocks.append(current); current = None
+            if line == 'rule ' + rule + '\n': current = {'first_line': number, 'last_line': number, 'text': ''}
+            if current is not None:
+                current['text'] += line; current['last_line'] = number
+                if len(current['text'].encode()) > 65536: raise ValueError('normal rule exceeds finite bound')
+    if current is not None: blocks.append(current)
+    if len(blocks) != 1: raise ValueError('one unique actual generated link rule required')
+    return blocks[0]
+
+
+def normal_wrapper579(owner, target, words):
+    """Finite source-bound POSIX wrapper adapter. It never runs printed code."""
+    if words.count('--') != 1: raise ValueError('one official wrapper/driver separator required')
+    split = words.index('--'); prefix = words[:split]; driver = words[split + 1:]
+    wrapper = owner.root / 'build/toolchain/gcc_link_wrapper.py'
+    if len(prefix) < 3 or prefix[0] != '/usr/bin/env' or (owner.build / prefix[1]).resolve() != wrapper:
+        raise ValueError('unreviewed normal executable wrapper launcher')
+    options = {}; switches = []
+    for word in prefix[2:]:
+        if word in ('--mini-debug', '--remove-unstripped-exe'):
+            if word in switches: raise ValueError('duplicate normal wrapper switch')
+            switches.append(word)
+        elif word.startswith(('--output=', '--strip=', '--unstripped-file=', '--clang-base-dir=')):
+            key, value = word.split('=', 1)
+            if key in options or not value or any(char in value for char in ('\x00', '\n', '\r', '$', '`')):
+                raise ValueError('unknown/duplicate normal wrapper option')
+            options[key] = value
+        else:
+            # Map-file/static/sanitizer variants have not been observed in this
+            # normal-link contract. Never run them or infer their semantics.
+            raise ValueError('normal wrapper option needs actual-source adapter')
+    if set(options) not in ({'--output', '--clang-base-dir'},
+            {'--output', '--clang-base-dir', '--strip', '--unstripped-file'}):
+        raise ValueError('normal wrapper output/strip pair incomplete')
+    primary = (owner.build / target).resolve()
+    if (owner.build / options['--output']).resolve() != primary or not within(primary, owner.build):
+        raise ValueError('official wrapper primary output differs from queried target')
+    if not Path(options['--clang-base-dir']).is_absolute(): raise ValueError('literal absolute clang-base-dir required')
+    linked = primary
+    if '--strip' in options:
+        if (owner.build / options['--strip']).resolve() != (owner.compiler.parent / 'llvm-strip').resolve():
+            raise ValueError('normal wrapper strip tool is outside selected actual clang tree')
+        linked = (owner.build / options['--unstripped-file']).resolve()
+        if linked != owner.build / 'exe.unstripped' / target:
+            raise ValueError('normal unstripped/primary output mapping differs')
+    elif switches:
+        raise ValueError('mini-debug/removal needs the actual unstripped output pair')
+    if '-static' in driver:
+        raise ValueError('static-link wrapper semantics are outside this dynamic PIE contract')
+    if not driver or Path(driver[0]).name not in ('clang', 'clang++'):
+        raise ValueError('literal actual clang driver after wrapper required')
+    if argument(driver, '-o') is None or (owner.build / argument(driver, '-o')).resolve() != linked:
+        raise ValueError('wrapper output pair and actual driver output differ')
+    sources = []
+    for relative, digest in NORMAL_LINK_GRAMMAR579:
+        row = owner.remember(owner.root / relative)
+        if row['sha256'] != digest: raise ValueError('normal executable wrapper/GN source revision changed: ' + relative)
+        sources.append(row)
+    edge = normal_edge579(target, owner.normal_link_edge_text)
+    observation = owner.normal_link_rule_observation
+    expected_source = owner.remember(owner.build / 'toolchain.ninja')
+    if (set(observation) != {'source', 'first_line', 'last_line', 'text'} or observation['source'] != expected_source or
+            type(observation['first_line']) is not int or type(observation['last_line']) is not int or
+            observation['first_line'] < 1 or observation['last_line'] < observation['first_line']):
+        raise ValueError('actual generated rule source/cut missing')
+    if (type(observation['text']) is not str or len(observation['text'].encode()) > 65536 or
+            type(expected_source.get('bytes')) is not int or expected_source['bytes'] > 256 * 1024 * 1024):
+        raise ValueError('retained generated rule/source exceeds finite byte bound')
+    rule_lines = observation['text'].splitlines()
+    if not rule_lines or rule_lines[0] != 'rule ' + edge['rule'] or len(rule_lines) != observation['last_line'] - observation['first_line'] + 1:
+        raise ValueError('retained generated rule boundary differs')
+    fields = {}
+    for line in rule_lines[1:]:
+        if not line.strip(): continue
+        match = re.fullmatch(r'  ([a-z_]+) = (.*)', line)
+        if match is None or match[1] in fields: raise ValueError('unreviewed generated rule field grammar')
+        fields[match[1]] = match[2]
+    if set(fields) != {'command', 'description', 'rspfile', 'rspfile_content', 'pool'}:
+        raise ValueError('generated link rule fields differ from selected source grammar')
+    rsp_expression = '${output_dir}/${target_output_name}${output_extension}.rsp'
+    if fields['rspfile'] != rsp_expression or fields['rspfile_content'] != '${in}' or fields['command'].count('@"' + rsp_expression + '"') != 1:
+        raise ValueError('actual generated response contents are not exactly explicit edge inputs')
+    rsp = [word for word in driver if word.startswith('@')]
+    if rsp != ['@' + target + '.rsp']:
+        raise ValueError('normal response token does not bind the actual primary output')
+    inline_deps = [Path(word).name for word in driver if word.endswith('.a') and '/common/deps' in word]
+    if len(inline_deps) != len(set(inline_deps)):
+        raise ValueError('wrapper duplicate-static-dependency rewrite needs a reviewed literal variant')
+    inputs = edge['explicit']
+    for token in inputs:
+        if not within((owner.build / token).resolve(), owner.root) or not re.search(r'\.(?:o|a|so(?:\.[0-9]+)*)$', token):
+            raise ValueError('response graph contains flags/unknown normal linker input grammar')
+    expanded = []
+    for word in driver:
+        expanded.extend(inputs if word.startswith('@') else [word])
+    block = observation['text'].encode()
+    return expanded, primary, {'schema': 'actual-normal-gcc-link-wrapper579/v1', 'literal_prefix': prefix,
+        'options': options, 'switches': switches, 'driver_words': driver, 'effective_driver_words': expanded,
+        'grammar_sources': sources, 'primary_output': str(primary), 'driver_output': str(linked),
+        'generated_rule': {'source': expected_source, 'name': edge['rule'],
+            'first_line': observation['first_line'], 'last_line': observation['last_line'],
+            'sha256': hashlib.sha256(block).hexdigest(), 'bytes': len(block), 'fields': fields},
+        'response': {'literal': rsp[0], 'kind': 'actual_generated_rule_and_query_explicit_inputs_NOT_rsp_file_bytes',
+            'edge': edge},
+        'clang_base_dir': {'literal': options['--clang-base-dir'], 'relocated': False,
+            'use': 'forwarded by the pinned wrapper to mini_debug_info.py; not the clang driver selector'},
+        'printed_wrapper_executed': False}
+
+
 class Builder:
     def __init__(self, source, output, helpers, plan_only=False, *, runtime_profile=None,
                  runtime_profile_sha256=None, product=PRODUCT, normal_link_target=None, _existing=False):
@@ -821,25 +997,28 @@ class Builder:
         return Path(path)
 
     def normal_link_contract(self, target, text):
-        """Read one actual direct-driver link; unknown wrappers/rsp fail closed.
+        """Read one actual direct link or the pinned official wrapper grammar.
 
-        No triple/CRT directory is guessed for a new product. This parser does
-        not execute the printed command. A new wrapper grammar needs the actual
-        fixed toolchain source and a separately reviewed finite adapter.
+        Printed code is never executed. Wrapper response inputs come from the
+        actual generated rule plus the actual Ninja input edge, not a recreated
+        rsp file or an estimate. Helpers retain their independent CFI gates.
         """
         if (not isinstance(target, str) or not re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_./+\-]*', target) or
                 target.startswith('/') or any(part in ('', '.', '..') for part in target.split('/'))):
             raise ValueError('one safe existing normal executable Ninja output required')
         lines = [line for line in text.splitlines() if line.strip()]
         if len(lines) != 1: raise ValueError('one actual final normal-executable link command required')
-        words = shlex.split(lines[0])
-        if (not words or any(word in ('&&', '||', ';', '|', '>', '<') or word.startswith('@') for word in words) or
-                Path(words[0]).name not in ('clang', 'clang++') or
+        words = shlex.split(lines[0]); wrapper = None; primary = None
+        if not words or any(word in ('&&', '||', ';', '|', '>', '<') for word in words):
+            raise ValueError('actual normal link contains unsupported shell grammar')
+        if Path(words[0]).name not in ('clang', 'clang++'):
+            words, primary, wrapper = normal_wrapper579(self, target, words)
+        if (any(word.startswith('@') for word in words) or Path(words[0]).name not in ('clang', 'clang++') or
                 (self.build / words[0]).resolve() not in (self.compiler.resolve(), self.c_compiler.resolve())):
-            raise ValueError('actual normal link uses an unreviewed wrapper/response grammar; source-specific adapter required')
+            raise ValueError('actual normal link uses an unreviewed driver/response grammar')
         if words.count('-o') != 1 or argument(words, '-o') is None or '-c' in words or '-shared' in words or '-pie' not in words:
             raise ValueError('actual normal PIE executable link required')
-        binary = (self.build / argument(words, '-o')).resolve()
+        binary = primary if wrapper is not None else (self.build / argument(words, '-o')).resolve()
         if binary != (self.build / target).resolve() or not within(binary, self.build):
             raise ValueError('actual normal executable output differs from queried Ninja target')
         selected = compiler_target(words)
@@ -847,8 +1026,11 @@ class Builder:
         if len(roots) != 1 or (self.build / roots[0]).resolve() != (self.build / 'obj/third_party/musl').resolve():
             raise ValueError('normal link must use this product actual system musl sysroot')
         lto = [word for word in words if word == '-flto' or word.startswith(('-flto=', '-fno-lto'))]
-        if '-nostdlib' not in words or not effective_cfi(words) or not lto or lto[-1].startswith('-fno-lto'):
-            raise ValueError('normal executable actual -nostdlib/LTO/cross-DSO CFI required; never disable a target gate')
+        if '-nostdlib' not in words or not lto or lto[-1].startswith('-fno-lto'):
+            raise ValueError('normal executable actual -nostdlib/LTO required')
+        # This executable supplies CRT/triple/float ABI, not the helper CFI
+        # policy. R71 ark_aot really has CFI off. Preserve its flags as observed;
+        # validate_flags/binding_context still require actual helper C++ CFI.
         startup = [Path(word).name for word in words if not word.startswith('-') and
                    re.fullmatch(r'(?:[rS]?crt[^/]*|crtbegin[^/]*|crtend[^/]*)\.o', Path(word).name)]
         if startup != ['Scrt1.o', 'crti.o', 'crtn.o']:
@@ -870,21 +1052,46 @@ class Builder:
         loader = Path(self.installed_runtime['profile']['dsos']['libc.so']['image_member']).name
         if Path(interpreter).name != loader:
             raise ValueError('normal executable interpreter differs from actual installed musl loader')
-        return {'target': target, 'actual_command': lines[0], 'compiler_target': selected,
+        result = {'target': target, 'actual_command': lines[0], 'compiler_target': selected,
                 'abi_options': abi_options(words), 'CRT': crt, 'binary': record, 'elf': elf,
-                'machine_abi_flags': machine_abi_flags(retained_binary, self.product), 'interpreter': interpreter}
+                'machine_abi_flags': machine_abi_flags(retained_binary, self.product), 'interpreter': interpreter,
+                'effective_cfi': effective_cfi(words), 'lto_flags': lto}
+        if wrapper is not None: result['wrapper'] = wrapper
+        return result
 
     def load_normal_link(self, target):
-        text = self.command([self.ninja, '-w', 'dupbuild=warn', '-C', self.build, '-t', 'commands', '-s', target],
+        text = self.normal_query_command579([self.ninja, '-w', 'dupbuild=warn', '-C', self.build, '-t', 'commands', '-s', target],
                             'actual-normal-executable-link-command', timeout=30)
+        printed = [line for line in text.splitlines() if line.strip()]
+        if len(printed) != 1: raise ValueError('one actual normal link command required')
+        words = shlex.split(printed[0])
+        rule_observation = None
+        if words and Path(words[0]).name not in ('clang', 'clang++'):
+            self.normal_link_edge_text = self.normal_query_command579(
+                [self.ninja, '-w', 'dupbuild=warn', '-C', self.build, '-t', 'query', target],
+                'actual-normal-executable-input-edge', timeout=30)
+            edge = normal_edge579(target, self.normal_link_edge_text)
+            source = self.remember(self.build / 'toolchain.ninja')
+            rule_observation = dict(source=source, **normal_rule579(self.build / 'toolchain.ninja', edge['rule']))
+            if self.remember(self.build / 'toolchain.ninja') != source:
+                raise ValueError('actual generated rule file changed during bounded read')
+            self.normal_link_rule_observation = rule_observation
         self.normal_link = self.normal_link_contract(target, text)
         self.report['normal_link_contract'] = self.normal_link
         self.report['normal_link_tools'] = {name: {'literal': str(path), 'file': self.remember(path)}
             for name, path in (('compiler', self.compiler), ('c_compiler', self.c_compiler), ('ninja', self.ninja))}
         retained = self.output / 'normal-link-artifacts'; retained.mkdir()
         records = {}
-        for key, source in [('binary', self.normal_link['binary']),
-                *[(str(i), item) for i, item in enumerate(self.normal_link['CRT'])]]:
+        source_files = [('binary', self.normal_link['binary']),
+                *[(str(i), item) for i, item in enumerate(self.normal_link['CRT'])]]
+        if 'wrapper' in self.normal_link:
+            source_files += [('grammar' + str(i), item)
+                for i, item in enumerate(self.normal_link['wrapper']['grammar_sources'])]
+            raw_rule = retained / 'generated-rule.raw.ninja'
+            raw_rule.write_bytes(rule_observation['text'].encode())
+            self.report['normal_link_rule_artifact'] = {'source': self.normal_link['wrapper']['generated_rule'],
+                'retained': {'path': str(raw_rule), 'sha256': sha(raw_rule), 'bytes': raw_rule.stat().st_size}}
+        for key, source in source_files:
             path = Path(source['path']); copy = retained / key
             data = path.read_bytes()
             if sha(path) != source['sha256'] or len(data) != source['bytes']:
@@ -898,6 +1105,45 @@ class Builder:
         for entry in self.installed_runtime['profile']['dsos'].values():
             for key in ('staged', 'image_file'): self.check_target_abi(entry[key]['path'])
         self.save()
+
+    def normal_query_command579(self, argv, label, timeout=30):
+        """Only the two readonly normal queries retain independent full streams.
+
+        Every other original compile/link/ELF command keeps command() unchanged.
+        No warning line is filtered, reclassified as stdout, or discarded.
+        """
+        kinds = {'actual-normal-executable-link-command': ['commands', '-s'],
+                 'actual-normal-executable-input-edge': ['query']}
+        words = list(map(str, argv))
+        if (label not in kinds or timeout != 30 or words != list(map(str,
+                [self.ninja, '-w', 'dupbuild=warn', '-C', self.build, '-t', *kinds[label], self.normal_link_target]))):
+            raise ValueError('only the fixed readonly normal Ninja queries may use split streams')
+        stem = str(len(self.report['commands'])).zfill(3) + '-' + label
+        stdout = self.output / (stem + '.stdout.log'); stderr = self.output / (stem + '.stderr.log')
+        row = {'argv': words, 'cwd': str(self.build), 'log': str(stdout), 'label': label,
+               'stream_mode': 'normal-query-separate-stdio579/v1', 'timed_out': False}
+        self.report['commands'].append(row); self.save()
+        with stdout.open('xb') as output_stream, stderr.open('xb') as error_stream:
+            try:
+                process = subprocess.Popen(words, cwd=self.build, env=self.environment,
+                    stdin=subprocess.DEVNULL, stdout=output_stream, stderr=error_stream, start_new_session=True)
+                try:
+                    row['exit_code'] = process.wait(timeout=timeout)
+                except subprocess.TimeoutExpired:
+                    # The exact original command-owned signal/wait lifecycle.
+                    os.killpg(process.pid, signal.SIGTERM)
+                    try: process.wait(timeout=3)
+                    except subprocess.TimeoutExpired:
+                        os.killpg(process.pid, signal.SIGKILL); process.wait()
+                    row.update(exit_code=124, timed_out=True, process_returncode=process.returncode)
+            except OSError as error:
+                error_stream.write((str(error) + '\n').encode())
+                row.update(exit_code=127, launch_error=str(error))
+        row['stdout'] = {'path': str(stdout), 'sha256': sha(stdout), 'bytes': stdout.stat().st_size}
+        row['stderr'] = {'path': str(stderr), 'sha256': sha(stderr), 'bytes': stderr.stat().st_size}
+        row['sha256'] = row['stdout']['sha256']; self.save()
+        if row['exit_code']: raise ValueError('actual normal query failed: ' + label)
+        return stdout.read_text(errors='replace')
 
     def actual_target(self):
         return None if self.normal_link is None else self.normal_link['compiler_target']
@@ -1316,7 +1562,31 @@ class ExistingVerifier(Builder):
             query = self.prior_command('actual-normal-executable-link-command')
             expected = list(map(str, [self.ninja, '-w', 'dupbuild=warn', '-C', self.build, '-t', 'commands', '-s', normal['target']]))
             if query['argv'] != expected: raise ValueError('original actual normal Ninja query differs')
-            bound = self.bound_artifact(query['log'], query['sha256'])
+            stdout_ref, stderr_ref = normal_query_streams579(query)
+            for raw in (stdout_ref, stderr_ref):
+                observed = self.bound_artifact(raw['path'], raw['sha256'])
+                if observed['bytes'] != raw['bytes']:
+                    raise ValueError('original normal stdout/stderr complete bytes differ')
+            bound = self.bound_artifact(stdout_ref['path'], stdout_ref['sha256'])
+            if 'wrapper' in normal:
+                edge_argv = list(map(str, [self.ninja, '-w', 'dupbuild=warn', '-C', self.build, '-t', 'query', normal['target']]))
+                edge_query = self.prior_command('actual-normal-executable-input-edge', edge_argv)
+                edge_stdout, edge_stderr = normal_query_streams579(edge_query)
+                for raw in (edge_stdout, edge_stderr):
+                    observed = self.bound_artifact(raw['path'], raw['sha256'])
+                    if observed['bytes'] != raw['bytes']:
+                        raise ValueError('original normal edge stdout/stderr complete bytes differ')
+                edge_bound = self.bound_artifact(edge_stdout['path'], edge_stdout['sha256'])
+                self.normal_link_edge_text = Path(edge_bound['path']).read_text()
+                edge = normal_edge579(normal['target'], self.normal_link_edge_text)
+                rule = normal_rule579(self.build / 'toolchain.ninja', edge['rule'])
+                self.normal_link_rule_observation = dict(source=self.remember(self.build / 'toolchain.ninja'), **rule)
+                raw = old['normal_link_rule_artifact']
+                retained = self.bound_artifact(raw['retained']['path'], raw['retained']['sha256'])
+                if (raw['source'] != normal['wrapper']['generated_rule'] or
+                        Path(retained['path']).read_bytes() != rule['text'].encode() or
+                        retained['bytes'] != raw['retained']['bytes']):
+                    raise ValueError('original generated rule cut/source changed')
             self.normal_link = self.normal_link_contract(normal['target'], Path(bound['path']).read_text())
             if self.normal_link != normal:
                 raise ValueError('original normal executable/CRT/target/interpreter contract changed')
@@ -1326,6 +1596,9 @@ class ExistingVerifier(Builder):
         elif product != PRODUCT:
             raise ValueError('nondefault original report has no actual normal-link target/CRT contract')
         self.save()
+
+    def normal_query_command579(self, argv, label, timeout=30):
+        raise ValueError('verify-existing replays retained normal streams and never invokes Ninja')
 
     def command(self, argv, label, timeout=60):
         words = list(map(str, argv))

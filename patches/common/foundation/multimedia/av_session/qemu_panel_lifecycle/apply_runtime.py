@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Stage and verify all3 fixed sources, then atomic per-file commit or rollback."""
+"""Stage and verify all4 fixed sources, then atomic per-file commit or rollback."""
 import argparse
 import hashlib
+import fcntl
 import os
 from pathlib import Path
 import stat
 import subprocess
 import tempfile
-from verify_source import HERE, heads, manifest, state, target, vector
+from verify_source import HERE, heads, manifest, state, target, vector, vector_state
 
 
 def digest(content):
@@ -58,7 +59,7 @@ def rollback(root, value, originals, installed):
         except BaseException as error:
             failures.append(name + ': ' + str(error))
     try:
-        if state(root) != 'before':
+        if vector_state(root, value) != 'before':
             raise ValueError('Rollback did not restore the complete actual before vector')
         for name, original in originals.items():
             if identity(target(root, name))[2:] != original['identity'][2:]:
@@ -69,9 +70,8 @@ def rollback(root, value, originals, installed):
         raise RuntimeError('Source rollback incomplete; preserved unexpected changes: ' + '; '.join(failures))
 
 
-def apply(root):
-    value = manifest()
-    if state(root) == 'final':
+def apply_vector(root, value, *, reverse=False, patch_name='0001-connect-actual-panels-and-guard-session-events.patch'):
+    if vector_state(root, value) == 'final':
         return
     originals = {}
     for name in value['files']:
@@ -92,14 +92,14 @@ def apply(root):
         heads(root, value)
         if vector(scratch, value) != 'before':
             raise ValueError('Complete scratch preimage required')
-        subprocess.run(['patch', '--binary', '--batch', '--forward', '--fuzz=0', '-p1', '-i',
-            str(HERE / '0001-connect-actual-panels-and-guard-session-events.patch')], cwd=scratch, check=True)
+        subprocess.run(['patch', '--binary', '--batch', '--reverse' if reverse else '--forward', '--fuzz=0', '-p1', '-i',
+            str(HERE / patch_name)], cwd=scratch, check=True)
         if vector(scratch, value) != 'final':
             raise ValueError('Complete final scratch vector required')
         if {p.relative_to(scratch).as_posix() for p in scratch.rglob('*') if p.is_file()} != set(value['files']):
             raise ValueError('Unexpected scratch file/reject/original output')
         finals = {name: target(scratch, name).read_bytes() for name in value['files']}
-        if state(root) != 'before':
+        if vector_state(root, value) != 'before':
             raise ValueError('Actual source vector changed before commit')
         for name, original in originals.items():
             path = target(root, name)
@@ -112,7 +112,7 @@ def apply(root):
                 if identity(path) != original['identity'] or path.read_bytes() != original['bytes']:
                     raise ValueError('Source changed during finite commit: ' + name)
                 replace(path, finals[name], original, installed, name)
-            if state(root) != 'final':
+            if vector_state(root, value) != 'final':
                 raise ValueError('Complete final live vector required')
             for name, original in originals.items():
                 if identity(target(root, name))[2:] != original['identity'][2:]:
@@ -125,8 +125,54 @@ def apply(root):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-root', type=Path, required=True)
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--rewind', action='store_true')
+    mode.add_argument('--require-final', action='store_true')
     args = parser.parse_args()
-    apply(args.source_root.resolve())
+    root = args.source_root.resolve()
+    value = manifest()
+    previous = dict(value, files={name: [pair[0], value['previous_panel_final'][name]]
+                                 for name, pair in value['files'].items()})
+    previous_owned = dict(value, files={name: [pair[0], value['previous_owned_final'][name]]
+                                       for name, pair in value['files'].items()})
+    epochs = {'previous': (previous, '0000-legacy-panel-lifecycle.patch'),
+              'previous_owned': (previous_owned, '0003-previous-owned-panel-lifecycle.patch')}
+    marker = root / '.ohos-qemu-patches'
+    if marker.is_symlink():
+        raise ValueError('Source lock directory is linked')
+    marker.mkdir(exist_ok=True)
+    fd = os.open(marker / (digest(str(HERE).encode()) + '.lock'), os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, 'a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        current = state(root, value)
+        if args.require_final:
+            if current != 'final':
+                raise ValueError('New complete final AV panel source required; verify never migrates')
+        elif args.rewind:
+            if current != 'before':
+                active, patch = epochs.get(current, (value, '0001-connect-actual-panels-and-guard-session-events.patch'))
+                reverse = dict(active, files={n: list(reversed(pair)) for n, pair in active['files'].items()})
+                apply_vector(root, reverse, reverse=True, patch_name=patch)
+            if state(root, value) != 'before':
+                raise ValueError('Complete original AV panel prefix not restored')
+        elif current != 'final':
+            upgrading = current in epochs
+            if upgrading:
+                active, legacy_patch = epochs[current]
+                reverse = dict(active, files={n: list(reversed(pair)) for n, pair in active['files'].items()})
+                apply_vector(root, reverse, reverse=True, patch_name=legacy_patch)
+            try:
+                apply_vector(root, value)
+                if state(root, value) != 'final':
+                    raise ValueError('Complete new AV panel source vector required')
+            except BaseException as error:
+                if upgrading:
+                    if state(root, value) != 'before':
+                        raise RuntimeError('Upgrade rollback incomplete; unknown source preserved') from error
+                    apply_vector(root, active, patch_name=legacy_patch)
+                    if state(root, value) != current:
+                        raise RuntimeError('Complete previous AV panel vector not restored') from error
+                raise
     print('AV panel source transaction complete; build/runtime NOT accepted')
 
 

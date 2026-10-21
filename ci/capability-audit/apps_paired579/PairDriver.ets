@@ -2,6 +2,7 @@ import common from '@ohos.app.ability.common';
 import window from '@ohos.window';
 import dm from '@ohos.distributedDeviceManager';
 import av from '@ohos.multimedia.avsession';
+import { AVCastPickerState } from '@ohos.multimedia.avCastPickerParam';
 import audio from '@ohos.multimedia.audio';
 import ethernet from '@ohos.net.ethernet';
 import connection from '@ohos.net.connection';
@@ -48,7 +49,7 @@ export class Driver {
     if (Driver.helper) { Driver.helper.off('pickerStateChange'); }
     const id = Journal.requestId;
     Driver.helper = new av.AVCastPickerHelper(context);
-    Driver.helper.on('pickerStateChange', (state: av.AVCastPickerState) =>
+    Driver.helper.on('pickerStateChange', (state: AVCastPickerState) =>
       Journal.record('cast-picker-state', JSON.stringify(state), 0, id, 'cast-picker'));
     await Driver.helper.select(); Journal.record('picker-select-returned', 'null', 0, id, 'cast-picker');
   }

@@ -506,6 +506,44 @@ def bind(root_io):
     def network(action, parameters):
         at = begin('network_' + action)
         require(type(parameters) is dict, 'finite network action data required')
+        if action == 'cast-native-observations':
+            require(state['case'] == 'cast' and parameters == {} and 'grant' in state['installed'],
+                    'fixed installed cast grant caller observations only')
+            body, journal_rows, journal_files = pull('grant')
+            require(body and journal_rows, 'actual cast journal required before native observation')
+            pids = sorted(set(row['pid'] for row in journal_rows))
+            require(len(pids) <= 8 and all(type(pid) is int and 0 < pid <= 4194304 for pid in pids),
+                    'bounded actual journal-owned process set required')
+            observations = []
+
+            def capture(name, script):
+                receipt = shell(script, 'cast_native_' + name)
+                observations.append({'name': name, 'script': script, 'raw': receipt['stdout_ref'],
+                                     'command': len(io.receipts) - 1 - at[0]})
+                return name
+
+            processes = []
+            for pid in pids:
+                suffix = str(pid)
+                before = 'if test -d /proc/' + suffix + '; then cat /proc/' + suffix + '/stat; else printf "CAST579_ABSENT\\n"; fi'
+                status = 'if test -d /proc/' + suffix + '; then cat /proc/' + suffix + '/status; else printf "CAST579_ABSENT\\n"; fi'
+                processes.append({'pid': pid, 'observations': {
+                    'stat_before': capture('stat_before_' + suffix, before),
+                    'status': capture('status_' + suffix, status)}})
+            capture('hilog', 'hilog -x')
+            capture('ams', 'aa dump -a -u 100')
+            capture('bms', shlex.join(['bm', 'dump', '-n', bundle('cast', 'grant'), '-u', '100']))
+            capture('ps', 'ps -ef')
+            for process in processes:
+                suffix = str(process['pid'])
+                after = 'if test -d /proc/' + suffix + '; then cat /proc/' + suffix + '/stat; else printf "CAST579_ABSENT\\n"; fi'
+                process['observations']['stat_after'] = capture('stat_after_' + suffix, after)
+            capture('boot_end', 'cat /proc/sys/kernel/random/boot_id')
+            return result(at, schema='actual-cast579-native-observations/v1', run_id=state['run'],
+                          bundle=bundle('cast', 'grant'),
+                          identity=save_json('cast_native_identity', state['identities']['grant']),
+                          journal=save('cast_native_journal.jsonl', body), journal_files=journal_files,
+                          observations=observations, processes=processes)
         if action == 'knowledge-fixture':
             require(state['case'] in ('photos', 'photosform') and parameters == {}, 'original Photos fixture only')
             reference = io.package_inputs.get('apps579_knowledge_fixture')

@@ -1,16 +1,22 @@
-# Caption real SDK26 native context source successor
+# Caption SDK26 component member source successor
 
-Complete23 source closure: legacy72, deviceTypes d4, typed Session b091, final.
-The current final preserves b091 Session178ec and default/tablet/2in1 module;
-only the service's invalid local interface/class assertion bridge is removed.
-It directly calls the real context method declared by normal SDK preparation.
-No native lifecycle/startId logic, capture authorization, generation, request
-queue, observer, overlay, cancellation, error or cleanup behavior is changed.
+The actual build02 compiler reports 10505001 for Captions.backgroundColor,
+which conflicts with the inherited CustomComponent.backgroundColor method.
+The local field is now captionBackgroundColor and its one this-reference uses
+that name. @LocalStorageLink('backgroundColor'), its default and the rendered
+backgroundColor(...) call stay unchanged. This is the only product ETS delta.
 
-All known migrations compare the complete23 vector and actual HAP project HEAD.
-The original per-file snapshots, unchanged-file identity guard, atomic ownership
-and rollback remain. Unknown/mixed/extra production ETS files reject. Fresh source
-uses complete0001; known72/d4/b091 use fixed0002/0003/0004. Verification never
-migrates. The exact SDK26 declaration helper must run before normal compilation.
-The source helper861e (ASR32 serial composition) is unchanged. Models/HAR/recipe,
-permissions and UI claims are not advanced by this compile repair.
+Complete23 states remain strict: absent, legacy72, deviceTypes d4, typed Session
+b091, native ServiceContext f785/v4, and final v5. Fresh0001 and direct known
+migrations0002/0003/0004 contain the same finite page hunk; new0005 migrates only
+the complete f78523 vector. Unknown/mixed/extra ETS inputs reject. Final is a
+no-op. Actual parent HAP HEAD, per-file ownership snapshots, unchanged-inode
+checks, staged full-vector checks, atomic writes and owned rollback all remain.
+
+Session178ec, service3998, module deviceTypes, permission/signer, audio capture
+consent, UI/session/worker/queue/conditional native stop/recovery/cleanup,
+ASR32/64 source dependencies, helper861e and normal SDK declaration preparation
+are unchanged. The 45 warnings and duplicate printing of one actual error are
+not treated as additional errors. Models or source preparation do not prove
+capability acceptance. Root must batch this with all failures, prepare and
+build normally, then validate the newly packaged QEMU behavior.

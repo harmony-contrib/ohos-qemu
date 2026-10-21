@@ -1,6 +1,6 @@
 {
   "schema": "avpanel579-source-vector/v1",
-  "scope": "actual source preparation only; new QEMU behavior acceptance required",
+  "scope": "actual-r70-bound complete4 AV panel and pre-submit async context ownership; new target build/QEMU acceptance pending",
   "projects": {
     "foundation/multimedia/av_session": "47a2014c7040a039303109f0ebe817ebc31bfe6b"
   },
@@ -11,11 +11,31 @@
     ],
     "foundation/multimedia/av_session/frameworks/js/napi/session/include/napi_avcast_picker_helper.h": [
       "e99955010b9e4e071077fed66724234dc98d61986e45c6e7d73b4ed3dd869ab6",
-      "7aca88b0367310fe0ed8f45019cd77e1dc235501d69e918abc300ec09693d775"
+      "df5dfab961ab579d28021d96e34813c6b22b6b5cb9bc409840baa54fc2beb60d"
     ],
     "foundation/multimedia/av_session/frameworks/js/napi/session/src/napi_avcast_picker_helper.cpp": [
       "5628c4663bd33525aaa624491e207a01a8b742360fb8b6b4a91a32df0cb548dc",
-      "335d8c6956342f960ad6f46d9f652a7062afe1ca189caa38b1336b0c95711427"
+      "3d492ce67dbba529d42f2feb33bc66dc1b86f950a66a69ebc9204156e6260e6e"
+    ],
+    "foundation/multimedia/av_session/frameworks/js/napi/session/src/napi_async_callback.cpp": [
+      "a6ee13bb95e6ff743061d8edd2eaa23e46bab6f565b53d06bb9d2433af25637f",
+      "b40050e529693212a8b3907a835bcab11a0c164dc11e2f3c9f975be5254d30f0"
     ]
+  },
+  "previous_panel_final": {
+    "foundation/multimedia/av_session/avvolumepanel/avvolumepanel.js": "e654d9603d584994c3bdf1d3b465e7de7bed811c49a0b70e97ecc5e085bc9fee",
+    "foundation/multimedia/av_session/frameworks/js/napi/session/include/napi_avcast_picker_helper.h": "7aca88b0367310fe0ed8f45019cd77e1dc235501d69e918abc300ec09693d775",
+    "foundation/multimedia/av_session/frameworks/js/napi/session/src/napi_avcast_picker_helper.cpp": "335d8c6956342f960ad6f46d9f652a7062afe1ca189caa38b1336b0c95711427",
+    "foundation/multimedia/av_session/frameworks/js/napi/session/src/napi_async_callback.cpp": "a6ee13bb95e6ff743061d8edd2eaa23e46bab6f565b53d06bb9d2433af25637f"
+  },
+  "readonly": {
+    "foundation/multimedia/av_session/frameworks/js/napi/session/include/napi_async_callback.h": "79c45cd07afe87cd92a2f3ca348ee4169b5279e58baf640b098ed6c65e3cb922"
+  },
+  "readonly_scope": "actual r70 unchanged async header; async.cpp is managed, not readonly",
+  "previous_owned_final": {
+    "foundation/multimedia/av_session/avvolumepanel/avvolumepanel.js": "e654d9603d584994c3bdf1d3b465e7de7bed811c49a0b70e97ecc5e085bc9fee",
+    "foundation/multimedia/av_session/frameworks/js/napi/session/include/napi_avcast_picker_helper.h": "df5dfab961ab579d28021d96e34813c6b22b6b5cb9bc409840baa54fc2beb60d",
+    "foundation/multimedia/av_session/frameworks/js/napi/session/src/napi_avcast_picker_helper.cpp": "18e98258ea255c69c6010cc452b0b0f0a435d7486f1c956da7095548a6bc6855",
+    "foundation/multimedia/av_session/frameworks/js/napi/session/src/napi_async_callback.cpp": "a6ee13bb95e6ff743061d8edd2eaa23e46bab6f565b53d06bb9d2433af25637f"
   }
 }

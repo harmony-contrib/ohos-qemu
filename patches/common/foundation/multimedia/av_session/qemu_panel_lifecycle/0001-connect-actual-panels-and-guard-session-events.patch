@@ -11,18 +11,19 @@
    aboutToBeDeleted() {
 --- a/foundation/multimedia/av_session/frameworks/js/napi/session/include/napi_avcast_picker_helper.h
 +++ b/foundation/multimedia/av_session/frameworks/js/napi/session/include/napi_avcast_picker_helper.h
-@@ -15,6 +15,10 @@
+@@ -15,6 +15,11 @@
  
  #ifndef OHOS_NAPI_AVCAST_PICKER_HELPER_H
  #define OHOS_NAPI_AVCAST_PICKER_HELPER_H
 +
 +#include <atomic>
 +#include <cstdint>
++#include <map>
 +#include <memory>
  
  #include "napi/native_api.h"
  #include "napi/native_node_api.h"
-@@ -105,12 +109,13 @@
+@@ -105,12 +110,15 @@
      static std::map<std::string, std::pair<OnEventHandlerType, OffEventHandlerType>> eventHandlers_;
  
      template<typename T>
@@ -32,6 +33,8 @@
      std::mutex lock_;
      std::shared_ptr<NapiAsyncCallback> asyncCallback_;
      std::list<napi_ref> callbacks_[EVENT_TYPE_MAX] {};
++    // Queued checks own this stable cell, distinct for every registration.
++    std::map<napi_ref, std::shared_ptr<napi_ref>> callbackRefs_;
      std::shared_ptr<bool> isValid_;
 +    std::shared_ptr<std::atomic<uint64_t>> pickerGeneration_ = std::make_shared<std::atomic<uint64_t>>(0);
  
@@ -48,7 +51,23 @@
  
  static __thread napi_ref AVCastPickerHelperConstructorRef = nullptr;
  std::map<std::string, std::pair<NapiAVCastPickerHelper::OnEventHandlerType,
-@@ -222,7 +222,7 @@
+@@ -32,6 +32,7 @@
+ NapiAVCastPickerHelper::NapiAVCastPickerHelper(Ace::UIContent* uiContent)
+ {
+     SLOGI("construct");
++    SLOGI("AVPicker lifetime helper=%{public}p phase=construct", static_cast<void*>(this));
+     uiContent_ = uiContent;
+     isValid_ = std::make_shared<bool>(true);
+     audioRoutingMngr_ = AudioStandard::AudioRoutingManager::GetInstance();
+@@ -41,6 +42,7 @@
+ {
+     SLOGI("destroy.");
+     *isValid_ = false;
++    SLOGI("AVPicker lifetime helper=%{public}p phase=destroy", static_cast<void*>(this));
+ }
+ 
+ napi_value NapiAVCastPickerHelper::Init(napi_env env, napi_value exports)
+@@ -222,7 +224,7 @@
          auto extensionCallback = CreateExtensionCallback(callback, napiAVCastPickerHelper);
  
          Ace::ModalUIExtensionConfig config;
@@ -57,7 +76,7 @@
          CHECK_AND_RETURN_LOG(napiAVCastPickerHelper->uiContent_ != nullptr, "uiContent_ is destroyed");
          napiAVCastPickerHelper->sessionId_ =
              napiAVCastPickerHelper->uiContent_->CreateModalUIExtension(request, extensionCallback, config);
-@@ -234,9 +234,10 @@
+@@ -234,9 +236,10 @@
  
  void NapiAVCastPickerHelper::BuildPickerRequest(const NapiAVCastPickerOptions& options, AAFwk::Want& request)
  {
@@ -69,12 +88,14 @@
      request.SetParam("AVCastPickerOptionsType", options.sessionType);
      request.SetParam("AVCastPickerOptionsStyle", options.pickerStyle);
      request.SetParam("AVCastPickerOptionsPositionX", options.menuPosition.x);
-@@ -251,21 +252,52 @@
+@@ -251,21 +254,56 @@
  {
      static const std::string callBackName = "NapiAVCastPickerHelper::SelectAVPicker";
      auto isValid = napiAVCastPickerHelper->isValid_;
 +    auto generationToken = napiAVCastPickerHelper->pickerGeneration_;
 +    const uint64_t generation = generationToken->fetch_add(1) + 1;
++    SLOGI("AVPicker generation helper=%{public}p generation=%{public}llu",
++        static_cast<void*>(napiAVCastPickerHelper), static_cast<unsigned long long>(generation));
 +    auto pickerState = std::make_shared<std::atomic<int32_t>>(-1);
 +    auto notifyState = [napiAVCastPickerHelper, isValid, generationToken, generation, pickerState](int32_t state) {
 +        CHECK_AND_RETURN_LOG(isValid && *isValid, "NapiAVCastPickerHelper is destroyed");
@@ -86,6 +107,8 @@
 +            if (pickerState->compare_exchange_weak(previous, state)) {
 +                CHECK_AND_RETURN_LOG(isValid && *isValid, "NapiAVCastPickerHelper is destroyed");
 +                CHECK_AND_RETURN_LOG(generationToken->load() == generation, "Ignoring an older picker session");
++                SLOGI("AVPicker state helper=%{public}p generation=%{public}llu state=%{public}d",
++                    static_cast<void*>(napiAVCastPickerHelper), static_cast<unsigned long long>(generation), state);
 +                napiAVCastPickerHelper->HandleEvent(EVENT_PICPKER_STATE_CHANGE, callBackName, state, generation);
 +                return;
 +            }
@@ -130,7 +153,7 @@
      };
  }
  
-@@ -314,24 +346,31 @@
+@@ -314,28 +352,56 @@
  }
  
  template<typename T>
@@ -147,12 +170,30 @@
      for (auto ref = callbacks_[event].begin(); ref != callbacks_[event].end(); ++ref) {
 -        asyncCallback_->CallWithFunc(*ref, isValid_,
 -            [this, ref, event]() {
-+        const napi_ref callbackRef = *ref;
-+        asyncCallback_->CallWithFunc(callbackRef, isValid_,
++        const auto registered = callbackRefs_.find(*ref);
++        if (registered == callbackRefs_.end()) {
++            continue;
++        }
++        const auto callbackRef = registered->second;
++        // DataContextWithFunc retains napi_ref&; its check owns this cell.
++        SLOGI("AVPicker queue helper=%{public}p generation=%{public}llu ref=%{public}p cell=%{public}p",
++            static_cast<void*>(this), static_cast<unsigned long long>(generation),
++            static_cast<void*>(*callbackRef), static_cast<void*>(callbackRef.get()));
++        asyncCallback_->CallWithFunc(*callbackRef, isValid_,
 +            [this, callbackRef, event, generationToken, generation]() {
                  std::lock_guard<std::mutex> lockGuard(lock_);
 +                if (generationToken->load() != generation) {
 +                    SLOGI("Ignoring an older queued picker event");
++                    SLOGI("AVPicker reject helper=%{public}p generation=%{public}llu ref=%{public}p cell=%{public}p reason=generation",
++                        static_cast<void*>(this), static_cast<unsigned long long>(generation),
++                        static_cast<void*>(*callbackRef), static_cast<void*>(callbackRef.get()));
++                    return false;
++                }
++                const auto registered = callbackRefs_.find(*callbackRef);
++                if (registered == callbackRefs_.end() || registered->second != callbackRef) {
++                    SLOGI("AVPicker reject helper=%{public}p generation=%{public}llu ref=%{public}p cell=%{public}p reason=registration",
++                        static_cast<void*>(this), static_cast<unsigned long long>(generation),
++                        static_cast<void*>(*callbackRef), static_cast<void*>(callbackRef.get()));
 +                    return false;
 +                }
                  if (callbacks_[event].empty()) {
@@ -162,7 +203,211 @@
                  bool hasFunc = false;
                  for (auto it = callbacks_[event].begin(); it != callbacks_[event].end(); ++it) {
 -                    hasFunc = (ref == it ? true : hasFunc);
-+                    hasFunc = (callbackRef == *it ? true : hasFunc);
++                    hasFunc = (*callbackRef == *it ? true : hasFunc);
                  }
                  if (!hasFunc) {
                      SLOGE("checkCallbackValid res false for event=%{public}d", event);
+                 }
++                SLOGI("AVPicker checked helper=%{public}p generation=%{public}llu ref=%{public}p cell=%{public}p present=%{public}d",
++                    static_cast<void*>(this), static_cast<unsigned long long>(generation),
++                    static_cast<void*>(*callbackRef), static_cast<void*>(callbackRef.get()), hasFunc);
+                 return hasFunc;
+             }, callBackName,
+             [param](napi_env env, int& argc, napi_value* argv) {
+@@ -366,7 +432,11 @@
+             return napi_generic_failure;
+         }
+     }
++    const auto callbackRef = std::make_shared<napi_ref>(ref);
++    callbackRefs_.emplace(ref, callbackRef);
+     callbacks_[event].push_back(ref);
++    SLOGI("AVPicker registered helper=%{public}p ref=%{public}p cell=%{public}p",
++        static_cast<void*>(this), static_cast<void*>(ref), static_cast<void*>(callbackRef.get()));
+     return napi_ok;
+ }
+ 
+@@ -376,9 +446,15 @@
+     std::lock_guard<std::mutex> lockGuard(lock_);
+     CHECK_AND_RETURN_RET_LOG(event == EVENT_PICPKER_STATE_CHANGE, napi_generic_failure, "has no event");
+     if (callback == nullptr) {
+-        for (auto callbackRef = callbacks_[event].begin(); callbackRef != callbacks_[event].end(); ++callbackRef) {
++        for (auto callbackRef = callbacks_[event].begin(); callbackRef != callbacks_[event].end();) {
+             napi_status ret = napi_delete_reference(env, *callbackRef);
++            const auto registered = callbackRefs_.find(*callbackRef);
++            SLOGI("AVPicker removed helper=%{public}p ref=%{public}p cell=%{public}p status=%{public}d",
++                static_cast<void*>(this), static_cast<void*>(*callbackRef),
++                registered == callbackRefs_.end() ? nullptr : static_cast<void*>(registered->second.get()), ret);
+             CHECK_AND_RETURN_RET_LOG(napi_ok == ret, ret, "delete callback reference failed");
++            callbackRefs_.erase(*callbackRef);
++            callbackRef = callbacks_[event].erase(callbackRef);
+         }
+         callbacks_[event].clear();
+         return napi_ok;
+@@ -388,7 +464,13 @@
+                              napi_generic_failure, "get callback reference failed");
+     CHECK_AND_RETURN_RET_LOG(ref != nullptr, napi_ok, "callback has been remove");
+     callbacks_[event].remove(ref);
+-    return napi_delete_reference(env, ref);
++    const auto registered = callbackRefs_.find(ref);
++    const auto removedCell = registered == callbackRefs_.end() ? nullptr : registered->second;
++    callbackRefs_.erase(ref);
++    const napi_status status = napi_delete_reference(env, ref);
++    SLOGI("AVPicker removed helper=%{public}p ref=%{public}p cell=%{public}p status=%{public}d",
++        static_cast<void*>(this), static_cast<void*>(ref), static_cast<void*>(removedCell.get()), status);
++    return status;
+ }
+ 
+ bool NapiAVCastPickerHelper::IsCallbacksEmpty(int32_t event)
+--- a/foundation/multimedia/av_session/frameworks/js/napi/session/src/napi_async_callback.cpp
++++ b/foundation/multimedia/av_session/frameworks/js/napi/session/src/napi_async_callback.cpp
+@@ -14,12 +14,18 @@
+  */
+ 
+ #include <memory>
++#include <atomic>
++#include <cstdint>
+ 
+ #include "avsession_trace.h"
+ #include "napi_utils.h"
+ #include "napi_async_callback.h"
+ 
+ namespace OHOS::AVSession {
++namespace {
++std::atomic<uint64_t> callbackEventSequence { 0 };
++}
++
+ NapiAsyncCallback::NapiAsyncCallback(napi_env env) : env_(env)
+ {
+     if (env != nullptr) {
+@@ -47,16 +53,15 @@
+     CHECK_RETURN_VOID(loop_ != nullptr, "loop_ is nullptr");
+     CHECK_RETURN_VOID(method != nullptr, "method is nullptr");
+ 
+-    std::shared_ptr<uv_work_t> work = std::make_shared<uv_work_t>();
+-    CHECK_RETURN_VOID(work != nullptr, "no memory for uv_work_t");
+-
+-    work->data = new DataContext{env_, method, std::move(getter)};
+-    auto task = [work] {
+-        AVSESSION_TRACE_SYNC_START("NapiAsyncCallback::Call");
+-        std::shared_ptr<DataContext> context(static_cast<DataContext*>(work->data), [](DataContext* ptr) {
++    std::shared_ptr<DataContext> context(new DataContext{env_, method, std::move(getter)},
++        [](DataContext* ptr) {
+             delete ptr;
+             ptr = nullptr;
+         });
++    CHECK_RETURN_VOID(context != nullptr, "no memory for uv_work_t");
++
++    auto task = [context] {
++        AVSESSION_TRACE_SYNC_START("NapiAsyncCallback::Call");
+         if (context == nullptr) {
+             SLOGE("context is nullptr");
+             return;
+@@ -93,17 +98,16 @@
+     CHECK_RETURN_VOID(loop_ != nullptr, "loop_ is nullptr");
+     CHECK_RETURN_VOID(method != nullptr, "method is nullptr");
+ 
+-    std::shared_ptr<uv_work_t> work = std::make_shared<uv_work_t>();
+-    CHECK_RETURN_VOID(work != nullptr, "no memory for uv_work_t");
+-
+-    work->data = new DataContextWithFlag { env_, method, isValid, std::move(getter) };
+-    auto task = [work] {
+-        AVSESSION_TRACE_SYNC_START("NapiAsyncCallback::CallWithFlag");
+-        std::shared_ptr<DataContextWithFlag> context(static_cast<DataContextWithFlag*>(work->data),
+-            [](DataContextWithFlag* ptr) {
++    std::shared_ptr<DataContextWithFlag> context(
++        new DataContextWithFlag { env_, method, isValid, std::move(getter) },
++        [](DataContextWithFlag* ptr) {
+             delete ptr;
+             ptr = nullptr;
+         });
++    CHECK_RETURN_VOID(context != nullptr, "no memory for uv_work_t");
++
++    auto task = [context] {
++        AVSESSION_TRACE_SYNC_START("NapiAsyncCallback::CallWithFlag");
+         if (context == nullptr) {
+             SLOGE("context is nullptr");
+             return;
+@@ -146,17 +150,21 @@
+ {
+     CHECK_RETURN_VOID(loop_ != nullptr && method != nullptr, "loop_ or method is nullptr");
+ 
+-    std::shared_ptr<uv_work_t> work = std::make_shared<uv_work_t>();
+-    CHECK_RETURN_VOID(work != nullptr, "no memory for uv_work_t");
+-
+-    work->data = new DataContextWithFunc { env_, method, isValid, std::move(getter), checkCallbackValid };
+-    auto task = [work] {
+-        AVSESSION_TRACE_SYNC_START("NapiAsyncCallback::AfterWorkCallbackWithFunc");
+-        std::shared_ptr<DataContextWithFunc> context(static_cast<DataContextWithFunc*>(work->data),
+-            [](DataContextWithFunc* ptr) {
++    const napi_ref methodIdentity = method;
++    const uint64_t eventSequence = callbackEventSequence.fetch_add(1) + 1;
++    std::shared_ptr<DataContextWithFunc> context(
++        new DataContextWithFunc { env_, method, isValid, std::move(getter), checkCallbackValid },
++        [eventSequence, methodIdentity](DataContextWithFunc* ptr) {
+             delete ptr;
+             ptr = nullptr;
++            SLOGI("AVCallback release event=%{public}llu ref=%{public}p",
++                static_cast<unsigned long long>(eventSequence), static_cast<void*>(methodIdentity));
+         });
++    CHECK_RETURN_VOID(context != nullptr, "no memory for uv_work_t");
++    auto task = [context, eventSequence, methodIdentity] {
++        AVSESSION_TRACE_SYNC_START("NapiAsyncCallback::AfterWorkCallbackWithFunc");
++        SLOGI("AVCallback begin event=%{public}llu ref=%{public}p",
++            static_cast<unsigned long long>(eventSequence), static_cast<void*>(methodIdentity));
+ 
+         napi_handle_scope scope = nullptr;
+         napi_open_handle_scope(context->env, &scope);
+@@ -171,30 +179,48 @@
+ 
+         if (!(*context->isValid)) {
+             SLOGE("AfterWorkCallbackWithFunc failed for context is invalid.");
++            SLOGI("AVCallback skip event=%{public}llu reason=object-invalid",
++                static_cast<unsigned long long>(eventSequence));
+             napi_close_handle_scope(context->env, scope);
+             return;
+         }
+         napi_value global {};
+         napi_get_global(context->env, &global);
+         napi_value function {};
++        SLOGI("AVCallback check event=%{public}llu phase=before-resolve",
++            static_cast<unsigned long long>(eventSequence));
+         if (!context->checkCallbackValid()) {
+             SLOGE("Get func reference failed for func has been deleted.");
++            SLOGI("AVCallback skip event=%{public}llu phase=before-resolve",
++                static_cast<unsigned long long>(eventSequence));
+             napi_close_handle_scope(context->env, scope);
+             return;
+         }
+         napi_get_reference_value(context->env, context->method, &function);
+         napi_value result;
++        SLOGI("AVCallback check event=%{public}llu phase=before-invoke",
++            static_cast<unsigned long long>(eventSequence));
+         if (!context->checkCallbackValid()) {
+             SLOGE("Call func failed for func has been deleted.");
+-            napi_close_handle_scope(context->env, scope);
+-            return;
+-        }
+-        if (napi_status::napi_ok != napi_call_function(context->env, global, function, argc, argv, &result)) {
++            SLOGI("AVCallback skip event=%{public}llu phase=before-invoke",
++                static_cast<unsigned long long>(eventSequence));
++            napi_close_handle_scope(context->env, scope);
++            return;
++        }
++        const napi_status callStatus = napi_call_function(context->env, global, function, argc, argv, &result);
++        SLOGI("AVCallback invoke-result event=%{public}llu ref=%{public}p status=%{public}d",
++            static_cast<unsigned long long>(eventSequence), static_cast<void*>(methodIdentity), callStatus);
++        if (napi_status::napi_ok != callStatus) {
+             SLOGE("call function failed");
+         }
+         napi_close_handle_scope(context->env, scope);
+     };
+-    if (napi_status::napi_ok != napi_send_event(env_, task, napi_eprio_immediate, callbackName.c_str())) {
++    SLOGI("AVCallback submit event=%{public}llu ref=%{public}p",
++        static_cast<unsigned long long>(eventSequence), static_cast<void*>(methodIdentity));
++    const napi_status submitStatus = napi_send_event(env_, task, napi_eprio_immediate, callbackName.c_str());
++    SLOGI("AVCallback submit-result event=%{public}llu ref=%{public}p status=%{public}d",
++        static_cast<unsigned long long>(eventSequence), static_cast<void*>(methodIdentity), submitStatus);
++    if (napi_status::napi_ok != submitStatus) {
+         SLOGE("CallWithFlag: napi_send_event fail");
+     }
+ }

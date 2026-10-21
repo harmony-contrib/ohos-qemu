@@ -19,10 +19,11 @@ COMPONENTS = (
     ('common/build/sanitizers/qemu_thin_cfi', 2),
     ('common/foundation/ability/ability_runtime/service_idle_startid', 18),
     ('common/applications/standard/settings_data/accessibility_notification_defaults', 2),
-    ('common/foundation/multimedia/av_session/qemu_panel_lifecycle', 3),
+    ('common/foundation/multimedia/av_session/qemu_panel_lifecycle', 4),
     ('common/applications/standard/settings/dnd_selection_ids', 3),
     ('common/applications/standard/calendardata/lifecycle579', 18),
     ('common/foundation/multimedia/audio_framework/playback_capture_consent579', 5),
+    ('common/foundation/arkui/ace_engine/native_dso_exports579', 1),
 )
 
 

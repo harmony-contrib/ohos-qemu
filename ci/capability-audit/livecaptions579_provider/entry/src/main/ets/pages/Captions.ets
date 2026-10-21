@@ -10,7 +10,7 @@ struct Captions {
   @LocalStorageLink('status') status: string = '正在准备本地字幕';
   @LocalStorageLink('fontScale') fontScale: number = 100;
   @LocalStorageLink('fontColor') fontColor: number | string = '#FFFFFFFF';
-  @LocalStorageLink('backgroundColor') backgroundColor: number | string = '#EE000000';
+  @LocalStorageLink('backgroundColor') captionBackgroundColor: number | string = '#EE000000';
 
   build() {
     Column({ space: 8 }) {
@@ -26,6 +26,6 @@ struct Captions {
           .fontSize(20 * Math.max(1, Math.min(this.fontScale, 200)) / 100)
           .fontColor(this.fontColor).width('100%')
       }.layoutWeight(1).width('100%')
-    }.padding(12).width('100%').height('100%').backgroundColor(this.backgroundColor).borderRadius(12)
+    }.padding(12).width('100%').height('100%').backgroundColor(this.captionBackgroundColor).borderRadius(12)
   }
 }

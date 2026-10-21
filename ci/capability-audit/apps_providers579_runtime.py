@@ -267,11 +267,16 @@ def run(guest, root_callbacks, parameters):
         elif case == 'cast':
             keep('distinct_real_peer', cb['network']('peer-binding', {}))
             call('grant', 'session-create')
-            request = start('grant', 'picker'); picture('cast_actual_provider')
-            touch('back'); finish('grant', request)
+            from apps_providers579_cast_lifecycle import run as run_cast_lifecycle
+            lifecycle = run_cast_lifecycle(callbacks=cb, start=start, finish=finish, touch=touch, keep=keep,
+                run_id=run_id, boot_id=prepared['boot_id'], archive_sha256=prepared['archive_sha256'])
+            result['failures'].extend('cast lifecycle: ' + failure for failure in lifecycle['failures'])
+            result['unresolved_requirements'].extend('cast lifecycle ' + item['boundary'] for item in lifecycle['uncovered'])
+            # The original peer/discovery business still runs after narrow
+            # lifecycle failures. Its paired media obligations remain required.
             call('grant', 'discover'); picture('cast_discovery')
             call('grant', 'cleanup')
-            observed('actual_cast_session_picker_cancel_discovery_slice')
+            observed('actual_cast_session_picker_cancel_discovery_slice', lifecycle=lifecycle)
         elif case == 'wifi':
             for role in ('normal', 'denied'):
                 values, _ = call(role, 'ap-start', errors=True); permission_boundary(values)

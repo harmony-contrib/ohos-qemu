@@ -8,8 +8,8 @@ from pathlib import Path
 import hashlib,importlib.util,json,posixpath,re,shlex,stat,struct,sys,tarfile
 
 CANONICAL=Path('/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit')
-BUILDER_SHA='9c4db163b28e934bb41c7e19806d71b25a9c230cd048ba1d7b6c1a31f1d94ead'
-CONTEXT_SHA='779eaf2980765daaa14b9325dda1f39cc69451697b6f79cd2f33c7a8f4b1e943'
+BUILDER_SHA='795506d2e9c42870df1e09d0595ad0476e5c24ea1a8a5548d1e6577ff9c9fddb'
+CONTEXT_SHA='e018bbb2f497e9cf1682e9b7ca847da937fd977daa532a5ab90a4cd497c4202a'
 SOURCE_SHA={'audio_global579_af': '4a28bd721db126fb4f376731a95fae88c6f6fd66b7ff4571886ccc01df9bfa0d',
  'audio_global579_control': '7e7f4216eefbedfe4b362020e2ec9c1042c415b7580401c59f00ab5852600bf1',
  'audio_global579_status': 'cc62775b775d67a4928bc329c8f8f921b8ae78d31a5b59e68edeb30a253894fe'}
@@ -233,8 +233,11 @@ def admit(proof,*,profile_descriptor,archive_sha256,domain):
         command,raw=table['global-clock-kernel-HEAD']
         need(command['argv']==head_argv and raw.read_text()==KERNEL_HEAD+'\n',
              'actual complete kernel HEAD raw differs from reviewed implementation')
+    normal=build['normal_link_contract'];need(review['normal_link_contract']==normal,'same actual normal link/CRT contract')
     expected_commands={'installed-runtime-stat-'+name for name in profile['dsos']}
     expected_commands.update(('actual-normal-executable-link-command','global-clock-kernel-HEAD'))
+    if normal.get('wrapper') is not None:
+        expected_commands.add('actual-normal-executable-input-edge')
     expected_commands.update(name+suffix for name in NAMES for suffix in ('-0-actual-GN-command','-compile','-link','-actual-ELF-ABI'))
     need(set(commands)==expected_commands and set(rechecked)=={name+'-actual-ELF-ABI' for name in NAMES}|{'global-clock-kernel-HEAD'} and
          all(row['cwd']=='/ohos/out/armv7a_virt' for table in (commands,rechecked) for row,_ in table.values()),
@@ -246,7 +249,6 @@ def admit(proof,*,profile_descriptor,archive_sha256,domain):
         row=dict(item);verified=row.pop('verified_log');label=row['label']
         need(label not in seen and label in commands and row==commands[label][0] and verified['sha256']==row['sha256'],
              'actual original raw compiler command replay differs');seen.add(label)
-    normal=build['normal_link_contract'];need(review['normal_link_contract']==normal,'same actual normal link/CRT contract')
     reference=checked(proof['abi_reference'])
     need(record(reference)['sha256']==normal['binary']['sha256'] and reference.stat().st_size==normal['binary']['bytes'] and
          product.elf_header(reference,executable=True,product='armv7a_virt',interpreter_path=normal['interpreter'])==normal['elf'] and
@@ -254,12 +256,24 @@ def admit(proof,*,profile_descriptor,archive_sha256,domain):
          'actual normal executable class/loader/full ARM EABI flags')
     query=commands['actual-normal-executable-link-command']
     need(query[0]['argv']==['/ohos/prebuilts/build-tools/linux-x86/bin/ninja','-w','dupbuild=warn','-C',
-         '/ohos/out/armv7a_virt','-t','commands','-s',normal['target']] and
-         query[1].read_text().splitlines()==[normal['actual_command']],'actual printed normal link command')
-    normal_words=shlex.split(normal['actual_command'])
-    need(product.compiler_target(normal_words)==normal['compiler_target'] and
-         product.abi_options(normal_words)==normal['abi_options'] and product.effective_cfi(normal_words),
-         'normal target/float-call ABI/CFI cannot be guessed')
+         '/ohos/out/armv7a_virt','-t','commands','-s',normal['target']],
+         'actual printed normal link query argv')
+    if normal.get('wrapper') is not None:
+        edge=commands['actual-normal-executable-input-edge']
+        need(edge[0]['argv']==['/ohos/prebuilts/build-tools/linux-x86/bin/ninja','-w','dupbuild=warn','-C',
+             '/ohos/out/armv7a_virt','-t','query',normal['target']], 'actual normal input-edge query argv')
+    def normal_artifact(ref):
+        need(type(ref) is dict and set(ref) in ({'path','sha256'},{'path','sha256','bytes'}),
+             'actual retained normal-link Ref2/Ref3')
+        path=relocate(ref['path'],BUILD_ORIGIN,bp.parent)
+        need(digest(path)==ref['sha256'] and ('bytes' not in ref or path.stat().st_size==ref['bytes']),
+             'actual retained normal-link raw bytes changed')
+        return path
+    # The fixed reader binds both real stdout/stderr streams, source/rule cut,
+    # explicit response inputs, primary ELF and all three CRTs. Normal PIE CFI
+    # is observed only; the original helper C GN/CFI/LTO/ABI gate below remains.
+    need(artifact_context_module().replay_normal_link(build,normal_artifact)==normal,
+         'complete actual normal-link stdout/stderr/rule/CRT/ABI raw replay differs')
     need([Path(r['path']).name for r in normal['CRT']]==['Scrt1.o','crti.o','crtn.o'] and
          len({str(Path(r['path']).parent) for r in normal['CRT']})==1,'actual normal CRT directory/order')
     tools={};all_needed=set()

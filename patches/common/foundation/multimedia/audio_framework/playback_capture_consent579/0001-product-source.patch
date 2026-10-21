@@ -123,11 +123,19 @@
  #include <mutex>
 +#include <atomic>
 +#include <chrono>
-+#include "audio_privacy_ui_ext_connection.h"
++#include "refbase.h"
  #include "i_capturer_stream.h"
  #include "i_stream_listener.h"
  #include "oh_audio_buffer.h"
-@@ -105,7 +108,9 @@
+@@ -29,6 +32,7 @@
+ 
+ namespace OHOS {
+ namespace AudioStandard {
++class AudioPrivacyUIExtConnection;
+ class CapturerInServer : public IStatusCallback, public IReadCallback, public IHandler,
+     public std::enable_shared_from_this<CapturerInServer> {
+ public:
+@@ -105,7 +109,9 @@
      void ReportNoBgPermissionEvent();
      void ReportOverflowEvent();
      int32_t StartPrivacyConfirmDialog(uint32_t sessionId);
@@ -138,7 +146,7 @@
      int32_t CheckForReadData(size_t length, uint64_t currentWriteFrame);
      int32_t CheckForOnReadData(size_t requestDataLen, uint64_t currentWriteFrame);
      void RefreshServerBufferForSpanSizeUpdate(std::shared_ptr<IStreamListener> stateListener);
-@@ -165,7 +170,13 @@
+@@ -165,7 +171,13 @@
      std::atomic<IStatus> lastStatus_ = I_STATUS_IDLE;
      std::atomic<bool> lastOverflowStatus_ = false;
      std::shared_ptr<AudioStreamChecker> audioStreamChecker_ = nullptr;
@@ -149,7 +157,7 @@
 +    bool privacyAuthorityCompleting_ = false;
 +    bool privacyAuthorityReleased_ = false;
 +    std::chrono::steady_clock::time_point privacyAuthorityDeadline_;
-+    sptr<AudioPrivacyUIExtConnection> privacyUiConnection_ = nullptr;
++    sptr<AudioPrivacyUIExtConnection> privacyUiConnection_;
  
      std::mutex runnerMutex_;
      std::shared_ptr<CallbackHandler> callbackHandler_ = nullptr;
@@ -166,7 +174,15 @@
  }
 --- a/foundation/multimedia/audio_framework/services/audio_service/server/src/capturer_in_server.cpp
 +++ b/foundation/multimedia/audio_framework/services/audio_service/server/src/capturer_in_server.cpp
-@@ -1045,6 +1045,7 @@
+@@ -72,6 +72,7 @@
+ }
+ 
+ CapturerInServer::CapturerInServer(AudioProcessConfig processConfig, std::weak_ptr<IStreamListener> streamListener)
++    : privacyUiConnection_(nullptr)
+ {
+     processConfig_ = processConfig;
+     streamListener_ = streamListener;
+@@ -1045,6 +1046,7 @@
  {
      AudioXCollie audioXCollie("CapturerInServer::Release", RELEASE_TIMEOUT_IN_SEC,
          nullptr, nullptr, AUDIO_XCOLLIE_FLAG_LOG | AUDIO_XCOLLIE_FLAG_RECOVERY);
@@ -174,7 +190,7 @@
      AudioService::GetInstance()->RemoveCapturer(streamIndex_, isSwitchStream);
      ReleaseCallbackHandler();
      std::unique_lock<std::mutex> lock(statusLock_);
-@@ -1209,32 +1210,36 @@
+@@ -1209,32 +1211,36 @@
  
  int32_t CapturerInServer::RequestUserPrivacyAuthority(uint32_t sessionId)
  {
@@ -232,7 +248,7 @@
      return SUCCESS;
  }
  
-@@ -1397,73 +1402,121 @@
+@@ -1397,73 +1403,121 @@
  
  int32_t CapturerInServer::StartPrivacyConfirmDialog(uint32_t sessionId)
  {

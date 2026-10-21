@@ -3054,6 +3054,17 @@ PY
   echo "full ${DEVICE_TYPE} source profile and runtime artifacts verified for ${product}"
 }
 
+verify_arkui_native_dso_exports579_source() {
+  case "${DEVICE_TYPE_PROFILE}" in
+    qemu_phone_full_source|qemu_2in1_full_source) ;;
+    *) return 0 ;;
+  esac
+  # Exact product source identity only; behavior acceptance stays in new QEMU.
+  bash "${SCRIPT_DIR}/../patches/common/foundation/arkui/ace_engine/native_dso_exports579/apply.sh" \
+    --source-root "${SOURCE_ROOT}" --require-final \
+    > "${SOURCE_ROOT}/out/${PRODUCT}/arkui-native-dso-exports579-source.log"
+}
+
 verify_audio_accepted_write_source() {
   case "${DEVICE_TYPE_PROFILE}" in
     qemu_phone_full_source|qemu_2in1_full_source) ;;
@@ -3201,6 +3212,7 @@ case "${PRODUCT}" in
 esac
 
 verify_ace_cfi_native_closure
+verify_arkui_native_dso_exports579_source
 verify_audio_accepted_write_source
 verify_sonic_defined_arithmetic_source
 verify_audio_resampler_counts_source

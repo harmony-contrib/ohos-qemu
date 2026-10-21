@@ -40,10 +40,16 @@ def replay_normal_link(report, artifact):
         need(selected == product.PRODUCT, 'nondefault actual normal-link raw chain missing')
         return None
     copies = report.get('normal_link_artifacts')
-    need(type(copies) is dict and set(copies) == {'binary', '0', '1', '2'},
-         'actual retained normal executable and all three CRTs required')
     expected = {'binary': normal['binary'], **{str(i): row for i, row in enumerate(normal['CRT'])}}
     need(len(normal['CRT']) == 3, 'original exact normal-link CRT grammar required')
+    wrapper = normal.get('wrapper')
+    if wrapper is not None:
+        need(type(wrapper) is dict and wrapper.get('schema') == 'actual-normal-gcc-link-wrapper579/v1' and
+             len(wrapper.get('grammar_sources', [])) == len(product.NORMAL_LINK_GRAMMAR579),
+             'fixed official wrapper grammar-source vector required')
+        expected.update({'grammar' + str(i): row for i, row in enumerate(wrapper['grammar_sources'])})
+    need(type(copies) is dict and set(copies) == set(expected),
+         'actual retained normal executable/three CRTs/selected grammar sources required')
     source_paths = {}
     for key, source in expected.items():
         row = copies[key]
@@ -66,12 +72,48 @@ def replay_normal_link(report, artifact):
          'actual normal executable query argv/status differs')
     # The query actually has nine argv entries including its literal driver.
     # Do not infer it from a success summary: the complete log is replayed.
-    query = Path(artifact({'path': command['log'], 'sha256': command['sha256']}))
-    need(product.sha(query) == command['sha256'], 'actual normal Ninja query raw changed')
+    stdout_ref, stderr_ref = product.normal_query_streams579(command)
+    retained_streams = []
+    for raw in (stdout_ref, stderr_ref):
+        path = Path(artifact(raw))
+        need(product.sha(path) == raw['sha256'] and path.stat().st_size == raw['bytes'],
+             'actual complete normal stdout/stderr stream changed')
+        retained_streams.append(path)
+    query = retained_streams[0]
     need(report['build_directory'] == str(Path(report['source_root']) / 'out' / selected),
          'normal source/out product differs')
-    words = product.shlex.split(normal['actual_command'])
-    need(words and Path(words[0]).name in ('clang', 'clang++'), 'actual original normal driver required')
+    edge_text = None; rule_observation = None
+    if wrapper is not None:
+        edge_rows = [row for row in report['commands'] if row['label'] == 'actual-normal-executable-input-edge']
+        need(len(edge_rows) == 1, 'one original actual normal input-edge query required')
+        edge_row = edge_rows[0]
+        need(type(edge_row.get('exit_code')) is int and edge_row['exit_code'] == 0 and
+             not edge_row.get('timed_out') and edge_row['cwd'] == report['build_directory'] and
+             edge_row['argv'] == [argv[0], '-w', 'dupbuild=warn', '-C', report['build_directory'],
+                                  '-t', 'query', normal['target']],
+             'actual normal input-edge query argv/status differs')
+        edge_stdout, edge_stderr = product.normal_query_streams579(edge_row)
+        retained_edge_streams = []
+        for raw in (edge_stdout, edge_stderr):
+            path = Path(artifact(raw))
+            need(product.sha(path) == raw['sha256'] and path.stat().st_size == raw['bytes'],
+                 'actual complete normal edge stdout/stderr stream changed')
+            retained_edge_streams.append(path)
+        edge_text = retained_edge_streams[0].read_text()
+        rule_artifact = report.get('normal_link_rule_artifact')
+        need(type(rule_artifact) is dict and set(rule_artifact) == {'source', 'retained'} and
+             rule_artifact['source'] == wrapper['generated_rule'], 'generated rule cut identity differs')
+        meta = rule_artifact['source']; source = meta['source']
+        need(report['inputs'].get(source['path']) == source and
+             source['path'] == str(Path(report['build_directory']) / 'toolchain.ninja') and
+             source['path'] not in source_paths, 'actual full toolchain input identity differs')
+        rule_raw = Path(artifact(rule_artifact['retained']))
+        need(product.sha(rule_raw) == meta['sha256'] == rule_artifact['retained']['sha256'] and
+             rule_raw.stat().st_size == meta['bytes'] == rule_artifact['retained']['bytes'],
+             'retained bounded generated rule cut changed')
+        source_paths[source['path']] = (source, None)
+        rule_observation = {'source': source, 'first_line': meta['first_line'],
+            'last_line': meta['last_line'], 'text': rule_raw.read_text()}
     tools = report['normal_link_tools']
     need(set(tools) == {'compiler', 'c_compiler', 'ninja'}, 'actual normal query tool identities missing')
     for name, tool in tools.items():
@@ -90,6 +132,8 @@ def replay_normal_link(report, artifact):
             self.compiler = Path(tools['compiler']['literal'])
             self.c_compiler = Path(tools['c_compiler']['literal'])
             self.installed_runtime = report['installed_runtime_profile']
+            self.normal_link_edge_text = edge_text
+            self.normal_link_rule_observation = rule_observation
 
         def remember(self, path):
             key = str(Path(path))
@@ -98,7 +142,8 @@ def replay_normal_link(report, artifact):
 
         def read_normal_file(self, path):
             key = str(Path(path))
-            need(key in source_paths, 'normal parser requested unretained executable bytes')
+            need(key in source_paths and source_paths[key][1] is not None,
+                 'normal parser requested unretained executable bytes')
             return source_paths[key][1]
 
     rebuilt = product.Builder.normal_link_contract(Readback(), normal['target'], query.read_text())
