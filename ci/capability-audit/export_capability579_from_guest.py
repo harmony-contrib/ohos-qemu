@@ -13,6 +13,7 @@ import shlex
 from assemble_capability579_inputs import (PROVIDERS, checked_ref,
     document, hap_metadata, json_ref, raw, ref, require)
 from hdc_transport import failed as hdc_failed
+from production579_target import context as package_context
 
 COMMON = {'archive', 'source_commit', 'package_receipt', 'build_inputs', 'package_manifest'}
 SYSTEM_HAP_PREFIXES = ('/system/app/', '/system_ext/app/', '/sys_prod/app/')
@@ -168,10 +169,11 @@ class Export:
             require((guest.directory / filename).read_bytes() == raw(self.common[key]),
                 'supplied metadata does not equal the actual archive-extracted guest file')
         manifest = json_ref(self.common['package_manifest'])
-        require(manifest['product'] == guest.report['test_environment']['product'] == 'arm64_virt' and
-            manifest['guest_arch'] == guest.report['test_environment']['guest_arch'] == 'arm64' and
-            manifest['device_type'] == guest.report['test_environment']['device_type'],
+        actual = package_context(manifest); environment = guest.report['test_environment']
+        require(actual['product'] == environment['product'] and actual['arch'] == environment['guest_arch'] and
+            actual['device'] == environment['device_type'] == guest.device and actual['arch'] == guest.arch,
             'actual package/held guest product, architecture and profile differ')
+        self.library_directory = 'lib' if actual['arch'] == 'armv7a' else 'lib64'
         initial = guest.report['initial_package_file_sha256']
         require(initial['build-inputs.json'] == self.common['build_inputs']['sha256'] and
             initial['manifest.json'] == self.common['package_manifest']['sha256'] and
@@ -202,7 +204,7 @@ class Export:
             return self.haps[remote]['hap']
         self.boot(); quoted = shlex.quote(remote)
         resolved = self.shell('readlink -f ' + quoted, kind + '_resolved')['stdout'].strip()
-        self.path(resolved, ('/system/', '/vendor/', '/system_ext/', '/sys_prod/', '/app/', '/lib64/', '/etc/'))
+        self.path(resolved, ('/system/', '/vendor/', '/system_ext/', '/sys_prod/', '/app/', '/' + self.library_directory + '/', '/etc/'))
         mount = package_mount(resolved, self.mounts)
         stat_script = 'test -f ' + quoted + ' && stat -Lc ' + shlex.quote('%d:%i:%s:%u:%g:%a:%F') + ' ' + quoted
         first = self.shell(stat_script, kind + '_stat_before')['stdout'].strip()
@@ -306,7 +308,7 @@ class Export:
         for name in sorted(required):
             path = spec['library_paths'][name]
             require(type(path) is str and PurePosixPath(path).name == name and
-                re.fullmatch(r'/(?:system|vendor)/lib64/(?:[A-Za-z0-9_.-]+/)*' + re.escape(name), path),
+                re.fullmatch(r'/(?:system|vendor)/' + self.library_directory + r'/(?:[A-Za-z0-9_.-]+/)*' + re.escape(name), path),
                 'root actual selected DSO path required; no basename search/default')
             actual = self.file(path, 'dso', 256 * 1024 * 1024)
             libraries[name] = {'guest_path': path, 'file': actual}

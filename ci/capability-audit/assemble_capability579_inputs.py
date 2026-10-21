@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Assemble fixed input DATA after root's genuine representative package build.
+"""Assemble fixed input DATA after root's genuine selected package build.
 
 No Owner, tools, subprocess, SDK, signer, VM, HDC, QMP, archive extraction,
 network, caller compilation or capability verdict. Root supplies real immutable
-exports. Actual installed BMS/HAP/API/UI/frames/callbacks and cleanup are checked
+exports. A single bounded archive manifest is read without extracting files.
+Actual installed BMS/HAP/API/UI/frames/callbacks and cleanup are checked
 later by the original held-guest stage, never by this input assembler.
 """
 import argparse
@@ -13,6 +14,9 @@ from pathlib import Path, PurePosixPath
 import re
 import stat
 import zipfile
+
+from production579_target import archive_manifest, context as package_context
+from batch_system_build_runtime_helpers import target_spec, validate_installed_profile
 
 ASR_RUNTIME_SHA = 'bf465a9dd0296023d7b9c7703e76acf9e174f6049eaa8eb207eb3b9c86faa517'
 ASR_ASSETS_SHA = '601c869bb39fc8cc3aff277a37a65618dd9f406074ad1530b58b8be34366bc95'
@@ -83,6 +87,13 @@ CONSUMERS = (
     'ci/capability-audit/apn579_owned_oracle.py',
     'ci/capability-audit/apps_paired579_bindings.py',
     'ci/capability-audit/apps_paired579_runtime.py',
+    'ci/capability-audit/production579_target.py',
+    'ci/capability-audit/livecaptions579_inputs.py',
+    'ci/capability-audit/livecaptions579_arm32_contract.py',
+    'ci/capability-audit/livecaptions579_arm32_sources.py',
+    'ci/capability-audit/livecaptions579_arm32_production.py',
+    'ci/capability-audit/livecaptions579_native.py',
+    'scripts/build_livecaptions579_arm32.py',
 )
 COMMON = {'archive', 'source_commit', 'package_receipt', 'build_inputs'}
 
@@ -237,24 +248,35 @@ def provider_inputs(export):
     return providers, captions, declarations
 
 
-def elf_arm64(value, shared=False):
-    data = raw(value)
-    require(len(data) >= 64 and data[:6] == b'\x7fELF\x02\x01' and
-        int.from_bytes(data[18:20], 'little') == 183 and
+def elf_target(value, target, shared=False):
+    data = raw(value); spec = target_spec(target['product'])
+    bits = spec['class']; minimum = 52 if bits == 32 else 64
+    require(len(data) >= minimum and data[:4] == b'\x7fELF' and
+        data[4:7] == bytes((1 if bits == 32 else 2, 1, 1)) and
+        int.from_bytes(data[18:20], 'little') == spec['machine'] and
         int.from_bytes(data[16:18], 'little') in ((3,) if shared else (2, 3)),
-        'actual ARM64 product helper/addon ELF required; no host or foreign-ABI fallback')
+        'actual selected product helper/addon ELF required; no host or foreign-ABI fallback')
+    if bits == 32:
+        require(int.from_bytes(data[36:40], 'little') & 0xff000000 == 0x05000000,
+            'actual ARM ELF EABI5 header required; float ABI still comes from normal link receipts')
 
 
-def native_inputs(export, package, root, build):
+def native_inputs(export, package, root, build, target):
     common(export, 'actual-root-capability579-native-export/v1', package)
     require(set(export) == COMMON | {'schema', 'build'}, 'fixed original helper batch export required')
     build_ref = checked_ref(export['build']); report = json_ref(build_ref)
     require(report.get('status') == 'pass_compile_link_ONLY' and report.get('plan_only') is False and
-        report.get('product') == 'arm64_virt' and type(report.get('helpers')) is dict and
+        report.get('product') == target['product'] and type(report.get('helpers')) is dict and
         set(HELPERS) <= set(report['helpers']) and report.get('commands') and
         report.get('first_artifact_behavior_gate_passed') is False,
         'actual original completed product helper build required; plan/recheck/runtime summaries cannot replace it')
     runtime = report['installed_runtime_profile']['profile']
+    validate_installed_profile(runtime, archive_sha256=package['archive']['sha256'])
+    require(runtime['product'] == target['product'] and runtime['arch'] == target['arch'] and
+        runtime['device'] == target['device'], 'helper installed-runtime product/arch/device differs')
+    if (target['product'], target['device']) != ('arm64_virt', 'phone'):
+        require(runtime['schema_version'] == 2,
+            'later target requires the real full package-metadata installed profile, never a relabeled v1')
     require(checked_ref({key: runtime['archive'][key] for key in ('path', 'sha256')}) == package['archive'],
         'native helpers were built against another package installed-runtime profile')
     require(report['builder_sha256'] == recipe(root, 'ci/capability-audit/batch_system_build_runtime_helpers.py', build)['sha256'],
@@ -270,26 +292,27 @@ def native_inputs(export, package, root, build):
             row.get('status') == 'pass_compile_link_ONLY' and row.get('runtime_validated') is False and
             row.get('CFI_preserved') is True, 'actual fixed source/ABI-preserving helper build missing: ' + name)
         binary = checked_ref({'path': row['binary'], 'sha256': row['binary_sha256']})
-        elf_arm64(binary, shared=name == 'settings_idle579_napi')
+        elf_target(binary, target, shared=name == 'settings_idle579_napi')
         helpers[name] = {'binary': binary, 'build': build_ref}
     wifi = dict(helpers['apps579_wifi_peer'], source=checked_ref({key: report['helpers']['apps579_wifi_peer']['source'][key]
-        for key in ('path', 'sha256')}), abi='arm64')
+        for key in ('path', 'sha256')}), abi=target['arch'])
     native = {'communications578': {'at_peer': helpers['communications578_at_peer'],
         'permission_controller': helpers['communications578_permission_controller']}, 'apps579_wifi': wifi}
     native['apn579'] = {'modem_peer': helpers['apn579_modem_peer']}
     for key, name in (('apps_paired579', 'apps_paired579_net'), ('apps_paired579_alsa', 'alsa_inject')):
         native[key] = dict(helpers[name], source=checked_ref({field: report['helpers'][name]['source'][field]
-            for field in ('path', 'sha256')}), abi='arm64')
-    addons = {'settings_idle579': dict(helpers['settings_idle579_napi'], abi='arm64-v8a')}
+            for field in ('path', 'sha256')}), abi=target['arch'])
+    addons = {'settings_idle579': dict(helpers['settings_idle579_napi'], abi=target['abi'])}
     return native, addons, build_ref
 
 
-def services_inputs(export, package):
+def services_inputs(export, package, target):
     common(export, 'actual-root-capability579-services-export/v1', package)
     require(set(export) == COMMON | {'schema', 'services', 'init_files', 'library_files'} and
         set(export['services']) == set(export['init_files']) == {'ril', 'bluetooth'} and
         type(export['library_files']) is dict, 'both actual original init/service exports required')
     result = {}
+    library_directory = 'lib' if target['arch'] == 'armv7a' else 'lib64'
     used_libraries = set()
     for kind in ('ril', 'bluetooth'):
         value = export['services'][kind]
@@ -321,22 +344,41 @@ def services_inputs(export, package):
             used_libraries.add(library)
             item = export['library_files'][library]
             require(set(item) == {'guest_path', 'file'} and
-                re.fullmatch(r'/(?:system|vendor)/lib64/(?:[A-Za-z0-9_.+-]+/)*' + re.escape(library), item['guest_path']),
+                re.fullmatch(r'/(?:system|vendor)/' + library_directory + r'/(?:[A-Za-z0-9_.+-]+/)*' +
+                    re.escape(library), item['guest_path']),
                 'actual packaged service DSO location required')
-            elf_arm64(item['file'], shared=True)
+            elf_target(item['file'], target, shared=True)
         result[kind] = value
     require(set(export['library_files']) == used_libraries, 'unexpected or missing service library export')
     return result
 
 
-def caption_inputs(runtime_ref, assets_ref, archive, provider):
+def caption_inputs(runtime_ref, assets_ref, package, provider, target):
     runtime_ref, assets_ref = checked_ref(runtime_ref), checked_ref(assets_ref)
-    require(runtime_ref['sha256'] == ASR_RUNTIME_SHA and assets_ref['sha256'] == ASR_ASSETS_SHA,
-        'exact root-produced r66 caption input DATA required; no generated expected transcript')
+    require(runtime_ref['sha256'] == ASR_RUNTIME_SHA,
+        'exact root-produced r66 speech DATA required; no generated expected transcript')
     value, assets = json_ref(runtime_ref), json_ref(assets_ref)
-    require(assets['language'] == 'en' and assets['model'] == 'whisper-tiny.en' and
-        checked_ref(value['admission']) == assets_ref and set(value['speech']) == {'a', 'b'} and
-        set(value['libraries']['arm64-v8a']) == LIBRARIES, 'actual admitted English model/speech closure required')
+    base_ref = checked_ref(value['admission'])
+    require(base_ref['sha256'] == ASR_ASSETS_SHA and set(value['speech']) == {'a', 'b'},
+        'exact original admitted two-speaker English data required')
+    require(assets['language'] == 'en' and assets['model'] == 'whisper-tiny.en',
+        'actual fixed English model required; no alternative model or language')
+    abi = target['abi']
+    if abi == 'armeabi-v7a':
+        # This is production provenance replay, not an inference/capability test.
+        # Missing actual ARM32 compilation, full four-DSO HAR, raw commands or
+        # final original Owner35 cleanup remains a hard input failure.
+        from livecaptions579_arm32_contract import admit
+        native_build = admit(assets)
+        require(native_build['base_assets'] == json_ref(base_ref) and
+            native_build['source_commit'] == package['source_commit'],
+            'ARM32 ASR production must preserve r66 base data and use this actual package source commit')
+        require(set(native_build['libraries']) == LIBRARIES, 'complete actual ARM32 four-DSO production required')
+        libraries = {name: checked_ref(row['file']) for name, row in native_build['libraries'].items()}
+    else:
+        require(assets_ref == base_ref and set(value['libraries'][abi]) == LIBRARIES,
+            'unchanged actual two-ABI HAR/r66 asset vector and selected ABI libraries required')
+        libraries = {name: checked_ref(item) for name, item in value['libraries'][abi].items()}
     for group in ('assets', 'licenses'):
         for item in assets[group].values():
             checked_ref(item)
@@ -347,19 +389,20 @@ def caption_inputs(runtime_ref, assets_ref, archive, provider):
             'unchanged actual r66 speech DATA required')
         for field in ('audio', 'license', 'groundtruth'):
             checked_ref(item[field])
-    libraries = {name: checked_ref(item) for name, item in value['libraries']['arm64-v8a'].items()}
+    for item in libraries.values():
+        elf_target(item, target, shared=True)
     with zipfile.ZipFile(provider['path']) as hap:
         for library, item in libraries.items():
-            require(hap.read('libs/arm64-v8a/' + library) == raw(item),
-                'new selected caption provider contains different native inference bytes')
+            require(hap.read('libs/' + abi + '/' + library) == raw(item),
+                'new selected caption provider contains different selected-ABI inference bytes')
         for name, member in {'encoder': 'resources/rawfile/sherpa-onnx-whisper-tiny.en/tiny.en-encoder.int8.onnx',
             'decoder': 'resources/rawfile/sherpa-onnx-whisper-tiny.en/tiny.en-decoder.int8.onnx',
             'tokens': 'resources/rawfile/sherpa-onnx-whisper-tiny.en/tiny.en-tokens.txt',
             'vad': 'resources/rawfile/silero_vad.onnx', 'notices': 'resources/rawfile/LIVE_CAPTIONS_NOTICES.txt'}.items():
             require(hashlib.sha256(hap.read(member)).hexdigest() == assets['assets'][name]['sha256'],
                 'new selected caption provider model/notices bytes differ')
-    return {'archive_sha256': archive['sha256'], 'language': 'en', 'model': 'whisper-tiny.en',
-        'abi': 'arm64-v8a', 'admission': assets_ref, 'provider_hap': provider,
+    return {'archive_sha256': package['archive']['sha256'], 'language': 'en', 'model': 'whisper-tiny.en',
+        'abi': abi, 'admission': assets_ref, 'provider_hap': provider,
         'libraries': libraries, 'speech': value['speech']}
 
 
@@ -374,9 +417,13 @@ def assemble(request_ref, recipes, profile, output):
     require(build.get('schema_version') == 1 and build.get('source_git_revision') == package['source_commit'] and
         type(build.get('files_sha256')) is dict and build['tree_sha256'] == hashlib.sha256(
             json.dumps(build['files_sha256'], sort_keys=True).encode()).hexdigest(), 'actual complete build-input vector differs')
-    manifest = json_ref(package_export['package_manifest'])
-    require(manifest['product'] == 'arm64_virt' and manifest['guest_arch'] == 'arm64' and
-        manifest['device_type'] == profile, 'this finite native addon is only the actual ARM64 phone/2in1 representative')
+    manifest_ref = checked_ref(package_export['package_manifest'])
+    manifest = json_ref(manifest_ref)
+    actual_manifest = archive_manifest(package['archive']['path'])
+    target = package_context(manifest)
+    require(actual_manifest['document'] == manifest and actual_manifest['sha256'] == manifest_ref['sha256'] and
+        target == actual_manifest['context'] and target['device'] == profile,
+        'exported manifest/actual archive target/profile differ; target labels cannot relabel an old package')
     require(recipes.is_absolute() and recipes.resolve() == recipes and recipes.is_dir() and
         not any(path.is_symlink() for path in (recipes, *recipes.parents)), 'actual frozen recipe directory required')
     pinned = {name: recipe(recipes, name, build) for name in CONSUMERS}
@@ -393,20 +440,20 @@ def assemble(request_ref, recipes, profile, output):
             checked_ref(source)
         ui_plans[case] = item
     providers, captions, declarations = provider_inputs(package_export)
-    native, addons, helper_build = native_inputs(json_ref(request['native_export']), package, recipes, build)
-    services = services_inputs(json_ref(request['services_export']), package)
+    native, addons, helper_build = native_inputs(json_ref(request['native_export']), package, recipes, build, target)
+    services = services_inputs(json_ref(request['services_export']), package, target)
     permission = request['permission_ui']
     require(type(permission) is dict and set(permission) == {'allow_text', 'source'} and
         type(permission['allow_text']) is str and 0 < len(permission['allow_text']) <= 128 and
         '\n' not in permission['allow_text'] and checked_ref(permission['source']),
         'root actual source-backed permission UI selector required; no default Allow label')
-    captions = caption_inputs(request['caption_runtime_data'], request['caption_product_assets'], package['archive'], captions)
+    captions = caption_inputs(request['caption_runtime_data'], request['caption_product_assets'], package, captions, target)
     value = {'schema': 'actual-qemu-capability578-inputs/v1', 'source_commit': package['source_commit'],
         'archive': package['archive'], 'providers': providers, 'native_helpers': native,
         'native_addons': addons, 'ui_plans': ui_plans, 'communications_services': services,
         'permission_allow_text': permission['allow_text'], 'livecaptions579': captions}
     provenance = {'schema': 'actual-root-capability579-input-assembly/v1', 'request': request_ref,
-        'package': package, 'package_manifest': checked_ref(package_export['package_manifest']),
+        'package': package, 'package_manifest': manifest_ref, 'actual_target': target,
         'package_export': checked_ref(request['package_export']), 'native_export': checked_ref(request['native_export']),
         'services_export': checked_ref(request['services_export']), 'helper_build': helper_build,
         'caption_runtime_data': checked_ref(request['caption_runtime_data']),

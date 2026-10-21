@@ -2,7 +2,7 @@
 
 No boot/attach/process launcher exists here. Root must explicitly add the
 reviewed callable seam to run_packaged_qemu_suite.run, then inject this stage.
-Old four-family plan/verifiers and the first-artifact gate are unchanged.
+Original family verifiers and the first-artifact gate are unchanged.
 """
 import importlib.util
 import json
@@ -19,7 +19,8 @@ import batch_apps_contact_picker_coordinator as signing
 from enclosing_acceptance_guest import validate_binding
 from guest_ui import command_exit
 from hdc_transport import failed as transport_failed
-from parallel_runtime_suite import FAMILIES, boot_copy, load_plan, representative, verify_family
+from parallel_runtime_suite import (FAMILIES, applicable_families, boot_copy, load_plan,
+    supported_environment, verify_family)
 from batch_network_openvpn_runtime_collect import capture_snapshot
 
 ROOT = Path('/Volumes/PSSD/code/ohos-rs/ohos-qemu')
@@ -71,10 +72,10 @@ def validate_owner(guest, suite_report, archive, suite_work, held_binding):
     require(suite_report.get('package', {}).get('sha256') == project.sha(archive) == guest.report.get('archive_sha256'),
             'new archive bytes differ from original owned boot')
     env = validate_binding(guest.report, project.sha(archive))
-    require(representative(env) and suite_report.get('test_environment') == env and
+    require(supported_environment(env) and suite_report.get('test_environment') == env and
             env.get('target') == guest.target and env.get('udid') == guest.udid and
             type(env.get('qemu_pid')) is int and env['qemu_pid'] > 0 and guest.process.poll() is None,
-            'actual same representative process/environment required')
+            'actual same finite full-source process/environment required')
     guest.healthy()
     return env
 
@@ -93,7 +94,7 @@ class Stage:
         self.owned_family_verifier = owned_family_verifier
         self.env = validate_owner(guest, suite_report, self.archive, self.work, self.held_binding)
         self.capability_inputs = project.regular(capability_inputs)
-        self.plan = load_plan(self.capability_inputs, self.env)  # original exact four keys
+        self.plan = load_plan(self.capability_inputs, self.env)  # exact applicable family keys
         self.challenge = project.regular(challenge); project.load_challenge(self.challenge)
         require(type(role_inputs) is dict and set(role_inputs) == set(project.ROLES) and all(
                 set(row) == {'source_project', 'sdk_evidence', 'unsigned_hap'} for row in role_inputs.values()),
@@ -148,9 +149,9 @@ class Stage:
         return body, row
 
     def verify_four_finished(self):
-        # Conservative integration point: require all four original strict
-        # verifiers/cleanup before this additional stage touches shared UI.
-        for name in FAMILIES:
+        # Require every applicable original strict verifier/cleanup before
+        # this additional stage touches shared UI; phone still requires all four.
+        for name in applicable_families(self.env):
             evidence = self.work / name / 'evidence.json'
             parent = self.parent.get('checks', {}).get(name, {})
             require(parent.get('status') == 'pass' and parent.get('evidence') == str(evidence) and

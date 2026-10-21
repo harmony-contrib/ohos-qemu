@@ -204,10 +204,11 @@ def run(args, *, owned_command=None, owned_guest_factory=None, owned_select_hook
         report['backend_inventory'] = {'evidence': str(inventory_path),
             'sha256': checksum(inventory_path), 'not_a_behavior_check': True}
         save()
-        from parallel_runtime_suite import (FAMILIES, TIMEOUTS, argv as capability_argv,
-            boot_copy, load_plan, representative, verify_family)
+        from parallel_runtime_suite import (TIMEOUTS, argv as capability_argv, applicable_families,
+            boot_copy, load_plan, supported_environment, verify_family)
         completed_capability_probes = []  # Appended only after original after-health returns.
-        if representative(environment):
+        capability_families = applicable_families(environment)
+        if supported_environment(environment):
             capability_plan = None
             plan_error = None
             try:
@@ -217,7 +218,7 @@ def run(args, *, owned_command=None, owned_guest_factory=None, owned_select_hook
                     'sha256': checksum(Path(configured)), 'scope': 'prebuilt_inputs_NOT_behavior_evidence'}
             except (OSError, ValueError, KeyError, TypeError) as error:
                 plan_error = str(error)
-            for family in FAMILIES:
+            for family in capability_families:
                 output = work / family
                 previous_command_count = len(report['commands'])
                 def capability_health(label):
@@ -247,24 +248,24 @@ def run(args, *, owned_command=None, owned_guest_factory=None, owned_select_hook
                 completed_capability_probes.append(family)
         # Fixed root callable only: data plans cannot name executable hooks.
         if owned_select_hook is not None:
-            if not representative(environment):
-                raise ValueError('owned select hook requires the representative actual guest')
+            if not supported_environment(environment):
+                raise ValueError('owned select hook requires a finite actual full-source guest')
             same_guest('before-owned-select375')
-            not_passed = [name for name in FAMILIES if report['checks'].get(name, {}).get('status') != 'pass']
+            not_passed = [name for name in capability_families if report['checks'].get(name, {}).get('status') != 'pass']
             if not_passed:
                 # No Select operation is dispatched here. Reaching each append
                 # requires the original probe's actual after-health/cleanup return.
                 probes = report.get('independent_probes', {})
-                if (completed_capability_probes != list(FAMILIES) or not report['failures'] or
+                if (completed_capability_probes != list(capability_families) or not report['failures'] or
                         any(probes.get(name, {}).get('status') not in ('pass', 'fail') or
-                            'fatal_health_error' in probes.get(name, {}) for name in FAMILIES) or
+                            'fatal_health_error' in probes.get(name, {}) for name in capability_families) or
                         any(probes[name]['status'] != 'fail' for name in not_passed)):
                     raise ValueError('Select prerequisite failure lacks original completed healthy family probes')
                 deferred = dict(scope='Select375_not_dispatched_failed_original_family_prerequisite_ONLY',
                     status='not_run_failed_family_prerequisite', dispatched=False,
                     archive_sha256=report['package']['sha256'], boot_id=environment['boot_id'],
                     failed_families=not_passed, completed_original_family_probes=completed_capability_probes,
-                    original_probe_results={name: dict(probes[name]) for name in FAMILIES},
+                    original_probe_results={name: dict(probes[name]) for name in capability_families},
                     original_failures=list(report['failures']),
                     first_artifact_behavior_gate_passed=False, ledger_closed=False)
                 evidence = work / 'select375-not-run.json'

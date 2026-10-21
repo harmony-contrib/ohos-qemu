@@ -27,6 +27,25 @@ def representative(environment):
         'arm64_virt', 'phone', 'arm64')
 
 
+def supported_environment(environment):
+    """Finite target applicability; representative() retains its first-package meaning.
+
+    The caller still obtains this environment from the original validate_binding
+    and actual archive/held boot. This predicate does not certify a VM or result.
+    """
+    return (type(environment) is dict and environment.get('device_type') in ('phone', '2in1') and
+        (environment.get('product'), environment.get('guest_arch')) in (
+            ('arm64_virt', 'arm64'), ('armv7a_virt', 'armv7a'), ('x86_64_virt', 'x86_64')))
+
+
+def applicable_families(environment):
+    if not supported_environment(environment):
+        raise ValueError('finite actual full-source product/arch/device environment required')
+    # Contacts is a phone-only provider contract. An inapplicable family receives
+    # no pass/closure; all original phone families and all other profile duties remain.
+    return tuple(name for name in FAMILIES if name != 'contacts-picker' or environment['device_type'] == 'phone')
+
+
 def read(path):
     path = Path(path)
     if not path.is_absolute() or path.is_symlink() or not path.is_file():
@@ -41,15 +60,16 @@ def read(path):
 
 
 def load_plan(path, environment):
-    if not representative(environment): raise ValueError('representative capability inputs require ARM64 phone')
+    families = applicable_families(environment)
     if path is None: raise ValueError('QEMU_TEST_CAPABILITY_INPUTS must identify the real prebuilt capability inputs')
     value = read(path)
     if (set(value) != {'schema_version', 'product', 'device_type', 'families'} or
             type(value['schema_version']) is not int or value['schema_version'] != 1 or
             value['product'] != environment['product'] or value['device_type'] != environment['device_type'] or
-            not isinstance(value['families'], dict) or set(value['families']) != REQUIRED):
-        raise ValueError('complete fixed representative capability input plan required')
-    for name, (_, required, optional) in FAMILIES.items():
+            not isinstance(value['families'], dict) or set(value['families']) != set(families)):
+        raise ValueError('complete fixed applicable capability input plan required')
+    for name in families:
+        _, required, optional = FAMILIES[name]
         row = value['families'][name]
         if (not isinstance(row, dict) or not set(required) <= set(row) or
                 set(row) - set(required) - set(optional)):
@@ -86,7 +106,8 @@ def argv(name, plan, boot, archive, hdc, output, suite_evidence):
 
 
 def verify_family(name, path, archive, environment):
-    if not representative(environment): raise ValueError('new capability family is not bound to ARM64 phone')
+    if name not in applicable_families(environment):
+        raise ValueError('capability family is not applicable to this actual product/device: ' + str(name))
     path, archive = Path(path), Path(archive)
     payload = read(path)
     archive_sha = digest(archive)
