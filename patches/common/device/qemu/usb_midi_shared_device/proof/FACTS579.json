@@ -1,0 +1,345 @@
+{
+  "schema": "actual-normal-usb-midi-complete-source-facts/v1",
+  "source_root": "/ohos",
+  "files": [
+    {
+      "logical": ".repo/project.list",
+      "source_path": "/ohos/.repo/project.list",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/.repo/project.list",
+        "sha256": "e4790821b8830b941647d32967eaea5e9ffb9cdaf8d84857f9d6607bb2005b4b",
+        "bytes": 15133
+      },
+      "mode": 420
+    },
+    {
+      "logical": "base/security/selinux_adapter/sepolicy/base/system/virtfs_contexts",
+      "source_path": "/ohos/base/security/selinux_adapter/sepolicy/base/system/virtfs_contexts",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/base/security/selinux_adapter/sepolicy/base/system/virtfs_contexts",
+        "sha256": "0aa0fc7a6b3c3270c98848226ac69e4e166a31c53c8a20c188dafc57dcadc756",
+        "bytes": 6853
+      },
+      "mode": 420
+    },
+    {
+      "logical": "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/usb/public/file.te",
+      "source_path": "/ohos/base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/usb/public/file.te",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/usb/public/file.te",
+        "sha256": "375bb292967a68ab6c3750ab6e55dda2cccdd5c32b3ab31de2de50e18542165e",
+        "bytes": 784
+      },
+      "mode": 420
+    },
+    {
+      "logical": "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/usb/vendor/usb_host.te",
+      "source_path": "/ohos/base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/usb/vendor/usb_host.te",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/usb/vendor/usb_host.te",
+        "sha256": "cee85d09a5eb88c99455822c179700b5b7f5b6507fd5118e741482b77c3cf834",
+        "bytes": 10063
+      },
+      "mode": 420
+    },
+    {
+      "logical": "base/security/selinux_adapter/sepolicy/ohos_policy/multimedia/media_library/system/medialibrary_hap.te",
+      "source_path": "/ohos/base/security/selinux_adapter/sepolicy/ohos_policy/multimedia/media_library/system/medialibrary_hap.te",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/base/security/selinux_adapter/sepolicy/ohos_policy/multimedia/media_library/system/medialibrary_hap.te",
+        "sha256": "9790a4ccca907e50d3565bb18e736d6bad8296d79ebef4ca9e690582ad61d672",
+        "bytes": 5178
+      },
+      "mode": 420
+    },
+    {
+      "logical": "device/qemu/common/virt_full/cfg/init.virt.usb.cfg",
+      "source_path": "/ohos/device/qemu/common/virt_full/cfg/init.virt.usb.cfg",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/device/qemu/common/virt_full/cfg/init.virt.usb.cfg",
+        "sha256": "279246d465d88e39d94ea93ce991d8841e3a067af76c74bd3c72d4fddbd22c52",
+        "bytes": 4604
+      },
+      "mode": 493
+    },
+    {
+      "logical": "device/qemu/common/virt_full/kernel/arm64_virt_defconfig",
+      "source_path": "/ohos/device/qemu/common/virt_full/kernel/arm64_virt_defconfig",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/device/qemu/common/virt_full/kernel/arm64_virt_defconfig",
+        "sha256": "83189df4d404fe833b652a5ffadbee3090345fe80e4c26e40fa00668b067c2c5",
+        "bytes": 270481
+      },
+      "mode": 420
+    },
+    {
+      "logical": "device/qemu/common/virt_full/kernel/arm_virt_defconfig",
+      "source_path": "/ohos/device/qemu/common/virt_full/kernel/arm_virt_defconfig",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/device/qemu/common/virt_full/kernel/arm_virt_defconfig",
+        "sha256": "e8b44fd1ce31c961d29153283571116ff0902ec6a0df71b8fe69d443e65cb0e9",
+        "bytes": 189072
+      },
+      "mode": 420
+    },
+    {
+      "logical": "device/qemu/common/virt_full/kernel/x86_64_virt_defconfig",
+      "source_path": "/ohos/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig",
+        "sha256": "3e71f0f32811a5c4875fab91de355fb553be1a8ca0a6e5ef2ce6060faa618bd3",
+        "bytes": 175965
+      },
+      "mode": 420
+    },
+    {
+      "logical": "drivers/peripheral/usb/bundle.json",
+      "source_path": "/ohos/drivers/peripheral/usb/bundle.json",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/drivers/peripheral/usb/bundle.json",
+        "sha256": "0ea86148e378c6b724a310df430731956fcf51bad9d791c5ee232f677d96ccf8",
+        "bytes": 2294
+      },
+      "mode": 420
+    },
+    {
+      "logical": "drivers/peripheral/usb/gadget/function/mtp/BUILD.gn",
+      "source_path": "/ohos/drivers/peripheral/usb/gadget/function/mtp/BUILD.gn",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/drivers/peripheral/usb/gadget/function/mtp/BUILD.gn",
+        "sha256": "a5bf3b5f2a848291aa10051c2e91576f64db7c780a5d9510a34a540f27cf6ee2",
+        "bytes": 3238
+      },
+      "mode": 420
+    },
+    {
+      "logical": "drivers/peripheral/usb/gadget/function/mtp/include/qemu_mtp_functionfs.h",
+      "source_path": "/ohos/drivers/peripheral/usb/gadget/function/mtp/include/qemu_mtp_functionfs.h",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/drivers/peripheral/usb/gadget/function/mtp/include/qemu_mtp_functionfs.h",
+        "sha256": "5101d4822411678d8d97fae82bb8694de49b357328efda65ee4fa7d6c2fb3f36",
+        "bytes": 2021
+      },
+      "mode": 420
+    },
+    {
+      "logical": "drivers/peripheral/usb/gadget/function/mtp/src/qemu_mtp_functionfs.cpp",
+      "source_path": "/ohos/drivers/peripheral/usb/gadget/function/mtp/src/qemu_mtp_functionfs.cpp",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/drivers/peripheral/usb/gadget/function/mtp/src/qemu_mtp_functionfs.cpp",
+        "sha256": "c9bae4d9325a7149661a23ba6eeb5218397d683fd1ecb19f70935e4f363f30c7",
+        "bytes": 14801
+      },
+      "mode": 420
+    },
+    {
+      "logical": "drivers/peripheral/usb/gadget/function/mtp/src/usbfn_mtp_impl.cpp",
+      "source_path": "/ohos/drivers/peripheral/usb/gadget/function/mtp/src/usbfn_mtp_impl.cpp",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/drivers/peripheral/usb/gadget/function/mtp/src/usbfn_mtp_impl.cpp",
+        "sha256": "dc8bdd5e65f13cb0091ef79d2e620129d30bb2ab11c9328589a50c7588ab5943",
+        "bytes": 83305
+      },
+      "mode": 493
+    },
+    {
+      "logical": "drivers/peripheral/usb/usb.gni",
+      "source_path": "/ohos/drivers/peripheral/usb/usb.gni",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/drivers/peripheral/usb/usb.gni",
+        "sha256": "ee848e13d0873084f5341aa4ff33b92cd34fa203f017a61276bd60d18617618e",
+        "bytes": 1126
+      },
+      "mode": 420
+    },
+    {
+      "logical": "foundation/multimedia/media_library/bundle.json",
+      "source_path": "/ohos/foundation/multimedia/media_library/bundle.json",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/foundation/multimedia/media_library/bundle.json",
+        "sha256": "f46284874b9150afb1f25617c8d72ef0c7e19a920ed3a27d50060f2cb98764b8",
+        "bytes": 14271
+      },
+      "mode": 420
+    },
+    {
+      "logical": "foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/BUILD.gn",
+      "source_path": "/ohos/foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/BUILD.gn",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/BUILD.gn",
+        "sha256": "9bd22b86456e6ffa5d99253eb8e3ca6055f008cb690fb30bd4136868471cff39",
+        "bytes": 89466
+      },
+      "mode": 420
+    },
+    {
+      "logical": "foundation/multimedia/media_library/media_library.gni",
+      "source_path": "/ohos/foundation/multimedia/media_library/media_library.gni",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/foundation/multimedia/media_library/media_library.gni",
+        "sha256": "8a844c4375ab796af5c6448d71d206e7b2d726bec17f5668e22c936eb1c985c6",
+        "bytes": 4216
+      },
+      "mode": 420
+    },
+    {
+      "logical": "foundation/multimedia/media_library/services/media_mtp/BUILD.gn",
+      "source_path": "/ohos/foundation/multimedia/media_library/services/media_mtp/BUILD.gn",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/foundation/multimedia/media_library/services/media_mtp/BUILD.gn",
+        "sha256": "63ad9b983778a59ac1a1b6d07683abe7f259294fbf5ce0da7ff02f8b42de8778",
+        "bytes": 7577
+      },
+      "mode": 420
+    },
+    {
+      "logical": "foundation/multimedia/media_library/services/media_mtp/src/mtp_driver.cpp",
+      "source_path": "/ohos/foundation/multimedia/media_library/services/media_mtp/src/mtp_driver.cpp",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/foundation/multimedia/media_library/services/media_mtp/src/mtp_driver.cpp",
+        "sha256": "1dd913691e4a26225d5ca0840d9c4831266c036694ee7dc129bf69a5f82bfd4f",
+        "bytes": 6884
+      },
+      "mode": 420
+    },
+    {
+      "logical": "foundation/multimedia/media_library/services/media_mtp_service/include/qemu_mtp_mount_watcher.h",
+      "source_path": "/ohos/foundation/multimedia/media_library/services/media_mtp_service/include/qemu_mtp_mount_watcher.h",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/foundation/multimedia/media_library/services/media_mtp_service/include/qemu_mtp_mount_watcher.h",
+        "sha256": "50dc377981976126af72698854ee924b64596f7e25096ae676e55652a004988a",
+        "bytes": 2381
+      },
+      "mode": 420
+    },
+    {
+      "logical": "foundation/multimedia/media_library/services/media_mtp_service/src/media_mtp_manager.cpp",
+      "source_path": "/ohos/foundation/multimedia/media_library/services/media_mtp_service/src/media_mtp_manager.cpp",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/foundation/multimedia/media_library/services/media_mtp_service/src/media_mtp_manager.cpp",
+        "sha256": "9426acd6d9eac3416b815928b33c897ccda12e72fd43034a58c153aed6a00e96",
+        "bytes": 6706
+      },
+      "mode": 420
+    },
+    {
+      "logical": "vendor/ohemu/qemu_arm64_linux_full/config.json",
+      "source_path": "/ohos/vendor/ohemu/qemu_arm64_linux_full/config.json",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/vendor/ohemu/qemu_arm64_linux_full/config.json",
+        "sha256": "67ed25673f4c614df005db724351dc91799e7913c5c49e51234cd486035312ba",
+        "bytes": 3581
+      },
+      "mode": 493
+    },
+    {
+      "logical": "vendor/ohemu/qemu_armv7a_linux_full/config.json",
+      "source_path": "/ohos/vendor/ohemu/qemu_armv7a_linux_full/config.json",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/vendor/ohemu/qemu_armv7a_linux_full/config.json",
+        "sha256": "bd7f3acbd31e6037fe95b206aa26a5a0c9317b2215eb8de298fd95c7d6fd6f0f",
+        "bytes": 3511
+      },
+      "mode": 493
+    },
+    {
+      "logical": "vendor/ohemu/qemu_x86_64_linux_full/config.json",
+      "source_path": "/ohos/vendor/ohemu/qemu_x86_64_linux_full/config.json",
+      "file": {
+        "path": "/evidence/actual-usb-midi26/files/vendor/ohemu/qemu_x86_64_linux_full/config.json",
+        "sha256": "1aea4493a4927951c2d7430d2de6bea9bdb1ea45cf59c0ca2920956cbb9cba43",
+        "bytes": 3634
+      },
+      "mode": 420
+    }
+  ],
+  "actual_heads": [
+    {
+      "project": "device/qemu",
+      "argv": [
+        "git",
+        "-c",
+        "safe.directory=/ohos/device/qemu",
+        "-C",
+        "/ohos/device/qemu",
+        "rev-parse",
+        "HEAD"
+      ],
+      "stdout": {
+        "path": "/evidence/actual-usb-midi26/head-device_qemu.stdout",
+        "sha256": "1c45dd73789d111a1bdabe98e57a0da32197c53c1ba01b2737caad488ae7f3dc",
+        "bytes": 41
+      }
+    },
+    {
+      "project": "drivers/peripheral",
+      "argv": [
+        "git",
+        "-c",
+        "safe.directory=/ohos/drivers/peripheral",
+        "-C",
+        "/ohos/drivers/peripheral",
+        "rev-parse",
+        "HEAD"
+      ],
+      "stdout": {
+        "path": "/evidence/actual-usb-midi26/head-drivers_peripheral.stdout",
+        "sha256": "19d3f4706f8b8aff772a771bda5a238e2c0125f5e2ce1dc0f5fe7a12051b1664",
+        "bytes": 41
+      }
+    },
+    {
+      "project": "foundation/multimedia/media_library",
+      "argv": [
+        "git",
+        "-c",
+        "safe.directory=/ohos/foundation/multimedia/media_library",
+        "-C",
+        "/ohos/foundation/multimedia/media_library",
+        "rev-parse",
+        "HEAD"
+      ],
+      "stdout": {
+        "path": "/evidence/actual-usb-midi26/head-foundation_multimedia_media_library.stdout",
+        "sha256": "29bb59884f85b5df39b4a75a434f4b60a7640400cab2af3cdaf88f75e11669a9",
+        "bytes": 41
+      }
+    },
+    {
+      "project": "vendor/ohemu",
+      "argv": [
+        "git",
+        "-c",
+        "safe.directory=/ohos/vendor/ohemu",
+        "-C",
+        "/ohos/vendor/ohemu",
+        "rev-parse",
+        "HEAD"
+      ],
+      "stdout": {
+        "path": "/evidence/actual-usb-midi26/head-vendor_ohemu.stdout",
+        "sha256": "ad86ecd58f265fc803a978c854f89bd3f714b99b915e45e91d70def219292157",
+        "bytes": 41
+      }
+    },
+    {
+      "project": "base/security/selinux_adapter",
+      "argv": [
+        "git",
+        "-c",
+        "safe.directory=/ohos/base/security/selinux_adapter",
+        "-C",
+        "/ohos/base/security/selinux_adapter",
+        "rev-parse",
+        "HEAD"
+      ],
+      "stdout": {
+        "path": "/evidence/actual-usb-midi26/head-base_security_selinux_adapter.stdout",
+        "sha256": "c1ed327b1bbe21939aead51e00e6842b9d3c331812d87c62c381a5297dc00a95",
+        "bytes": 41
+      }
+    }
+  ],
+  "source_only": true,
+  "runtime_pass": false
+}

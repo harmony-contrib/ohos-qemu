@@ -1888,6 +1888,29 @@ configure_qemu_device_profile() {
   export DEVICE_TYPE_BUILD_PROFILE
 }
 
+recheck_qemu_serial_usb_source() {
+  # USB prefix rewinds the fixed Serial kernel cuts but preserves old markers.
+  # This one original patch must be proved against source, not marker presence.
+  local patch="${SERIAL_USB_ENDPOINT_COMPONENT_SCRIPT%/*}/0001-build-in-qemu-ftdi-serial-endpoint.patch"
+  local device_head
+  [ -f "${patch}" ] && [ ! -L "${patch}" ] || return 1
+  [ "$(wc -c < "${patch}")" -eq 1890 ] || return 1
+  printf '%s  %s\n' 'd96a84a1dd3ee58b4f29fbefeee30cc4b112ecd058cb98c554966047407a6b7a' "${patch}" | sha256sum --check --status - || return 1
+  device_head="$(git -c "safe.directory=${OHOS_ROOT}/device/qemu" -C "${OHOS_ROOT}/device/qemu" rev-parse --verify 'HEAD^{commit}')" || return 1
+  [ "${device_head}" = b017aee8e2dfc97e45aeb508facc1527c3d06f4b ] || return 1
+  if git -C "${OHOS_ROOT}" apply --check "${patch}" >/dev/null 2>&1; then
+    git -C "${OHOS_ROOT}" apply --whitespace=nowarn "${patch}"
+  elif git -C "${OHOS_ROOT}" apply --check --ignore-space-change "${patch}" >/dev/null 2>&1; then
+    git -C "${OHOS_ROOT}" apply --ignore-space-change --whitespace=nowarn "${patch}"
+  elif git -C "${OHOS_ROOT}" apply --check --reverse "${patch}" >/dev/null 2>&1 || \
+       git -C "${OHOS_ROOT}" apply --check --reverse --ignore-space-change "${patch}" >/dev/null 2>&1; then
+    : # The actual source already contains this fixed Serial patch.
+  else
+    echo "fixed Serial USB source is neither before nor after the original patch" >&2
+    return 1
+  fi
+}
+
 apply_qemu_serial_components() {
   # Never import or change Serial device permissions for a phone build.
   if [ "${DEVICE_TYPE}" != "2in1" ] || [ "${QEMU_2IN1_PROFILE_COMPONENT}" = "0" ]; then
@@ -1906,8 +1929,30 @@ apply_qemu_serial_components() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_serial_dialog_component.log"
   bash "${SERIAL_DEVICES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_serial_devices_component.log"
+  recheck_qemu_serial_usb_source \
+    2>&1 | tee "${CACHE_ROOT}/logs/recheck_serial_usb_endpoint_source.log"
   bash "${SERIAL_USB_ENDPOINT_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_serial_usb_endpoint_component.log"
+}
+
+prepare_usb_midi_armv7a_source_prerequisite() {
+  # USB manages all three source configurations, even for a single target.
+  # A fresh tree has no generated ARMv7 vendor product. Establish only its
+  # original source prerequisites; never select/build an extra product here.
+  local config="${OHOS_ROOT}/vendor/ohemu/qemu_armv7a_linux_full/config.json"
+  local components="${ARMV7A_COMPONENT_SCRIPT%/apply.sh}/components"
+  local component
+  if ! product_list_contains armv7a_virt && [ ! -e "${config}" ] && [ ! -L "${config}" ]; then
+    # Vendor is last so its presence cannot conceal an incomplete prerequisite.
+    for component in device_qemu kernel vendor_ohemu; do
+      if [ ! -f "${components}/${component}/apply.sh" ]; then
+        echo "missing fixed ARMv7 source prerequisite: ${component}" >&2
+        return 1
+      fi
+      bash "${components}/${component}/apply.sh" --source-root "${OHOS_ROOT}" \
+        2>&1 | tee "${CACHE_ROOT}/logs/prepare_usb_midi_armv7a_${component}.log"
+    done
+  fi
 }
 
 apply_armv7a_product_component() {
@@ -3086,6 +3131,10 @@ apply_qemu_capability_patch_plan() {
   python3 "${PATCH_ROOT}/lib/qemu_preserve_source_times579.py" --source-root "${OHOS_ROOT}" \
     --snapshot "${source_times_snapshot}" --action capture \
     2>&1 | tee "${source_times_directory}/capture.log"
+  # Restore the complete USB/MIDI/MTP predecessor, including all three new files.
+  # Partial/unknown vectors remain untouched; all original guards still run.
+  bash "${QEMU_USB_MIDI_SHARED_DEVICE_SCRIPT}" --source-root "${OHOS_ROOT}" --rewind \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_usb_midi_shared_device_prefix.log"
   # Rewind only the complete Additional5 final before any overlapping chooser guard.
   # With no known final item, preserve pristine/older bytes for their original guards.
   python3 "${PATCH_ROOT}/../scripts/apply_additional579_product.py" --source-root "${OHOS_ROOT}" --rewind \
@@ -3140,6 +3189,7 @@ apply_qemu_capability_patch_plan() {
   # armv7a_virt is generated from the arm64 product template. Generate it
   # before applying the managed phone/2in1 inheritance; otherwise the armv7
   # component recreates config.json and silently drops the selected profile.
+  prepare_usb_midi_armv7a_source_prerequisite
   apply_armv7a_product_component
   bash "${QEMU_AUDIO_PROFILE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_audio_profile_component.log"
@@ -3902,7 +3952,15 @@ apply_qemu_capability_patch_plan() {
   python3 "${PATCH_ROOT}/lib/qemu_preserve_source_times579.py" --source-root "${OHOS_ROOT}" \
     --snapshot "${source_times_snapshot}" --action restore \
     2>&1 | tee "${source_times_directory}/restore.log"
+  local usb_midi_source_profile
+  case "${DEVICE_TYPE_BUILD_PROFILE}" in
+    qemu_phone_full_source) usb_midi_source_profile=phone ;;
+    qemu_2in1_full_source) usb_midi_source_profile=2in1 ;;
+    default|param_only) usb_midi_source_profile=none ;;
+    *) echo "unknown prepared USB source profile: ${DEVICE_TYPE_BUILD_PROFILE}" >&2; return 2 ;;
+  esac
   bash "${QEMU_USB_MIDI_SHARED_DEVICE_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    --product "${PRODUCTS[@]}" --profile "${usb_midi_source_profile}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_usb_midi_shared_device.log"
   # Hash actual, fully patched kernel/config/HDI sources before any traversal.
   # Directory mtimes and a shell environment flag cannot invalidate Ninja's
