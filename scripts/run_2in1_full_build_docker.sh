@@ -480,6 +480,36 @@ if [ -n "${DOCKER_BUILD_MEMORY_SWAP:-}" ]; then
   DOCKER_MEMORY_SWAP_ARGS=(--memory-swap "${DOCKER_BUILD_MEMORY_SWAP}")
 fi
 
+# DATA and immutable evidence are assembled only for an actual ARM32 build.
+# The already-existing F17 Owner supplies its UUID and concrete source inputs.
+MEDIA579_INPUT_MOUNTS=()
+MEDIA579_INPUT_ENV=()
+if [ "${PRODUCTS}" = armv7a_virt ] && [ "${PREPARE_ONLY}" != 1 ] && [ "${SOURCE_PREPARE_ONLY}" != 1 ]; then
+  media579_result="${LOG_DIR}/normal-media579-arm32-data-result.json"
+  python3 "${SCRIPT_DIR}/prepare_media579_arm32_inputs.py" \
+    --normal-source "${QEMU_MEDIA579_NORMAL_SOURCE:?actual normal SOURCE required}" \
+    --normal-source-sha256 "${QEMU_MEDIA579_NORMAL_SOURCE_SHA256:?actual normal SOURCE checksum required}" \
+    --representative-gate "${QEMU_MEDIA579_REPRESENTATIVE_GATE:?actual final QEMU gate required}" \
+    --representative-gate-sha256 "${QEMU_MEDIA579_REPRESENTATIVE_GATE_SHA256:?actual final gate checksum required}" \
+    --sdk-native "${QEMU_MEDIA579_SDK_NATIVE:?actual Linux native SDK required}" \
+    --sdk-metadata-sha256 "${QEMU_MEDIA579_SDK_METADATA_SHA256:?actual selected SDK metadata checksum required}" \
+    --source-commit "${QEMU_MEDIA579_SOURCE_COMMIT:?actual selected commit required}" \
+    --source-root "${OHOS_ROOT}" --product armv7a_virt --device "${DEVICE_TYPE}" \
+    --normal-build-run-id "${QEMU_MEDIA579_NORMAL_RUN_ID:?original normal Owner UUID required}" \
+    --output "${LOG_DIR}" > "${media579_result}"
+  IFS=$'\t' read -r QEMU_MEDIA579_ARM32_INPUTS QEMU_MEDIA579_ARM32_INPUTS_SHA256 media579_mounts media579_mounts_sha < <(
+    python3 - "${media579_result}" <<'JSON'
+import json,sys
+v=json.load(open(sys.argv[1]));print('\t'.join((v['inputs']['path'],v['inputs']['sha256'],v['mounts']['path'],v['mounts']['sha256'])))
+JSON
+  )
+  python3 "${SCRIPT_DIR}/prepare_media579_arm32_inputs.py" --print-mounts "${media579_mounts}" --mounts-sha256 "${media579_mounts_sha}" > "${LOG_DIR}/normal-media579-arm32-readonly-paths.txt"
+  while IFS= read -r media579_path; do
+    MEDIA579_INPUT_MOUNTS+=(--mount "type=bind,src=${media579_path},dst=${media579_path},readonly")
+  done < "${LOG_DIR}/normal-media579-arm32-readonly-paths.txt"
+  MEDIA579_INPUT_ENV=(-e "QEMU_MEDIA579_ARM32_INPUTS=${QEMU_MEDIA579_ARM32_INPUTS}" -e "QEMU_MEDIA579_ARM32_INPUTS_SHA256=${QEMU_MEDIA579_ARM32_INPUTS_SHA256}" -e "QEMU_MEDIA579_NORMAL_RUN_ID=${QEMU_MEDIA579_NORMAL_RUN_ID}")
+fi
+
 exec docker run --rm \
   --platform "${DOCKER_PLATFORM}" \
   --name "ohos-qemu-${DEVICE_TYPE}-build" \
@@ -562,6 +592,8 @@ exec docker run --rm \
   ${PACKAGE_MOUNT_ARGS[@]+"${PACKAGE_MOUNT_ARGS[@]}"} \
   ${ARTIFACT_MOUNT_ARGS[@]+"${ARTIFACT_MOUNT_ARGS[@]}"} \
   ${KNOWLEDGE_INPUT_MOUNT_ARGS[@]+"${KNOWLEDGE_INPUT_MOUNT_ARGS[@]}"} \
+  ${MEDIA579_INPUT_MOUNTS[@]+"${MEDIA579_INPUT_MOUNTS[@]}"} \
+  ${MEDIA579_INPUT_ENV[@]+"${MEDIA579_INPUT_ENV[@]}"} \
   --mount "type=volume,src=${DOCKER_SOURCE_VOLUME},dst=${OHOS_ROOT}" \
   --mount "type=volume,src=${DOCKER_OUT_VOLUME},dst=${OHOS_ROOT}/out" \
   -v "${BUILD_INPUT_ROOT}:/work:ro" \

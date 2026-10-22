@@ -18,7 +18,7 @@ import tarfile
 sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
 EDITS_SHA = 'c050aec95959eb8178c247cf76450f12947d28488bce5455860c025cd726e38e'
-INPUT_FILES_SHA = 'f7e7c770c62ffcfa8883bb7cd8e6aa2a18eba148b5a61afded1f384e8e4eed71'
+INPUT_FILES_SHA = '110131274b8868ab48172b227a0c1c969f8e0b2820fefadd03636bba5264dc42'
 PROJECTS_SHA = 'ea9b404805887ae248a1eda69333465d0ce426c342d5f82e14e5b6e7c62a0b41'
 CPU = 'drivers/peripheral/intelligent_voice/passthrough/cpu/'
 SPATIAL = 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/'

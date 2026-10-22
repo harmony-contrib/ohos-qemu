@@ -10,6 +10,11 @@
       "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-arm32-normal-entry-successor01/FROZEN.json",
       "sha256": "1a5f723ec05c9c4db6eebf74fee0ec933c49d272eda807ccbc7dddfea2df64da",
       "bytes": 2754
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-openal-target-successor01/FROZEN.json",
+      "sha256": "9cfba00adbc900711e7ce1695c2b378e94120c20e96abe4635e99ccf1e8dc618",
+      "bytes": 1904
     }
   ],
   "files": {
@@ -23,12 +28,12 @@
       }
     },
     "INPUT-SOURCES.json": {
-      "sha256": "8c135ac539983f7e100882d5f98867a5902894fbc951d83a6e51d99d3cc0907d",
-      "bytes": 75282,
+      "sha256": "61b6851f5bc8a50f174a4ec6328df1313e35ac13714edbc97f2f26345d0f8da4",
+      "bytes": 75430,
       "origin": {
-        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-provider-scope-candidate/candidate/component/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/INPUT-SOURCES.json",
-        "sha256": "8c135ac539983f7e100882d5f98867a5902894fbc951d83a6e51d99d3cc0907d",
-        "bytes": 75282
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/root-openal579-metadata-successor08/after/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/INPUT-SOURCES.json",
+        "sha256": "61b6851f5bc8a50f174a4ec6328df1313e35ac13714edbc97f2f26345d0f8da4",
+        "bytes": 75430
       }
     },
     "PROJECTS.json": {
@@ -338,12 +343,12 @@
       }
     },
     "sources/foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/build_openal.py": {
-      "sha256": "90ecc90ea5367eb17d9e80fc30e28c9dbbb61408614c0c84792d30130ce392c0",
-      "bytes": 5475,
+      "sha256": "de8b821733113889602392192684d3b9bacc9f08978b40a8eaa0faac296dd2be",
+      "bytes": 12148,
       "origin": {
-        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-provider-scope-candidate/candidate/component/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/sources/foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/build_openal.py",
-        "sha256": "90ecc90ea5367eb17d9e80fc30e28c9dbbb61408614c0c84792d30130ce392c0",
-        "bytes": 5475
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-openal-target-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/sources/foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/build_openal.py",
+        "sha256": "de8b821733113889602392192684d3b9bacc9f08978b40a8eaa0faac296dd2be",
+        "bytes": 12148
       }
     },
     "sources/foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/qemu_spatial_effect.cpp": {
