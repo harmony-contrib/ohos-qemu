@@ -12,7 +12,12 @@ import subprocess
 import tempfile
 
 HERE = Path(__file__).resolve().parent
-STATES_SHA256 = '4ffd8a1b23eefc3acc55d8a4b952f0e3f0ca0c2c05c75ca436aeaae0934d5a1b'
+STATES_SHA256 = '838730f5a808a7849f2efb8bcc889c4987d208d427d62f948ab86a0f13ea8b0c'
+PREVIOUS_STATES_SHA256 = '4ffd8a1b23eefc3acc55d8a4b952f0e3f0ca0c2c05c75ca436aeaae0934d5a1b'
+PREVIOUS_EDITS_SHA256 = '95217549884a3a978bb1d4299fe961f4b840801df8899ddac86a47ee4e0a26ab'
+MTP_FUNCTIONFS_SOURCE = 'drivers/peripheral/usb/gadget/function/mtp/src/qemu_mtp_functionfs.cpp'
+PREVIOUS_MTP_CPP_SHA256 = 'c9bae4d9325a7149661a23ba6eeb5218397d683fd1ecb19f70935e4f363f30c7'
+CURRENT_MTP_CPP_SHA256 = 'f1cca308728780404fe6065a92b19914f84c8e53e49c1c65fa6e331ba97837f4'
 MAX_FILE_BYTES = 4 * 1024 * 1024
 
 
@@ -115,7 +120,42 @@ def load():
             for name, expected in vector[endpoint].items():
                 need(expected in bodies or (expected is None and endpoint in ('prefix', 'before') and name in spec['new_paths']),
                      'unknown source asset or absent existing source')
-    return spec, bodies, support
+    # Only this exact complete previous24 manifest is eligible at the prefix.
+    # Retain its full edits as well; no individual source accepts an old hash.
+    previous_record = dict(states='PREVIOUS-SOURCE-STATES579.json', states_sha256=PREVIOUS_STATES_SHA256,
+                           edits='PREVIOUS-EDITS579.json', edits_sha256=PREVIOUS_EDITS_SHA256)
+    need(spec['previous_final'] == previous_record, 'fixed previous full-source contract differs')
+    previous_raw = support[str(HERE / previous_record['states'])]['data']
+    previous_edits_raw = support[str(HERE / previous_record['edits'])]['data']
+    need(sha(previous_raw) == PREVIOUS_STATES_SHA256 and
+         sha(previous_edits_raw) == PREVIOUS_EDITS_SHA256, 'complete previous source/edit bytes differ')
+    previous = json.loads(previous_raw)
+    previous_edits = json.loads(previous_edits_raw)
+    for field in ('schema', 'projects', 'paths', 'new_paths', 'modes', 'profile_source_guards', 'source_only', 'runtime_pass'):
+        need(previous[field] == spec[field], 'previous/current source identity differs: ' + field)
+    need(previous['edits_sha256'] == PREVIOUS_EDITS_SHA256 and
+         len(previous['vectors']) == len(spec['vectors']) == 22,
+         'complete previous22 variants and original edits required')
+    need(CURRENT_MTP_CPP_SHA256 in spec['assets'] and CURRENT_MTP_CPP_SHA256 not in previous['assets'] and
+         previous['assets'] == {k: v for k, v in spec['assets'].items() if k != CURRENT_MTP_CPP_SHA256},
+         'only one new fixed MTP source asset may be added')
+    need(all(spec['proofs'].get(k) == v for k, v in previous['proofs'].items()),
+         'all original actual-source proofs must remain exact')
+    restored_edits = json.loads(edits['data'])
+    selected = [row for row in restored_edits['new_files'] if row['path'] == MTP_FUNCTIONFS_SOURCE]
+    need(len(selected) == 1 and selected[0]['sha256'] == CURRENT_MTP_CPP_SHA256,
+         'one exact current MTP source declaration required')
+    selected[0]['sha256'] = PREVIOUS_MTP_CPP_SHA256
+    need(restored_edits == previous_edits, 'source edit contract differs outside the one MTP asset identity')
+    for current, old in zip(spec['vectors'], previous['vectors']):
+        restored = dict(current)
+        restored['after'] = dict(current['after'])
+        need(current['after'][MTP_FUNCTIONFS_SOURCE] == CURRENT_MTP_CPP_SHA256 and
+             old['after'][MTP_FUNCTIONFS_SOURCE] == PREVIOUS_MTP_CPP_SHA256,
+             'exact complete current/previous MTP postimage required')
+        restored['after'][MTP_FUNCTIONFS_SOURCE] = PREVIOUS_MTP_CPP_SHA256
+        need(restored == old, 'complete previous/current profile endpoints differ outside the MTP source')
+    return spec, bodies, support, previous
 
 
 def revisions(root, spec):
@@ -232,18 +272,22 @@ def hashes(sources):
     return {name: sha(row['data']) if row['data'] is not None else None for name, row in sources.items()}
 
 
-def transition(root, spec, bodies, support, *, rewind=False, require_final=False, selected_profile=None, selected_products=None):
+def transition(root, spec, bodies, support, previous, *, rewind=False, require_final=False, selected_profile=None, selected_products=None):
     original = snapshot(root, spec)
     observed = hashes(original)
     before = [v for v in spec['vectors'] if v['before'] == observed]
     after = [v for v in spec['vectors'] if v['after'] == observed]
+    previous_after = [v for v in previous['vectors'] if v['after'] == observed]
+    source_epoch = 'current'
     final_marker = has_final_marker(spec, original)
     if rewind and not final_marker:
         unchanged(root, spec, original, support)
         return dict(status='before' if len(before) == 1 else 'deferred_to_original_guards', files=24)
     if rewind:
-        need(len(after) == 1, 'only a complete known 24-source final can rewind; mixed/unknown input preserved')
-        vector, endpoint = after[0], 'prefix'
+        need(len(after) + len(previous_after) == 1,
+             'only one complete current/previous24 final can rewind; mixed/unknown input preserved')
+        source_epoch = 'previous' if previous_after else 'current'
+        vector, endpoint = (previous_after or after)[0], 'prefix'
     elif after:
         need(len(after) == 1 and after[0]['name'] == selected_profile and
              (after[0]['armv7_jsvm'] == 'on' or 'armv7a_virt' not in selected_products),
@@ -310,7 +354,7 @@ def transition(root, spec, bodies, support, *, rewind=False, require_final=False
             (recovery / 'RECOVERY.json').write_text(json.dumps(dict(files=rows, errors=errors, source_only=True), indent=2) + '\n')
             raise RuntimeError('incomplete source rollback; original bytes/absence/metadata at ' + str(recovery)) from failure
         raise
-    return dict(status='rewound' if rewind else 'applied', profile=vector['name'], files=24)
+    return dict(status='rewound' if rewind else 'applied', profile=vector['name'], files=24, source_epoch=source_epoch)
 
 
 def main():
@@ -332,7 +376,7 @@ def main():
     if not args.rewind:
         selected = 'none' if args.profile == 'none' else args.profile + ':' + ','.join(
             p for p in order if p in args.product)
-    spec, bodies, support = load()
+    spec, bodies, support, previous = load()
     result = None
     if args.rewind:
         probe = marker_probe(root, spec)
@@ -344,7 +388,7 @@ def main():
             result = dict(status='deferred_to_original_guards', files=24)
     if result is None:
         with locked(root, readonly=args.require_final):
-            result = transition(root, spec, bodies, support, rewind=args.rewind,
+            result = transition(root, spec, bodies, support, previous, rewind=args.rewind,
                                 require_final=args.require_final, selected_profile=selected, selected_products=args.product)
     print(json.dumps(dict(schema='usb-midi579-normal-source-transaction/v1', operation=
         'rewind' if args.rewind else 'require-final' if args.require_final else 'apply',

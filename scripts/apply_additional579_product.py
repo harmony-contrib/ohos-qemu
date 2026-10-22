@@ -15,10 +15,13 @@ import stat
 import subprocess
 import tempfile
 
-PAIRS = [('applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/ByodAdminProvisionAbility.ts', '448901d9fd4b081a4949d2d06906b404a45504bd57730bc2ce3454d18e89514f', '9a16f377696e60d73cc9dc8d08a8f97d4a01238d2cac4cc01de3f158acc09fbd'), ('applications/standard/admin_provisioning/entry/src/main/ets/pages/byod/byodActivationPage.ets', 'c87ad0d795d4073e9ee553e24c183378f7ea7ca78134696f13e419ab363fc83e', 'd7ddfb7d63c59fec041799d494169cbb3ca7380ce842930d9c2d38e486fa5e44'), ('applications/standard/mms/entry/src/main/ets/pages/transmitmsg/transmitMsgPage.ets', '516e94fcada17b5c6e16c2c19d6121b0c0e709a675c540ad13699634303a596f', 'b53cf189c1e91f61c9b3de58bb48971ef97134003b056bbc73ed834d4f1beec9'), ('foundation/ability/ability_runtime/services/abilitymgr/etc/appfwk.para', 'fb05d3b87cfa9def879abec2b45f7e97d8d42b8069b2932cfde370a71d45a884', '50d25cbc171bd151b3016fd9b7a8911b24080b36a7acf031296b3fef02ed3a94'), ('foundation/ability/ability_runtime/services/abilitymgr/src/dialog_session/dialog_session_manager.cpp', '65d04f5cf9dfaf1f0aaa267ff8b0dfa06296a0ea600e25ceac2ac0438a60f11a', 'b3dec3bcc065de6c80814fd3c0cca599f80da43f25f00c5e56406732f57aef63')]
+PAIRS = [('applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/ByodAdminProvisionAbility.ts', '448901d9fd4b081a4949d2d06906b404a45504bd57730bc2ce3454d18e89514f', '9a16f377696e60d73cc9dc8d08a8f97d4a01238d2cac4cc01de3f158acc09fbd'), ('applications/standard/admin_provisioning/entry/src/main/ets/pages/byod/byodActivationPage.ets', 'c87ad0d795d4073e9ee553e24c183378f7ea7ca78134696f13e419ab363fc83e', 'd8dc4440c329ed4f5b9ae6efa0429a2564b86fbfc13abb9064577e3ae9355442'), ('applications/standard/mms/entry/src/main/ets/pages/transmitmsg/transmitMsgPage.ets', '516e94fcada17b5c6e16c2c19d6121b0c0e709a675c540ad13699634303a596f', 'b53cf189c1e91f61c9b3de58bb48971ef97134003b056bbc73ed834d4f1beec9'), ('foundation/ability/ability_runtime/services/abilitymgr/etc/appfwk.para', 'fb05d3b87cfa9def879abec2b45f7e97d8d42b8069b2932cfde370a71d45a884', '50d25cbc171bd151b3016fd9b7a8911b24080b36a7acf031296b3fef02ed3a94'), ('foundation/ability/ability_runtime/services/abilitymgr/src/dialog_session/dialog_session_manager.cpp', '65d04f5cf9dfaf1f0aaa267ff8b0dfa06296a0ea600e25ceac2ac0438a60f11a', 'b3dec3bcc065de6c80814fd3c0cca599f80da43f25f00c5e56406732f57aef63')]
+# The complete previous five-final is a prefix-only migration endpoint.
+PREVIOUS_FINAL = (('applications/standard/admin_provisioning/entry/src/main/ets/MainAbility/ByodAdminProvisionAbility.ts', '9a16f377696e60d73cc9dc8d08a8f97d4a01238d2cac4cc01de3f158acc09fbd'), ('applications/standard/admin_provisioning/entry/src/main/ets/pages/byod/byodActivationPage.ets', 'd7ddfb7d63c59fec041799d494169cbb3ca7380ce842930d9c2d38e486fa5e44'), ('applications/standard/mms/entry/src/main/ets/pages/transmitmsg/transmitMsgPage.ets', 'b53cf189c1e91f61c9b3de58bb48971ef97134003b056bbc73ed834d4f1beec9'), ('foundation/ability/ability_runtime/services/abilitymgr/etc/appfwk.para', '50d25cbc171bd151b3016fd9b7a8911b24080b36a7acf031296b3fef02ed3a94'), ('foundation/ability/ability_runtime/services/abilitymgr/src/dialog_session/dialog_session_manager.cpp', 'b3dec3bcc065de6c80814fd3c0cca599f80da43f25f00c5e56406732f57aef63'))
 PROJECTS = {'applications/standard/admin_provisioning': '352a226f5c969a14be6f711fb41c8d02fddce2d7', 'applications/standard/mms': '26df98e3738f4219aa45efe6a3e7f6b1be55c051', 'foundation/ability/ability_runtime': '6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8'}
 ASSETS = Path(__file__).resolve().parent / 'additional579-product'
 BEFORE_ASSETS = Path(__file__).resolve().parent / 'additional579-product-before'
+PREVIOUS_ASSETS = Path(__file__).resolve().parent / 'additional579-product-previous580'
 
 
 def need(value, message):
@@ -78,8 +81,12 @@ def revisions(root):
 def snapshot(root):
     revisions(root)
     sources, assets = {}, {}
+    previous = dict(PREVIOUS_FINAL)
+    need(set(previous) == {relative for relative, before, after in PAIRS},
+         'complete previous five-final path set differs')
     for relative, before, after in PAIRS:
-        for folder, expected in ((BEFORE_ASSETS, before), (ASSETS, after)):
+        for folder, expected in ((BEFORE_ASSETS, before), (ASSETS, after),
+                                 (PREVIOUS_ASSETS, previous[relative])):
             path = target(folder, relative)
             actual = capture(path)
             need(sha(actual['data']) == expected, 'complete fixed before/final asset differs: ' + relative)
@@ -150,16 +157,21 @@ def transition(root, *, rewind=False, require_final=False):
     observed = {name: sha(row['data']) for name, row in sources.items()}
     before = {name: a for name, a, b in PAIRS}
     after = {name: b for name, a, b in PAIRS}
+    previous = dict(PREVIOUS_FINAL)
+    endpoint = 'current_final' if observed == after else 'previous_final' if observed == previous else 'before' if observed == before else 'unknown'
     if rewind and not any(observed[name] == after[name] for name in after):
+        need(not any(observed[name] == previous[name] for name in previous),
+             'partial previous five-final preserved; no prefix write')
         # Scheduling only: pristine/older bytes are still checked by every
         # original source guard and the strict late forward operation.
         unchanged(root, sources, assets)
         return dict(status='before' if observed == before else 'deferred_to_original_source_guards', files=[])
     if rewind:
-        need(observed == after, 'only the complete fixed five-source final can rewind; mixed/unknown preserved')
+        need(observed == after or observed == previous,
+             'only a complete current or previous five-source final can rewind; mixed/unknown preserved')
     else:
-        need(all(observed[name] in (before[name], after[name]) for name in observed),
-             'unknown five-source input preserved; no write')
+        need(observed == before or observed == after,
+             'only the complete before or current five-source final can apply; previous/mixed/unknown preserved')
     if require_final:
         need(observed == after, 'complete final five-source vector required')
         unchanged(root, sources, assets)
@@ -217,7 +229,8 @@ def transition(root, *, rewind=False, require_final=False):
             raise RuntimeError('source rollback incomplete; original five bytes retained at ' + str(recovery) + '; ' + '; '.join(errors)) from failure
         raise
     rows = [dict(path=name, before=a, after=b, was_already_applied=observed[name] == b) for name, a, b in PAIRS]
-    return dict(status='rewound' if rewind else 'applied', files=rows)
+    return dict(status='rewound' if rewind else 'applied', files=rows,
+                source_endpoint=endpoint, previous_final_migrated=rewind and endpoint == 'previous_final')
 
 
 @contextmanager
@@ -242,7 +255,9 @@ def apply(root, output, *, rewind=False, require_final=False):
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(dict(schema='additional579-normal-product-source-apply/v1',
         files=result['files'], operation='rewind' if rewind else 'require-final' if require_final else 'apply',
-        status=result['status'], source_only=True, runtime_param_mutation=False), indent=2) + '\n')
+        status=result['status'], source_endpoint=result.get('source_endpoint'),
+        previous_final_migrated=result.get('previous_final_migrated', False),
+        source_only=True, runtime_param_mutation=False), indent=2) + '\n')
 
 
 if __name__ == '__main__':

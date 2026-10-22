@@ -1,0 +1,50 @@
+# Copyright (c) 2022-2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+bootevent.appfwk.ready=false
+component.startup.newRules=true
+component.startup.newRules.except.LauncherSystemUI=true
+component.startup.backgroundJudge.flag=true
+component.startup.whitelist.associatedWakeUp=true
+component.startup.extension.multiprocess.enable=false
+component.startup.extension.multiprocess.whitelist=com.ohos.systemui;com.ohos.launcher;com.ohos.sceneboard;
+persist.sys.prepare_terminate=false
+persist.sys.abilityms.support.ecologicalrulemgrservice = true
+persist.sys.abilityms.inherit_window_split_screen_mode = true
+persist.sys.abilityms.support_anco_app = false
+persist.sys.abilityms.timeout_unit_time_ratio = 1
+persist.sys.abilityms.selector_dialog_possion = true
+persist.sys.abilityms.start_specified_process = false
+persist.sys.abilityms.use_multi_render_process = true
+persist.sys.abilityms.limit_maximum_of_render_process = true
+persist.sys.abilityms.grant_persist_uri_permission = false
+persist.sys.abilityms.start_options_with_animation = false
+persist.sys.abilityms.multi_process_model = true
+persist.sys.abilityms.start_options_with_process_option = false
+persist.sys.abilityms.move_ui_ability_to_background_api_enable = true
+persist.sys.abilityms.prevent_startability = true
+persist.sys.abilityms.forbid_start = false
+persist.sys.abilityms.if_startup_ready = true
+persist.sys.abilityms.inherit_plugin_namespace = false
+persist.sys.abilityms.plugin_default_namespace_lddictionary =
+persist.sys.abilityms.allow_debug_permission = false
+persist.sys.abilityms.restart_app_with_window = false
+persist.sys.abilityms.support_native_ui_ability = false
+const.abilityms.launch_embeded_ui_ability = false
+const.sys.abilityms.limit_maximum_extensions_of_per_process = 10
+const.sys.abilityms.limit_maximum_extensions_of_per_device = 100
+const.sys.abilityms.cache_extension = 260
+const.max_native_child_process = 50
+const.sys.abilityms.allow_child_process_in_multi_process_feature_app = false
+const.sys.abilityms.max_multi_process_feature_child_process = 0
+persist.sys.abilityms.enable_madvise = false

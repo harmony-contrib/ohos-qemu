@@ -41,7 +41,7 @@ struct ByodActivationPage {
       const request=this.request();
       const info=await bundleManager.getBundleInfo(request.target.bundleName as string,
         bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_APPLICATION|bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_HAP_MODULE|bundleManager.BundleFlag.GET_BUNDLE_INFO_WITH_EXTENSION_ABILITY);
-      if(info.appInfo.uid!==request.callerUid||!info.hapModulesInfo.some((module)=>module.extensionAbilitiesInfo.some((entry)=>entry.name===request.target.abilityName&&entry.type===bundleManager.ExtensionAbilityType.ENTERPRISE_ADMIN))) {
+      if(info.appInfo.uid!==request.callerUid||!info.hapModulesInfo.some((module)=>module.extensionAbilitiesInfo.some((entry)=>entry.name===request.target.abilityName&&entry.extensionAbilityType===bundleManager.ExtensionAbilityType.ENTERPRISE_ADMIN))) {
         throw new Error('Actual caller enterprise extension differs');
       }
       if(!this.active||epoch!==this.generation||encoded!==this.encoded)return;

@@ -191,6 +191,47 @@ def verify_loader_image(image, arch, scratch, output_directory):
     return report
 
 
+def verify_seed_files(source, image, scratch, output_directory, image_sha256):
+    """Bind the two supported-local corpora to the selected source and image."""
+    reports = {}
+    extracted = {}
+    for name in ('numberlocation.data', 'yellowpage.data'):
+        relative = PROJECT + '/etc/' + name
+        original = source / relative
+        need(original.is_file() and not original.is_symlink() and
+             0 < original.stat().st_size <= 16 * 1024 * 1024,
+             'bounded regular selected NumberIdentity seed required: ' + name)
+        directory = scratch / ('seed-' + name)
+        directory.mkdir()
+        actual, inode = dump_unique_file(image,
+            tuple(prefix + '/etc/telephony/' + name for prefix in ('', '/system')),
+            directory, debugfs_path())
+        need(actual.stat().st_size == original.stat().st_size and
+             actual.read_bytes() == original.read_bytes(),
+             'actual NumberIdentity image seed differs from selected source: ' + name)
+        extracted[name] = actual
+        reports[name] = {**inode, 'sha256': file_sha256(actual),
+            'bytes': actual.stat().st_size, 'source_relative': relative,
+            'source_sha256': file_sha256(original), 'source_revision': REVISION,
+            'system_image_sha256': image_sha256,
+            'scope': 'on-disk supported-local seed bytes; lookup behavior remains unverified',
+            'runtime_validated': False}
+    if output_directory is not None:
+        destination = Path(output_directory)
+        need(destination.is_absolute() and destination.parent.resolve() == destination.parent and
+             not destination.exists() and not destination.is_symlink(),
+             'fresh canonical NumberIdentity seed evidence directory required')
+        destination.mkdir(mode=0o700)
+        for name, actual in extracted.items():
+            target = destination / name
+            shutil.copyfile(actual, target)
+            need(target.stat().st_size == reports[name]['bytes'] and
+                 file_sha256(target) == reports[name]['sha256'],
+                 'exported NumberIdentity seed differs from image: ' + name)
+            reports[name]['file'] = str(target)
+    return reports
+
+
 def compare_policy(name, source_data, image_data):
     source, actual = decode(source_data), decode(image_data)
     need(encode(actual) == encode(source), 'typed actual NumberIdentity image policy differs: ' + name)
@@ -220,7 +261,7 @@ def require_number_loader_source(source):
         trace.preflight_sequence(source, require_patched=True)
 
 
-def verify_image(source, image, arch, scratch):
+def verify_image(source, image, arch, scratch, seed_output_directory=None):
     native = load_guard('patches/common/base/telephony/number_identity/local_provider/verify_source.py',
                         'number_identity_native_guard')
     native.validate(source, require_patched=True)
@@ -268,6 +309,8 @@ def verify_image(source, image, arch, scratch):
          result['native_libraries'][LIBRARIES[0]]['sha256'],
          'NumberIdentity bundled provider differs from the validated installed native implementation')
     result['system_image_sha256'] = file_sha256(image)
+    result['local_seed_files'] = verify_seed_files(source, image, scratch,
+        seed_output_directory, result['system_image_sha256'])
     return result
 
 
@@ -278,6 +321,7 @@ def main(argv=None):
     parser.add_argument('--arch', choices=tuple(ARCHES), required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--loader-output-dir', type=Path)
+    parser.add_argument('--seed-output-dir', type=Path)
     args = parser.parse_args(argv)
     result = {'status': 'fail', 'scope': 'offline_public_local_subset_HAP_profile_ELF_image_policy_only',
               'provider_runtime_validated': False, 'local_subset_runtime_validated': False,
@@ -285,7 +329,8 @@ def main(argv=None):
               'first_artifact_behavior_gate_passed': False, 'failures': []}
     try:
         with tempfile.TemporaryDirectory(prefix='number-identity-image-') as temporary:
-            result.update(verify_image(args.source_root, args.system_image, args.arch, Path(temporary)))
+            result.update(verify_image(args.source_root, args.system_image, args.arch,
+                                       Path(temporary), args.seed_output_dir))
             if args.loader_output_dir is not None:
                 result['loader_library'] = verify_loader_image(args.system_image, args.arch, Path(temporary),
                                                                args.loader_output_dir)

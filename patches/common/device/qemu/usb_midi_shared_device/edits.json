@@ -260,7 +260,7 @@
     {
       "path": "drivers/peripheral/usb/gadget/function/mtp/src/qemu_mtp_functionfs.cpp",
       "source": "sources/drivers/peripheral/usb/gadget/function/mtp/src/qemu_mtp_functionfs.cpp",
-      "sha256": "c9bae4d9325a7149661a23ba6eeb5218397d683fd1ecb19f70935e4f363f30c7"
+      "sha256": "f1cca308728780404fe6065a92b19914f84c8e53e49c1c65fa6e331ba97837f4"
     },
     {
       "path": "foundation/multimedia/media_library/services/media_mtp_service/include/qemu_mtp_mount_watcher.h",

@@ -3489,7 +3489,8 @@ PY
       python3 "${SCRIPT_DIR}/verify_number_identity_image.py" \
         --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
         --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/number-identity-local-evidence.json" \
-        --loader-output-dir "${PACKAGE_DIR}/number-native-emitter-elf"
+        --loader-output-dir "${PACKAGE_DIR}/number-native-emitter-elf" \
+        --seed-output-dir "${PACKAGE_DIR}/number-local-seeds"
     fi
     python3 "${SCRIPT_DIR}/verify_contacts_theme_provider_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --device "${DEVICE_TYPE}" \

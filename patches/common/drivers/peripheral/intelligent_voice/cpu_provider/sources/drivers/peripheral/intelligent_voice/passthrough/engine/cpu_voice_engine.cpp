@@ -247,8 +247,11 @@ IntellVoiceStatus CpuVoiceEngine::SetParameter(const std::string &value)
      if(value=="CommitEnrollment=true" || value=="CommitEnrollment=1") { if(!CommitLocked())return -EINVAL;JournalLocked("actual-enrollment-committed",0,phrase_);callback=callback_; }
      else if(value=="end_of_pcm=true") { if(active_&&enroll_){active_=false;JournalLocked("actual-enrollment-no-match",-ENOENT);callback=callback_;}else return 0; }
      else { if (value.size()>4096) return -EINVAL; JournalLocked("unsupported-vendor-parameter",-ENOTSUP,value); return -ENOTSUP; }}
-    if(callback)callback->OnIntellVoiceEvent({value.rfind("CommitEnrollment=",0)==0?INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE:INTELL_VOICE_ENGINE_MSG_ENROLL_COMPLETE,
-        value.rfind("CommitEnrollment=",0)==0?INTELL_VOICE_ENGINE_OK:static_cast<IntellVoiceEngineErrors>(-ENOENT),""});return 0;
+    if (callback) {
+        callback->OnIntellVoiceEvent({value.rfind("CommitEnrollment=",0)==0?INTELL_VOICE_ENGINE_MSG_COMMIT_ENROLL_COMPLETE:INTELL_VOICE_ENGINE_MSG_ENROLL_COMPLETE,
+            value.rfind("CommitEnrollment=",0)==0?INTELL_VOICE_ENGINE_OK:static_cast<IntellVoiceEngineErrors>(-ENOENT),""});
+    }
+    return 0;
 }
 IntellVoiceStatus CpuVoiceEngine::GetParameter(const std::string &key,getParameterCb cb)
 {

@@ -75,11 +75,15 @@
     {
       "path": "foundation/ai/intelligent_voice_framework/services/intell_voice_engine/BUILD.gn",
       "before_sha256": "c00ca05fec2d0c0a7fdf988248b05ca96b459e9279ae21027d6e5bce74814efa",
-      "after_sha256": "db496392eab29b68f7bc705fd37a9e11775ea5050c4f7d50a071a667292897a6",
+      "after_sha256": "3f4492680052e57bc4980942da4a1f04792542d7dd53058bd98522591c1678e1",
       "cuts": [
         {
           "before": "\nimport(\"//build/ohos.gni\")\nimport(\"../../intell_voice_service.gni\")\n\nohos_source_set(\"engine_source\") {\n  configs = [ \"//build/config/compiler:exceptions\" ]\n  if (intelligent_voice_framework_engine_enable) {\n    sources = [\n      \"server/base/adapter_callback_service.cpp\",\n",
           "after": "\nimport(\"//build/ohos.gni\")\nimport(\"../../intell_voice_service.gni\")\nconfig(\"qemu_cpu_voice\") {\n  if (intelligent_voice_framework_qemu_cpu_provider) {\n    defines = [ \"QEMU_CPU_VOICE_PROVIDER\" ]\n  }\n}\n\nohos_source_set(\"engine_source\") {\n  configs = [ \":qemu_cpu_voice\", \"//build/config/compiler:exceptions\" ]\n  if (intelligent_voice_framework_engine_enable) {\n    sources = [\n      \"server/base/adapter_callback_service.cpp\",\n"
+        },
+        {
+          "before": "  deps = [ \"../../utils:intell_voice_utils\" ]\n\n  sanitize = {\n",
+          "after": "  deps = [ \"../../utils:intell_voice_utils\" ]\n  if (intelligent_voice_framework_qemu_cpu_provider) {\n    external_deps += [ \"access_token:libaccesstoken_sdk\" ]\n  }\n\n  sanitize = {\n"
         }
       ]
     },
@@ -215,11 +219,11 @@
     {
       "path": "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/intelligent_voice/vendor/file.te",
       "before_sha256": "f9f57ea055e3644323d3191460eb55697d1225d86ef4f396e8b3bf20cee6fe82",
-      "after_sha256": "f6aa420db69e99c41b828343aa98418d9c67e57170f293b3d61439132414f8e6",
+      "after_sha256": "3472da194b81c086fc12ddda2a1ceed201d484516049a4a32044303dd143ea0f",
       "cuts": [
         {
           "before": "\ntype dev_soundtrigger, dev_attr;\ntype dev_hifi_misc, dev_attr;\n",
-          "after": "\ntype dev_soundtrigger, dev_attr;\ntype dev_hifi_misc, dev_attr;\n\n# QEMU CPU provider: immutable model data and private native enrollment.\ntype qemu_voice_models_file, file_attr;\ntype qemu_voice_cpu_data, file_attr;\n"
+          "after": "\ntype dev_soundtrigger, dev_attr;\ntype dev_hifi_misc, dev_attr;\n\n# QEMU CPU provider: immutable model data and private native enrollment.\ntype qemu_voice_models_file, file_attr, vendor_file_attr, vendor_etc_file_attr;\ntype qemu_voice_cpu_data, file_attr, data_file_attr, data_service_file_attr;\n"
         }
       ]
     },

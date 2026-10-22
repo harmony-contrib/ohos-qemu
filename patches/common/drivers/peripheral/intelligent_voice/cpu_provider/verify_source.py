@@ -17,8 +17,9 @@ import tarfile
 
 sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
-EDITS_SHA = '71a7f202b149d9530c22ebb2815b722237f8a65bcc15cf93220f1683b7659c17'
+EDITS_SHA = 'aa619e7a6a2ac20dd5793eeb78e138b6fb8d5b208eded5515c5a54c950660c0a'
 PREVIOUS_EDITS_SHA = 'c050aec95959eb8178c247cf76450f12947d28488bce5455860c025cd726e38e'
+PREVIOUS_C22_EDITS_SHA = '71a7f202b149d9530c22ebb2815b722237f8a65bcc15cf93220f1683b7659c17'
 PREVIOUS_INPUT_SOURCES_SHA = '61b6851f5bc8a50f174a4ec6328df1313e35ac13714edbc97f2f26345d0f8da4'
 PREVIOUS_GN_SHA = 'e16ba5fb2a35de048f42027b4c243434b9a79941ee8c62f49a2e2124de293251'
 PREVIOUS_GN_INPUT = 'legacy/CPU-BUILD-previous.gn'
@@ -26,7 +27,12 @@ CPU_GN_INPUT = 'sources/drivers/peripheral/intelligent_voice/passthrough/cpu/BUI
 PREVIOUS_C23_INPUT_SOURCES_SHA = '206c5f355b1c8e5cb4d59a2708751213107db9cf7c83afb2ce8d5ab15489698d'
 PREVIOUS_C23_GN_SHA = '4fadb8d00e75ab0b66afb94f41241ceeb8e41a96ac0c40e470310987239c8491'
 PREVIOUS_C23_GN_INPUT = 'legacy/CPU-BUILD-c23.gn'
-INPUT_FILES_SHA = '3e2f2fd4a64d5daadf1d8e5271db0ecc98f383ec995b010a661dd0e3eda5f850'
+PREVIOUS_C24_INPUT_SOURCES_SHA = 'e89983ab042d69cdcf414d02aec2633421f65a6c9d4e7635c8dc74308ae2b001'
+PREVIOUS_C24_CPP_SHA = '624ae661f8d2639d9b50d7a55c1a19405343137769b738f3cf4775650d74dba6'
+PREVIOUS_C24_CPP_INPUT = 'legacy/CPU-VOICE-c24.cpp'
+CPU_CPP = 'drivers/peripheral/intelligent_voice/passthrough/engine/cpu_voice_engine.cpp'
+CPU_CPP_INPUT = 'sources/drivers/peripheral/intelligent_voice/passthrough/engine/cpu_voice_engine.cpp'
+INPUT_FILES_SHA = 'ddd24362f69ba2b14869e23546295dcec47ee25a44b72eb5034209f57fc84f18'
 PROJECTS_SHA = 'ea9b404805887ae248a1eda69333465d0ce426c342d5f82e14e5b6e7c62a0b41'
 CPU = 'drivers/peripheral/intelligent_voice/passthrough/cpu/'
 SPATIAL = 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/'
@@ -182,15 +188,29 @@ def previous_edits(edits):
     return previous
 
 
+def previous_c22_edits(edits):
+    raw = file_raw(HERE / 'PREVIOUS-C22-SOURCE-EDITS.json')
+    need(sha(raw) == PREVIOUS_C22_EDITS_SHA, 'fixed retained C22 complete31 source contract changed')
+    previous = json.loads(raw)
+    need(previous['schema'] == edits['schema'] and len(previous['files']) == 31 and
+         [(r['path'], r['before_sha256']) for r in previous['files']] ==
+         [(r['path'], r['before_sha256']) for r in edits['files']],
+         'retained C22 complete31 must share the exact original before vector')
+    return previous
+
+
 def complete_state(actual, edits):
     if all(actual[r['path']] == r['before_sha256'] for r in edits['files']):
         return 'before'
     if all(actual[r['path']] == r['after_sha256'] for r in edits['files']):
         return 'final'
     previous = previous_edits(edits)
-    need(all(actual[r['path']] == r['after_sha256'] for r in previous['files']),
+    if all(actual[r['path']] == r['after_sha256'] for r in previous['files']):
+        return 'previous_final'
+    retained = previous_c22_edits(edits)
+    need(all(actual[r['path']] == r['after_sha256'] for r in retained['files']),
          'unknown/mixed M01 vector preserved')
-    return 'previous_final'
+    return 'previous_c22_final'
 
 
 def inverse(raw, row):
@@ -260,44 +280,49 @@ def payloads(index):
 
 
 def legacy_payloads(index, current):
-    """Two exact previous443 maps; each differs at only one retained GN path.
+    """Three exact historical full443 maps; no per-file alternative admission.
 
-    Complete declarations and fixed GN bytes are independently authenticated.
-    The shallow maps share every unchanged binary/model/archive byte object;
-    no file chooses an old/current value independently.
+    Each complete declaration is authenticated and differs from current only
+    at its fixed GN/CPU CPP overrides. Shallow maps share unchanged binary/model
+    bytes; C21/C23 retain their GN and all three retain the same original CPP.
     """
     selected = json.loads(file_raw(HERE / 'INPUT-SOURCES.json'))
-    name = CPU + 'BUILD.gn'
-    need(name in selected['new_sources'] and len(current) == 443 and name in current,
-         'complete current443 CPU GN map required')
-    need(selected['new_sources'][name]['relative'] == CPU_GN_INPUT,
-         'fixed current CPU GN component input')
+    gn_name = CPU + 'BUILD.gn'
+    need(len(current) == 443 and gn_name in current and CPU_CPP in current,
+         'complete current443 GN/CPP map required')
+    need(selected['new_sources'][gn_name]['relative'] == CPU_GN_INPUT and
+         selected['new_sources'][CPU_CPP]['relative'] == CPU_CPP_INPUT,
+         'fixed current GN/CPP component inputs')
+    cpp = (CPU_CPP, CPU_CPP_INPUT, PREVIOUS_C24_CPP_INPUT, PREVIOUS_C24_CPP_SHA)
     fixed = (
         ('previous', 'PREVIOUS-ASSET-SOURCES.json', PREVIOUS_INPUT_SOURCES_SHA,
-         PREVIOUS_GN_INPUT, PREVIOUS_GN_SHA),
+         ((gn_name, CPU_GN_INPUT, PREVIOUS_GN_INPUT, PREVIOUS_GN_SHA), cpp)),
         ('previous_c23', 'PREVIOUS-C23-ASSET-SOURCES.json', PREVIOUS_C23_INPUT_SOURCES_SHA,
-         PREVIOUS_C23_GN_INPUT, PREVIOUS_C23_GN_SHA),
+         ((gn_name, CPU_GN_INPUT, PREVIOUS_C23_GN_INPUT, PREVIOUS_C23_GN_SHA), cpp)),
+        ('previous_c24', 'PREVIOUS-C24-ASSET-SOURCES.json', PREVIOUS_C24_INPUT_SOURCES_SHA,
+         (cpp,)),
     )
     result = {}
-    for epoch, declaration, declaration_sha, gn_input, gn_sha in fixed:
+    for epoch, declaration, declaration_sha, overrides in fixed:
         raw = file_raw(HERE / declaration)
         need(sha(raw) == declaration_sha, 'fixed previous complete asset declaration changed: ' + epoch)
         previous = json.loads(raw)
-        need(name in previous['new_sources'], 'fixed previous CPU GN input required: ' + epoch)
-        old_row = previous['new_sources'][name]
-        need(old_row['relative'] == CPU_GN_INPUT and old_row['sha256'] == gn_sha,
-             'only the fixed original GN asset may differ: ' + epoch)
         normalized = dict(selected)
         normalized['new_sources'] = dict(selected['new_sources'])
-        normalized['new_sources'][name] = old_row
-        need(normalized == previous,
-             'complete asset declarations differ outside one fixed GN input: ' + epoch)
-        entry = index['files'][gn_input]
-        old_raw = file_raw(source(HERE, gn_input))
-        need(entry['sha256'] == gn_sha and len(old_raw) == entry['bytes'] and sha(old_raw) == gn_sha,
-             'complete retained previous GN bytes required: ' + epoch)
         mapping = dict(current)
-        mapping[name] = old_raw
+        for logical, relative_input, retained_input, retained_sha in overrides:
+            need(logical in previous['new_sources'], 'fixed historical input required: ' + epoch)
+            old_row = previous['new_sources'][logical]
+            need(old_row['relative'] == relative_input and old_row['sha256'] == retained_sha,
+                 'only fixed historical GN/CPP input may differ: ' + epoch)
+            normalized['new_sources'][logical] = old_row
+            entry = index['files'][retained_input]
+            retained_raw = file_raw(source(HERE, retained_input))
+            need(entry['sha256'] == retained_sha and len(retained_raw) == entry['bytes'] and
+                 sha(retained_raw) == retained_sha, 'complete retained historical bytes required: ' + epoch)
+            mapping[logical] = retained_raw
+        need(normalized == previous,
+             'complete asset declarations differ outside fixed overrides: ' + epoch)
         need(set(mapping) == set(current) and len(mapping) == 443,
              'exact same complete443 payload paths required: ' + epoch)
         result[epoch] = mapping
@@ -373,26 +398,28 @@ def rewind_plan(root):
     assets = payloads(index)
     epoch = asset_epoch(root, index, assets)
     previous = previous_edits(edits)
+    retained = previous_c22_edits(edits)
     actual = vectors(root, edits)
     if epoch == 'absent':
         need(not any(actual[r['path']] == r['after_sha256']
-                     for contract in (edits, previous) for r in contract['files']),
+                     for contract in (edits, previous, retained) for r in contract['files']),
              'complete final source31 cannot have absent product assets')
         need(vectors(root, edits) == actual and component_identity(index) == component_before,
              'fresh source/component changed during prefix read')
         project_heads(root, projects)
         return None
     state = complete_state(actual, edits)
-    need((state == 'final' and epoch in ('current', 'previous', 'previous_c23')) or
+    need((state == 'final' and epoch == 'current') or
+         (state == 'previous_c22_final' and epoch in ('previous', 'previous_c23', 'previous_c24')) or
          (state == 'previous_final' and epoch == 'previous') or
-         (state == 'before' and epoch in ('current', 'previous', 'previous_c23')),
+         (state == 'before' and epoch in ('current', 'previous', 'previous_c23', 'previous_c24')),
          'only a fixed complete source31/asset443 prefix endpoint is admitted')
     if state == 'before' and epoch == 'current':
         need(vectors(root, edits) == actual and component_identity(index) == component_before and
              asset_epoch(root, index, assets) == epoch, 'complete prepared prefix changed during read')
         project_heads(root, projects)
         return None
-    selected = previous if state == 'previous_final' else edits
+    selected = {'previous_final': previous, 'previous_c22_final': retained}.get(state, edits)
     desired = dict(assets)
     for row in selected['files']:
         name = row['path']

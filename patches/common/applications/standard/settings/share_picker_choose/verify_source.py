@@ -15,7 +15,7 @@ _spec.loader.exec_module(_apply)
 DIALOG = 'foundation/ability/ability_runtime/services/abilitymgr/src/dialog_session/dialog_session_manager.cpp'
 CHOOSER_FINAL = '65d04f5cf9dfaf1f0aaa267ff8b0dfa06296a0ea600e25ceac2ac0438a60f11a'
 ADDITIONAL_FINAL = 'b3dec3bcc065de6c80814fd3c0cca599f80da43f25f00c5e56406732f57aef63'
-ADDITIONAL_HELPER_SHA256 = '148960d9f68f668967e86d1c98b26b7b37e124bc915e2b66a3c5a6871bdc00c0'
+ADDITIONAL_HELPER_SHA256 = '95a43375a75894531689af6e3dcdd868dd0749e771998e258dcd83fcd00de924'
 
 
 def additional_helper():

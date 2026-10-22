@@ -84,19 +84,19 @@ foreach(helper,
       "-Werror",
     ]
     deps = [ "$EXT_INNERKITS_ROOT/netvpnclient:net_vpn_manager_if" ]
-    if (helper == "tun_bridge") {
-      deps += [
-        "//foundation/communication/netmanager_base/interfaces/innerkits/netconnclient:net_conn_manager_if",
-        "//third_party/openssl:libcrypto_shared",
-        "//third_party/openssl:libssl_shared",
-      ]
-    }
     external_deps = [
       "ability_base:want",
       "c_utils:utils",
       "init:libbegetutil",
       "ipc:ipc_single",
     ]
+    if (helper == "tun_bridge") {
+      external_deps += [
+        "netmanager_base:net_conn_manager_if",
+        "openssl:libcrypto_shared",
+        "openssl:libssl_shared",
+      ]
+    }
     subsystem_name = "communication"
     part_name = "netmanager_ext"
   }

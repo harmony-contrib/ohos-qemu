@@ -88,11 +88,11 @@
   "new_sources": {
     "drivers/peripheral/intelligent_voice/passthrough/engine/cpu_voice_engine.cpp": {
       "relative": "sources/drivers/peripheral/intelligent_voice/passthrough/engine/cpu_voice_engine.cpp",
-      "sha256": "624ae661f8d2639d9b50d7a55c1a19405343137769b738f3cf4775650d74dba6",
+      "sha256": "42b0d83a3c7811a82408ef7c04095e71386c4484be03262a55ae8c9b253940a1",
       "source": {
-        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-provider-scope-candidate/candidate/product/cpu_voice_engine.cpp",
-        "sha256": "624ae661f8d2639d9b50d7a55c1a19405343137769b738f3cf4775650d74dba6",
-        "bytes": 18001
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-selinux-policy-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/sources/drivers/peripheral/intelligent_voice/passthrough/engine/cpu_voice_engine.cpp",
+        "sha256": "42b0d83a3c7811a82408ef7c04095e71386c4484be03262a55ae8c9b253940a1",
+        "bytes": 18028
       }
     },
     "drivers/peripheral/intelligent_voice/passthrough/engine/cpu_voice_engine.h": {
