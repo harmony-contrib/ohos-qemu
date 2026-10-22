@@ -23,7 +23,10 @@ PREVIOUS_INPUT_SOURCES_SHA = '61b6851f5bc8a50f174a4ec6328df1313e35ac13714edbc97f
 PREVIOUS_GN_SHA = 'e16ba5fb2a35de048f42027b4c243434b9a79941ee8c62f49a2e2124de293251'
 PREVIOUS_GN_INPUT = 'legacy/CPU-BUILD-previous.gn'
 CPU_GN_INPUT = 'sources/drivers/peripheral/intelligent_voice/passthrough/cpu/BUILD.gn'
-INPUT_FILES_SHA = '5fda73c37d38cea5bb7283ca86afa5f5f0f7df6ab97087050d629a92de81417c'
+PREVIOUS_C23_INPUT_SOURCES_SHA = '206c5f355b1c8e5cb4d59a2708751213107db9cf7c83afb2ce8d5ab15489698d'
+PREVIOUS_C23_GN_SHA = '4fadb8d00e75ab0b66afb94f41241ceeb8e41a96ac0c40e470310987239c8491'
+PREVIOUS_C23_GN_INPUT = 'legacy/CPU-BUILD-c23.gn'
+INPUT_FILES_SHA = '3e2f2fd4a64d5daadf1d8e5271db0ecc98f383ec995b010a661dd0e3eda5f850'
 PROJECTS_SHA = 'ea9b404805887ae248a1eda69333465d0ce426c342d5f82e14e5b6e7c62a0b41'
 CPU = 'drivers/peripheral/intelligent_voice/passthrough/cpu/'
 SPATIAL = 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/'
@@ -256,32 +259,48 @@ def payloads(index):
     return result
 
 
-def previous_payloads(index, current):
-    """Exact previous443 from its original declaration and one retained GN file.
+def legacy_payloads(index, current):
+    """Two exact previous443 maps; each differs at only one retained GN path.
 
-    The shallow mapping shares unchanged binary objects; no second archive/model
-    copy is constructed and no file may independently choose an old/new value.
+    Complete declarations and fixed GN bytes are independently authenticated.
+    The shallow maps share every unchanged binary/model/archive byte object;
+    no file chooses an old/current value independently.
     """
-    raw = file_raw(HERE / 'PREVIOUS-ASSET-SOURCES.json')
-    need(sha(raw) == PREVIOUS_INPUT_SOURCES_SHA, 'fixed previous complete asset declaration changed')
-    previous = json.loads(raw)
     selected = json.loads(file_raw(HERE / 'INPUT-SOURCES.json'))
     name = CPU + 'BUILD.gn'
-    need(name in selected['new_sources'] and name in previous['new_sources'], 'fixed complete CPU GN input required')
-    current_row = selected['new_sources'][name]
-    old_row = previous['new_sources'][name]
-    need(current_row['relative'] == old_row['relative'] == CPU_GN_INPUT and
-         old_row['sha256'] == PREVIOUS_GN_SHA, 'only the fixed original GN asset may differ')
-    selected['new_sources'][name] = old_row
-    need(selected == previous, 'previous/current full asset declarations differ outside the one fixed GN input')
-    entry = index['files'][PREVIOUS_GN_INPUT]
-    old_raw = file_raw(source(HERE, PREVIOUS_GN_INPUT))
-    need(entry['sha256'] == PREVIOUS_GN_SHA and len(old_raw) == entry['bytes'] and
-         sha(old_raw) == PREVIOUS_GN_SHA, 'complete retained previous GN bytes required')
-    need(name in current and len(current) == 443, 'complete current443 input map required')
-    result = dict(current)
-    result[name] = old_raw
-    need(set(result) == set(current) and len(result) == 443, 'exact same complete443 payload paths required')
+    need(name in selected['new_sources'] and len(current) == 443 and name in current,
+         'complete current443 CPU GN map required')
+    need(selected['new_sources'][name]['relative'] == CPU_GN_INPUT,
+         'fixed current CPU GN component input')
+    fixed = (
+        ('previous', 'PREVIOUS-ASSET-SOURCES.json', PREVIOUS_INPUT_SOURCES_SHA,
+         PREVIOUS_GN_INPUT, PREVIOUS_GN_SHA),
+        ('previous_c23', 'PREVIOUS-C23-ASSET-SOURCES.json', PREVIOUS_C23_INPUT_SOURCES_SHA,
+         PREVIOUS_C23_GN_INPUT, PREVIOUS_C23_GN_SHA),
+    )
+    result = {}
+    for epoch, declaration, declaration_sha, gn_input, gn_sha in fixed:
+        raw = file_raw(HERE / declaration)
+        need(sha(raw) == declaration_sha, 'fixed previous complete asset declaration changed: ' + epoch)
+        previous = json.loads(raw)
+        need(name in previous['new_sources'], 'fixed previous CPU GN input required: ' + epoch)
+        old_row = previous['new_sources'][name]
+        need(old_row['relative'] == CPU_GN_INPUT and old_row['sha256'] == gn_sha,
+             'only the fixed original GN asset may differ: ' + epoch)
+        normalized = dict(selected)
+        normalized['new_sources'] = dict(selected['new_sources'])
+        normalized['new_sources'][name] = old_row
+        need(normalized == previous,
+             'complete asset declarations differ outside one fixed GN input: ' + epoch)
+        entry = index['files'][gn_input]
+        old_raw = file_raw(source(HERE, gn_input))
+        need(entry['sha256'] == gn_sha and len(old_raw) == entry['bytes'] and sha(old_raw) == gn_sha,
+             'complete retained previous GN bytes required: ' + epoch)
+        mapping = dict(current)
+        mapping[name] = old_raw
+        need(set(mapping) == set(current) and len(mapping) == 443,
+             'exact same complete443 payload paths required: ' + epoch)
+        result[epoch] = mapping
     return result
 
 
@@ -302,18 +321,19 @@ def assets_state(root, expected):
 
 
 def asset_epoch(root, index, current):
-    """Classify exactly one full443 endpoint; never a per-file alternative map."""
-    previous = previous_payloads(index, current)
-    seen, current_ok, previous_ok = 0, True, True
+    """Classify one whole443 epoch; never a per-file alternative map."""
+    expected = {'current': current, **legacy_payloads(index, current)}
+    matches = {epoch: True for epoch in expected}
+    seen = 0
     for name in current:
         path = source(root, name)
         if not path.exists():
-            current_ok = previous_ok = False
+            matches = {epoch: False for epoch in expected}
             continue
         raw = file_raw(path)
         seen += 1
-        current_ok = current_ok and raw == current[name]
-        previous_ok = previous_ok and raw == previous[name]
+        for epoch, mapping in expected.items():
+            matches[epoch] = matches[epoch] and raw == mapping[name]
     need(seen in (0, 443), 'partial fixed443 asset vector preserved')
     directory = source(root, SPATIAL + 'openal-soft', directory=True)
     if directory.exists():
@@ -322,10 +342,9 @@ def asset_epoch(root, index, current):
              'extra/missing original OpenAL source preserved')
     if seen == 0:
         return 'absent'
-    if current_ok:
-        return 'current'
-    need(previous_ok, 'unknown/mixed complete443 asset bytes preserved')
-    return 'previous'
+    selected = [epoch for epoch, matched in matches.items() if matched]
+    need(len(selected) == 1, 'unknown/mixed/ambiguous complete443 asset bytes preserved')
+    return selected[0]
 
 
 def require_final(root):
@@ -364,9 +383,9 @@ def rewind_plan(root):
         project_heads(root, projects)
         return None
     state = complete_state(actual, edits)
-    need((state == 'final' and epoch in ('current', 'previous')) or
+    need((state == 'final' and epoch in ('current', 'previous', 'previous_c23')) or
          (state == 'previous_final' and epoch == 'previous') or
-         (state == 'before' and epoch in ('current', 'previous')),
+         (state == 'before' and epoch in ('current', 'previous', 'previous_c23')),
          'only a fixed complete source31/asset443 prefix endpoint is admitted')
     if state == 'before' and epoch == 'current':
         need(vectors(root, edits) == actual and component_identity(index) == component_before and

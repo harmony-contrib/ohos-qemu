@@ -106,10 +106,10 @@
     },
     "drivers/peripheral/intelligent_voice/passthrough/cpu/BUILD.gn": {
       "relative": "sources/drivers/peripheral/intelligent_voice/passthrough/cpu/BUILD.gn",
-      "sha256": "4fadb8d00e75ab0b66afb94f41241ceeb8e41a96ac0c40e470310987239c8491",
+      "sha256": "b8ef43399ec22b2efbf3b8397eab3e4765a0d010ba775101a8e1980a9168c91d",
       "source": {
-        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-gn-syntax-assets-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/sources/drivers/peripheral/intelligent_voice/passthrough/cpu/BUILD.gn",
-        "sha256": "4fadb8d00e75ab0b66afb94f41241ceeb8e41a96ac0c40e470310987239c8491",
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-gn-template-assets-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/sources/drivers/peripheral/intelligent_voice/passthrough/cpu/BUILD.gn",
+        "sha256": "b8ef43399ec22b2efbf3b8397eab3e4765a0d010ba775101a8e1980a9168c91d",
         "bytes": 1583
       }
     },

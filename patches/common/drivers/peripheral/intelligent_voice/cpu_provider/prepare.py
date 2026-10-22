@@ -132,14 +132,14 @@ def prepare(root, *, rewind=False, require_final=False):
                               expected_assets=plan['asset_state'], assets=plan['assets'], wanted_source='before')
             checked.need(checked.complete_state(checked.vectors(root, edits), edits) == 'before', 'complete31 prefix rewind required')
             return dict(state='complete31_before_current443_prepared', source_endpoint=plan['source_state'],
-                        previous_asset_migrated=plan['asset_state'] == 'previous', changed=changed, runtime_pass=False)
+                        asset_endpoint=plan['asset_state'], previous_asset_migrated=plan['asset_state'] in ('previous', 'previous_c23'), changed=changed, runtime_pass=False)
         component_before = checked.component_identity(index)
         checked.project_heads(root, projects)
         state = checked.complete_state(checked.vectors(root, edits), edits)
         checked.need(state != 'previous_final', 'previous complete31 must first rewind through the original prefix')
         assets = checked.payloads(index)
         asset_state = checked.asset_epoch(root, index, assets)
-        checked.need(asset_state != 'previous', 'previous complete443 must first migrate through the original prefix')
+        checked.need(asset_state not in ('previous', 'previous_c23'), 'previous complete443 must first migrate through the original prefix')
         if state == 'final':
             checked.need(asset_state == 'current', 'complete final requires every current fixed product input')
             checked.require_final(root)

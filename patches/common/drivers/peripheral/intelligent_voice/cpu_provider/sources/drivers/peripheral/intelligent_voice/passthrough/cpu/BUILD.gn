@@ -18,7 +18,7 @@ foreach(_pair, _names) {
     if (current_cpu == "arm") {
       module_install_dir = "lib"
     }
-    strip_enable = false
+    enable_strip = false
     install_enable = true
     install_images = [ chipset_base_dir ]
     subsystem_name = "hdf"

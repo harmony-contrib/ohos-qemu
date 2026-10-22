@@ -28,12 +28,12 @@
       }
     },
     "INPUT-SOURCES.json": {
-      "sha256": "206c5f355b1c8e5cb4d59a2708751213107db9cf7c83afb2ce8d5ab15489698d",
-      "bytes": 75548,
+      "sha256": "e89983ab042d69cdcf414d02aec2633421f65a6c9d4e7635c8dc74308ae2b001",
+      "bytes": 75550,
       "origin": {
-        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-gn-syntax-assets-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/INPUT-SOURCES.json",
-        "sha256": "206c5f355b1c8e5cb4d59a2708751213107db9cf7c83afb2ce8d5ab15489698d",
-        "bytes": 75548
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-gn-template-assets-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/INPUT-SOURCES.json",
+        "sha256": "e89983ab042d69cdcf414d02aec2633421f65a6c9d4e7635c8dc74308ae2b001",
+        "bytes": 75550
       }
     },
     "PROJECTS.json": {
@@ -271,12 +271,12 @@
       }
     },
     "prepare.py": {
-      "sha256": "3c9d799250f8b298d7a560e76e91b877d8c3b1a910b1daf10758d9b7a619c286",
-      "bytes": 11033,
+      "sha256": "d34f1ec596c5e4d20b3a4022a967ef458508663774e315c5dfc6477f15761543",
+      "bytes": 11109,
       "origin": {
-        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-gn-syntax-assets-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/prepare.py",
-        "sha256": "3c9d799250f8b298d7a560e76e91b877d8c3b1a910b1daf10758d9b7a619c286",
-        "bytes": 11033
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-gn-template-assets-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/prepare.py",
+        "sha256": "d34f1ec596c5e4d20b3a4022a967ef458508663774e315c5dfc6477f15761543",
+        "bytes": 11109
       }
     },
     "produce_arm32.py": {
@@ -289,11 +289,11 @@
       }
     },
     "sources/drivers/peripheral/intelligent_voice/passthrough/cpu/BUILD.gn": {
-      "sha256": "4fadb8d00e75ab0b66afb94f41241ceeb8e41a96ac0c40e470310987239c8491",
+      "sha256": "b8ef43399ec22b2efbf3b8397eab3e4765a0d010ba775101a8e1980a9168c91d",
       "bytes": 1583,
       "origin": {
-        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-gn-syntax-assets-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/sources/drivers/peripheral/intelligent_voice/passthrough/cpu/BUILD.gn",
-        "sha256": "4fadb8d00e75ab0b66afb94f41241ceeb8e41a96ac0c40e470310987239c8491",
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-gn-template-assets-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/sources/drivers/peripheral/intelligent_voice/passthrough/cpu/BUILD.gn",
+        "sha256": "b8ef43399ec22b2efbf3b8397eab3e4765a0d010ba775101a8e1980a9168c91d",
         "bytes": 1583
       }
     },
@@ -385,6 +385,24 @@
         "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-gn-syntax-assets-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/legacy/CPU-BUILD-previous.gn",
         "sha256": "e16ba5fb2a35de048f42027b4c243434b9a79941ee8c62f49a2e2124de293251",
         "bytes": 1511
+      }
+    },
+    "PREVIOUS-C23-ASSET-SOURCES.json": {
+      "sha256": "206c5f355b1c8e5cb4d59a2708751213107db9cf7c83afb2ce8d5ab15489698d",
+      "bytes": 75548,
+      "origin": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-gn-template-assets-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/PREVIOUS-C23-ASSET-SOURCES.json",
+        "sha256": "206c5f355b1c8e5cb4d59a2708751213107db9cf7c83afb2ce8d5ab15489698d",
+        "bytes": 75548
+      }
+    },
+    "legacy/CPU-BUILD-c23.gn": {
+      "sha256": "4fadb8d00e75ab0b66afb94f41241ceeb8e41a96ac0c40e470310987239c8491",
+      "bytes": 1583,
+      "origin": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-gn-template-assets-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/legacy/CPU-BUILD-c23.gn",
+        "sha256": "4fadb8d00e75ab0b66afb94f41241ceeb8e41a96ac0c40e470310987239c8491",
+        "bytes": 1583
       }
     }
   },
