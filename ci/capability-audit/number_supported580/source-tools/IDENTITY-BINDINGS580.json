@@ -1,0 +1,63 @@
+{
+  "schema": "number580-failclosed-normal-identity-bindings/v1",
+  "source_only": true,
+  "runtime_pass": false,
+  "normal_family": "normal",
+  "approval_slot": "networking",
+  "owner_assignment_sites": {
+    "KIT": {
+      "before": "None",
+      "type": "Path",
+      "binding": "actual selected kit family root"
+    },
+    "KIT_SHA": {
+      "before": "None",
+      "type": "sha256",
+      "binding": "actual kit/manifest.json complete produced bytes"
+    },
+    "SOURCE_COMMIT": {
+      "before": "None",
+      "type": "commit40",
+      "binding": "actual Root chosen clean committed source HEAD"
+    },
+    "NUMBER580_DIRECTORY": {
+      "before": "None",
+      "type": "Path",
+      "binding": "actual fixed locations.normal/number"
+    },
+    "NUMBER580_PINS": {
+      "before": {
+        "corpus580.py": null,
+        "protocol580.py": null,
+        "register580.py": null,
+        "project580.py": null,
+        "CONTRACT580.json": null
+      },
+      "type": "fixed_node_SHA256_map",
+      "binding": "each exact normal sibling final byte hash"
+    },
+    "BOOT_SHA": {
+      "before": "None",
+      "type": "canonical_sha256",
+      "binding": "ci/capability-audit/boot_package.py actual complete snapshot row"
+    }
+  },
+  "protocol_assignment_sites": {
+    "CONTRACT_SHA": {
+      "before": "None",
+      "type": "sha256",
+      "binding": "actual same normal CONTRACT580.json"
+    }
+  },
+  "other_paths": "fixed canonical19 and H actor retain original source identity; no blanket old HEAD/path/scalar refresh",
+  "SDK_sources_exact5": [
+    "produce580.py",
+    "project580.py",
+    "caller/NumberCorpus580.ets",
+    "caller/LegacyNumberCorpus580.js",
+    "caller/LegacyNumberCorpus580.d.ts"
+  ],
+  "remaining_normal5": "owner/corpus/protocol/register/CONTRACT protected by Owner pins plus Final full source authority",
+  "no_normal_source_head_field": true,
+  "no_producer_project_inline_hash_cycle": true
+}

@@ -14,12 +14,13 @@ owners, serial cleanup, stages and security flags remain in force. `source-tools
 records the reviewed finite input preparer and explicit future identity sites.
 Full provenance and finite changes remain in the retained Root evidence capsules.
 
-The local Owner, corpus and final mandatory gate remain under review. Their
-source identity, original normal signing, actual SDK/native production and the
-independent Number QEMU closure must complete before acceptance. Unprojected
-fields and templates do not authorize bypassing those gates. The representative
-build waits for all known fixes, and the other five packages wait for complete
-runtime validation of the newly packaged representative.
+The local Owner, corpus and final mandatory gate are included as unprojected
+sources. Commit all business code first, then derive actual source identity DATA
+from that clean HEAD with the reviewed Root author. Original normal signing,
+actual SDK/native production and the independent Number QEMU closure must all
+complete before acceptance. Unprojected templates do not bypass those gates.
+The representative build waits for all known fixes; the other five packages wait
+for complete runtime validation of the newly packaged representative.
 
 Cloud user registration, login and account-bound cloud sync are outside the
 requested scope. Local OS account isolation, permissions, ordinary networking

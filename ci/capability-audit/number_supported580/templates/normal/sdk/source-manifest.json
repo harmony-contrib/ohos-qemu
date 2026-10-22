@@ -1,0 +1,181 @@
+{
+  "schema": "F-SDK-batch29-source-draft/v1",
+  "scope": "actual four caller SDK source inputs; no independent host/Linux/NativeStrip execution gate",
+  "inherits": {
+    "directory": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-SDK-batch26",
+    "manifest": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-SDK-batch26/source-manifest.json",
+      "sha256": "821ee0619874062d9e8dc938f7863fa6d16bde35a51387e19cb68cd7d27f4039"
+    },
+    "complete_predecessor_sha_inventory": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-SDK-batch29/predecessor-sha256.json",
+      "sha256": "af9b36f9f03cb1f6ad2ca20acbd4a0904a7e88f31235cb803dc2ff7a316f79b3"
+    }
+  },
+  "checkpoint_from_parent_not_Git_verified": "d58d97db7b782a63ae7beaa6f35cf9d6b2647b1d",
+  "build_input_tree_from_parent": "76dfe14c6d8fd12cde8ca9bcc633f50d1714b7c4092524b854d9c525076e5ade",
+  "final_commit_must_be_explicit": true,
+  "files": {
+    "CANONICAL-375.md": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/CANONICAL-375.md",
+      "sha256": "9e32d0309d04a0d766002d3ddc48bc9614a6b37003dd9ae6cda5f12b8cca8838"
+    },
+    "HANDOFF.md": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/HANDOFF.md",
+      "sha256": "27998919122e9f6f2e4409d484756e03fd3db87bb83d51c98d6380ab7694fd2a"
+    },
+    "STATIC-REVIEW.json": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/STATIC-REVIEW.json",
+      "sha256": "758deef617d753f8205ab7737e1988c57265cb3c9a267229853919c681da5150"
+    },
+    "predecessor-sha256.json": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/predecessor-sha256.json",
+      "sha256": "af9b36f9f03cb1f6ad2ca20acbd4a0904a7e88f31235cb803dc2ff7a316f79b3"
+    },
+    "prepare_apps_callers375.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/prepare_apps_callers375.py",
+      "sha256": "83f1c00304b514ffc189e6b45c92abe079ee13be6cb77439da03a3524248ba2d"
+    },
+    "run_dedicated_sdk26.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/run_dedicated_sdk26.py",
+      "sha256": "edda4fa16d6094fb22a35aa30d4dad7883f32e9d4b769ae3e78ea4d541de2e5d"
+    },
+    "run_knowledge_sdk26.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/run_knowledge_sdk26.py",
+      "sha256": "ed4e26602ebd91e91b8118cfe9f9cf68847c8835764d1c582afd953e7e1a5403"
+    },
+    "run_live_sdk39_26.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/run_live_sdk39_26.py",
+      "sha256": "ef1d2f403c6ad6a533671a47b61c01530cccd26cd701f967720aedd0520583cb"
+    },
+    "run_native_strip26.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/run_native_strip26.py",
+      "sha256": "d86634cf9970a9c9ece34f43583aaafe1af87b10a785d09f2c4b4f78b331b412"
+    },
+    "run_peer_postpackage26.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/run_peer_postpackage26.py",
+      "sha256": "4d14e7f973261af096dac79515248d63d25e9cec0970cddf3fe9a8813356188d"
+    },
+    "run_sdk_batch26.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/run_sdk_batch26.py",
+      "sha256": "65aeb6c50c11c3af61bb125ceebf5b198a625296c1aef60d9107618be87c5240"
+    },
+    "sdk26_common.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/sdk26_common.py",
+      "sha256": "bba565ad4cf824b00dbc1741871d8e2ae631378a65863db06adb4b26e2606dc4"
+    },
+    "sdk26_plan.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/sdk26_plan.py",
+      "sha256": "6a9ce0f1b528d0e661a6f92e16bb53431b7b560a3ddff6107c749fde43911912"
+    },
+    "sdk29_admission.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/sdk29_admission.py",
+      "sha256": "165b0ec9ac7d3b119e26a2fde853e9a397f84620ee04430a383ed6bea71c830b"
+    },
+    "source-diff-proof.json": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/source-diff-proof.json",
+      "sha256": "ff5cc90c25f5937ade84dd973269324cb0cc3e1590e758fa023b5bfda091665c"
+    },
+    "source-diff26-to29.diff": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/source-diff26-to29.diff",
+      "sha256": "ea89c9e17d405a82ef0830e68e94d14d274a9d30087ea542b1ee84aa180ceaaf"
+    }
+  },
+  "external_inputs": {
+    "prepare_apps_callers15.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/prepare_apps_callers15.py",
+      "sha256": "7cfe3c330a695e46a71ff2c33d4ad03d02b37218983a53f46cd6833bb900e2dc"
+    },
+    "apps-callers-sdk15/apps_callers_protocol.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/apps-callers-sdk15/apps_callers_protocol.py",
+      "sha256": "918db03e0ad91c197b665112d1d1340abc8b8ef5f997fd96c82470c858211d1b"
+    },
+    "apps-callers-sdk15/HANDOFF-18.md": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/apps-callers-sdk15/HANDOFF-18.md",
+      "sha256": "e1994c1b8b2848f93b5202c7f5af01a1dfeb1527c5834b9050b4ee64f3e16ff0"
+    },
+    "run_knowledge_SDK105_12.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/run_knowledge_SDK105_12.py",
+      "sha256": "1128df77954cdbd3e3ddb7698b9a724f107c10492736e87e6ed0c0b422e3f992"
+    },
+    "run_dedicated_qa_sdk_E_batch12.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/run_dedicated_qa_sdk_E_batch12.py",
+      "sha256": "89cc4ac3ef984011d2d00aaf76fd8957cfdcce00690ff43108b5dcb7510d5d11"
+    },
+    "run_seed_live_Linux_SDK13.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/run_seed_live_Linux_SDK13.py",
+      "sha256": "374898a2d72826c857852d6069882634e7535bc72350c7e75959591ae091c182"
+    },
+    "run_live_native_strip13.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/run_live_native_strip13.py",
+      "sha256": "b5f6ee71922b9ddede10b21672d696b562aa50a1a3bbc8ed75f8823cee62e3e5"
+    },
+    "run_peer_SDK15.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/run_peer_SDK15.py",
+      "sha256": "f433a2b4d459866a0a65f8f18ce99e184c69abdd0088296d0b1788d9fac6adda"
+    },
+    "openvpn-owned-peer-guest15/manifest.json": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/openvpn-owned-peer-guest15/manifest.json",
+      "sha256": "c0098e3fd458ef15a697c08c70077ac985c3c6e8a8957e11921a8a50f39fc8ed"
+    },
+    "openvpn-owned-peer-guest15/common12.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/openvpn-owned-peer-guest15/common12.py",
+      "sha256": "ed92a1033a8547dccc79b357408558979b512691e96dd1560197ea72021e1edc"
+    },
+    "openvpn-owned-peer-guest15/HANDOFF.md": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/openvpn-owned-peer-guest15/HANDOFF.md",
+      "sha256": "b05d34a6f0fb05ebe8870a1052e1b8ea69264b9f9980c21df1dabfd2255b95e3"
+    },
+    "location-owned16/HANDOFF.md": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/location-owned16/HANDOFF.md",
+      "sha256": "6a14f2c85ff411c880426006db37713f44b9741d7879cf0d1180b44eb0260035"
+    },
+    "location-role-export16/HANDOFF.md": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/location-role-export16/HANDOFF.md",
+      "sha256": "34f2b108697809abf36a2864117c84e40c3680f54bc3a805e0f1b0183b4c6a29"
+    },
+    "calendar-owned-boot-integration15/calendar_owned_boot.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/calendar-owned-boot-integration15/calendar_owned_boot.py",
+      "sha256": "a85f6ce8f64e3f868bbe488df6e28f3f0a940099afd4808902dd04fdb3231925"
+    },
+    "calendar-owned-boot-integration15/tool_pin.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/calendar-owned-boot-integration15/tool_pin.py",
+      "sha256": "30d52375c7bef8e4bc78530d51b6bd1528be4242521a7532172ff8754d7b91aa"
+    },
+    "prepare_first_runtime_inputs12.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/prepare_first_runtime_inputs12.py",
+      "sha256": "8da67a0fb6069fcf8f120b9810f09e21cff380e6bf7081b3251de305469203f1"
+    },
+    "check_E_QA_bindings12.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/check_E_QA_bindings12.py",
+      "sha256": "cd55984e7b021761cad8bd903d9505ba90cda038192abe576945afbdbdd963f7"
+    },
+    "run_representative_support12.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/run_representative_support12.py",
+      "sha256": "88ee1ac6800cf564c305ce8d9585aa3a8c147a8d2576e9d09eeb1687dcd660c5"
+    },
+    "F-SDK-batch26-review/REVIEW.md": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-SDK-batch26-review/REVIEW.md",
+      "sha256": "f5506e214a181c07bf3a9b8a4698c2667eb93c1cbdeb635314792168c7956e92"
+    },
+    "F-SDK-batch26-review/review.json": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-SDK-batch26-review/review.json",
+      "sha256": "a280c16446ed63dc2d7025cec3a282d010adf20fca3d5aa03e343053f584390a"
+    }
+  },
+  "prepackage_roles": 14,
+  "postpackage_peer15_roles": 2,
+  "shared_resource_execution_by_agent": false,
+  "capabilities_closed": 0,
+  "first_artifact_behavior_gate_passed": false,
+  "predecessor": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/F-SDK-batch29/source-manifest.json",
+    "sha256": "b6bf2ed46c5c1849d4d6f4aec03bb6b52a0e0d7c744e242c39d943e655544240"
+  },
+  "source_commit": "67765265103a932b9a562face76a882f07bed3e3",
+  "source_kit_manifest": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-suite-after579-generated/kit-6776526-579-01/manifest.json",
+    "sha256": "ba7c0e3b363d30ffa2baef081edc7c29bba0bf6177e5e922b7fad08c0a89ecbb",
+    "bytes": 14938
+  }
+}
