@@ -17,8 +17,10 @@ import tarfile
 
 sys.dont_write_bytecode = True
 HERE = Path(__file__).resolve().parent
-EDITS_SHA = 'c050aec95959eb8178c247cf76450f12947d28488bce5455860c025cd726e38e'
-INPUT_FILES_SHA = '110131274b8868ab48172b227a0c1c969f8e0b2820fefadd03636bba5264dc42'
+EDITS_SHA = '71a7f202b149d9530c22ebb2815b722237f8a65bcc15cf93220f1683b7659c17'
+PREVIOUS_EDITS_SHA = 'c050aec95959eb8178c247cf76450f12947d28488bce5455860c025cd726e38e'
+PREVIOUS_INPUT_SOURCES_SHA = '61b6851f5bc8a50f174a4ec6328df1313e35ac13714edbc97f2f26345d0f8da4'
+INPUT_FILES_SHA = 'bd9c47d0e0d494657c8027cf4716f8eb1e5cccca02f0bb12e67412a3034f992e'
 PROJECTS_SHA = 'ea9b404805887ae248a1eda69333465d0ce426c342d5f82e14e5b6e7c62a0b41'
 CPU = 'drivers/peripheral/intelligent_voice/passthrough/cpu/'
 SPATIAL = 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/'
@@ -163,11 +165,26 @@ def vectors(root, edits):
     return actual
 
 
+def previous_edits(edits):
+    raw = file_raw(HERE / 'PREVIOUS-SOURCE-EDITS.json')
+    need(sha(raw) == PREVIOUS_EDITS_SHA, 'fixed previous complete31 source contract changed')
+    previous = json.loads(raw)
+    need(previous['schema'] == edits['schema'] and len(previous['files']) == 31 and
+         [(r['path'], r['before_sha256']) for r in previous['files']] ==
+         [(r['path'], r['before_sha256']) for r in edits['files']],
+         'previous complete31 must share the exact original before vector')
+    return previous
+
+
 def complete_state(actual, edits):
     if all(actual[r['path']] == r['before_sha256'] for r in edits['files']):
         return 'before'
-    need(all(actual[r['path']] == r['after_sha256'] for r in edits['files']), 'unknown/mixed M01 vector preserved')
-    return 'final'
+    if all(actual[r['path']] == r['after_sha256'] for r in edits['files']):
+        return 'final'
+    previous = previous_edits(edits)
+    need(all(actual[r['path']] == r['after_sha256'] for r in previous['files']),
+         'unknown/mixed M01 vector preserved')
+    return 'previous_final'
 
 
 def inverse(raw, row):
@@ -261,6 +278,37 @@ def require_final(root):
     need(component_identity(index) == identity, 'component sources changed during verification')
     project_heads(root, projects)
     return edits
+
+
+def rewind_files(root):
+    """Prefix-only inverse; no mutation/subprocess or runtime admission.
+
+    Seeing an exact current/previous final member requires one complete31
+    endpoint, actual HEADs, the complete component and every fixed product asset.
+    The previous final is eligible only for a read-only inverse, never as the
+    new require-final. Return all31 original before bytes, including config.gni.
+    """
+    root = root_path(root)
+    edits, index, projects = metadata()
+    previous = previous_edits(edits)
+    actual = vectors(root, edits)
+    if not any(actual[r['path']] == r['after_sha256']
+               for contract in (edits, previous) for r in contract['files']):
+        return {}
+    component_before = component_identity(index)
+    project_heads(root, projects)
+    state = complete_state(actual, edits)
+    need(state in ('final', 'previous_final'), 'only a complete final31 may project to its original before')
+    if state == 'previous_final':
+        need(sha(file_raw(HERE / 'INPUT-SOURCES.json')) == PREVIOUS_INPUT_SOURCES_SHA,
+             'previous source epoch requires its exact unchanged full product asset declaration')
+    need(assets_state(root, payloads(index)) == 'final', 'complete fixed product assets required for full31 inverse')
+    selected = previous if state == 'previous_final' else edits
+    result = {row['path']: inverse(file_raw(source(root, row['path'])), row) for row in selected['files']}
+    need(vectors(root, edits) == actual, 'final source vector changed during read-only projection')
+    need(component_identity(index) == component_before, 'component changed during complete31 inverse projection')
+    project_heads(root, projects)
+    return result
 
 
 def preceding_files(root):

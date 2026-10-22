@@ -53,7 +53,7 @@ def publish(root, desired, *, edits, index, projects, component_before, expected
             checked.need(all(checked.file_raw(checked.source(root, n)) == raw for n, raw in desired.items()), 'complete published M01 byte vector differs')
             checked.project_heads(root, projects)
             checked.need(checked.component_identity(index) == component_before, 'component changed during transaction')
-            wanted = 'before' if expected_state == 'final' else 'final'
+            wanted = 'before' if expected_state in ('final', 'previous_final') else 'final'
             checked.need(checked.complete_state(checked.vectors(root, edits), edits) == wanted and
                          checked.assets_state(root, checked.payloads(index)) == 'final', 'complete committed source/asset vector differs')
         except BaseException as error:
@@ -120,17 +120,20 @@ def prepare(root, *, rewind=False, require_final=False):
     with os.fdopen(fd, 'a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         if rewind:
-            desired = checked.preceding_files(root)
+            desired = checked.rewind_files(root)
             if not desired:
                 return dict(state='no_M01_final_seen_defer_to_original_hooks', M01_source_verified=False, runtime_pass=False)
             component_before = checked.component_identity(index)
+            source_endpoint = checked.complete_state(checked.vectors(root, edits), edits)
+            checked.need(source_endpoint in ('final', 'previous_final'), 'complete current/previous final31 required for rewind')
             changed = publish(root, desired, edits=edits, index=index, projects=projects,
-                              component_before=component_before, expected_state='final')
+                              component_before=component_before, expected_state=source_endpoint)
             checked.need(checked.complete_state(checked.vectors(root, edits), edits) == 'before', 'complete 31-file rewind required')
-            return dict(state='complete_31_final_rewound_to_reviewed_before', changed=changed, fixed_assets_retained=True, runtime_pass=False)
+            return dict(state='complete_31_final_rewound_to_reviewed_before', source_endpoint=source_endpoint, changed=changed, fixed_assets_retained=True, runtime_pass=False)
         component_before = checked.component_identity(index)
         checked.project_heads(root, projects)
         state = checked.complete_state(checked.vectors(root, edits), edits)
+        checked.need(state != 'previous_final', 'previous complete31 must first rewind through the original prefix')
         assets = checked.payloads(index)
         asset_state = checked.assets_state(root, assets)
         if state == 'final':

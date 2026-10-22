@@ -49,7 +49,7 @@
     {
       "path": "drivers/peripheral/intelligent_voice/passthrough/BUILD.gn",
       "before_sha256": "a6575ce047472eba92dd9e529546a6b951ea9720cc259951c0d736233c632fb3",
-      "after_sha256": "880bbdf9e7d5c50a3003c81d5dc09957459b37f9adccd799eb560daab0bf996b",
+      "after_sha256": "559b176ec69434870930a7574e98ba56a10b07d81bf28d5a19c87a4e7fb3c60a",
       "cuts": [
         {
           "before": "# limitations under the License.\n\nimport(\"//build/ohos.gni\")\n\nohos_shared_library(\"vendor_intell_voice_trigger\") {\n  include_dirs = [\n",
@@ -57,7 +57,7 @@
         },
         {
           "before": "}\n\nohos_shared_library(\"vendor_intell_voice_engine\") {\n  include_dirs = [\n    \"../interfaces\",\n    \"../utils\",\n    \"engine\",\n  ]\n  sources = [\n    \"engine/engine_base.cpp\",\n    \"engine/engine_factory.cpp\",\n    \"engine/enroll_engine.cpp\",\n",
-          "after": "}\n\nohos_shared_library(\"vendor_intell_voice_engine\") {\n  sources = []\n  include_dirs = []\n  if (drivers_peripheral_intelligent_voice_qemu_cpu_provider) {\n    defines = [ \"QEMU_CPU_VOICE_PROVIDER\" ]\n    sanitize = {\n      cfi = true\n      cfi_cross_dso = true\n      debug = false\n    }\n    sanitize = {\n      cfi = true\n      cfi_cross_dso = true\n      debug = false\n    }\n    include_dirs = [ \"cpu/include\" ]\n    sources = [ \"engine/cpu_voice_engine.cpp\" ]\n    deps = [ \"cpu:cpu_voice_assets\", \"cpu:cpu_sherpa\", \"cpu:cpu_ort\", \"cpu:cpu_cxx\" ]\n  }\n  include_dirs += [\n    \"../interfaces\",\n    \"../utils\",\n    \"engine\",\n  ]\n  sources += [\n    \"engine/engine_base.cpp\",\n    \"engine/engine_factory.cpp\",\n    \"engine/enroll_engine.cpp\",\n"
+          "after": "}\n\nohos_shared_library(\"vendor_intell_voice_engine\") {\n  sources = []\n  include_dirs = []\n  if (drivers_peripheral_intelligent_voice_qemu_cpu_provider) {\n    defines = [ \"QEMU_CPU_VOICE_PROVIDER\" ]\n    sanitize = {\n      cfi = true\n      cfi_cross_dso = true\n      debug = false\n    }\n    include_dirs = [ \"cpu/include\" ]\n    sources = [ \"engine/cpu_voice_engine.cpp\" ]\n    deps = [ \"cpu:cpu_voice_assets\", \"cpu:cpu_sherpa\", \"cpu:cpu_ort\", \"cpu:cpu_cxx\" ]\n  }\n  include_dirs += [\n    \"../interfaces\",\n    \"../utils\",\n    \"engine\",\n  ]\n  sources += [\n    \"engine/engine_base.cpp\",\n    \"engine/engine_factory.cpp\",\n    \"engine/enroll_engine.cpp\",\n"
         }
       ]
     },
