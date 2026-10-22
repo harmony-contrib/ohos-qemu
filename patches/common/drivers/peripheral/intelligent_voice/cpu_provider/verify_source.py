@@ -33,9 +33,14 @@ PREVIOUS_C24_CPP_INPUT = 'legacy/CPU-VOICE-c24.cpp'
 PREVIOUS_C28_INPUT_SOURCES_SHA = 'd9446437d2aa1caba73e137d35de074b0cf2174634343fe8d7beee1b6a70ec49'
 PREVIOUS_C28_SPATIAL_GN_SHA = 'c27190ee7936d5beca5fb2ebdeff546aa610c12a198d336ba4cd296d2144b4e2'
 PREVIOUS_C28_SPATIAL_GN_INPUT = 'legacy/SPATIAL-BUILD-c28.gn'
+PREVIOUS_C29_INPUT_SOURCES_SHA = '880e2f187602b06263d4fa501d01c95078cc6c2ba2af49b90125befeb67253e8'
+PREVIOUS_C29_SPATIAL_GN_SHA = '00622e510ca1d6b6a33654a1f04dbd31946c72a73db7ae159b6ad89b5cbecbff'
+PREVIOUS_C29_SPATIAL_GN_INPUT = 'legacy/SPATIAL-BUILD-c29.gn'
+PREVIOUS_C29_OPENAL_BUILD_SHA = 'de8b821733113889602392192684d3b9bacc9f08978b40a8eaa0faac296dd2be'
+PREVIOUS_C29_OPENAL_BUILD_INPUT = 'legacy/BUILD-OPENAL-c29.py'
 CPU_CPP = 'drivers/peripheral/intelligent_voice/passthrough/engine/cpu_voice_engine.cpp'
 CPU_CPP_INPUT = 'sources/drivers/peripheral/intelligent_voice/passthrough/engine/cpu_voice_engine.cpp'
-INPUT_FILES_SHA = 'ea60706114a84bf9fb19e08c7ae3ecba89dd8926b0127e40f39c67ad9a7cd60d'
+INPUT_FILES_SHA = '9773c1b2eef7da527a5f2d1b93ba84b04ba2ea81104c79dda2a3ca73ce3a424a'
 PROJECTS_SHA = 'ea9b404805887ae248a1eda69333465d0ce426c342d5f82e14e5b6e7c62a0b41'
 CPU = 'drivers/peripheral/intelligent_voice/passthrough/cpu/'
 SPATIAL = 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/'
@@ -283,32 +288,39 @@ def payloads(index):
 
 
 def legacy_payloads(index, current):
-    """Four exact historical full443 maps; no per-file alternative admission.
+    """Five exact historical full443 maps; no per-file alternative admission.
 
     Each complete declaration is authenticated and differs from current only
-    at its fixed CPU GN/CPP and spatial GN overrides. Shallow maps share unchanged
-    binary/model bytes; the three original declarations remain byte identical.
+    at its fixed CPU GN/CPP, spatial GN and OpenAL builder overrides. Unchanged
+    binary/model bytes are shared; all four prior declarations stay byte identical.
     """
     selected = json.loads(file_raw(HERE / 'INPUT-SOURCES.json'))
     gn_name = CPU + 'BUILD.gn'
     spatial_name = SPATIAL + 'BUILD.gn'
-    need(len(current) == 443 and gn_name in current and CPU_CPP in current and spatial_name in current,
-         'complete current443 CPU GN/CPP and spatial GN map required')
+    openal_name = SPATIAL + 'build_openal.py'
+    need(len(current) == 443 and gn_name in current and CPU_CPP in current and
+         spatial_name in current and openal_name in current,
+         'complete current443 CPU GN/CPP, spatial GN and OpenAL builder map required')
     need(selected['new_sources'][gn_name]['relative'] == CPU_GN_INPUT and
          selected['new_sources'][CPU_CPP]['relative'] == CPU_CPP_INPUT and
-         selected['new_sources'][spatial_name]['relative'] == 'sources/' + spatial_name,
-         'fixed current CPU GN/CPP and spatial GN component inputs')
+         selected['new_sources'][spatial_name]['relative'] == 'sources/' + spatial_name and
+         selected['new_sources'][openal_name]['relative'] == 'sources/' + openal_name,
+         'fixed current CPU GN/CPP, spatial GN and OpenAL builder component inputs')
     cpp = (CPU_CPP, CPU_CPP_INPUT, PREVIOUS_C24_CPP_INPUT, PREVIOUS_C24_CPP_SHA)
     spatial = (spatial_name, 'sources/' + spatial_name, PREVIOUS_C28_SPATIAL_GN_INPUT, PREVIOUS_C28_SPATIAL_GN_SHA)
+    openal = (openal_name, 'sources/' + openal_name, PREVIOUS_C29_OPENAL_BUILD_INPUT, PREVIOUS_C29_OPENAL_BUILD_SHA)
+    spatial_c29 = (spatial_name, 'sources/' + spatial_name, PREVIOUS_C29_SPATIAL_GN_INPUT, PREVIOUS_C29_SPATIAL_GN_SHA)
     fixed = (
         ('previous', 'PREVIOUS-ASSET-SOURCES.json', PREVIOUS_INPUT_SOURCES_SHA,
-         ((gn_name, CPU_GN_INPUT, PREVIOUS_GN_INPUT, PREVIOUS_GN_SHA), cpp, spatial)),
+         ((gn_name, CPU_GN_INPUT, PREVIOUS_GN_INPUT, PREVIOUS_GN_SHA), cpp, spatial, openal)),
         ('previous_c23', 'PREVIOUS-C23-ASSET-SOURCES.json', PREVIOUS_C23_INPUT_SOURCES_SHA,
-         ((gn_name, CPU_GN_INPUT, PREVIOUS_C23_GN_INPUT, PREVIOUS_C23_GN_SHA), cpp, spatial)),
+         ((gn_name, CPU_GN_INPUT, PREVIOUS_C23_GN_INPUT, PREVIOUS_C23_GN_SHA), cpp, spatial, openal)),
         ('previous_c24', 'PREVIOUS-C24-ASSET-SOURCES.json', PREVIOUS_C24_INPUT_SOURCES_SHA,
-         (cpp, spatial)),
+         (cpp, spatial, openal)),
         ('previous_c28', 'PREVIOUS-C28-ASSET-SOURCES.json', PREVIOUS_C28_INPUT_SOURCES_SHA,
-         (spatial,)),
+         (spatial, openal)),
+        ('previous_c29', 'PREVIOUS-C29-ASSET-SOURCES.json', PREVIOUS_C29_INPUT_SOURCES_SHA,
+         (spatial_c29, openal)),
     )
     result = {}
     for epoch, declaration, declaration_sha, overrides in fixed:
@@ -417,10 +429,10 @@ def rewind_plan(root):
         project_heads(root, projects)
         return None
     state = complete_state(actual, edits)
-    need((state == 'final' and epoch in ('current', 'previous_c28')) or
+    need((state == 'final' and epoch in ('current', 'previous_c28', 'previous_c29')) or
          (state == 'previous_c22_final' and epoch in ('previous', 'previous_c23', 'previous_c24')) or
          (state == 'previous_final' and epoch == 'previous') or
-         (state == 'before' and epoch in ('current', 'previous', 'previous_c23', 'previous_c24', 'previous_c28')),
+         (state == 'before' and epoch in ('current', 'previous', 'previous_c23', 'previous_c24', 'previous_c28', 'previous_c29')),
          'only a fixed complete source31/asset443 prefix endpoint is admitted')
     if state == 'before' and epoch == 'current':
         need(vectors(root, edits) == actual and component_identity(index) == component_before and

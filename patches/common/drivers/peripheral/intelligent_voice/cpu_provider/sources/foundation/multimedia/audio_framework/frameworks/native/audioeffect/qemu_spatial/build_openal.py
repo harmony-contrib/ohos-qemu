@@ -92,6 +92,7 @@ def fixed_target_units(src, out, cc, db):
  return units,closure
 def main():
  p=argparse.ArgumentParser();p.add_argument('--source',type=Path,required=True);p.add_argument('--build',type=Path,required=True);p.add_argument('--clang',type=Path,required=True);p.add_argument('--sysroot',type=Path,required=True);p.add_argument('--cpu',choices=['arm','arm64','x86_64','x64'],required=True);p.add_argument('--cmake',type=Path,required=True);p.add_argument('--ninja',type=Path,required=True);a=p.parse_args()
+ a.cmake=a.cmake.resolve();a.ninja=a.ninja.resolve()
  src=a.source.resolve();out=a.build.resolve();cc=a.clang.resolve();out.mkdir(parents=True,exist_ok=True)
  tools=out/'actual-tools';tools.mkdir(exist_ok=True);tool_refs={}
  for name,path in [('cmake',a.cmake),('ninja',a.ninja)]:
