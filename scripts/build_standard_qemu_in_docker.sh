@@ -3378,6 +3378,9 @@ apply_qemu_capability_patch_plan() {
       --source-root "${OHOS_ROOT}" \
       2>&1 | tee "${CACHE_ROOT}/logs/apply_number_identity_native_package_identity.log"
     apply_number_identity_native_observation
+    bash "${PATCH_ROOT}/common/base/telephony/number_identity/public_permission580/apply.sh" \
+      --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_number_identity_public_permission580.log"
     python3 "${PATCH_ROOT}/lib/number_identity_provider.py" --source-root "${OHOS_ROOT}" --prepare \
       2>&1 | tee "${CACHE_ROOT}/logs/prepare_number_identity_local_signing.log"
     python3 "${PATCH_ROOT}/common/vendor/ohemu/virt/number_identity_local/configure.py" \

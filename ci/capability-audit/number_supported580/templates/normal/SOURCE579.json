@@ -1,0 +1,147 @@
+{
+  "schema": "postpackage-source579-output/v1",
+  "source_commit": "67765265103a932b9a562face76a882f07bed3e3",
+  "source_kit_manifest": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-suite-after579-generated/kit-6776526-579-01/manifest.json",
+    "sha256": "ba7c0e3b363d30ffa2baef081edc7c29bba0bf6177e5e922b7fad08c0a89ecbb",
+    "bytes": 14938
+  },
+  "canonical_snapshot": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-suite-after579-generated/kit-6776526-579-01/CANONICAL_SNAPSHOT578.json",
+    "sha256": "85fa0089fd14a002d47fc8404c3cc036ba7e509d3a44b9d85aef00705cec5db2",
+    "bytes": 1251812
+  },
+  "snapshot_count": 5480,
+  "sdk_source_manifest": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/source-manifest.json",
+    "sha256": "c4add0e15f408aa97368ea28fc5c0b5be1a3ad876e9cdead73d36ef4e11024c0",
+    "bytes": 11434
+  },
+  "sdk_entry": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/sdk/run_sdk_batch26.py",
+    "sha256": "65aeb6c50c11c3af61bb125ceebf5b198a625296c1aef60d9107618be87c5240",
+    "bytes": 15115
+  },
+  "family_entry": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/family/prepare_first_runtime_inputs377.py",
+    "sha256": "fec1db3a6261108e740f7f148aba49274dc6e015b0dc5b3d5f1122559643d057",
+    "bytes": 5691
+  },
+  "source_inputs": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-onset-source/ORIGINAL_INPUTS579.json",
+    "sha256": "1b8b3870f4b2bccb1c87e7d316fe23de9ef2d045194e85d6fef5dd97c56e551c",
+    "bytes": 36315
+  },
+  "consumed_preparation_private": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-onset-source/source-history579/source-preparation-build02-target579/PREPARATION_FILES579.json",
+    "sha256": "27c3e9bf6cbec581c75458e1efeda312a96b0e778c9e651d689c475746f958d0",
+    "bytes": 4919
+  },
+  "gnss": {
+    "owner": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/gnss403/gnss_owner395.py",
+      "sha256": "eeeb1fe5d6baa7bd785cba0a8d36d6bc486d700a4ae821d9d10854f80b494aa6",
+      "bytes": 16085
+    },
+    "sources": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/gnss403/SOURCES.json",
+      "sha256": "8cf7596b3afdf07986df3ea482457f35196e54a3304d7c9c8b108e0a0f6fd17c",
+      "bytes": 40622
+    },
+    "private_sources": {
+      "location-owned16/gnss_public_boundary16.py": "600063c467adc147564e195770037a004a835d7bbbabcccfbb80230a1aaeeb00",
+      "location-owned16/location_native_session16.py": "0969611c7d0527381dd9adb3985f60c6852653f809a29f45d0b28e9bf26555f1",
+      "location-owned16/location_privacy_owner16.py": "65504f768185f69995b38910753bbc63ebc4060c124f89edc1f662722acba464",
+      "location-owned16/location_runtime_contract16.py": "c53cee93d6ba99fa260595c29a18f43e4195e927682a9c426099c6473261a4be",
+      "location_switch_owned16.py": "cde0a26e8e1f41fff628b714dca5e5393007921d3ae31669b3774078cf9ee236",
+      "publish_root_location_selection16.py": "15040ec375cba24743959199451851eb002509b92fd2ae2e92c14c7cc50e2303",
+      "run_gnss_existing_trace_steps16.py": "5985d00ef7ad969c59b59a9d0a69de881587da12177f9dced838519d70226a21",
+      "run_location_switch_bootstrap16.py": "e7b3b346e7f8ce3d5b91347b0849ac97dfc619b45880ca24617d046b0244be41"
+    },
+    "profiles": [
+      "track",
+      "icon",
+      "fence",
+      "supported",
+      "invalid",
+      "ordinary",
+      "denied",
+      "switch-off",
+      "district-boundary",
+      "ble-off-boundary"
+    ],
+    "core8_vector": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-location579-remaining-candidate/CORE8-VECTOR.json",
+      "sha256": "899fcbd3f8b03873bc4a617309a4163cae8e2ba3d19d57281ee4b9d267aa2cfb",
+      "bytes": 4449
+    },
+    "provider_boundary_vector": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-location579-remaining-candidate/provider-next/VECTOR.json",
+      "sha256": "859a11e66149bed8b51c3dd64a7a3e6140f9f04b13a9431e67624dc18cd95553",
+      "bytes": 3787
+    }
+  },
+  "peer": {
+    "manifest": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/peer/openvpn-owned-peer-guest15/manifest.json",
+      "sha256": "0f9790d602a8ae530cc2365aafc57b8b1b466ac372b41f68c3b8e856f8806ee8",
+      "bytes": 25898
+    },
+    "sdk": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/peer/run_peer_SDK15.py",
+      "sha256": "f433a2b4d459866a0a65f8f18ce99e184c69abdd0088296d0b1788d9fac6adda",
+      "bytes": 6309
+    },
+    "runtime": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/peer/run_peer_guest_steps15.py",
+      "sha256": "355f5a9b2a50dffb1ca27e4c9afc73e29e3833520d3b2e50f0f79da00a166e23",
+      "bytes": 24792
+    },
+    "source_context": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-postpackage579-generated/source-6776526-579-01/peer/openvpn-owned-peer-guest15/helper35_admission445.py",
+      "sha256": "6962bdd9f12e3fccdb8137db02e3705467b35dc718b3da78ee13f3c539d6ae6e",
+      "bytes": 21630
+    }
+  },
+  "location_sdk_argv": [
+    "/Volumes/PSSD/qemu/validation/first-20261005/host-regression-venv/bin/python",
+    "-B",
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-sdk578-source/run_candidates.py",
+    "--flag=--location-eight-only",
+    "--output",
+    "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r67-location-eight-source-6776526-579-01",
+    "--source",
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/location_eight_contract.py",
+    "--source",
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/location_eight/EntryAbility.ets",
+    "--source",
+    "/Volumes/PSSD/code/ohos-rs/ohos-qemu/ci/capability-audit/location_eight/Index.ets"
+  ],
+  "number_local": {
+    "schema": "number-local580-normal-source-selection/v1",
+    "sources": {
+      "produce580.py": null,
+      "project580.py": null,
+      "caller/LegacyNumberCorpus580.js": null,
+      "caller/LegacyNumberCorpus580.d.ts": null,
+      "caller/NumberCorpus580.ets": null
+    },
+    "scope": "phone_supported_local_unsigned_SDK_ONLY",
+    "number_roles": [
+      "system-granted",
+      "system-readonly",
+      "ordinary"
+    ],
+    "independent_account_role": "account",
+    "two_in_one": "not_applicable_NO_phone_result",
+    "native_observer": "separate actual-image normal Builder/admission; not this SDK stage",
+    "signed": false,
+    "guest_executed": false,
+    "runtime_validated": false,
+    "first_artifact_behavior_gate_passed": false
+  },
+  "host_tests_executed": false,
+  "resources_executed": false,
+  "runtime_validated": false,
+  "first_artifact_behavior_gate_passed": false
+}

@@ -1,0 +1,51 @@
+{
+  "schema": "number580-export-dispatcher-static-identity-sites/v1",
+  "method": "ordinary full source-text top-level statement count; no AST/parser execution",
+  "node": "post-9d2f5cf30e12271e",
+  "family": "post",
+  "path": "export/export_with_facts579_inner.py",
+  "selected_template": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-private579-family-union-candidate/candidate/post/export/export_with_facts579_inner.py",
+    "sha256": "55967d5670aedfcaa3aaf878a5365cbd6e51b99e849265687a022ce07bd2520f",
+    "bytes": 5727
+  },
+  "current_after": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-number580-public-permission-product01/export-successor01/candidate/export/export_with_facts579_inner.py",
+    "sha256": "5102e2bda6cd107f5a44e4bf9596bbbbe9affab327e4f9efbaef265161bfe59d",
+    "bytes": 5727
+  },
+  "sites": [
+    {
+      "meaning": "third top-level Try, second body assignment expected dictionary, first key/value",
+      "python_ast_path": "Module.body[15].body[1].value.values[0]",
+      "assignment_target": "expected",
+      "dict_key": "export_media579_source.py",
+      "dict_key_ast_path": "Module.body[15].body[1].value.keys[0]",
+      "current_literal": "b6da8f2751db987ba72a3ff49eecc80a228898e97f12ac62c301ff29471c02e1",
+      "binding": {
+        "node": {
+          "id": "post-34bd5801a1ce5a24",
+          "field": "sha256"
+        }
+      }
+    },
+    {
+      "meaning": "same expected dictionary, second key/value",
+      "python_ast_path": "Module.body[15].body[1].value.values[1]",
+      "assignment_target": "expected",
+      "dict_key": "media579_source_request.py",
+      "dict_key_ast_path": "Module.body[15].body[1].value.keys[1]",
+      "current_literal": "e2058f3a9b7374b77371900da031111dd698d4729fd1550a9e4f6d2edd43df88",
+      "binding": {
+        "node": {
+          "id": "post-1cd4fe52f3dcf1c9",
+          "field": "sha256"
+        }
+      }
+    }
+  ],
+  "must_add_Root_typed_bindings": true,
+  "source_only": true,
+  "candidate_executed": false,
+  "runtime_pass": false
+}

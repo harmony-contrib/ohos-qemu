@@ -3134,6 +3134,9 @@ verify_number_native_observation_source() {
   python3 "${SCRIPT_DIR}/../patches/common/foundation/ability/ability_runtime/number_identity_native_trace495/verify_source.py" \
     --source-root "${SOURCE_ROOT}" --require-patched \
     > "${SOURCE_ROOT}/out/${PRODUCT}/number-native-observation-source.json"
+  python3 "${SCRIPT_DIR}/../patches/common/base/telephony/number_identity/public_permission580/verify_source.py" \
+    --source-root "${SOURCE_ROOT}" --require-patched \
+    > "${SOURCE_ROOT}/out/${PRODUCT}/number-public-permission-source.json"
 }
 
 verify_audio_haptic_sync_id_source() {
@@ -3339,6 +3342,7 @@ esac
 case "${DEVICE_TYPE_PROFILE}" in
   qemu_phone_full_source)
     cp "${SOURCE_ROOT}/out/${PRODUCT}/number-native-observation-source.json" "${PACKAGE_DIR}/number-native-observation-source.json"
+    cp "${SOURCE_ROOT}/out/${PRODUCT}/number-public-permission-source.json" "${PACKAGE_DIR}/number-public-permission-source.json"
     ;;
 esac
 cp "${SCRIPT_DIR}/sign-hap.sh" "${TOOLS_OUT}/sign-hap.sh"

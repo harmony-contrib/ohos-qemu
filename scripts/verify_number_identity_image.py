@@ -271,6 +271,9 @@ def verify_image(source, image, arch, scratch, seed_output_directory=None):
     packaging = load_guard('patches/common/base/telephony/number_identity/native_package_identity/verify_source.py',
                            'number_identity_native_package_guard')
     packaging.validate(source, require_patched=True)
+    permission = load_guard('patches/common/base/telephony/number_identity/public_permission580/verify_source.py',
+                            'number_identity_public_permission580_guard')
+    permission.validate(source, require_patched=True)
     require_number_loader_source(source)
     selection = load_guard('patches/common/vendor/ohemu/virt/number_identity_local/configure.py',
                            'number_identity_selection_guard')

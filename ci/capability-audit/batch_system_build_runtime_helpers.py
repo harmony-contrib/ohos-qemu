@@ -87,6 +87,7 @@ HELPERS = {
         'libraries': ['security/access_token/libaccesstoken_sdk.z.so'], 'headers': [TOKEN['header']], 'extra_includes': []},
     'knowledge_token_query': {'fixture': 'batch_media/knowledge_runtime/knowledge_token_query.cpp', 'anchors': [TOKEN],
         'libraries': ['security/access_token/libaccesstoken_sdk.z.so'], 'headers': [TOKEN['header']], 'extra_includes': []}}
+NUMBER_LOCAL_HELPER_NAMES580 = ('number_token_query395',)
 COMMUNICATION_HELPER_NAMES = ('communications578_permission_controller', 'communications578_at_peer')
 SETTINGS_HELPER_NAMES = ('settings_idle579_napi',)
 OWNING_SERVICES_HELPER_NAMES579 = ('owning_services579_napi',)
@@ -118,6 +119,12 @@ def helper_spec(name):
     """
     if name in HELPERS:
         return HELPERS[name]
+    if name in NUMBER_LOCAL_HELPER_NAMES580:
+        return {'fixture': 'batch_apps/number_runtime/number_token_query395.cpp',
+            'anchors': [TOKEN], 'libraries': ['security/access_token/libaccesstoken_sdk.z.so'],
+            'headers': [TOKEN['header'],
+                        'base/security/access_token/interfaces/innerkits/accesstoken/include/hap_token_info.h'],
+            'extra_includes': []}
     if name in USB579_HELPER_NAMES:
         from usb579_native import helper_recipes
         recipes = helper_recipes()
@@ -879,7 +886,7 @@ class Builder:
             raise ValueError('explicit global clock helpers belong only to actual ARM32 packages')
         if set(helpers) & set(GLOBAL_THREEUID_HELPER_NAMES579) and product != 'armv7a_virt':
             raise ValueError('explicit global-clock three-UID helpers belong only to actual ARM32 packages')
-        admitted = (set(USB579_HELPER_NAMES) | set(HELPERS) | set(GLOBAL_CLOCK_HELPER_NAMES579) | set(GLOBAL_THREEUID_HELPER_NAMES579) |
+        admitted = (set(USB579_HELPER_NAMES) | set(HELPERS) | set(NUMBER_LOCAL_HELPER_NAMES580) | set(GLOBAL_CLOCK_HELPER_NAMES579) | set(GLOBAL_THREEUID_HELPER_NAMES579) |
             set(COMMUNICATION_HELPER_NAMES) | set(SETTINGS_HELPER_NAMES) | set(OWNING_SERVICES_HELPER_NAMES579) | set(MSDP579_HELPER_NAMES) | set(WIFI_HELPER_NAMES) | set(PRODUCTION_HELPER_NAMES579) |
             set(NETWORKING_HELPER_NAMES579))
         if not set(helpers) <= admitted:
@@ -1543,7 +1550,7 @@ class ExistingVerifier(Builder):
             raise ValueError('original complete command logs absent')
         known = (set(USB579_HELPER_NAMES) & set(old.get('helpers', {}))) | (set(HELPERS) | (set(old.get('helpers', {})) &
             (set(COMMUNICATION_HELPER_NAMES) | set(SETTINGS_HELPER_NAMES) | set(OWNING_SERVICES_HELPER_NAMES579) | set(MSDP579_HELPER_NAMES) | set(WIFI_HELPER_NAMES) |
-             set(PRODUCTION_HELPER_NAMES579) | set(GLOBAL_CLOCK_HELPER_NAMES579) | set(GLOBAL_THREEUID_HELPER_NAMES579) |
+             set(PRODUCTION_HELPER_NAMES579) | set(NUMBER_LOCAL_HELPER_NAMES580) | set(GLOBAL_CLOCK_HELPER_NAMES579) | set(GLOBAL_THREEUID_HELPER_NAMES579) |
              set(NETWORKING_HELPER_NAMES579))))
         allowed_fixtures = {Path(helper_spec(name).get('source_file',
             HERE / 'fixtures' / helper_spec(name)['fixture'])).resolve() for name in known}
@@ -1794,7 +1801,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--product', choices=tuple(TARGETS), required=True)
     parser.add_argument('--normal-link-target', help='Actual existing PIE executable Ninja output; required for nondefault products; never an SDK triple or CRT override')
-    parser.add_argument('--helper', choices=tuple(HELPERS) + USB579_HELPER_NAMES + GLOBAL_CLOCK_HELPER_NAMES579 + GLOBAL_THREEUID_HELPER_NAMES579 + COMMUNICATION_HELPER_NAMES + SETTINGS_HELPER_NAMES + OWNING_SERVICES_HELPER_NAMES579 + MSDP579_HELPER_NAMES + WIFI_HELPER_NAMES + PRODUCTION_HELPER_NAMES579 + NETWORKING_HELPER_NAMES579, action='append',
+    parser.add_argument('--helper', choices=tuple(HELPERS) + NUMBER_LOCAL_HELPER_NAMES580 + USB579_HELPER_NAMES + GLOBAL_CLOCK_HELPER_NAMES579 + GLOBAL_THREEUID_HELPER_NAMES579 + COMMUNICATION_HELPER_NAMES + SETTINGS_HELPER_NAMES + OWNING_SERVICES_HELPER_NAMES579 + MSDP579_HELPER_NAMES + WIFI_HELPER_NAMES + PRODUCTION_HELPER_NAMES579 + NETWORKING_HELPER_NAMES579, action='append',
                         help='Repeat to select; default original helpers only; communication helpers require explicit selection')
     parser.add_argument('--plan-only', action='store_true', help='Read/query existing GN only; never clang/build GN')
     parser.add_argument('--verify-existing', type=Path, help='Read-only original build.json; no Ninja/compiler/linker invocation')
