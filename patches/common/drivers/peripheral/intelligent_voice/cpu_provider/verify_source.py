@@ -20,7 +20,10 @@ HERE = Path(__file__).resolve().parent
 EDITS_SHA = '71a7f202b149d9530c22ebb2815b722237f8a65bcc15cf93220f1683b7659c17'
 PREVIOUS_EDITS_SHA = 'c050aec95959eb8178c247cf76450f12947d28488bce5455860c025cd726e38e'
 PREVIOUS_INPUT_SOURCES_SHA = '61b6851f5bc8a50f174a4ec6328df1313e35ac13714edbc97f2f26345d0f8da4'
-INPUT_FILES_SHA = 'bd9c47d0e0d494657c8027cf4716f8eb1e5cccca02f0bb12e67412a3034f992e'
+PREVIOUS_GN_SHA = 'e16ba5fb2a35de048f42027b4c243434b9a79941ee8c62f49a2e2124de293251'
+PREVIOUS_GN_INPUT = 'legacy/CPU-BUILD-previous.gn'
+CPU_GN_INPUT = 'sources/drivers/peripheral/intelligent_voice/passthrough/cpu/BUILD.gn'
+INPUT_FILES_SHA = '5fda73c37d38cea5bb7283ca86afa5f5f0f7df6ab97087050d629a92de81417c'
 PROJECTS_SHA = 'ea9b404805887ae248a1eda69333465d0ce426c342d5f82e14e5b6e7c62a0b41'
 CPU = 'drivers/peripheral/intelligent_voice/passthrough/cpu/'
 SPATIAL = 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/'
@@ -249,6 +252,36 @@ def payloads(index):
     actual = dict(schema='normal-qemu-cpu-voice-inputs/v1', models=spec['models'], libraries=library_metadata, arm32_sources=spec['arm32_sources'],
         normal_prebuilt_dependency_not_compile_proof=True, original_upstream_source_archive=dependencies['source_archive'], runtime_pass=False)
     add(CPU + 'assets/INPUTS.json', (json.dumps(actual, indent=2) + '\n').encode())
+    need(len(result) == 443, 'complete fixed443 product payload map required')
+    return result
+
+
+def previous_payloads(index, current):
+    """Exact previous443 from its original declaration and one retained GN file.
+
+    The shallow mapping shares unchanged binary objects; no second archive/model
+    copy is constructed and no file may independently choose an old/new value.
+    """
+    raw = file_raw(HERE / 'PREVIOUS-ASSET-SOURCES.json')
+    need(sha(raw) == PREVIOUS_INPUT_SOURCES_SHA, 'fixed previous complete asset declaration changed')
+    previous = json.loads(raw)
+    selected = json.loads(file_raw(HERE / 'INPUT-SOURCES.json'))
+    name = CPU + 'BUILD.gn'
+    need(name in selected['new_sources'] and name in previous['new_sources'], 'fixed complete CPU GN input required')
+    current_row = selected['new_sources'][name]
+    old_row = previous['new_sources'][name]
+    need(current_row['relative'] == old_row['relative'] == CPU_GN_INPUT and
+         old_row['sha256'] == PREVIOUS_GN_SHA, 'only the fixed original GN asset may differ')
+    selected['new_sources'][name] = old_row
+    need(selected == previous, 'previous/current full asset declarations differ outside the one fixed GN input')
+    entry = index['files'][PREVIOUS_GN_INPUT]
+    old_raw = file_raw(source(HERE, PREVIOUS_GN_INPUT))
+    need(entry['sha256'] == PREVIOUS_GN_SHA and len(old_raw) == entry['bytes'] and
+         sha(old_raw) == PREVIOUS_GN_SHA, 'complete retained previous GN bytes required')
+    need(name in current and len(current) == 443, 'complete current443 input map required')
+    result = dict(current)
+    result[name] = old_raw
+    need(set(result) == set(current) and len(result) == 443, 'exact same complete443 payload paths required')
     return result
 
 
@@ -268,6 +301,33 @@ def assets_state(root, expected):
     return 'absent' if seen == 0 else 'final'
 
 
+def asset_epoch(root, index, current):
+    """Classify exactly one full443 endpoint; never a per-file alternative map."""
+    previous = previous_payloads(index, current)
+    seen, current_ok, previous_ok = 0, True, True
+    for name in current:
+        path = source(root, name)
+        if not path.exists():
+            current_ok = previous_ok = False
+            continue
+        raw = file_raw(path)
+        seen += 1
+        current_ok = current_ok and raw == current[name]
+        previous_ok = previous_ok and raw == previous[name]
+    need(seen in (0, 443), 'partial fixed443 asset vector preserved')
+    directory = source(root, SPATIAL + 'openal-soft', directory=True)
+    if directory.exists():
+        actual = {str(p.relative_to(root)) for p in directory.rglob('*') if p.is_file() or p.is_symlink()}
+        need(actual == {n for n in current if n.startswith(SPATIAL + 'openal-soft/')},
+             'extra/missing original OpenAL source preserved')
+    if seen == 0:
+        return 'absent'
+    if current_ok:
+        return 'current'
+    need(previous_ok, 'unknown/mixed complete443 asset bytes preserved')
+    return 'previous'
+
+
 def require_final(root):
     root = root_path(root)
     edits, index, projects = metadata()
@@ -280,35 +340,55 @@ def require_final(root):
     return edits
 
 
-def rewind_files(root):
-    """Prefix-only inverse; no mutation/subprocess or runtime admission.
+def rewind_plan(root):
+    """Prefix-only complete474 transaction plan; no mutation/runtime admission.
 
-    Seeing an exact current/previous final member requires one complete31
-    endpoint, actual HEADs, the complete component and every fixed product asset.
-    The previous final is eligible only for a read-only inverse, never as the
-    new require-final. Return all31 original before bytes, including config.gni.
+    An installed current/previous443 always requires a complete known source31,
+    even if no final source marker is seen. A valid interrupted common-before31
+    with previous443 migrates here, never through the late forward path.
     """
     root = root_path(root)
     edits, index, projects = metadata()
-    previous = previous_edits(edits)
-    actual = vectors(root, edits)
-    if not any(actual[r['path']] == r['after_sha256']
-               for contract in (edits, previous) for r in contract['files']):
-        return {}
     component_before = component_identity(index)
     project_heads(root, projects)
+    assets = payloads(index)
+    epoch = asset_epoch(root, index, assets)
+    previous = previous_edits(edits)
+    actual = vectors(root, edits)
+    if epoch == 'absent':
+        need(not any(actual[r['path']] == r['after_sha256']
+                     for contract in (edits, previous) for r in contract['files']),
+             'complete final source31 cannot have absent product assets')
+        need(vectors(root, edits) == actual and component_identity(index) == component_before,
+             'fresh source/component changed during prefix read')
+        project_heads(root, projects)
+        return None
     state = complete_state(actual, edits)
-    need(state in ('final', 'previous_final'), 'only a complete final31 may project to its original before')
-    if state == 'previous_final':
-        need(sha(file_raw(HERE / 'INPUT-SOURCES.json')) == PREVIOUS_INPUT_SOURCES_SHA,
-             'previous source epoch requires its exact unchanged full product asset declaration')
-    need(assets_state(root, payloads(index)) == 'final', 'complete fixed product assets required for full31 inverse')
+    need((state == 'final' and epoch in ('current', 'previous')) or
+         (state == 'previous_final' and epoch == 'previous') or
+         (state == 'before' and epoch in ('current', 'previous')),
+         'only a fixed complete source31/asset443 prefix endpoint is admitted')
+    if state == 'before' and epoch == 'current':
+        need(vectors(root, edits) == actual and component_identity(index) == component_before and
+             asset_epoch(root, index, assets) == epoch, 'complete prepared prefix changed during read')
+        project_heads(root, projects)
+        return None
     selected = previous if state == 'previous_final' else edits
-    result = {row['path']: inverse(file_raw(source(root, row['path'])), row) for row in selected['files']}
-    need(vectors(root, edits) == actual, 'final source vector changed during read-only projection')
-    need(component_identity(index) == component_before, 'component changed during complete31 inverse projection')
+    desired = dict(assets)
+    for row in selected['files']:
+        name = row['path']
+        need(name not in desired, 'fixed source31/payload443 destinations must be disjoint')
+        raw = file_raw(source(root, name))
+        if state == 'before':
+            need(sha(raw) == row['before_sha256'], 'complete common source31 changed during prefix read')
+            desired[name] = raw
+        else:
+            desired[name] = inverse(raw, row)
+    need(len(desired) == 474 and vectors(root, edits) == actual and
+         component_identity(index) == component_before and asset_epoch(root, index, assets) == epoch,
+         'complete source31/asset443 prefix plan changed during read')
     project_heads(root, projects)
-    return result
+    return dict(desired=desired, source_state=state, asset_state=epoch, assets=assets)
 
 
 def preceding_files(root):

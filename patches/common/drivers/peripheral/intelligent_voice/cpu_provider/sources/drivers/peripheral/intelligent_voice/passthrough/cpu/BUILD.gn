@@ -28,10 +28,14 @@ foreach(_pair, _names) {
 _assets = [ "encoder.onnx", "decoder.onnx", "joiner.onnx", "tokens.txt", "speaker.onnx", "pinyin.txt", "NOTICES.txt", "INPUTS.json" ]
 group("cpu_voice_assets") {
   deps = []
-  foreach(_file, _assets) { deps += [ ":cpu_voice_asset_${string_replace(_file, ".", "_")}" ] }
+  foreach(_file, _assets) {
+    _asset_suffix = string_replace(_file, ".", "_")
+    deps += [ ":cpu_voice_asset_${_asset_suffix}" ]
+  }
 }
 foreach(_file, _assets) {
-  ohos_prebuilt_etc("cpu_voice_asset_${string_replace(_file, ".", "_")}") {
+  _asset_suffix = string_replace(_file, ".", "_")
+  ohos_prebuilt_etc("cpu_voice_asset_${_asset_suffix}") {
     source = "assets/${_file}"
     output = _file
     module_install_dir = "etc/intelligent_voice/cpu"

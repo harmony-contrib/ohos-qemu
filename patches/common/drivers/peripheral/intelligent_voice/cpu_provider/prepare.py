@@ -16,12 +16,14 @@ sys.path.insert(0, str(HERE.parents[4] / 'lib'))
 from guarded_source_vector579 import identity, matches, replace
 
 
-def publish(root, desired, *, edits, index, projects, component_before, expected_state):
+def publish(root, desired, *, edits, index, projects, component_before, expected_state, expected_assets, assets, wanted_source):
     """Stage every delta first, publish only unchanged owned preimages, rollback.
 
     Byte-identical paths retain inode/mtime. Unknown concurrent content is
     preserved and reported; rollback never overwrites another writer's bytes.
     """
+    checked.need(wanted_source in ('before', 'final') and len(desired) == 474,
+                 'fixed complete474 source/asset transaction required')
     originals = {}
     for name in desired:
         path = checked.source(root, name)
@@ -39,6 +41,7 @@ def publish(root, desired, *, edits, index, projects, component_before, expected
         checked.project_heads(root, projects)
         checked.need(checked.component_identity(index) == component_before, 'component changed before transaction')
         checked.need(checked.complete_state(checked.vectors(root, edits), edits) == expected_state, 'source vector changed before publish')
+        checked.need(checked.asset_epoch(root, index, assets) == expected_assets, 'complete443 asset vector changed before publish')
         checked.need(all(matches(checked.source(root, name), original) for name, original in originals.items()), 'actual source/input changed before commit')
         try:
             for name in changed:
@@ -53,9 +56,8 @@ def publish(root, desired, *, edits, index, projects, component_before, expected
             checked.need(all(checked.file_raw(checked.source(root, n)) == raw for n, raw in desired.items()), 'complete published M01 byte vector differs')
             checked.project_heads(root, projects)
             checked.need(checked.component_identity(index) == component_before, 'component changed during transaction')
-            wanted = 'before' if expected_state in ('final', 'previous_final') else 'final'
-            checked.need(checked.complete_state(checked.vectors(root, edits), edits) == wanted and
-                         checked.assets_state(root, checked.payloads(index)) == 'final', 'complete committed source/asset vector differs')
+            checked.need(checked.complete_state(checked.vectors(root, edits), edits) == wanted_source and
+                         checked.assets_state(root, assets) == 'final', 'complete committed source31/current443 vector differs')
         except BaseException as error:
             rollback_errors = []
             interrupted = error if not isinstance(error, Exception) else None
@@ -120,26 +122,29 @@ def prepare(root, *, rewind=False, require_final=False):
     with os.fdopen(fd, 'a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         if rewind:
-            desired = checked.rewind_files(root)
-            if not desired:
-                return dict(state='no_M01_final_seen_defer_to_original_hooks', M01_source_verified=False, runtime_pass=False)
+            plan = checked.rewind_plan(root)
+            if plan is None:
+                return dict(state='no_M01_source_or_asset_migration_needed_defer_to_original_hooks',
+                            M01_source_verified=False, runtime_pass=False)
             component_before = checked.component_identity(index)
-            source_endpoint = checked.complete_state(checked.vectors(root, edits), edits)
-            checked.need(source_endpoint in ('final', 'previous_final'), 'complete current/previous final31 required for rewind')
-            changed = publish(root, desired, edits=edits, index=index, projects=projects,
-                              component_before=component_before, expected_state=source_endpoint)
-            checked.need(checked.complete_state(checked.vectors(root, edits), edits) == 'before', 'complete 31-file rewind required')
-            return dict(state='complete_31_final_rewound_to_reviewed_before', source_endpoint=source_endpoint, changed=changed, fixed_assets_retained=True, runtime_pass=False)
+            changed = publish(root, plan['desired'], edits=edits, index=index, projects=projects,
+                              component_before=component_before, expected_state=plan['source_state'],
+                              expected_assets=plan['asset_state'], assets=plan['assets'], wanted_source='before')
+            checked.need(checked.complete_state(checked.vectors(root, edits), edits) == 'before', 'complete31 prefix rewind required')
+            return dict(state='complete31_before_current443_prepared', source_endpoint=plan['source_state'],
+                        previous_asset_migrated=plan['asset_state'] == 'previous', changed=changed, runtime_pass=False)
         component_before = checked.component_identity(index)
         checked.project_heads(root, projects)
         state = checked.complete_state(checked.vectors(root, edits), edits)
         checked.need(state != 'previous_final', 'previous complete31 must first rewind through the original prefix')
         assets = checked.payloads(index)
-        asset_state = checked.assets_state(root, assets)
+        asset_state = checked.asset_epoch(root, index, assets)
+        checked.need(asset_state != 'previous', 'previous complete443 must first migrate through the original prefix')
         if state == 'final':
-            checked.need(asset_state == 'final', 'complete final requires every fixed product input')
+            checked.need(asset_state == 'current', 'complete final requires every current fixed product input')
             checked.require_final(root)
             return dict(state='complete_final_unchanged', changed=[], runtime_pass=False)
+        checked.need(state == 'before' and asset_state in ('current', 'absent'), 'fixed late source-before/current-or-absent443 required')
         desired = dict(assets)
         for row in edits['files']:
             text = checked.file_raw(checked.source(root, row['path'])).decode()
@@ -151,7 +156,8 @@ def prepare(root, *, rewind=False, require_final=False):
             checked.need(row['path'] not in desired, 'new source/edit destination overlap')
             desired[row['path']] = raw
         changed = publish(root, desired, edits=edits, index=index, projects=projects,
-                          component_before=component_before, expected_state='before')
+                          component_before=component_before, expected_state='before',
+                          expected_assets=asset_state, assets=assets, wanted_source='final')
         checked.require_final(root)
         return dict(state='complete_final_prepared', changed=changed, runtime_pass=False)
 

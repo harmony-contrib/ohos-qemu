@@ -106,11 +106,11 @@
     },
     "drivers/peripheral/intelligent_voice/passthrough/cpu/BUILD.gn": {
       "relative": "sources/drivers/peripheral/intelligent_voice/passthrough/cpu/BUILD.gn",
-      "sha256": "e16ba5fb2a35de048f42027b4c243434b9a79941ee8c62f49a2e2124de293251",
+      "sha256": "4fadb8d00e75ab0b66afb94f41241ceeb8e41a96ac0c40e470310987239c8491",
       "source": {
-        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-provider-scope-candidate/candidate/product/BUILD.cpu.gn",
-        "sha256": "e16ba5fb2a35de048f42027b4c243434b9a79941ee8c62f49a2e2124de293251",
-        "bytes": 1511
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-gn-syntax-assets-successor01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/sources/drivers/peripheral/intelligent_voice/passthrough/cpu/BUILD.gn",
+        "sha256": "4fadb8d00e75ab0b66afb94f41241ceeb8e41a96ac0c40e470310987239c8491",
+        "bytes": 1583
       }
     },
     "drivers/peripheral/intelligent_voice/passthrough/cpu/include/sherpa-onnx/c-api/c-api.h": {
