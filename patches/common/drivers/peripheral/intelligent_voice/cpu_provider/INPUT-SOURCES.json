@@ -124,11 +124,11 @@
     },
     "foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/BUILD.gn": {
       "relative": "sources/foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/BUILD.gn",
-      "sha256": "c27190ee7936d5beca5fb2ebdeff546aa610c12a198d336ba4cd296d2144b4e2",
+      "sha256": "00622e510ca1d6b6a33654a1f04dbd31946c72a73db7ae159b6ad89b5cbecbff",
       "source": {
-        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-provider-scope-candidate/candidate/product/BUILD.spatial.gn",
-        "sha256": "c27190ee7936d5beca5fb2ebdeff546aa610c12a198d336ba4cd296d2144b4e2",
-        "bytes": 1873
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-build579-09-openal-exec01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/sources/foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/BUILD.gn",
+        "sha256": "00622e510ca1d6b6a33654a1f04dbd31946c72a73db7ae159b6ad89b5cbecbff",
+        "bytes": 1925
       }
     },
     "foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/qemu_spatial_effect.cpp": {

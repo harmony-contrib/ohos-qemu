@@ -17,7 +17,7 @@
 #define MULTI_VPN_MANAGER_H
 
 #include <cstdint>
-#include <linux/if.h>
+#include <net/if.h>
 #include <string>
 #include <mutex>
 #include <atomic>

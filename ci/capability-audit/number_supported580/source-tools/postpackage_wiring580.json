@@ -1,0 +1,195 @@
+{
+  "schema": "number580-normal-post-wiring-source-contract/v1",
+  "development_branch": "codex/ohos7-integrated-development",
+  "provenance_source_commit": "1b1ffbbd8af533ae056143193537bda1d9eafe80",
+  "scope": "fixed source-only post nodes and canonical identity sites; original GEN and Publisher remain unchanged",
+  "post_nodes": [
+    {
+      "node": "post-ba29020962a8b146",
+      "family": "post",
+      "source_path": "final_raw579_root.py",
+      "original_template": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-next579-concrete-source-plan-candidate/captured/511bc9e4a5bbee6b51ae0cde74a5b05a09f864e8cb37ea31370d07480ee3b050",
+        "sha256": "511bc9e4a5bbee6b51ae0cde74a5b05a09f864e8cb37ea31370d07480ee3b050",
+        "bytes": 4830
+      },
+      "canonical_template": "ci/capability-audit/number_supported580/templates/post/final_raw579_root.py",
+      "template_sha256": "e068a86c943b6d548a8184771de4c572fc36c4d419d515f25d7f81410a6ea068",
+      "template_bytes": 5783,
+      "source_origin_mode": 292,
+      "generated_mode": 420,
+      "canonical_mode": 420
+    },
+    {
+      "node": "post-b953f7869b035d44",
+      "family": "post",
+      "source_path": "run_audio_owner579.py",
+      "original_template": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-next579-concrete-source-plan-candidate/captured/46721f4b2489898f2aed7508603bcaa6431ab16f79439a14c8a8e96b4a569fff",
+        "sha256": "46721f4b2489898f2aed7508603bcaa6431ab16f79439a14c8a8e96b4a569fff",
+        "bytes": 39898
+      },
+      "canonical_template": "ci/capability-audit/number_supported580/templates/post/run_audio_owner579.py",
+      "template_sha256": "1d79c6d12a8a6412e8c6556e8975e0924d8e89688d8e722ca9b542e8bd0f6107",
+      "template_bytes": 40383,
+      "source_origin_mode": 292,
+      "generated_mode": 420,
+      "canonical_mode": 420
+    },
+    {
+      "node": "post-27f62b59259ca3b1",
+      "family": "post",
+      "source_path": "render_family579.py",
+      "original_template": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-next579-concrete-source-plan-candidate/captured/e40d0bcd4bd0bcc5616d0419e7b607dd3c35760d4be10c2268f21dd3f952c177",
+        "sha256": "e40d0bcd4bd0bcc5616d0419e7b607dd3c35760d4be10c2268f21dd3f952c177",
+        "bytes": 4956
+      },
+      "canonical_template": "ci/capability-audit/number_supported580/templates/post/render_family579.py",
+      "template_sha256": "a9fff66e49855771475ab9ff5e72fca9e3f31050000e859f8536c8090ed9ecb7",
+      "template_bytes": 11386,
+      "source_origin_mode": 292,
+      "generated_mode": 420,
+      "canonical_mode": 420
+    },
+    {
+      "node": "post-a0e9ee19064bf83e",
+      "family": "post",
+      "source_path": "assemble_config579.py",
+      "original_template": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-next579-concrete-source-plan-candidate/captured/fe758f8da5d458de7eea0fa54bbf149c63c314ed862370b7be00b08e6b7ba22c",
+        "sha256": "fe758f8da5d458de7eea0fa54bbf149c63c314ed862370b7be00b08e6b7ba22c",
+        "bytes": 21167
+      },
+      "canonical_template": "ci/capability-audit/number_supported580/templates/post/assemble_config579.py",
+      "template_sha256": "071cde551556974e33c3c97531e59eef2c2cb2fb92687da45ede30459b9800a7",
+      "template_bytes": 28453,
+      "source_origin_mode": 292,
+      "generated_mode": 420,
+      "canonical_mode": 420
+    },
+    {
+      "node": "post-e7be32223966f6de",
+      "family": "post",
+      "source_path": "assemble_provider_inputs579.py",
+      "original_template": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-next579-concrete-source-plan-candidate/captured/4777909d7cca7f9bdff2a73f2109160424df92cd352b62f3eaad316fa5fb1961",
+        "sha256": "4777909d7cca7f9bdff2a73f2109160424df92cd352b62f3eaad316fa5fb1961",
+        "bytes": 14007
+      },
+      "canonical_template": "ci/capability-audit/number_supported580/templates/post/assemble_provider_inputs579.py",
+      "template_sha256": "1276babf9922eee5a90d2db4a77cb5ddef557c74437c5635dae9d0909ba3f64c",
+      "template_bytes": 18557,
+      "source_origin_mode": 292,
+      "generated_mode": 420,
+      "canonical_mode": 420
+    },
+    {
+      "node": "post-dbda7a60eff3e54c",
+      "family": "post",
+      "source_path": "produce_telephony579_product.py",
+      "original_template": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-private579-family-union-candidate/candidate/post/produce_telephony579_product.py",
+        "sha256": "93e4d1f08472cd1749f7670c8036e41657a6abccd0375aaaf850ab1d39f328ce",
+        "bytes": 12780
+      },
+      "prior_selected_template": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-number580-normal-native-post-successor03/candidate/post/produce_telephony579_product.py",
+        "sha256": "1c6896e7f2bc7a289dff8a28d652cecea002697678cd4d5b6c9019843c1ccd09",
+        "bytes": 20215
+      },
+      "canonical_template": "ci/capability-audit/number_supported580/templates/post/produce_telephony579_product.py",
+      "template_sha256": "cdc6c062f69315d39874a96b316f27e337b4ff1ed3ca78e9f5eb9b0c52c02e2d",
+      "template_bytes": 20215,
+      "source_origin_mode": 420,
+      "generated_mode": 420,
+      "canonical_mode": 420,
+      "ancestry": "Unpublished fixed new-member node from the exact family Union; retain its two previous semantic stages and append the actual one-pin modem source successor. This is not a sixth new unique successor beyond the original19 plus new5.",
+      "subsequent_stage": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-build579-09-network-compile01/NODE-SUCCESSORS.json",
+        "sha256": "1af781dd06c24e87714b1fa1428af2530f2c6e7994b17a4f95f8192966735df5",
+        "bytes": 2887
+      }
+    }
+  ],
+  "canonical_entry_fixes": [
+    {
+      "path": "ci/capability-audit/capability579_entry.py",
+      "before_sha256": "08dd4fac0de09880e56ceb07ce572a18628db2fa368d80ee99adbd416fd3a832",
+      "after_sha256": "48475b295757098b5cd54eb3f3bdd9e9913606b723a34162e64b8549f8d0220e",
+      "after_bytes": 3261
+    },
+    {
+      "path": "ci/capability-audit/export_capability579_from_guest.py",
+      "before_sha256": "5e6b1a5e3d3a7ef7b1c82a0a2f67350bf3776286e073d9704bca592a06645bd5",
+      "after_sha256": "a38b7629296dd4712186670c3e522c27d45f3cfb7243e0661bfcc384bf38f146",
+      "after_bytes": 27959
+    }
+  ],
+  "additional_literal_rules": [
+    {
+      "node": "post-e7be32223966f6de",
+      "site": "assignment/CANONICAL_SHA256/value/ci/capability-audit/batch_system_build_runtime_helpers.py",
+      "before": "9c4db163b28e934bb41c7e19806d71b25a9c230cd048ba1d7b6c1a31f1d94ead",
+      "binding": {
+        "canonical": {
+          "path": "ci/capability-audit/batch_system_build_runtime_helpers.py",
+          "field": "sha256"
+        }
+      },
+      "historical": false
+    },
+    {
+      "node": "post-e7be32223966f6de",
+      "site": "assignment/CANONICAL_SHA256/value/ci/capability-audit/production579_completed_2in1_provider.py",
+      "before": "5de77e4ad1e59403c5a246a976a07d54cca3631407c76c2eff269507d4fb9283",
+      "binding": {
+        "canonical": {
+          "path": "ci/capability-audit/production579_completed_2in1_provider.py",
+          "field": "sha256"
+        }
+      },
+      "historical": false
+    }
+  ],
+  "original_680_literal_rules_preserved": true,
+  "source_provenance": [
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-next580-number-final-forwarding01/FROZEN.json",
+      "sha256": "7f6531ad4f07ebbfb8d150e545864ccc1e7358acd776acc8fda15ceaf59e3858",
+      "bytes": 2581
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-next580-main-entry-forwarding03/FROZEN.json",
+      "sha256": "6dc61e373374e567ff8531ea08bcfd6f87eb1e793e60db93698cebc940c86359",
+      "bytes": 2946
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-next580-provider-profile-forwarding01/FROZEN.json",
+      "sha256": "8ba1e5a60d807cdb50ceaf86da36a29013a8991c0da000ed667d787945b35443",
+      "bytes": 2173
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-build579-09-network-compile01/FROZEN.json",
+      "sha256": "19f3171b03cfb457847cef880c625e5b9df4b71c9f9db66374b0069eded3212e",
+      "bytes": 7824
+    }
+  ],
+  "requirements": [
+    "Root retains the original nineteen successor nodes and appends the five independent reviewed post successors plus the subsequent stage for the existing telephony producer; add only the two exact canonical literal rules.",
+    "After actual fresh Author output, inspect before=None semantic-cut rows and preserve all unpublished template ancestry in finite proofs; never invent a published preimage or modify original Author/GEN admission.",
+    "Original Author and GEN project the actual committed source identity; source templates are not executable runtime delivery.",
+    "After a newly built representative archive succeeds and its build Owner fully closes, run original GEN, independent full generated-output review and publication; the full QEMU gate is still pending.",
+    "Only actual newly packaged QEMU behavior and original complete owner/resource closures satisfy acceptance.",
+    "Cloud registration, sign-in and cloud-account dependent sync are outside requested scope; local accounts, permissions and offline behavior stay required."
+  ],
+  "normal_source_generated": false,
+  "published": false,
+  "runtime_pass": false,
+  "first_artifact_behavior_gate_passed": false,
+  "prior_wiring_contract": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-next580-postpackage-wiring-contract02/FROZEN.json",
+    "sha256": "4d013f26c1dd238d6109e0844da37eeb7fa356153f8730399fda256a01f5b01d",
+    "bytes": 889
+  }
+}

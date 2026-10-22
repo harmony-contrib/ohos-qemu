@@ -1,6 +1,11 @@
 --- a/foundation/communication/netmanager_base/services/netmanagernative/include/manager/multi_vpn_manager.h
 +++ b/foundation/communication/netmanager_base/services/netmanagernative/include/manager/multi_vpn_manager.h
-@@ -23,6 +23,7 @@
+@@ -19,10 +19,11 @@
+ #include <cstdint>
+-#include <linux/if.h>
++#include <net/if.h>
+ #include <string>
+ #include <mutex>
  #include <atomic>
  #include <memory>
  #include <unordered_map>

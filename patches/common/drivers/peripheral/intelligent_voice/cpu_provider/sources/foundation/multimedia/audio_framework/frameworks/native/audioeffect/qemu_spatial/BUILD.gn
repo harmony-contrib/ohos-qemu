@@ -7,10 +7,10 @@ _spatial_build = "$target_gen_dir/openal"
 _cmake = "/usr/bin/cmake"
 _ninja = "//prebuilts/build-tools/linux-x86/bin/ninja"
 action("qemu_openal_hrtf") {
-  script = "build_openal.py"
-  inputs = [ "OPENAL-INPUTS.json", "openal-soft/CMakeLists.txt", "openal-soft/hrtf/Default HRTF.mhr" ]
+  script = "/usr/bin/python3"
+  inputs = [ "build_openal.py", "OPENAL-INPUTS.json", "openal-soft/CMakeLists.txt", "openal-soft/hrtf/Default HRTF.mhr" ]
   outputs = [ "$_spatial_build/libopenal.a", "$_spatial_build/BUILD.json" ]
-  args = [ "--source", rebase_path("openal-soft"), "--build", rebase_path(_spatial_build),
+  args = [ rebase_path("build_openal.py"), "--source", rebase_path("openal-soft"), "--build", rebase_path(_spatial_build),
            "--clang", rebase_path("$clang_base_path/bin/clang"), "--sysroot", rebase_path(sysroot),
            "--cpu", current_cpu, "--cmake", _cmake, "--ninja", rebase_path(_ninja) ]
 }

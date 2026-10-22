@@ -30,9 +30,12 @@ PREVIOUS_C23_GN_INPUT = 'legacy/CPU-BUILD-c23.gn'
 PREVIOUS_C24_INPUT_SOURCES_SHA = 'e89983ab042d69cdcf414d02aec2633421f65a6c9d4e7635c8dc74308ae2b001'
 PREVIOUS_C24_CPP_SHA = '624ae661f8d2639d9b50d7a55c1a19405343137769b738f3cf4775650d74dba6'
 PREVIOUS_C24_CPP_INPUT = 'legacy/CPU-VOICE-c24.cpp'
+PREVIOUS_C28_INPUT_SOURCES_SHA = 'd9446437d2aa1caba73e137d35de074b0cf2174634343fe8d7beee1b6a70ec49'
+PREVIOUS_C28_SPATIAL_GN_SHA = 'c27190ee7936d5beca5fb2ebdeff546aa610c12a198d336ba4cd296d2144b4e2'
+PREVIOUS_C28_SPATIAL_GN_INPUT = 'legacy/SPATIAL-BUILD-c28.gn'
 CPU_CPP = 'drivers/peripheral/intelligent_voice/passthrough/engine/cpu_voice_engine.cpp'
 CPU_CPP_INPUT = 'sources/drivers/peripheral/intelligent_voice/passthrough/engine/cpu_voice_engine.cpp'
-INPUT_FILES_SHA = 'ddd24362f69ba2b14869e23546295dcec47ee25a44b72eb5034209f57fc84f18'
+INPUT_FILES_SHA = 'ea60706114a84bf9fb19e08c7ae3ecba89dd8926b0127e40f39c67ad9a7cd60d'
 PROJECTS_SHA = 'ea9b404805887ae248a1eda69333465d0ce426c342d5f82e14e5b6e7c62a0b41'
 CPU = 'drivers/peripheral/intelligent_voice/passthrough/cpu/'
 SPATIAL = 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/'
@@ -280,27 +283,32 @@ def payloads(index):
 
 
 def legacy_payloads(index, current):
-    """Three exact historical full443 maps; no per-file alternative admission.
+    """Four exact historical full443 maps; no per-file alternative admission.
 
     Each complete declaration is authenticated and differs from current only
-    at its fixed GN/CPU CPP overrides. Shallow maps share unchanged binary/model
-    bytes; C21/C23 retain their GN and all three retain the same original CPP.
+    at its fixed CPU GN/CPP and spatial GN overrides. Shallow maps share unchanged
+    binary/model bytes; the three original declarations remain byte identical.
     """
     selected = json.loads(file_raw(HERE / 'INPUT-SOURCES.json'))
     gn_name = CPU + 'BUILD.gn'
-    need(len(current) == 443 and gn_name in current and CPU_CPP in current,
-         'complete current443 GN/CPP map required')
+    spatial_name = SPATIAL + 'BUILD.gn'
+    need(len(current) == 443 and gn_name in current and CPU_CPP in current and spatial_name in current,
+         'complete current443 CPU GN/CPP and spatial GN map required')
     need(selected['new_sources'][gn_name]['relative'] == CPU_GN_INPUT and
-         selected['new_sources'][CPU_CPP]['relative'] == CPU_CPP_INPUT,
-         'fixed current GN/CPP component inputs')
+         selected['new_sources'][CPU_CPP]['relative'] == CPU_CPP_INPUT and
+         selected['new_sources'][spatial_name]['relative'] == 'sources/' + spatial_name,
+         'fixed current CPU GN/CPP and spatial GN component inputs')
     cpp = (CPU_CPP, CPU_CPP_INPUT, PREVIOUS_C24_CPP_INPUT, PREVIOUS_C24_CPP_SHA)
+    spatial = (spatial_name, 'sources/' + spatial_name, PREVIOUS_C28_SPATIAL_GN_INPUT, PREVIOUS_C28_SPATIAL_GN_SHA)
     fixed = (
         ('previous', 'PREVIOUS-ASSET-SOURCES.json', PREVIOUS_INPUT_SOURCES_SHA,
-         ((gn_name, CPU_GN_INPUT, PREVIOUS_GN_INPUT, PREVIOUS_GN_SHA), cpp)),
+         ((gn_name, CPU_GN_INPUT, PREVIOUS_GN_INPUT, PREVIOUS_GN_SHA), cpp, spatial)),
         ('previous_c23', 'PREVIOUS-C23-ASSET-SOURCES.json', PREVIOUS_C23_INPUT_SOURCES_SHA,
-         ((gn_name, CPU_GN_INPUT, PREVIOUS_C23_GN_INPUT, PREVIOUS_C23_GN_SHA), cpp)),
+         ((gn_name, CPU_GN_INPUT, PREVIOUS_C23_GN_INPUT, PREVIOUS_C23_GN_SHA), cpp, spatial)),
         ('previous_c24', 'PREVIOUS-C24-ASSET-SOURCES.json', PREVIOUS_C24_INPUT_SOURCES_SHA,
-         (cpp,)),
+         (cpp, spatial)),
+        ('previous_c28', 'PREVIOUS-C28-ASSET-SOURCES.json', PREVIOUS_C28_INPUT_SOURCES_SHA,
+         (spatial,)),
     )
     result = {}
     for epoch, declaration, declaration_sha, overrides in fixed:
@@ -409,10 +417,10 @@ def rewind_plan(root):
         project_heads(root, projects)
         return None
     state = complete_state(actual, edits)
-    need((state == 'final' and epoch == 'current') or
+    need((state == 'final' and epoch in ('current', 'previous_c28')) or
          (state == 'previous_c22_final' and epoch in ('previous', 'previous_c23', 'previous_c24')) or
          (state == 'previous_final' and epoch == 'previous') or
-         (state == 'before' and epoch in ('current', 'previous', 'previous_c23', 'previous_c24')),
+         (state == 'before' and epoch in ('current', 'previous', 'previous_c23', 'previous_c24', 'previous_c28')),
          'only a fixed complete source31/asset443 prefix endpoint is admitted')
     if state == 'before' and epoch == 'current':
         need(vectors(root, edits) == actual and component_identity(index) == component_before and

@@ -3965,6 +3965,10 @@ apply_qemu_capability_patch_plan() {
   bash "${QEMU_USB_MIDI_SHARED_DEVICE_SCRIPT}" --source-root "${OHOS_ROOT}" \
     --product "${PRODUCTS[@]}" --profile "${usb_midi_source_profile}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_usb_midi_shared_device.log"
+  # Pin only the existing developer-mode sh permissions for the new QEMU types.
+  bash "${PATCH_ROOT}/common/base/security/selinux_adapter/qemu_sh_baseline/apply.sh" \
+    --source-root "${OHOS_ROOT}" --profile "${usb_midi_source_profile}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_sh_baseline.log"
   # Hash actual, fully patched kernel/config/HDI sources before any traversal.
   # Directory mtimes and a shell environment flag cannot invalidate Ninja's
   # old Image output; the GN action now consumes this stable fingerprint.

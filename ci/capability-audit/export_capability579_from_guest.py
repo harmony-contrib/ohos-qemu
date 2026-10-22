@@ -378,7 +378,8 @@ def produce(io, inputs, services):
 
 
 def make_deferred_inputs(*, package, services, native_export, caption_runtime_data,
-                         caption_product_assets, permission_ui, recipes_root, profile, media579_product_export, usb579_product_export):
+                         caption_product_assets, permission_ui, recipes_root, profile, media579_product_export, usb579_product_export,
+                         telephony579_product_export):
     """Trusted root source chooses this one factory; JSON cannot select code.
 
     Return signature is deferred_inputs(owner, resources) -> exact two-key Ref.
@@ -387,6 +388,7 @@ def make_deferred_inputs(*, package, services, native_export, caption_runtime_da
     from assemble_capability579_inputs import assemble
     # Freeze DATA values, not a callable/executable supplied through JSON.
     usb579_product_export = checked_ref(usb579_product_export)
+    telephony579_product_export = checked_ref(telephony579_product_export)
     package, services, permission_ui = [json.loads(json.dumps(value)) for value in (package, services, permission_ui)]
     native_export, caption_runtime_data, caption_product_assets, media579_product_export = [checked_ref(value)
         for value in (native_export, caption_runtime_data, caption_product_assets, media579_product_export)]
@@ -416,7 +418,8 @@ def make_deferred_inputs(*, package, services, native_export, caption_runtime_da
                 'package_export': exports['package_export'], 'services_export': exports['services_export'],
                 'native_export': native_export, 'caption_runtime_data': caption_runtime_data,
                 'caption_product_assets': caption_product_assets, 'permission_ui': permission_ui,
-                'media579_product_export': media579_product_export, 'usb579_product_export': usb579_product_export}
+                'media579_product_export': media579_product_export, 'usb579_product_export': usb579_product_export,
+                'telephony579_product_export': telephony579_product_export}
             request_ref = write(io.output / 'assembly-request.json', request)
             return assemble(request_ref, recipes_root, profile, io.output / 'assembled-inputs')
         finally:

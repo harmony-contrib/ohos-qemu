@@ -181,7 +181,7 @@ new file mode 100644
 +    if (tun.Get() < 0) { return false; }
 +    struct ifreq interface {};
 +    memcpy(interface.ifr_name, "usb0", sizeof("usb0"));
-+    interface.ifr_flags = IFF_TUN | IFF_NO_PI | IFF_TUN_EXCL;
++    interface.ifr_flags = static_cast<decltype(interface.ifr_flags)>(IFF_TUN | IFF_NO_PI | IFF_TUN_EXCL);
 +    if (ioctl(tun.Get(), TUNSETIFF, &interface) != 0 || strcmp(interface.ifr_name, "usb0") != 0) {
 +        return false;
 +    }

@@ -17,7 +17,7 @@ BASE = 'foundation/communication/netmanager_base/services/netmanagernative/'
 NATIVE_SOURCES = {
     BASE + 'BUILD.gn': 'ca34a5f72e51f2b7f297ffd1924a8e5b21993f89ea913b42491ab32591250ec9',
     BASE + 'src/netsys_native_service.cpp': 'cba1bf384b844a3ca3bd97d4b4d34a27fab2d35308978567ecde7f4598f020f2',
-    BASE + 'src/qemu_modem_tun.cpp': '02ceb1c09861ed5fdee3944e6022439a9d1d0fd0134fb8869c8218dbb3b6e0fd',
+    BASE + 'src/qemu_modem_tun.cpp': '49450e5e2f13fe2a20acae0eff2d10b6bda8846a52b04395667dc95e03e1f143',
     BASE + 'include/qemu_modem_tun.h': '6507372cf9854bfadfc3fb067b33adfa268a7797abacf3b3ba9929ecd4058887',
 }
 

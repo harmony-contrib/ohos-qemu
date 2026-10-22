@@ -1,0 +1,15 @@
+diff --git a/base/security/selinux_adapter/sepolicy/whitelist/qemu_usb_sh.baseline b/base/security/selinux_adapter/sepolicy/whitelist/qemu_usb_sh.baseline
+new file mode 100644
+--- /dev/null
++++ b/base/security/selinux_adapter/sepolicy/whitelist/qemu_usb_sh.baseline
+@@ -0,0 +1,10 @@
++# Exact QEMU USB developer-shell baseline; no policy permissions are added.
++# Only the concrete type/class/permission tuples observed in Build09 are recorded.
++developer_only(`
++(allow sh qemu_usb_functionfs (dir (open getattr search read)))
++(allow sh qemu_usb_functionfs (file (open ioctl getattr read write)))
++(allow sh qemu_usb_configfs (dir (open getattr search remove_name read write add_name)))
++(allow sh qemu_usb_configfs (file (write getattr open read)))
++(allow sh qemu_usb_configfs (lnk_file (create getattr unlink read)))
++(allow sh dev_usb_ffs (dir (search getattr)))
++')
