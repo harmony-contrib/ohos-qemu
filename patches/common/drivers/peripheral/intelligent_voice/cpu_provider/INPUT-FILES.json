@@ -53,11 +53,16 @@
       }
     },
     "INPUT-SOURCES.json": {
-      "sha256": "3f9edcd7605cdf965561b7d7cfc97fc3dfc40420776b346aa0173c8c995a657b",
+      "sha256": "a39303c83c21b96e9688a84b02155fdf40b82c7e5f2b8477154b4b3d40d2d02d",
       "bytes": 75804,
       "origin": {
         "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-build579-10-openal-component02/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/INPUT-SOURCES.json",
         "sha256": "3f9edcd7605cdf965561b7d7cfc97fc3dfc40420776b346aa0173c8c995a657b",
+        "bytes": 75804
+      },
+      "source": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-build579-11-openal-component01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/INPUT-SOURCES.json",
+        "sha256": "a39303c83c21b96e9688a84b02155fdf40b82c7e5f2b8477154b4b3d40d2d02d",
         "bytes": 75804
       }
     },
@@ -296,12 +301,17 @@
       }
     },
     "prepare.py": {
-      "sha256": "ab7dd3b5fb0f9f570900ac7f414aced004c8fc4753a2efbed29f4215683f117a",
-      "bytes": 11233,
+      "sha256": "c5a1787fbcc6a8fdf55eda5b24094fcc6a447b8c07dfb51da4fbe938fc9f2750",
+      "bytes": 11265,
       "origin": {
         "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-build579-10-openal-component02/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/prepare.py",
         "sha256": "ab7dd3b5fb0f9f570900ac7f414aced004c8fc4753a2efbed29f4215683f117a",
         "bytes": 11233
+      },
+      "source": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-build579-11-openal-component01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/prepare.py",
+        "sha256": "c5a1787fbcc6a8fdf55eda5b24094fcc6a447b8c07dfb51da4fbe938fc9f2750",
+        "bytes": 11265
       }
     },
     "produce_arm32.py": {
@@ -368,12 +378,17 @@
       }
     },
     "sources/foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/build_openal.py": {
-      "sha256": "e166505d8d6d3ebce9ff4ab407d44620ceca24efa1b06d220ac44e0371221b81",
-      "bytes": 12201,
+      "sha256": "d574d12b31adf4982d15184155d88f7e89bb4095c321b6b7a522b42539eb6dc1",
+      "bytes": 12203,
       "origin": {
         "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-build579-10-openal-component02/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/sources/foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/build_openal.py",
         "sha256": "e166505d8d6d3ebce9ff4ab407d44620ceca24efa1b06d220ac44e0371221b81",
         "bytes": 12201
+      },
+      "source": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-build579-11-openal-component01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/sources/foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/build_openal.py",
+        "sha256": "d574d12b31adf4982d15184155d88f7e89bb4095c321b6b7a522b42539eb6dc1",
+        "bytes": 12203
       }
     },
     "sources/foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/qemu_spatial_effect.cpp": {
@@ -500,6 +515,24 @@
         "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-build579-10-openal-component02/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/legacy/BUILD-OPENAL-c29.py",
         "sha256": "de8b821733113889602392192684d3b9bacc9f08978b40a8eaa0faac296dd2be",
         "bytes": 12148
+      }
+    },
+    "PREVIOUS-C30-ASSET-SOURCES.json": {
+      "sha256": "3f9edcd7605cdf965561b7d7cfc97fc3dfc40420776b346aa0173c8c995a657b",
+      "bytes": 75804,
+      "source": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-build579-11-openal-component01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/PREVIOUS-C30-ASSET-SOURCES.json",
+        "sha256": "3f9edcd7605cdf965561b7d7cfc97fc3dfc40420776b346aa0173c8c995a657b",
+        "bytes": 75804
+      }
+    },
+    "legacy/BUILD-OPENAL-c30.py": {
+      "sha256": "e166505d8d6d3ebce9ff4ab407d44620ceca24efa1b06d220ac44e0371221b81",
+      "bytes": 12201,
+      "source": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-build579-11-openal-component01/candidate/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/legacy/BUILD-OPENAL-c30.py",
+        "sha256": "e166505d8d6d3ebce9ff4ab407d44620ceca24efa1b06d220ac44e0371221b81",
+        "bytes": 12201
       }
     }
   },

@@ -38,9 +38,12 @@ PREVIOUS_C29_SPATIAL_GN_SHA = '00622e510ca1d6b6a33654a1f04dbd31946c72a73db7ae159
 PREVIOUS_C29_SPATIAL_GN_INPUT = 'legacy/SPATIAL-BUILD-c29.gn'
 PREVIOUS_C29_OPENAL_BUILD_SHA = 'de8b821733113889602392192684d3b9bacc9f08978b40a8eaa0faac296dd2be'
 PREVIOUS_C29_OPENAL_BUILD_INPUT = 'legacy/BUILD-OPENAL-c29.py'
+PREVIOUS_C30_INPUT_SOURCES_SHA = '3f9edcd7605cdf965561b7d7cfc97fc3dfc40420776b346aa0173c8c995a657b'
+PREVIOUS_C30_OPENAL_BUILD_SHA = 'e166505d8d6d3ebce9ff4ab407d44620ceca24efa1b06d220ac44e0371221b81'
+PREVIOUS_C30_OPENAL_BUILD_INPUT = 'legacy/BUILD-OPENAL-c30.py'
 CPU_CPP = 'drivers/peripheral/intelligent_voice/passthrough/engine/cpu_voice_engine.cpp'
 CPU_CPP_INPUT = 'sources/drivers/peripheral/intelligent_voice/passthrough/engine/cpu_voice_engine.cpp'
-INPUT_FILES_SHA = '9773c1b2eef7da527a5f2d1b93ba84b04ba2ea81104c79dda2a3ca73ce3a424a'
+INPUT_FILES_SHA = 'd276652285d3756c58e553c6e2531f40cdbec4db25a9d4f6cda5b13b08d4fa40'
 PROJECTS_SHA = 'ea9b404805887ae248a1eda69333465d0ce426c342d5f82e14e5b6e7c62a0b41'
 CPU = 'drivers/peripheral/intelligent_voice/passthrough/cpu/'
 SPATIAL = 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/qemu_spatial/'
@@ -288,11 +291,12 @@ def payloads(index):
 
 
 def legacy_payloads(index, current):
-    """Five exact historical full443 maps; no per-file alternative admission.
+    """Six exact historical full443 maps; no per-file alternative admission.
 
     Each complete declaration is authenticated and differs from current only
     at its fixed CPU GN/CPP, spatial GN and OpenAL builder overrides. Unchanged
-    binary/model bytes are shared; all four prior declarations stay byte identical.
+    binary/model bytes are shared; all five prior declarations stay byte identical.
+    The C30 declaration retains the complete previous current443 builder epoch.
     """
     selected = json.loads(file_raw(HERE / 'INPUT-SOURCES.json'))
     gn_name = CPU + 'BUILD.gn'
@@ -310,6 +314,7 @@ def legacy_payloads(index, current):
     spatial = (spatial_name, 'sources/' + spatial_name, PREVIOUS_C28_SPATIAL_GN_INPUT, PREVIOUS_C28_SPATIAL_GN_SHA)
     openal = (openal_name, 'sources/' + openal_name, PREVIOUS_C29_OPENAL_BUILD_INPUT, PREVIOUS_C29_OPENAL_BUILD_SHA)
     spatial_c29 = (spatial_name, 'sources/' + spatial_name, PREVIOUS_C29_SPATIAL_GN_INPUT, PREVIOUS_C29_SPATIAL_GN_SHA)
+    openal_c30 = (openal_name, 'sources/' + openal_name, PREVIOUS_C30_OPENAL_BUILD_INPUT, PREVIOUS_C30_OPENAL_BUILD_SHA)
     fixed = (
         ('previous', 'PREVIOUS-ASSET-SOURCES.json', PREVIOUS_INPUT_SOURCES_SHA,
          ((gn_name, CPU_GN_INPUT, PREVIOUS_GN_INPUT, PREVIOUS_GN_SHA), cpp, spatial, openal)),
@@ -321,6 +326,8 @@ def legacy_payloads(index, current):
          (spatial, openal)),
         ('previous_c29', 'PREVIOUS-C29-ASSET-SOURCES.json', PREVIOUS_C29_INPUT_SOURCES_SHA,
          (spatial_c29, openal)),
+        ('previous_c30', 'PREVIOUS-C30-ASSET-SOURCES.json', PREVIOUS_C30_INPUT_SOURCES_SHA,
+         (openal_c30,)),
     )
     result = {}
     for epoch, declaration, declaration_sha, overrides in fixed:
@@ -429,10 +436,10 @@ def rewind_plan(root):
         project_heads(root, projects)
         return None
     state = complete_state(actual, edits)
-    need((state == 'final' and epoch in ('current', 'previous_c28', 'previous_c29')) or
+    need((state == 'final' and epoch in ('current', 'previous_c28', 'previous_c29', 'previous_c30')) or
          (state == 'previous_c22_final' and epoch in ('previous', 'previous_c23', 'previous_c24')) or
          (state == 'previous_final' and epoch == 'previous') or
-         (state == 'before' and epoch in ('current', 'previous', 'previous_c23', 'previous_c24', 'previous_c28', 'previous_c29')),
+         (state == 'before' and epoch in ('current', 'previous', 'previous_c23', 'previous_c24', 'previous_c28', 'previous_c29', 'previous_c30')),
          'only a fixed complete source31/asset443 prefix endpoint is admitted')
     if state == 'before' and epoch == 'current':
         need(vectors(root, edits) == actual and component_identity(index) == component_before and

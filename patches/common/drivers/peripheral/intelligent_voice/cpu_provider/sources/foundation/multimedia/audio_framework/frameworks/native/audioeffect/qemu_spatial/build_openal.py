@@ -57,7 +57,7 @@ def fixed_target_units(src, out, cc, db):
   # no-op/ranlib shell segments. Admit one llvm-ar segment for libopenal.a.
   for position,word in enumerate(words):
    if word in ('&&','||',';',':') or word.startswith('-'):continue
-   if Path(word).resolve()!=cc.with_name('llvm-ar').resolve():continue
+   if Path(word).absolute()!=cc.with_name('llvm-ar').absolute():continue
    if archive_inputs is not None or (position and words[position-1]!='&&'):raise ValueError('one fixed normal archive command required')
    end=next((i for i in range(position+1,len(words)) if words[i] in ('&&','||',';')),len(words))
    segment=words[position:end]
