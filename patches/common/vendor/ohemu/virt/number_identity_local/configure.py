@@ -68,8 +68,17 @@ def source_pins(root):
     guard = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(guard)
     guard.preflight_sequence(root, require_patched=True)
+    # The current successor also requires the complete public permission component.
+    permission_guard_path = Path(__file__).resolve().parents[5] / 'common/base/telephony/number_identity/public_permission580/verify_source.py'
+    need(hashlib.sha256(regular(permission_guard_path).read_bytes()).hexdigest() == '7eca81090b077dfa7b955fd807af5eece05779b83e66033ac3e6c2c8a0572e7a',
+         'fixed public permission source guard differs')
+    permission_spec = importlib.util.spec_from_file_location('number_selection_public_permission580_guard', permission_guard_path)
+    permission_guard = importlib.util.module_from_spec(permission_spec)
+    permission_spec.loader.exec_module(permission_guard)
+    need(permission_guard.validate(root, require_patched=True) is True,
+         'complete reviewed public permission successor required')
     expected = dict(SOURCE_PINS)
-    expected.update({'foundation/ability/ability_runtime/frameworks/native/appkit/app/main_thread.cpp': 'ed25c0dd5459e94c802aa9abcfb70baa3aba8110ae8b1f4a4f2ffd0bdb3b4528', 'base/telephony/number_identity/number_location/src/number_identity_datashare_stub_impl.cpp': 'ecc474085ce71a77b641c0d6962554fbb3400683a63ea45e3720feebfc7d6715', 'base/telephony/number_identity/number_location/src/number_location_ability.cpp': '371c44cc4d8387d95092ee1c073e7a6976149b361914c55f0b10eeb89b973dd4'})
+    expected.update({'foundation/ability/ability_runtime/frameworks/native/appkit/app/main_thread.cpp': 'ed25c0dd5459e94c802aa9abcfb70baa3aba8110ae8b1f4a4f2ffd0bdb3b4528', 'base/telephony/number_identity/number_location/src/number_identity_datashare_stub_impl.cpp': 'ecc474085ce71a77b641c0d6962554fbb3400683a63ea45e3720feebfc7d6715', 'base/telephony/number_identity/number_location/src/number_location_ability.cpp': '371c44cc4d8387d95092ee1c073e7a6976149b361914c55f0b10eeb89b973dd4', 'base/telephony/number_identity/frameworks/js/src/napi_number_identity.cpp': '36a024778c3057f8f3dbe7ad620e5e8446f47cfe718e71c2d0edf65a92a97582'})
     need(actual == expected, 'public local source/config differs from complete successor')
     return expected
 
