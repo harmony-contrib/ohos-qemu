@@ -24,6 +24,7 @@ COMPONENTS = (
     ('common/applications/standard/calendardata/lifecycle579', 18),
     ('common/foundation/multimedia/audio_framework/playback_capture_consent579', 5),
     ('common/foundation/arkui/ace_engine/native_dso_exports579', 1),
+    ('common/foundation/communication/netmanager_ext/qemu_openvpn_options579', 7),
 )
 
 

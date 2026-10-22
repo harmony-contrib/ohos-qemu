@@ -109,8 +109,9 @@ struct Index {
         const target: Want = { bundleName: BUNDLE, abilityName: action === 'invalid' ? 'MissingAdmin578' : 'Admin578' };
         if (action === 'byod') {
           value = JSON.stringify(await context.startAbilityForResult({ bundleName: 'com.ohos.adminprovisioning',
-            abilityName: 'ByodAdminProvisionAbility' }));
-        } else if (action === 'read') { value = JSON.stringify(await admin.isAdminEnabled(target)); }
+            abilityName: 'ByodAdminProvisionAbility', parameters: { bundleName: BUNDLE, abilityName: 'Admin578', activateId: RUN } }));
+        } else if (action === 'byod-read') { value = JSON.stringify(admin.isByodAdmin(target)); }
+        else if (action === 'read') { value = JSON.stringify(await admin.isAdminEnabled(target)); }
         else if (action === 'disable') { await admin.disableAdmin(target); }
         else {
           await admin.enableAdmin(target, { name: 'apps578-' + RUN, description: 'Disposable QEMU admin' },
@@ -157,6 +158,7 @@ struct Index {
           Button('Disable own').id('apps578-disable').onClick(() => this.call('disable'))
           Button('Super boundary').id('apps578-super').onClick(() => this.call('super'))
           Button('BYOD').id('apps578-byod').onClick(() => this.call('byod'))
+          Button('Own BYOD state').id('apps578-byod-read').onClick(() => this.call('byod-read'))
         }
       }
       if (CASE === 'network-policy') {

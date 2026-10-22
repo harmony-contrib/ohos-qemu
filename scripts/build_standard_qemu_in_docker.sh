@@ -193,6 +193,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PACKAGER="${SCRIPT_DIR}/package_standard_qemu.sh"
 PATCH_ROOT="${SCRIPT_DIR}/../patches"
+QEMU_USB_MIDI_SHARED_DEVICE_SCRIPT="${PATCH_ROOT}/common/device/qemu/usb_midi_shared_device/apply.sh"
 ARMV7A_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/armv7a_product/apply.sh"
 VPN_COMPONENT_SCRIPT="${PATCH_ROOT}/common/standard_vpn/apply.sh"
 F2FS_QUOTA_COMPONENT_SCRIPT="${PATCH_ROOT}/common/vendor/ohemu/f2fs_quota/apply.sh"
@@ -376,6 +377,7 @@ PHOTO_FUSION_ASSET_TYPE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multim
 ALSA_CONFIG_INSTALL_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/alsa-lib/config_install/apply.sh"
 ALSA_PCM_ONSET_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/alsa-lib/pcm_onset/apply.sh"
 AUDIO_ONSET579_COMPONENT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/audio_onset579/apply.py"
+MEDIA579_CPU_COMPONENT="${PATCH_ROOT}/common/drivers/peripheral/intelligent_voice/cpu_provider"
 CALENDAR_SOURCE_PROVIDER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/source_provider/apply.sh"
 CALENDAR_EVENT_EDITOR_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/event_editor/apply.sh"
 CALENDAR_EDITOR_CALLBACK_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/calendardata/editor_callback_dispatch/apply.sh"
@@ -3084,6 +3086,13 @@ apply_qemu_capability_patch_plan() {
   python3 "${PATCH_ROOT}/lib/qemu_preserve_source_times579.py" --source-root "${OHOS_ROOT}" \
     --snapshot "${source_times_snapshot}" --action capture \
     2>&1 | tee "${source_times_directory}/capture.log"
+  # Reverse only the complete known native VPN options vector before its original guards.
+  bash "${PATCH_ROOT}/common/foundation/communication/netmanager_ext/qemu_openvpn_options579/apply.sh" --source-root "${OHOS_ROOT}" --rewind \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_openvpn_options579_prefix.log"
+  # Re-enter original component guards only from the complete media predecessor.
+  # Unknown or partial source/assets remain untouched and fail the fixed guard.
+  bash "${MEDIA579_CPU_COMPONENT}/apply.sh" --source-root "${OHOS_ROOT}" --rewind \
+    2>&1 | tee "${CACHE_ROOT}/logs/prepare_media579_cpu_prefix.log"
   # Reverse the complete native DSO export map before re-entering any older source guard.
   bash "${ARKUI_NATIVE_DSO_EXPORTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --rewind \
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_arkui_native_dso_exports579_prefix.log"
@@ -3234,6 +3243,10 @@ apply_qemu_capability_patch_plan() {
   apply_qemu_runtime_components
   bash "${NATIVE_CHILD_PROCESS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_native_child_process_component.log"
+  python3 "${PATCH_ROOT}/../scripts/apply_additional579_product.py" --source-root "${OHOS_ROOT}" \
+    --receipt "${CACHE_ROOT}/logs/apply_additional579_product.json"
+  python3 "${PATCH_ROOT}/../scripts/apply_media579_hap_identity.py" --source-root "${OHOS_ROOT}" \
+    --receipt "${CACHE_ROOT}/logs/apply_media579_hap_identity.json"
   apply_release_hap_dependencies_component
   apply_sdk_cortex_m_component
   apply_qemu_audio_component
@@ -3392,6 +3405,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_vpn_openvpn_fields_component.log"
   bash "${CONNECTED_VPN_NULLABLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_connected_vpn_nullable_component.log"
+  python3 "${PATCH_ROOT}/common/foundation/communication/netmanager_base/qemu_modem_tun/rewind_source.py" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/rewind_qemu_modem_tun_source.log"
   bash "${QEMU_OPENVPN_CONTROL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_openvpn_control_component.log"
   bash "${PATCH_ROOT}/common/foundation/communication/netmanager_base/qemu_openvpn_broker/apply.sh" --source-root "${OHOS_ROOT}" \
@@ -3411,6 +3426,10 @@ apply_qemu_capability_patch_plan() {
   python3 "${SCRIPT_DIR}/prepare_qemu_openvpn_backend.py" --source-root "${OHOS_ROOT}" \
     --archive "${QEMU_OPENVPN_SOURCE_ARCHIVE}" \
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_openvpn_backend.log"
+  bash "${PATCH_ROOT}/common/foundation/communication/netmanager_ext/qemu_openvpn_options579/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_openvpn_options579.log"
+  bash "${PATCH_ROOT}/common/foundation/communication/netmanager_base/qemu_modem_tun/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_modem_tun_source.log"
   bash "${DHW_UI_PREINSTALL_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_dhardware_ui_preinstall_component.log"
   bash "${QEMU_AUDIO_DEVICE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3838,6 +3857,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_msdp_real_sensor_input_component.log"
   bash "${PATCH_ROOT}/common/base/msdp/device_status/public_still/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_msdp_public_still_component.log"
+  python3 "${PATCH_ROOT}/common/base/msdp/device_status/rotation_input/apply.py" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_msdp_rotation_fresh_source.log"
   if [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; then
     python3 "${SCRIPT_DIR}/prepare_qemu_sensor_runtime.py" --source-root "${OHOS_ROOT}" \
       2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_sensor_runtime.log"
@@ -3866,11 +3887,18 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_onset579_component.log"
   python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action verify \
     > "${CACHE_ROOT}/logs/verify_audio_onset579_component.json"
+  # Device contract/profile and every original audio source component are final.
+  bash "${MEDIA579_CPU_COMPONENT}/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_media579_cpu_component.log"
+  python3 "${MEDIA579_CPU_COMPONENT}/verify_source.py" --source-root "${OHOS_ROOT}" --require-final \
+    > "${CACHE_ROOT}/logs/verify_media579_cpu_component.json"
   bash "${ARKUI_NATIVE_DSO_EXPORTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-final \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_arkui_native_dso_exports579_final.log"
   python3 "${PATCH_ROOT}/lib/qemu_preserve_source_times579.py" --source-root "${OHOS_ROOT}" \
     --snapshot "${source_times_snapshot}" --action restore \
     2>&1 | tee "${source_times_directory}/restore.log"
+  bash "${QEMU_USB_MIDI_SHARED_DEVICE_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_usb_midi_shared_device.log"
   # Hash actual, fully patched kernel/config/HDI sources before any traversal.
   # Directory mtimes and a shell environment flag cannot invalidate Ninja's
   # old Image output; the GN action now consumes this stable fingerprint.
@@ -3911,6 +3939,13 @@ main() {
 
   local product
   for product in "${PRODUCTS[@]}"; do
+    if [ "${product}" = "armv7a_virt" ]; then
+      python3 -B "${MEDIA579_CPU_COMPONENT}/normal_arm32_entry.py" \
+        --inputs "${QEMU_MEDIA579_ARM32_INPUTS:?actual normal Owner ARM32 DATA required}" \
+        --inputs-sha256 "${QEMU_MEDIA579_ARM32_INPUTS_SHA256:?actual ARM32 DATA checksum required}" \
+        --product "${product}" --device "${DEVICE_TYPE}" --source-root "${OHOS_ROOT}" \
+        2>&1 | tee "${CACHE_ROOT}/logs/normal_media579_arm32_${DEVICE_TYPE}.log"
+    fi
     build_product "${product}"
     if [ "${BUILD_ONLY_LOAD}" != "1" ]; then
       package_product "${product}"

@@ -94,6 +94,39 @@ CONSUMERS = (
     'ci/capability-audit/livecaptions579_arm32_production.py',
     'ci/capability-audit/livecaptions579_native.py',
     'scripts/build_livecaptions579_arm32.py',
+    'ci/capability-audit/media579/audio579_common.py',
+    'ci/capability-audit/media579/audio579_project.py',
+    'ci/capability-audit/media579/audio579_native.py',
+    'ci/capability-audit/media579/audio579_runtime.py',
+    'ci/capability-audit/media579/audio579_inputs.py',
+    'ci/capability-audit/media579/audio579_midi.cpp',
+    'ci/capability-audit/media579/audio579/AudioAudit.ets',
+    'ci/capability-audit/media579/audio579/EntryAbility.ets',
+    'ci/capability-audit/media579/audio579/Index.ets',
+    'ci/capability-audit/telephony579/EntryAbility.ets',
+    'ci/capability-audit/telephony579/Index.ets',
+    'ci/capability-audit/telephony579/TelephonyAudit.js',
+    'ci/capability-audit/telephony579_project.py',
+    'ci/capability-audit/telephony579_raw.py',
+    'ci/capability-audit/telephony579_runtime.py',
+    'ci/capability-audit/telephony579_oracle.py',
+    'ci/capability-audit/telephony579_registration.py',
+    'ci/capability-audit/telephony579_tun.py',
+    'ci/capability-audit/telephony579_inputs.py',
+    'ci/capability-audit/telephony579_full_replay.py',
+    'ci/capability-audit/telephony579_image_inventory.py',
+    'ci/capability-audit/policy579/execution-20261021/ims-provider-source-facts579.json',
+    'ci/capability-audit/usb579_contract.py',
+    'ci/capability-audit/usb579_inputs.py',
+    'ci/capability-audit/usb579_native.py',
+    'ci/capability-audit/usb579_device_peer.c',
+    'ci/capability-audit/usb579_project.py',
+    'ci/capability-audit/usb579_shared.py',
+    'ci/capability-audit/usb579_retention.py',
+    'ci/capability-audit/usb579/UsbAudit.ets',
+    'ci/capability-audit/usb579/EntryAbility.ets',
+    'ci/capability-audit/usb579/Index.ets',
+    'ci/capability-audit/media579/usb579_midi_session.inc',
 )
 COMMON = {'archive', 'source_commit', 'package_receipt', 'build_inputs'}
 
@@ -263,7 +296,8 @@ def elf_target(value, target, shared=False):
 
 def native_inputs(export, package, root, build, target):
     common(export, 'actual-root-capability579-native-export/v1', package)
-    require(set(export) == COMMON | {'schema', 'build'}, 'fixed original helper batch export required')
+    require(set(export) == COMMON | {'schema', 'build', 'supplemental_owner', 'supplemental_builds'},
+        'fixed original helper batch and actual separate singleton exports required')
     build_ref = checked_ref(export['build']); report = json_ref(build_ref)
     require(report.get('status') == 'pass_compile_link_ONLY' and report.get('plan_only') is False and
         report.get('product') == target['product'] and type(report.get('helpers')) is dict and
@@ -302,7 +336,27 @@ def native_inputs(export, package, root, build, target):
     for key, name in (('apps_paired579', 'apps_paired579_net'), ('apps_paired579_alsa', 'alsa_inject')):
         native[key] = dict(helpers[name], source=checked_ref({field: report['helpers'][name]['source'][field]
             for field in ('path', 'sha256')}), abi=target['arch'])
+    extra_owner = json_ref(export['supplemental_owner'])
+    require(extra_owner['exit_code'] == 0 and extra_owner['source_commit'] == package['source_commit'] and
+        extra_owner['cleanup_verified'] is True and extra_owner['owned_container_absent'] is True and
+        set(extra_owner['supplemental_helpers']) == set(export['supplemental_builds']) ==
+            {'networking579', 'owning_services579', 'usb579', 'msdp579'} and
+        checked_ref({'path': extra_owner['build_report'], 'sha256': extra_owner['build_report_sha256']}) == build_ref,
+        'actual same-package original extra7 Owner and all three singleton resources must settle')
+    for key, helper in (('networking579', 'networking579_bpf_snapshot'),
+                        ('owning_services579', 'owning_services579_napi'),
+                        ('usb579', 'usb579_device_peer'), ('msdp579', 'msdp579_napi')):
+        actual = extra_owner['supplemental_helpers'][key]
+        selected = checked_ref(export['supplemental_builds'][key])
+        require(actual['status'] == 'pass_compile_link_ONLY' and checked_ref(actual['build']) == selected and
+            set(json_ref(selected)['helpers']) == {helper}, 'actual fixed selected helper/Owner receipt differs')
+    from networking579_native import prepared_input as networking579_prepared_input
+    native['networking579_bpf'] = networking579_prepared_input(
+        checked_ref(export['supplemental_builds']['networking579']), archive=package['archive'], product=target['product'])
     addons = {'settings_idle579': dict(helpers['settings_idle579_napi'], abi=target['abi'])}
+    from msdp579_native import prepared_input as msdp579_prepared_input
+    addons['msdp579'] = msdp579_prepared_input(checked_ref(export['supplemental_builds']['msdp579']),
+        archive=package['archive'], product=target['product'])
     return native, addons, build_ref
 
 
@@ -409,7 +463,7 @@ def caption_inputs(runtime_ref, assets_ref, package, provider, target):
 def assemble(request_ref, recipes, profile, output):
     request_ref = checked_ref(request_ref); request = json_ref(request_ref)
     require(type(request) is dict and set(request) == {'schema', 'package_export', 'native_export',
-        'services_export', 'caption_runtime_data', 'caption_product_assets', 'permission_ui'} and
+        'services_export', 'caption_runtime_data', 'caption_product_assets', 'permission_ui', 'media579_product_export', 'usb579_product_export', 'telephony579_product_export'} and
         request['schema'] == 'actual-root-capability579-input-request/v1', 'finite input-only assembly request required')
     package_export = json_ref(request['package_export'])
     package = common(package_export, 'actual-root-capability579-package-export/v1')
@@ -448,16 +502,29 @@ def assemble(request_ref, recipes, profile, output):
         '\n' not in permission['allow_text'] and checked_ref(permission['source']),
         'root actual source-backed permission UI selector required; no default Allow label')
     captions = caption_inputs(request['caption_runtime_data'], request['caption_product_assets'], package, captions, target)
+    import sys
+    media_folder = Path(__file__).with_name('media579')
+    if str(media_folder) not in sys.path: sys.path.insert(0, str(media_folder))
+    from audio579_inputs import assemble_audio
+    media_audio = assemble_audio(request['media579_product_export'], package=package, target=target, native=native)
+    from usb579_inputs import assemble_usb
+    require(json_ref(request['usb579_product_export'])['native_build'] == json_ref(request['native_export'])['supplemental_builds']['usb579'], 'fixed normal USB singleton helper build')
+    usb = assemble_usb(request['usb579_product_export'], package=package, target=target)
+    from telephony579_inputs import assemble_telephony
+    telephony = assemble_telephony(request['telephony579_product_export'], package=package, target=target)
     value = {'schema': 'actual-qemu-capability578-inputs/v1', 'source_commit': package['source_commit'],
         'archive': package['archive'], 'providers': providers, 'native_helpers': native,
         'native_addons': addons, 'ui_plans': ui_plans, 'communications_services': services,
-        'permission_allow_text': permission['allow_text'], 'livecaptions579': captions}
+        'permission_allow_text': permission['allow_text'], 'livecaptions579': captions, 'media579_audio': media_audio, 'usb579': usb, 'telephony579': telephony}
     provenance = {'schema': 'actual-root-capability579-input-assembly/v1', 'request': request_ref,
         'package': package, 'package_manifest': manifest_ref, 'actual_target': target,
         'package_export': checked_ref(request['package_export']), 'native_export': checked_ref(request['native_export']),
         'services_export': checked_ref(request['services_export']), 'helper_build': helper_build,
         'caption_runtime_data': checked_ref(request['caption_runtime_data']),
         'caption_product_assets': checked_ref(request['caption_product_assets']), 'permission_ui': permission,
+        'media579_product_export': checked_ref(request['media579_product_export']),
+        'usb579_product_export': checked_ref(request['usb579_product_export']),
+        'telephony579_product_export': checked_ref(request['telephony579_product_export']),
         'source_consumers': pinned, 'provider_declarations': declarations,
         'scope': 'input DATA assembly only; origin remains original root export receipts and actual guest binding',
         'runtime_validated': False, 'formally_closed': [], 'first_artifact_behavior_gate_passed': False}

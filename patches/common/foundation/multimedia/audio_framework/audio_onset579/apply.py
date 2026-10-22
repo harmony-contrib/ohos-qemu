@@ -3,7 +3,7 @@
 This is product source wiring only. It cannot grant any runtime/onset claim.
 """
 from pathlib import Path
-import argparse,fcntl,hashlib,json,os,stat,subprocess,sys,tempfile
+import argparse,fcntl,hashlib,importlib.util,json,os,stat,subprocess,sys,tempfile
 sys.dont_write_bytecode=True
 HERE=Path(__file__).resolve().parent
 PATCH_ROOT=HERE.parents[4]
@@ -666,8 +666,35 @@ def classify(seen,allow_previous=False):
     raise ValueError('unknown/partial onset579 source tuple; preserving every file')
 
 
+CPU_GUARD_SHA='ea1cd9d0e53b64183db050d556c8e18ccf8a33365949ebda8ce6242c74c21152'
+CPU_SOURCE_PATHS=('base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/intelligent_voice/vendor/file.te', 'base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/intelligent_voice/vendor/file_contexts', 'base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/intelligent_voice/vendor/init.te', 'base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/intelligent_voice/vendor/intell_voice_host.te', 'base/security/selinux_adapter/sepolicy/ohos_policy/multimedia/audio/public/type.te', 'base/security/selinux_adapter/sepolicy/ohos_policy/multimedia/audio/system/audio_server.te', 'base/security/selinux_adapter/sepolicy/ohos_policy/multimedia/audio/system/file_contexts', 'base/security/selinux_adapter/sepolicy/ohos_policy/multimedia/audio/system/init.te', 'drivers/peripheral/intelligent_voice/bundle.json', 'drivers/peripheral/intelligent_voice/hdi_service/engine/etc/intelligent_voice_engine.cfg', 'drivers/peripheral/intelligent_voice/intelligent_voice.gni', 'drivers/peripheral/intelligent_voice/passthrough/BUILD.gn', 'drivers/peripheral/intelligent_voice/passthrough/engine/engine_factory.cpp', 'drivers/peripheral/intelligent_voice/passthrough/engine/intell_voice_engine_manager.cpp', 'foundation/ai/intelligent_voice_framework/bundle.json', 'foundation/ai/intelligent_voice_framework/intell_voice_service.gni', 'foundation/ai/intelligent_voice_framework/services/intell_voice_engine/BUILD.gn', 'foundation/ai/intelligent_voice_framework/services/intell_voice_engine/server/enroll/enroll_engine.cpp', 'foundation/ai/intelligent_voice_framework/services/intell_voice_engine/server/wakeup/wakeup_engine.cpp', 'foundation/ai/intelligent_voice_framework/services/intell_voice_engine/server/wakeup/wakeup_engine_impl.cpp', 'foundation/ai/intelligent_voice_framework/services/intell_voice_engine/server/wakeup/wakeup_engine_impl.h', 'foundation/ai/intelligent_voice_framework/services/intell_voice_service/BUILD.gn', 'foundation/ai/intelligent_voice_framework/services/intell_voice_service/server/sa/intell_voice_service.cpp', 'foundation/multimedia/audio_framework/bundle.json', 'foundation/multimedia/audio_framework/config.gni', 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/BUILD.gn', 'foundation/multimedia/audio_framework/frameworks/native/audioeffect/src/audio_effect_chain_manager.cpp', 'foundation/multimedia/audio_framework/services/audio_policy/BUILD.gn', 'foundation/multimedia/audio_framework/services/audio_policy/server/domain/effect/src/audio_spatialization_service.cpp', 'foundation/multimedia/audio_framework/services/audio_policy/server/infra/config/file/audio_effect_config.xml', 'foundation/multimedia/audio_framework/services/audio_service/etc/audio_server.cfg')
+
+def media_predecessor(root):
+    # Only the complete fixed CPU voice/spatial successor may project back to
+    # this unchanged original whole Onset contract. No actual source is edited.
+    path=PATCH_ROOT/'common/drivers/peripheral/intelligent_voice/cpu_provider/verify_source.py'
+    need(hashlib.sha256(regular(path)).hexdigest()==CPU_GUARD_SHA,'fixed complete CPU source guard changed')
+    spec=importlib.util.spec_from_file_location('_root_cpu_provider_source_guard579',path)
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+    result=module.preceding_files(root)
+    if result is None:return {}
+    need(type(result) is dict,'fixed CPU predecessor reader must return a source map')
+    if not result:return {}
+    need(set(result)==set(CPU_SOURCE_PATHS) and
+        all(type(name) is str and type(raw) is bytes for name,raw in result.items()),
+        'complete exact31 predecessor vector, never a supplied single-file SHA')
+    return result
+
+def source_validation_observed(root):
+    actual=observed(root);previous=media_predecessor(root)
+    for name,raw in previous.items():
+        if name in FILES:
+            need(descriptor(raw)==FILES[name]['after'],'CPU successor must retain the original complete Onset predecessor')
+            actual[name]=descriptor(raw)
+    return actual
+
 def state(root,require_after=False):
-    actual=classify(observed(root))
+    actual=classify(source_validation_observed(root))
     need(not require_after or actual=='after','complete final onset579 source required')
     return actual
 
@@ -774,6 +801,7 @@ def legacy(root,name,operation):
     implementation=implementation_snapshot(root)
     # Finite source-owned enumeration. Neither JSON nor command data selects code.
     row=LEGACY[name];component=PATCH_ROOT/row['path']
+    media_before=media_predecessor(root)
     for script,sha in row['script_sha256'].items():
         need(hashlib.sha256(regular(component/script)).hexdigest()==sha,'fixed legacy source guard changed')
     marker=[root/n for n,r in FILES.items() if r['before'] is None]
@@ -793,7 +821,7 @@ def legacy(root,name,operation):
     with tempfile.TemporaryDirectory(prefix='audio-onset579-projection-') as name_tmp:
         projection=Path(name_tmp)
         for name_src in row['paths']:
-            raw=regular(root/name_src)
+            raw=media_before[name_src] if name_src in media_before else regular(root/name_src)
             # Actual final global vector is already checked. Reverse only this
             # component's known overlap, without mutating any real source file.
             if name_src in FILES:

@@ -147,9 +147,8 @@ def certificate_case(session):
 
 
 def enterprise(session):
-    # The backend and real extension callbacks are exercised even though fixed
-    # public BYOD UI currently implements only an unsupported-device dialog.
-    # A backend success must not close that unimplemented provider protocol.
+    # Keep the normal administrator lifecycle, then exercise the real BYOD UI
+    # and independent native state on this newly packaged provider.
     session.bind_provider();session.value['admin_owned']=False
     require(session.api('a','baseline','read') is False and session.api('b','peer.baseline','read') is False,
         'fresh nonce caller admins must initially be disabled')
@@ -172,13 +171,23 @@ def enterprise(session):
     returned(session.rows('a'),'byod.cancel','byod')
     require(session.api('a','byod.cancel.read','read') is False,'actual BYOD cancel activated an administrator')
     session.invoke('a','byod.agree','byod',wait=False);session.visible('a','byod.agree');session.system('byod-agree')
-    # This is the fixed provider's real unsupported branch. The actual dialog
-    # must be selected/clicked, not synthesized as a caller success response.
-    session.system('byod-unsupported-confirm')
-    session.wait('a',lambda r:any(x['operation']=='byod.agree' and x['event']=='return.byod' for x in r),'actual_byod_unsupported_result')
-    returned(session.rows('a'),'byod.agree','byod')
-    require(session.api('a','byod.agree.read','read') is False,'fixed unsupported BYOD branch unexpectedly changed admin state')
-    session.value['product_boundaries']=['fixed-public-BYOD-provider-has-no-activation-implementation']
+    session.wait('a',lambda r:any(x['operation']=='byod.agree' and x['event']=='return.byod' for x in r),'actual_byod_authorized_result')
+    returned(session.rows('a'),'byod.agree','byod');session.value['admin_owned']=True
+    require(session.api('a','byod.agree.read','read') is True and session.api('a','byod.kind','byod-read') is True and
+        session.api('b','byod.peer','read') is False, 'actual BYOD backend state/independent peer differs')
+    deadline=time.monotonic()+30
+    while len([r for r in session.observers('a') if r['event']=='admin.enabled.callback'])<2:
+        require(time.monotonic()<deadline,'second real BYOD extension enabled callback missing');time.sleep(.1)
+    old=session.stop('a')
+    require(session.api('a','byod.restart.read','read') is True and session.api('a','byod.restart.kind','byod-read') is True and
+        any(r['pid']!=old and r['operation']=='byod.restart.read' for r in session.rows('a')), 'actual BYOD state did not persist across caller recreation')
+    session.api('a','byod.disable','disable');session.value['admin_owned']=False
+    require(session.api('a','byod.disabled.read','read') is False and session.api('a','byod.disabled.kind','byod-read') is False,
+        'actual BYOD deactivation did not restore real state')
+    deadline=time.monotonic()+30
+    while len([r for r in session.observers('a') if r['event']=='admin.disabled.callback'])<2:
+        require(time.monotonic()<deadline,'second real BYOD extension disabled callback missing');time.sleep(.1)
+    session.value['product_boundaries']=[]
 
 
 def run(session):

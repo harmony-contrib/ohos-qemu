@@ -3,8 +3,8 @@
   "kind": "enterprise",
   "source_files": [
     {
-      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/admin-byodActivationPage.ets",
-      "sha256": "c87ad0d795d4073e9ee553e24c183378f7ea7ca78134696f13e419ab363fc83e"
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps579-additional-whole-raw-candidate/proposal/product/applications/standard/admin_provisioning/entry/src/main/ets/pages/byod/byodActivationPage.ets",
+      "sha256": "d7ddfb7d63c59fec041799d494169cbb3ca7380ce842930d9c2d38e486fa5e44"
     },
     {
       "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps578-full-runtime-candidate/upstream/admin/fixed/entry/src/main/resources/zh_CN/element/string.json",
@@ -24,13 +24,6 @@
       {
         "bundle": "com.ohos.adminprovisioning",
         "text": "同意",
-        "ancestor": true
-      }
-    ],
-    "byod-unsupported-confirm": [
-      {
-        "bundle": "com.ohos.adminprovisioning",
-        "text": "知道了",
         "ancestor": true
       }
     ]

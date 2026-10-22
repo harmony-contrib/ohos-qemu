@@ -6,7 +6,7 @@ from pathlib import Path
 
 EXPECTED = {'drivers_peripheral_sensor_feature_community': True,
             'drivers_peripheral_sensor_feature_qemu_external': True,
-            'device_status_sensor_enable': True, 'device_status_allow_mock_fallback': False}
+            'device_status_sensor_enable': True, 'device_status_interaction_coordination': True, 'device_status_allow_mock_fallback': False}
 
 
 def validate(features, device):

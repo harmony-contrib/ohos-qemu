@@ -1,8 +1,8 @@
 {
   "schema": "user-approved-public-provider-boundary/20261021",
-  "user_instruction": "\u770b\u4e0b openharmony \u4ee5\u53ca\u5bf9\u5e94 sig \u7b49\u4ed3\u5e93\u662f\u5426\u6709\uff0c\u5982\u679c\u6709\u5c31\u8865\u9f50\uff0c\u5982\u679c\u6ca1\u6709\u5c31\u8ba4\u4e3a\u662f\u80fd\u529b\u4e0d\u652f\u6301",
+  "user_instruction": "看下 openharmony 以及对应 sig 等仓库是否有，如果有就补齐，如果没有就认为是能力不支持",
   "decision": "current_complete_provider_unsupported_not_fixed_not_runtime_validated",
-  "scope": "Eight exact complete-provider findings remain conditional unsupported. Four additional Location/Bluetooth provider-positive scopes are partial only: no whole-ID exclusions; every supported typed API/permission/invalid/OFF/restart/release boundary remains mandatory on newly packaged QEMU. LiveCaptions is reopened and remains mandatory.",
+  "scope": "Eight exact complete-provider findings remain conditional unsupported. Five additional Location/Bluetooth/Ads provider-positive scopes are partial only: no whole-ID exclusions; every supported typed API/permission/invalid/OFF/restart/release boundary remains mandatory on newly packaged QEMU. LiveCaptions is reopened and remains mandatory. One additional exact carrier IMS vendor-positive scope is partial only; the full original L22 and RTT/5A supported obligations stay mandatory.",
   "features": {
     "NumberIdentity": {
       "id": "behavior:telephony-number-identity-provider-missing",
@@ -120,6 +120,20 @@
     {
       "path": "ci/capability-audit/policy579/execution-20261021/location-provider-source579.md",
       "sha256": "d3c12d47c4491dcd98d1b9111691cfe6ef48b9f22e6132118129324372376e4a"
+    },
+    {
+      "path": "ci/capability-audit/owning_services579/ads-source-facts.json",
+      "sha256": "e7bebb963384bfc5b8f0f579bdeff23750b07a590340ebe479907d95b095c6bd"
+    },
+    {
+      "path": "ci/capability-audit/policy579/execution-20261021/ims-provider-source-facts579.json",
+      "sha256": "c73a5f73e5b85cebd57ecd2477adaf49b29e75fe6e8b85b400d604e8e6fefc01",
+      "bytes": 18809
+    },
+    {
+      "path": "ci/capability-audit/policy579/execution-20261021/msdp579-public-provider-source-facts.json",
+      "sha256": "610e3e0b5a200f2656e7d6efe2d0f5e48f577411b05f091db7497cb52e19f098",
+      "bytes": 79035
     }
   ],
   "reopen": "Supply a complete lawful provider/data/model/product identity, integrate it and restore that exact finding to runtime acceptance.",
@@ -308,6 +322,114 @@
           "no OFF getter fallback used as service-presence proof",
           "actual same-new-archive signature/boot/UID/process binding and cleanup"
         ]
+      }
+    },
+    "AdsCompleteProvider579": {
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "whole_id_unsupported": false,
+      "state": "conditional_partial_provider_scope_unsupported_not_runtime_validated",
+      "repaired": false,
+      "runtime_pass": false,
+      "new_formal_closure": false,
+      "passable_without_new_runtime": false,
+      "source_facts": {
+        "path": "ci/capability-audit/owning_services579/ads-source-facts.json",
+        "sha256": "e7bebb963384bfc5b8f0f579bdeff23750b07a590340ebe479907d95b095c6bd",
+        "bytes": 6230
+      },
+      "id": "behavior:advertising-service-provider-missing",
+      "scope": "Only a complete bundled OEM creative/content backend plus AdsCoreService/FullScreenAdAbility/AdsUIExtensionAbility/JsBridgeService/providerApiAbilityName implementation and positive load/display/interaction driven by that provider in the fixed official source/product. The framework and all available public API/permission/lifecycle/failure boundaries remain mandatory.",
+      "reason": "Fixed selected OpenHarmony, newer official primary and manifest-selected SIG complete trees supply framework/base extension/OEM instructions, with no complete compatible content/render/API provider. No fake creative, echo provider or stub is substituted.",
+      "not_unsupported": [
+        "advertising framework/syscap",
+        "ordinary caller exact signed HAP identity",
+        "401 invalid load/display rejection",
+        "load/multi actual 12 connection failure with no false creative success",
+        "caller death/restart/requery",
+        "unchanged actual config, real BMS/AMS/UID absence and owned cleanup"
+      ],
+      "mandatory_new_image": {
+        "fixed_case": "ads579_boundaries.run_ads",
+        "pure_raw_replay": "ads579_boundaries.replay_ads",
+        "required_actual_results": [
+          "actual new archive/main boot/SDK signature/UID",
+          "exact normal caller public API requests and raw callbacks",
+          "actual default config and installed bundle observations before and after",
+          "no fake ad-success, true new PID after restart",
+          "all original cleanup plus actual UID/AMS/BMS absence"
+        ]
+      },
+      "no_implicit_policy_adoption": true
+    },
+    "QemuCarrierIMSTransport579": {
+      "id": "behavior:telephony-no-modem-or-sim",
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "whole_id_unsupported": false,
+      "state": "conditional_partial_provider_scope_unsupported_not_runtime_validated",
+      "repaired": false,
+      "runtime_pass": false,
+      "new_formal_closure": false,
+      "passable_without_new_runtime": false,
+      "source_facts": {
+        "path": "ci/capability-audit/policy579/execution-20261021/ims-provider-source-facts579.json",
+        "sha256": "c73a5f73e5b85cebd57ecd2477adaf49b29e75fe6e8b85b400d604e8e6fefc01",
+        "bytes": 18809
+      },
+      "scope": "Only genuine carrier IMS registration/negotiation and RTT sessions/messages behind the reviewed current SA4014 vendor provider. Calls, SMS, cellular packets, SIM/AT/RIL, RTT supported boundaries and complete explicit5A remain mandatory.",
+      "reason": "Complete fixed-release and current official IMS demo sources locally callback responses and lack genuine IMS/RTT transport. Corresponding SIG identifies this vendor boundary. Fresh complete current provider source and actual new image native-library/profile/init trees must establish the same scope; any new provider reopens it.",
+      "not_unsupported": [
+        "actual reference AT/SIM/RIL service",
+        "CS incoming/outgoing/error/native timeout",
+        "SMS submit and actual status report",
+        "two actual UID CellularNetHandle IP packets and carrier recovery",
+        "original complete RTT10 and explicit5A independent input/permissions/queued off/reset/revoke/exit/quiet",
+        "device and caller restart, full cleanup"
+      ],
+      "mandatory_new_image": {
+        "finite_transaction_oracle": "telephony579_oracle.verify",
+        "full_original_join": "telephony579_full_replay.collect",
+        "real_native_fd_handover": "existing netsysnative fixed /dev/tun usb0 SCM_RIGHTS; actual kernel credentials and new image DSO",
+        "no_whole_ID_closure_without_all_supported_obligations": true
+      }
+    },
+    "Msdp579PublicModels": {
+      "id": "behavior:msdp-device-status-mock-or-missing-clients",
+      "devices": [
+        "phone",
+        "2in1"
+      ],
+      "whole_id_unsupported": false,
+      "state": "conditional_partial_provider_scope_unsupported_not_runtime_validated",
+      "repaired": false,
+      "runtime_pass": false,
+      "new_formal_closure": false,
+      "passable_without_new_runtime": false,
+      "source_facts": {
+        "path": "ci/capability-audit/policy579/execution-20261021/msdp579-public-provider-source-facts.json",
+        "sha256": "610e3e0b5a200f2656e7d6efe2d0f5e48f577411b05f091db7497cb52e19f098",
+        "bytes": 79035
+      },
+      "positive_scopes": [
+        "device-steady-standing",
+        "distance-measurement",
+        "metadata-pixel-roundtrip",
+        "motion-inference",
+        "onscreen-content-control",
+        "stationary-relative-input",
+        "user-status-inference"
+      ],
+      "scope": "Only the seven exact provider-positive model scopes listed here; Cooperate/Drag/still/metadata-handshake/rotation and all supported nine-modality framework behavior remain mandatory.",
+      "reason": "Complete selected and current public native provider source plus corresponding SIG boundary supplies these loaders/interfaces but not their complete models; relativeStill lacks a real algorithm. No fixture, SDK, flag, generic API error or network failure is used as provider absence.",
+      "mandatory_new_image": {
+        "local": "msdp-nine/local full three-role runtime and raw replay",
+        "sensor": "original Capture plus real still and quaternion two-generation source/permission/error/EOF/quiet/cleanup",
+        "paired": "original trusted two-IO Cooperate actual remote nonce consumption, deactivate silence, death/reopen, original PIN/media/unbind replay"
       }
     }
   }

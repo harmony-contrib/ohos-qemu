@@ -102,9 +102,11 @@ def bind(root_io):
                 'source-defined action and nonce-bound request required')
         payload = request['payload']
         allowed = {'read-ungranted': {'uri', 'video'}, 'read-denied': {'uri'}, 'cleanup-owned': {'uri'},
-                   'use-owned-fixture': {'uri'}}.get(action, set())
+                   'use-owned-fixture': {'uri'}, 'p2p-connect': {'peer_mac'}}.get(action, set())
         require(set(payload) <= allowed and all(type(v) in (str, bool, int) for v in payload.values()),
                 'request JSON may contain data only, never executable/module/UI selectors')
+        if 'peer_mac' in payload:
+            require(re.fullmatch(r'[0-9a-f]{2}(:[0-9a-f]{2}){5}', payload['peer_mac']), 'actual P2P discovery address data')
         if 'uri' in payload:
             require(re.fullmatch(r'file://media/Photo/[A-Za-z0-9_./%-]{1,1024}', payload['uri']), 'actual Photo URI required')
         if action == 'cleanup-owned':

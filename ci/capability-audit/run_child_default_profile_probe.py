@@ -19,6 +19,12 @@ ROOT=Path(__file__).resolve().parents[2]
 
 
 def run(args):
+    import sys
+    fixed_additional_root = '/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-final579-identity-generated/source-whole579-next01/candidate/additional579'
+    if fixed_additional_root not in sys.path: sys.path.insert(0, fixed_additional_root)
+    from additional579_raw import module as admitted_additional_source
+    enabled = admitted_additional_source('identity579_mandatory').run_enabled_if_available(args)
+    if enabled is not None: return enabled
     output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
     report=dict(status='fail',scope=SCOPE,first_artifact_behavior_gate_passed=False,
         archive=str(args.archive.resolve()),archive_sha256=digest(args.archive),boot_id=args.boot_id,

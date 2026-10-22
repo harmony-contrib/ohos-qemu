@@ -46,12 +46,21 @@ class Capture:
             runner_sha256=digest(Path(__file__)), signer_jar=str(args.signer_jar.resolve()), signer_jar_sha256=digest(args.signer_jar))
         self.ui = GuestUi(self.command, args.hdc, args.target, self.output / 'ui')
 
-    def command(self, argv, label, timeout=60, accepted_failure=False):
+    def command(self, argv, label, timeout=60, accepted_failure=False, cwd=None, env=None):
         argv = list(map(str, argv)); path = self.output / (f'{len(self.report["commands"]):04d}-{label}.log')
         record = {'argv': argv, 'label': label}; self.report['commands'].append(record)
+        options = {}
+        if cwd is not None or env is not None:
+            from msdp579_capture_production import validate_execution
+            record.update(validate_execution(self, argv, cwd, env))
+            options.update(cwd=cwd, env=env)
         try:
-            p = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, timeout=timeout)
+            p = subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, timeout=timeout, **options)
             path.write_bytes(p.stdout + p.stderr)
+            stdout_path = path.with_suffix('.stdout'); stderr_path = path.with_suffix('.stderr')
+            stdout_path.write_bytes(p.stdout); stderr_path.write_bytes(p.stderr)
+            record.update(stdout_record={'path':str(stdout_path), 'sha256':digest(stdout_path)},
+                stderr_record={'path':str(stderr_path), 'sha256':digest(stderr_path)})
             record.update(exit_code=p.returncode, log=str(path), sha256=digest(path))
             stdout, stderr = p.stdout.decode('utf-8'), p.stderr.decode('utf-8')
             if not accepted_failure and (p.returncode or hdc_failed(stdout, stderr)):
@@ -59,6 +68,10 @@ class Capture:
             return stdout.replace('\r', '')
         except subprocess.TimeoutExpired as e:
             path.write_bytes((e.stdout or b'') + (e.stderr or b'')); record.update(timed_out=True, log=str(path), sha256=digest(path))
+            stdout_path = path.with_suffix('.stdout'); stderr_path = path.with_suffix('.stderr')
+            stdout_path.write_bytes(e.stdout or b''); stderr_path.write_bytes(e.stderr or b'')
+            record.update(exit_code=None, stdout_record={'path': str(stdout_path), 'sha256': digest(stdout_path)},
+                stderr_record={'path': str(stderr_path), 'sha256': digest(stderr_path)})
             raise ValueError('bounded operation timeout: ' + label) from e
 
     def shell(self, script, label, accepted_failure=False):
@@ -149,12 +162,22 @@ class Capture:
             time.sleep(.2)
         raise ValueError('actual app clock marker missing')
 
+    def own_forward(self, kind, path):
+        if kind not in ('gnss', 'sensor', 'rotation') or path != (SOCKETS.get(kind) if kind != 'rotation' else '/dev/unix/socket/qemu_sensor/rotation'):
+            raise ValueError('fixed original Capture forward only')
+        if kind in self.ports: raise ValueError('forward already owned')
+        with socket.socket() as probe: probe.bind(('127.0.0.1', 0)); port = probe.getsockname()[1]
+        local, remote = 'tcp:' + str(port), 'localfilesystem:' + path
+        self.forwards.append((local, remote))
+        self.command([self.a.hdc, '-t', self.a.target, 'fport', local, remote], 'own-forward-' + kind)
+        self.ports[kind] = port
+
     def connect(self, kind, label):
         stream = socket.socket(); stream.settimeout(3)
         stream.connect(('127.0.0.1', self.ports[kind])); self.streams.append(stream)
         hello = read_exact(stream, 32)
         magic, version, challenge, field, reserved = struct.unpack('<4sI16sII', hello)
-        expected = (b'QGN1', 88) if kind == 'gnss' else (b'QSN1', 1)
+        expected = (b'QRS1', 259) if kind == 'rotation' else ((b'QGN1', 88) if kind == 'gnss' else (b'QSN1', 1))
         if (magic, version, field, reserved) != (expected[0], 1, expected[1], 0):
             raise ValueError('actual provider handshake invalid')
         row = {'kind': kind, 'label': label, 'hello_hex': hello.hex(), 'frames': [],
@@ -165,6 +188,7 @@ class Capture:
     @staticmethod
     def frame(kind, challenge, seq, sample):
         if kind == 'gnss': return encode_sample(challenge, seq, sample)
+        if kind == 'rotation': return struct.pack('<4sI16sQffff', b'QRF1', 1, challenge, seq, sample['x'], sample['y'], sample['z'], sample['w'])
         return struct.pack('<4sI16sQfff', b'QSF1', 1, challenge, seq, sample['x'], sample['y'], sample['z'])
 
     @staticmethod
@@ -322,13 +346,7 @@ class Capture:
             self.wait('permissions', seconds=90)
             self.ports = {}
             for kind in SOCKETS:
-                with socket.socket() as probe: probe.bind(('127.0.0.1', 0)); port = probe.getsockname()[1]
-                local, remote = 'tcp:' + str(port), 'localfilesystem:' + SOCKETS[kind]
-                # Register this private endpoint before a command that may fail
-                # after creation, so the finally path still attempts removal.
-                self.forwards.append((local, remote))
-                self.command([a.hdc, '-t', a.target, 'fport', local, remote], 'own-forward-' + kind)
-                self.ports[kind] = port
+                self.own_forward(kind, SOCKETS[kind])
             old = {}
             for generation in (1, 2):
                 self.generation = generation
@@ -372,6 +390,8 @@ class Capture:
                 time.sleep(4)  # queued deliveries before this are preserved, not hidden
                 begin = self.mark(); time.sleep(4); end = self.mark()
                 r['quiet_window_' + str(generation)] = [begin, end]
+            from msdp579_sensor import after_original
+            after_original(self)
             self.click('live-finish'); self.wait('finished')
             if self.shell('cat /proc/sys/kernel/random/boot_id', 'boot-after') != r['boot_id']:
                 raise ValueError('kernel boot changed during actual test')

@@ -9,10 +9,20 @@ FILES = (('services/vpnmanager/include/net_vpn_impl.h', '5aaf595c3027660a3b5cdc8
 CRLF_FILES = ('foundation/communication/netmanager_ext/services/vpnmanager/include/open_vpn_ctl.h', 'foundation/communication/netmanager_ext/services/vpnmanager/src/open_vpn_ctl.cpp')
 
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    import importlib.util
+    path=Path(__file__).resolve().parents[1]/'qemu_openvpn_options579/following.py'
+    spec=importlib.util.spec_from_file_location('qemu_openvpn_options579_following',path)
+    following=importlib.util.module_from_spec(spec);spec.loader.exec_module(following)
+    expected=following.advance(root,PROJECT,REVISION,FILES)
+    return validate_component(root, PROJECT, REVISION, expected, require_patched)
 
 def validate_preceding(root, files):
     validate(root, True)
     repaired = {name: final for name, _, final in FILES}
     expected = tuple((name, original, repaired.get(name, final)) for name, original, final in files)
+    import importlib.util
+    path=Path(__file__).resolve().parents[1]/'qemu_openvpn_options579/following.py'
+    spec=importlib.util.spec_from_file_location('qemu_openvpn_options579_following_preceding',path)
+    following=importlib.util.module_from_spec(spec);spec.loader.exec_module(following)
+    expected=following.advance(root,PROJECT,REVISION,expected)
     return validate_component(root, PROJECT, REVISION, expected, True)

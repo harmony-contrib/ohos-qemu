@@ -6,6 +6,8 @@
 #include "session_contract.h"
 #include "broker_protocol.h"
 #include "negotiated_config.h"
+#include "route_metrics.h"
+#include "dns_transport.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -49,7 +51,7 @@ bool Notify(const std::string &body)
 {
     return NetworkVpnClient::GetInstance().NotifyConnectStage(OhosOpenvpn::Stage(sessionToken, body), 0) == 0;
 }
-int ReceiveTun()
+int ReceiveTun(const OhosOpenvpn::NegotiatedConfig &negotiated, bool clear = false)
 {
     Fd control;
     control.value = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
@@ -59,7 +61,10 @@ int ReceiveTun()
     const char path[] = "/dev/unix/socket/qemu_openvpn_tunfd";
     memcpy(address.sun_path, path, sizeof(path));
     if (connect(control.value, reinterpret_cast<sockaddr *>(&address), sizeof(address)) < 0) return -1;
-    if (!OhosOpenvpn::SendFrame(control.value, std::string("qemu-openvpn-tun-v2\n") + sessionToken)) return -1;
+    if (!OhosOpenvpn::SendFrame(control.value, std::string("qemu-openvpn-tun-v3\n") + sessionToken + "\n" + (clear ? "clear\n" : "tun\n" + OhosOpenvpn::MetricWire(negotiated)))) return -1;
+    if (clear) {
+        std::string reply; return OhosOpenvpn::ReadFrame(control.value, reply) && reply == "0" ? 0 : -1;
+    }
     pollfd ready { control.value, POLLIN, 0 };
     if (poll(&ready, 1, 2000) <= 0) return -1;
     char byte = 0;
@@ -104,20 +109,30 @@ int Bridge()
         if (!environment.emplace(std::string(*entry, static_cast<size_t>(split - *entry)), std::string(split + 1)).second) return 2;
     }
     OhosOpenvpn::NegotiatedConfig negotiated;
-    if (!OhosOpenvpn::ReadNegotiated(environment, negotiated)) return 2;
+    std::vector<OhosOpenvpn::DnsPolicy> policies;
+    if (!OhosOpenvpn::ReadNegotiated(environment, negotiated) || !OhosOpenvpn::ReadDnsPolicies(environment, policies)) return 2;
     int socketType = 0;
     socklen_t socketTypeSize = sizeof(socketType);
     if (getsockopt(peer, SOL_SOCKET, SO_TYPE, &socketType, &socketTypeSize) != 0 ||
         socketType != SOCK_DGRAM) return 2;
+    if (ReceiveTun(negotiated, true) != 0) return 3;
+    struct MetricsFinally {
+        const OhosOpenvpn::NegotiatedConfig &config;
+        ~MetricsFinally() { (void)ReceiveTun(config, true); }
+    } metricsFinally {negotiated};
     if (!Notify(OhosOpenvpn::NetworkJson(negotiated)) || !Notify("{\"setupVpnTun\":{}}")) return 3;
     Fd tun;
-    tun.value = ReceiveTun();
+    tun.value = ReceiveTun(negotiated);
     if (tun.value < 0) return 4;
     ifreq request {};
     const char *interfaceName = getenv("OHOS_OPENVPN_INTERFACE");
     if (!interfaceName || !OhosOpenvpn::BrokerInterface(interfaceName) ||
         ioctl(tun.value, TUNGETIFF, &request) < 0 || !(request.ifr_flags & IFF_TUN) || !(request.ifr_flags & IFF_NO_PI) ||
         strnlen(request.ifr_name, IFNAMSIZ) == IFNAMSIZ || strcmp(request.ifr_name, interfaceName)) return 4;
+    const char *profile = getenv("OHOS_OPENVPN_PROFILE");
+    if (!profile) return 4;
+    OhosOpenvpn::DnsForwarder dns(negotiated, std::move(policies), tun.value, interfaceName, sessionToken, profile);
+    if (!dns.Good()) return 4;
     Fd ready;
     ready.value = ConnectReady();
     if (ready.value < 0) return 4;
@@ -134,11 +149,12 @@ int Bridge()
             if (length < 0 && (errno == EAGAIN || errno == EINTR)) continue;
             if (length < 20 || (bytes[0] >> 4 != 4 && bytes[0] >> 4 != 6) ||
                 (bytes[0] >> 4 == 6 && length < 40)) return 7;
+            if (i == 1 && dns.Handle(bytes.data(), static_cast<size_t>(length))) continue;
             int target = i == 0 ? tun.value : peer;
             if (write(target, bytes.data(), length) != length) return 8;
         }
     }
-    return 0;
+    return 0; // DNS joins before this bridge closes its fd; the manager retains the session TUN until STOP.
 }
 }
 int main()

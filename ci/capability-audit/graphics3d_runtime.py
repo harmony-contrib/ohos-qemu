@@ -182,7 +182,7 @@ def verify_capture_fences(report):
 
 def run_owned_graphics3d(*, guest, suite_command, same_guest, held_binding, suite_report,
                         save_suite, suite_work, archive, sdk, signer_dist, signer_jar,
-                        hvigor_home, node_home, process_env=None):
+                        hvigor_home, node_home, process_env=None, product_inputs=None):
     """Execute the real 15-command/6-QMP case using only the passed original owner.
 
     The function returns a fail report after preserving/cleaning a failed case.
@@ -413,7 +413,14 @@ def run_owned_graphics3d(*, guest, suite_command, same_guest, held_binding, suit
                 frame = output / ('frame-' + str(index) + '.ppm')
                 require(not frame.exists(), 'fresh QMP frame path required')
                 qmp_started = time.monotonic_ns()
-                response = guest.qmp('screendump', {'filename': str(frame), 'format': 'ppm'})
+                wire = []
+                def keep_qmp_wire(direction, raw):
+                    require(direction in ('request', 'response') and type(raw) is bytes and
+                            0 < len(raw) <= 65536, 'actual original bounded QMP trace')
+                    path = output / ('frame-' + str(index) + '-qmp-' + str(len(wire)).zfill(3) + '.raw')
+                    with path.open('xb') as stream: stream.write(raw)
+                    wire.append({'direction': direction, 'raw': descriptor(path)})
+                response = guest.qmp('screendump', {'filename': str(frame), 'format': 'ppm'}, trace=keep_qmp_wire)
                 qmp_finished = time.monotonic_ns()
                 require(response == {} and qmp_started >= completed, 'actual QMP screendump/fence failed')
                 ppm(frame.read_bytes())
@@ -421,7 +428,33 @@ def run_owned_graphics3d(*, guest, suite_command, same_guest, held_binding, suit
                     raw_end_observed_ns=completed, UI=observation, roi=list(roi),
                     qmp={'execute': 'screendump', 'arguments': {'filename': str(frame), 'format': 'ppm'},
                          'reply': response, 'started_ns': qmp_started, 'finished_ns': qmp_finished},
-                    capture=descriptor(frame), process_after=identity('frame-' + str(index) + '-after')))
+                    capture=descriptor(frame), wire=wire, process_after=identity('frame-' + str(index) + '-after')))
+                if index == 1 and product_inputs is not None:
+                    require(descriptor(product_inputs['path'])['sha256'] == product_inputs['sha256'],
+                            'actual Root product provenance input changed')
+                    product_value = decode(Path(product_inputs['path']).read_text())
+                    require(product_value['schema'] == 'media579-graphics3d-actual-product/v1' and
+                            product_value['archive_sha256'] == archive_record['sha256'] and
+                            product_value['product'] == env['product'], 'same selected product provenance')
+                    profile_ref = product_value['installed_runtime_profile']
+                    require(descriptor(profile_ref['path'])['sha256'] == profile_ref['sha256'], 'actual product profile changed')
+                    profile = decode(Path(profile_ref['path']).read_text())
+                    shell('cat /proc/' + str(current['pid']) + '/maps', 'actual-product-maps')
+                    for soname in sorted(product_value['libraries']):
+                        require(re.fullmatch('[A-Za-z0-9_.+-]+', soname) and soname in profile['dsos'],
+                                'finite real installed Scene/core/plugin SONAME')
+                        installed = profile['dsos'][soname]
+                        staged = installed['staged']['path']
+                        parts = staged.split('/packages/phone/')
+                        require(len(parts) == 2 and parts[1].startswith(('system/', 'vendor/')),
+                                'actual physical product staging partition')
+                        guest_path = '/' + parts[1]
+                        require(re.fullmatch('/(?:system|vendor)/lib(?:64)?/[A-Za-z0-9_./+-]+', guest_path) and
+                                '..' not in Path(guest_path).parts, 'literal actual guest DSO path')
+                        observed = shell('sha256sum ' + shlex.quote(guest_path), 'actual-product-sha-' + soname)
+                        require(observed.split() == [installed['image_file']['sha256'], guest_path],
+                                'live product DSO differs from actual new image')
+                    report['product_inputs'] = product_inputs
             save()
         require(actual_identity is not None and len(report['frames']) == 6, 'actual complete process/six frame chain missing')
         require(shell('stat -c %u ' + shlex.quote(remote), 'actual-journal-owner').strip() == str(actual_identity['uid']), 'journal belongs to another UID')

@@ -343,15 +343,21 @@ def enterprise(value,rows,callback_rows):
     require(returned(a,'enabled.read','read') is returned(a,'restart.read','read') is True and
         returned(b,'peer.read','read') is False and returned(a,'disabled.read','read') is False and
         value['admin_owned'] is False, 'normal admin activation/peer isolation/persistence/deactivation differs')
-    events=[r['event'] for r in callback_rows['a']]
-    require('admin.enabled.callback' in events and 'admin.disabled.callback' in events and
-        events.index('admin.enabled.callback')<events.index('admin.disabled.callback'),
+    events=[r['event'] for r in sorted(callback_rows['a'],key=lambda r:r['activeMs'])]
+    require(events==['admin.enabled.callback','admin.disabled.callback','admin.enabled.callback','admin.disabled.callback'],
         'actual independent EnterpriseAdmin extension enable/disable callbacks missing')
-    for operation in ('byod.cancel','byod.agree'):
-        returned(a,operation,'byod');require(returned(a,operation+'.read','read') is False,'unsupported/cancelled BYOD changed real admin state')
-    require(value['product_boundaries']==['fixed-public-BYOD-provider-has-no-activation-implementation'] and
-        {'byod-cancel','byod-agree','byod-unsupported-confirm'} <= {x['system'] for x in value['actions'] if 'system' in x},
-        'fixed provider unsupported/cancel UI branch must remain explicit, not a full enterprise pass')
+    returned(a,'byod.cancel','byod');require(returned(a,'byod.cancel.read','read') is False,'cancelled BYOD changed actual admin state')
+    returned(a,'byod.agree','byod')
+    require(returned(a,'byod.agree.read','read') is True and returned(a,'byod.kind','byod-read') is True and
+        returned(b,'byod.peer','read') is False and returned(a,'byod.restart.read','read') is True and
+        returned(a,'byod.restart.kind','byod-read') is True, 'real BYOD normal public provider/backend/peer/persistence missing')
+    returned(a,'byod.disable','disable')
+    require(returned(a,'byod.disabled.read','read') is False and returned(a,'byod.disabled.kind','byod-read') is False and
+        value['product_boundaries']==[], 'actual BYOD deactivation and provider result required')
+    before=[r for r in a if r['operation']=='byod.kind' and r['event']=='return.byod-read']
+    after=[r for r in a if r['operation']=='byod.restart.kind' and r['event']=='return.byod-read']
+    require(len(before)==len(after)==1 and before[0]['pid']!=after[0]['pid'], 'actual BYOD caller PID generation did not change')
+    require({'byod-cancel','byod-agree'} <= {x['system'] for x in value['actions'] if 'system' in x}, 'real BYOD cancel/agreement UI required')
 
 
 def blink(value,rows,records):

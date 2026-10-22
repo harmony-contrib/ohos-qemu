@@ -41,6 +41,17 @@ def load_manifest():
     return manifest, patches[0]
 
 
+def legacy_complete(root, manifest):
+    for key in ('legacy', 'rotation_legacy'):
+        old = manifest[key]
+        values = {**old['originals'], **old['files']}
+        if all(safe_path(root, n).is_file() and sha(safe_path(root, n).read_bytes()) == expected
+               for n, expected in values.items()) and all(
+               not safe_path(root, n).exists() for n in set(manifest['files']) - set(old['files'])):
+            return old
+    return None
+
+
 def validate(root, manifest, require_patched=False, revision=True):
     root = Path(root).resolve()
     project = safe_path(root, manifest['project'])
@@ -48,6 +59,8 @@ def validate(root, manifest, require_patched=False, revision=True):
         actual = subprocess.check_output(['git', '-C', str(project), 'rev-parse', 'HEAD'], text=True).strip()
         if actual != manifest['revision']:
             raise ValueError('fixed upstream revision required')
+    if not require_patched and legacy_complete(root, manifest):
+        return False
     states = set()
     for relative, row in manifest['originals'].items():
         value = sha(safe_path(root, relative).read_bytes())
@@ -91,6 +104,7 @@ def apply(root):
     manifest, patch = load_manifest()
     if validate(root, manifest):
         return {'status': 'already_applied', 'revision': manifest['revision']}
+    legacy = legacy_complete(root, manifest)
     original = {}
     for relative in [*manifest['originals'], *manifest['files']]:
         target = safe_path(root, relative)
@@ -101,7 +115,14 @@ def apply(root):
             target = candidate / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(original[relative][0])
-        subprocess.run(['git', '-C', str(candidate), 'apply', str(patch)], check=True)
+        if legacy:
+            edit = legacy.get('edit', manifest['legacy_edit']); target = candidate / edit['path']
+            data = target.read_text()
+            if data.count(edit['before']) != 1:
+                raise ValueError('legacy GN unique source-list edit changed')
+            target.write_text(data.replace(edit['before'], edit['after']))
+        else:
+            subprocess.run(['git', '-C', str(candidate), 'apply', str(patch)], check=True)
         for relative, row in manifest['files'].items():
             target = candidate / relative
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -112,8 +133,11 @@ def apply(root):
             for relative, (_, mode) in original.items():
                 target = safe_path(root, relative)
                 target.parent.mkdir(parents=True, exist_ok=True)
+                data = (candidate / relative).read_bytes()
+                if original[relative][0] == data:
+                    continue
                 written.append(relative)
-                atomic_write(target, (candidate / relative).read_bytes(), mode)
+                atomic_write(target, data, mode)
             validate(root, manifest, require_patched=True)
         except BaseException:
             for relative in reversed(written):

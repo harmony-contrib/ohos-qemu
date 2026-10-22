@@ -15,6 +15,12 @@ from verify_child_default_profile_results import verify, PARAMETERS
 
 
 def verify_evidence(document, archive_sha, boot_id, arch, device, target):
+    if document.get('scope') == 'ordinary_API26_enabled_child_profile_full_raw_HAP_lifecycle':
+        import sys
+        fixed_additional_root = '/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-final579-identity-generated/source-whole579-next01/candidate/additional579'
+        if fixed_additional_root not in sys.path: sys.path.insert(0, fixed_additional_root)
+        from additional579_raw import module as admitted_additional_source
+        return admitted_additional_source('identity579_mandatory').verify_enabled(document, archive_sha, boot_id, arch, device, target)
     if (document.get('status')!='pass' or document.get('scope')!=SCOPE or document.get('failures')!=[] or
         document.get('archive_sha256')!=archive_sha or document.get('boot_id')!=boot_id or
         document.get('arch')!=arch or document.get('device')!=device or document.get('target')!=target or

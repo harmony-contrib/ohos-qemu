@@ -187,6 +187,10 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
     # It may be present only as a transitive HDI dependency upstream. Product
     # selection is needed for its feature/default config dependency closure.
     add_component(effective, "thirdparty", "alsa-lib")
+    # Select the real CPU voice HDI/service and spatial effect owners.
+    # Their flags belong to this final device contract, not local board parts.
+    add_component(effective, "hdf", "drivers_peripheral_intelligent_voice")
+    add_component(effective, "ai", "intelligent_voice_framework")
     # Selecting only the HDI leaves no dynamically loaded VDI/config closure.
     add_component(effective, "hdf", "drivers_peripheral_camera")
     # The public device-status service owns the real sensor algorithm selected
@@ -257,6 +261,7 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
             },
             ("msdp", "device_status"): {
                 "device_status_sensor_enable": True,
+                "device_status_interaction_coordination": True,
                 "device_status_allow_mock_fallback": False,
             },
             # Both ends of the native IPC ABI must use the same switches.
@@ -275,6 +280,7 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
             ("multimedia", "audio_framework"): {
                 "audio_framework_feature_audiosuite_support": True,
                 "audio_framework_feature_audiosuite_format_convert_support": True,
+                "audio_framework_qemu_cpu_spatial": True,
             },
             ("multimedia", "av_session"): {"av_session_enable_input_redistribute": True},
             # Enable the existing RTT implementation on both IPC endpoints.
@@ -289,6 +295,16 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
             # The HDI uses named ALSA hw devices, not the MIDI-only empty
             # configuration. Package/enable upstream definitions for ES1370.
             ("thirdparty", "alsa-lib"): {"alsa_lib_feature_config_enable": True},
+            ("hdf", "drivers_peripheral_intelligent_voice"): {
+                "drivers_peripheral_intelligent_voice_qemu_cpu_provider": True,
+                "drivers_peripheral_intelligent_voice_engine_enable": True,
+            },
+            ("ai", "intelligent_voice_framework"): {
+                "intelligent_voice_framework_qemu_cpu_provider": True,
+                "intelligent_voice_framework_engine_enable": True,
+                "intelligent_voice_framework_only_first_stage": False,
+                "intelligent_voice_framework_only_second_stage": False,
+            },
             ("hdf", "drivers_peripheral_camera"): {
                 "drivers_peripheral_camera_feature_usb": True,
                 "drivers_peripheral_camera_use_commom_usb_camera_host_config": True,

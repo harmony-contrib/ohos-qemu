@@ -147,3 +147,43 @@ The fixed root HDC config has uid root/domain su, while its nonroot variant has
 uid shell/domain hdcd. The nonroot daemon fails this component's peer UID check.
 Any production transport beyond the designated QEMU debug controller requires
 its own explicit access design; do not loosen the directory or application ACL.
+
+
+## Independent rotation-vector source (source candidate, no runtime claim)
+
+The original accelerometer input/header/protocol bytes and QSN1/QSF1 ABI are
+unchanged. The same VDI additionally enumerates the genuine SensorAgent type259
+ROTATION_VECTOR. A disjoint `Qemu::Rotation::SensorInput` uses the same complete
+UID0 authorization, 0600 socket, native challenge, session generation, bounded
+transfer, callback drain and thread retirement body. It listens at the already
+owned `/dev/unix/socket/qemu_sensor/rotation` directory entry.
+
+Hello is32 bytes: `QRS1`, LE32 version1, sixteen native-random nonce bytes,
+LE32 type259, LE32 reserved0. Each48-byte `QRF1` frame has LE32 version1,
+same nonce, LE64 strictly increasing positive sequence and four LE float32
+components x/y/z/w. All components must be finite in[-1,1], and the squared
+length must differ from1 by at most0.0001. Guest timestamps are native
+CLOCK_MONOTONIC at actual dispatch; host time never replaces them.
+
+The installer recognizes exactly stock, complete legacy ACCEL vector, or the
+complete new vector. Unknown/mixed states fail. Legacy upgrades edit the unique
+GN source-list block and the VDI, add three rotation files, and skip every
+byte-identical old file. Original source inode/mtime survives unchanged files;
+publish failure follows the existing complete rollback transaction.
+
+New-image acceptance must prove independent unit quaternion consumption via
+public SensorId.ROTATION_VECTOR plus public getDeviceRotationRadian, three
+orientations/two caller generations, permission rejection, malformed/nonfinite/
+zero/old nonce, source EOF after last unsubscribe, quiet and actual cleanup.
+This source does not claim physical orientation accuracy.
+
+
+HEADPOSTURE268 successor: adds independent /dev/unix/socket/qemu_sensor/headposture,
+QHP1 hello32 and QHF1 frame52 (nonce/seq/positive exact-int24 order/wxyz).
+The VDI emits the actual adapter's seven-float28B layout [0,order,0,w,x,y,z],
+not the native20B HeadPostureData. Original ACCEL/rotation protocol and input
+files remain byte-identical. New root-only stream has the same authorization,
+nonce, timeout, generation and callback-drain lifecycle. Full stock/priorACCEL/
+priorrotation/final vectors are explicit; unknown/mixed source is refused.
+The source helper is transport-only; real HeadTracker/SET_IMU/PCM must be proved
+on the newly packaged image by the Media owner. No runtime gate is granted here.

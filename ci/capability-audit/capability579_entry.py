@@ -31,7 +31,8 @@ def install(children, request_ref, *, paired_stage, calendar_phase1, calendar_ph
             'fixed reviewed Calendar phase implementations required')
     value = json_ref(ref)
     require(type(value) is dict and set(value) == {'schema', 'package', 'services', 'native_export',
-        'caption_runtime_data', 'caption_product_assets', 'permission_ui', 'recipes_root', 'profile'} and
+        'caption_runtime_data', 'caption_product_assets', 'permission_ui', 'recipes_root', 'profile',
+        'media579_product_export', 'usb579_product_export'} and
         value['schema'] == 'actual-root-capability579-deferred-request/v1',
         'explicit finite package/native/service/caption input DATA required')
     factory = make_deferred_inputs(**{key: item for key, item in value.items() if key != 'schema'})

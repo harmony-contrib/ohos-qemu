@@ -63,11 +63,15 @@ type qemu_sensor_input_socket, dev_attr, file_attr, system_sock_domain;
     POLICY + 'system/file_contexts': '''# SPDX-License-Identifier: Apache-2.0
 /dev/unix/socket/qemu_sensor          u:object_r:qemu_sensor_input_dir:s0
 /dev/unix/socket/qemu_sensor/input    u:object_r:qemu_sensor_input_socket:s0
+/dev/unix/socket/qemu_sensor/rotation u:object_r:qemu_sensor_input_socket:s0
+/dev/unix/socket/qemu_sensor/headposture u:object_r:qemu_sensor_input_socket:s0
 ''',
     POLICY + 'system/runtime.te': '''# SPDX-License-Identifier: Apache-2.0
 # No permission to bind directly in the shared /dev/unix/socket directory.
 type_transition init dev_unix_socket:dir qemu_sensor_input_dir "qemu_sensor";
 type_transition sensor_host qemu_sensor_input_dir:sock_file qemu_sensor_input_socket "input";
+type_transition sensor_host qemu_sensor_input_dir:sock_file qemu_sensor_input_socket "rotation";
+type_transition sensor_host qemu_sensor_input_dir:sock_file qemu_sensor_input_socket "headposture";
 allow init qemu_sensor_input_dir:dir { create getattr setattr search relabelto };
 allow sensor_host qemu_sensor_input_dir:dir { getattr search write add_name remove_name };
 allow sensor_host qemu_sensor_input_socket:sock_file { create getattr setattr write unlink };
@@ -134,7 +138,9 @@ FORMAT_FIXED_FILES_SHA256 = {
     "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/system/file_contexts": "6cd23fbe712b41f7a1eacafd0e53907ba492d3bfcbf47165a0799065c7535158",
     "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/system/runtime.te": "3944c748a5556d6bb5c9a05b9df3dec9c2018a3d6a50a21bcd5dcfd3d17fbf7c"
 }
-KNOWN_PREVIOUS_FILES_SHA256 = (LEGACY_FILES_SHA256, FORMAT_FIXED_FILES_SHA256)
+ACCEL_FINAL_FILES_SHA256 = {'vendor/ohemu/virt/etc/qemu_sensor_input.cfg': '538559efa3c4b36e927eb2b2674f35a865428055be19e861fb00ea1169ba23a3', 'base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/public/types.te': '7e5cb986427dc187fd4d231dd32634bff9fba9668e3d02e6e54616ee297caf1e', 'base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/system/file_contexts': '6cd23fbe712b41f7a1eacafd0e53907ba492d3bfcbf47165a0799065c7535158', 'base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/system/runtime.te': '3944c748a5556d6bb5c9a05b9df3dec9c2018a3d6a50a21bcd5dcfd3d17fbf7c'}
+ROTATION_FINAL_FILES_SHA256 = {'vendor/ohemu/virt/etc/qemu_sensor_input.cfg': '538559efa3c4b36e927eb2b2674f35a865428055be19e861fb00ea1169ba23a3', 'base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/public/types.te': '7e5cb986427dc187fd4d231dd32634bff9fba9668e3d02e6e54616ee297caf1e', 'base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/system/file_contexts': '83581e0bd49d2522d87be756c8a0fc3df505cd27990b9432b0ad94b2980e223f', 'base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/qemu_sensor/system/runtime.te': '76f5b2ab274ee24978b048b6ca6724233368d7a2db05c9e9e3d5422414d79c19'}
+KNOWN_PREVIOUS_FILES_SHA256 = (LEGACY_FILES_SHA256, FORMAT_FIXED_FILES_SHA256, ACCEL_FINAL_FILES_SHA256, ROTATION_FINAL_FILES_SHA256)
 
 
 def apply(root):

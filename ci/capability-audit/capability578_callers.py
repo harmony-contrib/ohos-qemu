@@ -17,7 +17,7 @@ from capability578_owned_io import reference, require
 from sign_certificate_probe import sign
 
 FAMILIES = ('apps_ui578', 'communications578', 'system_services578', 'settings_idle579', 'apps_providers579',
-            'livecaptions579', 'apn579', 'apps_paired579', 'mms_share579', 'calendar579')
+            'livecaptions579', 'apn579', 'apps_paired579', 'mms_share579', 'calendar579', 'audio579', 'entrance579', 'identity579', 'owning_services579', 'usb579', 'telephony579', 'network_whole579', 'msdp579')
 
 
 def compiled_fields_match(actual, expected):
@@ -39,7 +39,11 @@ def adapter(family, case, run, role, parameters):
     require(family in FAMILIES and re.fullmatch('[a-z0-9_-]+', case) and
             re.fullmatch('[a-z0-9_-]+', role) and re.fullmatch('[a-f0-9]{32}', run),
             'fixed source family/case/role and fresh run required')
-    module = importlib.import_module(family + '_project')
+    if family in ('entrance579', 'identity579'):
+        from additional579_raw import module as admitted_additional_source
+        module = admitted_additional_source(family + '_project')
+    else:
+        module = importlib.import_module(family + '_project')
     if family == 'apps_ui578':
         return module, module.source_files(run, case, role), module.module_fields(case, role), module.bundle(role)
     if family == 'system_services578':
@@ -94,6 +98,7 @@ def prepare_callers(io, family, case, run, roles, parameters):
             require(not rel.is_absolute() and '..' not in rel.parts and type(text) is str,
                     'fixed caller source overlay required')
             target = root / rel; target.parent.mkdir(parents=True, exist_ok=True); target.write_text(text)
+        audio579_native = module.prepare_native(io, root) if family == 'audio579' else None
         if family == 'livecaptions579':
             speech = io.package_inputs['livecaptions579']['speech']
             require(set(speech) == {'a', 'b'}, 'two independent original speech inputs required')
@@ -105,15 +110,15 @@ def prepare_callers(io, family, case, run, roles, parameters):
                 target = root / destination
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(artifact['path'], target)
-        if family == 'settings_idle579':
-            native = io.package_inputs['native_addons']['settings_idle579']
+        if family in ('settings_idle579', 'owning_services579'):
+            native = (io.package_inputs['native_addons']['settings_idle579'] if family == 'settings_idle579' else io.owning_services579_native)
             require(type(native) is dict and set(native) == {'binary', 'build', 'abi'} and
                     native['abi'] == {'arm64': 'arm64-v8a', 'armv7a': 'armeabi-v7a', 'x86_64': 'x86_64'}[io.guest.report['test_environment']['guest_arch']],
                     'actual same-boot platform addon ABI required')
             for kind in ('binary', 'build'):
                 require(reference(native[kind]['path']) == native[kind], 'actual platform addon input changed')
             destination = root / module.native_artifact_destination(io.guest.report['test_environment']['guest_arch'])
-            require(destination == root / ('entry/libs/' + native['abi'] + '/libsettings_idle579.so'),
+            require(destination == root / ('entry/libs/' + native['abi'] + ('/libsettings_idle579.so' if family == 'settings_idle579' else '/libowning_services579.so')),
                     'fixed actual addon destination required')
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(native['binary']['path'], destination)
@@ -125,6 +130,19 @@ def prepare_callers(io, family, case, run, roles, parameters):
             profile_value = json.loads(profile_path.read_text())
             profile_value.setdefault('buildOption', {})['nativeLib'] = {
                 'debugSymbol': {'strip': False}}
+            profile_path.write_text(json.dumps(profile_value, indent=2) + '\n')
+        identity_native = module.prepare_native(io, root, sdk) if family == 'identity579' else None
+        if family == 'msdp579':
+            from msdp579_admission import admit as admit_msdp579
+            native = io.package_inputs['native_addons']['msdp579']
+            admit_msdp579(native, archive_sha256=io.archive_sha256,
+                arch=io.guest.report['test_environment']['guest_arch'])
+            destination = root / module.native_artifact_destination(io.guest.report['test_environment']['guest_arch'])
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(native['binary']['path'], destination)
+            profile_path = root / 'entry/build-profile.json5'
+            profile_value = json.loads(profile_path.read_text())
+            profile_value.setdefault('buildOption', {})['nativeLib'] = {'debugSymbol': {'strip': False}}
             profile_path.write_text(json.dumps(profile_value, indent=2) + '\n')
         (root / 'local.properties').write_text('sdk.dir=' + str(sdk.parent) + '\nnodejs.dir=' + str(node.parent.parent) + '\n')
         inputs = {str(p.relative_to(root)): reference(p) for p in root.rglob('*') if p.is_file()}
@@ -143,9 +161,16 @@ def prepare_callers(io, family, case, run, roles, parameters):
             names = hap.namelist()
             require(len(names) == len(set(names)) and hap.read('ets/modules.abc'), 'actual complete caller HAP required')
             compiled = json.loads(hap.read('module.json'))
-            if family == 'settings_idle579':
-                require(hap.read('libs/' + native['abi'] + '/libsettings_idle579.so') ==
+            if family in ('settings_idle579', 'owning_services579'):
+                require(hap.read('libs/' + native['abi'] + ('/libsettings_idle579.so' if family == 'settings_idle579' else '/libowning_services579.so')) ==
                         Path(native['binary']['path']).read_bytes(), 'Hvigor changed the actual platform addon')
+        if family == 'audio579':
+            module.verify_native_hap(unsigned, audio579_native)
+        if family == 'identity579':
+            with zipfile.ZipFile(unsigned) as hap:
+                require(hap.read('libs/' + identity_native['abi'] + '/libprobe.so') == Path(identity_native['binary']['path']).read_bytes() and
+                        hap.read('libs/' + identity_native['abi'] + '/libc++_shared.so') == Path(identity_native['cxx']['path']).read_bytes(),
+                        'actual SDK native identity payload changed during packaging')
         require(compiled['app']['bundleName'] == bundle and compiled_fields_match(compiled['module'], fields),
                 'compiled caller role fields differ from actual source recipe')
         if family == 'apps_ui578' and case == 'intelligent-scene' and role in ('a', 'b'):
@@ -165,10 +190,17 @@ def prepare_callers(io, family, case, run, roles, parameters):
         arguments = SimpleNamespace(unsigned=unsigned, output=signed, role=role, udid=io.udid,
             signer_dist=Path(signer['signer_dist']), jar=Path(signer['signer_jar']))
         sign(arguments, configure=module.configure_profile(case), command=actual_sign_command)
-        if family == 'settings_idle579':
+        if family in ('settings_idle579', 'owning_services579'):
             with zipfile.ZipFile(signed) as hap:
-                require(hap.read('libs/' + native['abi'] + '/libsettings_idle579.so') ==
+                require(hap.read('libs/' + native['abi'] + ('/libsettings_idle579.so' if family == 'settings_idle579' else '/libowning_services579.so')) ==
                         Path(native['binary']['path']).read_bytes(), 'signer changed the actual platform addon')
+        if family == 'audio579':
+            module.verify_native_hap(signed, audio579_native)
+        if family == 'identity579':
+            with zipfile.ZipFile(signed) as hap:
+                require(hap.read('libs/' + identity_native['abi'] + '/libprobe.so') == Path(identity_native['binary']['path']).read_bytes() and
+                        hap.read('libs/' + identity_native['abi'] + '/libc++_shared.so') == Path(identity_native['cxx']['path']).read_bytes(),
+                        'actual native identity payload changed during signing')
         signing = signed.with_suffix('.signing.json')
         signed_record = json.loads(signing.read_text())
         profile = root / 'verified-profile.json'
@@ -188,6 +220,10 @@ def prepare_callers(io, family, case, run, roles, parameters):
             'sign_commands': [io.ref_receipt(r) for r in sign_rows if r not in verify_rows],
             'verify_commands': [io.ref_receipt(r) for r in verify_rows],
             'identity': {'fingerprint': values[0].replace(':', '').upper()}}
+        if family == 'identity579':
+            result['callers'][role]['identity579_native'] = identity_native
+        if family == 'audio579':
+            result['callers'][role]['audio579_native'] = audio579_native
     if family == 'apps_ui578':
         # The app binding's fixed role-map API carries the actual decoded
         # provision object as well as its immutable extracted-file reference.
@@ -209,6 +245,8 @@ def prepare_callers(io, family, case, run, roles, parameters):
             native_helper_builds=native, receipts=io.receipts[command_start:])
     if family == 'settings_idle579':
         result['native_addons'] = {'settings_idle579': io.package_inputs['native_addons']['settings_idle579']}
+    if family == 'owning_services579':
+        result['native_addons'] = {'owning_services579': io.owning_services579_native}
     if family == 'livecaptions579':
         speech = io.package_inputs['livecaptions579']['speech']
         result.update(audio_fixtures={k: speech[k]['audio'] for k in ('a', 'b')},

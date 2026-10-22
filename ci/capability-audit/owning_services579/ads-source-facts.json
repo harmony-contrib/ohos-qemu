@@ -1,0 +1,125 @@
+{
+  "schema": "ads579-bounded-complete-public-provider-source-facts/v1",
+  "source_only": true,
+  "selected_project": "a31d0874a5634771c57f1d875f596479628cdbd3",
+  "selected_url": "https://github.com/openharmony/advertising_ads_framework",
+  "newer_official_primary": {
+    "url": "https://github.com/openharmony/advertising_ads_framework",
+    "commit": "eb8ca56a98bd570b9d65dae3bc28225d34d70fac"
+  },
+  "sig": {
+    "url": "https://gitcode.com/openharmony-sig/cloud_advertising",
+    "commit": "bcc909b452cb89fffa83a9f36a7c81bae2e3eb1f",
+    "complete_tree": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-repair578-system/cloud-advertising-SOURCE.json",
+      "sha256": "05fef72ec385872df4c521c34dcbca364d6476a8773bc881a79d371ab3298357",
+      "bytes": 14892
+    },
+    "manifest": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-repair578-system/sig-xml/cloud_advertising.xml",
+      "sha256": "473eba9ae17b297236e5268412099cf70283eec2e5f0166b0f2856b54cb11dff",
+      "bytes": 679
+    }
+  },
+  "actual_product_source": {
+    "receipt": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-whole-source579-03/receipt.json",
+      "sha256": "bfbe57113202a2aabee66c13995a45ad1e55238977798c1a0b62f5660eca2ef6",
+      "bytes": 18204
+    },
+    "source": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-whole-source579-03/SOURCE.json",
+      "sha256": "f4563c7001d36abea4dd6e67c42b14742361299bbaf08be23899256797990ae1",
+      "bytes": 1195
+    },
+    "facts": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-whole-source579-03/actual-source03/FACTS579.json",
+      "sha256": "61b8d6faa5689726c079bc9cfb3e4a4f69a72de10ad7e2f4992adb5930bdc8a2",
+      "bytes": 32803008
+    },
+    "inventory_limit": "source ten repositories and system/vendor inventory complete; later out/obj inventories partial in this first export, never absence proof; separate RO05 supplies complete ten obj inventories"
+  },
+  "primary_read_receipts": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-provider579-six-services-ads-candidate/research/ads-primary/READS.json",
+    "sha256": "66946cd16f63a680ba0c805068c2e27e4d98c7ee1786d6e3fec145aae30d8011",
+    "bytes": 11992
+  },
+  "complete_primary_trees": [
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-provider579-six-services-ads-candidate/research/ads-primary/selected-tree.raw",
+      "sha256": "0e9e9bb8777a8bd615117c061a183169be7d151989b563f052bab4e1d3d27ecc",
+      "bytes": 6986
+    },
+    {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-provider579-six-services-ads-candidate/research/ads-primary/upstream-20261022-tree.raw",
+      "sha256": "d0bbd45113f91a9aeae9063d0ff389d7ef91261efa8bfcdd4bcff9520ca25b31",
+      "bytes": 7087
+    }
+  ],
+  "facts": [
+    {
+      "source": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-provider579-six-services-ads-candidate/research/ads-primary/selected/README_zh.md",
+        "sha256": "3c27df1bb318583068fca22a177d36b69fd762b76976b9fdca03f28057995e1c",
+        "bytes": 13834
+      },
+      "lines": [
+        5,
+        23,
+        25,
+        39,
+        51,
+        71
+      ],
+      "claim": "OEM must implement the content service; README snippets show caller/framework integration and sample reply values, not an installed content/render/API provider"
+    },
+    {
+      "source": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-provider579-six-services-ads-candidate/research/ads-primary/selected/frameworks/js/napi/adsservice_extension_ability/adsservice_extension.js",
+        "sha256": "fcf300fb49d0f8b79b307e7360fd02828597011c2800a017bbaba453ea3ce930",
+        "bytes": 18657
+      },
+      "lines": [
+        28,
+        32
+      ],
+      "claim": "base onLoadAd/onLoadAdWithMultiSlots only log; no inventory/creative acquisition implemented there"
+    },
+    {
+      "source": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-provider579-six-services-ads-candidate/research/ads-primary/selected/frameworks/js/napi/ads/src/ad_load_service.cpp",
+        "sha256": "dedda74472217eabc7b40d24277b3d530aafd715aeda2e075576b2ac06d2c16f",
+        "bytes": 10177
+      },
+      "lines": [
+        191
+      ],
+      "claim": "providerApiAbilityName is a real required connection configuration input"
+    },
+    {
+      "source": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-provider579-six-services-ads-candidate/research/ads-primary/selected/frameworks/js/napi/ads/resource/ad_service_config.json",
+        "sha256": "a5a0cc7aaf2017884b0c7dd422e4246105f3178999e164691e82579da902fc8b",
+        "bytes": 587
+      },
+      "claim": "default com.samples.AdsServiceDemo and service/UI/JS names; providerApiAbilityName omitted"
+    },
+    {
+      "source": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-repair578-system/cloud-advertising-SOURCE.json",
+        "sha256": "05fef72ec385872df4c521c34dcbca364d6476a8773bc881a79d371ab3298357",
+        "bytes": 14892
+      },
+      "claim": "complete bounded SIG tree contains framework/base extension/config/examples/patch references, not a complete compatible OEM content and all five entrypoint provider"
+    }
+  ],
+  "conclusion": "Within these three fixed complete official trees and the selected product inputs there is no complete reusable OEM content/backend/service/UI/API provider to integrate. This is a bounded source conclusion, not a claim about all external/private advertising platforms.",
+  "not_unsupported": [
+    "public advertising SDK/framework",
+    "real 401 parameter/display boundary",
+    "actual missing-provider load/multi callback and restart",
+    "actual ordinary app/UID/signature/foreground/exit/cleanup"
+  ],
+  "runtime_pass": false,
+  "first_artifact_behavior_gate_passed": false
+}

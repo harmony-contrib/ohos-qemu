@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include <unistd.h>
+#include "codec579_catalog.inc"
 
 namespace {
 constexpr int kWidth = 64;
@@ -573,6 +574,7 @@ bool TruncatedRgba(FILE *out, const char *run)
 
 extern "C" int RunAvcMediaProbe(FILE *out, const char *run)
 {
+    (void)codec579::Catalog(run); // Separate file; original 968 AVC rows remain unchanged.
     fprintf(out, "{\"type\":\"identity\",\"run_id\":\"%s\",\"uid\":%u,\"euid\":%u}\n",
         run, static_cast<unsigned>(getuid()), static_cast<unsigned>(geteuid()));
     bool passed = Step(out, run, -1, -1, -1, "null_encoder_start", OH_VideoEncoder_Start(nullptr), AV_ERR_INVALID_VAL);

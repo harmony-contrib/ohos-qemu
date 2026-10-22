@@ -154,6 +154,10 @@ def run(guest,root_callbacks,parameters):
         result['observed_slices'].append({'slice':'real_independent_ETH_SoftBus_discovery_PIN_reject_cancel_accept_and_app_restart',
             'native_interfaces':current,'discovery':found_raw,'reject':reject_raw,'cancel':cancel_raw,'actual_pin':pin,
             'accept':accept_raw,'source_trust':source_trusted,'sink_trust':sink_trusted,'restart':restart_trust})
+        network('owning-services579-held', {'locals':local,
+            'source_trust':restart_trust,'sink_trust':sink_trusted})
+        network('msdp579-held', {'locals':local,
+            'source_trust':restart_trust,'sink_trust':sink_trusted})
         # DHardware_UI is triggered by real remote camera use. Its PIN UI is
         # a different provider; do not manually start either hardware dialog.
         try:

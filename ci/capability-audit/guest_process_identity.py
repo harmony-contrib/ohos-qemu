@@ -63,7 +63,7 @@ def producer_shell(remote, marker, *, repeat=20, timeout_ms=30000):
     remote = _remote(remote)
     if not re.fullmatch(r'__PCM_CHILD_EXIT_[0-9a-f]{32}__=', marker):
         raise ValueError('fresh owned PCM child exit nonce required')
-    if (repeat, timeout_ms) not in ((20, 30000), (60, 90000)):
+    if (repeat, timeout_ms) not in ((1, 30000), (20, 30000), (60, 90000)):
         raise ValueError('reviewed finite PCM configuration required')
     wrapper = ('umask 077; set -C; '
         'printf "%s\\n" "$$" > ' + remote + '/producer.pid || exit 1; '

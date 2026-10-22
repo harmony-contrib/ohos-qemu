@@ -38,7 +38,8 @@ RECIPE_FILES = ('scripts/build_openvpn_ohos.py', 'scripts/build_product_openvpn.
     'scripts/build_openvpn_ohos_in_docker.sh', 'scripts/openvpn_source_lock.json',
     'scripts/openvpn_source_archive.py', 'scripts/openharmony_release_source_lock.py',
     'scripts/openharmony_7_0_release_source_lock.json',
-    'patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch')
+    'patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch',
+    'patches/common/third_party/openvpn/ohos_backend/0002-export-final-DNS-policy-to-AF_UNIX-tunnel.patch')
 EXECUTABLE_ENTRYPOINT = PROJECT + '/qemu_openvpn/recipe/scripts/build_product_openvpn.py'
 
 

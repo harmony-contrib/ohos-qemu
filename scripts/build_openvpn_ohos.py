@@ -17,6 +17,8 @@ TARGETS = {'arm64_virt': ('aarch64', 'aarch64-linux-ohos', 'AArch64'),
            'x86_64_virt': ('x86_64', 'x86_64-linux-ohos', 'Advanced Micro Devices X86-64')}
 PORT_PATCH = 'patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch'
 
+DNS_PATCH = 'patches/common/third_party/openvpn/ohos_backend/0002-export-final-DNS-policy-to-AF_UNIX-tunnel.patch'
+
 
 def digest(path):
     value = hashlib.sha256()
@@ -31,7 +33,7 @@ def recipe_identity():
              'scripts/build_openvpn_ohos_in_docker.sh', 'scripts/openvpn_source_lock.json',
              'scripts/openvpn_source_archive.py',
              'scripts/openharmony_release_source_lock.py',
-             'scripts/openharmony_7_0_release_source_lock.json', PORT_PATCH)
+             'scripts/openharmony_7_0_release_source_lock.json', PORT_PATCH, DNS_PATCH)
     hashes = {name: digest(ROOT / name) for name in files}
     return {'recipe_sha256': hashlib.sha256(json.dumps(hashes, sort_keys=True).encode()).hexdigest(),
             'files_sha256': hashes}
@@ -142,6 +144,10 @@ def build(args):
             report['port_patch_sha256'] = digest(patch)
             command(['git', 'apply', '--check', patch], 'port-check', work, environment)
             command(['git', 'apply', patch], 'port-apply', work, environment)
+            dns_patch = ROOT / DNS_PATCH
+            report['dns_policy_patch_sha256'] = digest(dns_patch)
+            command(['git', 'apply', '--check', dns_patch], 'dns-policy-check', work, environment)
+            command(['git', 'apply', dns_patch], 'dns-policy-apply', work, environment)
             command(['autoreconf', '-fi'], 'autoreconf', work, environment)
             sub = work / 'config.sub'
             text = sub.read_text()

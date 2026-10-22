@@ -560,6 +560,23 @@ def run(args):
             if args.persona in ('media-recorder', 'media-pipeline578'):
                 ui_arguments += ['--decode-evidence', str(args.output / 'independent-decode'),
                                  '--ffmpeg', str(args.ffmpeg), '--ffprobe', str(args.ffprobe)]
+        if args.persona == 'avc-media':
+            # The original full AVC verifier still consumes exactly 968 rows.
+            # Preserve a separate native CodecBase catalog under the same caller.
+            from guest_process_identity import identity_shell
+            catalog = args.output / 'codec-base-catalog.jsonl'
+            remote = app_files + 'codec-base-' + challenge + '-catalog.jsonl'
+            process = shell(identity_shell(BUNDLE), 'codec-base-actual-process')
+            if re.fullmatch('[1-9][0-9]*(?: [0-9]+){5}\n?', process) is None:
+                raise ValueError('actual native CodecBase process generation missing')
+            owner = shell('stat -c %u ' + shlex.quote(remote), 'codec-base-actual-owner')
+            if owner.strip() != str(report['ordinary_uid']):
+                raise ValueError('catalog belongs to another UID')
+            command([args.hdc, '-t', args.target, 'file', 'recv', remote, catalog], 'codec-base-original-raw')
+            native = Path(__file__).with_name('probes') / 'codec579_catalog.inc'
+            report.update(hdc=str(args.hdc), codec_base_process=process,
+                codec_base_catalog={'path': str(catalog), 'sha256': checksum(catalog)},
+                codec_base_catalog_native_source={'path': str(native), 'sha256': checksum(native)})
         verification = args.output / 'verified-result.json'
         if args.persona in ('avc-media', 'rpc-runtime', 'arkui-components', 'spring-loading', 'observer-info', 'router-observer', 'network-accounting', 'wifi-scan', 'image-metadata', 'thermal', 'completion-handler', 'const-enum', 'arkts-exports', 'worker-legacy', 'worker-thread', 'matrix4', 'factory-objects', 'web-factory', 'contact-sync-mode', 'runtime-enum', 'curve', 'binding', 'optional-phone-profile', 'photos-recent', 'photos-asset', 'storage-stats'):
             inputs = project / (args.persona + '-probe-inputs.json')

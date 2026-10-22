@@ -34,7 +34,7 @@ def read_inputs(ref, owner):
     value = json.loads(data_file(ref).read_text())
     require(type(value) is dict and set(value) == {
         'schema', 'source_commit', 'archive', 'providers', 'native_helpers', 'native_addons',
-        'ui_plans', 'communications_services', 'permission_allow_text', 'livecaptions579'},
+        'ui_plans', 'communications_services', 'permission_allow_text', 'livecaptions579', 'media579_audio', 'usb579', 'telephony579'},
         'fixed capability fixture data required; no executable or expected-result field')
     require(value['schema'] == 'actual-qemu-capability578-inputs/v1' and
             data_file(value['archive']) == owner.archive and
@@ -77,11 +77,17 @@ def run_on_owner(owner, inputs_ref, resources, **context):
     from livecaptions579_runtime import run as run_captions
     from verify_screen_blink_evidence import verify_evidence as replay_original_blink
 
+    import sys
+    media_folder = Path(__file__).with_name('media579')
+    if str(media_folder) not in sys.path: sys.path.insert(0, str(media_folder))
+    from audio579_common import source_guard as media_source_guard
+    from audio579_runtime import run as run_audio579
     guest = context['guest']
     owner.held_binding(guest)
     require(owner.vm is guest and Path(context['archive']) == owner.archive,
             'only the original held package guest may run capability cases')
     inputs = read_inputs(inputs_ref, owner)
+    media_source_guard(inputs['media579_audio']['normal_source_context'])
     expected_plans = set(APP_CASES) - {'blink', 'accessibility-input'}
     require(set(inputs['ui_plans']) == expected_plans,
             'every applicable fixed apps UI case needs its actual source-backed plan')
@@ -116,6 +122,10 @@ def run_on_owner(owner, inputs_ref, resources, **context):
             package = {'native_addons': inputs['native_addons'], 'settings_actions579': settings_actions}
         elif group == 'livecaptions':
             package = {'livecaptions579': inputs['livecaptions579']}
+        elif group == 'media579':
+            package = {'media579_audio': inputs['media579_audio']}
+        elif group == 'usb579':
+            package = {'usb579': inputs['usb579']}
         io = OwnedIO(owner, guest, root / (group + '-' + case),
             run_id=secrets.token_hex(16), package_inputs=package,
             prepare_callers=prepare_callers, https_factory=OwnedHTTPS)
@@ -126,6 +136,7 @@ def run_on_owner(owner, inputs_ref, resources, **context):
             # Keep the Apps provider package's original exact three keys.
             # Only the fixed virtual-SIM wrapper consumes this separate data.
             io.apn579_native_helper = inputs['native_helpers']['apn579']
+            io.telephony579_product = inputs['telephony579']
         if group == 'providers':
             package['native_helpers'] = inputs['native_helpers']
             # Only actual already-completed same-guest family documents can
@@ -170,6 +181,9 @@ def run_on_owner(owner, inputs_ref, resources, **context):
             row.update(status='fail', error=type(error).__name__ + ': ' + str(error),
                        traceback=traceback.format_exc())
             report['failures'].append(group + '/' + case + ': ' + row['error'])
+            if isinstance(error, UnsettledCapability):
+                save()
+                raise  # Cleanup uncertainty prohibits reuse even if a retry later closes.
         finally:
             try:
                 row['cleanup'] = io.close()
@@ -345,6 +359,11 @@ def run_on_owner(owner, inputs_ref, resources, **context):
 
     attempt('settings-idle', 'conditional', run_settings_idle, settings_idle_review)
 
+    def msdp_local(io):
+        from msdp579_hooks import run_main
+        return run_main(io)
+    attempt('msdp-nine', 'local', msdp_local)
+
     def caption_case(io):
         return {'evidence': run_captions(io), 'archive_sha256': archive_sha, 'boot_id': boot}
 
@@ -362,6 +381,78 @@ def run_on_owner(owner, inputs_ref, resources, **context):
                 'boot_id': boot, 'whole_id_closure': False}
 
     attempt('livecaptions', 'english', caption_case, caption_review)
+
+
+    def owning_services579_cases():
+        from owning_services579_hooks import main_native, run_main, publish_main
+        context['same_guest']('before-owning-services579')
+        local_io = fresh_io('owning-services579', 'local')
+        ads_io = fresh_io('owning-services579', 'ads')
+        row = {'group': 'owning-services579', 'case': 'local-and-ads',
+               'boot_id': boot, 'status': 'running'}
+        report['cases'].append(row); save()
+        unsettled = None
+        try:
+            row['result'] = run_main(local_io, ads_io, main_native(local_io))
+            row['status'] = 'actual_guest_flow_observed'
+        except Exception as error:
+            row.update(status='fail', error=type(error).__name__ + ': ' + str(error),
+                       traceback=traceback.format_exc())
+            report['failures'].append('owning-services579: ' + row['error'])
+            if isinstance(error, UnsettledCapability):
+                unsettled = error
+        finally:
+            errors = []
+            for label, io in (('ads', ads_io), ('local', local_io)):
+                try:
+                    row[label + '_cleanup'] = io.close()
+                except Exception as error:
+                    errors.append(label + ': ' + type(error).__name__ + ': ' + str(error))
+            row['cleanup_errors'] = errors
+            if not errors:
+                local = getattr(local_io, 'six_services579_local_attempt', None)
+                ads = getattr(ads_io, 'ads579_boundary_attempt', None)
+                if local is not None and ads is not None:
+                    try:
+                        row['retained'] = publish_main(owner, local_io, local, ads_io, ads)
+                    except Exception as error:
+                        row['retention_error'] = type(error).__name__ + ': ' + str(error)
+                        report['failures'].append('owning-services579-retention: ' + row['retention_error'])
+                else:
+                    row['retention_error'] = 'actual local or Ads attempt missing'
+                    report['failures'].append('owning-services579-retention: ' + row['retention_error'])
+            save()
+            if errors:
+                raise UnsettledCapability('owning-services579 IO cleanup failed: ' + repr(errors))
+        if unsettled is not None:
+            raise unsettled
+        context['same_guest']('after-owning-services579')
+
+    owning_services579_cases()
+
+    def audio579_case(io):
+        from usb579_shared import run as run_shared_usb_audio
+        usb_io = fresh_io('usb579', 'shared-device')
+        try:
+            shared = run_shared_usb_audio(usb_io, io)
+            report['usb579_shared'] = shared
+            save()
+            return {'evidence': shared['audio_evidence'], 'usb579_shared': shared,
+                    'archive_sha256': archive_sha, 'boot_id': boot}
+        finally:
+            usb_io.close()  # Original registered IO/Owner closes it exactly once.
+
+    def audio579_review(io, result):
+        value = json.loads(data_file(result['evidence']).read_text())
+        require(value['schema'] == 'media579-original-audio10-runtime/v1' and
+                value['archive_sha256'] == archive_sha and value['boot_id'] == boot and
+                value['failures'] == value['cleanup_errors'] == [] and value['cleanup']['errors'] == [],
+                'actual supplemental audio business/permission/PCM/lifecycle failed')
+        return {'actual_raw_behavior_matched': True, 'archive_sha256': archive_sha, 'boot_id': boot,
+                'whole_id_closure': False,
+                'requires_complete_original_media579_registration': True}
+
+    attempt('media579', 'audio10', audio579_case, audio579_review)
 
     def provider_review(io, result):
         require(result.get('archive_sha256') == archive_sha and result.get('boot_id') == boot and
@@ -525,6 +616,9 @@ def install_on_original_children(children, inputs_ref=None, *, deferred_inputs=N
                 from mms_share579_integration import run_after_original_share
                 run_after_original_share(owner, installed['resources'], original_result,
                     mms_facts=factory.exports['mms_facts'], context=context)
+                from additional579_raw import module as admitted_additional_source
+                admitted_additional_source('additional579_held').run_supplements(owner, installed['resources'],
+                    resolve_inputs(owner), **context)
                 return original_result
 
             result = canonical(args, owned_command=command_with_knowledge_inputs, owned_guest_factory=owned_guest_factory,

@@ -10,7 +10,7 @@
 
 namespace OhosOpenvpn {
 struct NetworkAddress { std::string address; unsigned prefix = 0; int family = 0; };
-struct NetworkRoute { NetworkAddress destination; std::string gateway; bool excluded = false; };
+struct NetworkRoute { NetworkAddress destination; std::string gateway; bool excluded = false; unsigned metric = 0; };
 struct NegotiatedConfig {
     unsigned mtu = 0;
     std::vector<NetworkAddress> addresses;
@@ -126,8 +126,9 @@ inline bool ReadNegotiated(const Environment &env, NegotiatedConfig &output)
         route.gateway = get("route_gateway_" + suffix);
         if (!ipv4 || IpFamily(route.destination.address) != AF_INET || IpFamily(route.gateway) != AF_INET ||
             !MaskPrefix(get("route_netmask_" + suffix), route.destination.prefix)) return false;
-        if (!get("route_metric_" + suffix).empty() && get("route_metric_" + suffix) != "0") return false;
+        if (!get("route_metric_" + suffix).empty() && !Number(get("route_metric_" + suffix), 0x7fffffff, route.metric)) return false;
         route.excluded = !get("route_net_gateway").empty() && route.gateway == get("route_net_gateway");
+        if (route.excluded && route.metric) return false;
         value.routes.push_back(route);
     }
     for (unsigned index : routes6) {
@@ -135,7 +136,7 @@ inline bool ReadNegotiated(const Environment &env, NegotiatedConfig &output)
         if (!ipv6 || !Cidr(get("route_ipv6_network_" + suffix), AF_INET6, route.destination)) return false;
         route.gateway = get("route_ipv6_gateway_" + suffix);
         if (IpFamily(route.gateway) != AF_INET6) return false;
-        if (!get("route_ipv6_metric_" + suffix).empty() && get("route_ipv6_metric_" + suffix) != "0") return false;
+        if (!get("route_ipv6_metric_" + suffix).empty() && !Number(get("route_ipv6_metric_" + suffix), 0x7fffffff, route.metric)) return false;
         value.routes.push_back(route);
     }
     for (const auto &entry : {std::make_pair("route_redirect_gateway_ipv4", AF_INET),
@@ -154,18 +155,20 @@ inline bool ReadNegotiated(const Environment &env, NegotiatedConfig &output)
             for (const auto &item : env) {
                 if (item.first.compare(0, prefix.size(), prefix)) continue;
                 const auto field = item.first.substr(prefix.size());
-                if (field == "transport") { if (item.second != "plain") return false; }
-                else if (field == "dnssec") { if (item.second != "no") return false; }
+                if (field == "transport") { if (item.second != "plain" && item.second != "DoH" && item.second != "DoT" && item.second != "unset") return false; }
+                else if (field == "dnssec") { if (item.second != "no" && item.second != "unset") return false; }
                 else if (field.compare(0, 5, "port_") == 0) {
-                    unsigned addressIndex = 0;
-                    if (!Number(field.substr(5), 8, addressIndex) || !addressIndex || item.second != "53" ||
+                    unsigned addressIndex = 0, port = 0;
+                    if (!Number(field.substr(5), 8, addressIndex) || !addressIndex || !Number(item.second, 65535, port) || !port ||
                         !IpFamily(get(prefix + "address_" + std::to_string(addressIndex)))) return false;
                 }
                 else if (field.compare(0, 8, "address_") == 0) {
                     unsigned addressIndex = 0;
                     if (!Number(field.substr(8), 8, addressIndex) || !addressIndex || !IpFamily(item.second) ||
                         !AppendUnique(value.dns, item.second, 16)) return false;
-                } else return false; // SNI/resolve-domain policies are not represented by OHOS DNS lists.
+                } else if (field == "sni" || field.compare(0,15,"resolve_domain_") == 0) {
+                    if (!Domain(item.second)) return false;
+                } else return false; // Full structured policy is also validated by dns_policy.h.
             }
         }
         if (value.dns.empty()) return false;

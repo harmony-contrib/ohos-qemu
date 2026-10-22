@@ -18,6 +18,10 @@ def validate(root, require_patched=False):
         following = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(following)
         try:
-            return following.validate_preceding(root, FILES)
+            modem_spec = importlib.util.spec_from_file_location('qemu_modem_tun_following',
+                Path(__file__).resolve().parent.parent / 'qemu_modem_tun/verify_source.py')
+            modem = importlib.util.module_from_spec(modem_spec)
+            modem_spec.loader.exec_module(modem)
+            return following.validate_preceding(root, modem.preceding_files(root, FILES))
         except (ValueError, FileNotFoundError):
             raise original_error

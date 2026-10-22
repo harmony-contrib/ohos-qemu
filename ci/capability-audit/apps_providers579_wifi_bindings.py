@@ -93,7 +93,7 @@ def bind(root_io):
 
     def control(mode, command):
         row = shell(shlex.join(['/vendor/bin/wpa_cli', '-p', remote + '/control', '-i', 's579peer', 'raw', command]),
-                    'stock_control_' + command.replace('-', '_'), allow_failure=True)
+                    'stock_control_' + re.sub('[^A-Za-z0-9_-]', '_', command), allow_failure=True)
         return row
 
     def stop_peer():
@@ -104,13 +104,17 @@ def bind(root_io):
             require(finished['exit_code'] == 0 and not finished['timed_out'], 'actual namespace server did not close')
             receipts.append(io.ref_receipt(finished)); state['server'] = None;state['server_pid'] = None
         if state['daemon'] is not None:
+            if state['mode'] == 'p2p':
+                removed = control('p2p', 'P2P_GROUP_REMOVE s579peer')
+                require(removed['exit_code'] == 0 and 'OK' in removed['stdout'].splitlines(), 'real peer P2P group removal required')
+                receipts.append(io.ref_receipt(removed))
             stopped = control(state['mode'], 'TERMINATE')
             require(stopped['exit_code'] == 0 and 'OK' in stopped['stdout'].splitlines(), 'stock daemon control must terminate its real process')
             finished = io.wait(state['daemon'], timeout=30)
             require(finished['exit_code'] == 0 and not finished['timed_out'], 'actual stock daemon transport did not finish')
             receipts.append(io.ref_receipt(finished)); state['daemon'] = None
         if state['mode']:
-            leaves = ['ap-ready'] if state['mode'] == 'ap' else ['sta-ready', 'dhcp-client.txt']
+            leaves = ['ap-ready'] if state['mode'] in ('ap', 'p2p') else ['sta-ready', 'dhcp-client.txt']
             for leaf in leaves:
                 captured = shell('cat ' + shlex.quote(remote + '/' + leaf), 'finished_' + leaf.replace('.', '_'), allow_failure=True)
                 if captured['exit_code'] == 0:
@@ -121,7 +125,8 @@ def bind(root_io):
 
     def network(action, parameters):
         if action not in ('wifi-radio-prepare', 'wifi-peer-start', 'wifi-peer-collect', 'wifi-peer-stop',
-                'wifi-radio-collect', 'wifi-data-exchange', 'wifi-portal-config', 'wifi-ip-collect'):
+                'wifi-radio-collect', 'wifi-data-exchange', 'wifi-portal-config', 'wifi-ip-collect',
+                'wifi-p2p-peer-start', 'wifi-p2p-peer-collect', 'wifi-p2p-arm', 'wifi-p2p-data'):
             return base['network'](action, parameters)
         mark = begin(action)
         require(type(parameters) is dict, 'finite source-defined network data')
@@ -162,6 +167,58 @@ def bind(root_io):
             files, events = journals()
             return result(mark, inventory=inventory['stdout_ref'], namespace=marker['stdout_ref'],
                 helper=spec, native_journals=files, native_events=events)
+        if action == 'wifi-p2p-peer-start':
+            require(parameters == {} and state['moved'] and state['daemon'] is None and state['server'] is None,
+                'fresh original namespace P2P peer only')
+            body = ('ctrl_interface=' + remote + '/control\nupdate_config=0\np2p_no_group_iface=1\n'
+                'device_name=whole579_' + run[:12] + '\ndevice_type=1-0050F204-1\nconfig_methods=virtual_push_button\n')
+            config = output / 'p2p.conf';require(not config.exists(), 'fresh finite P2P configuration')
+            config.write_text(body);io.send(config, remote + '/p2p.conf', 'apps579_wifi_p2p_config')
+            state['mode'] = 'p2p'
+            state['daemon'] = io.spawn_guest(shlex.join([executable, 'daemon-p2p', run, str(state['namespace_pid'])]), 'apps579_wifi_stock_p2p')
+            deadline = time.monotonic() + 30
+            while True:
+                ping = control('p2p', 'PING')
+                if ping['exit_code'] == 0 and 'PONG' in ping['stdout'].splitlines():break
+                require(time.monotonic() < deadline, 'real independent P2P supplicant did not start');time.sleep(.1)
+            group = control('p2p', 'P2P_GROUP_ADD freq=2412')
+            require(group['exit_code'] == 0 and 'OK' in group['stdout'].splitlines(), 'stock P2P_GROUP_ADD rejected')
+            while True:
+                status = control('p2p', 'STATUS')
+                if status['exit_code'] == 0 and 'mode=P2P GO' in status['stdout'].splitlines():break
+                require(time.monotonic() < deadline, 'stock independent P2P GO did not become active');time.sleep(.1)
+            # Same finite DHCP/DNS/nonce server; only its held P2P radio now
+            # carries these real L2/IP bytes. No normal STA config is selected.
+            state['server'] = io.spawn_guest(shlex.join([executable, 'server-ap', run, str(state['namespace_pid'])]), 'apps579_wifi_p2p_ip_server')
+            marker = await_file('ap-ready');identity = re.fullmatch(r'pid=([1-9][0-9]*) netns=([1-9][0-9]*)', marker['stdout'])
+            require(identity and int(identity[2]) == state['peer_netns'], 'P2P server actual netns')
+            state['server_pid'] = int(identity[1]);files,events = journals()
+            return result(mark, status=status['stdout_ref'], group_create=group['stdout_ref'], configuration={'path': str(config),
+                'sha256': hashlib.sha256(config.read_bytes()).hexdigest()}, independent_server=marker['stdout_ref'],
+                native_journals=files, native_events=events)
+        if action == 'wifi-p2p-arm':
+            require(parameters == {} and state['mode'] == 'p2p' and state['daemon'], 'same actual held P2P GO')
+            armed = control('p2p', 'WPS_PBC')
+            require(armed['exit_code'] == 0 and 'OK' in armed['stdout'].splitlines(), 'stock real WPS PBC authorization failed')
+            return result(mark, wps=armed['stdout_ref'])
+        if action == 'wifi-p2p-peer-collect':
+            require(parameters == {} and state['mode'] == 'p2p', 'same retained independent P2P peer')
+            status = control('p2p', 'STATUS');station = control('p2p', 'STA-FIRST');helper('inspect', state['namespace_pid'])
+            files,events = journals()
+            # Actual P2P device identity, not the ordinary interface MAC.
+            addresses = re.findall(r'^p2p_device_address=([0-9a-f:]{17})$', status['stdout'], re.M)
+            require(len(addresses) == 1, 'real supplicant P2P device address')
+            return result(mark, status=status['stdout_ref'], station=station['stdout_ref'], peer_mac=addresses[0],
+                namespace=state['peer_netns'], native_journals=files, native_events=events)
+        if action == 'wifi-p2p-data':
+            require(state['server'] and state['mode'] == 'p2p' and set(parameters) == {'interface'} and
+                re.fullmatch(r'p2p0|p2p-wlan0-[0-9]+', parameters['interface']), 'actual public P2P interface only')
+            helper('exchange', parameters['interface'], '192.0.2.1');files,events = journals()
+            pids = {r['pid'] for r in events if r['event'] == 'nonce-initial-tx'};fresh = pids - state['exchange_pids']
+            require(len(fresh) == 1, 'fresh actual P2P native exchange process');state['exchange_pids'] = pids
+            return result(mark, current_exchange_pid=next(iter(fresh)), server_pid=state['server_pid'], side='p2p',
+                peer_ip='192.0.2.1', interface=parameters['interface'], initial_netns=state['initial_netns'],
+                peer_netns=state['peer_netns'], native_journals=files, native_events=events)
         if action == 'wifi-peer-start':
             require(parameters in ({'mode': 'ap'}, {'mode': 'sta'}) and state['moved'] and state['daemon'] is None and state['server'] is None,
                     'one real peer mode in held independent namespace')

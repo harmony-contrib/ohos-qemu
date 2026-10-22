@@ -11,9 +11,9 @@ SCOPE = 'ordinary_default_AVC_MIME_and_name_YUV_RGBA_buffer_and_surface_96_chall
 ABIS = {'arm64': ('arm64-v8a', 'aarch64-linux-ohos', 183, 2),
         'armv7a': ('armeabi-v7a', 'arm-linux-ohos', 40, 1),
         'x86_64': ('x86_64', 'x86_64-linux-ohos', 62, 2)}
-SOURCES = ('avc_media_probe.ets', 'avc_media_hap_probe.cpp', 'probes/avc_media.cpp')
+SOURCES = ('avc_media_probe.ets', 'avc_media_hap_probe.cpp', 'probes/avc_media.cpp', 'probes/codec579_catalog.inc')
 HEADERS = ('native_avbuffer.h', 'native_avbuffer_info.h', 'native_avcapability.h',
-           'native_avcodec_videoencoder.h', 'native_avcodec_videodecoder.h', 'native_avcodec_base.h',
+           'native_avcodec_videoencoder.h', 'native_avcodec_videodecoder.h', 'native_avcodec_audiocodec.h', 'native_avcodec_base.h',
            'native_avcodec_videobase.h', 'native_avformat.h', 'native_averrors.h')
 GRAPHICS_HEADERS = ('native_window/external_window.h', 'native_window/buffer_handle.h',
                     'native_buffer/native_buffer.h', 'native_buffer/buffer_common.h')
@@ -39,7 +39,7 @@ def compile_command(project, sdk, arch):
     return [str(native / 'llvm/bin/clang++'), '--target=' + triple, '--sysroot=' + str(native / 'sysroot'),
             *flags, '-std=c++17', '-shared', '-fPIC', '-O2', '-Wall', '-Wextra', '-Werror',
             str(HERE / SOURCES[1]), str(HERE / SOURCES[2]), '-lace_napi.z', '-lnative_media_venc',
-            '-lnative_media_vdec', '-lnative_media_codecbase', '-lnative_media_core', '-lnative_window', '-lnative_buffer',
+            '-lnative_media_vdec', '-lnative_media_acodec', '-lnative_media_codecbase', '-lnative_media_core', '-lnative_window', '-lnative_buffer',
             '-o', str(Path(project).resolve() / 'entry/libs' / abi / 'libavcmediaprobe.so')]
 
 

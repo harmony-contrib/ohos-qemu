@@ -22,7 +22,7 @@ from verify_alsa_config_image import debugfs_path
 ROOT = Path(__file__).resolve().parents[1]
 PRODUCTS = {'armv7a_virt': (1, 40), 'arm64_virt': (2, 183), 'x86_64_virt': (2, 62)}
 LOGS = tuple(name + '.log' for name in (
-    'port-check', 'port-apply', 'autoreconf', 'configure', 'make-compat',
+    'port-check', 'port-apply', 'dns-policy-check', 'dns-policy-apply', 'autoreconf', 'configure', 'make-compat',
     'make-openvpn', 'ELF-identity'))
 PROGRAMS = ('qemu_openvpn', 'qemu_openvpn_service', 'qemu_openvpn_tun')
 CONFIGS = {'etc/init/qemu_openvpn.cfg': 'qemu_openvpn.cfg',
@@ -88,7 +88,17 @@ def check_build(directory, product, require_product=True):
     if (main.get('source_lock_sha256') != digest(main_lock) or
             main.get('checked_projects') != len(expected) or main.get('projects') != expected):
         raise ValueError('VPN main source HEAD evidence differs from the fixed release')
+    from build_openvpn_ohos import DNS_PATCH
+    if build.get('dns_policy_patch_sha256') != digest(ROOT / DNS_PATCH):
+        raise ValueError('normal final DNS export patch identity differs')
     commands = build.get('commands', [])
+    expected_patch = DNS_PATCH
+    dns_commands=[c for c in commands if c.get('log') in ('dns-policy-check.log','dns-policy-apply.log')]
+    if (len(dns_commands)!=2 or dns_commands[0].get('argv',[])[:3]!=['git','apply','--check'] or
+            dns_commands[1].get('argv',[])[:2]!=['git','apply'] or len(dns_commands[0]['argv'])!=4 or len(dns_commands[1]['argv'])!=3 or
+            dns_commands[0]['argv'][-1]!=dns_commands[1]['argv'][-1] or
+            not dns_commands[0]['argv'][-1].endswith('/'+expected_patch)):
+        raise ValueError('actual fixed normal-source DNS patch check/application commands differ')
     if [c.get('log') for c in commands] != list(LOGS):
         raise ValueError('complete VPN configure/compile/link evidence required')
     for c in commands:

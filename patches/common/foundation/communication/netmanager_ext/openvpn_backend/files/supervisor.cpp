@@ -103,6 +103,7 @@ struct Session {
     std::string directory;
     Fd directoryFd;
     pid_t child = -1;
+    bool persistent = false;
     ~Session()
     {
         if (child > 0) {
@@ -119,7 +120,7 @@ struct Session {
             while (waitpid(child, &status, 0) < 0 && errno == EINTR) {}
         }
         if (!directory.empty() && directoryFd.value >= 0) {
-            for (const char *name : {"client.ovpn", "askpass", "management", "ready"})
+            for (const char *name : {"client.ovpn", "askpass", "management", "ready", "dns-wire.jsonl"})
                 unlinkat(directoryFd.value, name, 0);
             rmdir(directory.c_str());
         }
@@ -136,6 +137,7 @@ bool Spawn(Session &session, const std::string &config, const std::string &manag
         "--management-hold", "--setenv", "OHOS_OPENVPN_READY_SOCKET", ready,
         "--setenv", "OHOS_OPENVPN_SESSION", sessionToken,
         "--setenv", "OHOS_OPENVPN_INTERFACE", interfaceName,
+        "--setenv", "OHOS_OPENVPN_PROFILE", config,
         "--verb", "3",
     };
     std::vector<char *> argv;
@@ -159,12 +161,14 @@ int Observe(Session &session, int managementListener, int readyListener)
     bool tunReady = false;
     bool tlsConnected = false;
     bool published = false;
+    bool reconnecting = false;
     std::string pending;
     auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(90);
     while (!stopping) {
         siginfo_t exited {};
         if (waitid(P_PID, session.child, &exited, WEXITED | WNOHANG | WNOWAIT) < 0 || exited.si_pid) return 5;
         if (!published && std::chrono::steady_clock::now() >= deadline) return 6;
+        const int observedBridge = bridgeReady.value;
         pollfd descriptors[4] {{managementListener, POLLIN, 0}, {readyListener, POLLIN, 0},
                               {management.value, POLLIN, 0}, {bridgeReady.value, POLLIN, 0}};
         int result = poll(descriptors, 4, 500);
@@ -180,19 +184,6 @@ int Observe(Session &session, int managementListener, int readyListener)
             // The peer is our exact exec child. No externally supplied state
             // channel or test flag can turn this session into CONNECTED.
             if (!Write(management.value, "state on\nhold release\n")) return 9;
-        }
-        if (descriptors[1].revents & POLLIN) {
-            Fd incoming;
-            incoming.value = accept4(readyListener, nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK);
-            ucred peer {};
-            if (incoming.value < 0 || !Credentials(incoming.value, peer) ||
-                !IsBridgeChild(peer.pid, session.child) || tunReady) return 10;
-            pollfd response {incoming.value, POLLIN, 0};
-            char ready = 0;
-            if (poll(&response, 1, 2000) <= 0 || read(incoming.value, &ready, 1) != 1 || ready != 'R') return 11;
-            bridgeReady.value = incoming.value;
-            incoming.value = -1;
-            tunReady = true;
         }
         // A one-time readiness byte must not outlive the real TUN bridge. Its
         // private peer connection stays open for the entire forwarding loop.
@@ -212,19 +203,43 @@ int Observe(Session &session, int managementListener, int readyListener)
                 else if (event == OhosOpenvpn::Event::Reconnecting) {
                     if (NetworkVpnClient::GetInstance().NotifyConnectStage(
                         OhosOpenvpn::Stage(sessionToken, "{\"reconnecting\":{}}"), 0) != 0) return 15;
-                    tlsConnected = published = tunReady = false;
-                    if (bridgeReady.value >= 0) close(bridgeReady.value);
-                    bridgeReady.value = -1;
+                    tlsConnected = published = false; reconnecting = true;
+                    if (!session.persistent) {
+                        tunReady = false;
+                        if (bridgeReady.value >= 0) close(bridgeReady.value);
+                        bridgeReady.value = -1;
+                    }
                     deadline = std::chrono::steady_clock::now() + std::chrono::seconds(90);
                 } else if (event != OhosOpenvpn::Event::Ignore) return 15;
             }
         }
-        if (tunReady && descriptors[3].revents) return 17;
+        if (descriptors[1].revents & POLLIN) {
+            Fd incoming;
+            incoming.value = accept4(readyListener, nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK);
+            ucred peer {};
+            if (incoming.value < 0 || !Credentials(incoming.value, peer) ||
+                !IsBridgeChild(peer.pid, session.child) || (tunReady && !(session.persistent && reconnecting))) return 10;
+            if (bridgeReady.value >= 0) {
+                pollfd old {bridgeReady.value, POLLIN, 0};
+                if (poll(&old, 1, 0) <= 0 || !(old.revents & (POLLHUP | POLLERR))) return 10;
+                close(bridgeReady.value); bridgeReady.value = -1;
+            }
+            pollfd response {incoming.value, POLLIN, 0};
+            char ready = 0;
+            if (poll(&response, 1, 2000) <= 0 || read(incoming.value, &ready, 1) != 1 || ready != 'R') return 11;
+            bridgeReady.value = incoming.value;
+            incoming.value = -1;
+            tunReady = true;
+        }
+        if (tunReady && bridgeReady.value == observedBridge && descriptors[3].revents) {
+            if (!session.persistent || !reconnecting || !(descriptors[3].revents & (POLLHUP | POLLERR))) return 17;
+            close(bridgeReady.value); bridgeReady.value = -1; tunReady = false;
+        }
         if (!published && tlsConnected && tunReady) {
             pollfd live {bridgeReady.value, POLLIN, 0};
             if (poll(&live, 1, 0) != 0) return 17;
             if (!Notify(4)) return 16;
-            published = true;
+            published = true; reconnecting = false;
         }
     }
     return 0;
@@ -245,6 +260,7 @@ int RunWorkerBody(const OhosOpenvpn::BrokerCommand &command, const std::string &
     std::string config = command.session.profile;
     std::string password = command.session.password;
     if (!OhosOpenvpn::ValidateProfile(config)) return 3;
+    session.persistent = OhosOpenvpn::ProfileHasOption(config, "persist-tun");
     if (!password.empty()) {
         if (!SaveSecret(session.directoryFd.value, "askpass", password + "\n")) return 3;
         config += "\naskpass " + session.directory + "/askpass\n";

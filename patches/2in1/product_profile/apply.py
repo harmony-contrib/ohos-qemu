@@ -173,6 +173,10 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
     # phone camera hardware. Their owning part must also be built on 2in1.
     add_component(effective, "applications", "photos")
     add_component(effective, "thirdparty", "alsa-lib")
+    # Select the real CPU voice HDI/service and spatial effect owners.
+    # Their flags belong to this final device contract, not local board parts.
+    add_component(effective, "hdf", "drivers_peripheral_intelligent_voice")
+    add_component(effective, "ai", "intelligent_voice_framework")
     # Keep the public service in the product graph with its real sensor
     # algorithm; feature overrides alone cannot introduce a missing owner.
     add_component(effective, "msdp", "device_status")
@@ -260,6 +264,7 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
             },
             ("msdp", "device_status"): {
                 "device_status_sensor_enable": True,
+                "device_status_interaction_coordination": True,
                 "device_status_allow_mock_fallback": False,
             },
             ("communication", "netmanager_ext"): {
@@ -269,7 +274,18 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
             # Pair SceneBoard's logical display tree with the unified renderer,
             # not the historical QEMU legacy composition configuration.
             ("graphic", "graphic_2d"): {"graphic_2d_feature_rs_enable_uni_render": True},
+            ("multimedia", "audio_framework"): {"audio_framework_qemu_cpu_spatial": True},
             ("thirdparty", "alsa-lib"): {"alsa_lib_feature_config_enable": True},
+            ("hdf", "drivers_peripheral_intelligent_voice"): {
+                "drivers_peripheral_intelligent_voice_qemu_cpu_provider": True,
+                "drivers_peripheral_intelligent_voice_engine_enable": True,
+            },
+            ("ai", "intelligent_voice_framework"): {
+                "intelligent_voice_framework_qemu_cpu_provider": True,
+                "intelligent_voice_framework_engine_enable": True,
+                "intelligent_voice_framework_only_first_stage": False,
+                "intelligent_voice_framework_only_second_stage": False,
+            },
         },
     )
 

@@ -20,7 +20,7 @@ IMAGE_GENERATION = frozenset('arkts_export:@ohos.arkui.intelligence.imageGenerat
 
 
 PROVIDER_POLICY = 'ci/capability-audit/policy579/execution-20261021/unsupported-public-providers.json'
-PROVIDER_POLICY_SHA256 = '5aacbbd3a059604696c00fe5eae094ddd73a34f9a73c98086c5567d405148f92'
+PROVIDER_POLICY_SHA256 = 'cad6913851d8fe91f06b7256af6248004400a37087dd19533d1a3377763dc3a8'
 PROVIDER_IDS = {
     'NumberIdentity': 'behavior:telephony-number-identity-provider-missing',
     'DeviceAttest': 'behavior:device-attest-uninitialized',
@@ -36,6 +36,9 @@ PARTIAL_PROVIDER_IDS = {
     'LocationBluetoothScanController579': 'arkts_export:@ohos.geoLocationManager:startBluetoothSearch',
     'LocationBluetoothStopOnLiveController579': 'arkts_export:@ohos.geoLocationManager:stopBluetoothSearch',
     'QemuBluetoothStateController579': 'behavior:bluetooth-state-transition-false-success',
+    'AdsCompleteProvider579': 'behavior:advertising-service-provider-missing',
+    'QemuCarrierIMSTransport579': 'behavior:telephony-no-modem-or-sim',
+    'Msdp579PublicModels': 'behavior:msdp-device-status-mock-or-missing-clients',
 }
 
 

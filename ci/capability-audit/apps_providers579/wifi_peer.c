@@ -87,8 +87,18 @@ static void enter_peer(int pid) {
     unsigned long before=ns_inode();check(setns(fd,CLONE_NEWNET)==0,"enter actual peer netns");close(fd);
     check(ns_inode()!=before,"peer must be independent from initial network stack");text("entered-peer",command);
 }
+static int p2p_interface(const char *name) {
+    int valid=!strcmp(name,"p2p0");
+    const char *prefix="p2p-wlan0-";
+    if(!strncmp(name,prefix,strlen(prefix))){const char *p=name+strlen(prefix);valid=*p!=0;for(;*p;++p)valid=valid&&*p>='0'&&*p<='9';}
+    if(!valid || strlen(name)>=IFNAMSIZ)return 0;
+    char path[128];snprintf(path,sizeof(path),"/sys/class/net/%s/phy80211",name);
+    struct stat actual,original;
+    check(stat(path,&actual)==0 && stat("/sys/class/net/wlan0/phy80211",&original)==0 && actual.st_dev==original.st_dev && actual.st_ino==original.st_ino,"P2P interface must be the OS radio's actual wiphy");
+    text("actual-p2p-interface",name);return 1;
+}
 static int interface_socket(const char *name) {
-    check(!strcmp(name,"wlan0")||!strcmp(name,"wlan1")||!strcmp(name,peer_if)||!strcmp(name,"lo"),"finite radio interface");
+    check(!strcmp(name,"wlan0")||!strcmp(name,"wlan1")||!strcmp(name,peer_if)||!strcmp(name,"lo")||p2p_interface(name),"finite radio interface");
     int fd=socket(AF_INET,SOCK_DGRAM|SOCK_CLOEXEC,0);check(fd>=0,"interface socket");return fd;
 }
 static void flags_up(const char *name) {
@@ -299,7 +309,7 @@ static void exchange(const char *iface,const char *peer) {
 }
 int main(int argc,char **argv) {
     check(argc>=3,"finite helper arguments");const char *mode=argv[1];
-    check(!strcmp(mode,"hold")||!strcmp(mode,"move")||!strcmp(mode,"return")||!strcmp(mode,"daemon-ap")||!strcmp(mode,"daemon-sta")||!strcmp(mode,"server-ap")||!strcmp(mode,"server-sta")||!strcmp(mode,"inspect")||!strcmp(mode,"inspect-initial")||!strcmp(mode,"exchange")||!strcmp(mode,"restore")||!strcmp(mode,"config-mount")||!strcmp(mode,"config-unmount"),"source-defined helper mode");
+    check(!strcmp(mode,"hold")||!strcmp(mode,"move")||!strcmp(mode,"return")||!strcmp(mode,"daemon-ap")||!strcmp(mode,"daemon-sta")||!strcmp(mode,"daemon-p2p")||!strcmp(mode,"server-ap")||!strcmp(mode,"server-sta")||!strcmp(mode,"inspect")||!strcmp(mode,"inspect-initial")||!strcmp(mode,"exchange")||!strcmp(mode,"restore")||!strcmp(mode,"config-mount")||!strcmp(mode,"config-unmount"),"source-defined helper mode");
     initialize(argv[2],mode);
     if(!strcmp(mode,"config-mount")){check(argc==3,"config mount arity");char source[256];snprintf(source,sizeof(source),"%s/probe.conf",directory);
         struct stat st;check(lstat(source,&st)==0 && S_ISREG(st.st_mode) && st.st_uid==0,"actual owned probe config");
@@ -323,7 +333,7 @@ int main(int argc,char **argv) {
             move_phy((int)number(argv[4],0,4096),1);text("peer-returned","actual wiphy returned to init namespace");}
         else if(!strcmp(mode,"inspect"))inspect();
         else if(!strcmp(mode,"server-ap")||!strcmp(mode,"server-sta"))server(!strcmp(mode,"server-ap"));
-        else {char config[256];snprintf(config,sizeof(config),"%s/%s.conf",directory,!strcmp(mode,"daemon-ap")?"ap":"sta");text("stock-daemon",config);
+        else {char config[256];snprintf(config,sizeof(config),"%s/%s.conf",directory,!strcmp(mode,"daemon-ap")?"ap":!strcmp(mode,"daemon-p2p")?"p2p":"sta");text("stock-daemon",config);
             if(!strcmp(mode,"daemon-ap"))execl("/vendor/bin/hostapd","hostapd","-d",config,(char*)NULL);
             else execl("/vendor/bin/wpa_supplicant","wpa_supplicant","-Dnl80211","-i","s579peer","-c",config,"-d",(char*)NULL);
             check(0,"exec actual fixed stock radio daemon");

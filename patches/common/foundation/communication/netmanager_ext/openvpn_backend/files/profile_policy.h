@@ -23,7 +23,7 @@ inline bool ValidateProfile(std::string_view profile)
         "rport", "lport", "local", "nobind", "bind", "resolv-retry", "connect-retry",
         "connect-retry-max", "connect-timeout", "server-poll-timeout", "remote-random",
         "remote-random-hostname", "float", "persist-key", "persist-local-ip",
-        "persist-remote-ip", "auth", "cipher", "data-ciphers", "data-ciphers-fallback",
+        "persist-remote-ip", "persist-tun", "auth", "cipher", "data-ciphers", "data-ciphers-fallback",
         "tls-version-min", "tls-version-max", "tls-cipher", "tls-ciphersuites",
         "remote-cert-tls", "remote-cert-ku", "remote-cert-eku", "verify-x509-name",
         "verify-hash", "peer-fingerprint", "key-direction", "auth-nocache", "auth-retry",
@@ -90,5 +90,27 @@ inline bool ValidateProfile(std::string_view profile)
             (name == "dev-type" && args != "tun")) return false;
     }
     return credential.empty() && !connection;
+}
+inline bool ProfileHasOption(std::string_view text, std::string_view option)
+{
+    if (!ValidateProfile(text)) return false;
+    std::string block;
+    size_t offset = 0;
+    while (offset < text.size()) {
+        size_t end = text.find('\n', offset); if (end == std::string_view::npos) end = text.size();
+        auto line = text.substr(offset,end-offset); offset=end+1;
+        auto first=line.find_first_not_of(" \t\r"); if(first==std::string_view::npos) continue;
+        line.remove_prefix(first); line=line.substr(0,line.find_last_not_of(" \t\r")+1);
+        if (!block.empty()) { if(line=="</"+block+">") block.clear(); continue; }
+        if (line.front()=='#' || line.front()==';') continue;
+        if (line.front()=='<' && line.back()=='>') {
+            if(line!="<connection>" && line!="</connection>") block=line.substr(1,line.size()-2);
+            continue;
+        }
+        auto split=line.find_first_of(" \t"); auto name=line.substr(0,split);
+        if(name.substr(0,2)=="--") name.remove_prefix(2);
+        if(name==option) return true;
+    }
+    return false;
 }
 } // namespace OhosOpenvpn

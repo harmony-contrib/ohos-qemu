@@ -376,7 +376,8 @@ def verify_cleanup(report, target):
     require(not failed(raw, checked(forwards['stderr']).read_text()), 'actual forward-list transport failed')
     for local, remote in value['owned_forwards']:
         require(re.fullmatch('tcp:[0-9]{1,5}', local) and remote in ('localfilesystem:/dev/unix/socket/qemu_gnss/input',
-                'localfilesystem:/dev/unix/socket/qemu_sensor/input') and local not in raw, 'private forward remains or invalid ownership')
+                'localfilesystem:/dev/unix/socket/qemu_sensor/input',
+                'localfilesystem:/dev/unix/socket/qemu_sensor/rotation') and local not in raw, 'private forward remains or invalid ownership')
     require(value['open_streams'] == 0, 'private client sockets remain open')
     producer = value['producer']
     require(producer.get('owned') is False or producer.get('exited') is True and type(producer.get('exit_code')) is int,
@@ -445,9 +446,31 @@ def verify_evidence(evidence_path, archive_path, boot_path):
     require(report['cleanup']['ordinary_uid'] == capture_report['ordinary_uid'], 'cleanup did not inspect the actual ordinary UID')
     forwards = [row for row in capture_report['commands'] if row.get('label') in ('own-forward-gnss', 'own-forward-sensor')]
     require(len(forwards) == 2 and len({row['label'] for row in forwards}) == 2 and
-            all(row.get('exit_code') == 0 and row['argv'][1:4] == ['-t', env['target'], 'fport'] and len(row['argv']) == 6 for row in forwards) and
-            report['cleanup']['owned_forwards'] == [row['argv'][-2:] for row in forwards],
+            all(row.get('exit_code') == 0 and row['argv'][1:4] == ['-t', env['target'], 'fport'] and len(row['argv']) == 6 for row in forwards),
             'cleanup forward ownership differs from actual captured creations')
+    rotation = [row for row in capture_report['commands'] if row.get('label') == 'own-forward-rotation']
+    require(len(rotation) == 1 and rotation[0]['argv'][1:4] == ['-t', env['target'], 'fport'] and
+            len(rotation[0]['argv']) == 6 and rotation[0]['argv'][-1] == 'localfilesystem:/dev/unix/socket/qemu_sensor/rotation',
+            'one actual independently owned rotation forward required')
+    creations = [row for row in capture_report['commands'] if row['argv'][1:4] == ['-t', env['target'], 'fport'] and
+                 len(row['argv']) == 6 and row['argv'][4].startswith('tcp:')]
+    owned = [row['argv'][-2:] for row in creations]
+    require(creations == forwards + rotation and len({tuple(pair) for pair in owned}) == 3 and
+            report['cleanup']['owned_forwards'] == owned,
+            'complete exact original two plus rotation forward ownership differs')
+    removals = [row for row in capture_report['commands'] if row.get('label') == 'remove-own-forward']
+    require(len(removals) == 3 and [row['argv'] for row in removals] ==
+            [[row['argv'][0], '-t', env['target'], 'fport', 'rm', *pair] for row, pair in zip(creations, owned)],
+            'every actual forward must have its own exact original finally removal')
+    from hdc_transport import failed as forward_failed
+    for row in creations + removals:
+        stdout, stderr = (checked(row[key]).read_bytes() for key in ('stdout_record', 'stderr_record'))
+        require(row.get('exit_code') == 0 and not row.get('timed_out', False) and
+                regular(row['log']).read_bytes() == stdout + stderr and digest(regular(row['log'])) == row['sha256'] and
+                not forward_failed(stdout.decode(), stderr.decode()),
+                'actual forward creation/removal status or complete two-stream raw failed')
+    # verify_cleanup above independently replays the original final fport ls:
+    # all three exact owned local endpoints must be absent after these removals.
     require(regular(capture_report['signed_hap']) == checked(report['signed']['signed_hap']) and
             regular(capture_report['signer_jar']) == regular(spec['signer_jar']) and
             capture_report['sdk'] == str(Path(spec['sdk']).resolve()), 'captured caller/signer/SDK differs from independently verified inputs')
@@ -535,6 +558,10 @@ def run(args):
         if publisher_log:
             publisher_log.close(); report['publisher_log'] = descriptor(output / 'publisher.log')
         if capture:
+            if any(row.get('label', '').startswith('msdp579_sensor_') and
+                   (row.get('timed_out') or type(row.get('exit_code')) is not int or row.get('process_group_cleanup_unconfirmed'))
+                   for row in capture.report['commands']):
+                report['cleanup_errors'].append('original MSDP SDK command settlement unconfirmed; dispose this guest before reuse')
             for stream in capture.streams:
                 try: stream.close()
                 except OSError as error: report['cleanup_errors'].append('private stream: ' + str(error))

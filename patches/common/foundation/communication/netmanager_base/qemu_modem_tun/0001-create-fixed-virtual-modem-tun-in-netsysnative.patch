@@ -1,0 +1,304 @@
+diff --git a/foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn b/foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn
+--- a/foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn
++++ b/foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn
+@@ -58,6 +58,12 @@
+       (product_name == "armv7a_virt" || product_name == "arm64_virt" ||
+        product_name == "x86_64_virt")) {
+     defines += [ "OHOS_QEMU_OPENVPN" ]
++  }
++
++  # The fixed virtual modem endpoint is present only on QEMU products.
++  if (product_name == "armv7a_virt" || product_name == "arm64_virt" ||
++      product_name == "x86_64_virt") {
++    defines += [ "OHOS_QEMU_MODEM_TUN" ]
+   }
+ 
+   if (netmanager_base_feature_enterprise_route_custom) {
+@@ -116,6 +122,11 @@
+   "src/netsys_traffic_callback_proxy.cpp",
+ ]
+ 
++if (product_name == "armv7a_virt" || product_name == "arm64_virt" ||
++    product_name == "x86_64_virt") {
++  netsys_native_manager_sources += [ "src/qemu_modem_tun.cpp" ]
++}
++
+ netsys_native_manager_deps = [
+   "$FWMARK_CLIENT_DIR:fwmark_client",
+   "$INNERKITS_ROOT/netconnclient:net_conn_manager_if",
+diff --git a/foundation/communication/netmanager_base/services/netmanagernative/src/netsys_native_service.cpp b/foundation/communication/netmanager_base/services/netmanagernative/src/netsys_native_service.cpp
+--- a/foundation/communication/netmanager_base/services/netmanagernative/src/netsys_native_service.cpp
++++ b/foundation/communication/netmanager_base/services/netmanagernative/src/netsys_native_service.cpp
+@@ -31,6 +31,9 @@
+ #include "system_vpn_wrapper.h"
+ #endif // SUPPORT_SYSVPN
+ #include "bpf_ring_buffer.h"
++#ifdef OHOS_QEMU_MODEM_TUN
++#include "qemu_modem_tun.h"
++#endif
+ 
+ using namespace OHOS::NetManagerStandard::CommonUtils;
+ namespace OHOS {
+@@ -71,6 +74,11 @@
+ #ifdef FEATURE_NET_FIREWALL_ENABLE
+     bpfNetFirewall_->StartListener();
+ #endif
++#ifdef OHOS_QEMU_MODEM_TUN
++    if (!StartQemuModemTun()) {
++        NETNATIVE_LOGE("QEMU virtual modem TUN endpoint failed");
++    }
++#endif
+     NETNATIVE_LOGI("start listener end on start end");
+ }
+ 
+@@ -78,6 +86,9 @@
+ {
+     std::lock_guard<std::mutex> guard(instanceLock_);
+     state_ = ServiceRunningState::STATE_STOPPED;
++#ifdef OHOS_QEMU_MODEM_TUN
++    StopQemuModemTun();
++#endif
+     NETNATIVE_LOGI("stop listener");
+     manager_->StopListener();
+ #ifdef FEATURE_NET_FIREWALL_ENABLE
+diff --git a/foundation/communication/netmanager_base/services/netmanagernative/src/qemu_modem_tun.cpp b/foundation/communication/netmanager_base/services/netmanagernative/src/qemu_modem_tun.cpp
+new file mode 100644
+--- /dev/null
++++ b/foundation/communication/netmanager_base/services/netmanagernative/src/qemu_modem_tun.cpp
+@@ -0,0 +1,221 @@
++/* Copyright (c) 2026. Licensed under the Apache License, Version 2.0. */
++#include "qemu_modem_tun.h"
++
++#include <array>
++#include <cerrno>
++#include <chrono>
++#include <cstddef>
++#include <cstdint>
++#include <cstdio>
++#include <cstring>
++#include <fstream>
++#include <linux/if_tun.h>
++#include <mutex>
++#include <net/if.h>
++#include <poll.h>
++#include <sstream>
++#include <string>
++#include <sys/eventfd.h>
++#include <sys/ioctl.h>
++#include <sys/socket.h>
++#include <sys/un.h>
++#include <fcntl.h>
++#include <thread>
++#include <unistd.h>
++
++namespace OHOS::NetsysNative {
++namespace {
++constexpr char ENDPOINT[] = "qemu_modem_tun579";
++constexpr char CALLER_CONTEXT[] = "u:r:sh:s0";
++constexpr int POLL_MS = 250;
++constexpr int HANDSHAKE_MS = 3000;
++constexpr size_t MAX_REQUEST = 160;
++
++class Fd {
++public:
++    explicit Fd(int value = -1) : value_(value) {}
++    ~Fd() { if (value_ >= 0) { close(value_); } }
++    Fd(const Fd &) = delete;
++    Fd &operator=(const Fd &) = delete;
++    int Get() const { return value_; }
++    void Reset(int value = -1)
++    {
++        if (value_ >= 0) { close(value_); }
++        value_ = value;
++    }
++private:
++    int value_;
++};
++
++bool HexId(const std::string &text, size_t length, bool boot)
++{
++    if (text.size() != length) { return false; }
++    for (size_t i = 0; i < length; ++i) {
++        if (boot && (i == 8 || i == 13 || i == 18 || i == 23)) {
++            if (text[i] != '-') { return false; }
++        } else if (!((text[i] >= '0' && text[i] <= '9') || (text[i] >= 'a' && text[i] <= 'f'))) {
++            return false;
++        }
++    }
++    return true;
++}
++
++bool Caller(int fd, struct ucred &credentials)
++{
++    socklen_t length = sizeof(credentials);
++    if (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &credentials, &length) != 0 ||
++        length != sizeof(credentials) || credentials.uid != 0 || credentials.pid <= 0) { return false; }
++    std::array<char, 128> context {};
++    length = context.size();
++    if (getsockopt(fd, SOL_SOCKET, SO_PEERSEC, context.data(), &length) != 0 || length == 0 ||
++        length > context.size()) { return false; }
++    if (context[length - 1] == '\0') { --length; }
++    return length == sizeof(CALLER_CONTEXT) - 1 &&
++        memcmp(context.data(), CALLER_CONTEXT, length) == 0;
++}
++
++bool Transfer(int client)
++{
++    struct ucred credentials {};
++    if (!Caller(client, credentials)) { return false; }
++    std::array<char, MAX_REQUEST> request {};
++    alignas(struct cmsghdr) std::array<char, CMSG_SPACE(sizeof(int) * 4)> control {};
++    struct iovec vector {request.data(), request.size()};
++    struct msghdr message {};
++    message.msg_iov = &vector;
++    message.msg_iovlen = 1;
++    message.msg_control = control.data();
++    message.msg_controllen = control.size();
++    ssize_t count = recvmsg(client, &message, MSG_CMSG_CLOEXEC | MSG_DONTWAIT);
++    bool unexpectedControl = message.msg_controllen != 0;
++    // Even a malformed caller may send fds: close every descriptor delivered
++    // by the kernel before rejecting it. No client-controlled fd is retained.
++    for (auto *c = CMSG_FIRSTHDR(&message); c != nullptr; c = CMSG_NXTHDR(&message, c)) {
++        if (c->cmsg_level == SOL_SOCKET && c->cmsg_type == SCM_RIGHTS && c->cmsg_len >= CMSG_LEN(0)) {
++            auto *fds = reinterpret_cast<int *>(CMSG_DATA(c));
++            size_t number = (c->cmsg_len - CMSG_LEN(0)) / sizeof(int);
++            for (size_t i = 0; i < number; ++i) { close(fds[i]); }
++        }
++    }
++    if (count <= 0 || static_cast<size_t>(count) >= request.size() || unexpectedControl ||
++        (message.msg_flags & (MSG_TRUNC | MSG_CTRUNC)) != 0) { return false; }
++    std::string wire(request.data(), static_cast<size_t>(count));
++    std::istringstream fields(wire);
++    std::string version, run, boot, nonce, extra, actualBoot;
++    if (!(fields >> version >> run >> boot >> nonce) || (fields >> extra) || version != "QMT1" ||
++        !HexId(run, 32, false) || !HexId(boot, 36, true) || !HexId(nonce, 32, false) ||
++        wire != "QMT1\t" + run + "\t" + boot + "\t" + nonce + "\n") { return false; }
++    std::ifstream bootFile("/proc/sys/kernel/random/boot_id");
++    if (!std::getline(bootFile, actualBoot) || actualBoot != boot || if_nametoindex("usb0") != 0) {
++        return false;
++    }
++    Fd tun(open("/dev/tun", O_RDWR | O_CLOEXEC | O_NONBLOCK));
++    if (tun.Get() < 0) { return false; }
++    struct ifreq interface {};
++    memcpy(interface.ifr_name, "usb0", sizeof("usb0"));
++    interface.ifr_flags = IFF_TUN | IFF_NO_PI | IFF_TUN_EXCL;
++    if (ioctl(tun.Get(), TUNSETIFF, &interface) != 0 || strcmp(interface.ifr_name, "usb0") != 0) {
++        return false;
++    }
++    unsigned index = if_nametoindex("usb0");
++    if (index == 0) { return false; }
++    std::string reply = "QMT1\t" + run + "\t" + boot + "\t" + nonce + "\t" +
++        std::to_string(getpid()) + "\t" + std::to_string(getuid()) + "\t" +
++        std::to_string(index) + "\t" + std::to_string(credentials.pid) + "\n";
++    vector = {reply.data(), reply.size()};
++    control.fill(0);
++    message = {};
++    message.msg_iov = &vector;
++    message.msg_iovlen = 1;
++    message.msg_control = control.data();
++    message.msg_controllen = CMSG_SPACE(sizeof(int));
++    auto *header = CMSG_FIRSTHDR(&message);
++    header->cmsg_level = SOL_SOCKET;
++    header->cmsg_type = SCM_RIGHTS;
++    header->cmsg_len = CMSG_LEN(sizeof(int));
++    int descriptor = tun.Get();
++    memcpy(CMSG_DATA(header), &descriptor, sizeof(descriptor));
++    // The local TUN reference is destroyed immediately. The original modem
++    // peer becomes its sole owner; no persistence, address or route is set.
++    return sendmsg(client, &message, MSG_NOSIGNAL | MSG_DONTWAIT) == static_cast<ssize_t>(reply.size());
++}
++
++class ModemTun {
++public:
++    ~ModemTun() { Stop(); }
++    bool Start()
++    {
++        if (worker_.joinable()) { return true; }
++        listener_.Reset(socket(AF_UNIX, SOCK_SEQPACKET | SOCK_CLOEXEC | SOCK_NONBLOCK, 0));
++        wake_.Reset(eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK));
++        struct sockaddr_un address {};
++        address.sun_family = AF_UNIX;
++        memcpy(address.sun_path + 1, ENDPOINT, sizeof(ENDPOINT) - 1);
++        socklen_t length = offsetof(struct sockaddr_un, sun_path) + sizeof(ENDPOINT);
++        if (listener_.Get() < 0 || wake_.Get() < 0 ||
++            bind(listener_.Get(), reinterpret_cast<struct sockaddr *>(&address), length) != 0 ||
++            listen(listener_.Get(), 2) != 0) {
++            listener_.Reset(); wake_.Reset(); return false;
++        }
++        worker_ = std::thread([this] { Loop(); });
++        return true;
++    }
++    void Stop()
++    {
++        if (worker_.joinable()) {
++            uint64_t value = 1;
++            (void)write(wake_.Get(), &value, sizeof(value));
++            worker_.join();
++        }
++        listener_.Reset(); wake_.Reset();
++    }
++private:
++    void Loop()
++    {
++        Fd client;
++        bool transferred = false;
++        std::chrono::steady_clock::time_point accepted;
++        for (;;) {
++            struct pollfd pollers[] = {{wake_.Get(), POLLIN, 0}, {listener_.Get(), POLLIN, 0},
++                {client.Get(), POLLIN, 0}};
++            int result = poll(pollers, 3, POLL_MS);
++            if (result < 0 && errno == EINTR) { continue; }
++            if (result < 0 || pollers[0].revents != 0 ||
++                (pollers[1].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) { return; }
++            if (client.Get() >= 0 && ((pollers[2].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0 ||
++                (!transferred && std::chrono::steady_clock::now() - accepted >=
++                    std::chrono::milliseconds(HANDSHAKE_MS)))) {
++                client.Reset(); transferred = false;
++            } else if (client.Get() >= 0 && (pollers[2].revents & POLLIN) != 0) {
++                if (transferred || !Transfer(client.Get())) { client.Reset(); transferred = false; }
++                else { transferred = true; }
++            }
++            if ((pollers[1].revents & POLLIN) != 0) {
++                int next = accept4(listener_.Get(), nullptr, nullptr, SOCK_CLOEXEC | SOCK_NONBLOCK);
++                if (next >= 0) {
++                    struct ucred credentials {};
++                    if (client.Get() >= 0 || !Caller(next, credentials)) { close(next); }
++                    else { client.Reset(next); transferred = false; accepted = std::chrono::steady_clock::now(); }
++                }
++            }
++        }
++    }
++    Fd listener_;
++    Fd wake_;
++    std::thread worker_;
++};
++std::mutex lifecycle;
++ModemTun modem;
++}
++
++bool StartQemuModemTun()
++{
++    std::lock_guard<std::mutex> guard(lifecycle);
++    return modem.Start();
++}
++void StopQemuModemTun()
++{
++    std::lock_guard<std::mutex> guard(lifecycle);
++    modem.Stop();
++}
++}
+diff --git a/foundation/communication/netmanager_base/services/netmanagernative/include/qemu_modem_tun.h b/foundation/communication/netmanager_base/services/netmanagernative/include/qemu_modem_tun.h
+new file mode 100644
+--- /dev/null
++++ b/foundation/communication/netmanager_base/services/netmanagernative/include/qemu_modem_tun.h
+@@ -0,0 +1,10 @@
++/* Copyright (c) 2026. Licensed under the Apache License, Version 2.0. */
++#ifndef OHOS_QEMU_MODEM_TUN_H
++#define OHOS_QEMU_MODEM_TUN_H
++namespace OHOS::NetsysNative {
++// QEMU's developer virtual modem owns the received nonpersistent usb0 fd.
++// Creation stays in netsysnative; no capability or TUN ioctl is given to sh.
++bool StartQemuModemTun();
++void StopQemuModemTun();
++}
++#endif

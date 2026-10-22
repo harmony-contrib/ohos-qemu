@@ -40,7 +40,7 @@ inline bool RemoveSession(int root, const char *name, uid_t owner)
         while (dirent *entry = readdir(entries)) {
             const std::string item(entry->d_name);
             if (item == "." || item == "..") continue;
-            if (item != "client.ovpn" && item != "askpass" && item != "management" && item != "ready") {
+            if (item != "client.ovpn" && item != "askpass" && item != "management" && item != "ready" && item != "dns-wire.jsonl") {
                 valid = false;
                 break;
             }
@@ -49,7 +49,7 @@ inline bool RemoveSession(int root, const char *name, uid_t owner)
         closedir(entries);
     }
     if (valid) {
-        for (const char *item : {"client.ovpn", "askpass", "management", "ready"})
+        for (const char *item : {"client.ovpn", "askpass", "management", "ready", "dns-wire.jsonl"})
             if (unlinkat(fd, item, 0) != 0 && errno != ENOENT) valid = false;
     }
     close(fd);

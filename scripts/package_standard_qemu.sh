@@ -3148,6 +3148,9 @@ verify_audio_haptic_sync_id_source() {
   python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/audio_onset579/apply.py" \
     --source-root "${SOURCE_ROOT}" --action verify \
     > "${SOURCE_ROOT}/out/${PRODUCT}/audio-onset579-source.json"
+  python3 "${SCRIPT_DIR}/../patches/common/drivers/peripheral/intelligent_voice/cpu_provider/verify_source.py" \
+    --source-root "${SOURCE_ROOT}" --require-final \
+    > "${SOURCE_ROOT}/out/${PRODUCT}/media579-cpu-source.json"
 }
 
 verify_ace_cfi_native_closure() {
@@ -3414,6 +3417,7 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
       --dependency "${QEMU_MESA_LLVM_ARTIFACTS:?full profile requires pinned LLVM artifacts}/${PRODUCT}" \
       --write-provenance "${PACKAGE_DIR}/mesa-llvm-source" \
       --output "${PACKAGE_DIR}/mesa-llvm-image-evidence.json"
+    bash "${SCRIPT_DIR}/../patches/common/foundation/communication/netmanager_ext/qemu_openvpn_options579/apply.sh" --source-root "${SOURCE_ROOT}" --require-final
     python3 "${SCRIPT_DIR}/verify_openvpn_backend_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --product "${PRODUCT}" \
       --source-root "${SOURCE_ROOT}" \

@@ -19,7 +19,7 @@
      ],
 --- a/drivers/peripheral/sensor/hdi_impl/BUILD.gn
 +++ b/drivers/peripheral/sensor/hdi_impl/BUILD.gn
-@@ -22,8 +22,16 @@
+@@ -22,8 +22,18 @@
      "../hal/include",
    ]
  
@@ -28,6 +28,8 @@
 +  if (drivers_peripheral_sensor_feature_qemu_external) {
 +    sources = [
 +      "qemu_sensor_input.cpp",
++      "qemu_rotation_input.cpp",
++      "qemu_headposture_input.cpp",
 +      "qemu_sensor_vdi.cpp",
 +    ]
 +    deps = []

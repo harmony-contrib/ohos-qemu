@@ -348,8 +348,11 @@ def gn_generation(text, source_root, product, start_ns, end_ns):
     heads = [line for line in text.splitlines() if line.startswith(prefix)]
     require(len(heads) == 1, 'unique current full GN generation header required in each log')
     source = Path(source_root); head = heads[0]
-    require(head.startswith(prefix + str(source / 'prebuilts/build-tools/linux-x86/bin/gn') + ' gen ') and
-            head.endswith(' ' + str(source / 'out' / product)), 'GN header source/product differs')
+    # The normal emulated launcher appends this one fixed GN control flag.
+    # Preserve the full actual header; remove only that suffix for path binding.
+    path_header = head.removesuffix(' --threads=1')
+    require(path_header.startswith(prefix + str(source / 'prebuilts/build-tools/linux-x86/bin/gn') + ' gen ') and
+            path_header.endswith(' ' + str(source / 'out' / product)), 'GN header source/product differs')
     times = re.findall(r'(?<!\S)ohos_build_time=([0-9]+)(?=\s)', head)
     require(1 <= len(times) <= 2 and len(set(times)) == 1 and
             start_ns // 1000000 <= int(times[0]) <= end_ns // 1000000,

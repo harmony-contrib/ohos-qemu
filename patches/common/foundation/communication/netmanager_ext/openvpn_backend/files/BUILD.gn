@@ -23,6 +23,7 @@ action("build_openvpn") {
     "recipe/scripts/openharmony_release_source_lock.py",
     "recipe/scripts/openharmony_7_0_release_source_lock.json",
     "recipe/patches/common/third_party/openvpn/ohos_backend/0001-recognize-OHOS-and-isolate-duplicate-UAPI-socket-type.patch",
+    "recipe/patches/common/third_party/openvpn/ohos_backend/0002-export-final-DNS-policy-to-AF_UNIX-tunnel.patch",
   ]
   outputs = [
     "$openvpn_generated/openvpn",
@@ -69,6 +70,11 @@ foreach(helper,
     executable_name = "qemu_openvpn_tun"
   }
   ohos_executable(executable_name) {
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = false
+    }
     sources = [ "$helper.cpp" ]
     defines = [ "SUPPORT_SYSVPN" ]
     cflags_cc = [
@@ -78,6 +84,13 @@ foreach(helper,
       "-Werror",
     ]
     deps = [ "$EXT_INNERKITS_ROOT/netvpnclient:net_vpn_manager_if" ]
+    if (helper == "tun_bridge") {
+      deps += [
+        "//foundation/communication/netmanager_base/interfaces/innerkits/netconnclient:net_conn_manager_if",
+        "//third_party/openssl:libcrypto_shared",
+        "//third_party/openssl:libssl_shared",
+      ]
+    }
     external_deps = [
       "ability_base:want",
       "c_utils:utils",

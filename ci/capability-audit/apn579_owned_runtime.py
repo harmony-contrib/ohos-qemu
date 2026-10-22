@@ -23,6 +23,11 @@ def run(root_io, parameters, apps_bindings):
         apps_bindings.update(bind(root_io))
         result = run_apps(root_io.guest,apps_bindings,parameters)
         modem.join_apps(result,Path(parameters['output']) / 'evidence.json')
+        # L22 reuses this exact held peer after original complete APN CRUD.
+        # Its failures are preserved separately and replayed by Root only
+        # after IO.close and the original Owner final settlement.
+        from telephony579_runtime import run as run_transactions
+        run_transactions(root_io,modem)
     # The independent replay uses the preserved original stdout/footer, peer
     # stdin and raw typed journals after reverse cleanup, before root reviews
     # the unchanged original Apps result with its existing raw UI verifier.

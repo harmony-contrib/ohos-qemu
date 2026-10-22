@@ -41,7 +41,7 @@ ACTIONS = {
     'input': ('identity', 'permissions', 'observe', 'show-input', 'hide-input', 'capture-start', 'capture-stop', 'restore', 'exit'),
     'dhardware': ('identity', 'discover', 'authenticate', 'trusted', 'unbind', 'stop-discover', 'invalid-auth', 'exit'),
     'vpn': ('identity', 'authorize', 'stop-vpn', 'exit'),
-    'wifi': ('identity', 'permissions', 'snapshot', 'sta-start', 'sta-state', 'sta-stop', 'networks', 'detect', 'ap-start', 'ap-state', 'ap-stop', 'restore', 'exit'),
+    'wifi': ('p2p-snapshot', 'p2p-watch', 'p2p-discover', 'p2p-state', 'p2p-connect', 'p2p-remove', 'p2p-create', 'p2p-off', 'p2p-restore', 'identity', 'permissions', 'snapshot', 'sta-start', 'sta-state', 'sta-stop', 'networks', 'detect', 'ap-start', 'ap-state', 'ap-stop', 'network579-state', 'network579-policy-read', 'network579-policy-before', 'network579-policy-deny', 'network579-policy-allow', 'network579-policy-restore', 'network579-traffic', 'restore', 'exit'),
     'published': ('identity', 'declarations', 'exit'), 'exports': ('identity', 'matrix-modern', 'matrix-legacy', 'exit'),
     'imagegen': ('identity', 'graph-open', 'graph-hide', 'graph-restore', 'graph-close',
         'dialog-open', 'dialog-hide', 'dialog-restore', 'dialog-close', 'boundaries', 'exit'),
@@ -83,8 +83,8 @@ def permissions(case, role):
         'dhardware': ['ohos.permission.DISTRIBUTED_DATASYNC'],
         'ethernet': ['ohos.permission.CONNECTIVITY_INTERNAL', 'ohos.permission.GET_NETWORK_INFO'],
         'sysvpn': ['ohos.permission.MANAGE_VPN'], 'alwaysvpn': ['ohos.permission.MANAGE_VPN'],
-        'wifi': ['ohos.permission.INTERNET', 'ohos.permission.GET_NETWORK_INFO', 'ohos.permission.GET_WIFI_INFO', 'ohos.permission.SET_WIFI_INFO', 'ohos.permission.SET_WIFI_CONFIG',
-                 'ohos.permission.GET_WIFI_CONFIG', 'ohos.permission.MANAGE_WIFI_CONNECTION',
+        'wifi': ['ohos.permission.MANAGE_NET_STRATEGY', 'ohos.permission.INTERNET', 'ohos.permission.GET_NETWORK_INFO', 'ohos.permission.GET_WIFI_INFO', 'ohos.permission.SET_WIFI_INFO', 'ohos.permission.SET_WIFI_CONFIG',
+                 'ohos.permission.GET_WIFI_CONFIG', 'ohos.permission.GET_WIFI_LOCAL_MAC', 'ohos.permission.GET_WIFI_PEERS_MAC', 'ohos.permission.MANAGE_WIFI_CONNECTION',
                  'ohos.permission.MANAGE_WIFI_HOTSPOT', 'ohos.permission.LOCATION', 'ohos.permission.APPROXIMATELY_LOCATION']}.get(case, [])
 
 

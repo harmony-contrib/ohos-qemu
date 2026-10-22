@@ -1,0 +1,2048 @@
+{
+  "schema": "msdp579-exact-public-provider-source-facts/v1",
+  "original_id": "behavior:msdp-device-status-mock-or-missing-clients",
+  "whole_id_unsupported": false,
+  "actual": {
+    "head": "96335211bea5ca348325d55746e14e102208354f",
+    "facts": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/FACTS579.json",
+      "sha256": "92564ad0180095adfd0f3ccf52ceb9a231d4e0da15de0797f5c0022d56208474",
+      "bytes": 54203484
+    },
+    "motion_exact_path": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-motion579-16/actual-source16/FACTS579.json",
+      "sha256": "4178fa79aff6ed6953223c8d4e46c1cc8c64d18cc634916ffc4895fd21f860f8",
+      "bytes": 8999
+    }
+  },
+  "official": {
+    "url": "https://github.com/openharmony/msdp_device_status",
+    "head": "468687bfe725a413dd2b8acff459d20aa982b56c",
+    "archive": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source.tar.gz",
+      "sha256": "65ac4e80433f769f67a6bd07f2d3a4c4edd521846ac9fee289eb32faba1e1436",
+      "bytes": 970143
+    },
+    "complete_tree": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-tree.txt",
+      "sha256": "0b86654c86a1af5e3280aeba5ae4c379cee59c08ac7fb7c95d2e7e80b6545de2",
+      "bytes": 143902
+    },
+    "complete_archive_inventory": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/archive-inventory.json",
+      "sha256": "df73689cf00190a0a5e0fb6d215005b3bf53017aa66f5751688129e9d798b0d3",
+      "bytes": 252673
+    },
+    "production_symbol_references": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/sig/full-production-symbol-references.json",
+      "sha256": "b84815bda3130944df91b8dc02fbbe5ddb70e6d4d02c91a2fbe8d674c4268e22",
+      "bytes": 4247
+    }
+  },
+  "corresponding_sig": {
+    "manifest_head": "d679e50d1ed091d9e07fc28d3ab7ceba5d385bc3",
+    "catalog": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/sig/SIG-CATALOG.json",
+      "sha256": "f5d03985fd0742de07f42cf6923959cd426dda3e62535ff55fe26e52b010df83",
+      "bytes": 2341229
+    },
+    "community_head": "af4dba4f7c432befe4f20ee2a7a4ac734781f1c3",
+    "complete_sig_catalog": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/sig/sigs_list.json",
+      "sha256": "7ef03183bbb4098d838f31c30fc98474a27228ca85da11e72131289129c96d05",
+      "bytes": 294978
+    },
+    "entry": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/sig/corresponding-sig.json",
+      "sha256": "a1bfd3c537b97973dc11efe7ef42f1dc00c0bde0aab7a5c667953df3aa2ba108",
+      "bytes": 12778
+    },
+    "native_implementation": "msdp_device_status full fixed archive, selected actual tree and GN entry; generic SensorAgent/wrapper clients do not implement these models",
+    "scope": "The published corresponding SIG entry names this native MSDP source. Its complete fixed production source contains clients/loaders/contracts but not the seven required complete provider implementations. The full SIG manifest catalog shows SDK/plugin wrappers; no compatible named native model provider is supplied by this inspected public boundary. No failed/empty web search is used as absence evidence."
+  },
+  "integrated": [
+    "existing real Cooperate plugin + product coordination flag + independent paired source input",
+    "real Drag/UDMF source/drop/state lifecycle",
+    "original independent SensorAgent still source heuristic; no physical accuracy claim",
+    "real service metadata callback handshake, distinct from missing pixel watermark",
+    "new QEMU ROTATION_VECTOR input to unchanged public ZXY conversion, freshness/death/invalid/close/reopen",
+    "real absolute/horizontal/vertical simultaneous inner StationaryManager callbacks in the original HAP UIDs, product CFI ABI addon, partial unsubscribe/drain/EOF"
+  ],
+  "partial_positive_scopes": {
+    "stationary-relative-input": {
+      "provider": "real TYPE_RELATIVE_STILL algorithm, not mock/absoluteStill",
+      "boundary": "actual relativeStill on/once/off results, no invented callback; actual ordinary/grant/denied lifecycle, quiet, UID cleanup",
+      "source_evidence": [
+        {
+          "kind": "actual_selected_7_source",
+          "file": {
+            "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp",
+            "sha256": "445396673473d9503aacf19fa03d630ec6241a641a172dad121d3fb9919c9192",
+            "bytes": 13996
+          },
+          "lines": [
+            {
+              "line": 54,
+              "text": "    if (GetSensorHdi(type) == RET_OK) {"
+            },
+            {
+              "line": 55,
+              "text": "        FI_HILOGI(\"GetSensorHdi is support\");"
+            },
+            {
+              "line": 109,
+              "text": "    if (!lifecycle.owns_lock() || algoRetiring_ || GetAlgoAbility(type) != RET_OK) { return RET_ERR; }"
+            },
+            {
+              "line": 152,
+              "text": "ErrCode DeviceStatusMsdpClientImpl::GetSensorHdi(Type type)"
+            },
+            {
+              "line": 157,
+              "text": "ErrCode DeviceStatusMsdpClientImpl::GetAlgoAbility(Type type)"
+            },
+            {
+              "line": 159,
+              "text": "    if ((type == Type::TYPE_STILL) || (type == Type::TYPE_ABSOLUTE_STILL) || (type == Type::TYPE_HORIZONTAL_POSITION) ||"
+            }
+          ]
+        },
+        {
+          "kind": "official_current_source",
+          "file": {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source/services/native/src/devicestatus_msdp_client_impl.cpp",
+            "sha256": "09b00c603b0fedc4966b6d2bb99d0f619548b9d4ae176bfb407f2fd4140e43c1",
+            "bytes": 13639
+          },
+          "lines": [
+            {
+              "line": 55,
+              "text": "    if (GetSensorHdi(type) == RET_OK) {"
+            },
+            {
+              "line": 56,
+              "text": "        FI_HILOGI(\"GetSensorHdi is support\");"
+            },
+            {
+              "line": 104,
+              "text": "    if (GetAlgoAbility(type) == RET_ERR) {"
+            },
+            {
+              "line": 160,
+              "text": "ErrCode DeviceStatusMsdpClientImpl::GetSensorHdi(Type type)"
+            },
+            {
+              "line": 165,
+              "text": "ErrCode DeviceStatusMsdpClientImpl::GetAlgoAbility(Type type)"
+            }
+          ]
+        },
+        {
+          "kind": "actual_selected_7_source",
+          "file": {
+            "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp",
+            "sha256": "66e7494899a03569b37b0999dd90cc17414220d9575fde727ad588819b239f49",
+            "bytes": 7348
+          },
+          "lines": [
+            {
+              "line": 102,
+              "text": "        case Type::TYPE_STILL:"
+            },
+            {
+              "line": 103,
+              "text": "        case Type::TYPE_ABSOLUTE_STILL: {"
+            },
+            {
+              "line": 106,
+              "text": "        case Type::TYPE_HORIZONTAL_POSITION: {"
+            },
+            {
+              "line": 109,
+              "text": "        case Type::TYPE_VERTICAL_POSITION: {"
+            },
+            {
+              "line": 133,
+              "text": "        case TYPE_STILL: instance = std::make_shared<AlgoAbsoluteStill>(); break;"
+            },
+            {
+              "line": 134,
+              "text": "        case TYPE_ABSOLUTE_STILL: instance = std::make_shared<AlgoAbsoluteStill>(); break;"
+            },
+            {
+              "line": 135,
+              "text": "        case TYPE_HORIZONTAL_POSITION: instance = std::make_shared<AlgoHorizontal>(); break;"
+            },
+            {
+              "line": 136,
+              "text": "        case TYPE_VERTICAL_POSITION: instance = std::make_shared<AlgoVertical>(); break;"
+            },
+            {
+              "line": 142,
+              "text": "        case TYPE_STILL: publicStill_ = std::static_pointer_cast<AlgoAbsoluteStill>(instance); break;"
+            },
+            {
+              "line": 143,
+              "text": "        case TYPE_ABSOLUTE_STILL: still_ = std::static_pointer_cast<AlgoAbsoluteStill>(instance); break;"
+            },
+            {
+              "line": 144,
+              "text": "        case TYPE_HORIZONTAL_POSITION: horizontalPosition_ = std::static_pointer_cast<AlgoHorizontal>(instance); break;"
+            },
+            {
+              "line": 145,
+              "text": "        case TYPE_VERTICAL_POSITION: verticalPosition_ = std::static_pointer_cast<AlgoVertical>(instance); break;"
+            },
+            {
+              "line": 161,
+              "text": "        case TYPE_STILL: instance = publicStill_; break;"
+            },
+            {
+              "line": 162,
+              "text": "        case TYPE_ABSOLUTE_STILL: instance = still_; break;"
+            },
+            {
+              "line": 163,
+              "text": "        case TYPE_HORIZONTAL_POSITION: instance = horizontalPosition_; break;"
+            },
+            {
+              "line": 164,
+              "text": "        case TYPE_VERTICAL_POSITION: instance = verticalPosition_; break;"
+            },
+            {
+              "line": 175,
+              "text": "        case TYPE_STILL: publicStill_.reset(); break;"
+            },
+            {
+              "line": 176,
+              "text": "        case TYPE_ABSOLUTE_STILL: still_.reset(); break;"
+            },
+            {
+              "line": 177,
+              "text": "        case TYPE_HORIZONTAL_POSITION: horizontalPosition_.reset(); break;"
+            },
+            {
+              "line": 178,
+              "text": "        case TYPE_VERTICAL_POSITION: verticalPosition_.reset(); break;"
+            }
+          ]
+        },
+        {
+          "kind": "official_current_source",
+          "file": {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source/libs/src/devicestatus_algorithm_manager.cpp",
+            "sha256": "5e07d69bdb885cf7600a60834403b92ae3036e92cd972bf757e466346987ecab",
+            "bytes": 7414
+          },
+          "lines": [
+            {
+              "line": 64,
+              "text": "        case Type::TYPE_ABSOLUTE_STILL: {"
+            },
+            {
+              "line": 70,
+              "text": "        case Type::TYPE_HORIZONTAL_POSITION: {"
+            },
+            {
+              "line": 76,
+              "text": "        case Type::TYPE_VERTICAL_POSITION: {"
+            },
+            {
+              "line": 120,
+              "text": "        case Type::TYPE_ABSOLUTE_STILL: {"
+            },
+            {
+              "line": 123,
+              "text": "        case Type::TYPE_HORIZONTAL_POSITION: {"
+            },
+            {
+              "line": 126,
+              "text": "        case Type::TYPE_VERTICAL_POSITION: {"
+            },
+            {
+              "line": 146,
+              "text": "        case Type::TYPE_ABSOLUTE_STILL: {"
+            },
+            {
+              "line": 156,
+              "text": "        case Type::TYPE_HORIZONTAL_POSITION: {"
+            },
+            {
+              "line": 166,
+              "text": "        case Type::TYPE_VERTICAL_POSITION: {"
+            },
+            {
+              "line": 196,
+              "text": "        case Type::TYPE_ABSOLUTE_STILL: {"
+            },
+            {
+              "line": 204,
+              "text": "        case Type::TYPE_HORIZONTAL_POSITION: {"
+            },
+            {
+              "line": 212,
+              "text": "        case Type::TYPE_VERTICAL_POSITION: {"
+            }
+          ]
+        },
+        {
+          "kind": "actual_selected_7_source",
+          "file": {
+            "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/msdp/device_status/frameworks/js/napi/src/devicestatus_napi.cpp",
+            "sha256": "3e0f71dbc70665dab0e0a8cfc542765e535af125703a604f79fc480e21eca14b",
+            "bytes": 22482
+          },
+          "lines": [
+            {
+              "line": 119,
+              "text": "    } else if (type == \"relativeStill\") {"
+            },
+            {
+              "line": 120,
+              "text": "        return Type::TYPE_RELATIVE_STILL;"
+            },
+            {
+              "line": 275,
+              "text": "    if ((type != Type::TYPE_STILL) && (type != Type::TYPE_RELATIVE_STILL)) {"
+            },
+            {
+              "line": 302,
+              "text": "    if ((type != Type::TYPE_STILL) && (type != Type::TYPE_RELATIVE_STILL)) {"
+            },
+            {
+              "line": 384,
+              "text": "    int32_t subscribeRet = StationaryManager::GetInstance().SubscribeCallback(static_cast<Type>(type),"
+            },
+            {
+              "line": 387,
+              "text": "        ThrowErr(env, SERVICE_EXCEPTION, \"On:Failed to SubscribeCallback\");"
+            },
+            {
+              "line": 407,
+              "text": "    if ((type != Type::TYPE_STILL) && (type != Type::TYPE_RELATIVE_STILL)) {"
+            }
+          ]
+        },
+        {
+          "kind": "official_current_source",
+          "file": {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source/frameworks/js/napi/src/devicestatus_napi.cpp",
+            "sha256": "3e0f71dbc70665dab0e0a8cfc542765e535af125703a604f79fc480e21eca14b",
+            "bytes": 22482
+          },
+          "lines": [
+            {
+              "line": 119,
+              "text": "    } else if (type == \"relativeStill\") {"
+            },
+            {
+              "line": 120,
+              "text": "        return Type::TYPE_RELATIVE_STILL;"
+            },
+            {
+              "line": 275,
+              "text": "    if ((type != Type::TYPE_STILL) && (type != Type::TYPE_RELATIVE_STILL)) {"
+            },
+            {
+              "line": 302,
+              "text": "    if ((type != Type::TYPE_STILL) && (type != Type::TYPE_RELATIVE_STILL)) {"
+            },
+            {
+              "line": 384,
+              "text": "    int32_t subscribeRet = StationaryManager::GetInstance().SubscribeCallback(static_cast<Type>(type),"
+            },
+            {
+              "line": 387,
+              "text": "        ThrowErr(env, SERVICE_EXCEPTION, \"On:Failed to SubscribeCallback\");"
+            },
+            {
+              "line": 407,
+              "text": "    if ((type != Type::TYPE_STILL) && (type != Type::TYPE_RELATIVE_STILL)) {"
+            }
+          ]
+        }
+      ],
+      "unsupported_proposal": true,
+      "positive_supported": false,
+      "repaired": false,
+      "runtime_pass": false,
+      "whole_id_unsupported": false
+    },
+    "device-steady-standing": {
+      "provider": "motion:motion_client + motion_interface_native, steadyStanding/3602",
+      "boundary": "public steadyStandingDetect on/off, real system/permission/801 branch and restart/quiet",
+      "source_evidence": [
+        {
+          "kind": "actual_selected_7_source",
+          "file": {
+            "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/msdp/device_status/intention/stationary/server/BUILD.gn",
+            "sha256": "ab18f6ca3988bfb3e6c501efbd5f6e54e5bd7af5ff4045cf1f80a1e11827edd4",
+            "bytes": 4132
+          },
+          "lines": [
+            {
+              "line": 96,
+              "text": "    defines += [ \"MOTION_ENABLE\" ]"
+            },
+            {
+              "line": 97,
+              "text": "    external_deps += [ \"motion:motion_interface_native\" ]"
+            }
+          ]
+        },
+        {
+          "kind": "official_current_source",
+          "file": {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source/intention/stationary/server/BUILD.gn",
+            "sha256": "ab18f6ca3988bfb3e6c501efbd5f6e54e5bd7af5ff4045cf1f80a1e11827edd4",
+            "bytes": 4132
+          },
+          "lines": [
+            {
+              "line": 96,
+              "text": "    defines += [ \"MOTION_ENABLE\" ]"
+            },
+            {
+              "line": 97,
+              "text": "    external_deps += [ \"motion:motion_interface_native\" ]"
+            }
+          ]
+        },
+        {
+          "kind": "actual_selected_7_source",
+          "file": {
+            "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/msdp/device_status/intention/stationary/server/src/stationary_server.cpp",
+            "sha256": "c6aa30108eb8a11ee5f7d23448524dd0d8c6564dd896537abe3a11c740c423ec",
+            "bytes": 16352
+          },
+          "lines": [
+            {
+              "line": 42,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 43,
+              "text": "constexpr int32_t MOTION_TYPE_STAND = 3602;"
+            },
+            {
+              "line": 47,
+              "text": "    { Type::TYPE_STAND, MOTION_TYPE_STAND },"
+            },
+            {
+              "line": 50,
+              "text": "    { MOTION_TYPE_STAND, Type::TYPE_STAND },"
+            },
+            {
+              "line": 53,
+              "text": "constexpr int32_t RET_NO_SUPPORT = 801;"
+            },
+            {
+              "line": 87,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 115,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 130,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 133,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 147,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 150,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 174,
+              "text": "    return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 178,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 341,
+              "text": "#ifdef MOTION_ENABLE"
+            }
+          ]
+        },
+        {
+          "kind": "official_current_source",
+          "file": {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source/intention/stationary/server/src/stationary_server.cpp",
+            "sha256": "c6aa30108eb8a11ee5f7d23448524dd0d8c6564dd896537abe3a11c740c423ec",
+            "bytes": 16352
+          },
+          "lines": [
+            {
+              "line": 42,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 43,
+              "text": "constexpr int32_t MOTION_TYPE_STAND = 3602;"
+            },
+            {
+              "line": 47,
+              "text": "    { Type::TYPE_STAND, MOTION_TYPE_STAND },"
+            },
+            {
+              "line": 50,
+              "text": "    { MOTION_TYPE_STAND, Type::TYPE_STAND },"
+            },
+            {
+              "line": 53,
+              "text": "constexpr int32_t RET_NO_SUPPORT = 801;"
+            },
+            {
+              "line": 87,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 115,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 130,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 133,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 147,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 150,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 174,
+              "text": "    return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 178,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 341,
+              "text": "#ifdef MOTION_ENABLE"
+            }
+          ]
+        }
+      ],
+      "unsupported_proposal": true,
+      "positive_supported": false,
+      "repaired": false,
+      "runtime_pass": false,
+      "whole_id_unsupported": false
+    },
+    "distance-measurement": {
+      "provider": "libspatial_awareness_client.z.so / CSubscribeDistanceMeasurement,CUnsubscribeDistanceMeasurement",
+      "boundary": "typed on/off DistanceMeasure/IndoorOrOutdoorIdentify, true argument/permission/library load outcomes and quiet",
+      "source_evidence": [
+        {
+          "kind": "actual_selected_7_source",
+          "file": {
+            "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/msdp/device_status/frameworks/js/napi/distance_measurement/src/distance_measurement_napi.cpp",
+            "sha256": "67932a94c7a93c34baeeaa790a1b904047d6e685a7dd8c41edcd843b1ad3751b",
+            "bytes": 41056
+          },
+          "lines": [
+            {
+              "line": 45,
+              "text": "const std::string_view SUBSCRIBE_FUNC_NAME = { \"CSubscribeDistanceMeasurement\" };"
+            },
+            {
+              "line": 46,
+              "text": "const std::string_view UNSUBSCRIBE_FUNC_NAME = { \"CUnsubscribeDistanceMeasurement\" };"
+            },
+            {
+              "line": 47,
+              "text": "const std::string SPATIAL_AWARENESS_CLIENT_SO_PATH = \"libspatial_awareness_client.z.so\";"
+            },
+            {
+              "line": 66,
+              "text": "            dlopen(SPATIAL_AWARENESS_CLIENT_SO_PATH.c_str(), RTLD_LAZY);"
+            },
+            {
+              "line": 721,
+              "text": "                dlsym(g_DistanceMeasurementNapi->g_distanceMeasurementHandle, SUBSCRIBE_FUNC_NAME.data()));"
+            },
+            {
+              "line": 724,
+              "text": "                FI_HILOGE(\"%{public}s find symbol failed, error: %{public}s\", SUBSCRIBE_FUNC_NAME.data(), dlerror());"
+            },
+            {
+              "line": 770,
+              "text": "            dlsym(g_DistanceMeasurementNapi->g_distanceMeasurementHandle, UNSUBSCRIBE_FUNC_NAME.data()));"
+            },
+            {
+              "line": 772,
+              "text": "            FI_HILOGE(\"%{public}s find symbol failed, error: %{public}s\", UNSUBSCRIBE_FUNC_NAME.data(), dlerror());"
+            }
+          ]
+        },
+        {
+          "kind": "official_current_source",
+          "file": {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source/frameworks/js/napi/distance_measurement/src/distance_measurement_napi.cpp",
+            "sha256": "67932a94c7a93c34baeeaa790a1b904047d6e685a7dd8c41edcd843b1ad3751b",
+            "bytes": 41056
+          },
+          "lines": [
+            {
+              "line": 45,
+              "text": "const std::string_view SUBSCRIBE_FUNC_NAME = { \"CSubscribeDistanceMeasurement\" };"
+            },
+            {
+              "line": 46,
+              "text": "const std::string_view UNSUBSCRIBE_FUNC_NAME = { \"CUnsubscribeDistanceMeasurement\" };"
+            },
+            {
+              "line": 47,
+              "text": "const std::string SPATIAL_AWARENESS_CLIENT_SO_PATH = \"libspatial_awareness_client.z.so\";"
+            },
+            {
+              "line": 66,
+              "text": "            dlopen(SPATIAL_AWARENESS_CLIENT_SO_PATH.c_str(), RTLD_LAZY);"
+            },
+            {
+              "line": 721,
+              "text": "                dlsym(g_DistanceMeasurementNapi->g_distanceMeasurementHandle, SUBSCRIBE_FUNC_NAME.data()));"
+            },
+            {
+              "line": 724,
+              "text": "                FI_HILOGE(\"%{public}s find symbol failed, error: %{public}s\", SUBSCRIBE_FUNC_NAME.data(), dlerror());"
+            },
+            {
+              "line": 770,
+              "text": "            dlsym(g_DistanceMeasurementNapi->g_distanceMeasurementHandle, UNSUBSCRIBE_FUNC_NAME.data()));"
+            },
+            {
+              "line": 772,
+              "text": "            FI_HILOGE(\"%{public}s find symbol failed, error: %{public}s\", UNSUBSCRIBE_FUNC_NAME.data(), dlerror());"
+            }
+          ]
+        }
+      ],
+      "unsupported_proposal": true,
+      "positive_supported": false,
+      "repaired": false,
+      "runtime_pass": false,
+      "whole_id_unsupported": false
+    },
+    "metadata-pixel-roundtrip": {
+      "provider": "libmsdp_boomerang_algo.z.so / EncodeImage,DecodeImage",
+      "boundary": "actual pixel inputs + encoded full pixels + decode actual metadata; same-input fallback cannot count as a roundtrip; separate supported cross-UID service handshake still mandatory",
+      "source_evidence": [
+        {
+          "kind": "actual_selected_7_source",
+          "file": {
+            "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/msdp/device_status/services/native/src/devicestatus_napi_manager.cpp",
+            "sha256": "e2eeffa4110bfc45ccd65113ede0329fe6847a6048be5728dafb2c43163af78c",
+            "bytes": 5620
+          },
+          "lines": [
+            {
+              "line": 32,
+              "text": "EncodeImageFunc BoomerangAlgoManager::boomerangAlgoEncodeImageHandle_ = nullptr;"
+            },
+            {
+              "line": 33,
+              "text": "DecodeImageFunc BoomerangAlgoManager::boomerangAlgoDecodeImageHandle_ = nullptr;"
+            },
+            {
+              "line": 35,
+              "text": "const std::string BOOMERANG_ALGO_SO_PATH = \"system/lib64/libmsdp_boomerang_algo.z.so\";"
+            },
+            {
+              "line": 37,
+              "text": "bool BoomerangAlgoManager::EncodeImage(std::shared_ptr<Media::PixelMap> &pixelMap, const std::string &content,"
+            },
+            {
+              "line": 42,
+              "text": "    if (realpath(BOOMERANG_ALGO_SO_PATH.c_str(), realPath) == nullptr) {"
+            },
+            {
+              "line": 43,
+              "text": "        FI_HILOGE(\"Path is error, path is %{private}s\", BOOMERANG_ALGO_SO_PATH.c_str());"
+            },
+            {
+              "line": 48,
+              "text": "        boomerangAlgoHandle_ = dlopen(realPath, RTLD_LAZY);"
+            },
+            {
+              "line": 55,
+              "text": "    if (boomerangAlgoEncodeImageHandle_ == nullptr) {"
+            },
+            {
+              "line": 56,
+              "text": "        boomerangAlgoEncodeImageHandle_ = reinterpret_cast<EncodeImageFunc>(dlsym(boomerangAlgoHandle_, \"EncodeImage\"));"
+            },
+            {
+              "line": 57,
+              "text": "        CHKPF(boomerangAlgoEncodeImageHandle_);"
+            },
+            {
+              "line": 64,
+              "text": "    boomerangAlgoEncodeImageHandle_(pixelMap, content, resultPixelMap);"
+            },
+            {
+              "line": 69,
+              "text": "bool BoomerangAlgoManager::DecodeImage(std::shared_ptr<Media::PixelMap> &pixelMap, std::string &content)"
+            },
+            {
+              "line": 73,
+              "text": "    if (realpath(BOOMERANG_ALGO_SO_PATH.c_str(), realPath) == nullptr) {"
+            },
+            {
+              "line": 74,
+              "text": "        FI_HILOGE(\"Path is error, path is %{private}s\", BOOMERANG_ALGO_SO_PATH.c_str());"
+            },
+            {
+              "line": 79,
+              "text": "        boomerangAlgoHandle_ = dlopen(realPath, RTLD_LAZY);"
+            },
+            {
+              "line": 86,
+              "text": "    if (boomerangAlgoDecodeImageHandle_ == nullptr) {"
+            },
+            {
+              "line": 87,
+              "text": "        boomerangAlgoDecodeImageHandle_ = reinterpret_cast<DecodeImageFunc>(dlsym(boomerangAlgoHandle_, \"DecodeImage\"));"
+            },
+            {
+              "line": 88,
+              "text": "        CHKPF(boomerangAlgoDecodeImageHandle_);"
+            },
+            {
+              "line": 90,
+              "text": "        if (((error = dlerror()) != nullptr) || (boomerangAlgoDecodeImageHandle_ == nullptr)) {"
+            },
+            {
+              "line": 95,
+              "text": "    boomerangAlgoDecodeImageHandle_(pixelMap, content);"
+            },
+            {
+              "line": 107,
+              "text": "    boomerangAlgoEncodeImageHandle_ = nullptr;"
+            },
+            {
+              "line": 108,
+              "text": "    boomerangAlgoDecodeImageHandle_ = nullptr;"
+            },
+            {
+              "line": 119,
+              "text": "    boomerangAlgoEncodeImageHandle_ = nullptr;"
+            },
+            {
+              "line": 120,
+              "text": "    boomerangAlgoDecodeImageHandle_ = nullptr;"
+            },
+            {
+              "line": 123,
+              "text": "void BoomerangAlgoImpl::EncodeImage(std::shared_ptr<Media::PixelMap> &pixelMap, const std::string &content,"
+            },
+            {
+              "line": 127,
+              "text": "    if (BoomerangAlgoManager::EncodeImage(pixelMap, content, resultPixelMap) != true) {"
+            },
+            {
+              "line": 128,
+              "text": "        resultPixelMap = pixelMap;"
+            },
+            {
+              "line": 132,
+              "text": "        resultPixelMap = pixelMap;"
+            },
+            {
+              "line": 138,
+              "text": "void BoomerangAlgoImpl::DecodeImage(std::shared_ptr<Media::PixelMap> &pixelMap, std::string &content)"
+            },
+            {
+              "line": 140,
+              "text": "    BoomerangAlgoManager::DecodeImage(pixelMap, content);"
+            }
+          ]
+        },
+        {
+          "kind": "official_current_source",
+          "file": {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source/services/native/src/devicestatus_napi_manager.cpp",
+            "sha256": "e2eeffa4110bfc45ccd65113ede0329fe6847a6048be5728dafb2c43163af78c",
+            "bytes": 5620
+          },
+          "lines": [
+            {
+              "line": 32,
+              "text": "EncodeImageFunc BoomerangAlgoManager::boomerangAlgoEncodeImageHandle_ = nullptr;"
+            },
+            {
+              "line": 33,
+              "text": "DecodeImageFunc BoomerangAlgoManager::boomerangAlgoDecodeImageHandle_ = nullptr;"
+            },
+            {
+              "line": 35,
+              "text": "const std::string BOOMERANG_ALGO_SO_PATH = \"system/lib64/libmsdp_boomerang_algo.z.so\";"
+            },
+            {
+              "line": 37,
+              "text": "bool BoomerangAlgoManager::EncodeImage(std::shared_ptr<Media::PixelMap> &pixelMap, const std::string &content,"
+            },
+            {
+              "line": 42,
+              "text": "    if (realpath(BOOMERANG_ALGO_SO_PATH.c_str(), realPath) == nullptr) {"
+            },
+            {
+              "line": 43,
+              "text": "        FI_HILOGE(\"Path is error, path is %{private}s\", BOOMERANG_ALGO_SO_PATH.c_str());"
+            },
+            {
+              "line": 48,
+              "text": "        boomerangAlgoHandle_ = dlopen(realPath, RTLD_LAZY);"
+            },
+            {
+              "line": 55,
+              "text": "    if (boomerangAlgoEncodeImageHandle_ == nullptr) {"
+            },
+            {
+              "line": 56,
+              "text": "        boomerangAlgoEncodeImageHandle_ = reinterpret_cast<EncodeImageFunc>(dlsym(boomerangAlgoHandle_, \"EncodeImage\"));"
+            },
+            {
+              "line": 57,
+              "text": "        CHKPF(boomerangAlgoEncodeImageHandle_);"
+            },
+            {
+              "line": 64,
+              "text": "    boomerangAlgoEncodeImageHandle_(pixelMap, content, resultPixelMap);"
+            },
+            {
+              "line": 69,
+              "text": "bool BoomerangAlgoManager::DecodeImage(std::shared_ptr<Media::PixelMap> &pixelMap, std::string &content)"
+            },
+            {
+              "line": 73,
+              "text": "    if (realpath(BOOMERANG_ALGO_SO_PATH.c_str(), realPath) == nullptr) {"
+            },
+            {
+              "line": 74,
+              "text": "        FI_HILOGE(\"Path is error, path is %{private}s\", BOOMERANG_ALGO_SO_PATH.c_str());"
+            },
+            {
+              "line": 79,
+              "text": "        boomerangAlgoHandle_ = dlopen(realPath, RTLD_LAZY);"
+            },
+            {
+              "line": 86,
+              "text": "    if (boomerangAlgoDecodeImageHandle_ == nullptr) {"
+            },
+            {
+              "line": 87,
+              "text": "        boomerangAlgoDecodeImageHandle_ = reinterpret_cast<DecodeImageFunc>(dlsym(boomerangAlgoHandle_, \"DecodeImage\"));"
+            },
+            {
+              "line": 88,
+              "text": "        CHKPF(boomerangAlgoDecodeImageHandle_);"
+            },
+            {
+              "line": 90,
+              "text": "        if (((error = dlerror()) != nullptr) || (boomerangAlgoDecodeImageHandle_ == nullptr)) {"
+            },
+            {
+              "line": 95,
+              "text": "    boomerangAlgoDecodeImageHandle_(pixelMap, content);"
+            },
+            {
+              "line": 107,
+              "text": "    boomerangAlgoEncodeImageHandle_ = nullptr;"
+            },
+            {
+              "line": 108,
+              "text": "    boomerangAlgoDecodeImageHandle_ = nullptr;"
+            },
+            {
+              "line": 119,
+              "text": "    boomerangAlgoEncodeImageHandle_ = nullptr;"
+            },
+            {
+              "line": 120,
+              "text": "    boomerangAlgoDecodeImageHandle_ = nullptr;"
+            },
+            {
+              "line": 123,
+              "text": "void BoomerangAlgoImpl::EncodeImage(std::shared_ptr<Media::PixelMap> &pixelMap, const std::string &content,"
+            },
+            {
+              "line": 127,
+              "text": "    if (BoomerangAlgoManager::EncodeImage(pixelMap, content, resultPixelMap) != true) {"
+            },
+            {
+              "line": 128,
+              "text": "        resultPixelMap = pixelMap;"
+            },
+            {
+              "line": 132,
+              "text": "        resultPixelMap = pixelMap;"
+            },
+            {
+              "line": 138,
+              "text": "void BoomerangAlgoImpl::DecodeImage(std::shared_ptr<Media::PixelMap> &pixelMap, std::string &content)"
+            },
+            {
+              "line": 140,
+              "text": "    BoomerangAlgoManager::DecodeImage(pixelMap, content);"
+            }
+          ]
+        }
+      ],
+      "unsupported_proposal": true,
+      "positive_supported": false,
+      "repaired": false,
+      "runtime_pass": false,
+      "whole_id_unsupported": false
+    },
+    "motion-inference": {
+      "provider": "motion:motion_client + motion_interface_native, operating/holding/pickup/rotate/hover models",
+      "boundary": "typed subscribe/unsubscribe/recent/holding/pickup/rotate/hover valid and invalid, roles, no callback after off, restart",
+      "source_evidence": [
+        {
+          "kind": "actual_selected_7_source",
+          "file": {
+            "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/msdp/device_status/frameworks/js/napi/motion/BUILD.gn",
+            "sha256": "53ace25462c1fe9854a150b7193f49a89465a05d6d9cdccf8783f18adc6a0bd3",
+            "bytes": 2027
+          },
+          "lines": [
+            {
+              "line": 58,
+              "text": "    defines += [ \"MOTION_ENABLE\" ]"
+            },
+            {
+              "line": 60,
+              "text": "      \"motion:motion_client\","
+            },
+            {
+              "line": 61,
+              "text": "      \"motion:motion_interface_native\","
+            }
+          ]
+        },
+        {
+          "kind": "official_current_source",
+          "file": {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source/frameworks/js/napi/motion/BUILD.gn",
+            "sha256": "846857d23f7d4dfb8cb558bb7ceeca6c98eec9a07a82018e992d07d58791c0da",
+            "bytes": 2252
+          },
+          "lines": [
+            {
+              "line": 61,
+              "text": "    defines += [ \"MOTION_ENABLE\" ]"
+            },
+            {
+              "line": 63,
+              "text": "      \"motion:motion_client\","
+            },
+            {
+              "line": 64,
+              "text": "      \"motion:motion_interface_native\","
+            }
+          ]
+        },
+        {
+          "kind": "actual_selected_7_source",
+          "file": {
+            "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/msdp/device_status/frameworks/js/napi/motion/src/motion_napi.cpp",
+            "sha256": "0486950006ca39f1efe17f353c9849454be0ab1da04dc0e91a16b8aa8f2aea70",
+            "bytes": 49457
+          },
+          "lines": [
+            {
+              "line": 27,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 39,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 44,
+              "text": "constexpr int32_t EVENT_NOT_SUPPORT = -200;"
+            },
+            {
+              "line": 111,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 117,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 224,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 226,
+              "text": "    UnsubscribeFromAllTypesNoThrow();"
+            },
+            {
+              "line": 242,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 263,
+              "text": "                ThrowMotionErr(env, SUBSCRIBE_EXCEPTION, \"Subscribe failed\");"
+            },
+            {
+              "line": 301,
+              "text": "            ThrowMotionErr(env, PERMISSION_EXCEPTION, \"Permission denined\");"
+            },
+            {
+              "line": 305,
+              "text": "            ThrowMotionErr(env, NO_SYSTEM_API, \"No system api\");"
+            },
+            {
+              "line": 309,
+              "text": "            ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 313,
+              "text": "            ThrowMotionErr(env, SUBSCRIBE_EXCEPTION, \"Subscribe failed\");"
+            },
+            {
+              "line": 332,
+              "text": "            ThrowMotionErr(env, UNSUBSCRIBE_EXCEPTION, \"Unsubscribe failed\");"
+            },
+            {
+              "line": 364,
+              "text": "        ThrowMotionErr(env, PERMISSION_EXCEPTION, \"Permission denined\");"
+            },
+            {
+              "line": 368,
+              "text": "        ThrowMotionErr(env, NO_SYSTEM_API, \"No system api\");"
+            },
+            {
+              "line": 372,
+              "text": "        ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 376,
+              "text": "        ThrowMotionErr(env, UNSUBSCRIBE_EXCEPTION, \"Unsubscribe failed\");"
+            },
+            {
+              "line": 381,
+              "text": "void MotionNapi::UnsubscribeFromServiceNoThrow(int32_t type)"
+            },
+            {
+              "line": 425,
+              "text": "void MotionNapi::UnsubscribeFromAllTypesNoThrow()"
+            },
+            {
+              "line": 435,
+              "text": "        UnsubscribeFromServiceNoThrow(t);"
+            },
+            {
+              "line": 762,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 775,
+              "text": "        ThrowMotionErr(env, SUBSCRIBE_EXCEPTION, \"napi_get_cb_info failed\");"
+            },
+            {
+              "line": 780,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"validateargstype failed\");"
+            },
+            {
+              "line": 786,
+              "text": "        ThrowMotionErr(env, SUBSCRIBE_EXCEPTION, \"Trans to string failed\");"
+            },
+            {
+              "line": 792,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"Type is illegal\");"
+            },
+            {
+              "line": 800,
+              "text": "        ThrowMotionErr(env, SUBSCRIBE_EXCEPTION, \"Failed to get g_motionObj\");"
+            },
+            {
+              "line": 804,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 812,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"AddCallback failed\");"
+            },
+            {
+              "line": 839,
+              "text": "    if (processorId == EVENT_NOT_SUPPORT) {"
+            },
+            {
+              "line": 848,
+              "text": "    ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 877,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"napi_get_cb_info failed\");"
+            },
+            {
+              "line": 882,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"validateargstype failed\");"
+            },
+            {
+              "line": 885,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 889,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"Failed to get motionNapi instance\");"
+            },
+            {
+              "line": 900,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"AddCallback failed\");"
+            },
+            {
+              "line": 911,
+              "text": "    ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 919,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 948,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 957,
+              "text": "        ThrowMotionErr(env, UNSUBSCRIBE_EXCEPTION, \"Motion instance not found in this env\");"
+            },
+            {
+              "line": 967,
+              "text": "        ThrowMotionErr(env, UNSUBSCRIBE_EXCEPTION, \"napi_get_cb_info is failed\");"
+            },
+            {
+              "line": 976,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"validateargstype failed\");"
+            },
+            {
+              "line": 982,
+              "text": "        ThrowMotionErr(env, UNSUBSCRIBE_EXCEPTION, \"Trans to string failed\");"
+            },
+            {
+              "line": 988,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"Type is illegal\");"
+            },
+            {
+              "line": 992,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 995,
+              "text": "            ThrowMotionErr(env, SERVICE_EXCEPTION, \"RemoveCallback failed\");"
+            },
+            {
+              "line": 1000,
+              "text": "            ThrowMotionErr(env, SERVICE_EXCEPTION, \"RemoveCallback failed\");"
+            },
+            {
+              "line": 1014,
+              "text": "    if (processorId == EVENT_NOT_SUPPORT) {"
+            },
+            {
+              "line": 1023,
+              "text": "    ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 1052,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"napi_get_cb_info failed\");"
+            },
+            {
+              "line": 1056,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"wrong number of arguments\");"
+            },
+            {
+              "line": 1060,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"validateargstype failed\");"
+            },
+            {
+              "line": 1063,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 1066,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"MotionNapi instance is nullptr\");"
+            },
+            {
+              "line": 1076,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"RemoveCallback failed\");"
+            },
+            {
+              "line": 1087,
+              "text": "    ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 1101,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"napi_get_cb_info failed\");"
+            },
+            {
+              "line": 1105,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 1108,
+              "text": "        ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 1112,
+              "text": "        ThrowMotionErr(env, PERMISSION_EXCEPTION, \"Invalid Type\");"
+            },
+            {
+              "line": 1117,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 1119,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"Error invalid type\");"
+            },
+            {
+              "line": 1124,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"napi_create_int32 failed\");"
+            },
+            {
+              "line": 1128,
+              "text": "    ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            }
+          ]
+        },
+        {
+          "kind": "official_current_source",
+          "file": {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source/frameworks/js/napi/motion/src/motion_napi.cpp",
+            "sha256": "246e9470470fc37bf060f6fdbe41e5a965d8231370aca2a811ccac77ab39905f",
+            "bytes": 49809
+          },
+          "lines": [
+            {
+              "line": 27,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 40,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 45,
+              "text": "constexpr int32_t EVENT_NOT_SUPPORT = -200;"
+            },
+            {
+              "line": 112,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 118,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 225,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 227,
+              "text": "    UnsubscribeFromAllTypesNoThrow();"
+            },
+            {
+              "line": 243,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 264,
+              "text": "                ThrowMotionErr(env, SUBSCRIBE_EXCEPTION, \"Subscribe failed\");"
+            },
+            {
+              "line": 302,
+              "text": "            ThrowMotionErr(env, PERMISSION_EXCEPTION, \"Permission denined\");"
+            },
+            {
+              "line": 306,
+              "text": "            ThrowMotionErr(env, NO_SYSTEM_API, \"No system api\");"
+            },
+            {
+              "line": 310,
+              "text": "            ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 314,
+              "text": "            ThrowMotionErr(env, SUBSCRIBE_EXCEPTION, \"Subscribe failed\");"
+            },
+            {
+              "line": 333,
+              "text": "            ThrowMotionErr(env, UNSUBSCRIBE_EXCEPTION, \"Unsubscribe failed\");"
+            },
+            {
+              "line": 365,
+              "text": "        ThrowMotionErr(env, PERMISSION_EXCEPTION, \"Permission denined\");"
+            },
+            {
+              "line": 369,
+              "text": "        ThrowMotionErr(env, NO_SYSTEM_API, \"No system api\");"
+            },
+            {
+              "line": 373,
+              "text": "        ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 377,
+              "text": "        ThrowMotionErr(env, UNSUBSCRIBE_EXCEPTION, \"Unsubscribe failed\");"
+            },
+            {
+              "line": 382,
+              "text": "void MotionNapi::UnsubscribeFromServiceNoThrow(int32_t type)"
+            },
+            {
+              "line": 426,
+              "text": "void MotionNapi::UnsubscribeFromAllTypesNoThrow()"
+            },
+            {
+              "line": 436,
+              "text": "        UnsubscribeFromServiceNoThrow(t);"
+            },
+            {
+              "line": 763,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 776,
+              "text": "        ThrowMotionErr(env, SUBSCRIBE_EXCEPTION, \"napi_get_cb_info failed\");"
+            },
+            {
+              "line": 781,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"validateargstype failed\");"
+            },
+            {
+              "line": 787,
+              "text": "        ThrowMotionErr(env, SUBSCRIBE_EXCEPTION, \"Trans to string failed\");"
+            },
+            {
+              "line": 793,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"Type is illegal\");"
+            },
+            {
+              "line": 801,
+              "text": "        ThrowMotionErr(env, SUBSCRIBE_EXCEPTION, \"Failed to get g_motionObj\");"
+            },
+            {
+              "line": 805,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 813,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"AddCallback failed\");"
+            },
+            {
+              "line": 840,
+              "text": "    if (processorId == EVENT_NOT_SUPPORT) {"
+            },
+            {
+              "line": 849,
+              "text": "    ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 878,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"napi_get_cb_info failed\");"
+            },
+            {
+              "line": 883,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"validateargstype failed\");"
+            },
+            {
+              "line": 886,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 890,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"Failed to get motionNapi instance\");"
+            },
+            {
+              "line": 901,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"AddCallback failed\");"
+            },
+            {
+              "line": 912,
+              "text": "    ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 920,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 949,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 958,
+              "text": "        ThrowMotionErr(env, UNSUBSCRIBE_EXCEPTION, \"Motion instance not found in this env\");"
+            },
+            {
+              "line": 968,
+              "text": "        ThrowMotionErr(env, UNSUBSCRIBE_EXCEPTION, \"napi_get_cb_info is failed\");"
+            },
+            {
+              "line": 977,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"validateargstype failed\");"
+            },
+            {
+              "line": 983,
+              "text": "        ThrowMotionErr(env, UNSUBSCRIBE_EXCEPTION, \"Trans to string failed\");"
+            },
+            {
+              "line": 989,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"Type is illegal\");"
+            },
+            {
+              "line": 993,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 996,
+              "text": "            ThrowMotionErr(env, SERVICE_EXCEPTION, \"RemoveCallback failed\");"
+            },
+            {
+              "line": 1001,
+              "text": "            ThrowMotionErr(env, SERVICE_EXCEPTION, \"RemoveCallback failed\");"
+            },
+            {
+              "line": 1015,
+              "text": "    if (processorId == EVENT_NOT_SUPPORT) {"
+            },
+            {
+              "line": 1024,
+              "text": "    ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 1053,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"napi_get_cb_info failed\");"
+            },
+            {
+              "line": 1057,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"wrong number of arguments\");"
+            },
+            {
+              "line": 1061,
+              "text": "        ThrowMotionErr(env, PARAM_EXCEPTION, \"validateargstype failed\");"
+            },
+            {
+              "line": 1064,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 1067,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"MotionNapi instance is nullptr\");"
+            },
+            {
+              "line": 1077,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"RemoveCallback failed\");"
+            },
+            {
+              "line": 1088,
+              "text": "    ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 1102,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"napi_get_cb_info failed\");"
+            },
+            {
+              "line": 1106,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 1109,
+              "text": "        ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            },
+            {
+              "line": 1113,
+              "text": "        ThrowMotionErr(env, PERMISSION_EXCEPTION, \"Invalid Type\");"
+            },
+            {
+              "line": 1118,
+              "text": "#ifdef MOTION_ENABLE"
+            },
+            {
+              "line": 1120,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"Error invalid type\");"
+            },
+            {
+              "line": 1125,
+              "text": "        ThrowMotionErr(env, SERVICE_EXCEPTION, \"napi_create_int32 failed\");"
+            },
+            {
+              "line": 1129,
+              "text": "    ThrowMotionErr(env, DEVICE_EXCEPTION, \"Device not support\");"
+            }
+          ]
+        }
+      ],
+      "unsupported_proposal": true,
+      "positive_supported": false,
+      "repaired": false,
+      "runtime_pass": false,
+      "whole_id_unsupported": false
+    },
+    "onscreen-content-control": {
+      "provider": "libon_screen.z.so / Create,Destroy implementing IOnScreenAlgorithm",
+      "boundary": "typed getPageContent/control/listeners/subscribe/capture/trigger/interact/apperceive, real ordinary/denied permission, invalid control, off/quiet/restart; no fabricated page hook",
+      "source_evidence": [
+        {
+          "kind": "actual_selected_7_source",
+          "file": {
+            "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/msdp/device_status/intention/onscreen/server/src/on_screen_server.cpp",
+            "sha256": "03b67f91af0599e692fb9b49909b979a993609aaced3e659a3a84fe7b15f56c4",
+            "bytes": 25586
+          },
+          "lines": [
+            {
+              "line": 44,
+              "text": "const char *LIB_ON_SCREEN_ALGO_PATH = \"/system/lib64/libon_screen.z.so\";"
+            },
+            {
+              "line": 49,
+              "text": "constexpr int32_t RET_NO_SUPPORT = 801;"
+            },
+            {
+              "line": 87,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 89,
+              "text": "    if (!CheckPermission(context, PERMISSION_GET_PAGE_CONTENT)) {"
+            },
+            {
+              "line": 99,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 121,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 124,
+              "text": "    if (!CheckPermission(context, PERMISSION_SEND_CONTROL_EVENT)) {"
+            },
+            {
+              "line": 134,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 158,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 174,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 190,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 212,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 234,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 256,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 269,
+              "text": "    if (realpath(LIB_ON_SCREEN_ALGO_PATH, libRealPath) == nullptr) {"
+            },
+            {
+              "line": 273,
+              "text": "    handle_.handle = dlopen(libRealPath, RTLD_LAZY);"
+            },
+            {
+              "line": 275,
+              "text": "        FI_HILOGE(\"dlopen failed, err:%{public}sn\", dlerror());"
+            },
+            {
+              "line": 278,
+              "text": "    handle_.create = reinterpret_cast<IOnScreenAlgorithm*(*)()>(dlsym(handle_.handle, \"Create\"));"
+            },
+            {
+              "line": 279,
+              "text": "    handle_.destroy = reinterpret_cast<void(*)(const IOnScreenAlgorithm*)>(dlsym(handle_.handle, \"Destroy\"));"
+            },
+            {
+              "line": 307,
+              "text": "bool OnScreenServer::CheckPermission(const CallingContext &context, const std::string &permission)"
+            },
+            {
+              "line": 601,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 603,
+              "text": "    if (!CheckPermission(context, PERMISSION_GET_PAGE_CONTENT)) {"
+            },
+            {
+              "line": 620,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 622,
+              "text": "    if (!CheckPermission(context, PERMISSION_GET_PAGE_CONTENT)) {"
+            },
+            {
+              "line": 644,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 646,
+              "text": "    if (!CheckPermission(context, PERMISSION_GET_PAGE_CONTENT)) {"
+            },
+            {
+              "line": 697,
+              "text": "        return RET_NO_SUPPORT;"
+            }
+          ]
+        },
+        {
+          "kind": "official_current_source",
+          "file": {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source/intention/onscreen/server/src/on_screen_server.cpp",
+            "sha256": "03b67f91af0599e692fb9b49909b979a993609aaced3e659a3a84fe7b15f56c4",
+            "bytes": 25586
+          },
+          "lines": [
+            {
+              "line": 44,
+              "text": "const char *LIB_ON_SCREEN_ALGO_PATH = \"/system/lib64/libon_screen.z.so\";"
+            },
+            {
+              "line": 49,
+              "text": "constexpr int32_t RET_NO_SUPPORT = 801;"
+            },
+            {
+              "line": 87,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 89,
+              "text": "    if (!CheckPermission(context, PERMISSION_GET_PAGE_CONTENT)) {"
+            },
+            {
+              "line": 99,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 121,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 124,
+              "text": "    if (!CheckPermission(context, PERMISSION_SEND_CONTROL_EVENT)) {"
+            },
+            {
+              "line": 134,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 158,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 174,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 190,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 212,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 234,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 256,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 269,
+              "text": "    if (realpath(LIB_ON_SCREEN_ALGO_PATH, libRealPath) == nullptr) {"
+            },
+            {
+              "line": 273,
+              "text": "    handle_.handle = dlopen(libRealPath, RTLD_LAZY);"
+            },
+            {
+              "line": 275,
+              "text": "        FI_HILOGE(\"dlopen failed, err:%{public}sn\", dlerror());"
+            },
+            {
+              "line": 278,
+              "text": "    handle_.create = reinterpret_cast<IOnScreenAlgorithm*(*)()>(dlsym(handle_.handle, \"Create\"));"
+            },
+            {
+              "line": 279,
+              "text": "    handle_.destroy = reinterpret_cast<void(*)(const IOnScreenAlgorithm*)>(dlsym(handle_.handle, \"Destroy\"));"
+            },
+            {
+              "line": 307,
+              "text": "bool OnScreenServer::CheckPermission(const CallingContext &context, const std::string &permission)"
+            },
+            {
+              "line": 601,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 603,
+              "text": "    if (!CheckPermission(context, PERMISSION_GET_PAGE_CONTENT)) {"
+            },
+            {
+              "line": 620,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 622,
+              "text": "    if (!CheckPermission(context, PERMISSION_GET_PAGE_CONTENT)) {"
+            },
+            {
+              "line": 644,
+              "text": "        return RET_NO_SUPPORT;"
+            },
+            {
+              "line": 646,
+              "text": "    if (!CheckPermission(context, PERMISSION_GET_PAGE_CONTENT)) {"
+            },
+            {
+              "line": 697,
+              "text": "        return RET_NO_SUPPORT;"
+            }
+          ]
+        }
+      ],
+      "unsupported_proposal": true,
+      "positive_supported": false,
+      "repaired": false,
+      "runtime_pass": false,
+      "whole_id_unsupported": false
+    },
+    "user-status-inference": {
+      "provider": "libuser_status_client.z.so / actual UserStatus loader interface",
+      "boundary": "typed age/user subscribe/unsubscribe/configure/query, actual numeric/exception results, denial/off/quiet/restart; empty capabilities is not inference",
+      "source_evidence": [
+        {
+          "kind": "actual_selected_7_source",
+          "file": {
+            "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/msdp/device_status/frameworks/js/napi/underage_model/src/underage_model_napi_event.cpp",
+            "sha256": "1f537a583fa6bb536b6c2b139e6564324df92e69215eb4a576e0038d0ec2d6fa",
+            "bytes": 11720
+          },
+          "lines": []
+        },
+        {
+          "kind": "official_current_source",
+          "file": {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source/frameworks/js/napi/underage_model/src/underage_model_napi_event.cpp",
+            "sha256": "4c05b3bf3a48ad211fab270a808c1306577bb873712daad3ff999961fb3b5b75",
+            "bytes": 11738
+          },
+          "lines": []
+        },
+        {
+          "kind": "actual_selected_7_source",
+          "path": "frameworks/js/napi/motion/src/user_status_event_napi.cpp",
+          "missing_in_this_fixed_tree": true
+        },
+        {
+          "kind": "official_current_source",
+          "file": {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source/frameworks/js/napi/motion/src/user_status_event_napi.cpp",
+            "sha256": "d3dd23833808f6a5c2f3fe486209228e00230d35cfd11315b40b84f1a417bd25",
+            "bytes": 28593
+          },
+          "lines": [
+            {
+              "line": 43,
+              "text": "const constexpr char *USER_STATUS_CLIENT_SO_PATH = \"libuser_status_client.z.so\";"
+            },
+            {
+              "line": 221,
+              "text": "            dlsym(g_userStatusEventObj->handle_, SUBSCRIBE_CALLBACK_FUNC_NAME.data()));"
+            },
+            {
+              "line": 329,
+              "text": "        g_userStatusEventObj->handle_ = dlopen(USER_STATUS_CLIENT_SO_PATH, RTLD_LAZY);"
+            },
+            {
+              "line": 332,
+              "text": "                \"Load failed, path is %{private}s, error after: %{public}s\", USER_STATUS_CLIENT_SO_PATH, dlerror());"
+            },
+            {
+              "line": 344,
+              "text": "            dlsym(g_userStatusEventObj->handle_, SUBSCRIBE_HOVER_HAND_FUNC_NAME.data()));"
+            },
+            {
+              "line": 381,
+              "text": "            dlsym(g_userStatusEventObj->handle_, UNSUBSCRIBE_FUNC_NAME.data()));"
+            }
+          ]
+        },
+        {
+          "kind": "actual_selected_7_source",
+          "file": {
+            "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/msdp/device_status/frameworks/js/napi/underage_model/src/underage_model_napi.cpp",
+            "sha256": "7821def17ac2169313aa5853f9e704021a89ccc97a22de6df555392f72be9b6b",
+            "bytes": 44215
+          },
+          "lines": [
+            {
+              "line": 55,
+              "text": "const std::string USER_STATUS_CLIENT_SO_PATH = \"libuser_status_client.z.so\";"
+            },
+            {
+              "line": 56,
+              "text": "const std::string_view REGISTER_LISTENER_FUNC_NAME = { \"RegisterListener\" };"
+            },
+            {
+              "line": 57,
+              "text": "const std::string_view SUBSCRIBE_CALLBACK_FUNC_NAME = { \"SubscribeCallback\" };"
+            },
+            {
+              "line": 58,
+              "text": "const std::string_view SUBSCRIBE_FUNC_NAME = { \"Subscribe\" };"
+            },
+            {
+              "line": 59,
+              "text": "const std::string_view SUBSCRIBE_WITH_DEVICEINFO_FUNC_NAME = { \"SubscribeWithDeviceInfo\" };"
+            },
+            {
+              "line": 60,
+              "text": "const std::string_view UNSUBSCRIBE_FUNC_NAME = { \"Unsubscribe\" };"
+            },
+            {
+              "line": 61,
+              "text": "const std::string_view CONFIGPARAMS_FUNC_NAME = { \"ConfigParams\" };"
+            },
+            {
+              "line": 62,
+              "text": "const std::string_view QUERYCAPABILITIES_FUNC_NAME = { \"QueryCapabilities\" };"
+            },
+            {
+              "line": 69,
+              "text": "        g_underageModelObj->g_userStatusHandle = dlopen(USER_STATUS_CLIENT_SO_PATH.c_str(), RTLD_LAZY);"
+            },
+            {
+              "line": 72,
+              "text": "                USER_STATUS_CLIENT_SO_PATH.c_str(), dlerror());"
+            },
+            {
+              "line": 148,
+              "text": "                dlsym(g_underageModelObj->g_userStatusHandle, REGISTER_LISTENER_FUNC_NAME.data()));"
+            },
+            {
+              "line": 188,
+              "text": "            dlsym(g_underageModelObj->g_userStatusHandle, UNSUBSCRIBE_FUNC_NAME.data()));"
+            },
+            {
+              "line": 190,
+              "text": "            FI_HILOGE(\"%{public}s find symbol failed, error: %{public}s\", UNSUBSCRIBE_FUNC_NAME.data(), dlerror());"
+            },
+            {
+              "line": 219,
+              "text": "            dlsym(g_underageModelObj->g_userStatusHandle, SUBSCRIBE_FUNC_NAME.data()));"
+            },
+            {
+              "line": 221,
+              "text": "            FI_HILOGE(\"%{public}s find symbol failed, error: %{public}s\", SUBSCRIBE_FUNC_NAME.data(), dlerror());"
+            },
+            {
+              "line": 375,
+              "text": "            dlsym(g_underageModelObj->g_userStatusHandle, SUBSCRIBE_CALLBACK_FUNC_NAME.data()));"
+            },
+            {
+              "line": 378,
+              "text": "                SUBSCRIBE_CALLBACK_FUNC_NAME.data(), dlerror());"
+            },
+            {
+              "line": 409,
+              "text": "            dlsym(g_underageModelObj->g_userStatusHandle, SUBSCRIBE_WITH_DEVICEINFO_FUNC_NAME.data()));"
+            },
+            {
+              "line": 412,
+              "text": "                SUBSCRIBE_WITH_DEVICEINFO_FUNC_NAME.data(), dlerror());"
+            },
+            {
+              "line": 595,
+              "text": "            dlsym(g_underageModelObj->g_userStatusHandle, CONFIGPARAMS_FUNC_NAME.data()));"
+            },
+            {
+              "line": 597,
+              "text": "            FI_HILOGE(\"%{public}s find symbol failed, error: %{public}s\", CONFIGPARAMS_FUNC_NAME.data(), dlerror());"
+            },
+            {
+              "line": 647,
+              "text": "            dlsym(g_underageModelObj->g_userStatusHandle, QUERYCAPABILITIES_FUNC_NAME.data()));"
+            },
+            {
+              "line": 650,
+              "text": "                QUERYCAPABILITIES_FUNC_NAME.data(), dlerror());"
+            }
+          ]
+        },
+        {
+          "kind": "official_current_source",
+          "file": {
+            "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/research/official-source/frameworks/js/napi/underage_model/src/underage_model_napi.cpp",
+            "sha256": "7821def17ac2169313aa5853f9e704021a89ccc97a22de6df555392f72be9b6b",
+            "bytes": 44215
+          },
+          "lines": [
+            {
+              "line": 55,
+              "text": "const std::string USER_STATUS_CLIENT_SO_PATH = \"libuser_status_client.z.so\";"
+            },
+            {
+              "line": 56,
+              "text": "const std::string_view REGISTER_LISTENER_FUNC_NAME = { \"RegisterListener\" };"
+            },
+            {
+              "line": 57,
+              "text": "const std::string_view SUBSCRIBE_CALLBACK_FUNC_NAME = { \"SubscribeCallback\" };"
+            },
+            {
+              "line": 58,
+              "text": "const std::string_view SUBSCRIBE_FUNC_NAME = { \"Subscribe\" };"
+            },
+            {
+              "line": 59,
+              "text": "const std::string_view SUBSCRIBE_WITH_DEVICEINFO_FUNC_NAME = { \"SubscribeWithDeviceInfo\" };"
+            },
+            {
+              "line": 60,
+              "text": "const std::string_view UNSUBSCRIBE_FUNC_NAME = { \"Unsubscribe\" };"
+            },
+            {
+              "line": 61,
+              "text": "const std::string_view CONFIGPARAMS_FUNC_NAME = { \"ConfigParams\" };"
+            },
+            {
+              "line": 62,
+              "text": "const std::string_view QUERYCAPABILITIES_FUNC_NAME = { \"QueryCapabilities\" };"
+            },
+            {
+              "line": 69,
+              "text": "        g_underageModelObj->g_userStatusHandle = dlopen(USER_STATUS_CLIENT_SO_PATH.c_str(), RTLD_LAZY);"
+            },
+            {
+              "line": 72,
+              "text": "                USER_STATUS_CLIENT_SO_PATH.c_str(), dlerror());"
+            },
+            {
+              "line": 148,
+              "text": "                dlsym(g_underageModelObj->g_userStatusHandle, REGISTER_LISTENER_FUNC_NAME.data()));"
+            },
+            {
+              "line": 188,
+              "text": "            dlsym(g_underageModelObj->g_userStatusHandle, UNSUBSCRIBE_FUNC_NAME.data()));"
+            },
+            {
+              "line": 190,
+              "text": "            FI_HILOGE(\"%{public}s find symbol failed, error: %{public}s\", UNSUBSCRIBE_FUNC_NAME.data(), dlerror());"
+            },
+            {
+              "line": 219,
+              "text": "            dlsym(g_underageModelObj->g_userStatusHandle, SUBSCRIBE_FUNC_NAME.data()));"
+            },
+            {
+              "line": 221,
+              "text": "            FI_HILOGE(\"%{public}s find symbol failed, error: %{public}s\", SUBSCRIBE_FUNC_NAME.data(), dlerror());"
+            },
+            {
+              "line": 375,
+              "text": "            dlsym(g_underageModelObj->g_userStatusHandle, SUBSCRIBE_CALLBACK_FUNC_NAME.data()));"
+            },
+            {
+              "line": 378,
+              "text": "                SUBSCRIBE_CALLBACK_FUNC_NAME.data(), dlerror());"
+            },
+            {
+              "line": 409,
+              "text": "            dlsym(g_underageModelObj->g_userStatusHandle, SUBSCRIBE_WITH_DEVICEINFO_FUNC_NAME.data()));"
+            },
+            {
+              "line": 412,
+              "text": "                SUBSCRIBE_WITH_DEVICEINFO_FUNC_NAME.data(), dlerror());"
+            },
+            {
+              "line": 595,
+              "text": "            dlsym(g_underageModelObj->g_userStatusHandle, CONFIGPARAMS_FUNC_NAME.data()));"
+            },
+            {
+              "line": 597,
+              "text": "            FI_HILOGE(\"%{public}s find symbol failed, error: %{public}s\", CONFIGPARAMS_FUNC_NAME.data(), dlerror());"
+            },
+            {
+              "line": 647,
+              "text": "            dlsym(g_underageModelObj->g_userStatusHandle, QUERYCAPABILITIES_FUNC_NAME.data()));"
+            },
+            {
+              "line": 650,
+              "text": "                QUERYCAPABILITIES_FUNC_NAME.data(), dlerror());"
+            }
+          ]
+        }
+      ],
+      "unsupported_proposal": true,
+      "positive_supported": false,
+      "repaired": false,
+      "runtime_pass": false,
+      "whole_id_unsupported": false
+    }
+  },
+  "not_excluded": [
+    "all nine syscaps and public methods",
+    "ordinary/system/denied role and typed failure behavior",
+    "401 invalid inputs",
+    "all implemented callbacks and real source proofs",
+    "stop/unsubscribe/restart/quiet/cleanup",
+    "entire original S08 ID"
+  ],
+  "source_only": true,
+  "runtime_pass": false,
+  "first_artifact_behavior_gate_passed": false,
+  "rotation_not_unsupported": {
+    "implementation": "new type259 QRS1/QRF1 independent unit quaternion virtual HDI plus exact public fresh-sample conversion; original ACCEL3 files unchanged",
+    "public_source": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/msdp/device_status/intention/stationary/server/src/stationary_server.cpp",
+      "sha256": "c6aa30108eb8a11ee5f7d23448524dd0d8c6564dd896537abe3a11c740c423ec",
+      "bytes": 16352
+    },
+    "native_wire": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-msdp579-nine-modalities-candidate/candidate/patches/common/drivers/peripheral/sensor/qemu_external/files/hdi_impl/qemu_rotation_protocol.h",
+      "sha256": "aa5e0f33b5f6152e77143a0f2658b8d15de5abc43b5dc8d4c5a7f78657ad1325",
+      "bytes": 2522
+    },
+    "runtime_pass": false
+  }
+}

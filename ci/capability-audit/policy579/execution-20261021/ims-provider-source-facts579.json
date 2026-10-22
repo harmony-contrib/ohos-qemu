@@ -1,0 +1,245 @@
+{
+  "schema": "Root-source-reviewed-IMS-vendor-provider-scope579/v1",
+  "scope_id": "QemuCarrierIMSTransport579",
+  "whole_id": "behavior:telephony-no-modem-or-sim",
+  "selected_release_project_head": "4e644b8a8f5e7c6be04261bd128fc71dfe9fa09c",
+  "official_current_project_head": "06353f7375d5ff22deb6018756e9f7d4fe1c9fd9",
+  "official_SIG_community_head": "e1c6afd655a02cb52b853a8f5055a832b3e007eb",
+  "current_release_complete_vendor_sources": {
+    "base/telephony/cellular_call/vendor/ims/BUILD.gn": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/BUILD.gn",
+      "sha256": "0549b7f853e0a823c28c51f40e6ee6c72c5952015a611aa8ee94921bb591b84e",
+      "bytes": 1976
+    },
+    "base/telephony/cellular_call/vendor/ims/sa_profile/4014.json": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/sa_profile/4014.json",
+      "sha256": "a35f8ff821faf01e0dff79b3be4cf8ebd00ff3f591f1ae41d8ea990911f45e85",
+      "bytes": 286
+    },
+    "base/telephony/cellular_call/vendor/ims/sa_profile/BUILD.gn": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/sa_profile/BUILD.gn",
+      "sha256": "ac21e407c4a27b843fb0100e3550cc53c26dd1ad5bcd3cc250595851fcc2fa24",
+      "bytes": 727
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_base/include/ims_base.h": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_base/include/ims_base.h",
+      "sha256": "13f03cbcd486cc02f3a52e0ef2b0d8c5a8fe4ee436b16025bcea2cda132df18c",
+      "bytes": 1428
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_call/include/ims_call.h": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_call/include/ims_call.h",
+      "sha256": "aaa62041214e7057876cde01fcba4a20735a74b7d64a2ca1b0c3f6cfd5ed1f27",
+      "bytes": 13640
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_call/include/ims_call_stub.h": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_call/include/ims_call_stub.h",
+      "sha256": "10612dd6e21079e82c9114640291a1fcc2a8876e566d20716b14109d58431891",
+      "bytes": 5202
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_call/src/ims_call.cpp": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_call/src/ims_call.cpp",
+      "sha256": "5317199654abedb677d519808a2ea3574c751701550c8a7193ebe0543b2a4367",
+      "bytes": 21431
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_call/src/ims_call_stub.cpp": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_call/src/ims_call_stub.cpp",
+      "sha256": "455319f97c69d1efe668e2e7e1c0caa1668ed3116703e92922b01e670da8e07f",
+      "bytes": 24728
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_core_service/include/ims_core_service.h": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_core_service/include/ims_core_service.h",
+      "sha256": "dc194768a9a05a2cf035feb15ae1f5de9cf7a7cfb31610aeb0bcd2df72ad4a83",
+      "bytes": 2363
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_core_service/include/ims_core_service_stub.h": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_core_service/include/ims_core_service_stub.h",
+      "sha256": "213da896b9b039c84c29da5bd0ca2af607a3c79c7f2717db14008511f1b29a21",
+      "bytes": 1989
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_core_service/include/ims_radio_event.h": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_core_service/include/ims_radio_event.h",
+      "sha256": "b5cb6111b9e5742c8b81cfd893cfb5ff3bdbbb883133494573e34883c03fd546",
+      "bytes": 3080
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_core_service/src/ims_core_service.cpp": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_core_service/src/ims_core_service.cpp",
+      "sha256": "1123a5b8563e99d8f92267516fc5249cce939fcfe7ba39066f0412c02817758c",
+      "bytes": 4602
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_core_service/src/ims_core_service_stub.cpp": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_core_service/src/ims_core_service_stub.cpp",
+      "sha256": "98317d5378c2e92ca10cf018826a2a57de53e94cbe559f95b9ab0291ea174d38",
+      "bytes": 4022
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_sms/include/ims_sms.h": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_sms/include/ims_sms.h",
+      "sha256": "a0fa64cf34a6c1bdf53b365035074bb72cd91b96b12a807046eb408d591d9ea8",
+      "bytes": 2165
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_sms/include/ims_sms_stub.h": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_sms/include/ims_sms_stub.h",
+      "sha256": "e1977e57f278dd51ed072094e18a9f7e6a9dc5462fb827579a486c0fc86c7c04",
+      "bytes": 1996
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_sms/src/ims_sms.cpp": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_sms/src/ims_sms.cpp",
+      "sha256": "67a13b977589f2c17f3147220e25853b0657c77e3a12bb7e72db03b5282238c7",
+      "bytes": 2728
+    },
+    "base/telephony/cellular_call/vendor/ims/services/ims_sms/src/ims_sms_stub.cpp": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-msdp-telephony579-14/actual-source14/files/base/telephony/cellular_call/vendor/ims/services/ims_sms/src/ims_sms_stub.cpp",
+      "sha256": "a895f09bb84384a78c59414cc412fc611aaa54749637a09b40d696a5bdb0a11a",
+      "bytes": 3957
+    }
+  },
+  "current_public_complete_vendor_sources": {
+    "vendor/ims/BUILD.gn": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/BUILD.gn",
+      "sha256": "0549b7f853e0a823c28c51f40e6ee6c72c5952015a611aa8ee94921bb591b84e",
+      "bytes": 1976
+    },
+    "vendor/ims/sa_profile/4014.json": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/sa_profile/4014.json",
+      "sha256": "a35f8ff821faf01e0dff79b3be4cf8ebd00ff3f591f1ae41d8ea990911f45e85",
+      "bytes": 286
+    },
+    "vendor/ims/sa_profile/BUILD.gn": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/sa_profile/BUILD.gn",
+      "sha256": "ac21e407c4a27b843fb0100e3550cc53c26dd1ad5bcd3cc250595851fcc2fa24",
+      "bytes": 727
+    },
+    "vendor/ims/services/ims_base/include/ims_base.h": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_base/include/ims_base.h",
+      "sha256": "13f03cbcd486cc02f3a52e0ef2b0d8c5a8fe4ee436b16025bcea2cda132df18c",
+      "bytes": 1428
+    },
+    "vendor/ims/services/ims_call/include/ims_call.h": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_call/include/ims_call.h",
+      "sha256": "aaa62041214e7057876cde01fcba4a20735a74b7d64a2ca1b0c3f6cfd5ed1f27",
+      "bytes": 13640
+    },
+    "vendor/ims/services/ims_call/include/ims_call_stub.h": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_call/include/ims_call_stub.h",
+      "sha256": "10612dd6e21079e82c9114640291a1fcc2a8876e566d20716b14109d58431891",
+      "bytes": 5202
+    },
+    "vendor/ims/services/ims_call/src/ims_call.cpp": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_call/src/ims_call.cpp",
+      "sha256": "5317199654abedb677d519808a2ea3574c751701550c8a7193ebe0543b2a4367",
+      "bytes": 21431
+    },
+    "vendor/ims/services/ims_call/src/ims_call_stub.cpp": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_call/src/ims_call_stub.cpp",
+      "sha256": "455319f97c69d1efe668e2e7e1c0caa1668ed3116703e92922b01e670da8e07f",
+      "bytes": 24728
+    },
+    "vendor/ims/services/ims_core_service/include/ims_core_service.h": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_core_service/include/ims_core_service.h",
+      "sha256": "dc194768a9a05a2cf035feb15ae1f5de9cf7a7cfb31610aeb0bcd2df72ad4a83",
+      "bytes": 2363
+    },
+    "vendor/ims/services/ims_core_service/include/ims_core_service_stub.h": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_core_service/include/ims_core_service_stub.h",
+      "sha256": "213da896b9b039c84c29da5bd0ca2af607a3c79c7f2717db14008511f1b29a21",
+      "bytes": 1989
+    },
+    "vendor/ims/services/ims_core_service/include/ims_radio_event.h": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_core_service/include/ims_radio_event.h",
+      "sha256": "b5cb6111b9e5742c8b81cfd893cfb5ff3bdbbb883133494573e34883c03fd546",
+      "bytes": 3080
+    },
+    "vendor/ims/services/ims_core_service/src/ims_core_service.cpp": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_core_service/src/ims_core_service.cpp",
+      "sha256": "1123a5b8563e99d8f92267516fc5249cce939fcfe7ba39066f0412c02817758c",
+      "bytes": 4602
+    },
+    "vendor/ims/services/ims_core_service/src/ims_core_service_stub.cpp": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_core_service/src/ims_core_service_stub.cpp",
+      "sha256": "98317d5378c2e92ca10cf018826a2a57de53e94cbe559f95b9ab0291ea174d38",
+      "bytes": 4022
+    },
+    "vendor/ims/services/ims_sms/include/ims_sms.h": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_sms/include/ims_sms.h",
+      "sha256": "a0fa64cf34a6c1bdf53b365035074bb72cd91b96b12a807046eb408d591d9ea8",
+      "bytes": 2165
+    },
+    "vendor/ims/services/ims_sms/include/ims_sms_stub.h": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_sms/include/ims_sms_stub.h",
+      "sha256": "e1977e57f278dd51ed072094e18a9f7e6a9dc5462fb827579a486c0fc86c7c04",
+      "bytes": 1996
+    },
+    "vendor/ims/services/ims_sms/src/ims_sms.cpp": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_sms/src/ims_sms.cpp",
+      "sha256": "67a13b977589f2c17f3147220e25853b0657c77e3a12bb7e72db03b5282238c7",
+      "bytes": 2728
+    },
+    "vendor/ims/services/ims_sms/src/ims_sms_stub.cpp": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/files/vendor/ims/services/ims_sms/src/ims_sms_stub.cpp",
+      "sha256": "a895f09bb84384a78c59414cc412fc611aaa54749637a09b40d696a5bdb0a11a",
+      "bytes": 3957
+    }
+  },
+  "official_SIG_scope_sources": {
+    "sig/sig_telephony/OWNERS": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/community/files/sig/sig_telephony/OWNERS",
+      "sha256": "910af13752f5691c44cbbfaea9407eb02af6ccf3cf9b28a61d03dc8b626acfab",
+      "bytes": 794
+    },
+    "sig/sig_telephony/figures/telephony_overview.png": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/community/files/sig/sig_telephony/figures/telephony_overview.png",
+      "sha256": "3cd87ffb5c991f03b48bf5dd6367193bdd7e42285808112417bd4b04e9f16f4e",
+      "bytes": 218342
+    },
+    "sig/sig_telephony/sig_telephony.md": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/community/files/sig/sig_telephony/sig_telephony.md",
+      "sha256": "6cf3851df031f82b8c05d073e5ef083dfe63468213d2a25aa0e6a55ea10e878d",
+      "bytes": 2259
+    },
+    "sig/sig_telephony/sig_telephony_cn.md": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/community/files/sig/sig_telephony/sig_telephony_cn.md",
+      "sha256": "90e6c0927f4d99b0c3cead3e768f07a49a4477dd471fbafc9d5bd0a95ca39fd1",
+      "bytes": 4742
+    }
+  },
+  "official_full_capture": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/SOURCE579.json",
+    "sha256": "b0c4b482b17758e7a42741e3b0caed1f6c8f74836ee163cf0c3b3a8f1d408184",
+    "bytes": 1470
+  },
+  "official_complete_source_tree": 247,
+  "official_complete_source_archive": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/telephony_cellular_call/complete-upstream-source.tar",
+    "sha256": "80b47aa2b196b66445c783c6fff33b0cb527f862817536d0f555e539957d0fb8",
+    "bytes": 2713600
+  },
+  "official_complete_frozen": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/public-telephony-provider-research05/FROZEN.json",
+    "sha256": "3119022c18c77a0750d4e8ed22c12e8ac7aa0462a669a0ad0b056e2c5252d394",
+    "bytes": 35953
+  },
+  "root_reviewed_findings": [
+    "Both fixed release and current official tel_ims BUILD.gn select the six IMS demo translation units and SA4014 profile names libtel_ims.z.so.",
+    "Demo request functions directly invoke local response callbacks; these source files do not implement real carrier IMS transport, registration, negotiated RTT session or RTT messages. Public client interfaces are preserved and are not an IMS provider.",
+    "The corresponding official Telephony SIG describes the framework/vendor service boundary; enabling these same demo sources would not provide the missing transport.",
+    "This disposition is confined to that fixed product/vendor provider scope. Fresh complete current source and independently read package image native-library/profile/init trees must still establish the same boundary. A new or changed provider invalidates the disposition."
+  ],
+  "unsupported_positive_scope": [
+    "actual carrier IMS registration/negotiation behind current SA4014 vendor provider",
+    "real IMS RTT session and messages requiring that provider"
+  ],
+  "mandatory_supported_scope": [
+    "current actual AT/SIM/service/PTY/native source identities",
+    "original full APN UI CRUD",
+    "real CS incoming/outgoing/callbacks and modem failures/timeouts",
+    "SMS actual submit/status-report/send/delivery/error",
+    "two real UID CellularNetHandle IP packets and carrier loss/reattach",
+    "RIL device reset/rebind and actual caller generation reconstruction",
+    "original complete RTT10 permissions/invalid/no-session/no-modem/local-capability/listener cases",
+    "original explicit5A URCs, false reset, off/crossUID/cache/queued-off/revoke/exit and full quiet/cleanup"
+  ],
+  "whole_id_unsupported": false,
+  "repaired": false,
+  "runtime_pass": false,
+  "new_formal_closure": false,
+  "passable_without_new_runtime": false
+}
