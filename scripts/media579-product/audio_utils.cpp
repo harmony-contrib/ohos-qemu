@@ -217,6 +217,11 @@ bool Util::IsScoSupportSource(const SourceType sourceType)
     return sourceType == SOURCE_TYPE_VOICE_RECOGNITION || sourceType == SOURCE_TYPE_VOICE_TRANSCRIPTION;
 }
 
+bool Util::IsSppSupportSource(const SourceType sourceType)
+{
+    return sourceType == SOURCE_TYPE_MIC || sourceType == SOURCE_TYPE_LIVE || sourceType == SOURCE_TYPE_CAMCORDER;
+}
+
 bool Util::IsDualToneStreamType(const AudioStreamType streamType)
 {
     if (VolumeUtils::IsPCVolumeEnable()) {
@@ -272,6 +277,12 @@ bool Util::IsEnhancedRoutingSupported()
     static const bool isEnhancedRoutingSupported =
         OHOS::system::GetBoolParameter("const.multimedia.audio.sys_multidevice_capability.enable", false);
     return isEnhancedRoutingSupported;
+}
+
+bool Util::IsCustomSampleRateValid(uint32_t customSampleRate)
+{
+    return (customSampleRate >= SAMPLE_RATE_8000 && customSampleRate <= SAMPLE_RATE_384000 &&
+        customSampleRate % SAMPLE_RATE_RESOLUTION_10 == 0) || customSampleRate == SAMPLE_RATE_11025;
 }
 
 WatchTimeout::WatchTimeout(const std::string &funcName, int64_t timeoutNs) : funcName_(funcName), timeoutNs_(timeoutNs)
@@ -2005,6 +2016,7 @@ std::unordered_map<AudioStreamType, AudioVolumeType> VolumeUtils::defaultVolumeM
     {STREAM_VOICE_MESSAGE, STREAM_MUSIC},
 
     {STREAM_VOICE_ASSISTANT, STREAM_VOICE_ASSISTANT},
+    {STREAM_VOICE_ASSISTANT_SYSTEM, STREAM_VOICE_ASSISTANT},
     {STREAM_ALARM, STREAM_ALARM},
     {STREAM_ACCESSIBILITY, STREAM_ACCESSIBILITY},
     {STREAM_ULTRASONIC, STREAM_ULTRASONIC},
@@ -2021,6 +2033,7 @@ std::unordered_map<AudioStreamType, AudioVolumeType> VolumeUtils::audioPCVolumeM
     {STREAM_VOICE_CALL_ASSISTANT, STREAM_VOICE_CALL_ASSISTANT},
     {STREAM_VOICE_MESSAGE, STREAM_MUSIC},
     {STREAM_VOICE_ASSISTANT, STREAM_MUSIC},
+    {STREAM_VOICE_ASSISTANT_SYSTEM, STREAM_MUSIC},
     {STREAM_VOICE_COMMUNICATION, STREAM_MUSIC},
     {STREAM_DTMF, STREAM_MUSIC},
     {STREAM_MUSIC, STREAM_MUSIC},
@@ -2145,6 +2158,7 @@ std::unordered_map<StreamUsage, AudioStreamType> VolumeUtils::streamUsageMap_ = 
     {STREAM_USAGE_VOICE_COMMUNICATION, STREAM_VOICE_COMMUNICATION},
     {STREAM_USAGE_INTERPHONE, STREAM_VOICE_COMMUNICATION},
     {STREAM_USAGE_VOICE_ASSISTANT, STREAM_VOICE_ASSISTANT},
+    {STREAM_USAGE_VOICE_ASSISTANT_SYSTEM, STREAM_VOICE_ASSISTANT_SYSTEM},
     {STREAM_USAGE_ALARM, STREAM_ALARM},
     {STREAM_USAGE_VOICE_MESSAGE, STREAM_VOICE_MESSAGE},
     {STREAM_USAGE_RINGTONE, STREAM_RING},
@@ -2280,6 +2294,7 @@ std::map<AudioVolumeType, std::vector<StreamUsage>> VolumeUtils::streamToStreamU
     {STREAM_VOICE_CALL, {STREAM_USAGE_VOICE_MODEM_COMMUNICATION, STREAM_USAGE_VOICE_COMMUNICATION,
         STREAM_USAGE_INTERPHONE, STREAM_USAGE_VOICE_TRANSFER_COMMUNICATION}},
     {STREAM_VOICE_ASSISTANT, {STREAM_USAGE_VOICE_ASSISTANT}},
+    {STREAM_VOICE_ASSISTANT_SYSTEM, {STREAM_USAGE_VOICE_ASSISTANT_SYSTEM}},
     {STREAM_ALARM, {STREAM_USAGE_ALARM}},
     {STREAM_ACCESSIBILITY, {STREAM_USAGE_ACCESSIBILITY}},
     {STREAM_SYSTEM, {STREAM_USAGE_SYSTEM}},
