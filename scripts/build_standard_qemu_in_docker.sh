@@ -3086,6 +3086,10 @@ apply_qemu_capability_patch_plan() {
   python3 "${PATCH_ROOT}/lib/qemu_preserve_source_times579.py" --source-root "${OHOS_ROOT}" \
     --snapshot "${source_times_snapshot}" --action capture \
     2>&1 | tee "${source_times_directory}/capture.log"
+  # Rewind only the complete Additional5 final before any overlapping chooser guard.
+  # With no known final item, preserve pristine/older bytes for their original guards.
+  python3 "${PATCH_ROOT}/../scripts/apply_additional579_product.py" --source-root "${OHOS_ROOT}" --rewind \
+    --receipt "${CACHE_ROOT}/logs/prepare_additional579_product_prefix.json"
   # Reverse only the complete known native VPN options vector before its original guards.
   bash "${PATCH_ROOT}/common/foundation/communication/netmanager_ext/qemu_openvpn_options579/apply.sh" --source-root "${OHOS_ROOT}" --rewind \
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_qemu_openvpn_options579_prefix.log"
@@ -3243,8 +3247,6 @@ apply_qemu_capability_patch_plan() {
   apply_qemu_runtime_components
   bash "${NATIVE_CHILD_PROCESS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_native_child_process_component.log"
-  python3 "${PATCH_ROOT}/../scripts/apply_additional579_product.py" --source-root "${OHOS_ROOT}" \
-    --receipt "${CACHE_ROOT}/logs/apply_additional579_product.json"
   python3 "${PATCH_ROOT}/../scripts/apply_media579_hap_identity.py" --source-root "${OHOS_ROOT}" \
     --receipt "${CACHE_ROOT}/logs/apply_media579_hap_identity.json"
   apply_release_hap_dependencies_component
@@ -3887,6 +3889,9 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_onset579_component.log"
   python3 "${AUDIO_ONSET579_COMPONENT}" --source-root "${OHOS_ROOT}" --action verify \
     > "${CACHE_ROOT}/logs/verify_audio_onset579_component.json"
+  # Every original chooser/vendor/native guard has completed before the reviewed logs.
+  python3 "${PATCH_ROOT}/../scripts/apply_additional579_product.py" --source-root "${OHOS_ROOT}" \
+    --receipt "${CACHE_ROOT}/logs/apply_additional579_product.json"
   # Device contract/profile and every original audio source component are final.
   bash "${MEDIA579_CPU_COMPONENT}/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_media579_cpu_component.log"

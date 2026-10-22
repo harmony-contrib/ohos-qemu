@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Fail closed on partial or unknown system sharing edits."""
 from pathlib import Path
+import hashlib
+import importlib.util
+import os
+import stat
+import tempfile
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[5] / 'lib'))
 from exact_source_states import validate_component
@@ -42,5 +47,62 @@ def state(root):
             raise original_error
         return 'legacy_text'
 
+ADDITIONAL_PAGE = PROJECT + '/entry/src/main/ets/pages/transmitmsg/transmitMsgPage.ets'
+MMS_FINAL_PAGE = '516e94fcada17b5c6e16c2c19d6121b0c0e709a675c540ad13699634303a596f'
+ADDITIONAL_FINAL_PAGE = 'b53cf189c1e91f61c9b3de58bb48971ef97134003b056bbc73ed834d4f1beec9'
+ADDITIONAL_HELPER_SHA256 = '148960d9f68f668967e86d1c98b26b7b37e124bc915e2b66a3c5a6871bdc00c0'
+
+
+def additional_helper():
+    path = Path(__file__).resolve().parents[6] / 'scripts/apply_additional579_product.py'
+    if path.resolve() != path or any(p.is_symlink() for p in (path, *path.parents)):
+        raise ValueError('fixed Additional5 helper path required')
+    info = path.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        raise ValueError('fixed regular Additional5 helper required')
+    data = path.read_bytes()
+    if hashlib.sha256(data).hexdigest() != ADDITIONAL_HELPER_SHA256:
+        raise ValueError('unknown Additional5 helper bytes')
+    name = 'mms_send_data_additional579_source_guard'
+    if name in sys.modules:
+        raise ValueError('cached Additional5 helper refused')
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    if Path(module.__file__).resolve() != path or path.read_bytes() != data:
+        raise ValueError('Additional5 helper changed during fixed import')
+    return module
+
+
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    page = Path(root) / ADDITIONAL_PAGE
+    if not page.is_file() or hashlib.sha256(page.read_bytes()).hexdigest() != ADDITIONAL_FINAL_PAGE:
+        return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+
+    # apply_runtime/state still inspect only actual source. This readonly
+    # package branch proves all five final inputs before projecting one page.
+    helper = additional_helper()
+    root = helper.source_root(root)
+    if next(after for name, before, after in FILES if PROJECT + '/' + name == ADDITIONAL_PAGE) != MMS_FINAL_PAGE:
+        raise ValueError('unknown MMS ancestor contract')
+    with helper.preceding_view(root) as before:
+        actual = {PROJECT + '/' + name: helper.capture(helper.target(root, PROJECT + '/' + name))
+                  for name, original, final in FILES}
+        if (hashlib.sha256(actual[ADDITIONAL_PAGE]['data']).hexdigest() != ADDITIONAL_FINAL_PAGE or
+                hashlib.sha256(before[ADDITIONAL_PAGE]).hexdigest() != MMS_FINAL_PAGE):
+            raise ValueError('actual/preceding MMS page differs')
+        with tempfile.TemporaryDirectory(prefix='mms-send-data-additional579-') as directory:
+            view = Path(directory).resolve(strict=True)
+            for name, saved in actual.items():
+                target = helper.target(view, name)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(before[ADDITIONAL_PAGE] if name == ADDITIONAL_PAGE else saved['data'])
+                os.chmod(target, saved['mode'])
+            result = validate_component(view, PROJECT, REVISION, FILES, require_patched=True)
+        helper.revisions(root)
+        for name, saved in actual.items():
+            if helper.capture(helper.target(root, name)) != saved:
+                raise ValueError('actual MMS component changed during readonly view: ' + name)
+        if result is not True:
+            raise ValueError('complete MMS final required beneath Additional5')
+        return result
