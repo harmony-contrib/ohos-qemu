@@ -29,7 +29,7 @@ def safe(root,name):
 def descriptor(p):
  b=p.read_bytes();return dict(path=str(p),sha256=hashlib.sha256(b).hexdigest(),bytes=len(b))
 def expand(s,values,depth=0):
- require(depth<16,'recursive Ninja variable');s=s.replace('$$','\x00')
+ require(depth<16,'recursive Ninja variable');s=s.replace('$$','\x00').replace('$:',':')
  def sub(m):
   key=m.group(1) or m.group(2);require(key in values,'unbound Ninja variable: '+key);return expand(values[key],values,depth+1)
  s=re.sub(r'\$\{([^}]+)\}|\$([A-Za-z_][A-Za-z0-9_]*)',sub,s)
@@ -114,6 +114,9 @@ def checked_linkage(edge,compiler_runtime,triple):
   require(not (part.endswith(('.a','.o')) and part not in edge['inputs'] and part not in compiler_runtime),'hidden static linker code input: '+part)
  return v
 def parse_ninja(path,solink_only=False):
+ if solink_only:
+  possible=path.read_bytes().replace(b'\r\n',b'\n').replace(b'\r',b'\n').replace(b'$\n',b'')
+  if not any(b'build ' in line and b'solink' in line for line in possible.split(b'\n')):return []
  raw=path.read_text();lines=raw.replace('$\r\n','').replace('$\n','').splitlines();base={};edges=[];current=None
  for l in lines:
   if not l.strip() or l.startswith('#'):continue
@@ -198,8 +201,8 @@ def scan_archive_consumers(out):
  consumers={x:set() for x in allowed_consumers}
  for file in out.rglob('*.ninja'):
   require(not file.is_symlink(),'global Ninja symlink')
-  text=file.read_text()
-  if not any(x in text for x in allowed_consumers):continue
+  text=file.read_bytes()
+  if not any(x.encode('utf-8') in text for x in allowed_consumers):continue
   for edge in parse_ninja(file,solink_only=True):
    if edge['rule']!='solink':continue
    for archive,allowed in allowed_consumers.items():
