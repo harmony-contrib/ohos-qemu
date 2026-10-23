@@ -179,8 +179,8 @@ def args_output(command, source, timeout, diagnostics=None):
 
 def query_receipt(graph, stdout, stderr, receipt, product):
     value = json.loads(receipt)
-    command = graph['selected_args_command']; selected_args_command(command, product)
-    source = Path(command[-2]).parent.parent
+    command = graph['selected_args_command']
+    source = selected_args_command(command, product)
     expected = dict(argv=command, cwd=str(source), timeout_seconds=GN_EMULATED_TIMEOUT
                     if command[0] == '/usr/bin/qemu-x86_64-static' else GN_NATIVE_TIMEOUT,
                     exit_code=0, files_sha256={name: __import__('hashlib').sha256(data).hexdigest()
@@ -192,16 +192,19 @@ def query_receipt(graph, stdout, stderr, receipt, product):
 def selected_args_command(command, product):
     if not isinstance(command, list) or any(not isinstance(x, str) for x in command):
         raise ValueError('actual GN argument query argv required')
-    if command and command[0] == '/usr/bin/qemu-x86_64-static':
+    emulated = bool(command) and command[0] == '/usr/bin/qemu-x86_64-static'
+    if emulated:
         if command[1:3] != ['-cpu', 'max']:
             raise ValueError('explicit fixed host GN software CPU required')
         command = command[3:]
-    if len(command) != 4 or command[1] != 'args' or command[3] != '--list=theme_service':
+    if (len(command) != (5 if emulated else 4) or command[1] != 'args' or
+            command[3] != '--list=theme_service' or (emulated and command[4] != '--threads=1')):
         raise ValueError('unique theme_service GN argument query required')
     build = Path(command[2]); source = build.parent.parent
     if (not build.is_absolute() or '..' in build.parts or build.parts[-2:] != ('out', product) or
             command[0] != str(source / 'prebuilts/build-tools/linux-x86/bin/gn')):
         raise ValueError('GN query does not bind the actual product source/build paths')
+    return source
 
 
 
@@ -212,6 +215,8 @@ def gn_query_command(source, product):
     prefix = ['/usr/bin/qemu-x86_64-static', '-cpu', 'max'] if mode == '1' else []
     command = prefix + [str(source / 'prebuilts/build-tools/linux-x86/bin/gn'),
                         'args', str(source / 'out' / product), '--list=theme_service']
+    if mode == '1':
+        command.append('--threads=1')  # Same bounded worker policy as the original emulated HB GN.
     selected_args_command(command, product)
     return command, GN_EMULATED_TIMEOUT if mode == '1' else GN_NATIVE_TIMEOUT
 
