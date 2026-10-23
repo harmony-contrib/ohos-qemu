@@ -99,14 +99,21 @@ def verify(args):
     rows = mapping['modules'][args.device]; retained = mapping['retained_screenlock']
     expected = {r['hap'] for r in rows} | {retained['hap']}
     directory = args.build_hap_dir
-    if (not directory.is_absolute() or directory.resolve() != directory or not directory.is_dir() or
+    build_target = 'systemui_pc_sources' if args.device == '2in1' else 'systemui_phone_sources'
+    if (directory.name != build_target or not directory.is_absolute() or
+        directory.resolve() != directory or not directory.is_dir() or
         not directory.is_relative_to(args.source_root / 'out') or any(p.is_symlink() for p in (directory, *directory.parents))):
         raise ValueError('explicit actual SystemUI GN output directory under this source/out required')
-    if {p.name for p in directory.glob('*.hap')} != {r['hap'] for r in rows}:
-        raise ValueError('actual source build must produce the exact selected modules, no stale profile output')
+    built_names = {p.name for p in directory.glob('*.hap')}
+    expected_built_names = {r['hap'] for r in rows}
+    if built_names != expected_built_names:
+        raise ValueError('actual source build must produce the exact selected modules: ' +
+            json.dumps({'directory': str(directory), 'missing': sorted(expected_built_names - built_names),
+                        'extra': sorted(built_names - expected_built_names)}, sort_keys=True))
     executable = debugfs_path()
     if image_names(args.system_image, executable) != expected: raise ValueError('image contains stale/missing/extra same-bundle modules')
-    result = {'scope': 'actual image/build-byte/signature source proof ONLY; BMS and QEMU UI must still pass', 'modules': []}
+    result = {'scope': 'actual image/build-byte/signature source proof ONLY; BMS and QEMU UI must still pass',
+              'actual_build_target': build_target, 'modules': []}
     with tempfile.TemporaryDirectory(prefix='systemui-source-image-') as temporary:
         scratch = Path(temporary)
         result['install_selection'] = verify_selection(args.source_root, 'com.ohos.systemui', args.system_image, scratch)

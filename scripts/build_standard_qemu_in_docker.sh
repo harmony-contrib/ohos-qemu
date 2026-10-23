@@ -2149,6 +2149,8 @@ apply_release_hap_dependencies_component() {
   fi
   bash "${RELEASE_HAP_DEPENDENCIES_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_release_hap_dependencies.log"
+  bash "${PATCH_ROOT}/common/build/app_sign/strict_hap_list580/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_strict_hap_list580.log"
 }
 
 apply_sdk_cortex_m_component() {
@@ -3749,6 +3751,8 @@ apply_qemu_capability_patch_plan() {
   # Build the actual patched SystemUI modules, retaining independent ScreenLock.
   bash "${PATCH_ROOT}/common/applications/standard/systemui/source_provider/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_systemui_source_provider.log"
+  bash "${PATCH_ROOT}/common/applications/standard/systemui/profile_outputs580/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_systemui_profile_outputs580.log"
   bash "${PATCH_ROOT}/common/applications/standard/systemui/playback_capture_consent579/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_systemui_playback_capture_consent579.log"
   bash "${PATCH_ROOT}/common/applications/standard/hap/systemui_provider/apply.sh" --source-root "${OHOS_ROOT}" \

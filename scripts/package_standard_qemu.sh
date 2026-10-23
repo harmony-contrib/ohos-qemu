@@ -3484,10 +3484,14 @@ PY
     python3 "${SCRIPT_DIR}/verify_screen_capture_resources_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --source-root "${SOURCE_ROOT}" \
       --output "${PACKAGE_DIR}/screen-capture-resources-evidence.json"
+    systemui_source_target=systemui_phone_sources
+    if [ "${DEVICE_TYPE}" = "2in1" ]; then
+      systemui_source_target=systemui_pc_sources
+    fi
     python3 "${SCRIPT_DIR}/verify_systemui_provider_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --device "${DEVICE_TYPE}" \
       --source-root "${SOURCE_ROOT}" \
-      --build-hap-dir "${SOURCE_ROOT}/out/${PRODUCT}/obj/applications/standard/systemui/systemui_hap" \
+      --build-hap-dir "${SOURCE_ROOT}/out/${PRODUCT}/obj/applications/standard/systemui/${systemui_source_target}" \
       --output "${PACKAGE_DIR}/systemui-provider-evidence.json"
     if [ "${DEVICE_TYPE}" = phone ]; then
       python3 "${SCRIPT_DIR}/verify_number_identity_image.py" \
