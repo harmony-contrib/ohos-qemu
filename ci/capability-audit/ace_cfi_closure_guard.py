@@ -14,6 +14,8 @@ STATIC_CODE=(
  'obj/foundation/communication/netmanager_base/interfaces/innerkits/netconnclient/libnet_conn_parcel.a',
  'obj/third_party/bounds_checking_function/libsec_static_ace_cfi.a',
 )
+# Kept separate from the original83 emitted-boundary history above.
+EMITTED_EXAMPLE_DSO='arkui/ace_engine/libui_sa.z.so'
 def require(ok,why):
  if not ok:raise ValueError(why)
 def safe(root,name):
@@ -111,12 +113,15 @@ def checked_linkage(edge,compiler_runtime,triple):
  for part in v['names']:
   require(not (part.endswith(('.a','.o')) and part not in edge['inputs'] and part not in compiler_runtime),'hidden static linker code input: '+part)
  return v
-def parse_ninja(path):
+def parse_ninja(path,solink_only=False):
  raw=path.read_text();lines=raw.replace('$\r\n','').replace('$\n','').splitlines();base={};edges=[];current=None
  for l in lines:
   if not l.strip() or l.startswith('#'):continue
   if l.startswith('build '):
-   out,body=l[6:].split(': ',1);parts=body.split();rule=parts[0];ins=[]
+   out,body=l[6:].split(': ',1);parts=body.split();rule=parts[0]
+   if solink_only and rule!='solink':
+    current=None;continue
+   ins=[]
    for x in parts[1:]:
     if x in ('|','||'):break
     ins.append(x)
@@ -195,13 +200,73 @@ def scan_archive_consumers(out):
   require(not file.is_symlink(),'global Ninja symlink')
   text=file.read_text()
   if not any(x in text for x in allowed_consumers):continue
-  for edge in parse_ninja(file):
+  for edge in parse_ninja(file,solink_only=True):
    if edge['rule']!='solink':continue
    for archive,allowed in allowed_consumers.items():
     if archive in linkage(edge)['names']:
      actual=edge['outputs'][0];require(actual in allowed,'unreviewed CFI archive consumer: '+actual);consumers[archive].add(actual)
  for archive,allowed in allowed_consumers.items():require(consumers[archive]==allowed,'missing fixed CFI archive consumers: '+archive)
  return consumers
+
+def product_example_selection(out,arch,nodes,selected):
+ """Separate actual product membership from mere emitted common-config edges."""
+ metadata=safe(out,'packages/phone/system_module_info.json')
+ require(metadata.is_file(),'missing complete product module installation metadata')
+ rows=json.loads(metadata.read_text())
+ require(type(rows) is list and rows,'complete product module installation list')
+ installed={};library_type='lib' if arch=='arm' else 'lib64'
+ for row in rows:
+  require(type(row) is dict and {'source','dest','type','install_enable'}<=set(row) and
+          type(row['source']) is str and row['source'] and type(row['dest']) is list and
+          all(type(x) is str and x for x in row['dest']) and type(row['type']) is str and
+          type(row['install_enable']) is bool,'malformed product module metadata')
+  if not row['install_enable'] or not row['source'].endswith('.so'):continue
+  source=PurePosixPath(row['source'])
+  require(not source.is_absolute() and '..' not in source.parts and str(source)!='.' and
+          row['dest'],'unsafe or empty selected product module')
+  installed.setdefault(str(source),[]).append(row)
+ floor=set(REQUIRED_DSOS)-{EMITTED_EXAMPLE_DSO}
+ require(floor<=set(installed),'missing fixed ACE product installation members')
+ for name in floor:
+  require(all(row['type']==library_type for row in installed[name]),
+          'fixed ACE product installation ABI kind: '+name)
+ # Read every native solink; metadata restricts consumer identity, never flags.
+ consumers=[];inventory={};product_links=set()
+ for file in sorted(out.rglob('*.ninja')):
+  require(not file.is_symlink(),'global product Ninja symlink')
+  inventory[str(file.relative_to(out))]=descriptor(file)
+  for edge in parse_ninja(file,solink_only=True):
+   outputs={str(PurePosixPath(name)) for name in edge['outputs']}
+   product_outputs=outputs&set(installed)
+   if not product_outputs:continue
+   product_links.update(product_outputs)
+   inputs=linkage(edge)
+   named=any(PurePosixPath(name).name=='libui_sa.z.so' for name in inputs['names'])
+   library=any(name in ('ui_sa','ui_sa.z') or
+               PurePosixPath(name.lstrip(':')).name=='libui_sa.z.so'
+               for name in inputs['libraries'])
+   if named or library:
+    consumers.append(dict(outputs=sorted(product_outputs),ninja=descriptor(file),
+        explicit_and_linker_names=sorted(inputs['names']),libraries=inputs['libraries']))
+ require(floor<=product_links,'fixed product ACE solink missing from actual global graph')
+ member=EMITTED_EXAMPLE_DSO in installed
+ required=member or bool(consumers)
+ if required:
+  require(EMITTED_EXAMPLE_DSO in nodes and nodes[EMITTED_EXAMPLE_DSO]['rule']=='solink',
+          'selected product example has no native solink')
+  selected[EMITTED_EXAMPLE_DSO]=nodes[EMITTED_EXAMPLE_DSO]
+ else:
+  # The only finite exception: never infer scope from artifact existence.
+  selected.pop(EMITTED_EXAMPLE_DSO,None)
+ return dict(product_module_metadata=descriptor(metadata),module_count=len(rows),
+     fixed_product_floor=sorted(floor),selected_common_dsos=sorted(selected),
+     example=dict(output=EMITTED_EXAMPLE_DSO,product_member=member,
+         product_link_consumers=consumers,native_CFI_required=required,
+         classification='product-selected' if required else 'emitted-unselected',
+         reason='actual installation membership or product link dependency' if required else
+                'absent from complete actual installation metadata and every product native solink'),
+     product_solink_outputs=sorted(product_links),global_ninja_inventory=inventory,
+     runtime_passed=False,first_artifact_behavior_gate_passed=False)
 
 def verify(out,arch):
  out=Path(out).resolve();machine={'arm64':183,'arm':40,'x86_64':62}[arch]
@@ -218,11 +283,13 @@ def verify(out,arch):
     require(name not in nodes,'duplicate native output: '+name);nodes[name]=e
  selected={};dso_evidence={}
  for name in REQUIRED_DSOS:
+  if name==EMITTED_EXAMPLE_DSO:continue
   require(name in nodes and nodes[name]['rule']=='solink','missing required ACE DSO: '+name);selected[name]=nodes[name]
  common={name for name,e in nodes.items() if e['rule'] in ('cxx','cc') and '-DUNITEST_FRIEND_CLASS=' in flags(e['values'],('cflags',))}
  # Newly emitted DSO boundaries with the same real common-config inputs are checked too.
  for e in all_edges:
   if e['rule']=='solink' and common.intersection(e['inputs']):selected[e['outputs'][0]]=e
+ product_selection=product_example_selection(out,arch,nodes,selected)
  triple={'arm64':'aarch64-linux-ohos','arm':'arm-linux-ohos','x86_64':'x86_64-linux-ohos'}[arch]
  compiler_base='../../prebuilts/clang/ohos/linux-x86_64/llvm/lib/'
  runtime_allowed=(compiler_base+'clang/15.0.4/lib/'+triple+'/libclang_rt.builtins.a',compiler_base+'clang/15.0.4/lib/'+triple+'/libclang_rt.gwp_asan.a',compiler_base+triple+'/libc++abi.a')
@@ -264,7 +331,7 @@ def verify(out,arch):
   dso_evidence[name]=cfi_dso_elf(safe(out,name),machine)
  scan_archive_consumers(out)
  runtime_evidence={name:descriptor(out/name) for name in sorted(compiler_runtime)}
- return dict(scope='actual native CFI flag and local link-input coverage ONLY',arch=arch,dsos={n:dso_evidence[n] for n in sorted(selected)},compiled_inputs=checked,archives=archives,compiler_runtime_inputs_under_existing_platform_policy=runtime_evidence,data_objects=data,ninja_files=seen,actual_artifacts_checked=True,native_compile_execution_independently_proven=False,runtime_passed=False,first_artifact_behavior_gate_passed=False)
+ return dict(scope='actual native CFI flag and local link-input coverage ONLY',arch=arch,dsos={n:dso_evidence[n] for n in sorted(selected)},compiled_inputs=checked,archives=archives,compiler_runtime_inputs_under_existing_platform_policy=runtime_evidence,data_objects=data,ninja_files=seen,product_selection=product_selection,actual_artifacts_checked=True,native_compile_execution_independently_proven=False,runtime_passed=False,first_artifact_behavior_gate_passed=False)
 def main(argv=None):
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--out',type=Path,required=True);p.add_argument('--arch',choices=('arm64','arm','x86_64'),required=True);p.add_argument('--output',type=Path);a=p.parse_args(argv)
  d=verify(a.out,a.arch);s=json.dumps(d,indent=2)+'\n'
