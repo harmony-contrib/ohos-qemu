@@ -277,8 +277,10 @@ def image_bytes(bindings, after):
         type(loader.get('image_path')) is str,
         'actual independent loader extraction/image binding required')
     aliases=loader.get('image_path_aliases')
-    candidates=['/lib64/'+core.SONAMES[0],'/system/lib64/'+core.SONAMES[0]]
-    core.need(type(aliases) is list and aliases in ([candidates[0]],[candidates[1]],candidates) and
+    candidates=['/lib64/'+core.SONAMES[0],'/system/lib64/'+core.SONAMES[0],
+        '/lib64/platformsdk/'+core.SONAMES[0],'/system/lib64/platformsdk/'+core.SONAMES[0]]
+    core.need(type(aliases) is list and aliases and
+        aliases == [path for path in candidates if path in aliases] and
         loader['image_path']==aliases[0],
         'actual loader aliases must retain the finite same-inode extraction order')
     actual={}

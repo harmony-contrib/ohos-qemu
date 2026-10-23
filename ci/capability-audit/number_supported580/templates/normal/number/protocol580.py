@@ -453,8 +453,10 @@ def image_bytes(bindings, after, *, admitted, original):
         'actual independent loader extraction/image binding required')
     aliases=loader.get('image_path_aliases')
     directory='/lib64/' if target['class']==64 else '/lib/'
-    candidates=[directory+core.SONAMES[0],'/system'+directory+core.SONAMES[0]]
-    core.need(type(aliases) is list and aliases in ([candidates[0]],[candidates[1]],candidates) and
+    candidates=[directory+core.SONAMES[0],'/system'+directory+core.SONAMES[0],
+        directory+'platformsdk/'+core.SONAMES[0],'/system'+directory+'platformsdk/'+core.SONAMES[0]]
+    core.need(type(aliases) is list and aliases and
+        aliases == [path for path in candidates if path in aliases] and
         loader['image_path']==aliases[0],
         'actual loader aliases must retain the finite same-inode extraction order')
     actual={}

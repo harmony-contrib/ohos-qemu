@@ -75,7 +75,7 @@ class LoaderImage496(unittest.TestCase):
                 target=destination/LIBRARY;self.assertTrue(target.is_file());self.assertFalse(target.is_symlink());self.assertEqual(target.read_bytes(),payload)
                 self.assertEqual(destination.stat().st_mode&0o777,0o700)
                 self.assertEqual(report['sha256'],sha(payload));self.assertEqual(report['bytes'],len(payload));self.assertEqual(report['system_image_sha256'],sha(self.image.read_bytes()));self.assertEqual(report['file'],str(target));self.assertEqual(report['basename'],LIBRARY)
-                self.assertEqual(report['image_inode'],731);self.assertEqual(report['image_path_aliases'],['/'+guard.ARCHES[arch][2]+'/'+LIBRARY,'/system/'+guard.ARCHES[arch][2]+'/'+LIBRARY])
+                self.assertEqual(report['image_inode'],731);self.assertEqual(report['image_path_aliases'],['/'+guard.ARCHES[arch][2]+'/'+LIBRARY,'/system/'+guard.ARCHES[arch][2]+'/'+LIBRARY,'/'+guard.ARCHES[arch][2]+'/platformsdk/'+LIBRARY,'/system/'+guard.ARCHES[arch][2]+'/platformsdk/'+LIBRARY])
                 self.assertEqual(report['elf_class'],guard.ARCHES[arch][0]);self.assertEqual(report['elf_machine'],guard.ARCHES[arch][1]);self.assertEqual(report['elf_type'],3)
                 self.assertIs(report['loaded_process_verified'],False);self.assertIs(report['native_callback_proven'],False)
                 self.assertIn('on-disk loader ELF only',report['scope']);dump.assert_called_once()
@@ -115,12 +115,14 @@ class LoaderImage496(unittest.TestCase):
         def corrupt(source,target):Path(target).write_bytes(b'HOST_CORRUPTION')
         with self.assertRaisesRegex(ValueError,'differs from image'):self.call_export(copy=corrupt)
     def test_11_unique_inode_actual_helper_replayed_with_synthetic_debugfs(self):
-        for inodes,accepted in [([731,731],True),([731,None],True),([None,731],True),([731,732],False),([None,None],False)]:
+        candidates=['/lib64/'+LIBRARY,'/system/lib64/'+LIBRARY,
+                    '/lib64/platformsdk/'+LIBRARY,'/system/lib64/platformsdk/'+LIBRARY]
+        for inodes,accepted in [([731,731,None,None],True),([731,None,None,None],True),([None,731,None,None],True),([731,732,None,None],False),([None,None,None,None],False)]:
             scratch,dest=self.fresh();payload=synthetic_elf();calls=[]
             def fake(argv,**kwargs):
                 calls.append(argv);self.assertEqual(argv[0],'HOST_SYNTHETIC_DEBUGFS_ONLY');self.assertEqual(argv[1],'-R');self.assertEqual(argv[-1],str(self.image));self.assertIs(kwargs['check'],True)
                 if argv[2].startswith('stat '):
-                    index=1 if argv[2].startswith('stat /system/') else 0;inode=inodes[index]
+                    index=candidates.index(argv[2].removeprefix('stat '));inode=inodes[index]
                     text='File not found\n' if inode is None else f'Inode: {inode}   Type: regular Mode: 0644\n'
                     return subprocess.CompletedProcess(argv,0,stdout=text,stderr='')
                 self.assertTrue(argv[2].startswith('dump '));target=Path(argv[2].split(' ',2)[2]);target.write_bytes(payload)
@@ -128,7 +130,7 @@ class LoaderImage496(unittest.TestCase):
             with mock.patch.object(ext_image_entries.subprocess,'run',side_effect=fake),mock.patch.object(guard,'debugfs_path',return_value='HOST_SYNTHETIC_DEBUGFS_ONLY'):
                 if accepted:
                     report=guard.verify_loader_image(self.image,'arm64',scratch,dest);self.assertEqual(report['image_inode'],731);self.assertEqual((dest/LIBRARY).read_bytes(),payload)
-                    aliases=[prefix+'/lib64/'+LIBRARY for prefix,inode in zip(['','/system'],inodes) if inode is not None]
+                    aliases=[path for path,inode in zip(candidates,inodes) if inode is not None]
                     self.assertEqual(report['image_path_aliases'],aliases);self.assertEqual(report['image_path'],aliases[0])
                 else:
                     with self.assertRaisesRegex(ValueError,'unambiguous regular file inode'):guard.verify_loader_image(self.image,'arm64',scratch,dest)

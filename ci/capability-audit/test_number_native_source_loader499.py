@@ -21,6 +21,7 @@ ROOT=Path(__file__).resolve().parents[2]
 FIXTURES=ROOT/'ci/capability-audit/fixtures/number_native_source_loader499'
 BEFORE=FIXTURES/'owner494_before.py'
 OWNER=FIXTURES/'owner499_final.py'
+ACTIVE_OWNER=ROOT/'ci/capability-audit/number_supported580/templates/normal/number/owner499.py'
 SOURCE=ROOT
 OWNER_PATCH=ROOT/'ci/capability-audit/number_native497/patches/kit411/candidate/number_owner411.py.patch'
 TEMP_PREFIX='number-native-source-loader499-'
@@ -45,6 +46,22 @@ def fixture_nodes(path):
 
 def dump(node):return ast.dump(node,include_attributes=False)
 
+def active_canonical_pins():
+ # Read only the reviewed active Owner's literal pin table, never execute it.
+ nodes=[node.value for node in ast.parse(ACTIVE_OWNER.read_bytes(),filename=str(ACTIVE_OWNER)).body
+  if isinstance(node,ast.Assign) and len(node.targets)==1 and
+  isinstance(node.targets[0],ast.Name) and node.targets[0].id=='NATIVE496_CANONICAL_PINS']
+ if len(nodes)!=1:raise ValueError('one active literal canonical pin table required')
+ value=ast.literal_eval(nodes[0])
+ if type(value) is not dict or len(value)!=9:raise ValueError('active nine-source pin table required')
+ for relative,row in value.items():
+  if (type(relative) is not str or type(row) is not dict or set(row)!={'sha256','bytes'} or
+      type(row['sha256']) is not str or len(row['sha256'])!=64 or
+      any(c not in '0123456789abcdef' for c in row['sha256']) or
+      type(row['bytes']) is not int or row['bytes']<=0):
+   raise ValueError('active literal source hash/size pin required')
+ return value
+
 def load_owner():
  name='_HOST_ONLY_number499_owner_'+os.urandom(8).hex()
  raw=fixture_bytes(OWNER);module=types.ModuleType(name);module.__file__=str(OWNER)
@@ -62,6 +79,8 @@ class Loader499Tests(unittest.TestCase):
   for name in self.previous:del sys.modules[name]
   self.temp=tempfile.TemporaryDirectory(prefix=TEMP_PREFIX);self.root=Path(self.temp.name).resolve()
   self.n=load_owner();self.n.R=self.root
+  active=active_canonical_pins();self.assertEqual(set(active),set(self.n.NATIVE496_CANONICAL_PINS))
+  self.n.NATIVE496_CANONICAL_PINS=active
   for relative,row in self.n.NATIVE496_CANONICAL_PINS.items():
    source=SOURCE/relative;self.assertEqual(sha(source),row['sha256'])
    target=self.root/relative;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)

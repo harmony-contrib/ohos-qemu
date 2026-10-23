@@ -4,6 +4,8 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
+import stat
 from pathlib import Path, PurePosixPath
 import re
 import struct
@@ -80,29 +82,67 @@ def inspect_hap(hap):
                 'hap_sha256': file_sha256(hap)}
 
 
+def stage_signature_hap(hap, scratch):
+    """Retain the exact input bytes under a .hap name for the fixed signer."""
+    before = hap.stat()
+    fields = ('st_dev', 'st_ino', 'st_mode', 'st_nlink', 'st_size', 'st_mtime_ns', 'st_ctime_ns')
+    identity = lambda value: tuple(getattr(value, key) for key in fields)
+    if not stat.S_ISREG(before.st_mode) or before.st_size <= 0:
+        raise ValueError('signature input must be a nonempty regular HAP')
+    staged = scratch / 'signature-input.hap'
+    digest = hashlib.sha256(); remaining = before.st_size
+    with hap.open('rb') as source, staged.open('xb') as output:
+        if identity(os.fstat(source.fileno())) != identity(before):
+            raise ValueError('signature input changed before staging')
+        while True:
+            block = source.read(min(65536, remaining + 1))
+            if not block:
+                break
+            if len(block) > remaining:
+                raise ValueError('signature input grew during staging')
+            digest.update(block); output.write(block); remaining -= len(block)
+        if identity(os.fstat(source.fileno())) != identity(before):
+            raise ValueError('signature input changed during staging')
+    if (remaining or identity(hap.stat()) != identity(before) or
+            staged.stat().st_size != before.st_size or file_sha256(staged) != digest.hexdigest()):
+        raise ValueError('staged .hap differs from original signature input')
+    return staged
+
+
 def verify_signature(hap, source, scratch,
                      profile_relative='applications/standard/photos/signature/photos.p7b'):
     dist = source / 'developtools/hapsigner/dist'
     jar = dist / 'hap-sign-tool.jar'
     if file_sha256(jar) != SIGNER_JAR_SHA:
         raise ValueError('Photos signer tool does not match the fixed release')
+    signature_hap = stage_signature_hap(hap, scratch)
     profile = scratch / 'embedded-profile.p7b'
     chain = scratch / 'app-chain.cer'
-    completed = subprocess.run(['java', '-jar', str(jar), 'verify-app', '-inFile', str(hap),
+    completed = subprocess.run(['java', '-jar', str(jar), 'verify-app', '-inFile', str(signature_hap),
                                 '-outCertChain', str(chain), '-outProfile', str(profile)],
                                check=True, capture_output=True, text=True, timeout=120)
     output = completed.stdout + completed.stderr
     required = ('verify codesign success', 'Digest verify result: true',
                 'verify permission sign success', 'verify-app success')
+    if 'skip code signing verify' in output:
+        raise ValueError('source HAP verifier skipped code signing')
+    missing_markers = [marker for marker in required if marker not in output]
+    if missing_markers:
+        raise ValueError('source HAP verification missing required markers: ' + ', '.join(missing_markers))
     leaf = re.split(r'certificate #0\b', output, maxsplit=1)
     if len(leaf) != 2:
         raise ValueError('Photos HAP verification lacks the actual signing leaf')
     match = re.search(r'SHA256:\s*([0-9A-Fa-f:]+)', re.split(r'certificate #1\b', leaf[1], maxsplit=1)[0])
-    if (not all(marker in output for marker in required) or not match or
-            match[1].replace(':', '').upper() != SIGNATURE or not chain.is_file() or
-            profile.read_bytes() != (source / profile_relative).read_bytes()):
-        raise ValueError('Photos signature/digest/permissions or exact source profile mismatch')
+    identity_checks = {
+        'application_leaf': bool(match and match[1].replace(':', '').upper() == SIGNATURE),
+        'certificate_chain_output': chain.is_file(),
+        'exact_source_profile': profile.is_file() and profile.read_bytes() == (source / profile_relative).read_bytes(),
+    }
+    if not all(identity_checks.values()):
+        raise ValueError('source HAP signing identity/profile mismatch: ' +
+                         ', '.join(name for name, passed in identity_checks.items() if not passed))
     return {'application_signer_sha256': SIGNATURE, 'embedded_profile_sha256': file_sha256(profile),
+            'signature_input_sha256': file_sha256(signature_hap), 'code_signing_skip_rejected': True,
             'digest_codesign_permission_verification': 'pass'}
 
 

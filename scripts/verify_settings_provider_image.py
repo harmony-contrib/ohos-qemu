@@ -14,6 +14,7 @@ import zipfile
 from ext_image_entries import dump_unique_file
 from verify_preinstall_selection import verify_selection
 from verify_alsa_config_image import debugfs_path, file_sha256
+from verify_photos_provider_image import stage_signature_hap
 
 SIGNATURE = '8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5'
 SIGNER_JAR_SHA = 'a434b6747e6c5d0b14e73837a46b39f4816ab25b42d1833d6f767bf867cf616d'
@@ -169,23 +170,34 @@ def verify_signature(hap, source, scratch):
     jar = dist / 'hap-sign-tool.jar'
     if file_sha256(jar) != SIGNER_JAR_SHA:
         raise ValueError('Settings signer tool does not match the fixed release')
+    signature_hap = stage_signature_hap(hap, scratch)
     profile = scratch / 'embedded-profile.p7b'
     chain = scratch / 'app-chain.cer'
-    completed = subprocess.run(['java', '-jar', str(jar), 'verify-app', '-inFile', str(hap),
+    completed = subprocess.run(['java', '-jar', str(jar), 'verify-app', '-inFile', str(signature_hap),
                                 '-outCertChain', str(chain), '-outProfile', str(profile)],
                                check=True, capture_output=True, text=True, timeout=120)
     output = completed.stdout + completed.stderr
     required = ('verify codesign success', 'Digest verify result: true',
                 'verify permission sign success', 'verify-app success')
+    if 'skip code signing verify' in output:
+        raise ValueError('Settings HAP verifier skipped code signing')
+    missing_markers = [marker for marker in required if marker not in output]
+    if missing_markers:
+        raise ValueError('Settings HAP verification missing required markers: ' + ', '.join(missing_markers))
     leaf = re.split(r'certificate #0\b', output, maxsplit=1)
     if len(leaf) != 2:
         raise ValueError('Settings HAP verification lacks the actual signing leaf')
     match = re.search(r'SHA256:\s*([0-9A-Fa-f:]+)', re.split(r'certificate #1\b', leaf[1], maxsplit=1)[0])
-    if (not all(marker in output for marker in required) or not match or
-            match[1].replace(':', '').upper() != SIGNATURE or not chain.is_file() or
-            profile.read_bytes() != (source / 'applications/standard/settings/signature/settings.p7b').read_bytes()):
-        raise ValueError('Settings signature/digest/permissions or exact source profile mismatch')
+    identity_checks = {
+        'application_leaf': bool(match and match[1].replace(':', '').upper() == SIGNATURE),
+        'certificate_chain_output': chain.is_file(),
+        'exact_source_profile': profile.is_file() and profile.read_bytes() == (source / 'applications/standard/settings/signature/settings.p7b').read_bytes(),
+    }
+    if not all(identity_checks.values()):
+        raise ValueError('Settings HAP signing identity/profile mismatch: ' +
+                         ', '.join(name for name, passed in identity_checks.items() if not passed))
     return {'application_signer_sha256': SIGNATURE, 'embedded_profile_sha256': file_sha256(profile),
+            'signature_input_sha256': file_sha256(signature_hap), 'code_signing_skip_rejected': True,
             'digest_codesign_permission_verification': 'pass'}
 
 

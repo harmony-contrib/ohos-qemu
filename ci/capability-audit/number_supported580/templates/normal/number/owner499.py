@@ -117,7 +117,7 @@ NATIVE496_CANONICAL_PINS = {'ci/capability-audit/fixtures/batch_apps/number_runt
  'ci/capability-audit/number_native496/candidate/number_token_query395.cpp': {'sha256': 'b56d895cddd5dcc375b7b871e871b199540b43c0a495d7ec8b31ff1106a4e5ed',
                                                                               'bytes': 6767},
  'ci/capability-audit/number_native496/consumer496.py': {'sha256': '9c9719c41d50d8348b96e229bbcdc82f857109ff913c1b5704184aa40a0577cc', 'bytes': 19705},
- 'ci/capability-audit/number_native496/evidence_join496.py': {'sha256': '021d564c75f95fa1e99f30814819bd7c961c4155e73d2c78886edeb9fc7f0c99', 'bytes': 36667},
+ 'ci/capability-audit/number_native496/evidence_join496.py': {'sha256': 'b6d0cc633cc15be6acbabc95b24c61ae699fa6de906e667b641aed18db50a687', 'bytes': 36783},
  'ci/capability-audit/number_native496/support/guest_ui.py': {'sha256': '8f8fba0256492ff3d9d8bcfa526540954a8cafa42381cc16fd02c7cd48a4147f',
                                                               'bytes': 7723},
  'ci/capability-audit/number_native496/support/napi_protocol411.py': {'sha256': '03ae5a3a5d5cdc4932e6421bc64c39e06880b701326682bb6dfaf0c4d7c5ec49',

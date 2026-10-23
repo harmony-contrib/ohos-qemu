@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'patches/lib'))
 import systemui_provider as provider
 from ext_image_entries import dump_unique_file
 from verify_alsa_config_image import debugfs_path, file_sha256
-from verify_photos_provider_image import verify_signature
+from verify_photos_provider_image import verify_signature, stage_signature_hap, SIGNER_JAR_SHA
 from verify_preinstall_selection import verify_selection
 
 
@@ -74,22 +74,58 @@ def image_names(image, executable):
 
 
 def retained_signature(hap, source, scratch):
-    dist = source / 'developtools/hapsigner/dist'; profile = scratch / 'retained-profile.p7b'; chain = scratch / 'retained-app.cer'
-    result = subprocess.run(['java', '-jar', str(dist / 'hap-sign-tool.jar'), 'verify-app', '-inFile', str(hap),
+    # Only this exact unchanged legacy payload may omit the permission log marker.
+    expected_sha = '7e6d99cf44f67a421e20ef2d7a86084d52b45dc1fc4c0ea0902dd4ede47c2cc9'
+    if file_sha256(hap) != expected_sha or hap.stat().st_size != 851864:
+        raise ValueError('retained ScreenLock exact legacy payload SHA/size differs')
+    dist = source / 'developtools/hapsigner/dist'; jar = dist / 'hap-sign-tool.jar'
+    if file_sha256(jar) != SIGNER_JAR_SHA:
+        raise ValueError('retained ScreenLock signer tool does not match the fixed release')
+    signature_hap = stage_signature_hap(hap, scratch)
+    if file_sha256(signature_hap) != expected_sha or signature_hap.stat().st_size != 851864:
+        raise ValueError('retained ScreenLock staged legacy payload SHA/size differs')
+    profile = scratch / 'retained-profile.p7b'; chain = scratch / 'retained-app.cer'
+    result = subprocess.run(['java', '-jar', str(jar), 'verify-app', '-inFile', str(signature_hap),
         '-outProfile', str(profile), '-outCertChain', str(chain)], check=True, capture_output=True, text=True, timeout=120)
     output = result.stdout + result.stderr
-    required = ('verify codesign success', 'Digest verify result: true', 'verify permission sign success', 'verify-app success')
+    if 'skip code signing verify' in output:
+        raise ValueError('retained ScreenLock verifier skipped code signing')
+    required = ('verify codesign success', 'Digest verify result: true', 'verify-app success')
+    missing_markers = [marker for marker in required if marker not in output]
+    if missing_markers:
+        raise ValueError('retained ScreenLock verification missing required markers: ' + ', '.join(missing_markers))
+    permission_marker = 'verify permission sign success' in output
     leaf = re.split(r'certificate #0\b', output, maxsplit=1)
     match = re.search(r'SHA256:\s*([0-9A-Fa-f:]+)', re.split(r'certificate #1\b', leaf[1], maxsplit=1)[0]) if len(leaf) == 2 else None
-    issuer = scratch / 'retained-profile-issuer.pem'; document = provider.cms(profile, issuer)
-    actual_issuer = provider.certificates(provider.read(issuer)); expected_issuers = provider.certificates(provider.read(dist / 'OpenHarmonyProfileRelease.pem'))
-    if (not all(s in output for s in required) or match is None or match[1].replace(':', '').upper() != provider.SIGNATURE or
-        not chain.is_file() or document['bundle-info']['bundle-name'] != 'com.ohos.systemui' or
-        provider.certificate_fingerprint(document['bundle-info']['distribution-certificate'].encode()) != provider.SIGNATURE or
-        len(actual_issuer) != 1 or len(expected_issuers) != 3 or
-        provider.certificate_fingerprint(actual_issuer[0]) != provider.certificate_fingerprint(expected_issuers[-1])):
-        raise ValueError('retained ScreenLock signer/profile issuer identity differs from the source modules')
-    return {'application_signer_sha256': provider.SIGNATURE, 'original_payload_retained': True}
+    issuer = scratch / 'retained-profile-issuer.pem'
+    try:
+        document = provider.cms(profile, issuer)
+        actual_issuer = provider.certificates(provider.read(issuer))
+        expected_issuers = provider.certificates(provider.read(dist / 'OpenHarmonyProfileRelease.pem'))
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        raise ValueError('retained ScreenLock profile CMS/export verification failed') from error
+    try:
+        distribution_fingerprint = provider.certificate_fingerprint(document['bundle-info']['distribution-certificate'].encode())
+        actual_fingerprint = provider.certificate_fingerprint(actual_issuer[0]) if len(actual_issuer) == 1 else None
+        expected_fingerprint = provider.certificate_fingerprint(expected_issuers[-1]) if len(expected_issuers) == 3 else None
+    except (KeyError, TypeError, AttributeError, OSError, ValueError, subprocess.SubprocessError) as error:
+        raise ValueError('retained ScreenLock profile certificate fingerprint extraction failed') from error
+    identity_checks = {
+        'application_leaf': bool(match and match[1].replace(':', '').upper() == provider.SIGNATURE),
+        'certificate_chain_output': chain.is_file(),
+        'profile_bundle': document.get('bundle-info', {}).get('bundle-name') == 'com.ohos.systemui',
+        'distribution_certificate': distribution_fingerprint == provider.SIGNATURE,
+        'profile_CMS_signer_count': len(actual_issuer) == 1,
+        'fixed_profile_chain_count': len(expected_issuers) == 3,
+        'profile_CMS_signer_identity': actual_fingerprint is not None and expected_fingerprint is not None and actual_fingerprint == expected_fingerprint,
+    }
+    if not all(identity_checks.values()):
+        raise ValueError('retained ScreenLock signing identity/profile mismatch: ' +
+                         ', '.join(name for name, passed in identity_checks.items() if not passed))
+    return {'application_signer_sha256': provider.SIGNATURE, 'original_payload_retained': True,
+            'signature_input_sha256': file_sha256(signature_hap), 'code_signing_skip_rejected': True,
+            'legacy_permission_marker_absent': not permission_marker,
+            'legacy_exception_payload_sha256': expected_sha, 'legacy_exception_payload_bytes': 851864}
 
 
 def verify(args):

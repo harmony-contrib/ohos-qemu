@@ -171,9 +171,11 @@ def verify_loader_image(image, arch, scratch, output_directory):
     library = 'libappkit_native.z.so'
     directory = scratch / 'loader-elf'
     directory.mkdir()
-    relative = '/' + ARCHES[arch][2] + '/' + library
-    actual, inode = dump_unique_file(image, tuple(prefix + relative for prefix in ('', '/system')),
-                                     directory, debugfs_path())
+    # Include the platform SDK directory; every found alias must share one inode.
+    relatives = ('/' + ARCHES[arch][2] + '/' + library,
+                 '/' + ARCHES[arch][2] + '/platformsdk/' + library)
+    actual, inode = dump_unique_file(image, tuple(prefix + relative
+        for relative in relatives for prefix in ('', '/system')), directory, debugfs_path())
     report = {**inode, **inspect_elf(actual, arch, library),
               'basename': library, 'bytes': actual.stat().st_size,
               'system_image_sha256': file_sha256(image),
