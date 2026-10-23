@@ -243,6 +243,18 @@ def verify_source(source):
             verifier.parent.parent / component / 'verify_source.py')
         route_guard = importlib.util.module_from_spec(route_spec)
         route_spec.loader.exec_module(route_guard)
+        if component == 'accessibility_service_completion':
+            # Packaging follows the complete conditional-idle-stop source composition.
+            idle_path = verifier.parents[4] / 'foundation/ability/ability_runtime/service_idle_startid/verify_source.py'
+            idle_spec = importlib.util.spec_from_file_location('settings_idle_source_guard', idle_path)
+            idle_guard = importlib.util.module_from_spec(idle_spec)
+            idle_spec.loader.exec_module(idle_guard)
+            idle_manifest = idle_guard.manifest()
+            idle_service = route_guard.PROJECT + '/' + route_guard.FILES[0][0]
+            if file_sha256(source / idle_service) == idle_manifest['files'][idle_service][1]:
+                if idle_guard.state(source.resolve()) != 'final':
+                    raise ValueError('Settings requires the complete final conditional-stop source vector')
+                continue
         route_guard.validate(source, require_patched=True)
     parameter_path = verifier.parents[4] / 'vendor/ohemu/virt/settings_select/apply.py'
     parameter_spec = importlib.util.spec_from_file_location('settings_select_parameter_guard', parameter_path)
