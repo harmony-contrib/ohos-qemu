@@ -27,7 +27,8 @@ def compilation_key(words, out):
  if any(w.startswith('@') for w in words):raise ValueError('unretained compiler response file is outside fixed expanded target grammar')
  return tuple(w for i,w in enumerate(words) if i not in remove)
 
-def fixed_target_units(src, out, cc, db):
+def fixed_target_units(src, out, cc, db, target):
+ if target not in ('arm-linux-ohos','aarch64-linux-ohos','x86_64-linux-ohos'):raise ValueError('fixed normal product target required')
  # CMake's database describes every configured target, including the unused
  # EXCLUDE_FROM_ALL alsoft.common. Only Ninja's fixed OpenAL command closure
  # selects TUs. A missing selected object is always an error, never a filter.
@@ -80,8 +81,14 @@ def fixed_target_units(src, out, cc, db):
   header=dependencies[start];paths=[line[4:] for line in dependencies[start+1:stop]]
   count=header.split(': #deps ',1)[1].split(',',1)[0]
   if not count.isdecimal() or int(count)!=len(paths) or not header.endswith('(VALID)') or not paths or source not in {(out/p).resolve() for p in paths}:raise ValueError('valid complete actual target dependency record and primary source required')
-  effective=all(flag in words for flag in ('-fsanitize=cfi','-fsanitize-cfi-cross-dso','-flto=thin'))
-  if not effective:raise ValueError('all selected real OpenAL and fmt TUs require CFI and thin LTO')
+  trap_flags=['-fsanitize-trap=all','-ftrap-function=abort']
+  if target=='aarch64-linux-ohos':trap_flags.append('-fcfi-trap-function=__cfi_fail_report')
+  actual_trap=[flag for flag in words if flag.startswith(('-fsanitize-trap','-ftrap-function','-fcfi-trap-function'))]
+  effective=(all(flag in words for flag in ('-fsanitize=cfi','-fsanitize-cfi-cross-dso','-flto=thin')) and
+   sorted(actual_trap)==sorted(trap_flags) and
+   not any(flag in ('-fno-sanitize','-fno-sanitize-trap','-fno-sanitize-cfi-cross-dso') or flag.startswith(('-fno-sanitize=','-fno-sanitize-trap=','-fsanitize-recover','-fsanitize-cfi-diag')) for flag in words) and
+   [flag for flag in words if flag.startswith('--target')]==['--target='+target])
+  if not effective:raise ValueError('all selected real OpenAL and fmt TUs require target-bound normal product CFI trap mode and thin LTO')
   units.append(dict(source=ref(source),object=ref(obj),command=words,effective_CFI=effective,
    compilation_database_index=index,compilation_database_command=database_words,target_command_line=line_number,ninja_dependency_header=header,ninja_dependency_paths=paths))
  indices={row[0] for row in selected}
@@ -100,7 +107,8 @@ def main():
   if ref(dst)['sha256']!=before['sha256'] or ref(path)!=before:raise ValueError('actual normal build tool changed')
   tool_refs[name]=dict(invoked_path=str(path),sha256=before['sha256'],bytes=before['bytes'],retained_copy=ref(dst))
  target={'arm':'arm-linux-ohos','arm64':'aarch64-linux-ohos','x64':'x86_64-linux-ohos','x86_64':'x86_64-linux-ohos'}[a.cpu]
- flags='-fPIC -O2 -flto=thin -fsanitize=cfi -fsanitize-cfi-cross-dso -fvisibility=hidden -fno-sanitize-trap=cfi'
+ flags='-fPIC -O2 -flto=thin -fsanitize=cfi -fsanitize-cfi-cross-dso -fvisibility=hidden -fsanitize-trap=all -ftrap-function=abort'
+ if a.cpu=='arm64':flags+=' -fcfi-trap-function=__cfi_fail_report'
  if a.cpu=='arm':flags+=' -march=armv7-a -mfloat-abi=softfp -mfpu=neon'
  tc=out/'product-toolchain.cmake'
  def q(x):return '"'+str(x).replace('\\','/').replace('"','\\"')+'"'
@@ -112,14 +120,14 @@ def main():
   commands.append(dict(argv=[str(w) for w in words],exit_code=r.returncode,stdout=ref(stdout),stderr=ref(stderr),normal_product_build=True,read_only_query=query))
   (out/'BUILD.json').write_text(json.dumps(dict(schema='normal-openal-hrtf-build/v1',status='building',commands=commands,runtime_pass=False),indent=2)+'\n')
   if r.returncode:raise RuntimeError('normal product OpenAL '+label+' failed; original stdio retained')
- opts=['-DLIBTYPE=STATIC','-DCMAKE_BUILD_TYPE=Release','-DCMAKE_POSITION_INDEPENDENT_CODE=ON','-DCMAKE_EXPORT_COMPILE_COMMANDS=ON','-DALSOFT_EMBED_HRTF_DATA=ON','-DALSOFT_UPDATE_BUILD_VERSION=OFF','-DALSOFT_UTILS=OFF','-DALSOFT_EXAMPLES=OFF','-DALSOFT_TESTS=OFF','-DALSOFT_INSTALL=OFF','-DALSOFT_DLOPEN=OFF','-DALSOFT_RTKIT=OFF']
+ opts=['-DCMAKE_C_FLAGS='+flags,'-DCMAKE_CXX_FLAGS='+flags,'-DLIBTYPE=STATIC','-DCMAKE_BUILD_TYPE=Release','-DCMAKE_POSITION_INDEPENDENT_CODE=ON','-DCMAKE_EXPORT_COMPILE_COMMANDS=ON','-DALSOFT_EMBED_HRTF_DATA=ON','-DALSOFT_UPDATE_BUILD_VERSION=OFF','-DALSOFT_UTILS=OFF','-DALSOFT_EXAMPLES=OFF','-DALSOFT_TESTS=OFF','-DALSOFT_INSTALL=OFF','-DALSOFT_DLOPEN=OFF','-DALSOFT_RTKIT=OFF']
  for backend in ['PIPEWIRE','PULSEAUDIO','ALSA','OSS','SOLARIS','SNDIO','JACK','COREAUDIO','OBOE','OPENSL','PORTAUDIO','SDL2','SDL3','WAVE']:opts.append('-DALSOFT_BACKEND_'+backend+'=OFF')
  run([a.cmake,'-S',src,'-B',out,'-G','Ninja','-DCMAKE_MAKE_PROGRAM='+str(a.ninja.resolve()),'-DCMAKE_TOOLCHAIN_FILE='+str(tc),*opts],'configure')
  run([a.cmake,'--build',out,'--target','OpenAL','--parallel','2','--verbose'],'compile-and-archive')
  run([a.ninja,'-C',out,'-t','commands','OpenAL'],'full-commands',True);run([a.ninja,'-C',out,'-t','deps'],'full-deps',True)
  run([a.ninja,'-C',out,'-t','query','OpenAL'],'target-query',True)
  run([a.ninja,'-C',out,'-t','query','libopenal.a'],'archive-query',True)
- db=json.loads((out/'compile_commands.json').read_bytes());units,closure=fixed_target_units(src,out,cc,db)
+ db=json.loads((out/'compile_commands.json').read_bytes());units,closure=fixed_target_units(src,out,cc,db,target)
  value=dict(schema='normal-openal-hrtf-build/v1',status='complete',normal_product_build=True,target=target,tools=tool_refs,compiler=ref(cc),sysroot=str(a.sysroot.resolve()),toolchain=ref(tc),source_manifest=ref(src.parent/'OPENAL-INPUTS.json'),archive=ref(out/'libopenal.a'),archive_logical=str(out/'libopenal.a'),translation_units=units,target_closure=closure,commands=commands,compilation_database=ref(out/'compile_commands.json'),ninja=ref(out/'build.ninja'),ninja_log=ref(out/'.ninja_log'),runtime_pass=False)
  (out/'BUILD.json').write_text(json.dumps(value,indent=2)+'\n')
  return 0
