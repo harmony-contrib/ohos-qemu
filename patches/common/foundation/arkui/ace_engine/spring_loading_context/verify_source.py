@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Pinned real frontend class export; reject unknown or partial source edits."""
 from pathlib import Path
+import hashlib
+import importlib.util
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[5] / 'lib'))
@@ -15,4 +17,15 @@ FILES = (
 )
 
 def validate(root, require_patched=False):
-    return validate_component(root, PROJECT, REVISION, FILES, require_patched)
+    files = FILES
+    target = Path(root) / PROJECT / FILES[0][0]
+    if target.is_file():
+        spec = importlib.util.spec_from_file_location('pixel_map_napi_cfi_successor',
+            Path(__file__).resolve().parent.parent / 'pixel_map_napi_cfi/verify_source.py')
+        guard = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(guard)
+        successor = next(after for name, _, after in guard.FILES if name == FILES[0][0])
+        if hashlib.sha256(target.read_bytes()).hexdigest() == successor:
+            guard.validate(root, require_patched=True)
+            files = ((FILES[0][0], FILES[0][1], successor),)
+    return validate_component(root, PROJECT, REVISION, files, require_patched)

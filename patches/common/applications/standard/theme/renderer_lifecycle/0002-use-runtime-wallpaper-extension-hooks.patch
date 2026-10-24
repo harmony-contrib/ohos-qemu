@@ -1,0 +1,92 @@
+diff --git a/applications/standard/theme/product/phone/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts b/applications/standard/theme/product/phone/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts
+--- a/applications/standard/theme/product/phone/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts
++++ b/applications/standard/theme/product/phone/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts
+@@ -3,7 +3,7 @@
+  * Copyright (c) 2026 Harmony Contrib
+  * SPDX-License-Identifier: Apache-2.0 */
+ import windowManager from '@ohos.window';
+-import Extension from '@ohos.WallpaperExtension';
++import Extension from '@ohos.WallpaperExtensionAbility';
+ import wallPaper from '@ohos.wallpaper';
+ 
+ const MODULE_TAG = 'ExtWallpaper: ';
+@@ -11,15 +11,21 @@
+ export default class WallpaperExtAbility extends Extension {
+   private generation: number = 0;
+   private imageGeneration: number = 0;
++  private windowGeneration: number = -1;
+   private active: boolean = false;
+   private wallpaperWindow: windowManager.Window | undefined = undefined;
+ 
+-  onCreated(want) {
++  onCreate(want) {
+     this.onDestroy();
+     this.active = true;
+-    const generation = ++this.generation;
+-    this.createWindow(generation);
++    this.generation++;
+     this.sendPixelMapData();
++  }
++
++  createWallpaperWin() {
++    if (!this.active || this.windowGeneration === this.generation) { return; }
++    this.windowGeneration = this.generation;
++    this.createWindow(this.generation);
+   }
+ 
+   private async createWindow(generation: number): Promise<void> {
+@@ -51,7 +57,7 @@
+     catch (error) { console.error(MODULE_TAG + 'window teardown failed: ' + error?.message); }
+   }
+ 
+-  onWallpaperChanged(wallpaperType) {
++  onWallpaperChange(wallpaperType) {
+     if (this.active) { this.sendPixelMapData(); }
+   }
+ 
+diff --git a/applications/standard/theme/product/pad/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts b/applications/standard/theme/product/pad/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts
+--- a/applications/standard/theme/product/pad/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts
++++ b/applications/standard/theme/product/pad/src/main/ets/WallpaperExtAbility/WallpaperExtAbility.ts
+@@ -3,7 +3,7 @@
+  * Copyright (c) 2026 Harmony Contrib
+  * SPDX-License-Identifier: Apache-2.0 */
+ import windowManager from '@ohos.window';
+-import Extension from '@ohos.WallpaperExtension';
++import Extension from '@ohos.WallpaperExtensionAbility';
+ import wallPaper from '@ohos.wallpaper';
+ 
+ const MODULE_TAG = 'ExtWallpaper: ';
+@@ -11,15 +11,21 @@
+ export default class WallpaperExtAbility extends Extension {
+   private generation: number = 0;
+   private imageGeneration: number = 0;
++  private windowGeneration: number = -1;
+   private active: boolean = false;
+   private wallpaperWindow: windowManager.Window | undefined = undefined;
+ 
+-  onCreated(want) {
++  onCreate(want) {
+     this.onDestroy();
+     this.active = true;
+-    const generation = ++this.generation;
+-    this.createWindow(generation);
++    this.generation++;
+     this.sendPixelMapData();
++  }
++
++  createWallpaperWin() {
++    if (!this.active || this.windowGeneration === this.generation) { return; }
++    this.windowGeneration = this.generation;
++    this.createWindow(this.generation);
+   }
+ 
+   private async createWindow(generation: number): Promise<void> {
+@@ -51,7 +57,7 @@
+     catch (error) { console.error(MODULE_TAG + 'window teardown failed: ' + error?.message); }
+   }
+ 
+-  onWallpaperChanged(wallpaperType) {
++  onWallpaperChange(wallpaperType) {
+     if (this.active) { this.sendPixelMapData(); }
+   }
+ 
