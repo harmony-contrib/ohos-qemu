@@ -130,6 +130,162 @@ def unchanged_policies(root):
     selected_entry(read(directory / 'install_list.json'), 'com.ohos.systemui')
     return result
 
+def ensure_runtime_fixes(root):
+    """Apply the five reviewed runtime diffs, accepting each patched block as-is."""
+    fixes = (
+        (PROJECT + '/common/src/main/ets/default/SingleInstanceHelper.ts', (
+            ("""const AUDIO_MANAGER_KEY = 'MultiMediaAudioManager';
+
+export default function createOrGet<T>(objectClass: { new(): T }, storageKey: string): T {
+  if (!globalThis[storageKey]) {
+    globalThis[storageKey] = new objectClass();
+    Log.showInfo(TAG, `Create key of ${storageKey}`);
+  }
+  return globalThis[storageKey];
+}
+""", """const AUDIO_MANAGER_KEY = '__systemui_source__MultiMediaAudioManager';
+
+export default function createOrGet<T>(objectClass: { new(): T }, storageKey: string): T {
+  const realKey = '__systemui_source__' + storageKey;
+  if (!globalThis[realKey]) {
+    globalThis[realKey] = new objectClass();
+    Log.showInfo(TAG, `Create key of ${storageKey}`);
+  }
+  return globalThis[realKey];
+}
+"""),
+        )),
+        (PROJECT + '/common/src/main/ets/default/WindowManager.ts', (
+            ("""const SYSTEM_WINDOW_TYPE_MAP: { [key in WindowType]: Window.WindowType } = {
+  SystemUi_StatusBar: Window.WindowType.TYPE_STATUS_BAR,
+  SystemUi_NavigationBar: Window.WindowType.TYPE_NAVIGATION_BAR,
+  SystemUi_DropdownPanel: Window.WindowType.TYPE_PANEL,
+  SystemUi_NotificationPanel: Window.WindowType.TYPE_VOLUME_OVERLAY,
+  SystemUi_ControlPanel: Window.WindowType.TYPE_VOLUME_OVERLAY,
+  SystemUi_VolumePanel: Window.WindowType.TYPE_VOLUME_OVERLAY,
+  SystemUi_BannerNotice: Window.WindowType.TYPE_VOLUME_OVERLAY,
+  SystemUi_SplitBar: Window.WindowType.TYPE_DIVIDER,
+  SystemUi_PrivacyIndicator: Window.WindowType.TYPE_VOLUME_OVERLAY
+};
+""", """const SYSTEM_WINDOW_TYPE_MAP: { [key in WindowType]: Window.WindowType } = {
+  SystemUi_StatusBar: Window.WindowType.TYPE_VOLUME_OVERLAY,
+  SystemUi_NavigationBar: Window.WindowType.TYPE_VOLUME_OVERLAY,
+  SystemUi_DropdownPanel: Window.WindowType.TYPE_VOLUME_OVERLAY,
+  SystemUi_NotificationPanel: Window.WindowType.TYPE_VOLUME_OVERLAY,
+  SystemUi_ControlPanel: Window.WindowType.TYPE_VOLUME_OVERLAY,
+  SystemUi_VolumePanel: Window.WindowType.TYPE_VOLUME_OVERLAY,
+  SystemUi_BannerNotice: Window.WindowType.TYPE_VOLUME_OVERLAY,
+  SystemUi_SplitBar: Window.WindowType.TYPE_VOLUME_OVERLAY,
+  SystemUi_PrivacyIndicator: Window.WindowType.TYPE_VOLUME_OVERLAY
+};
+"""),
+            ("""    await winHandle.moveTo(rect.left, rect.top);
+    await winHandle.resetSize(rect.width, rect.height);
+""", """    await winHandle.moveTo(Math.round(rect.left || 0), Math.round(rect.top || 0));
+    await winHandle.resetSize(Math.max(1, Math.round(rect.width || 1)), Math.max(1, Math.round(rect.height || 1)));
+"""),
+            ("""  async resetSizeWindow(name: WindowType, rect: Rect): Promise<void> {
+    let window = await Window.find(name);
+    await window.moveTo(rect.left, rect.top);
+    await window.resetSize(rect.width, rect.height);
+""", """  async resetSizeWindow(name: WindowType, rect: Rect): Promise<void> {
+    let window = await Window.find(name);
+    await window.moveTo(Math.round(rect.left || 0), Math.round(rect.top || 0));
+    if (Math.round(rect.width || 0) > 0 && Math.round(rect.height || 0) > 0) {
+      await window.resetSize(Math.round(rect.width), Math.round(rect.height));
+    }
+"""),
+            ("""  async moveTo(name: WindowType, rect: Rect): Promise<void> {
+    Log.showInfo(TAG, `moveTo window[${name}] success, rect: ${JSON.stringify(rect)}.`);
+    let window = await Window.find(name);
+    await window.moveTo(rect.left, rect.top);
+  }
+""", """  async moveTo(name: WindowType, rect: Rect): Promise<void> {
+    Log.showInfo(TAG, `moveTo window[${name}] success, rect: ${JSON.stringify(rect)}.`);
+    let window = await Window.find(name);
+    await window.moveTo(Math.round(rect.left || 0), Math.round(rect.top || 0));
+  }
+"""),
+            ("""  async showWindow(name: WindowType): Promise<void> {
+    let window = await Window.find(name);
+    await window.show();
+""", """  async showWindow(name: WindowType): Promise<void> {
+    let window = await Window.find(name);
+    if (name !== WindowType.PRIVACY_INDICATOR && name !== WindowType.NAVIGATION_BAR) {
+      await window.show();
+    }
+"""),
+        )),
+        ('foundation/bundlemanager/bundle_framework/services/bundlemgr/src/bundle_mgr_service_event_handler.cpp', (
+            ('    dataMgr->SetApplicationEnabled(ServiceConstants::SYSTEM_UI_BUNDLE_NAME, 0, !sceneBoardEnable,\n',
+             '    dataMgr->SetApplicationEnabled(ServiceConstants::SYSTEM_UI_BUNDLE_NAME, 0, true,\n'),
+        )),
+        ('foundation/window/window_manager/interfaces/kits/napi/window_runtime/window_manager_napi/js_window_manager.cpp', (
+            ("""    if (resultValue >= static_cast<uint32_t>(ApiWindowType::TYPE_BASE) &&
+        resultValue < static_cast<uint32_t>(ApiWindowType::TYPE_END)) {
+        winType = JS_TO_NATIVE_WINDOW_TYPE_MAP.at(static_cast<ApiWindowType>(resultValue));
+    } else {
+""", """    if (resultValue >= static_cast<uint32_t>(ApiWindowType::TYPE_BASE) &&
+        resultValue < static_cast<uint32_t>(ApiWindowType::TYPE_END)) {
+        winType = JS_TO_NATIVE_WINDOW_TYPE_MAP.at(static_cast<ApiWindowType>(resultValue));
+    } else if (resultValue >= static_cast<uint32_t>(WindowType::SYSTEM_WINDOW_BASE) &&
+        resultValue < static_cast<uint32_t>(WindowType::SYSTEM_WINDOW_END)) {
+        winType = static_cast<WindowType>(resultValue);
+    } else {
+"""),
+            ("""        if (winType >= static_cast<uint32_t>(ApiWindowType::TYPE_BASE) &&
+            winType < static_cast<uint32_t>(ApiWindowType::TYPE_END)) {
+            option.SetWindowType(JS_TO_NATIVE_WINDOW_TYPE_MAP.at(static_cast<ApiWindowType>(winType)));
+        } else {
+""", """        if (winType >= static_cast<uint32_t>(ApiWindowType::TYPE_BASE) &&
+            winType < static_cast<uint32_t>(ApiWindowType::TYPE_END)) {
+            option.SetWindowType(JS_TO_NATIVE_WINDOW_TYPE_MAP.at(static_cast<ApiWindowType>(winType)));
+        } else if (winType >= static_cast<uint32_t>(WindowType::SYSTEM_WINDOW_BASE) &&
+            winType < static_cast<uint32_t>(WindowType::SYSTEM_WINDOW_END)) {
+            option.SetWindowType(static_cast<WindowType>(winType));
+        } else {
+"""),
+        )),
+        ('foundation/window/window_manager/wm/src/window_scene_session_impl.cpp', (
+            ("""const std::unordered_set<WindowType> INVALID_SCB_WINDOW_TYPE = {
+    WindowType::WINDOW_TYPE_WALLPAPER,
+    WindowType::WINDOW_TYPE_DESKTOP,
+    WindowType::WINDOW_TYPE_DOCK_SLICE,
+    WindowType::WINDOW_TYPE_STATUS_BAR,
+    WindowType::WINDOW_TYPE_KEYGUARD,
+    WindowType::WINDOW_TYPE_NAVIGATION_BAR,
+    WindowType::WINDOW_TYPE_LAUNCHER_RECENT,
+    WindowType::WINDOW_TYPE_LAUNCHER_DOCK
+};
+""", """const std::unordered_set<WindowType> INVALID_SCB_WINDOW_TYPE = {
+    WindowType::WINDOW_TYPE_WALLPAPER,
+    WindowType::WINDOW_TYPE_DESKTOP,
+    WindowType::WINDOW_TYPE_KEYGUARD,
+    WindowType::WINDOW_TYPE_LAUNCHER_RECENT,
+    WindowType::WINDOW_TYPE_LAUNCHER_DOCK
+};
+"""),
+        )),
+    )
+    pending = []
+    for relative, blocks in fixes:
+        path = root / relative; before = read(path); after = before
+        # The pinned NAPI source uses CRLF; retain the original source bytes.
+        newline = b'\r\n' if b'\r\n' in before else b'\n'
+        for old, new in blocks:
+            old = old.encode().replace(b'\n', newline)
+            new = new.encode().replace(b'\n', newline)
+            pair = after.count(old), after.count(new)
+            if pair == (1, 0): after = after.replace(old, new, 1)
+            elif pair != (0, 1):
+                raise ValueError('unknown/duplicate SystemUI runtime source: ' + relative)
+        pending.append((path, before, after))
+    # Validate every file before writing any of the runtime fixes.
+    if any(read(path) != before for path, before, _ in pending):
+        raise ValueError('SystemUI runtime source changed before write')
+    for path, before, after in pending:
+        if before != after: replace(path, after)
+
 def source_ready(root):
     component('systemui/source_provider').validate(root, require_patched=True)
     from guarded_source_vector579 import load, heads, vector
@@ -156,7 +312,9 @@ def source_ready(root):
                 target = path.parent / uri[5:]
                 if not target.is_dir() or not target.resolve().is_relative_to(root / PROJECT):
                     raise ValueError('missing/escaped SystemUI source dependency: ' + name)
-    return unchanged_policies(root)
+    policies = unchanged_policies(root)
+    ensure_runtime_fixes(root)
+    return policies
 
 def verify_profile(path, desired, issuer_fingerprint, scratch):
     signer = scratch / 'profile-issuer.pem'; actual = cms(path, signer); signers = certificates(read(signer))
