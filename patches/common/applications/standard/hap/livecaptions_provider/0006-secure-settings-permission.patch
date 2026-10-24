@@ -22,3 +22,10 @@
      ]
    },
    "permissions": {
+--- a/applications/standard/hap/vassistant_livecaptions579/entry/src/main/ets/pages/Captions.ets
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/ets/pages/Captions.ets
+@@ -3,1 +3,3 @@
+-@Entry
++const entryOptions: EntryOptions = { useSharedStorage: true };
++
++@Entry(entryOptions)

@@ -210,3 +210,15 @@
  @Component
  struct PlaybackCaptureConsentPage {
    @LocalStorageProp('consentId') consentId: string = '';
+--- a/applications/standard/systemui/product/default/dialog/src/main/module.json5
++++ b/applications/standard/systemui/product/default/dialog/src/main/module.json5
+@@ -18,7 +18,8 @@
+     "pages": "$profile:main_pages",
+     "requestPermissions": [
+       { "name": "ohos.permission.MANAGE_AUDIO_CONFIG" },
+-      { "name": "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED" }
++      { "name": "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED" },
++      { "name": "ohos.permission.SYSTEM_FLOAT_WINDOW" }
+     ],
+     "extensionAbilities": [
+       {

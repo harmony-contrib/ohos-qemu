@@ -19,6 +19,9 @@
       },
       {
         "name": "ohos.permission.WRITE_ACCESSIBILITY_CONFIG"
+      },
+      {
+        "name": "ohos.permission.MANAGE_SECURE_SETTINGS"
       }
     ],
     "extensionAbilities": [

@@ -125,17 +125,18 @@ class Stage:
                 session['record']=active[0]
                 self.b.frame('pending_'+str(len(self.sessions)))
                 return session
-            # First-use confirmation is a genuine Settings UI. Never mutate its
+            # First-use confirmation can belong to Settings or SceneBoard. Never mutate its
             # first-use database flag to avoid the dialog.
-            try:
-                layout=self.b.layout('com.ohos.settings','shortcut_confirm')
-                select_node(layout,'com.ohos.settings',identifier='accessibility-shortcut-confirm-enable')
-            except (NodeNotReady,LayoutNotReady):
-                pass
-            else:
+            for bundle in ('com.ohos.settings', 'com.ohos.sceneboard'):
+                try:
+                    layout=self.b.layout(bundle,'shortcut_confirm')
+                    select_node(layout,bundle,identifier='accessibility-shortcut-confirm-enable')
+                except (NodeNotReady,LayoutNotReady):
+                    continue
                 require(not confirm_clicked, 'unexpected repeated shortcut confirmation')
-                self.b.click('com.ohos.settings','accessibility-shortcut-confirm-enable')
+                self.b.click(bundle,'accessibility-shortcut-confirm-enable')
                 confirm_clicked=True
+                break
             time.sleep(1)
         raise ValueError('actual AAMS shortcut/model/consent chain deadline')
 

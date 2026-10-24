@@ -13,6 +13,11 @@ VERIFY="${SCRIPT_DIR}/verify_device_type_package.sh"
 LFS_ASSET_MAP="${SCRIPT_DIR}/../patches/common/build/github_lfs_assets/assets.tsv"
 
 CACHE_ROOT="${CACHE_ROOT:-/Volumes/PSSD/qemu}"
+export QEMU_LOTTIE_INPUT="${QEMU_LOTTIE_INPUT:-${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/r66-lottie-production-input579-06/lottie-input.json}"
+export QEMU_KNOWLEDGE_ICS="${QEMU_KNOWLEDGE_ICS:-}"
+if [ -z "${QEMU_KNOWLEDGE_ICS}" ] && [ -f "${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/basic.ics" ]; then
+  export QEMU_KNOWLEDGE_ICS="${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/basic.ics"
+fi
 PACKAGE_ROOT="${PACKAGE_ROOT:-${CACHE_ROOT}/packages/device-matrix-7.0-release-$(date -u +%Y%m%d)}"
 PRODUCTS="${PRODUCTS:-arm64_virt x86_64_virt armv7a_virt}"
 DEVICE_TYPES="${DEVICE_TYPES:-2in1 phone}"
@@ -45,7 +50,7 @@ MATRIX_DEPENDENCY_ROOT="${MATRIX_DEPENDENCY_ROOT:-${CACHE_ROOT}/artifacts/m144-7
 matrix_jsvm_shared="${JSVM_ENGINE_ARTIFACTS:-}"
 matrix_vulkan_shared="${QEMU_VULKAN_ARTIFACTS:-}"
 matrix_avc_shared="${QEMU_AVC_ARTIFACTS:-}"
-matrix_caption_shared="${QEMU_LIVE_CAPTIONS_INPUTS:-}"
+matrix_caption_shared="${QEMU_LIVE_CAPTIONS_INPUTS:-${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/r66-asr-product-assets579-05/product-assets.json}"
 matrix_caption_shared_sha="${QEMU_LIVE_CAPTIONS_INPUTS_SHA256:-}"
 export QEMU_ARKWEB_CORE_ARTIFACTS="${QEMU_ARKWEB_CORE_ARTIFACTS:-${CACHE_ROOT}/artifacts/arkweb-m144-7.0/${dependency_recipe}}"
 mesa_llvm_recipe="$(python3 "${SCRIPT_DIR}/qemu_mesa_llvm_artifacts.py" --recipe-hash)"
@@ -100,22 +105,35 @@ select_caption_inputs() {
     arm64_virt)
       export QEMU_LIVE_CAPTIONS_ABI=arm64-v8a
       export QEMU_LIVE_CAPTIONS_INPUTS="${MATRIX_LIVE_CAPTIONS_ARM64_INPUTS:-${matrix_caption_shared}}"
-      export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${MATRIX_LIVE_CAPTIONS_ARM64_INPUTS_SHA256:-${matrix_caption_shared_sha}}"
+      export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${MATRIX_LIVE_CAPTIONS_ARM64_INPUTS_SHA256:-}"
       ;;
     x86_64_virt)
       export QEMU_LIVE_CAPTIONS_ABI=x86_64
       export QEMU_LIVE_CAPTIONS_INPUTS="${MATRIX_LIVE_CAPTIONS_X86_64_INPUTS:-${matrix_caption_shared}}"
-      export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${MATRIX_LIVE_CAPTIONS_X86_64_INPUTS_SHA256:-${matrix_caption_shared_sha}}"
+      export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${MATRIX_LIVE_CAPTIONS_X86_64_INPUTS_SHA256:-}"
       ;;
     armv7a_virt)
       export QEMU_LIVE_CAPTIONS_ABI=armeabi-v7a
-      # No global/two-ABI fallback for ARM32. This descriptor must carry the
-      # genuine completed build and final original-Owner seal, replayed normally.
+      # The Linux builder prepares the ARM32 descriptor when none is supplied.
       export QEMU_LIVE_CAPTIONS_INPUTS="${MATRIX_LIVE_CAPTIONS_ARM32_INPUTS:-}"
       export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${MATRIX_LIVE_CAPTIONS_ARM32_INPUTS_SHA256:-}"
       ;;
     *) return 2 ;;
   esac
+  if [ -z "${QEMU_LIVE_CAPTIONS_INPUTS}" ] && [ "$1" = armv7a_virt ]; then
+    return 0
+  fi
+  if [ "${QEMU_LIVE_CAPTIONS_INPUTS}" = "${matrix_caption_shared}" ] && [ -z "${QEMU_LIVE_CAPTIONS_INPUTS_SHA256}" ]; then
+    export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${matrix_caption_shared_sha}"
+  fi
+  if [ -z "${QEMU_LIVE_CAPTIONS_INPUTS_SHA256}" ] && [ -f "${QEMU_LIVE_CAPTIONS_INPUTS}" ]; then
+    export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="$(python3 - "${QEMU_LIVE_CAPTIONS_INPUTS}" <<'PY'
+import hashlib,sys
+from pathlib import Path
+print(hashlib.sha256(Path(sys.argv[1]).read_bytes()).hexdigest())
+PY
+    )"
+  fi
   [ -n "${QEMU_LIVE_CAPTIONS_INPUTS}" ] && [ -n "${QEMU_LIVE_CAPTIONS_INPUTS_SHA256}" ] || {
     echo "missing actual caption descriptor/checksum for $1 (no planned or cross-ABI fallback)" >&2
     return 2

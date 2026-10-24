@@ -46,6 +46,7 @@ class Policy(unittest.TestCase):
         self.assertEqual(value, before)
         self.assertEqual(desired['bundle-info']['distribution-certificate'], 'synthetic-new-leaf\n')
         self.assertEqual(desired['validity']['not-after'], 2208988800)
+        self.assertEqual(desired.pop('app-privilege-capabilities'), ['AllowAppUsePrivilegeExtension'])
         desired['bundle-info']['distribution-certificate'] = before['bundle-info']['distribution-certificate']
         desired['validity']['not-after'] = before['validity']['not-after']
         self.assertEqual(desired, before)
@@ -131,6 +132,19 @@ class AuthenticatedProfile(unittest.TestCase):
         identity = {'current': b'original', 'raw': b'original', 'path': self.profile}
         self.assertEqual(helper.classify(identity, self.root), 'original_expired_not_ready')
         with self.assertRaises(ValueError):helper.classify(identity, self.root, True)
+
+    def test_prior_renewed_profile_is_authenticated_but_requires_privilege_upgrade(self):
+        desired = copy.deepcopy(self.expected)
+        desired['app-privilege-capabilities'] = ['AllowAppUsePrivilegeExtension']
+        identity = {'current': b'synthetic-CMS', 'raw': b'original', 'path': self.profile,
+                    'desired': desired, 'issuer': 'pinned-issuer'}
+        with patch.object(helper, 'cms', side_effect=self.cms_result(self.expected)), \
+                patch.object(helper, 'fingerprint', return_value='pinned-issuer'):
+            self.assertEqual(helper.classify(identity, self.root), 'prior_renewed_not_ready')
+            with self.assertRaises(ValueError):helper.classify(identity, self.root, True)
+        with patch.object(helper, 'cms', side_effect=self.cms_result(self.expected)), \
+                patch.object(helper, 'fingerprint', return_value='foreign-issuer'), self.assertRaises(ValueError):
+            helper.classify(identity, self.root)
 
     def test_profile_race_during_cryptographic_check_reject(self):
         identity = {'current': b'synthetic-CMS', 'raw': b'original', 'path': self.profile,

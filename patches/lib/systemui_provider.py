@@ -21,10 +21,11 @@ BLOCKS_SHA = '3a13681f2c487c2bbc3bce3bd9d2f863dbdef263841417b4ddfaa36b1819da4c'
 ACLS = ['ohos.permission.CAPTURE_SCREEN', 'ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS_EXTENSION',
         'ohos.permission.MANAGE_WIFI_CONNECTION', 'ohos.permission.NOTIFICATION_CONTROLLER',
         'ohos.permission.START_INVISIBLE_ABILITY']
-# Original ACLS remains the exact original signed-profile guard. Both additions
-# are actual system_basic/system_grant/provisionEnable permissions; no APL change.
+# Original ACLS remains the exact original signed-profile guard.
 CAPTION_ACLS = ACLS + ['ohos.permission.MANAGE_AUDIO_CONFIG',
-                       'ohos.permission.GET_BUNDLE_INFO_PRIVILEGED']
+                       'ohos.permission.GET_BUNDLE_INFO_PRIVILEGED',
+                       'ohos.permission.CONTROL_LOCATION_SWITCH',
+                       'ohos.permission.SYSTEM_FLOAT_WINDOW']
 CAPABILITY = {'bundleName': 'com.ohos.systemui', 'singleton': True, 'keepAlive': True,
     'runningResourcesApply': False, 'app_signature': [SIGNATURE], 'associatedWakeUp': False,
     'allowAppUsePrivilegeExtension': True}
@@ -136,7 +137,7 @@ def source_ready(root):
     consent_sources = load(consent)
     heads(root, consent_sources)
     if vector(root, consent_sources) != 'final':
-        raise ValueError('complete actual playback-consent source required for its two ACLs')
+        raise ValueError('complete actual playback-consent source required for SystemUI ACLs')
     live = component('systemui/screen_capture_live_view')
     live.validate(root, require_patched=True); live.prerequisites(root)
     hap = read(root / 'applications/standard/hap/BUILD.gn')
@@ -171,16 +172,17 @@ def prepare(root, cache):
         desired = desired_profile(cms(original)); fingerprint = certificate_fingerprint(issuer[-1])
         resign = before == raw
         if before != raw:
-            # A retained source volume can contain the exact previous renewed
-            # five-ACL profile. Authenticate that complete predecessor before
-            # migrating it to the two new, source-required SystemUI ACLs.
+            # Authenticate either complete renewed predecessor before upgrading.
             prior = copy.deepcopy(desired)
             prior['acls']['allowed-acls'] = list(ACLS)
+            prior_caption = copy.deepcopy(desired)
+            prior_caption['acls']['allowed-acls'] = ACLS + [
+                'ohos.permission.MANAGE_AUDIO_CONFIG', 'ohos.permission.GET_BUNDLE_INFO_PRIVILEGED']
             observed = cms(profile)
             if observed == desired:
                 verify_profile(profile, desired, fingerprint, scratch)
-            elif observed == prior:
-                verify_profile(profile, prior, fingerprint, scratch)
+            elif observed in (prior, prior_caption):
+                verify_profile(profile, observed, fingerprint, scratch)
                 resign = True
             else:
                 raise ValueError('unknown retained SystemUI profile preserved')

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Authenticate the public NumberIdentity profile and renew only its OS leaf/expiry.
+"""Authenticate NumberIdentity and renew its OS leaf, expiry and extension privilege.
 
 Source candidate. Only the coordinating root may execute --prepare with its signing
 lease. --verify reads public certificates/profile only; it never reads a keystore.
-No preinstall permissions, capability grants, ACLs or application data are changed.
+No preinstall permissions, ACLs or application data are changed.
 """
 import argparse
 import copy
@@ -113,6 +113,7 @@ def desired_profile(original, leaf):
     result = copy.deepcopy(original)
     result['bundle-info']['distribution-certificate'] = leaf.decode('ascii')
     result['validity']['not-after'] = RENEWED_NOT_AFTER
+    result['app-privilege-capabilities'] = ['AllowAppUsePrivilegeExtension']
     return result
 
 
@@ -155,9 +156,18 @@ def classify(identity, scratch, require_renewed=False):
         need(not require_renewed, 'original public NumberIdentity profile is expired; authenticated renewal required')
         return 'original_expired_not_ready'
     # Never accept merely decoded JSON, a supplied receipt, filename or new SHA.
-    profile_matches(identity['path'], identity['desired'], identity['issuer'], scratch)
+    state = 'authenticated_renewed'
+    try:
+        profile_matches(identity['path'], identity['desired'], identity['issuer'], scratch)
+    except ValueError:
+        if require_renewed:
+            raise
+        prior = copy.deepcopy(identity['desired'])
+        prior.pop('app-privilege-capabilities', None)
+        profile_matches(identity['path'], prior, identity['issuer'], scratch)
+        state = 'prior_renewed_not_ready'
     need(read(identity['path']) == identity['current'], 'NumberIdentity profile changed during CMS verification')
-    return 'authenticated_renewed'
+    return state
 
 
 def report(identity, state, changed=False):

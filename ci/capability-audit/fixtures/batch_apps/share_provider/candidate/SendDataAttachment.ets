@@ -23,7 +23,7 @@ export class SendDataAttachment {
   private static readonly prefix: string = 'senddata-import-';
   private static recovered: boolean = false;
   static recover(context: Context): void {
-    if (this.recovered) { return; }
+    if (SendDataAttachment.recovered) { return; }
     // Only our private previous-process staging directories, never sender URIs,
     // draft files, existing MMS attachments, or arbitrary cache contents.
     for (const name of fs.listFileSync(context.getApplicationContext().cacheDir)) {
@@ -36,7 +36,7 @@ export class SendDataAttachment {
       for (const n of names) { fs.unlinkSync(dir + '/' + n); }
       fs.rmdirSync(dir);
     }
-    this.recovered = true;
+    SendDataAttachment.recovered = true;
   }
   private static mime(type: string): string[] | undefined {
     const types: Record<string, string[]> = {
@@ -91,12 +91,12 @@ export class SendDataAttachment {
   }
   static stage(context: Context, want: Want): SharedAttachment | undefined {
     if (want.action !== 'ohos.want.action.sendData') { return undefined; }
-    if (this.active !== undefined) { throw new Error('Finish or cancel the current attachment draft first'); }
+    if (SendDataAttachment.active !== undefined) { throw new Error('Finish or cancel the current attachment draft first'); }
     const stream = want.parameters?.['ability.params.stream'];
     const possibleFile: boolean = (want.uri ?? '') !== '' || (Array.isArray(stream) &&
       ((want.type ?? '') !== 'text/plain' || stream.some((item: Object) => typeof item === 'string' && item.startsWith('file://'))));
     if (!possibleFile) { return undefined; }
-    const format = this.mime(want.type ?? '');
+    const format = SendDataAttachment.mime(want.type ?? '');
     if (format === undefined) { throw new Error('Unsupported shared file MIME type'); }
     if (((want.flags ?? 0) & 1) === 0) { throw new Error('Shared file requires caller URI READ authorization'); }
     let source: string = want.uri ?? '';
@@ -110,17 +110,17 @@ export class SendDataAttachment {
         parsed.fragment !== '' || source.length > 8192 || /[\u0000\r\n\s\\]/.test(source) || /%(?![0-9a-fA-F]{2})/.test(source)) {
       throw new Error('Invalid shared file URI');
     }
-    this.recover(context);
+    SendDataAttachment.recover(context);
     const item = new SharedAttachment();
-    item.id = util.generateRandomUUID(); item.directory = context.getApplicationContext().cacheDir + '/' + this.prefix + item.id;
+    item.id = util.generateRandomUUID(); item.directory = context.getApplicationContext().cacheDir + '/' + SendDataAttachment.prefix + item.id;
     item.suffix = format[0]; item.type = Number(format[1]);
     item.name = decodeURIComponent(parsed.path.substring(parsed.path.lastIndexOf('/') + 1));
     if (item.name.length === 0 || item.name.length > 255 || /[\u0000-\u001f/\\]/.test(item.name)) { throw new Error('Invalid attachment filename'); } item.path = item.directory + '/source.' + item.suffix;
     fs.mkdirSync(item.directory); // Fresh private directory; never reuse/overwrite.
     try {
-      item.size = this.copy(source, item.path, item.type === common.MM_ATTACHMENT_TYPE.AUDIO ?
+      item.size = SendDataAttachment.copy(source, item.path, item.type === common.MM_ATTACHMENT_TYPE.AUDIO ?
         common.int.MMS_AUDIO_FILE_MAX_SIZE : common.int.MMS_FILE_MAX_SIZE);
-      this.active = item;
+      SendDataAttachment.active = item;
       return item;
     } catch (error) {
       fs.rmdirSync(item.directory);
@@ -128,40 +128,40 @@ export class SendDataAttachment {
     }
   }
   static description(id: string): string {
-    const item = this.active;
+    const item = SendDataAttachment.active;
     return item !== undefined && item.id === id ? item.name + '\n' + fs.statSync(item.path).size.toString() + ' B' : '';
   }
   static dispose(): void {
-    if (this.active !== undefined) { this.cancel(this.active.id, true); }
+    if (SendDataAttachment.active !== undefined) { SendDataAttachment.cancel(SendDataAttachment.active.id, true); }
   }
   static reserve(id: string): void {
     if (!id) { return; }
-    const item = this.active;
+    const item = SendDataAttachment.active;
     if (item === undefined || item.id !== id || item.reserved) { throw new Error('Attachment draft ownership changed'); }
     item.reserved = true;
   }
   static cancel(id: string, reserved: boolean = false): void {
-    const item = this.active;
+    const item = SendDataAttachment.active;
     if (item === undefined || item.id !== id || (item.reserved && !reserved)) { return; }
-    fs.unlinkSync(item.path); fs.rmdirSync(item.directory); this.active = undefined;
+    fs.unlinkSync(item.path); fs.rmdirSync(item.directory); SendDataAttachment.active = undefined;
   }
   static handoff(id: string, context: Context): Mms {
-    const item = this.active;
+    const item = SendDataAttachment.active;
     if (item === undefined || item.id !== id || !item.reserved) { throw new Error('No reserved attachment draft'); }
     const name: string = 'SHARED_' + item.id + '.' + item.suffix;
     const destination: string = context.getApplicationContext().filesDir + '/' + name;
     let copied: boolean = false;
     try {
-      const size: number = this.copy(item.path, destination, common.int.MMS_FILE_MAX_SIZE);
+      const size: number = SendDataAttachment.copy(item.path, destination, common.int.MMS_FILE_MAX_SIZE);
       copied = true;
       const result: Mms = { duration: '', type: item.type, path: destination, name: name, size: size.toString() };
-      this.cancel(id, true);
+      SendDataAttachment.cancel(id, true);
       // Existing Conversation/DraftUtils now owns this actual copied attachment.
       // No automatic sending is performed by this helper or WantUtil.
       return result;
     } catch (error) {
       if (copied) { fs.unlinkSync(destination); }
-      this.cancel(id, true);
+      SendDataAttachment.cancel(id, true);
       throw error as Error;
     }
   }

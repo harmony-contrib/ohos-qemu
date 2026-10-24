@@ -504,10 +504,12 @@
 +}
 --- /dev/null
 +++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/ets/pages/Captions.ets
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,33 @@
 +import { CaptionActions } from '../common/CaptionActions';
 +
-+@Entry
++const entryOptions: EntryOptions = { useSharedStorage: true };
++
++@Entry(entryOptions)
 +@Component
 +struct Captions {
 +  @State private showNotices: boolean = false;

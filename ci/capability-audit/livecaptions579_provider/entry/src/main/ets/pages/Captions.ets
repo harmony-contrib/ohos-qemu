@@ -1,6 +1,8 @@
 import { CaptionActions } from '../common/CaptionActions';
 
-@Entry
+const entryOptions: EntryOptions = { useSharedStorage: true };
+
+@Entry(entryOptions)
 @Component
 struct Captions {
   @State private showNotices: boolean = false;

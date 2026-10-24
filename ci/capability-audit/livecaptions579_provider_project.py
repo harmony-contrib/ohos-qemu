@@ -11,7 +11,7 @@ import re
 BUNDLE = 'com.ohos.vassistant'
 ABILITY = 'AiCaptionServiceExtAbility'
 PERMISSIONS = ['ohos.permission.MANAGE_SETTINGS', 'ohos.permission.SYSTEM_FLOAT_WINDOW',
-               'ohos.permission.WRITE_ACCESSIBILITY_CONFIG']
+               'ohos.permission.WRITE_ACCESSIBILITY_CONFIG', 'ohos.permission.MANAGE_SECURE_SETTINGS']
 ROOT = Path(__file__).with_name('livecaptions579_provider')
 
 

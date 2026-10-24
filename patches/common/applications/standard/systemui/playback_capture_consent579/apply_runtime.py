@@ -30,6 +30,8 @@ LEGACY_MANIFEST_SHA='4d36415c30d4cfef580835cbb84502ebf51ca48ce36de571ab8fed654cf
 LOG_PATH=PROJECT+'/common/src/main/ets/default/Log.ts'
 LOG_SHA='5a6ad08fe269488a91b334656db18d9831b719e775dd017939a22572a67f17a1'
 PREFIX=PROJECT+'/product/default/dialog/'
+MODULE=PREFIX+'src/main/module.json5'
+PREVIOUS_MODULE_SHA='adf36413d8e5f0cdfa037ffc731be2edd5595f3a70de9820b4fff64965d54d49'
 MEMBERS=(
  'src/main/ets/Application/AbilityStage.ts',
  'src/main/ets/ServiceExtAbility/ExtAbility.ts',
@@ -65,6 +67,8 @@ def load():
 
 def hashes(value, state):
     if state=='legacy_final': return value['legacy_final']
+    if state=='previous_final':
+        return dict(hashes(value,'final'), **{MODULE:PREVIOUS_MODULE_SHA})
     if state not in ('before','final'): raise ValueError('Unknown source state')
     return {name:pair[0 if state=='before' else 1] for name,pair in value['files'].items()}
 
@@ -80,7 +84,7 @@ def complete(root, value):
     if not logger.is_file() or sha(logger.read_bytes())!=LOG_SHA:
         raise ValueError('Original actual SystemUI logger changed')
     observed=actual_hashes(root,value)
-    for state in ('before','legacy_final','final'):
+    for state in ('before','legacy_final','previous_final','final'):
         if observed==hashes(value,state):return state
     raise ValueError('Unknown or mixed SystemUI source vector preserved')
 
@@ -98,7 +102,7 @@ def vector(root,value):
     return 'before' if votes[0]==0 else 'final'
 
 
-def transact(root, component, value, *, reverse=False, patch_name='0001-product-source.patch'):
+def transact(root, component, value, *, reverse=False, patch_name='0001-product-source.patch', patch_steps=None):
     heads(root, value)
     if vector(root, value) == 'final':
         return
@@ -115,8 +119,9 @@ def transact(root, component, value, *, reverse=False, patch_name='0001-product-
                 p.write_bytes(original['bytes'])
         if vector(staged, value) != 'before':
             raise ValueError('actual preimage changed during snapshot')
-        subprocess.run(['patch', '--binary', '--batch', '--reverse' if reverse else '--forward', '--fuzz=0', '-p1', '-i',
-            str(component / patch_name)], cwd=staged, check=True)
+        for name, backwards in (patch_steps if patch_steps is not None else [(patch_name, reverse)]):
+            subprocess.run(['patch', '--binary', '--batch', '--reverse' if backwards else '--forward', '--fuzz=0', '-p1', '-i',
+                str(component / name)], cwd=staged, check=True)
         if vector(staged, value) != 'final' or {
                 str(p.relative_to(staged)) for p in staged.rglob('*') if p.is_file()} != {
                     n for n, pair in value['files'].items() if pair[1] is not None}:
@@ -213,12 +218,15 @@ def main():
                 start=hashes(value,initial);end=hashes(value,'before')
                 selected=dict(value,files={name:[start[name],end[name]] for name in value['files']})
                 patch='0000-legacy-product-source.patch' if initial=='legacy_final' else '0001-product-source.patch'
-                transact(root,HERE,selected,reverse=True,patch_name=patch)
+                steps=([('0003-upgrade-float-window.patch',False),(patch,True)]
+                    if initial=='previous_final' else None)
+                transact(root,HERE,selected,reverse=True,patch_name=patch,patch_steps=steps)
                 if complete(root,value)!='before':raise ValueError('Complete original prefix not restored')
         elif initial!='final':
             start=hashes(value,initial);end=hashes(value,'final')
             selected=dict(value,files={name:[start[name],end[name]] for name in value['files']})
             patch='0002-upgrade-legacy-arkts.patch' if initial=='legacy_final' else '0001-product-source.patch'
+            if initial=='previous_final':patch='0003-upgrade-float-window.patch'
             transact(root,HERE,selected,patch_name=patch)
             if complete(root,value)!='final':raise ValueError('Complete new SystemUI final vector not established')
     print('Product source transaction complete; actual build/new-QEMU acceptance remains pending')

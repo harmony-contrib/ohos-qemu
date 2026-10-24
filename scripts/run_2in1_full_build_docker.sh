@@ -81,20 +81,46 @@ BUILD_ONLY_LOAD="${BUILD_ONLY_LOAD:-0}"
 NO_PREBUILT_SDK="${NO_PREBUILT_SDK:-0}"
 PREPARE_ONLY="${PREPARE_ONLY:-0}"
 SOURCE_PREPARE_ONLY="${SOURCE_PREPARE_ONLY:-0}"
+PRODUCTS="${PRODUCTS:-arm64_virt x86_64_virt armv7a_virt}"
 QEMU_LIVE_CAPTIONS_INPUTS="${QEMU_LIVE_CAPTIONS_INPUTS:-}"
 QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${QEMU_LIVE_CAPTIONS_INPUTS_SHA256:-}"
 QEMU_LIVE_CAPTIONS_ABI="${QEMU_LIVE_CAPTIONS_ABI:-}"
-QEMU_LOTTIE_INPUT="${QEMU_LOTTIE_INPUT:-}"
+QEMU_LOTTIE_INPUT="${QEMU_LOTTIE_INPUT:-${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/r66-lottie-production-input579-06/lottie-input.json}"
 QEMU_KNOWLEDGE_ICS="${QEMU_KNOWLEDGE_ICS:-}"
-PRODUCTS="${PRODUCTS:-arm64_virt x86_64_virt armv7a_virt}"
+if [ -z "${QEMU_KNOWLEDGE_ICS}" ] && [ -f "${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/basic.ics" ]; then
+  QEMU_KNOWLEDGE_ICS="${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/basic.ics"
+fi
+if [ "${PRODUCTS}" != armv7a_virt ] && [ -z "${QEMU_LIVE_CAPTIONS_INPUTS}" ]; then
+  QEMU_LIVE_CAPTIONS_INPUTS="${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/r66-asr-product-assets579-05/product-assets.json"
+fi
+if [ -n "${QEMU_LIVE_CAPTIONS_INPUTS}" ] && [ -z "${QEMU_LIVE_CAPTIONS_INPUTS_SHA256}" ] && [ -f "${QEMU_LIVE_CAPTIONS_INPUTS}" ]; then
+  QEMU_LIVE_CAPTIONS_INPUTS_SHA256="$(python3 - "${QEMU_LIVE_CAPTIONS_INPUTS}" <<'PY'
+import hashlib,sys
+from pathlib import Path
+print(hashlib.sha256(Path(sys.argv[1]).read_bytes()).hexdigest())
+PY
+  )"
+fi
 PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE:-0}"
 QEMU_JSVM_COMPONENT="${QEMU_JSVM_COMPONENT:-1}"
 QEMU_VULKAN_COMPONENT="${QEMU_VULKAN_COMPONENT:-1}"
 QEMU_ACCESSIBILITY_COMPONENT="${QEMU_ACCESSIBILITY_COMPONENT:-1}"
 dependency_recipe="$(python3 "${SCRIPT_DIR}/m144_dependency_recipe.py")"
-JSVM_ENGINE_ARTIFACTS="${JSVM_ENGINE_ARTIFACTS:-${CACHE_ROOT}/artifacts/jsvm-m144-7.0/${dependency_recipe}}"
-QEMU_VULKAN_ARTIFACTS="${QEMU_VULKAN_ARTIFACTS:-${CACHE_ROOT}/artifacts/swiftshader-m144-7.0/${dependency_recipe}}"
-QEMU_AVC_ARTIFACTS="${QEMU_AVC_ARTIFACTS:-${CACHE_ROOT}/artifacts/avc-m144-7.0/${dependency_recipe}}"
+default_dep_arch=""
+case "${PRODUCTS}" in
+  armv7a_virt) default_dep_arch=arm ;;
+  arm64_virt) default_dep_arch=arm64 ;;
+  x86_64_virt) default_dep_arch=x86_64 ;;
+esac
+if [ -n "${default_dep_arch}" ] && [ -d "${CACHE_ROOT}/artifacts/m144-7.0-dependencies/${dependency_recipe}/${default_dep_arch}" ]; then
+  JSVM_ENGINE_ARTIFACTS="${JSVM_ENGINE_ARTIFACTS:-${CACHE_ROOT}/artifacts/m144-7.0-dependencies/${dependency_recipe}/${default_dep_arch}/jsvm}"
+  QEMU_VULKAN_ARTIFACTS="${QEMU_VULKAN_ARTIFACTS:-${CACHE_ROOT}/artifacts/m144-7.0-dependencies/${dependency_recipe}/${default_dep_arch}/swiftshader}"
+  QEMU_AVC_ARTIFACTS="${QEMU_AVC_ARTIFACTS:-${CACHE_ROOT}/artifacts/m144-7.0-dependencies/${dependency_recipe}/${default_dep_arch}/avc}"
+else
+  JSVM_ENGINE_ARTIFACTS="${JSVM_ENGINE_ARTIFACTS:-${CACHE_ROOT}/artifacts/jsvm-m144-7.0/${dependency_recipe}}"
+  QEMU_VULKAN_ARTIFACTS="${QEMU_VULKAN_ARTIFACTS:-${CACHE_ROOT}/artifacts/swiftshader-m144-7.0/${dependency_recipe}}"
+  QEMU_AVC_ARTIFACTS="${QEMU_AVC_ARTIFACTS:-${CACHE_ROOT}/artifacts/avc-m144-7.0/${dependency_recipe}}"
+fi
 QEMU_ARKWEB_CORE_ARTIFACTS="${QEMU_ARKWEB_CORE_ARTIFACTS:-${CACHE_ROOT}/artifacts/arkweb-m144-7.0/${dependency_recipe}}"
 mesa_llvm_recipe="$(python3 "${SCRIPT_DIR}/qemu_mesa_llvm_artifacts.py" --recipe-hash)"
 QEMU_MESA_LLVM_ARTIFACTS="${QEMU_MESA_LLVM_ARTIFACTS:-${CACHE_ROOT}/artifacts/qemu-mesa-llvm/${mesa_llvm_recipe}}"
@@ -484,7 +510,8 @@ fi
 # The already-existing F17 Owner supplies its UUID and concrete source inputs.
 MEDIA579_INPUT_MOUNTS=()
 MEDIA579_INPUT_ENV=()
-if [ "${PRODUCTS}" = armv7a_virt ] && [ "${PREPARE_ONLY}" != 1 ] && [ "${SOURCE_PREPARE_ONLY}" != 1 ]; then
+if [ "${PRODUCTS}" = armv7a_virt ] && [ -n "${QEMU_MEDIA579_NORMAL_SOURCE:-}" ] && \
+   [ "${PREPARE_ONLY}" != 1 ] && [ "${SOURCE_PREPARE_ONLY}" != 1 ]; then
   media579_result="${LOG_DIR}/normal-media579-arm32-data-result.json"
   python3 "${SCRIPT_DIR}/prepare_media579_arm32_inputs.py" \
     --normal-source "${QEMU_MEDIA579_NORMAL_SOURCE:?actual normal SOURCE required}" \

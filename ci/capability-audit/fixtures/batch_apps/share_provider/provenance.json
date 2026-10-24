@@ -42,7 +42,7 @@
     "applications/standard/settings/product/phone/src/main/module.json5": "fc6383796f603062cd0cba5e5078e28e3b567f95356d09d7014c2c27b52d9a62",
     "applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json": "021ce6f5057f629e37236b634dcecc7e963c44ed15d35f9de02a7bbb0d90389d",
     "applications/standard/mms/entry/src/main/module.json5": "f95d349f88e48ad35e9a354d2fc150a4d7c3624df253f6a3733c1da372e1d7ce",
-    "applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets": "3924357e0dadb41cd3fc87d9204a9f6000a0504e0f64110da1e495ae694fbb43",
+    "applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets": "d176254730825164da791cfa18f5a260e19d75061058a852b9b058fc0268a1a3",
     "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets": "7cbf03a93e1c4877b677c077ba279be7073fcc07996b8b3ac08f551077bf790d",
     "applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets": "2b7dc87f39cddb03a6ed9b18172125b717fa5b16fbb3f70f92eddd5dc6b99b61",
     "applications/standard/settings/product/phone/src/main/ets/pages/SharePicker.ets": "0b0f93e792995546b831c67980b80717c16067591c3a22b269fdca36c51379dd",
@@ -51,7 +51,7 @@
     "applications/standard/mms/entry/src/main/ets/pages/transmitmsg/transmitMsgController.ets": "ea702caeb33e400ffd8104a113e32a624e11d44e5baa68cbdd57d21878ec9876",
     "applications/standard/mms/entry/src/main/ets/pages/transmitmsg/transmitMsgPage.ets": "516e94fcada17b5c6e16c2c19d6121b0c0e709a675c540ad13699634303a596f",
     "applications/standard/mms/entry/src/main/ets/pages/conversation/conversationController.ets": "350d1484df2f21610793a2e40608837692ab3f113aa6220e947e0fc7d3e5c4de",
-    "applications/standard/mms/entry/src/main/ets/utils/SendDataAttachment.ets": "72f32087061d1731649d7b5bab26bbbc6e726e11c1bf4407681b59cec26268c3"
+    "applications/standard/mms/entry/src/main/ets/utils/SendDataAttachment.ets": "311e253e1c34b0819b9319070681b75419ec438033d20f71b27dc55fab05d273"
   },
   "added_extension": {
     "name": "SharePickerExtensionAbility",

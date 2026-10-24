@@ -17,7 +17,7 @@
     "entry/src/main/ets/common/CaptionSession.ets": "178ec8c5e4833425de283a60e01bec90df237a6cfe69a04bdd5b318d657de839",
     "entry/src/main/ets/common/CaptionTrace.ets": "887ad921c5704bb5ec24fd99bd82f25a1422825e5849977e9d6bb9867887fcfb",
     "entry/src/main/ets/common/ModelProfile.ets": "ed42752f9d2a1fdbda9c6d5485be4303b0d95aedec7f35f4ac4c88b2c53a5710",
-    "entry/src/main/ets/pages/Captions.ets": "38216dc69675472efc885fcecc240fd86fb9f3859abdd7cf845805513aee21ff",
+    "entry/src/main/ets/pages/Captions.ets": "5dc17ee3892574129f1942e77417ac1ae52e7b2db7fa3e4e5d5229e5534c9137",
     "entry/src/main/ets/service/AiCaptionServiceExtAbility.ets": "3998da02b341bb68c9a530f1e7acac5592787fa99e7d25ad8c2a28e22dbc3ab1",
     "entry/src/main/ets/workers/CaptionWorker.ets": "c33215580055d2af19a1ab15798d21176e3a844f3c2b6111116593cef08c3f53",
     "entry/src/main/module.json5": "d3fb604caddb7a3dde564c62b18cd33f3ec5ff11106ad494ebec8d7b7b61bfe4",

@@ -2074,6 +2074,7 @@ inject_standard_qemu_params() {
   if [ "${INJECT_DEVELOPER_MODE_PARAM:-1}" = "1" ]; then
     replace_or_append_param "${ohos_para}" "const.security.developermode.state" "const.security.developermode.state=true"
   fi
+  replace_or_append_param "${ohos_para}" "persist.sys.abilityms.maxProcessCacheNum" "persist.sys.abilityms.maxProcessCacheNum=2"
   if [ -n "${DEVICE_TYPE:-}" ]; then
     replace_or_append_param "${ohos_para}" \
       "const.product.devicetype" "const.product.devicetype=${DEVICE_TYPE}"

@@ -467,13 +467,14 @@
 +}
 --- a/applications/standard/systemui/product/default/dialog/src/main/module.json5
 +++ b/applications/standard/systemui/product/default/dialog/src/main/module.json5
-@@ -16,7 +16,17 @@
+@@ -16,7 +16,18 @@
      "installationFree": false,
      "uiSyntax": "ets",
      "pages": "$profile:main_pages",
 +    "requestPermissions": [
 +      { "name": "ohos.permission.MANAGE_AUDIO_CONFIG" },
-+      { "name": "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED" }
++      { "name": "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED" },
++      { "name": "ohos.permission.SYSTEM_FLOAT_WINDOW" }
 +    ],
      "extensionAbilities": [
 +      {

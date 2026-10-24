@@ -419,6 +419,40 @@ def owner_proof(value, build):
 
 
 def admit(inputs):
+    if inputs.get('ohos32_direct_build'):
+        build=load(inputs['ohos32_direct_build'])
+        require(build.get('schema')=='direct-livecaptions579-ohos32-build/v1' and
+            build.get('status')=='compiled_linked_packaged_NOT_runtime_validated' and
+            build.get('exit_code')==0 and build.get('runtime_validated') is False and
+            build.get('first_artifact_behavior_gate_passed') is False,
+            'completed direct ARM32 native production required')
+        libraries=build['libraries']
+        require(set(libraries)==set(LIBS), 'four actual ARM32 DSOs required')
+        for name,row in libraries.items():
+            actual=elf32(raw(row['file']))
+            require(actual==row['elf'] and actual['soname']==name, 'actual direct ARM32 DSO differs')
+            require(all(p=='$ORIGIN' for p in actual['rpaths']), 'foreign direct native RPATH')
+            # Vendored ORT and SDK libc++ retain their supplied ABI flags.
+            if name in ('libsherpa-onnx-c-api.so','libsherpa_onnx.so'):
+                require(actual['hard_float'] and actual['rpaths'],
+                    'direct compiled sherpa outputs require hard-float ABI and origin-relative RPATH')
+        api=set(libraries['libsherpa-onnx-c-api.so']['elf']['exports'])
+        imported={s for s in libraries['libsherpa_onnx.so']['elf']['imports'] if s.startswith('SherpaOnnx')}
+        require(imported and imported <= api and any('OfflineRecognizer' in n for n in imported) and
+            any('VoiceActivityDetector' in n for n in imported), 'complete direct NAPI imports/C API exports required')
+        require('napi_module_register' in libraries['libsherpa_onnx.so']['elf']['imports'] and
+            'OrtGetApiBase' in libraries['libsherpa-onnx-c-api.so']['elf']['imports'] and
+            'OrtGetApiBase' in libraries['libonnxruntime.so']['elf']['exports'],
+            'actual direct native module/ORT symbols absent')
+        har_proof(build['base_har'],build['har'],libraries,build['notices'])
+        require(inputs['assets']['har']==ref2(build['har']) and inputs['assets']['notices']==ref2(build['notices']),
+            'descriptor does not select actual direct HAR/full notices')
+        base=build['base_assets']
+        require(all(inputs['assets'][name]==base['assets'][name] for name in ('encoder','decoder','tokens','vad')) and
+            inputs['licenses']==base['licenses'], 'only direct native ABI/HAR/notices may vary')
+        for row in build['licenses']:
+            require(raw(row['file']) in raw(build['notices']), 'direct native dependency notice omitted')
+        return build
     seal=load(inputs['ohos32_source_build']); build=verify_build(seal['build'])
     build['receipt_identity']=seal['build']; owner_proof(inputs['ohos32_source_build'],build)
     require(inputs['assets']['har']==ref2(build['har']) and inputs['assets']['notices']==ref2(build['notices']),

@@ -490,7 +490,11 @@ SOURCE_PREPARE_ONLY="${SOURCE_PREPARE_ONLY:-0}"
 QEMU_LIVE_CAPTIONS_INPUTS="${QEMU_LIVE_CAPTIONS_INPUTS:-}"
 QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${QEMU_LIVE_CAPTIONS_INPUTS_SHA256:-}"
 QEMU_LIVE_CAPTIONS_ABI="${QEMU_LIVE_CAPTIONS_ABI:-}"
-QEMU_LOTTIE_INPUT="${QEMU_LOTTIE_INPUT:-}"
+QEMU_LOTTIE_INPUT="${QEMU_LOTTIE_INPUT:-${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/r66-lottie-production-input579-06/lottie-input.json}"
+QEMU_KNOWLEDGE_ICS="${QEMU_KNOWLEDGE_ICS:-}"
+if [ -z "${QEMU_KNOWLEDGE_ICS}" ] && [ -f "${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/basic.ics" ]; then
+  QEMU_KNOWLEDGE_ICS="${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/basic.ics"
+fi
 PATCH_COMPONENTS_ONLY="${PATCH_COMPONENTS_ONLY:-0}"
 SKIP_APT="${SKIP_APT:-0}"
 export QEMU_HOST_GN_QEMU_USER="${QEMU_HOST_GN_QEMU_USER:-0}"
@@ -3878,13 +3882,29 @@ apply_qemu_capability_patch_plan() {
   python3 "${PATCH_ROOT}/lib/communicationsetting_provider.py" --source-root "${OHOS_ROOT}" \
     --cache-root "${CACHE_ROOT}/communicationsetting-source-profile" --prepare-profile \
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_communicationsetting_source_profile.log"
+  if [ "${#PRODUCTS[@]}" -ne 1 ]; then
+    echo "Caption source preparation requires one actual product/ABI per normal build invocation" >&2
+    return 1
+  fi
+  if [ "${PRODUCTS[0]}" = armv7a_virt ]; then
+    python3 "${SCRIPT_DIR}/prepare_armv7a_sherpa_inputs.py" \
+      --source-root "${OHOS_ROOT}" --cache-root "${CACHE_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/prepare_armv7a_sherpa_inputs.log"
+    QEMU_LIVE_CAPTIONS_INPUTS="${QEMU_LIVE_CAPTIONS_INPUTS:-${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/arm32-prebuilt/livecaptions/product-assets-arm32.json}"
+  else
+    QEMU_LIVE_CAPTIONS_INPUTS="${QEMU_LIVE_CAPTIONS_INPUTS:-${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/r66-asr-product-assets579-05/product-assets.json}"
+  fi
+  if [ -n "${QEMU_LIVE_CAPTIONS_INPUTS}" ] && [ -z "${QEMU_LIVE_CAPTIONS_INPUTS_SHA256}" ] && [ -f "${QEMU_LIVE_CAPTIONS_INPUTS}" ]; then
+    QEMU_LIVE_CAPTIONS_INPUTS_SHA256="$(python3 - "${QEMU_LIVE_CAPTIONS_INPUTS}" <<'PY'
+import hashlib,sys
+from pathlib import Path
+print(hashlib.sha256(Path(sys.argv[1]).read_bytes()).hexdigest())
+PY
+    )"
+  fi
   if [ -z "${QEMU_LOTTIE_INPUT}" ] || [ -z "${QEMU_LIVE_CAPTIONS_INPUTS}" ] || \
      [ -z "${QEMU_LIVE_CAPTIONS_INPUTS_SHA256}" ]; then
     echo "Actual pinned Lottie and Live Captions production input descriptors are required" >&2
-    return 1
-  fi
-  if [ "${#PRODUCTS[@]}" -ne 1 ]; then
-    echo "Caption source preparation requires one actual product/ABI per normal build invocation" >&2
     return 1
   fi
   if [ -z "${QEMU_LIVE_CAPTIONS_ABI}" ]; then
@@ -4024,7 +4044,7 @@ main() {
 
   local product
   for product in "${PRODUCTS[@]}"; do
-    if [ "${product}" = "armv7a_virt" ]; then
+    if [ "${product}" = "armv7a_virt" ] && [ -n "${QEMU_MEDIA579_ARM32_INPUTS:-}" ]; then
       python3 -B "${MEDIA579_CPU_COMPONENT}/normal_arm32_entry.py" \
         --inputs "${QEMU_MEDIA579_ARM32_INPUTS:?actual normal Owner ARM32 DATA required}" \
         --inputs-sha256 "${QEMU_MEDIA579_ARM32_INPUTS_SHA256:?actual ARM32 DATA checksum required}" \

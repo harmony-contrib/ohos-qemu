@@ -1,0 +1,30 @@
+{
+  "version-name": "2.0.0",
+  "version-code": 2,
+  "app-distribution-type": "os_integration",
+  "uuid": "a0bb8e78-77d3-47dd-8cc0-2efa21aa5790",
+  "validity": {
+    "not-before": 1594865258,
+    "not-after": 2208988800
+  },
+  "type": "release",
+  "bundle-info": {
+    "developer-id": "OpenHarmony",
+    "distribution-certificate": "",
+    "bundle-name": "com.ohos.vassistant",
+    "apl": "system_basic",
+    "app-feature": "hos_system_app"
+  },
+  "acls": {
+    "allowed-acls": [
+      "ohos.permission.MANAGE_SETTINGS",
+      "ohos.permission.SYSTEM_FLOAT_WINDOW",
+      "ohos.permission.WRITE_ACCESSIBILITY_CONFIG",
+      "ohos.permission.MANAGE_SECURE_SETTINGS"
+    ]
+  },
+  "permissions": {
+    "restricted-permissions": []
+  },
+  "issuer": "pki_internal"
+}
