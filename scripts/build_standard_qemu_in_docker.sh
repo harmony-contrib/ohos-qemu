@@ -258,6 +258,7 @@ ARKUI_CFI_COVERAGE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_e
 ARKUI_NATIVE_DSO_EXPORTS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/native_dso_exports579/apply.sh"
 ARKUI_DYNAMIC_FACTORY_CFI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/dynamic_module_factory_cfi/apply.sh"
 ARKUI_PIXEL_MAP_NAPI_CFI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/pixel_map_napi_cfi/apply.sh"
+ARKUI_JSI_DESTRUCTOR_CFI_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/arkui/ace_engine/jsi_destructor_cfi/apply.sh"
 METADATA_FETCH_RESULT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/player_framework/api26_fetch_result/apply.sh"
 INSIGHT_CONFIGURATION_MODE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_insight_configuration_mode/apply.sh"
 CLI_SESSION_STATUS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/api26_cli_session_status/apply.sh"
@@ -3709,6 +3710,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_arkui_dynamic_factory_cfi.log"
   bash "${ARKUI_PIXEL_MAP_NAPI_CFI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_arkui_pixel_map_napi_cfi.log"
+  bash "${ARKUI_JSI_DESTRUCTOR_CFI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_arkui_jsi_destructor_cfi.log"
   python3 "${PATCH_ROOT}/common/applications/standard/settings/source_provider/prepare_dependencies.py" \
     --source-root "${OHOS_ROOT}" --cache-root "${CACHE_ROOT}/settings-source-dependencies" \
     --evidence "${CACHE_ROOT}/logs/settings-source-preparation.json" \
