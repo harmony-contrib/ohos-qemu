@@ -24,8 +24,9 @@ SIGNING_INPUTS = {
     'OpenHarmonyApplication.pem': 'b5c1d6254faa91eab645a32fc3ce136128c94d88a739a0e956e6a49b331387e5',
     'OpenHarmonyProfileRelease.pem': '515f0bd8173fabb8bf8f146cd61207baa0e2d6ab8693ae7623df7ee6f16af70e',
 }
-CAPABILITY = {'bundleName': 'com.ohos.mms', 'app_signature': [OLD_SIGNER], 'singleton': True,
-              'keepAlive': False, 'allowCommonEvent': ['usual.event.SMS_RECEIVE_COMPLETED']}
+LEGACY_CAPABILITY = {'bundleName': 'com.ohos.mms', 'app_signature': [OLD_SIGNER], 'singleton': True,
+                     'keepAlive': False, 'allowCommonEvent': ['usual.event.SMS_RECEIVE_COMPLETED']}
+CAPABILITY = dict(LEGACY_CAPABILITY, allowAppUsePrivilegeExtension=True)
 GRANTS = {'bundleName': 'com.ohos.mms', 'app_signature': [OLD_SIGNER], 'permissions': [
     {'name': 'ohos.permission.READ_CONTACTS', 'userCancellable': True},
     *[{'name': 'ohos.permission.' + name, 'userCancellable': False}
@@ -70,15 +71,36 @@ def desired_profile(original, leaf):
     return result
 
 
-def policy(data, expected, require_current=False):
+def policy_rows(data):
     value = json.loads(data, object_pairs_hook=unique)
-    rows = value['install_list'] if isinstance(value, dict) else value
+    rows = value.get('install_list') if isinstance(value, dict) else value
+    if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+        raise ValueError('invalid MMS preinstall policy rows')
     matches = [r for r in rows if r.get('bundleName') == 'com.ohos.mms']
+    return value, matches
+
+
+def policy_pair(capability, grants):
+    _, actual_capability = policy_rows(capability)
+    _, actual_grants = policy_rows(grants)
+    current_grants = dict(GRANTS, app_signature=[SIGNATURE])
+    allowed = ((LEGACY_CAPABILITY, GRANTS),
+               (dict(LEGACY_CAPABILITY, app_signature=[SIGNATURE]), current_grants),
+               (dict(CAPABILITY, app_signature=[SIGNATURE]), current_grants))
+    if not any(same_json(actual_capability, [cap]) and same_json(actual_grants, [grant])
+               for cap, grant in allowed):
+        raise ValueError('unknown/mixed MMS capability/grant identity; preserving source')
+
+
+def policy(data, expected, require_current=False):
+    value, matches = policy_rows(data)
+    legacy = LEGACY_CAPABILITY if same_json(expected, CAPABILITY) else expected
     desired = dict(expected, app_signature=[SIGNATURE])
-    allowed = ([desired],) if require_current else ([expected], [desired])
+    allowed = ([desired],) if require_current else (
+        [legacy], [dict(legacy, app_signature=[SIGNATURE])], [desired])
     if not any(same_json(matches, row) for row in allowed):
         raise ValueError('unknown MMS preinstall capability/grants; preserving source')
-    matches[0]['app_signature'] = [SIGNATURE]
+    matches[0].update(desired)
     return (json.dumps(value, ensure_ascii=False, indent=2) + '\n').encode()
 
 
@@ -119,6 +141,8 @@ def prepare(root):
     paths = {directory / 'install_list_capability.json': CAPABILITY,
              directory / 'install_list_permissions.json': GRANTS}
     before = {p: read(p) for p in (*paths, profile)}
+    policy_pair(before[directory / 'install_list_capability.json'],
+                before[directory / 'install_list_permissions.json'])
     pending = {p: policy(before[p], expected) for p, expected in paths.items()}
     with tempfile.TemporaryDirectory(prefix='mms-source-profile-') as temporary:
         scratch = Path(temporary)

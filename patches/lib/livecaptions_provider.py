@@ -13,7 +13,7 @@ import subprocess
 import sys
 import tempfile
 from calendar_provider import SIGNATURE, certificate_fingerprint
-from mms_provider import SIGNING_INPUTS, read, unique, cms, certificates
+from mms_provider import SIGNING_INPUTS, read, replace, unique, cms, certificates
 from preinstall_selection import entry, same_json, uninstall_policy
 
 PATCH_ROOT=Path(__file__).resolve().parents[1]
@@ -24,10 +24,25 @@ DEVICE_TYPES=['default','tablet','2in1']
 PRODUCT_ABIS={'arm64_virt':'arm64-v8a','armv7a_virt':'armeabi-v7a','x86_64_virt':'x86_64'}
 PERMISSIONS=['ohos.permission.MANAGE_SETTINGS','ohos.permission.SYSTEM_FLOAT_WINDOW',
              'ohos.permission.WRITE_ACCESSIBILITY_CONFIG']
-CAPABILITY={'bundleName':BUNDLE,'app_signature':[SIGNATURE],'keepAlive':False,'allowAppDesktopIconHide':True}
+LEGACY_CAPABILITY={'bundleName':BUNDLE,'app_signature':[SIGNATURE],'keepAlive':False,'allowAppDesktopIconHide':True}
+CAPABILITY=dict(LEGACY_CAPABILITY,allowAppUsePrivilegeExtension=True)
 
 
 def digest(data): return hashlib.sha256(data).hexdigest()
+
+
+def capability_policy(data, require_current=True):
+    value=json.loads(data,object_pairs_hook=unique)
+    rows=value.get('install_list') if isinstance(value,dict) else value
+    if not isinstance(rows,list) or any(not isinstance(row,dict) for row in rows):
+        raise ValueError('invalid caption preinstall capability rows')
+    matches=[row for row in rows if row.get('bundleName')==BUNDLE]
+    allowed=([CAPABILITY],) if require_current else ([LEGACY_CAPABILITY],[CAPABILITY])
+    if not any(same_json(matches,expected) for expected in allowed):
+        raise ValueError('exact signer-bound caption privilege-extension policy required')
+    if same_json(matches,[CAPABILITY]): return data
+    matches[0].update(CAPABILITY)
+    return (json.dumps(value,ensure_ascii=False,indent=2)+'\n').encode()
 
 
 def target_contract(product, device, abi):
@@ -38,7 +53,7 @@ def target_contract(product, device, abi):
         'sdk_device':'default' if device=='phone' else '2in1','module_device_types':list(DEVICE_TYPES)}
 
 
-def source_ready(root):
+def source_ready(root, require_current=True):
     manifest=json.loads(read(PATCH_ROOT/'common/applications/standard/hap/livecaptions_provider/source_states.json'),
                         object_pairs_hook=unique)
     if manifest['project']!=PROJECT or manifest['parent_project']!='applications/standard/hap':
@@ -59,10 +74,7 @@ def source_ready(root):
     directory=root/'vendor/ohemu/virt/preinstall-config'
     selected=entry(read(directory/'install_list.json'),BUNDLE)
     uninstall_policy(read(directory/'uninstall_list.json'),BUNDLE)
-    policies=json.loads(read(directory/'install_list_capability.json'),object_pairs_hook=unique)
-    rows=policies['install_list'] if isinstance(policies,dict) else policies
-    if not same_json([r for r in rows if r.get('bundleName')==BUNDLE],[CAPABILITY]):
-        raise ValueError('exact signer-bound non-keepalive provider policy required')
+    capability_policy(read(directory/'install_list_capability.json'),require_current)
     grants=json.loads(read(directory/'install_list_permissions.json'),object_pairs_hook=unique)
     grant_rows=grants['install_list'] if isinstance(grants,dict) else grants
     if [r for r in grant_rows if r.get('bundleName')==BUNDLE]:
@@ -174,7 +186,10 @@ def select_assets(root, mapping, inputs, abi):
 
 def prepare(root, cache, inputs, abi, *, product, device):
     context=target_contract(product,device,abi)
-    policies=source_ready(root)
+    policies=source_ready(root,require_current=False)
+    capability_path=root/'vendor/ohemu/virt/preinstall-config/install_list_capability.json'
+    capability_before=read(capability_path)
+    capability_after=capability_policy(capability_before,require_current=False)
     # Fixed source module, not a JSON-supplied code path or a live guest factory.
     sys.path.insert(0,str(PATCH_ROOT.parent/'ci/capability-audit'))
     from livecaptions579_inputs import product_assets, raw
@@ -212,6 +227,16 @@ def prepare(root, cache, inputs, abi, *, product, device):
             commands.append(row)
             if done.returncode: raise ValueError('actual source profile signing failed: '+json.dumps(row))
             verify(signed);install(path,read(signed));verify(path)
+    if read(capability_path)!=capability_before:
+        raise ValueError('caption capability policy changed before exact upgrade')
+    if capability_after!=capability_before:
+        try:
+            replace(capability_path,capability_after)
+            if read(capability_path)!=capability_after:
+                raise ValueError('caption capability policy changed during exact upgrade')
+        except BaseException:
+            if read(capability_path)==capability_after: replace(capability_path,capability_before)
+            raise
     return {'scope':'release OS source/profile/data preparation only; normal GN builds/signs/packages HAP',
         'project':PROJECT,'label':LABEL,'abi':abi,'target':context,'assets':assets,'profile':{'path':str(path),'sha256':digest(read(path))},
         'signer':SIGNATURE,'policies':policies,'commands':commands,'guest_or_udid_required':False,

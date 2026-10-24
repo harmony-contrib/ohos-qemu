@@ -16,7 +16,8 @@ import zipfile
 
 from calendar_provider import SIGNATURE, certificate_fingerprint
 from locationdialog_provider import prepare as prepare_location
-from mms_provider import SIGNING_INPUTS, certificates, cms, read, replace, unique
+from mms_provider import (CAPABILITY as MMS_CAPABILITY, SIGNING_INPUTS,
+                          certificates, cms, read, replace, unique)
 
 ASSETS = Path(__file__).resolve().parents[1] / 'common/vendor/ohemu/virt/ui_provider_activation'
 BASE = 'vendor/ohemu/virt/preinstall-config/'
@@ -28,6 +29,19 @@ PROVIDERS = {
     'com.ohos.callsetting': '/system/app/com.ohos.callsetting',
     'com.ohos.communicationsetting': '/system/app/com.ohos.communicationsetting',
     'com.ohos.vassistant': '/system/app/com.ohos.vassistant'}
+# Ordinary applications already packaged by the product, but omitted from its
+# boot-time selection. These need no extra privilege or permission grant row.
+LOCAL_PREINSTALL = ('/system/app/com.ohos.calendar',
+                    '/system/app/com.ohos.filemanager',
+                    '/system/app/com.ohos.soundrecorder')
+# Verified leaf certificates of the actual packaged HAPs. The retained official
+# Camera/Clock/CallUI/Spooler inputs use a different key from source-built DLP.
+PREBUILT_SIGNER = '0716E4E8C9B8CEEF6A974CD2289D5C4C668A5B41FA5DF8C0542DCB72602371F5'
+EXTENSION_SIGNERS = {'com.ohos.camera': PREBUILT_SIGNER,
+                     'com.ohos.clock': PREBUILT_SIGNER,
+                     'com.ohos.callui': PREBUILT_SIGNER,
+                     'com.ohos.dlpmanager': SIGNATURE,
+                     'com.ohos.spooler': PREBUILT_SIGNER}
 PREBUILT = {
     'com.wifiservice.portallogin': ('PortalLogin.hap',
         'd650d0a1bbd744d1bdf8cfcc4ca16ca51cecdc2b96c09d8f358897a54da00185', ('EntryAbility',)),
@@ -44,6 +58,21 @@ POLICIES = {
 def record(path):
     data = read(path)
     return {'path': str(path), 'sha256': hashlib.sha256(data).hexdigest(), 'bytes': len(data)}
+
+
+def policy_bytes(value):
+    return (json.dumps(value, ensure_ascii=False, indent=2) + '\n').encode()
+
+
+def mms_extension(capabilities):
+    rows = [row for row in capabilities['install_list']
+            if row.get('bundleName') == 'com.ohos.mms']
+    desired = dict(MMS_CAPABILITY, app_signature=[SIGNATURE])
+    legacy = dict(desired)
+    del legacy['allowAppUsePrivilegeExtension']
+    if len(rows) != 1 or policy_bytes(rows[0]) not in (policy_bytes(legacy), policy_bytes(desired)):
+        raise ValueError('fixed MMS policy identity changed before provider activation')
+    rows[0].update(desired)
 
 
 def command(argv, commands):
@@ -237,14 +266,45 @@ def prepare(root, cache):
             raise ValueError('original CertificateManager install selection changed')
         cap_rows.append({'bundleName': 'com.ohos.certmanager',
                          'app_signature': [signatures['com.ohos.certmanager']]})
-        pending = {'install_list.json': (json.dumps(install, indent=2) + '\n').encode(),
-                   'install_list_capability.json': (json.dumps(capabilities, indent=2) + '\n').encode()}
+        # Keep the complete C42 output as an exact migration predecessor. MMS
+        # runs before this transaction and can already have upgraded its row.
+        names = ('install_list.json', 'install_list_capability.json')
+        legacy = (policy_bytes(install), policy_bytes(capabilities))
+        original = tuple(read(ASSETS / 'before' / name) for name in names)
+        base_mms = json.loads(original[1], object_pairs_hook=unique)
+        mms_extension(base_mms)
+        legacy_mms = copy.deepcopy(capabilities)
+        mms_extension(legacy_mms)
+        allowed = {original, (original[0], policy_bytes(base_mms)),
+                   legacy, (legacy[0], policy_bytes(legacy_mms))}
+
+        if set(LOCAL_PREINSTALL) & {row['app_dir'] for row in install['install_list']}:
+            raise ValueError('ordinary application selection predecessor changed')
+        install['install_list'].extend({'app_dir': directory, 'removable': False}
+                                      for directory in LOCAL_PREINSTALL)
+        mms_extension(capabilities)
+        for bundle, signature in EXTENSION_SIGNERS.items():
+            rows = [row for row in cap_rows if row.get('bundleName') == bundle]
+            if len(rows) > 1:
+                raise ValueError('duplicate fixed extension policy: ' + bundle)
+            if rows:
+                capability = rows[0]
+                capability['app_signature'] = [signature]
+            else:
+                capability = {'bundleName': bundle, 'app_signature': [signature]}
+                cap_rows.append(capability)
+            capability['allowAppUsePrivilegeExtension'] = True
+        caption = [row for row in cap_rows if row.get('bundleName') == 'com.ohos.vassistant']
+        if len(caption) != 1:
+            raise ValueError('fixed caption policy identity changed')
+        caption[0]['allowAppUsePrivilegeExtension'] = True
+        pending = dict(zip(names, (policy_bytes(install), policy_bytes(capabilities))))
+        allowed.add(tuple(pending[name] for name in names))
         # No broad privilege wildcard or new user-grant row is introduced.
         if hashlib.sha256(before['install_list_permissions.json']).hexdigest() != POLICIES['install_list_permissions.json']:
             raise ValueError('unrelated product user-grant policy changed')
-        for name, after in pending.items():
-            if before[name] not in (read(ASSETS / 'before' / name), after):
-                raise ValueError('unknown complete product policy; preserve it: ' + name)
+        if tuple(before[name] for name in names) not in allowed:
+            raise ValueError('unknown complete product policy pair; preserve it')
         written = []
         try:
             for name in pending:

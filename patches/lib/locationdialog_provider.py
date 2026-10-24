@@ -18,7 +18,17 @@ PROJECT = 'base/location/location'
 REVISION = '5a0c49c2adb0623fdac73f76e4f98f2e57674c00'
 PROFILE = 'services/location_ui/signature/locationdialog.p7b'
 PROFILE_SHA = '99a9a8f7d749d12bf1929f12c19e4356e92c33bfb212140bb0c06d4d44eb2f29'
+C42_PREPARED_SHA = '8ad762394aa4bec76a0d21e3dedcd18bbf37ed797eaa794a04f26b5bce75b85e'
+C42_PREPARED_BYTES = 3731
 OLD_SIGNER = '8FD346D9BF992BE6CD80BFB4F1E60EF0D50BC9E04593AF1D47714E339B44268D'
+ORIGINAL_ACLS = (
+    'ohos.permission.MANAGE_BLUETOOTH',
+    'ohos.permission.ACCESS_SYSTEM_SETTINGS',
+    'ohos.permission.WRITE_IMAGEVIDEO',
+    'ohos.permission.SET_WIFI_CONFIG',
+    'ohos.permission.PUBLISH_LOCATION_EVENT',
+)
+CROSS_ACCOUNT_ACL = 'ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS'
 
 
 def prepare(root):
@@ -48,31 +58,44 @@ def prepare(root):
                 value['bundle-info']['bundle-name'] != 'com.ohos.locationdialog' or
                 value['bundle-info']['apl'] != 'normal' or
                 value['bundle-info']['app-feature'] != 'hos_system_app' or
+                value.get('acls') != {'allowed-acls': list(ORIGINAL_ACLS)} or
                 certificate_fingerprint(value['bundle-info']['distribution-certificate'].encode()) != OLD_SIGNER):
             raise ValueError('actual LocationDialog original identity or profile issuer changed')
-        desired = copy.deepcopy(value)
-        desired['bundle-info']['distribution-certificate'] = (application[-1] + b'\n').decode()
-        desired['validity']['not-after'] = 2208988800
+        legacy_desired = copy.deepcopy(value)
+        legacy_desired['bundle-info']['distribution-certificate'] = (application[-1] + b'\n').decode()
+        legacy_desired['validity']['not-after'] = 2208988800
+        desired = copy.deepcopy(legacy_desired)
+        # Build24 requests this permission at normal APL; its signed ACL must authorize it.
+        desired['acls']['allowed-acls'].append(CROSS_ACCOUNT_ACL)
 
-        def check(path):
+        def check(path, expected):
             observed = cms(path, signer)
             signers = certificates(signer.read_bytes())
-            if (observed != desired or len(signers) != 1 or
+            if (json.dumps(observed, sort_keys=True) != json.dumps(expected, sort_keys=True) or len(signers) != 1 or
                     certificate_fingerprint(signers[0]) != certificate_fingerprint(issuer[-1])):
                 raise ValueError('LocationDialog replacement profile or issuer differs')
 
+        legacy = (len(before) == C42_PREPARED_BYTES and
+                  hashlib.sha256(before).hexdigest() == C42_PREPARED_SHA)
         if before != original:
-            check(target)
-        else:
+            # Verify the captured input, not a second, potentially changed live read.
+            current = scratch / 'current.p7b'
+            current.write_bytes(before)
+            check(current, legacy_desired if legacy else desired)
+        if read(target) != before:
+            raise ValueError('LocationDialog profile changed during input validation')
+        if before == original or legacy:
             template = scratch / 'profile.json'
             template.write_text(json.dumps(desired, indent=2) + '\n')
+            if read(target) != before:
+                raise ValueError('LocationDialog profile changed before signing')
             subprocess.run(['java', '-jar', str(dist / 'hap-sign-tool.jar'), 'sign-profile',
                 '-keyAlias', 'openharmony application profile release', '-signAlg', 'SHA256withECDSA',
                 '-mode', 'localSign', '-profileCertFile', str(dist / 'OpenHarmonyProfileRelease.pem'),
                 '-inFile', str(template), '-keystoreFile', str(dist / 'OpenHarmony.p12'),
                 '-outFile', str(signed), '-keyPwd', '123456', '-keystorePwd', '123456'],
                 capture_output=True, check=True, timeout=120)
-            check(signed)
+            check(signed, desired)
             if read(target) != before:
                 raise ValueError('LocationDialog profile changed before replacement')
             replace(target, signed.read_bytes())
