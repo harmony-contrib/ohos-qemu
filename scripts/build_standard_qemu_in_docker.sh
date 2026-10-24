@@ -3733,6 +3733,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/prepare_mms_source_dependencies.log"
   bash "${PATCH_ROOT}/common/applications/standard/mms/send_data_text/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_mms_send_data_text.log"
+  bash "${PATCH_ROOT}/common/applications/standard/mms/local_draft_persistence/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_mms_local_draft_persistence.log"
   bash "${PATCH_ROOT}/common/applications/standard/hap/mms_provider/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_mms_hap_provider.log"
   python3 "${PATCH_ROOT}/lib/mms_provider.py" --source-root "${OHOS_ROOT}" \

@@ -188,7 +188,7 @@ def verify(root):
     """Read-only package guard: source, signer, original policy and selection."""
     project, _, raw, application, issuer = source_identity(root)
     components = Path(__file__).resolve().parents[1] / 'common/applications/standard'
-    for component in ('mms/source_provider', 'mms/send_data_text', 'hap/mms_provider'):
+    for component in ('mms/source_provider', 'mms/send_data_text', 'mms/local_draft_persistence', 'hap/mms_provider'):
         spec = importlib.util.spec_from_file_location('mms_guard_' + component.replace('/', '_'),
                                                      components / component / 'verify_source.py')
         guard = importlib.util.module_from_spec(spec);spec.loader.exec_module(guard)
