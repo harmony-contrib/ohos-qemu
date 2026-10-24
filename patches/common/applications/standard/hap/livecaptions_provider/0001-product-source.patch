@@ -777,7 +777,7 @@
 +};
 --- /dev/null
 +++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/module.json5
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,40 @@
 +{
 +  "module": {
 +    "name": "entry",
@@ -799,6 +799,9 @@
 +      },
 +      {
 +        "name": "ohos.permission.WRITE_ACCESSIBILITY_CONFIG"
++      },
++      {
++        "name": "ohos.permission.MANAGE_SECURE_SETTINGS"
 +      }
 +    ],
 +    "extensionAbilities": [
@@ -845,7 +848,7 @@
 +}
 --- /dev/null
 +++ b/applications/standard/hap/vassistant_livecaptions579/signature/profile-template.json
-@@ -0,0 +1,29 @@
+@@ -0,0 +1,30 @@
 +{
 +  "version-name": "2.0.0",
 +  "version-code": 2,
@@ -867,7 +870,8 @@
 +    "allowed-acls": [
 +      "ohos.permission.MANAGE_SETTINGS",
 +      "ohos.permission.SYSTEM_FLOAT_WINDOW",
-+      "ohos.permission.WRITE_ACCESSIBILITY_CONFIG"
++      "ohos.permission.WRITE_ACCESSIBILITY_CONFIG",
++      "ohos.permission.MANAGE_SECURE_SETTINGS"
 +    ]
 +  },
 +  "permissions": {

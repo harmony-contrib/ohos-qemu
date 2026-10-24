@@ -22,8 +22,9 @@ BUNDLE='com.ohos.vassistant'
 LABEL='//applications/standard/hap/vassistant_livecaptions579:vassistant_livecaptions579'
 DEVICE_TYPES=['default','tablet','2in1']
 PRODUCT_ABIS={'arm64_virt':'arm64-v8a','armv7a_virt':'armeabi-v7a','x86_64_virt':'x86_64'}
-PERMISSIONS=['ohos.permission.MANAGE_SETTINGS','ohos.permission.SYSTEM_FLOAT_WINDOW',
-             'ohos.permission.WRITE_ACCESSIBILITY_CONFIG']
+LEGACY_PERMISSIONS=['ohos.permission.MANAGE_SETTINGS','ohos.permission.SYSTEM_FLOAT_WINDOW',
+                    'ohos.permission.WRITE_ACCESSIBILITY_CONFIG']
+PERMISSIONS=LEGACY_PERMISSIONS+['ohos.permission.MANAGE_SECURE_SETTINGS']
 LEGACY_CAPABILITY={'bundleName':BUNDLE,'app_signature':[SIGNATURE],'keepAlive':False,'allowAppDesktopIconHide':True}
 CAPABILITY=dict(LEGACY_CAPABILITY,allowAppUsePrivilegeExtension=True)
 
@@ -90,7 +91,7 @@ def desired(root, leaf):
         'bundle-name':BUNDLE,'apl':'system_basic','app-feature':'hos_system_app'} or \
         value.get('acls')!={'allowed-acls':PERMISSIONS} or value.get('permissions')!={'restricted-permissions':[]} or \
         certificate_fingerprint(leaf)!=SIGNATURE:
-        raise ValueError('exact no-UDID release identity/APL/3ACL/OS signer required')
+        raise ValueError('exact no-UDID release identity/APL/4ACL/OS signer required')
     result=copy.deepcopy(value)
     result['bundle-info']['distribution-certificate']=leaf.decode()+'\n'
     return result
@@ -202,19 +203,26 @@ def prepare(root, cache, inputs, abi, *, product, device):
     issuer=certificates(read(dist/'OpenHarmonyProfileRelease.pem'))
     if len(app)!=3 or len(issuer)!=3: raise ValueError('fixed actual OS certificate chain required')
     expected=desired(root,app[-1]); issuer_sha=certificate_fingerprint(issuer[-1])
+    legacy_expected=copy.deepcopy(expected)
+    legacy_expected['acls']['allowed-acls']=LEGACY_PERMISSIONS
     path=root/PROJECT/'signature/vassistant.p7b'
     cache.mkdir(parents=True,exist_ok=True)
     commands=[]
     with tempfile.TemporaryDirectory(prefix='vassistant-release-profile-',dir=cache) as directory:
         scratch=Path(directory)
-        def verify(profile):
+        def verify(profile, allow_legacy=False):
             signer=scratch/'issuer.pem'
             actual=cms(profile,signer)
             chain=certificates(read(signer))
-            if actual!=expected or len(chain)!=1 or certificate_fingerprint(chain[0])!=issuer_sha or 'debug-info' in actual:
+            if (actual!=expected and not (allow_legacy and actual==legacy_expected)) or \
+                    len(chain)!=1 or certificate_fingerprint(chain[0])!=issuer_sha or 'debug-info' in actual:
                 raise ValueError('signed release profile policy/OS issuer/no-UDID differs')
-        if path.exists(): verify(path)
-        else:
+            return 'current' if actual==expected else 'legacy'
+        profile_before=read(path) if path.exists() else None
+        profile_state=verify(path,allow_legacy=True) if profile_before is not None else 'absent'
+        if profile_before is not None and read(path)!=profile_before:
+            raise ValueError('signed caption profile changed during predecessor verification')
+        if profile_state!='current':
             template=scratch/'profile.json'; signed=scratch/'release.p7b'
             template.write_text(json.dumps(expected,indent=2)+'\n')
             argv=['java','-jar',str(dist/'hap-sign-tool.jar'),'sign-profile','-keyAlias',
@@ -226,7 +234,25 @@ def prepare(root, cache, inputs, abi, *, product, device):
                  'stderr':done.stderr.decode(errors='replace'),'timed_out':False}
             commands.append(row)
             if done.returncode: raise ValueError('actual source profile signing failed: '+json.dumps(row))
-            verify(signed);install(path,read(signed));verify(path)
+            verify(signed)
+            profile_after=read(signed)
+            if profile_before is None:
+                install(path,profile_after)
+                verify(path)
+            else:
+                # Upgrade only the authenticated complete three-ACL predecessor.
+                # No signing identity, APL, permission grant row or other profile
+                # property changes; unknown/concurrent signed bytes are preserved.
+                if read(path)!=profile_before:
+                    raise ValueError('signed caption profile changed before exact ACL upgrade')
+                try:
+                    replace(path,profile_after)
+                    if read(path)!=profile_after:
+                        raise ValueError('signed caption profile changed during exact ACL upgrade')
+                    verify(path)
+                except BaseException:
+                    if read(path)==profile_after: replace(path,profile_before)
+                    raise
     if read(capability_path)!=capability_before:
         raise ValueError('caption capability policy changed before exact upgrade')
     if capability_after!=capability_before:

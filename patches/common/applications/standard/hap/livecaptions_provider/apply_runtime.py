@@ -29,8 +29,12 @@ LEGACY_SESSION = 'f69188a57f9fa5e925f520dd870726abad0b1f0dc53365947f1d600779f1f0
 LEGACY_MODULE = 'f495f8ad7d7341ffb789ec2ec709dcf458b986a3e09685a30d54cb9676ad4c19'
 SERVICE = 'entry/src/main/ets/service/AiCaptionServiceExtAbility.ets'
 PAGE = 'entry/src/main/ets/pages/Captions.ets'
+PROFILE = 'signature/profile-template.json'
 PREVIOUS_PAGE = '8ce769760387652eddef4dcdfa04ebe494ea2b36d78738ebe96204d15f6ccd26'
 FINAL_PAGE = '38216dc69675472efc885fcecc240fd86fb9f3859abdd7cf845805513aee21ff'
+PREVIOUS_PROFILE = 'bbd4ba1eade8cdfe38569c4caa68efc5ba8041d820379551a5fc43759a54eb65'
+FINAL_MODULE = 'd3fb604caddb7a3dde564c62b18cd33f3ec5ff11106ad494ebec8d7b7b61bfe4'
+FINAL_PROFILE = 'cdbc19e121650af1e7e44dded2906dd4d1f38f7b6b755bc709be5681993a1eaa'
 
 
 def digest(data):
@@ -39,27 +43,30 @@ def digest(data):
 
 def manifest():
     source = json.loads((HERE / 'source_states.json').read_text())
-    old, previous, final = source['legacy_files'], source['previous_d4_files'], source['files']
+    old, previous, color = source['legacy_files'], source['previous_d4_files'], source['previous_v5_files']
+    final = source['files']
     typed = source['previous_b091_files']
     native = source['previous_f785_files']
-    if (source.get('schema') != 'caption579-sdk26-color-member-project/v5' or
+    if (source.get('schema') != 'caption579-secure-settings-permission-project/v6' or
             source['project'] != PROJECT or source['parent_project'] != PARENT or
             source['parent_head'] != PARENT_HEAD or len(final) != 23 or
             old.keys() != previous.keys() or old.keys() != typed.keys() or old.keys() != native.keys() or
-            old.keys() != final.keys() or
-            old[MODULE] != LEGACY_MODULE or previous[MODULE] != final[MODULE] or
-            final[MODULE] != D4_MODULE or old[SESSION] != previous[SESSION] or
+            old.keys() != color.keys() or old.keys() != final.keys() or
+            old[MODULE] != LEGACY_MODULE or previous[MODULE] != color[MODULE] or
+            color[MODULE] != D4_MODULE or old[SESSION] != previous[SESSION] or
             old[SESSION] != LEGACY_SESSION or
-            typed[MODULE] != final[MODULE] or typed[SESSION] != final[SESSION] or
+            typed[MODULE] != color[MODULE] or typed[SESSION] != color[SESSION] or
             old[SERVICE] != previous[SERVICE] or old[SERVICE] != typed[SERVICE] or
-            {name for name in final if old[name] != final[name]} != {MODULE, SESSION, SERVICE, PAGE} or
-            {name for name in final if previous[name] != final[name]} != {SESSION, SERVICE, PAGE} or
-            {name for name in final if typed[name] != final[name]} != {SERVICE, PAGE} or
-            {name for name in final if native[name] != final[name]} != {PAGE} or
+            {name for name in color if old[name] != color[name]} != {MODULE, SESSION, SERVICE, PAGE} or
+            {name for name in color if previous[name] != color[name]} != {SESSION, SERVICE, PAGE} or
+            {name for name in color if typed[name] != color[name]} != {SERVICE, PAGE} or
+            {name for name in color if native[name] != color[name]} != {PAGE} or
             any(epoch[PAGE] != PREVIOUS_PAGE for epoch in (old, previous, typed, native)) or
-            final[PAGE] != FINAL_PAGE or
+            color[PAGE] != FINAL_PAGE or color[PROFILE] != PREVIOUS_PROFILE or
+            {name for name in final if color[name] != final[name]} != {MODULE, PROFILE} or
+            final[MODULE] != FINAL_MODULE or final[PROFILE] != FINAL_PROFILE or
             source['device_types'] != ['default', 'tablet', '2in1']):
-        raise ValueError('complete legacy72/d4/b091/f785 -> color-member SDK26 source contract required')
+        raise ValueError('complete legacy72/d4/b091/f785/v5 -> secure-settings SDK26 source contract required')
     return source
 
 
@@ -82,6 +89,8 @@ def state(root, source):
         raise ValueError('unknown production ETS closure preserved')
     if actual == source['files']:
         return 'final'
+    if actual == source['previous_v5_files']:
+        return 'v5'
     if actual == source['previous_f785_files']:
         return 'f785'
     if actual == source['previous_b091_files']:
@@ -95,11 +104,13 @@ def state(root, source):
 
 def migrate(root, source, epoch):
     before = source[{'legacy72': 'legacy_files', 'd4': 'previous_d4_files',
-        'b091': 'previous_b091_files', 'f785': 'previous_f785_files'}[epoch]]
+        'b091': 'previous_b091_files', 'f785': 'previous_f785_files',
+        'v5': 'previous_v5_files'}[epoch]]
     changed = [name for name in source['files'] if before[name] != source['files'][name]]
-    patch = {'legacy72': '0002-sdk26-device-types.patch', 'd4': '0003-d4-to-typed-caption.patch',
+    previous_patch = {'legacy72': '0002-sdk26-device-types.patch', 'd4': '0003-d4-to-typed-caption.patch',
         'b091': '0004-b091-to-sdk26-service-context.patch',
-        'f785': '0005-sdk26-color-member.patch'}[epoch]
+        'f785': '0005-sdk26-color-member.patch', 'v5': None}[epoch]
+    patches = ([previous_patch] if previous_patch is not None else []) + ['0006-secure-settings-permission.patch']
     originals = {}
     for relative in source['files']:
         path = target(root, PROJECT + '/' + relative)
@@ -114,8 +125,9 @@ def migrate(root, source, epoch):
             path = staged / PROJECT / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(originals[relative]['bytes'])
-        subprocess.run(['patch', '--binary', '--batch', '--forward', '--fuzz=0', '-p1', '-i',
-            str(HERE / patch)], cwd=staged, check=True)
+        for patch in patches:
+            subprocess.run(['patch', '--binary', '--batch', '--forward', '--fuzz=0', '-p1', '-i',
+                str(HERE / patch)], cwd=staged, check=True)
         finals = {name: (staged / PROJECT / name).read_bytes() for name in changed}
         if any(digest(data) != source['files'][name] for name, data in finals.items()) or {
                 p.relative_to(staged).as_posix() for p in staged.rglob('*') if p.is_file()} != {
@@ -163,7 +175,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source-root', type=Path, required=True)
     parser.add_argument('--require-final', action='store_true')
-    parser.add_argument('--migrate', action='store_true', help='only complete legacy72/d4/b091/f785 -> exact final, or final no-op')
+    parser.add_argument('--migrate', action='store_true', help='only complete legacy72/d4/b091/f785/v5 -> exact final, or final no-op')
     args = parser.parse_args()
     if args.require_final and args.migrate:
         raise ValueError('verification may not migrate')
@@ -183,11 +195,11 @@ def main():
         if args.require_final:
             if current != 'final':
                 raise ValueError('complete new final required; verification never migrates')
-        elif current in ('legacy72', 'd4', 'b091', 'f785'):
+        elif current in ('legacy72', 'd4', 'b091', 'f785', 'v5'):
             migrate(root, source, current)
         elif current == 'absent':
             if args.migrate:
-                raise ValueError('standalone migration requires complete legacy72/d4/b091/f785 or final')
+                raise ValueError('standalone migration requires complete legacy72/d4/b091/f785/v5 or final')
             apply(root, HERE, value)
         if state(root, source) != 'final':
             raise ValueError('complete new final source vector required')

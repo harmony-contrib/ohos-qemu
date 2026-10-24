@@ -34,14 +34,21 @@ PROVIDERS = {
 LOCAL_PREINSTALL = ('/system/app/com.ohos.calendar',
                     '/system/app/com.ohos.filemanager',
                     '/system/app/com.ohos.soundrecorder')
-# Verified leaf certificates of the actual packaged HAPs. The retained official
-# Camera/Clock/CallUI/Spooler inputs use a different key from source-built DLP.
+# Retain the complete C43 leaf-certificate policy only as a migration predecessor.
 PREBUILT_SIGNER = '0716E4E8C9B8CEEF6A974CD2289D5C4C668A5B41FA5DF8C0542DCB72602371F5'
-EXTENSION_SIGNERS = {'com.ohos.camera': PREBUILT_SIGNER,
-                     'com.ohos.clock': PREBUILT_SIGNER,
-                     'com.ohos.callui': PREBUILT_SIGNER,
-                     'com.ohos.dlpmanager': SIGNATURE,
-                     'com.ohos.spooler': PREBUILT_SIGNER}
+LEGACY_EXTENSION_SIGNERS = {'com.ohos.camera': PREBUILT_SIGNER,
+                            'com.ohos.clock': PREBUILT_SIGNER,
+                            'com.ohos.callui': PREBUILT_SIGNER,
+                            'com.ohos.dlpmanager': SIGNATURE,
+                            'com.ohos.spooler': PREBUILT_SIGNER}
+# BMS matches the authenticated profile distribution-certificate fingerprint,
+# not the outer HAP signing leaf. These are the exact packaged profile identities.
+EXTENSION_PROFILE_FINGERPRINTS = {
+    'com.ohos.camera': '62C298EE70BEEB3D58082FFEFFEAD4F26BE83350B46B75C393281BA6AAED2A91',
+    'com.ohos.clock': 'ACE0847BCEECA847F8DAF5E3A6EB8A56EA189265BCF1F409288D04A826FBD4EC',
+    'com.ohos.callui': 'DE99136A8BD141179B51EA3D8CF8402BBA4D6646063D7E35CA8E90E117D3F2CD',
+    'com.ohos.dlpmanager': 'D2E890E59AFB0135A8ACF02558988F37A51F43E099368883DB235C04619CC31C',
+    'com.ohos.spooler': SIGNATURE}
 PREBUILT = {
     'com.wifiservice.portallogin': ('PortalLogin.hap',
         'd650d0a1bbd744d1bdf8cfcc4ca16ca51cecdc2b96c09d8f358897a54da00185', ('EntryAbility',)),
@@ -283,7 +290,7 @@ def prepare(root, cache):
         install['install_list'].extend({'app_dir': directory, 'removable': False}
                                       for directory in LOCAL_PREINSTALL)
         mms_extension(capabilities)
-        for bundle, signature in EXTENSION_SIGNERS.items():
+        for bundle, signature in LEGACY_EXTENSION_SIGNERS.items():
             rows = [row for row in cap_rows if row.get('bundleName') == bundle]
             if len(rows) > 1:
                 raise ValueError('duplicate fixed extension policy: ' + bundle)
@@ -298,6 +305,14 @@ def prepare(root, cache):
         if len(caption) != 1:
             raise ValueError('fixed caption policy identity changed')
         caption[0]['allowAppUsePrivilegeExtension'] = True
+        # Admit the exact C43 install/capability pair before changing only these
+        # five identities. Partial updates and other policy edits remain unknown.
+        allowed.add((policy_bytes(install), policy_bytes(capabilities)))
+        for bundle, fingerprint in EXTENSION_PROFILE_FINGERPRINTS.items():
+            rows = [row for row in cap_rows if row.get('bundleName') == bundle]
+            if len(rows) != 1:
+                raise ValueError('fixed extension profile identity changed: ' + bundle)
+            rows[0]['app_signature'] = [fingerprint]
         pending = dict(zip(names, (policy_bytes(install), policy_bytes(capabilities))))
         allowed.add(tuple(pending[name] for name in names))
         # No broad privilege wildcard or new user-grant row is introduced.
