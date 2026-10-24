@@ -3075,6 +3075,16 @@ verify_audio_accepted_write_source() {
     > "${SOURCE_ROOT}/out/${PRODUCT}/audio-accepted-write-source.json"
 }
 
+verify_arkui_dynamic_factory_cfi_source() {
+  case "${DEVICE_TYPE_PROFILE}" in
+    qemu_phone_full_source|qemu_2in1_full_source) ;;
+    *) return 0 ;;
+  esac
+  bash "${SCRIPT_DIR}/../patches/common/foundation/arkui/ace_engine/dynamic_module_factory_cfi/apply.sh" \
+    --source-root "${SOURCE_ROOT}" --require-final \
+    > "${SOURCE_ROOT}/out/${PRODUCT}/arkui-dynamic-factory-cfi-source.log"
+}
+
 verify_sonic_defined_arithmetic_source() {
   case "${DEVICE_TYPE_PROFILE}" in
     qemu_phone_full_source|qemu_2in1_full_source) ;;
@@ -3219,6 +3229,7 @@ esac
 
 verify_ace_cfi_native_closure
 verify_arkui_native_dso_exports579_source
+verify_arkui_dynamic_factory_cfi_source
 verify_audio_accepted_write_source
 verify_sonic_defined_arithmetic_source
 verify_audio_resampler_counts_source
