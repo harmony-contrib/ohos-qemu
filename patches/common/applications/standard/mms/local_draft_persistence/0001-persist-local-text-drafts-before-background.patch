@@ -78,13 +78,15 @@ diff --git a/applications/standard/mms/entry/src/main/ets/pages/conversation/Cre
    public draftModel: DraftModel = new DraftModel()
    public newEmojiLength: number = 0;
    get canSendMmsMessage() {
-@@ -252,6 +259,17 @@
+@@ -251,7 +258,18 @@
+       || deliveryReportSwitch == common.DELIVERY_REPORTS.SMS_AND_MMS;
    }
  
-   onInit(context: Context, pageInfos: NavPathStack) {
+-  onInit(context: Context, pageInfos: NavPathStack) {
++  onInit(context: Context, pageInfos: NavPathStack): void {
 +    if (this.localDraftTask !== null) {
 +      this.stopLocalTextDraft();
-+      this.localDraftTask.then(() => this.onInit(context, pageInfos));
++      this.localDraftTask.then((): void => { this.onInit(context, pageInfos); });
 +      return;
 +    }
 +    // A route initialization starts a fresh editing epoch, unlike onShow.
@@ -108,6 +110,7 @@ diff --git a/applications/standard/mms/entry/src/main/ets/pages/conversation/Cre
      }
    }
  
+-  setDraftModel(callback: Function, isNeedToSetNull: boolean = true) {
 +  canPersistLocalTextDraft(): boolean {
 +    const contacts = this.getSelectContacts();
 +    const telephone = this.receiveContactValue || (contacts.length === 1 ? contacts[0].telephone : '');
@@ -196,9 +199,9 @@ diff --git a/applications/standard/mms/entry/src/main/ets/pages/conversation/Cre
 +    }
 +  }
 +
-   setDraftModel(callback: Function, isNeedToSetNull: boolean = true) {
++  setDraftModel(callback: Function, isNeedToSetNull: boolean = true): void {
 +    if (this.localDraftTask !== null) {
-+      this.localDraftTask.then(() => this.setDraftModel(callback, isNeedToSetNull));
++      this.localDraftTask.then((): void => { this.setDraftModel(callback, isNeedToSetNull); });
 +      return;
 +    }
      if (this.timeoutID >= 0) {
@@ -287,7 +290,7 @@ diff --git a/applications/standard/mms/entry/src/main/ets/service/ConversationLi
 +    if (session.code !== common.int.SUCCESS || !stillCurrent()) {
 +      return failed;
 +    }
-+    let threadId = session.response?.id ?? 0;
++    let threadId: number = session.response?.id ?? 0;
 +    if (action.threadId > 0 && action.threadId !== threadId) {
 +      failed.invalidated = true;
 +      return failed; // A deleted/replaced session is never recreated from an old editor.
@@ -466,7 +469,7 @@ diff --git a/applications/standard/mms/entry/src/main/ets/utils/DraftUtils.ets b
 +    const blank = action.content === '' && !action.isDraft && expectedMsgId === 0;
 +    if (!stillCurrent() || action.isMms || action.mmsSource.length !== 0 || contacts.length > 1 ||
 +      (!blank && !TelephoneUtil.isPhoneNumber(telephone))) {
-+      return Promise.resolve({ saved: false, threadId: 0, groupId: 0, msgId: 0, telephone: '',
++      return Promise.resolve<LocalTextDraftResult>({ saved: false, threadId: 0, groupId: 0, msgId: 0, telephone: '',
 +        storedText: '', invalidated: false });
 +    }
 +    return ConversationListService.getInstance().persistLocalTextDraft(action, expectedMsgId,

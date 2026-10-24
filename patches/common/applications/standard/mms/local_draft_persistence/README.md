@@ -55,19 +55,44 @@ changed identities. Failure during a new session creation may leave an empty
 session, and a failed final summary update is not reported as a completed save.
 These error paths remain foreground for diagnosis rather than claiming success.
 
+## Build26 compiler correction and migration
+
+The actual Build26 log contains four concrete diagnostics (repeated in two log
+sections): threadId inferred from LooseObject, an untyped Promise.resolve literal,
+and two recursive then callback return inferences. The summary says ERROR:5;
+this component does not invent a fifth concrete diagnostic. The correction adds
+only explicit number/interface/void types. The complete C45 product behavior
+above is unchanged.
+
+The component accepts three complete four-file states: original upstream,
+installed C45, or this final compiler-fixed state. Unknown and mixed vectors
+reject. `--require-final` and the package guard accept only the final state.
+`apply_runtime.py` uses the same project/component lock as the original shared
+exact helper. Installed C45 is copied to scratch, the unchanged pinned
+`legacy-installed-c45.patch` is reversed there, and the recovered upstream whole
+vector is verified. The existing `apply_exact_component.prepare_stack` then
+checks permitted targets, applies the new numbered patch in scratch and verifies
+all final hashes. All live source bytes/modes are rechecked before replacement;
+per-file same-directory atomic replacement preserves modes. Rollback restores
+only files still matching this operation's own final bytes/mode.
+
+The build/package path stays `mms/local_draft_persistence`; no shared build
+script, signing policy, permission, provider helper or acceptance tool changes.
+
 ## Fixed whole-file states
 
-| Project-relative file | Before SHA256 | After SHA256 |
-|---|---|---|
-| `entry/src/main/ets/pages/conversation/CreateNewConversation.ets` | `97260d924faa4fcb202f6ec66df45f0da77c84f2e45dc077b97235544cd6bdb6` | `128f661daeecbbc367e5ee453f0eed187cc6552b8594638df4fa753658ad3b22` |
-| `entry/src/main/ets/pages/conversation/CreateNewConversationViewModle.ets` | `1dcad1224c34074000c3b76fcf906b2a06a2d37338e00b0dbd50c661464a4c18` | `53445bf5faa88c2eb55edab99c4946fdcdc22ac048a8fcef65757c847a823f9a` |
-| `entry/src/main/ets/service/ConversationListService.ets` | `7bb37ad2d705ded59226bb46df9a4f802c2d7bc430dec992ab9ead54a0cc874b` | `32dd94a34774a93126f92d829254c2eacd0670457c5d60b3b58463659d8c0acb` |
-| `entry/src/main/ets/utils/DraftUtils.ets` | `88e7a1c9097ae3030e12657329f606366e358001d8753c32f3ba056a6db1ec43` | `615976263cb4cf94b139ebdb0e0e5b7bdf1096a86c88e6e084123ff04c07e11a` |
+| Project-relative file | Original SHA256 | Installed C45 SHA256 | Final SHA256 |
+|---|---|---|---|
+| `entry/src/main/ets/pages/conversation/CreateNewConversation.ets` | `97260d924faa4fcb202f6ec66df45f0da77c84f2e45dc077b97235544cd6bdb6` | `128f661daeecbbc367e5ee453f0eed187cc6552b8594638df4fa753658ad3b22` | `128f661daeecbbc367e5ee453f0eed187cc6552b8594638df4fa753658ad3b22` |
+| `entry/src/main/ets/pages/conversation/CreateNewConversationViewModle.ets` | `1dcad1224c34074000c3b76fcf906b2a06a2d37338e00b0dbd50c661464a4c18` | `53445bf5faa88c2eb55edab99c4946fdcdc22ac048a8fcef65757c847a823f9a` | `7e8d705c1e25b378144b6569ca8320ec7b338d1f4a37df0941a38d8da72c10f0` |
+| `entry/src/main/ets/service/ConversationListService.ets` | `7bb37ad2d705ded59226bb46df9a4f802c2d7bc430dec992ab9ead54a0cc874b` | `32dd94a34774a93126f92d829254c2eacd0670457c5d60b3b58463659d8c0acb` | `835bf3e2567d88d5af2e89bead4dca6c0331eaeb5fdd2bdd92fb073fd9461b7f` |
+| `entry/src/main/ets/utils/DraftUtils.ets` | `88e7a1c9097ae3030e12657329f606366e358001d8753c32f3ba056a6db1ec43` | `615976263cb4cf94b139ebdb0e0e5b7bdf1096a86c88e6e084123ff04c07e11a` | `3484d6566418da43b05756a69f75a040949b0f61e5250b175ca3f232f608aff0` |
 
-The `before/` and `candidate/` directories are review copies, not build inputs or
-runtime tools. The parent may retain them as private evidence outside the
-committed component. The numbered patch and exact hash vector are sufficient for
-ordinary application.
+Full source reading copies live only in the private delivery capsule's
+`source/{original,installed_c45,final}`. They are not component build inputs.
+Only the six files in this component directory are intended for repository
+adoption. `apply.sh`, `apply_runtime.py` and `verify_source.py` retain intended
+repository mode 0755; patches and this README use 0644.
 
 Static review only: no guard, candidate, host test, compiler, SDK, container or
 QEMU was executed by this author. The next representative package and real QEMU
