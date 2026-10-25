@@ -201,7 +201,7 @@ def decode(ffmpeg, ffprobe, media, dimensions, output):
     rgb, pcm = output / 'video.rgb', output / 'audio.pcm'
     run([tools['ffmpeg']['path'], '-nostdin', '-v', 'error', '-threads', '1', '-i', str(media), '-map', '0:v:0',
          '-vf', 'scale=160:120:flags=area', '-frames:v', str(MAX_FRAMES + 1), '-t', '16',
-         '-vsync', '0', '-pix_fmt', 'rgb24', '-f', 'rawvideo', str(rgb)], 'video')
+         '-fps_mode', 'passthrough', '-enc_time_base', '1:1000000', '-pix_fmt', 'rgb24', '-f', 'rawvideo', str(rgb)], 'video')
     run([tools['ffmpeg']['path'], '-nostdin', '-v', 'error', '-threads', '1', '-i', str(media), '-map', '0:a:0',
          '-t', '16', '-c:a', 'pcm_s16le', '-f', 's16le', str(pcm)], 'audio')
     if rgb.stat().st_size != len(pts) * DECODE_W * DECODE_H * 3:

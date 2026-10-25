@@ -1,0 +1,923 @@
+diff --git a/foundation/multimedia/av_codec/interfaces/inner_api/native/video_resize_filter.h b/foundation/multimedia/av_codec/interfaces/inner_api/native/video_resize_filter.h
+index a42b7b263..0c3765a19 100644
+--- a/foundation/multimedia/av_codec/interfaces/inner_api/native/video_resize_filter.h
++++ b/foundation/multimedia/av_codec/interfaces/inner_api/native/video_resize_filter.h
+@@ -16,11 +16,14 @@
+ #ifndef FILTERS_VIDEO_RESIZE_FILTER_H
+ #define FILTERS_VIDEO_RESIZE_FILTER_H
+ 
++#include <condition_variable>
+ #include <cstring>
++#include <mutex>
+ #include "filter/filter.h"
+ #include "osal/task/task.h"
+ #include "common/status.h"
+ #include "common/log.h"
++#include "surface.h"
+ 
+ namespace OHOS {
+ namespace Media {
+@@ -73,7 +76,11 @@ protected:
+     Status OnUnLinked(StreamType inType, const std::shared_ptr<FilterLinkCallback>& callback) override;
+ 
+ private:
++    bool IsSoftwareMode() const;
+     void ReleaseBuffer();
++    void ReleaseSoftwareBuffers();
++    void ResizeBuffer(sptr<SurfaceBuffer> &srcBuffer, int64_t pts);
++    void DrainInputBuffers();
+     void ReleaseOutputBuffer(std::vector<uint32_t> &indexs);
+     std::string name_;
+     FilterType filterType_;
+@@ -91,11 +98,22 @@ private:
+     std::string codecMimeType_;
+     std::shared_ptr<Meta> configureParameter_;
+ 
++    sptr<Surface> inputConsumerSurface_;
++    sptr<Surface> inputProducerSurface_;
++    sptr<IBufferConsumerListener> inputConsumerListener_;
++    sptr<Surface> outputSurface_;
++    int32_t outputWidth_ {0};
++    int32_t outputHeight_ {0};
++
+     std::shared_ptr<Filter> nextFilter_;
+ 
+     std::mutex releaseBufferMutex_;
+     std::condition_variable releaseBufferCondition_;
+     std::shared_ptr<Task> releaseBufferTask_{nullptr};
++    uint32_t pendingInputBuffers_ {0};
++    bool eosReceived_ {false};
++    bool eosNotified_ {false};
++    bool isPaused_ {false};
+     std::vector<uint32_t> indexs_;
+     uint32_t eosBufferIndex_ {UINT32_MAX};
+     int64_t eosPts_ {UINT32_MAX};
+diff --git a/foundation/multimedia/av_codec/services/engine/codec/video/fcodec/fcodec.cpp b/foundation/multimedia/av_codec/services/engine/codec/video/fcodec/fcodec.cpp
+index 274a68211..5e2f07238 100755
+--- a/foundation/multimedia/av_codec/services/engine/codec/video/fcodec/fcodec.cpp
++++ b/foundation/multimedia/av_codec/services/engine/codec/video/fcodec/fcodec.cpp
+@@ -29,9 +29,7 @@
+ #include "avcodec_codec_name.h"
+ #include "dma_swap.h"
+ #include "fcodec_surport_codec.h"
+-#ifndef EMULATOR_ENABLED
+ #include "fcodec_utils.h"
+-#endif
+ 
+ namespace OHOS {
+ namespace MediaAVCodec {
+@@ -72,7 +70,14 @@ static std::map<RawVideoPixelFormat, AVPixelFormat> g_convertFfmpegPixFmt = {
+ using namespace OHOS::Media;
+ using FMTKey = Media::Tag;
+ 
+-FCodec::FCodec(const std::string &name) : codecName_(name), state_(State::UNINITIALIZED) {}
++FCodec::FCodec(const std::string &name) : codecName_(name), state_(State::UNINITIALIZED)
++{
++#ifdef EMULATOR_ENABLED
++    isEmulator_ = true;
++#else
++    isEmulator_ = false;
++#endif
++}
+ 
+ FCodec::~FCodec()
+ {
+@@ -266,13 +271,11 @@ int32_t FCodec::ValidateAndSetVideoResolutionFormat(const Format &format)
+ int32_t FCodec::ConfigureRawVideoPixelFormat(const Format &format)
+ {
+     int32_t pixelFormat = 0;
+-    if (!format.GetIntValue(FMTKey::VIDEO_RAWVIDEO_INPUT_PIXEL_FORMAT, pixelFormat)) {
++    if (!(format.GetIntValue(FMTKey::VIDEO_RAWVIDEO_INPUT_PIXEL_FORMAT, pixelFormat) &&
++          IsValidRawVideoPixelFormat(pixelFormat))) {
+         return AVCS_ERR_OK;
+     }
+     rawvideoPixFmt_ = static_cast<RawVideoPixelFormat>(pixelFormat);
+-    CHECK_AND_RETURN_RET_LOG(
+-        rawvideoPixFmt_ >= RawVideoPixelFormat::YUV420P && rawvideoPixFmt_ <= RawVideoPixelFormat::RGBA,
+-        AVCS_ERR_INVALID_VAL, "Unsupported rawvideo pixel format %{public}d!", static_cast<int32_t>(rawvideoPixFmt_));
+     avCodecContext_->pix_fmt = g_convertFfmpegPixFmt[rawvideoPixFmt_];
+     return AVCS_ERR_OK;
+ }
+@@ -908,9 +911,10 @@ int32_t FCodec::AllocateSurfaceBuffer(sptr<SurfaceBuffer> &surfacebuffer)
+     GSError err = surfacebuffer->Alloc(reqConfig);
+     CHECK_AND_RETURN_RET_LOG(err == GSERROR_OK && surfacebuffer != nullptr, err,
+                              "Alloc surface buffer failed, GSERROR=%{public}d", err);
++    uint32_t seqNum = surfacebuffer->GetSeqNum();
++    AVCODEC_LOGI("Alloc surface buffer success seq=%{public}u", seqNum);
+     int32_t fd = surfacebuffer->GetFileDescriptor();
+-    CHECK_AND_RETURN_RET_LOG(fd > 0, AVCS_ERR_UNKNOWN, "Invalid fd %{public}d, surface buffer(%{public}u)", fd,
+-                             surfacebuffer->GetSeqNum());
++    CHECK_AND_RETURN_RET_LOG(fd > 0, AVCS_ERR_UNKNOWN, "Invalid fd %{public}d, surface buffer(%{public}u)", fd, seqNum);
+     std::string type = "sw-video-decoder";
+     std::string mime(fDecInfo_.mimeType);
+     std::vector<std::string> splitMime;
+@@ -940,19 +944,21 @@ int32_t FCodec::AllocateOutputBuffer()
+         CHECK_AND_RETURN_RET_LOG(buf != nullptr, AVCS_ERR_UNKNOWN, "Creata output buffer failed!");
+         buf->width_ = width_;
+         buf->height_ = height_;
+-#ifdef EMULATOR_ENABLED
+-        std::shared_ptr<AVAllocator> allocator =
+-            AVAllocatorFactory::CreateSharedAllocator(MemoryFlag::MEMORY_READ_WRITE);
+-        CHECK_AND_CONTINUE_LOG(allocator != nullptr, "output buffer %{public}u allocator is nullptr", i);
+-        buf->avBuffer_ = AVBuffer::CreateAVBuffer(allocator, outputBufferSize_);
+-#else
+-        sptr<SurfaceBuffer> sb = nullptr;
+-        int32_t ret = AllocateSurfaceBuffer(sb);
+-        CHECK_AND_RETURN_RET_LOG(ret == AVCS_ERR_OK && sb != nullptr, ret,
+-                                 "Alloc surface buffer failed, ret=%{public}d", ret);
+-        buf->avBuffer_ = AVBuffer::CreateAVBuffer(sb);
+-#endif
+-        CHECK_AND_CONTINUE_LOG(buf->avBuffer_ != nullptr && buf->avBuffer_->memory_ !=nullptr,
++        int32_t stride = AlignUp(width_, VIDEO_ALIGN_SIZE);
++        if (isEmulator_ || stride != width_) {
++            isUsedSharedMem_ =  true;
++            std::shared_ptr<AVAllocator> allocator =
++                AVAllocatorFactory::CreateSharedAllocator(MemoryFlag::MEMORY_READ_WRITE);
++            CHECK_AND_CONTINUE_LOG(allocator != nullptr, "output buffer %{public}u allocator is nullptr", i);
++            buf->avBuffer_ = AVBuffer::CreateAVBuffer(allocator, outputBufferSize_);
++        } else {
++            sptr<SurfaceBuffer> sb = nullptr;
++            int32_t ret = AllocateSurfaceBuffer(sb);
++            CHECK_AND_RETURN_RET_LOG(ret == AVCS_ERR_OK && sb != nullptr, ret,
++                                     "Alloc surface buffer failed, ret=%{public}d", ret);
++            buf->avBuffer_ = AVBuffer::CreateAVBuffer(sb);
++        }
++        CHECK_AND_CONTINUE_LOG(buf->avBuffer_ != nullptr && buf->avBuffer_->memory_ != nullptr,
+                                "create output avbuffer failed, index=%{public}d", i);
+         int32_t curBufSize = buf->avBuffer_->memory_->GetCapacity();
+         AVCODEC_LOGI("Allocate output buffer success: index=%{public}u, size=%{public}d", i, curBufSize);
+@@ -1063,21 +1069,21 @@ int32_t FCodec::UpdateBuffers(uint32_t index)
+         CHECK_AND_RETURN_RET_LOG(buf != nullptr, AVCS_ERR_UNKNOWN, "Creata output buffer failed!");
+         buf->width_ = width_;
+         buf->height_ = height_;
+-#ifdef EMULATOR_ENABLED
+-        std::shared_ptr<AVAllocator> allocator =
+-            AVAllocatorFactory::CreateSharedAllocator(MemoryFlag::MEMORY_READ_WRITE);
+-        CHECK_AND_RETURN_RET_LOG(allocator != nullptr, AVCS_ERR_NO_MEMORY,
+-                                 "buffer %{public}u allocator is nullptr", index);
+-        buf->avBuffer_ = AVBuffer::CreateAVBuffer(allocator, outputBufferSize_);
+-#else
+-        sptr<SurfaceBuffer> sb = nullptr;
+-        int32_t ret = AllocateSurfaceBuffer(sb);
+-        CHECK_AND_RETURN_RET_LOG(ret == AVCS_ERR_OK && sb != nullptr, ret,
+-                                 "Alloc surface buffer failed, ret=%{public}d", ret);
+-        buf->avBuffer_ = AVBuffer::CreateAVBuffer(sb);
+-        CHECK_AND_RETURN_RET_LOG(buf->avBuffer_ != nullptr, AVCS_ERR_UNKNOWN,
+-                                 "create output avbuffer failed, index=%{public}d", index);
+-#endif
++        if (isUsedSharedMem_) {
++            std::shared_ptr<AVAllocator> allocator =
++                AVAllocatorFactory::CreateSharedAllocator(MemoryFlag::MEMORY_READ_WRITE);
++            CHECK_AND_RETURN_RET_LOG(allocator != nullptr, AVCS_ERR_NO_MEMORY, "buffer %{public}u allocator is nullptr",
++                                     index);
++            buf->avBuffer_ = AVBuffer::CreateAVBuffer(allocator, outputBufferSize_);
++        } else {
++            sptr<SurfaceBuffer> sb = nullptr;
++            int32_t ret = AllocateSurfaceBuffer(sb);
++            CHECK_AND_RETURN_RET_LOG(ret == AVCS_ERR_OK && sb != nullptr, ret,
++                                     "Alloc surface buffer failed, ret=%{public}d", ret);
++            buf->avBuffer_ = AVBuffer::CreateAVBuffer(sb);
++            CHECK_AND_RETURN_RET_LOG(buf->avBuffer_ != nullptr, AVCS_ERR_UNKNOWN,
++                                     "create output avbuffer failed, index=%{public}d", index);
++        }
+         int32_t curBufSize = buf->avBuffer_->memory_->GetCapacity();
+         AVCODEC_LOGI("update output buffer success: index=%{public}u, size=%{public}d", index, curBufSize);
+         buf->owner_ = Owner::OWNED_BY_CODEC;
+@@ -1222,6 +1228,7 @@ void FCodec::ReleaseBuffers()
+     outputBufferCnt_ = 0u;
+     oLock.unlock();
+     isBufferAllocated_ = false;
++    isUsedSharedMem_ = false;
+ }
+ 
+ int32_t FCodec::QueueInputBuffer(uint32_t index)
+@@ -1330,11 +1337,7 @@ void FCodec::SendFrame()
+ 
+ int32_t FCodec::FillFrameBuffer(const std::shared_ptr<FBuffer> &frameBuffer)
+ {
+-    VideoPixelFormat targetPixelFmt = outputPixelFmt_;
+-    if (outputPixelFmt_ == VideoPixelFormat::UNKNOWN) {
+-        targetPixelFmt = VideoPixelFormat::NV12;
+-    }
+-    AVPixelFormat ffmpegFormat = ConvertPixelFormatToFFmpeg(targetPixelFmt);
++    AVPixelFormat ffmpegFormat = ConvertPixelFormatToFFmpeg(outputPixelFmt_);
+     int32_t ffpixfmt = cachedFrame_->format;
+     AVCODEC_LOGD("decode output ffmpeg pixfmt: %{public}d, target output ffmpeg pixfmt: %{public}d", ffpixfmt,
+                  static_cast<int32_t>(ffmpegFormat));
+@@ -1351,8 +1354,8 @@ int32_t FCodec::FillFrameBuffer(const std::shared_ptr<FBuffer> &frameBuffer)
+     }
+     {
+         std::lock_guard<std::mutex> lock(formatMutex_);
+-        format_.PutIntValue(FMTKey::VIDEO_PIXEL_FORMAT, static_cast<int32_t>(targetPixelFmt));
+-        GraphicPixelFormat surfacePixelFmt = TranslateSurfaceFormat(targetPixelFmt);
++        format_.PutIntValue(FMTKey::VIDEO_PIXEL_FORMAT, static_cast<int32_t>(outputPixelFmt_));
++        GraphicPixelFormat surfacePixelFmt = TranslateSurfaceFormat(outputPixelFmt_);
+         format_.PutIntValue(FMTKey::VIDEO_GRAPHIC_PIXEL_FORMAT, static_cast<int32_t>(surfacePixelFmt));
+     }
+     std::shared_ptr<AVMemory> &bufferMemory = frameBuffer->avBuffer_->memory_;
+@@ -1427,7 +1430,6 @@ void FCodec::DumpOutputBuffer()
+ }
+ #endif // BUILD_ENG_VERSION
+ 
+-#ifndef EMULATOR_ENABLED
+ void FCodec::GetCropInfo(std::vector<uint8_t> &vec, bool isFmtChanged)
+ {
+     int32_t cropTop = static_cast<int32_t>(cachedFrame_->crop_top);
+@@ -1484,7 +1486,6 @@ void FCodec::GetColorAspectsInfo(std::vector<uint8_t> &vec, bool isFmtChanged)
+         format_.PutIntValue(FMTKey::VIDEO_COLOR_RANGE, colRange);
+     }
+ }
+-#endif
+ 
+ int32_t FCodec::DecodedFrameProcess(uint32_t index)
+ {
+@@ -1495,12 +1496,12 @@ int32_t FCodec::DecodedFrameProcess(uint32_t index)
+     bool isChanged = false;
+     int32_t ret = CheckFormatChange(index, isChanged);
+     CHECK_AND_RETURN_RET_LOG(ret == AVCS_ERR_OK, ret, "Check format change failed");
+-#ifndef EMULATOR_ENABLED
+     std::vector<uint8_t> cropVec(sizeof(BufferHandleMetaRegion));
+     std::vector<uint8_t> colorSpaceInfoData(sizeof(CM_ColorSpaceInfo));
+-    GetCropInfo(cropVec, isChanged);
+-    GetColorAspectsInfo(colorSpaceInfoData, isChanged);
+-#endif
++    if (!isEmulator_ && sInfo_.surface != nullptr) {
++        GetCropInfo(cropVec, isChanged);
++        GetColorAspectsInfo(colorSpaceInfoData, isChanged);
++    }
+     if (decNum_ == 0) {
+         callback_->OnOutputFormatChanged(format_);
+     }
+@@ -1516,16 +1517,20 @@ int32_t FCodec::DecodedFrameProcess(uint32_t index)
+                                  "Update buffer failed");
+     }
+     oLock.unlock();
+-#ifndef EMULATOR_ENABLED
+-    std::shared_ptr<FBuffer> frameBuffer = buffers_[INDEX_OUTPUT][index];
+-    std::shared_ptr<AVMemory> &bufferMemory = frameBuffer->avBuffer_->memory_;
+-    sptr<SurfaceBuffer> surfacebuffer = bufferMemory->GetSurfaceBuffer();
+-    CHECK_AND_RETURN_RET_LOG(surfacebuffer != nullptr, AVCS_ERR_UNKNOWN, "surfacebuffer is nullptr");
+-    GSError err = surfacebuffer->SetMetadata(ATTRKEY_CROP_REGION, cropVec);
+-    CHECK_AND_RETURN_RET_LOG(err == GSERROR_OK, AVCS_ERR_UNKNOWN, "SetBufferMeta ATTRKEY_CROP_REGION failed");
+-    err = surfacebuffer->SetMetadata(ATTRKEY_COLORSPACE_INFO, colorSpaceInfoData);
+-    CHECK_AND_RETURN_RET_LOG(err == GSERROR_OK, AVCS_ERR_UNKNOWN, "SetBufferMeta ATTRKEY_COLORSPACE_INFO failed");
+-#endif
++    if (!isEmulator_ && sInfo_.surface != nullptr) {
++        std::shared_ptr<FBuffer> frameBuffer = buffers_[INDEX_OUTPUT][index];
++        std::shared_ptr<AVMemory> &bufferMemory = frameBuffer->avBuffer_->memory_;
++        sptr<SurfaceBuffer> surfacebuffer = bufferMemory->GetSurfaceBuffer();
++        CHECK_AND_RETURN_RET_LOG(surfacebuffer != nullptr, AVCS_ERR_UNKNOWN, "surfacebuffer is nullptr");
++        GSError err = surfacebuffer->SetMetadata(ATTRKEY_CROP_REGION, cropVec);
++        if (err != GSERROR_OK) {
++            AVCODEC_LOGW("SetBufferMeta ATTRKEY_CROP_REGION failed");
++        }
++        err = surfacebuffer->SetMetadata(ATTRKEY_COLORSPACE_INFO, colorSpaceInfoData);
++        if (err != GSERROR_OK) {
++            AVCODEC_LOGW("SetBufferMeta ATTRKEY_COLORSPACE_INFO failed");
++        }
++    }
+     decNum_++;
+     return AVCS_ERR_OK;
+ }
+diff --git a/foundation/multimedia/av_codec/services/media_engine/filters/surface_encoder_adapter.cpp b/foundation/multimedia/av_codec/services/media_engine/filters/surface_encoder_adapter.cpp
+index 35dcea99b..fbbfab17a 100644
+--- a/foundation/multimedia/av_codec/services/media_engine/filters/surface_encoder_adapter.cpp
++++ b/foundation/multimedia/av_codec/services/media_engine/filters/surface_encoder_adapter.cpp
+@@ -597,7 +597,9 @@ void SurfaceEncoderAdapter::TransCoderOnOutputBufferAvailable(uint32_t index, st
+         MEDIA_LOG_I("emptyOutputBuffer->memory_ is nullptr");
+         return;
+     }
+-    bufferMem->Write(buffer->memory_->GetAddr(), size, 0);
++    if (size > 0) {
++        bufferMem->Write(buffer->memory_->GetAddr(), size, 0);
++    }
+     bufferMem->SetSize(size);
+     *(emptyOutputBuffer->meta_) = *(buffer->meta_);
+     emptyOutputBuffer->pts_ = buffer->pts_;
+@@ -633,7 +635,10 @@ void SurfaceEncoderAdapter::OnOutputBufferAvailable(uint32_t index, std::shared_
+     FALSE_RETURN_MSG(outputBuffer != nullptr, "outputBuffer is nullptr.");
+     std::shared_ptr<AVMemory> &bufferMem = outputBuffer->memory_;
+     FALSE_RETURN_MSG(outputBuffer->memory_ != nullptr, "outputBuffer->memory_ is nullptr");
+-    bufferMem->Write(buffer->memory_->GetAddr(), size, 0);
++    if (size > 0) {
++        bufferMem->Write(buffer->memory_->GetAddr(), size, 0);
++    }
++    bufferMem->SetSize(size);
+     *(outputBuffer->meta_) = *(buffer->meta_);
+     outputBuffer->pts_ = buffer->pts_ / NS_PER_US;
+     outputBuffer->flag_ = buffer->flag_;
+@@ -752,6 +757,12 @@ void SurfaceEncoderAdapter::OnInputParameterWithAttrAvailable(uint32_t index, st
+         MEDIA_LOG_W("OnInputParameterWithAttrAvailable currentPts = " PUBLIC_LOG_D64, currentPts);
+         return;
+     }
++    if (currentPts <= 0) {
++        GetCurrentTime(currentPts);
++        if (lastBufferTime_ > 0 && currentPts <= lastBufferTime_) {
++            currentPts = lastBufferTime_ + NS_PER_US;
++        }
++    }
+     bool isDroppedFrames = CheckFrames(currentPts, checkFramesPauseTime_);
+     MEDIA_LOG_D("currentPts: " PUBLIC_LOG_D64 " checkFramesPauseTime_: " PUBLIC_LOG_D64
+         " isDroppedFrames: " PUBLIC_LOG_S, currentPts, checkFramesPauseTime_, isDroppedFrames ? "true" : "false");
+diff --git a/foundation/multimedia/av_codec/services/media_engine/filters/video_resize_filter.cpp b/foundation/multimedia/av_codec/services/media_engine/filters/video_resize_filter.cpp
+index 0f74c71db..158b9f64b 100644
+--- a/foundation/multimedia/av_codec/services/media_engine/filters/video_resize_filter.cpp
++++ b/foundation/multimedia/av_codec/services/media_engine/filters/video_resize_filter.cpp
+@@ -14,8 +14,10 @@
+  */
+ 
+ #include "video_resize_filter.h"
++#include <chrono>
+ #include "filter/filter_factory.h"
+ #include "common/media_core.h"
++#include "sync_fence.h"
+ 
+ #ifdef USE_VIDEO_PROCESSING_ENGINE
+ #include "detail_enhancer_video.h"
+@@ -34,6 +36,133 @@ constexpr int64_t VARIABLE_INCREMENT_INTERVAL = 1;
+ #endif
+ namespace Pipeline {
+ 
++namespace {
++constexpr uint64_t SOFTWARE_BUFFER_USAGE = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA;
++constexpr int32_t SOFTWARE_BUFFER_TIMEOUT_MS = 3000;
++constexpr int32_t SOFTWARE_FRAME_INTERVAL_MS = 15;
++constexpr uint32_t INPUT_QUEUE_SIZE = 8;
++constexpr int32_t STRIDE_ALIGNMENT = 16;
++constexpr uint32_t CHROMA_SUBSAMPLE = 2;
++constexpr uint32_t RGBA_PIXEL_BYTES = 4;
++
++struct ResizePlane {
++    uint8_t *data;
++    int32_t width;
++    int32_t height;
++    uint32_t stride;
++    uint32_t pixelBytes;
++};
++
++uint64_t GetPlaneOffset(const OH_NativeBuffer_Planes *planes, uint32_t index, uint64_t fallback)
++{
++    return planes != nullptr && planes->planeCount > index && planes->planes[index].offset != 0 ?
++        planes->planes[index].offset : fallback;
++}
++
++uint32_t GetPlaneStride(const OH_NativeBuffer_Planes *planes, uint32_t index, uint32_t fallback)
++{
++    return planes != nullptr && planes->planeCount > index && planes->planes[index].rowStride != 0 ?
++        planes->planes[index].rowStride : fallback;
++}
++
++bool AddResizePlane(const sptr<SurfaceBuffer> &buffer, std::vector<ResizePlane> &planes,
++    uint64_t offset, int32_t width, int32_t height, uint32_t stride, uint32_t pixelBytes)
++{
++    uint64_t rowBytes = static_cast<uint64_t>(width) * pixelBytes;
++    uint64_t size = buffer->GetSize();
++    if (width <= 0 || height <= 0 || stride < rowBytes || offset > size ||
++        static_cast<uint64_t>(height - 1) * stride + rowBytes > size - offset) {
++        MEDIA_LOG_E("Invalid software resize plane layout");
++        return false;
++    }
++    planes.push_back({static_cast<uint8_t *>(buffer->GetVirAddr()) + offset, width, height, stride, pixelBytes});
++    return true;
++}
++
++bool GetResizePlanes(const sptr<SurfaceBuffer> &buffer, std::vector<ResizePlane> &planes)
++{
++    if (buffer == nullptr || buffer->GetVirAddr() == nullptr || buffer->GetWidth() <= 0 ||
++        buffer->GetHeight() <= 0 || buffer->GetStride() <= 0) {
++        return false;
++    }
++    int32_t width = buffer->GetWidth();
++    int32_t height = buffer->GetHeight();
++    uint32_t stride = static_cast<uint32_t>(buffer->GetStride());
++    int32_t format = buffer->GetFormat();
++    if (format != GRAPHIC_PIXEL_FMT_RGBA_8888 && format != GRAPHIC_PIXEL_FMT_YCBCR_420_SP &&
++        format != GRAPHIC_PIXEL_FMT_YCRCB_420_SP && format != GRAPHIC_PIXEL_FMT_YCBCR_420_P) {
++        MEDIA_LOG_E("Unsupported software resize format: " PUBLIC_LOG_D32, format);
++        return false;
++    }
++    OH_NativeBuffer_Planes *nativePlanes = nullptr;
++    if (buffer->GetPlanesInfo(reinterpret_cast<void **>(&nativePlanes)) != GSERROR_OK) {
++        nativePlanes = nullptr;
++    }
++    uint32_t pixelBytes = format == GRAPHIC_PIXEL_FMT_RGBA_8888 ? RGBA_PIXEL_BYTES : 1;
++    if (!AddResizePlane(buffer, planes, GetPlaneOffset(nativePlanes, 0, 0), width, height, stride, pixelBytes)) {
++        return false;
++    }
++    if (format == GRAPHIC_PIXEL_FMT_RGBA_8888) {
++        return true;
++    }
++    int32_t chromaWidth = width / CHROMA_SUBSAMPLE + width % CHROMA_SUBSAMPLE;
++    int32_t chromaHeight = height / CHROMA_SUBSAMPLE + height % CHROMA_SUBSAMPLE;
++    uint64_t uvOffset = static_cast<uint64_t>(stride) * height;
++    if (format != GRAPHIC_PIXEL_FMT_YCBCR_420_P) {
++        // Native plane 1 is U and plane 2 is V, including interleaved NV12/NV21 buffers.
++        uint32_t uvPlane = format == GRAPHIC_PIXEL_FMT_YCRCB_420_SP ? CHROMA_SUBSAMPLE : 1;
++        return AddResizePlane(buffer, planes, GetPlaneOffset(nativePlanes, uvPlane, uvOffset),
++            chromaWidth, chromaHeight, GetPlaneStride(nativePlanes, uvPlane, stride), CHROMA_SUBSAMPLE);
++    }
++    uint32_t chromaStride = GetPlaneStride(nativePlanes, 1, (stride + 1) / CHROMA_SUBSAMPLE);
++    uvOffset = GetPlaneOffset(nativePlanes, 1, uvOffset);
++    uint64_t vOffset = uvOffset + static_cast<uint64_t>(chromaStride) * chromaHeight;
++    return AddResizePlane(buffer, planes, uvOffset, chromaWidth, chromaHeight, chromaStride, 1) &&
++        AddResizePlane(buffer, planes, GetPlaneOffset(nativePlanes, CHROMA_SUBSAMPLE, vOffset),
++            chromaWidth, chromaHeight, GetPlaneStride(nativePlanes, CHROMA_SUBSAMPLE, chromaStride), 1);
++}
++
++bool ScaleSurfaceBuffer(const sptr<SurfaceBuffer> &srcBuffer, const sptr<SurfaceBuffer> &dstBuffer)
++{
++    std::vector<ResizePlane> srcPlanes;
++    std::vector<ResizePlane> dstPlanes;
++    if (srcBuffer->GetFormat() != dstBuffer->GetFormat() || !GetResizePlanes(srcBuffer, srcPlanes) ||
++        !GetResizePlanes(dstBuffer, dstPlanes) || srcPlanes.size() != dstPlanes.size()) {
++        return false;
++    }
++    for (size_t plane = 0; plane < srcPlanes.size(); ++plane) {
++        const auto &src = srcPlanes[plane];
++        const auto &dst = dstPlanes[plane];
++        for (int32_t y = 0; y < dst.height; ++y) {
++            auto *srcRow = src.data + (static_cast<uint64_t>(y) * src.height / dst.height) * src.stride;
++            auto *dstRow = dst.data + static_cast<uint64_t>(y) * dst.stride;
++            for (int32_t x = 0; x < dst.width; ++x) {
++                uint64_t srcX = static_cast<uint64_t>(x) * src.width / dst.width;
++                for (uint32_t byte = 0; byte < src.pixelBytes; ++byte) {
++                    dstRow[static_cast<uint64_t>(x) * dst.pixelBytes + byte] =
++                        srcRow[srcX * src.pixelBytes + byte];
++                }
++            }
++        }
++    }
++    return true;
++}
++
++class VideoResizeSurfaceListener : public IBufferConsumerListener {
++public:
++    explicit VideoResizeSurfaceListener(std::function<void()> onBufferAvailable)
++        : onBufferAvailable_(std::move(onBufferAvailable)) {}
++
++    void OnBufferAvailable() override
++    {
++        onBufferAvailable_();
++    }
++
++private:
++    std::function<void()> onBufferAvailable_;
++};
++}
++
+ static AutoRegisterFilter<VideoResizeFilter> g_registerVideoResizeFilter("builtin.transcoder.videoresize",
+     FilterType::FILTERTYPE_VIDRESIZE,
+     [](const std::string& name, const FilterType type) {
+@@ -119,9 +248,19 @@ VideoResizeFilter::VideoResizeFilter(std::string name, FilterType type): Filter(
+ 
+ VideoResizeFilter::~VideoResizeFilter()
+ {
++    DoRelease();
+     MEDIA_LOG_I("video resize filter destroy");
+ }
+ 
++bool VideoResizeFilter::IsSoftwareMode() const
++{
++#ifdef USE_VIDEO_PROCESSING_ENGINE
++    return videoEnhancer_ == nullptr;
++#else
++    return true;
++#endif
++}
++
+ Status VideoResizeFilter::SetCodecFormat(const std::shared_ptr<Meta> &format)
+ {
+     MEDIA_LOG_I("SetCodecFormat");
+@@ -134,6 +273,14 @@ void VideoResizeFilter::Init(const std::shared_ptr<EventReceiver> &receiver,
+     MEDIA_LOG_I("Init");
+     eventReceiver_ = receiver;
+     filterCallback_ = callback;
++    eosPts_ = 0;
++    frameNum_ = 0;
++    currentFrameNum_ = 0;
++    pendingInputBuffers_ = 0;
++    eosReceived_ = false;
++    eosNotified_ = false;
++    isPaused_ = false;
++    isThreadExit_ = true;
+ #ifdef USE_VIDEO_PROCESSING_ENGINE
+     videoEnhancer_ = DetailEnhancerVideo::Create();
+     if (videoEnhancer_ != nullptr) {
+@@ -141,19 +288,10 @@ void VideoResizeFilter::Init(const std::shared_ptr<EventReceiver> &receiver,
+             std::make_shared<ResizeDetailEnhancerVideoCallback>(shared_from_this());
+         videoEnhancer_->RegisterCallback(detailEnhancerVideoCallback);
+     } else {
+-        MEDIA_LOG_I("Create videoEnhancer fail");
+-        if (eventReceiver_) {
+-            eventReceiver_->OnEvent({"video_resize_filter", EventType::EVENT_ERROR,
+-                static_cast<int32_t>(MSERR_UNKNOWN)});
+-        }
+-        return;
++        MEDIA_LOG_I("Create videoEnhancer failed, using software resize");
+     }
+ #else
+-    MEDIA_LOG_E("Init videoEnhancer fail, no VPE module");
+-    if (eventReceiver_) {
+-        eventReceiver_->OnEvent({"video_resize_filter", EventType::EVENT_ERROR, static_cast<int32_t>(MSERR_UNKNOWN)});
+-    }
+-    return;
++    MEDIA_LOG_I("No VPE module, using software resize");
+ #endif
+     if (!releaseBufferTask_) {
+         releaseBufferTask_ = std::make_shared<Task>("VideoResize");
+@@ -168,6 +306,14 @@ Status VideoResizeFilter::Configure(const std::shared_ptr<Meta> &parameter)
+ {
+     MEDIA_LOG_I("Configure");
+     configureParameter_ = parameter;
++    if (parameter != nullptr) {
++        std::lock_guard<std::mutex> lock(releaseBufferMutex_);
++        parameter->Get<Tag::VIDEO_WIDTH>(outputWidth_);
++        parameter->Get<Tag::VIDEO_HEIGHT>(outputHeight_);
++    }
++    if (IsSoftwareMode()) {
++        return Status::OK;
++    }
+ #ifdef USE_VIDEO_PROCESSING_ENGINE
+     if (videoEnhancer_ == nullptr) {
+         MEDIA_LOG_E("Configure videoEnhancer is null");
+@@ -181,48 +327,70 @@ Status VideoResizeFilter::Configure(const std::shared_ptr<Meta> &parameter)
+             eventReceiver_->OnEvent({"video_resize_filter", EventType::EVENT_ERROR,
+                 static_cast<int32_t>(MSERR_UNSUPPORT_VID_PARAMS)});
+         }
+-        return Status::ERROR_UNKNOWN;
++        return Status::ERROR_VID_ENHANCER_CONFIGURE_FAILED;
+     } else {
+         return Status::OK;
+     }
+-#else
+-    MEDIA_LOG_E("no VPE module");
+-    if (eventReceiver_) {
+-        eventReceiver_->OnEvent({"video_resize_filter", EventType::EVENT_ERROR, static_cast<int32_t>(MSERR_UNKNOWN)});
+-    }
+-    return Status::ERROR_UNKNOWN;
+ #endif
++    return Status::OK;
+ }
+ 
+ sptr<Surface> VideoResizeFilter::GetInputSurface()
+ {
+     MEDIA_LOG_I("GetInputSurface");
+ #ifdef USE_VIDEO_PROCESSING_ENGINE
+-    if (videoEnhancer_ == nullptr) {
+-        MEDIA_LOG_E("Configure videoEnhancer is null");
+-        return nullptr;
+-    }
+-    sptr<Surface> inputSurface = videoEnhancer_->GetInputSurface();
+-    return inputSurface;
+-#else
+-    MEDIA_LOG_E("no VPE module");
+-    if (eventReceiver_) {
+-        eventReceiver_->OnEvent({"video_resize_filter", EventType::EVENT_ERROR, static_cast<int32_t>(MSERR_UNKNOWN)});
++    if (videoEnhancer_ != nullptr) {
++        return videoEnhancer_->GetInputSurface();
+     }
+-    return nullptr;
+ #endif
++    if (inputProducerSurface_ != nullptr) {
++        return inputProducerSurface_;
++    }
++    auto consumer = Surface::CreateSurfaceAsConsumer("VideoResizeSurface");
++    FALSE_RETURN_V_MSG(consumer != nullptr, nullptr, "Create input consumer surface failed");
++    FALSE_RETURN_V_MSG(consumer->SetDefaultUsage(SOFTWARE_BUFFER_USAGE) == GSERROR_OK &&
++        consumer->SetQueueSize(INPUT_QUEUE_SIZE) == GSERROR_OK, nullptr, "Configure input consumer surface failed");
++    std::weak_ptr<VideoResizeFilter> weakFilter = shared_from_this();
++    sptr<IBufferConsumerListener> listener = new VideoResizeSurfaceListener([weakFilter] {
++        if (auto filter = weakFilter.lock()) {
++            {
++                std::lock_guard<std::mutex> lock(filter->releaseBufferMutex_);
++                ++filter->pendingInputBuffers_;
++            }
++            filter->releaseBufferCondition_.notify_all();
++        }
++    });
++    FALSE_RETURN_V_MSG(consumer->RegisterConsumerListener(listener) == GSERROR_OK, nullptr,
++        "Register input consumer listener failed");
++    auto producer = consumer->GetProducer();
++    auto surface = Surface::CreateSurfaceAsProducer(producer);
++    if (surface == nullptr) {
++        consumer->UnregisterConsumerListener();
++        return nullptr;
++    }
++    inputConsumerSurface_ = consumer;
++    inputConsumerListener_ = listener;
++    inputProducerSurface_ = surface;
++    return inputProducerSurface_;
+ }
+ 
+ Status VideoResizeFilter::SetOutputSurface(sptr<Surface> surface, int32_t width, int32_t height)
+ {
+     MEDIA_LOG_I("SetOutputSurface");
+-#ifdef USE_VIDEO_PROCESSING_ENGINE
+     if (surface == nullptr) {
+         MEDIA_LOG_E("SetOutputSurface surface is null");
+         return Status::ERROR_NULL_POINTER;
+-    } else {
+-        surface->SetRequestWidthAndHeight(width, height);
+     }
++    FALSE_RETURN_V_MSG(width > 0 && height > 0, Status::ERROR_INVALID_PARAMETER, "Invalid output dimensions");
++    surface->SetRequestWidthAndHeight(width, height);
++    if (IsSoftwareMode()) {
++        std::lock_guard<std::mutex> lock(releaseBufferMutex_);
++        outputSurface_ = surface;
++        outputWidth_ = width;
++        outputHeight_ = height;
++        return Status::OK;
++    }
++#ifdef USE_VIDEO_PROCESSING_ENGINE
+     if (videoEnhancer_ == nullptr) {
+         MEDIA_LOG_E("Configure videoEnhancer is null");
+         return Status::ERROR_NULL_POINTER;
+@@ -236,14 +404,8 @@ Status VideoResizeFilter::SetOutputSurface(sptr<Surface> surface, int32_t width,
+         }
+         return Status::ERROR_UNKNOWN;
+     }
+-    return Status::OK;
+-#else
+-    MEDIA_LOG_E("no VPE module");
+-    if (eventReceiver_) {
+-        eventReceiver_->OnEvent({"video_resize_filter", EventType::EVENT_ERROR, static_cast<int32_t>(MSERR_UNKNOWN)});
+-    }
+-    return Status::ERROR_UNKNOWN;
+ #endif
++    return Status::OK;
+ }
+ 
+ Status VideoResizeFilter::DoPrepare()
+@@ -266,10 +428,20 @@ Status VideoResizeFilter::DoPrepare()
+ Status VideoResizeFilter::DoStart()
+ {
+     MEDIA_LOG_I("Start");
+-    isThreadExit_ = false;
++    {
++        std::lock_guard<std::mutex> lock(releaseBufferMutex_);
++        isThreadExit_ = false;
++        isPaused_ = false;
++        eosReceived_ = false;
++        eosNotified_ = false;
++        currentFrameNum_ = 0;
++    }
+     if (releaseBufferTask_) {
+         releaseBufferTask_->Start();
+     }
++    if (IsSoftwareMode()) {
++        return Status::OK;
++    }
+ #ifdef USE_VIDEO_PROCESSING_ENGINE
+     if (videoEnhancer_ == nullptr) {
+         MEDIA_LOG_E("DoStart videoEnhancer is null");
+@@ -285,36 +457,48 @@ Status VideoResizeFilter::DoStart()
+         return Status::ERROR_UNKNOWN;
+     }
+     return Status::OK;
+-#else
+-    MEDIA_LOG_E("no VPE module");
+-    if (eventReceiver_) {
+-        eventReceiver_->OnEvent({"video_resize_filter", EventType::EVENT_ERROR, static_cast<int32_t>(MSERR_UNKNOWN)});
+-    }
+-    return Status::ERROR_UNKNOWN;
+ #endif
++    return Status::OK;
+ }
+ 
+ Status VideoResizeFilter::DoPause()
+ {
+     MEDIA_LOG_I("Pause");
++    {
++        std::lock_guard<std::mutex> lock(releaseBufferMutex_);
++        isPaused_ = true;
++    }
++    releaseBufferCondition_.notify_all();
+     return Status::OK;
+ }
+ 
+ Status VideoResizeFilter::DoResume()
+ {
+     MEDIA_LOG_I("Resume");
++    {
++        std::lock_guard<std::mutex> lock(releaseBufferMutex_);
++        isPaused_ = false;
++    }
++    releaseBufferCondition_.notify_all();
+     return Status::OK;
+ }
+ 
+ Status VideoResizeFilter::DoStop()
+ {
+     MEDIA_LOG_I("Stop");
+-    if (releaseBufferTask_) {
++    {
++        std::lock_guard<std::mutex> lock(releaseBufferMutex_);
+         isThreadExit_ = true;
+-        releaseBufferCondition_.notify_all();
++    }
++    releaseBufferCondition_.notify_all();
++    if (releaseBufferTask_) {
+         releaseBufferTask_->Stop();
+         MEDIA_LOG_I("releaseBufferTask_ Stop");
+     }
++    if (IsSoftwareMode()) {
++        DrainInputBuffers();
++        return Status::OK;
++    }
+ #ifdef USE_VIDEO_PROCESSING_ENGINE
+     if (!videoEnhancer_) {
+         return Status::OK;
+@@ -329,13 +513,8 @@ Status VideoResizeFilter::DoStop()
+         return Status::ERROR_UNKNOWN;
+     }
+     return Status::OK;
+-#else
+-    MEDIA_LOG_E("no VPE module");
+-    if (eventReceiver_) {
+-        eventReceiver_->OnEvent({"video_resize_filter", EventType::EVENT_ERROR, static_cast<int32_t>(MSERR_UNKNOWN)});
+-    }
+-    return Status::ERROR_UNKNOWN;
+ #endif
++    return Status::OK;
+ }
+ 
+ Status VideoResizeFilter::DoFlush()
+@@ -345,6 +524,17 @@ Status VideoResizeFilter::DoFlush()
+ 
+ Status VideoResizeFilter::DoRelease()
+ {
++    if (IsSoftwareMode()) {
++        DoStop();
++        if (inputConsumerSurface_ != nullptr) {
++            inputConsumerSurface_->UnregisterConsumerListener();
++        }
++        inputConsumerListener_ = nullptr;
++        inputProducerSurface_ = nullptr;
++        inputConsumerSurface_ = nullptr;
++        outputSurface_ = nullptr;
++        releaseBufferTask_.reset();
++    }
+     return Status::OK;
+ }
+ 
+@@ -367,6 +557,18 @@ void VideoResizeFilter::SetParameter(const std::shared_ptr<Meta> &parameter)
+     MEDIA_LOG_I("SetParameter");
+     bool isEos = false;
+     FALSE_RETURN_MSG(parameter != nullptr, "parameter is nullptr");
++    if (IsSoftwareMode()) {
++        if (parameter->Get<Tag::MEDIA_END_OF_STREAM>(isEos) && isEos) {
++            {
++                std::lock_guard<std::mutex> lock(releaseBufferMutex_);
++                parameter->Get<Tag::USER_FRAME_PTS>(eosPts_);
++                parameter->Get<Tag::USER_PUSH_DATA_TIME>(frameNum_);
++                eosReceived_ = true;
++            }
++            releaseBufferCondition_.notify_all();
++        }
++        return;
++    }
+     if (parameter->Find(Tag::MEDIA_END_OF_STREAM) != parameter->end() &&
+         parameter->Get<Tag::MEDIA_END_OF_STREAM>(isEos) &&
+         parameter->Get<Tag::USER_FRAME_PTS>(eosPts_) &&
+@@ -401,10 +603,6 @@ void VideoResizeFilter::SetParameter(const std::shared_ptr<Meta> &parameter)
+                 static_cast<int32_t>(MSERR_UNSUPPORT_VID_PARAMS)});
+         }
+     }
+-#else
+-    MEDIA_LOG_E("no VPE module");
+-    FALSE_RETURN_MSG(eventReceiver_ != nullptr, "no eventReceiver");
+-    eventReceiver_->OnEvent({"video_resize_filter", EventType::EVENT_ERROR, static_cast<int32_t>(MSERR_UNKNOWN)});
+ #endif
+ }
+ 
+@@ -508,6 +706,10 @@ void VideoResizeFilter::OnOutputBufferAvailable(uint32_t index, uint32_t flag)
+ void VideoResizeFilter::ReleaseBuffer()
+ {
+     MEDIA_LOG_I("ReleaseBuffer");
++    if (IsSoftwareMode()) {
++        ReleaseSoftwareBuffers();
++        return;
++    }
+     while (!isThreadExit_) {
+         std::vector<uint32_t> indexs;
+         {
+@@ -526,6 +728,119 @@ void VideoResizeFilter::ReleaseBuffer()
+     }
+ }
+ 
++void VideoResizeFilter::ReleaseSoftwareBuffers()
++{
++    std::unique_lock<std::mutex> lock(releaseBufferMutex_);
++    while (!isThreadExit_) {
++        releaseBufferCondition_.wait(lock, [this] {
++            return isThreadExit_ || (!isPaused_ &&
++                (pendingInputBuffers_ > 0 || (eosReceived_ && !eosNotified_)));
++        });
++        while (!isThreadExit_ && !isPaused_) {
++            // Acquire outside the mutex: a producer may be dispatching OnBufferAvailable.
++            if (pendingInputBuffers_ > 0) {
++                --pendingInputBuffers_;
++            }
++            lock.unlock();
++            sptr<SurfaceBuffer> srcBuffer;
++            sptr<SyncFence> fence;
++            int64_t pts = 0;
++            Rect damage = {};
++            GSError ret = inputConsumerSurface_ == nullptr ? GSERROR_INVALID_ARGUMENTS :
++                inputConsumerSurface_->AcquireBuffer(srcBuffer, fence, pts, damage);
++            if (ret != GSERROR_OK || srcBuffer == nullptr) {
++                lock.lock();
++                if (pendingInputBuffers_ > 0) {
++                    continue;
++                }
++                if (!isThreadExit_ && !isPaused_ && eosReceived_ && !eosNotified_) {
++                    // The queue is drained, even if the decoder's reported frame count differs.
++                    eosNotified_ = true;
++                    lock.unlock();
++                    NotifyNextFilterEos();
++                    lock.lock();
++                }
++                break;
++            }
++            if (fence == nullptr || !fence->IsValid() || fence->Wait(SOFTWARE_BUFFER_TIMEOUT_MS) == 0) {
++                srcBuffer->InvalidateCache();
++                ResizeBuffer(srcBuffer, pts);
++            } else {
++                MEDIA_LOG_E("Wait for input buffer fence failed");
++            }
++            inputConsumerSurface_->ReleaseBuffer(srcBuffer, -1);
++            lock.lock();
++            ++currentFrameNum_;
++            releaseBufferCondition_.wait_for(lock, std::chrono::milliseconds(SOFTWARE_FRAME_INTERVAL_MS), [this] {
++                return isThreadExit_ || isPaused_;
++            });
++        }
++    }
++}
++
++void VideoResizeFilter::ResizeBuffer(sptr<SurfaceBuffer> &srcBuffer, int64_t pts)
++{
++    std::unique_lock<std::mutex> lock(releaseBufferMutex_);
++    releaseBufferCondition_.wait(lock, [this] { return isThreadExit_ || !isPaused_; });
++    if (isThreadExit_ || outputSurface_ == nullptr || outputWidth_ <= 0 || outputHeight_ <= 0) {
++        return;
++    }
++    auto outputSurface = outputSurface_;
++    BufferRequestConfig requestConfig = {};
++    requestConfig.width = outputWidth_;
++    requestConfig.height = outputHeight_;
++    requestConfig.strideAlignment = STRIDE_ALIGNMENT;
++    requestConfig.format = srcBuffer->GetFormat();
++    requestConfig.usage = SOFTWARE_BUFFER_USAGE;
++    requestConfig.timeout = SOFTWARE_BUFFER_TIMEOUT_MS;
++    lock.unlock();
++    sptr<SurfaceBuffer> dstBuffer;
++    sptr<SyncFence> dstFence;
++    if (outputSurface->RequestBuffer(dstBuffer, dstFence, requestConfig) != GSERROR_OK || dstBuffer == nullptr) {
++        MEDIA_LOG_E("Request software resize output buffer failed");
++        return;
++    }
++    if ((dstFence != nullptr && dstFence->IsValid() && dstFence->Wait(SOFTWARE_BUFFER_TIMEOUT_MS) != 0) ||
++        !ScaleSurfaceBuffer(srcBuffer, dstBuffer)) {
++        MEDIA_LOG_E("Scale software resize buffer failed");
++        outputSurface->CancelBuffer(dstBuffer);
++        return;
++    }
++    dstBuffer->FlushCache();
++    lock.lock();
++    releaseBufferCondition_.wait(lock, [this] { return isThreadExit_ || !isPaused_; });
++    if (isThreadExit_) {
++        lock.unlock();
++        outputSurface->CancelBuffer(dstBuffer);
++        return;
++    }
++    BufferFlushConfig flushConfig = {};
++    flushConfig.damage = {0, 0, requestConfig.width, requestConfig.height};
++    flushConfig.timestamp = pts;
++    flushConfig.desiredPresentTimestamp = -1;
++    lock.unlock();
++    if (outputSurface->FlushBuffer(dstBuffer, -1, flushConfig) != GSERROR_OK) {
++        outputSurface->CancelBuffer(dstBuffer);
++    }
++}
++
++void VideoResizeFilter::DrainInputBuffers()
++{
++    if (inputConsumerSurface_ != nullptr) {
++        sptr<SurfaceBuffer> buffer;
++        sptr<SyncFence> fence;
++        int64_t pts = 0;
++        Rect damage = {};
++        while (inputConsumerSurface_->AcquireBuffer(buffer, fence, pts, damage) == GSERROR_OK) {
++            if (buffer != nullptr) {
++                inputConsumerSurface_->ReleaseBuffer(buffer, -1);
++            }
++        }
++    }
++    std::lock_guard<std::mutex> lock(releaseBufferMutex_);
++    pendingInputBuffers_ = 0;
++}
++
+ #ifdef USE_VIDEO_PROCESSING_ENGINE
+ void VideoResizeFilter::ReleaseOutputBuffer(std::vector<uint32_t> &indexs)
+ {

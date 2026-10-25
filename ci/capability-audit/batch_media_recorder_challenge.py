@@ -108,7 +108,7 @@ def decode(ffmpeg,ffprobe,path,evidence):
  if not Path(ffmpeg).is_file() or not Path(ffprobe).is_file():raise ValueError('explicit real ffmpeg/ffprobe executables required')
  evidence.mkdir(parents=True,exist_ok=False)
  commands=[[str(ffprobe),'-v','error','-show_streams','-show_frames','-show_packets','-of','json',str(path)],
-  [str(ffmpeg),'-v','error','-threads','1','-i',str(path),'-map','0:v:0','-frames:v','61','-vsync','0','-pix_fmt','rgb24','-f','rawvideo',str(evidence/'video.rgb')],
+  [str(ffmpeg),'-v','error','-threads','1','-i',str(path),'-map','0:v:0','-frames:v','61','-fps_mode','passthrough','-enc_time_base','1:1000000','-pix_fmt','rgb24','-f','rawvideo',str(evidence/'video.rgb')],
   [str(ffmpeg),'-v','error','-threads','1','-i',str(path),'-map','0:a:0','-t','3','-c:a','pcm_s16le','-f','s16le',str(evidence/'audio.pcm')]]
  for index,command in enumerate(commands):
   result=subprocess.run(command,capture_output=True,timeout=30)

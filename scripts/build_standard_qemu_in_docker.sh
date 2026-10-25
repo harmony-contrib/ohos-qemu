@@ -363,6 +363,7 @@ HIDEBUG_GRAPHICS_TYPES_SCRIPT="${PATCH_ROOT}/common/developtools/profiler/hidebu
 IMAGE_METADATA_ERROR_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/image_framework/metadata_error_type/apply.sh"
 IMAGE_AVIS_CLASS_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/image_framework/avis_class_export/apply.sh"
 IMAGE_RECORD_CLASSES_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/image_framework/tiff_dng_class_exports/apply.sh"
+IMAGE_SVG_VIEWBOX_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/image_framework/svg_viewbox_fallback/apply.sh"
 RS_YUV_CPU_FALLBACK_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_2d/yuv_cpu_fallback/apply.sh"
 SHARED_FENCE_OWNER_SCRIPT="${PATCH_ROOT}/common/foundation/graphic/graphic_surface/shared_fence_owner/apply.sh"
 ACCESS_TOKEN_SPM_HANDSHAKE_SCRIPT="${PATCH_ROOT}/common/base/security/access_token/kernel_spm_handshake/apply.sh"
@@ -413,6 +414,7 @@ SOFTWARE_AVC_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_cod
 AVC_EOS_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_eos/apply.sh"
 AVC_SURFACE_LAYOUT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/avc_surface_layout/apply.sh"
 AUDIO_CAPTURE_INTEGRITY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/audio_capture_integrity/apply.sh"
+TRANSCODER_SURFACE_PIPELINE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/av_codec/transcoder_surface_pipeline/apply.sh"
 CAPTURER_READ_LIFECYCLE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/capturer_read_lifecycle/apply.sh"
 JSFRAMEWORK_NATIVE_TEST_BRIDGE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/jsframework/native_test_bridge/apply.sh"
 AUDIO_HAPTIC_SYNC_ID_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/multimedia/audio_framework/audio_haptic_sync_id/apply.sh"
@@ -3340,6 +3342,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_image_avis_class.log"
   bash "${IMAGE_RECORD_CLASSES_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_image_record_classes.log"
+  bash "${IMAGE_SVG_VIEWBOX_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_image_svg_viewbox.log"
   bash "${RS_YUV_CPU_FALLBACK_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_rs_yuv_cpu_fallback.log"
   bash "${SHARED_FENCE_OWNER_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3806,6 +3810,8 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_avc_surface_layout_component.log"
   bash "${AUDIO_CAPTURE_INTEGRITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_audio_capture_integrity_component.log"
+  bash "${TRANSCODER_SURFACE_PIPELINE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_transcoder_surface_pipeline_component.log"
   bash "${CAPTURER_READ_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_capturer_read_lifecycle_component.log"
   bash "${CAPTURER_READ_LIFECYCLE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" --require-patched \
