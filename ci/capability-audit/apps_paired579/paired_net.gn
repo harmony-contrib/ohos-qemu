@@ -1,9 +1,0 @@
-import("//build/ohos.gni")
-# Parent may use its existing actual product C fixture anchor and flags.
-ohos_executable("apps_paired579_net") {
-  sources = [ "paired_net.c" ]
-  cflags = [ "-std=gnu11" ]
-  install_enable = false
-  subsystem_name = "communication"
-  part_name = "netmanager_ext"
-}

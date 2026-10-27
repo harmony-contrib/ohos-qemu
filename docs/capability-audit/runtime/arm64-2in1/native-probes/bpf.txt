@@ -1,5 +1,0 @@
-# source=/private/tmp/ohos_bpf_probe_arm64
-# target=127.0.0.1:5665
-FileTransfer finish, Size:841304, File count = 1, time:6ms rate:140217.33kB/s
-bpf(BPF_MAP_CREATE) ret=-1 errno=38 (Function not implemented)
-exit=0

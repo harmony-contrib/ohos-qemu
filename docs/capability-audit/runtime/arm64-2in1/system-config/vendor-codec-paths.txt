@@ -1,8 +1,0 @@
-/vendor/etc/hdfconfig/codec_adapter_capabilities.hcb
-/vendor/lib64/libcodec_driver.z.so
-/vendor/lib64/libcodec_image_driver.z.so
-/vendor/lib64/libcodec_image_service_2.1.z.so
-/vendor/lib64/libcodec_stub_4.0.z.so
-/vendor/lib64/libzcodec_driver.z.so
-/vendor/lib64/libzcodec_stub_1.0.z.so
-/vendor/lib64/passthrough/libcodec_component_manager_service_4.0.z.so

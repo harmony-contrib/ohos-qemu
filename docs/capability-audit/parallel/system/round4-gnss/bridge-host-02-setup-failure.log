@@ -1,4 +1,0 @@
-/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_gnss_bridge_functions_harness.cpp:11:71: error: unused variable 'GNSS_WORKING_MODE_MS_ASSISTED' [-Werror,-Wunused-const-variable]
-   11 | constexpr int HDF_ERR_INVALID_PARAM=-3,GNSS_WORKING_MODE_STANDALONE=1,GNSS_WORKING_MODE_MS_ASSISTED=3;
-      |                                                                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-1 error generated.

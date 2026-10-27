@@ -1,9 +1,0 @@
-{
-  "container": "ohos-qemu-parallel-source-20261015-01",
-  "upstream_path": "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets",
-  "project_revision": "0aba461c750fda71977c2f5186ca0e756ecfc6ca",
-  "sha256": "b0e94b08aaaba4414d41a175f047252e5b50be93e284a5ace50cc15592972d1f",
-  "retrieval": "read-only docker exec cat and git rev-parse",
-  "evidence_kind": "host fixture; not guest runtime acceptance",
-  "patched_sha256": "f97a094aeb689abb6d26470db61e4048690d3060d5ecfe0e94528ac8d730a825"
-}

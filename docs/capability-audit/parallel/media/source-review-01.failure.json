@@ -1,6 +1,0 @@
-{
-  "result": "failed",
-  "command": "docker exec -i ohos-qemu-parallel-source-20261015-01 python3 - --source-root /ohos < ci/capability-audit/batch_media_review_source.py",
-  "exit_code": 1,
-  "reason": "git show HEAD:path was not relative to the nested drivers/peripheral/audio directory, which belongs to the drivers/peripheral Git repository. Fixed the read-only query to HEAD:./path; no source was modified."
-}

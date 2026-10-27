@@ -1,5 +1,0 @@
-In file included from /Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_msdp_input_harness.cpp:56:
-/private/tmp/ohos-system-msdp-input-host-01/before/actual_msdp_functions.inc:1:43: error: unused parameter 'sensorTypeId' [-Werror,-Wunused-parameter]
-    1 | bool SensorDataCallback::PushData(int32_t sensorTypeId, uint8_t* data)
-      |                                           ^
-1 error generated.

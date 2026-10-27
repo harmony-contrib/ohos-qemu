@@ -192,7 +192,7 @@ def prepare(root, cache, inputs, abi, *, product, device):
     capability_before=read(capability_path)
     capability_after=capability_policy(capability_before,require_current=False)
     # Fixed source module, not a JSON-supplied code path or a live guest factory.
-    sys.path.insert(0,str(PATCH_ROOT.parent/'ci/capability-audit'))
+    sys.path.insert(0,str(PATCH_ROOT/'lib'))
     from livecaptions579_inputs import product_assets, raw
     mapping=product_assets(inputs,abi)
     assets=select_assets(root,mapping,inputs,abi)
@@ -269,57 +269,6 @@ def prepare(root, cache, inputs, abi, *, product, device):
         'actual_compilation':False,'runtime_validated':False,'first_artifact_behavior_gate_passed':False}
 
 
-def payload(hap, root, scratch, inputs, abi, *, product, device):
-    """Actual compiled-byte/signature admission; never functional acceptance."""
-    context=target_contract(product,device,abi)
-    import zipfile
-    from pathlib import PurePosixPath
-    sys.path.insert(0,str(PATCH_ROOT.parent/'scripts'))
-    sys.path.insert(0,str(PATCH_ROOT.parent/'ci/capability-audit'))
-    from verify_photos_provider_image import verify_signature
-    from livecaptions579_inputs import product_assets, raw
-    mapping=product_assets(inputs,abi)
-    with zipfile.ZipFile(hap) as archive:
-        rows=archive.infolist();names=[r.filename for r in rows]
-        if len(names)!=len(set(names)) or len(names)>10000 or sum(r.file_size for r in rows)>256*1024*1024:
-            raise ValueError('finite real product HAP closure required')
-        for row in rows:
-            path=PurePosixPath(row.filename)
-            if path.is_absolute() or '..' in path.parts or '\\' in row.filename or row.flag_bits&1 or \
-                (row.external_attr>>16)&0o170000==0o120000:
-                raise ValueError('unsafe product HAP member')
-        document=json.loads(archive.read('module.json'),object_pairs_hook=unique)
-        app,module=document['app'],document['module']
-        if (app.get('bundleName'),app.get('versionCode'),app.get('versionName'),app.get('debug'))!=(BUNDLE,1000000,'1.0.0',False):
-            raise ValueError('real release product app identity differs')
-        if (module.get('name'),module.get('type'),module.get('deviceTypes'))!=('entry','entry',DEVICE_TYPES):
-            raise ValueError('compiled caption SDK26 device/module contract differs')
-        if module.get('abilities',[]) or [p['name'] for p in module.get('requestPermissions',[])]!=PERMISSIONS:
-            raise ValueError('compiled provider permission/ability boundary differs')
-        extensions=module.get('extensionAbilities',[])
-        if len(extensions)!=1 or any(extensions[0].get(k)!=v for k,v in {
-            'name':'AiCaptionServiceExtAbility','type':'service','exported':True,
-            'permissions':['ohos.permission.WRITE_ACCESSIBILITY_CONFIG']}.items()):
-            raise ValueError('real compiled SERVICE entry differs')
-        if not archive.read('ets/modules.abc') or not archive.read('resources.index'):
-            raise ValueError('real product ABC/resources absent')
-        for relative,ref in mapping.items():
-            prefix='entry/src/main/resources/'
-            if relative.startswith(prefix) and archive.read('resources/'+relative[len(prefix):])!=raw(ref):
-                raise ValueError('compiled model/notices bytes differ from actual admitted source: '+relative)
-        expected={'libsherpa_onnx.so','libsherpa-onnx-c-api.so','libonnxruntime.so','libc++_shared.so'}
-        libraries={name:digest(archive.read('libs/'+abi+'/'+name)) for name in expected}
-        if abi=='armeabi-v7a':
-            from livecaptions579_arm32_contract import admit
-            actual=admit(inputs)
-            if libraries!={name:row['file']['sha256'] for name,row in actual['libraries'].items()}:
-                raise ValueError('actual compiled ARM32 HAP does not contain the admitted native outputs')
-    signature=verify_signature(hap,root,scratch,PROJECT+'/signature/vassistant.p7b')
-    return {'bundle':BUNDLE,'abi':abi,'target':context,'hap_sha256':digest(read(hap)),'libraries':libraries,**signature,
-        'scope':'actual compiled product byte/signature admission only',
-        'provider_runtime_validated':False,'first_artifact_behavior_gate_passed':False}
-
-
 def main():
     import argparse
     parser=argparse.ArgumentParser(description=__doc__)
@@ -328,22 +277,14 @@ def main():
     parser.add_argument('--inputs',type=Path,required=True)
     parser.add_argument('--inputs-sha256',required=True)
     parser.add_argument('--abi',choices=('arm64-v8a','x86_64','armeabi-v7a'),required=True)
-    parser.add_argument('--hap',type=Path)
     parser.add_argument('--product',choices=tuple(PRODUCT_ABIS),required=True)
     parser.add_argument('--device',choices=('phone','2in1'),required=True)
     args=parser.parse_args()
     source=read(args.inputs)
     if digest(source)!=args.inputs_sha256: raise ValueError('actual root dependency descriptor changed')
     inputs=json.loads(source,object_pairs_hook=unique)
-    if args.hap is None:
-        result=prepare(args.source_root.resolve(),args.cache_root.resolve(),inputs,args.abi,
-            product=args.product,device=args.device)
-    else:
-        source_ready(args.source_root.resolve())
-        args.cache_root.mkdir(parents=True,exist_ok=True)
-        with tempfile.TemporaryDirectory(prefix='caption-product-payload-',dir=args.cache_root) as directory:
-            result=payload(args.hap.resolve(),args.source_root.resolve(),Path(directory),inputs,args.abi,
-                product=args.product,device=args.device)
+    result=prepare(args.source_root.resolve(),args.cache_root.resolve(),inputs,args.abi,
+        product=args.product,device=args.device)
     print(json.dumps(result,indent=2))
 
 

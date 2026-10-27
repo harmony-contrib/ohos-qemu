@@ -121,58 +121,6 @@ def verify_profile(path, expected, issuer, scratch):
     return actual
 
 
-
-def payload(hap, root, scratch):
-    import zipfile
-    from pathlib import PurePosixPath
-    import json5
-    # Reuse the original fixed tool/leaf/profile verification. The original
-    # implementation lives beside its script imports, outside patches/lib.
-    sys.path.insert(0, str(PATCH_ROOT.parent / 'scripts'))
-    from verify_photos_provider_image import verify_signature
-    with zipfile.ZipFile(hap) as archive:
-        rows=archive.infolist();names=[r.filename for r in rows]
-        if len(rows)>10000 or len(set(names))!=len(names) or sum(r.file_size for r in rows)>256*1024*1024:
-            raise ValueError('bounded real compiled CommunicationSetting closure required')
-        for row in rows:
-            path=PurePosixPath(row.filename)
-            if (path.is_absolute() or '..' in path.parts or '\\' in row.filename or row.flag_bits&1 or
-                (row.external_attr>>16)&0o170000==0o120000):
-                raise ValueError('unsafe compiled CommunicationSetting member')
-        if not {'module.json','ets/modules.abc','resources.index'}<=set(names):
-            raise ValueError('real compiled provider/code/resources missing')
-        document=json.loads(archive.read('module.json'),object_pairs_hook=unique)
-        app,module=document['app'],document['module']
-        if (app.get('bundleName'),app.get('versionCode'),app.get('versionName'),app.get('debug'))!=(BUNDLE,100600338,'6.0.0.338',False):
-            raise ValueError('compiled full application identity/version differs')
-        source=json5.loads(read(root/APP/'entry/src/main/module.json5').decode(),allow_duplicate_keys=False)['module']
-        for key in ('name','type','deviceTypes','mainElement'):
-            if not same_json(module.get(key),source.get(key)):
-                raise ValueError('compiled provider module boundary differs: '+key)
-        if [r['name'] for r in module.get('requestPermissions',[])]!=[r['name'] for r in source['requestPermissions']]:
-            raise ValueError('compiled provider acquired/lost a request permission')
-        for key in ('abilities','extensionAbilities'):
-            actual,expected=module.get(key,[]),source.get(key,[])
-            if len(actual)!=len(expected) or [r['name'] for r in actual]!=[r['name'] for r in expected]:
-                raise ValueError('compiled extension/ability closure differs')
-            for actual_row,source_row in zip(actual,expected):
-                for field in ('name','type','permissions','exported','visible'):
-                    # Hvigor may emit an explicit false/default for a source
-                    # omission. This cannot authorize a new true/export gate.
-                    left,right=actual_row.get(field),source_row.get(field)
-                    if field in ('exported','visible'):
-                        left=False if left is None else left;right=False if right is None else right
-                    if not same_json(left,right):
-                        raise ValueError('compiled extension admission differs: '+field)
-        abc=archive.read('ets/modules.abc')
-        if not archive.read('resources.index') or not all(value in abc for value in (
-            b'ohos.net.policy.callerUid',b'Network policy caller identity mismatch',
-            b'Network policy committed uid:',b'net-policy-dialog-title')):
-            raise ValueError('actual compiled trusted provider/await/UI payload absent')
-    signature=verify_signature(hap,root,scratch,APP+'/signature/CommunicationSetting.p7b')
-    return {'bundle':BUNDLE,'module':'entry','hap_sha256':digest(read(hap)),**signature,
-            'scope':'actual compiled-byte/signing admission; QEMU business remains pending'}
-
 def prepare(root, cache):
     policies = source_ready(root)
     dist, raw, leaf, issuer = inputs(root)

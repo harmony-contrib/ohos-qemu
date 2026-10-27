@@ -1,9 +1,0 @@
-test_shutdown_retains_cleanup_until_retry_succeeds (test_batch_network_vpn_broker_cleanup.BrokerCleanupTests.test_shutdown_retains_cleanup_until_retry_succeeds) ... ok
-test_stop_cleanup_retries_without_signalling_retired_group (test_batch_network_vpn_broker_cleanup.BrokerCleanupTests.test_stop_cleanup_retries_without_signalling_retired_group) ... ok
-test_actual_broker_two_owners_stop_isolation_replay_and_cleanup (test_batch_network_vpn_broker.VpnBrokerTests.test_actual_broker_two_owners_stop_isolation_replay_and_cleanup) ... ok
-test_actual_codec_roundtrip_owner_replay_and_socket_framing (test_batch_network_vpn_broker.VpnBrokerTests.test_actual_codec_roundtrip_owner_replay_and_socket_framing) ... ok
-
-----------------------------------------------------------------------
-Ran 4 tests in 9.787s
-
-OK

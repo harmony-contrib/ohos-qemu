@@ -1,6 +1,0 @@
-# source=/private/tmp/ohos_hidebug_probe_arm64
-# target=127.0.0.1:5665
-FileTransfer finish, Size:14360, File count = 1, time:2ms rate:7180.00kB/s
-GetGraphicsMemory ret=0 value=0 KiB
-GetSystemCpuUsage value=0.021505
-exit=0

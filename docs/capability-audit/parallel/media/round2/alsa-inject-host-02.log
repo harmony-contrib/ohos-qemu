@@ -1,6 +1,0 @@
-.
-----------------------------------------------------------------------
-Ran 1 test in 1.643s
-
-OK
-actual diagnostic compiled; exact and segmented file writes, negotiation/error propagation, invalid/empty/link inputs checked; controlled ALSA only

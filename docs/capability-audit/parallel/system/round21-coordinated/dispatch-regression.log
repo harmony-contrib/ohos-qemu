@@ -1,9 +1,0 @@
-test_complete_source_provider_editor_dispatch_and_two_stack_replays (test_batch_apps_calendar_dispatch.CalendarDispatchTests.test_complete_source_provider_editor_dispatch_and_two_stack_replays) ... ok
-test_exact_predecessor_idempotence_and_drift (test_batch_apps_calendar_dispatch.CalendarDispatchTests.test_exact_predecessor_idempotence_and_drift) ... ok
-test_predecessor_guard_rejects_mixed_successor_and_unknown_ui (test_batch_apps_calendar_dispatch.CalendarDispatchTests.test_predecessor_guard_rejects_mixed_successor_and_unknown_ui) ... ok
-test_real_functions_thread_scope_cleanup_destroy_and_weak_ownership (test_batch_apps_calendar_dispatch.CalendarDispatchTests.test_real_functions_thread_scope_cleanup_destroy_and_weak_ownership) ... ok
-
-----------------------------------------------------------------------
-Ran 4 tests in 3.973s
-
-OK

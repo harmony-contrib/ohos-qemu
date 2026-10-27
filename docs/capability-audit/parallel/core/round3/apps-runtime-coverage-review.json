@@ -1,9 +1,0 @@
-{
-  "scope": "read-only exact lifecycle runtime coverage audit, no guest proof",
-  "report": "docs/capability-audit/parallel/apps/round21-runtime-tools/result.json",
-  "sha256": "1c28bf685172aacb2981063d2a126b49a59f4dacfb7f26c6772db5167a7d6a27",
-  "three_races_have_existing_guest_runner": false,
-  "host_only_ordering_tests": true,
-  "requires_actual_pending_barrier_and_session_observation": true,
-  "first_artifact_behavior_gate_passed": false
-}

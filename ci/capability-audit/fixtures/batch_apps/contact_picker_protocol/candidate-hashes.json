@@ -1,7 +1,0 @@
-{
-  "applications/standard/contacts_data/contacts/src/contact.js": "ae22907681082d8f7ccdaeaa81ee80d3da31114353bf2b167a060c2cf946b759",
-  "applications/standard/contacts_data/contacts/src/contacts_api.cpp": "e4d8a123de6ba2e943c6fda5e0258960376998f54fd61565e81e8b224beeb4d8",
-  "applications/standard/contacts_data/contacts/src/contacts_napi_utils.cpp": "ffd0180bf9632f6adc7fff2721d865446f27c65a3013f5b09b01433b484d4358",
-  "applications/standard/contacts_data/contacts/include/contacts_napi_utils.h": "3066f698312815e0bbfba4d71fb54e49d589641cd4947ba98859092dc8b1efc8",
-  "applications/standard/contacts_data/contacts/include/contact_picker_protocol.h": "722ead111840a4ecdc0336eec4511fa43790228f9decb2155bee08a5a2fa60c1"
-}

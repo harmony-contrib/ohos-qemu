@@ -1,9 +1,0 @@
-# source=/private/tmp/ohos_access_token_probe_arm64
-# target=127.0.0.1:5665
-FileTransfer finish, Size:14832, File count = 1, time:3ms rate:4944.00kB/s
-GET_TOKEN_ID ret=0 errno=0(No error information)
-token=806195217
-GET_ALL_PERMISSIONS ret=-1 errno=95(Not supported)
-GET_SPM_VERSION ret=-1 errno=95(Not supported)
-spm_version=0
-exit=0

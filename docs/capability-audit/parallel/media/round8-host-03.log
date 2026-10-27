@@ -1,7 +1,0 @@
-test_actual_fresh_request_PCM_reply_and_live_callback_under_sanitizers (test_batch_media_audio_events.Events.test_actual_fresh_request_PCM_reply_and_live_callback_under_sanitizers) ... actual fresh request/PCM/reply and Snapshot callbacks passed: strict nonce/owner/mode/size/NOFOLLOW/FIFO; new-callback half-second;19 refusal/collision/deadline cases;7 getter failures; one reply; legacy/early ACK/cancel/positive handshake. Controlled getters are not runtime proof.
-ok
-
-----------------------------------------------------------------------
-Ran 1 test in 2.844s
-
-OK

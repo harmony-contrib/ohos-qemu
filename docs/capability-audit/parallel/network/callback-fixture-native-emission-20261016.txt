@@ -1,9 +1,0 @@
-test_actual_new_dispatch_cancels_connected_before_blocking_stop (test_batch_network_vpn_broker.VpnBrokerTests.test_actual_new_dispatch_cancels_connected_before_blocking_stop) ... ok
-test_actual_schedule_epoch_failure_retry_isolation_and_teardown (test_batch_network_vpn_broker_health.BrokerHealthTests.test_actual_schedule_epoch_failure_retry_isolation_and_teardown) ... ok
-
-----------------------------------------------------------------------
-Ran 2 tests in 5.980s
-
-OK
-/Users/ranger/.codex/worktrees/ohos-capability-network/ohos-qemu/.network-scratch/broker-native-callback-fixture/vpn-broker-callback-native.cpp sha256=da52abb3f26a2db4187b763fd743f18add45ecbe02c8e9b3f3be5461607841f7
-/Users/ranger/.codex/worktrees/ohos-capability-network/ohos-qemu/.network-scratch/broker-native-callback-fixture/vpn-broker-health-native.cpp sha256=c791f7560e366bee21569d14c8f494f2574ac60a9d8450465efc2b6656e1e9f2

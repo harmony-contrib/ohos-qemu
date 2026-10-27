@@ -1,8 +1,0 @@
-{
-  "base_commit": "a9b769730e1a51d5daa6f3169388e64ed49611f2",
-  "tree": "feace0602e35bc65da4883796ad929be8be54939",
-  "archive": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/system-gnss-linux-r5-20261016-01/candidate-v01.tar",
-  "archive_sha256": "14b64b3a3bb1b6026fe2961fc4dd2f4856b458300654a63249030743ab702dfe",
-  "source_mount": "/frozen/candidate-v01",
-  "source_read_only": true
-}

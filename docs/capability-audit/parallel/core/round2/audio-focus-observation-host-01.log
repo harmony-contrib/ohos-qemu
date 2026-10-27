@@ -1,8 +1,0 @@
-test_empty_or_error_notification_dump_cannot_prove_an_active_notification (test_audio_focus_observation.AudioFocusObservation.test_empty_or_error_notification_dump_cannot_prove_an_active_notification) ... ok
-test_notification_ui_requires_actual_title_trusted_bundle_and_unique_visible_button (test_audio_focus_observation.AudioFocusObservation.test_notification_ui_requires_actual_title_trusted_bundle_and_unique_visible_button) ... ok
-test_two_services_join_by_owner_uid_id_label_and_unsuspended_actual_task (test_audio_focus_observation.AudioFocusObservation.test_two_services_join_by_owner_uid_id_label_and_unsuspended_actual_task) ... ok
-
-----------------------------------------------------------------------
-Ran 3 tests in 0.001s
-
-OK

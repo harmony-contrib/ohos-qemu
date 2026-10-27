@@ -1,7 +1,0 @@
-test_actual_ETS_helper_official_API26_types_and_failure_cleanup (test_batch_media_audio_background.Background.test_actual_ETS_helper_official_API26_types_and_failure_cleanup) ... Actual ETS helper with controlled SDK dependencies: real-readiness prerequisite, notification denial, task identity/suspend, abort and guaranteed stop cleanup passed; not runtime proof
-ok
-
-----------------------------------------------------------------------
-Ran 1 test in 0.990s
-
-OK

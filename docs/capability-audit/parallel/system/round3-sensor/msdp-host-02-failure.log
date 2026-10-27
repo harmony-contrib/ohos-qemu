@@ -1,7 +1,0 @@
-/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_msdp_input_harness.cpp:21:15: error: unused variable 'SENSOR_TYPE_ID_ACCELEROMETER' [-Werror,-Wunused-const-variable]
-   21 | constexpr int SENSOR_TYPE_ID_ACCELEROMETER = 1;
-      |               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/Users/ranger/.codex/worktrees/ohos-capability-system/ohos-qemu/ci/capability-audit/batch_system_msdp_input_harness.cpp:24:18: error: unused variable 'MAX_PENDING_ACCEL_SAMPLES' [-Werror,-Wunused-const-variable]
-   24 | constexpr size_t MAX_PENDING_ACCEL_SAMPLES = 256;
-      |                  ^~~~~~~~~~~~~~~~~~~~~~~~~
-2 errors generated.

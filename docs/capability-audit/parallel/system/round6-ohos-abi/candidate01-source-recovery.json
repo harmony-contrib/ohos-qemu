@@ -1,7 +1,0 @@
-{
-  "note": "Recovered exact pre-repair candidate text by reversing test-only edits; both SHA256 equal independently recorded initial freeze, no original evidence changed.",
-  "files": {
-    "ohos_abi_consumer.cpp": "4a021e226d00b26fcf7fb8da6a894ee5ba48c60e48e9aa984e3f3ac7e57e291d",
-    "validate_ohos_abi.py": "490809625a0d9b4e5e35f1c3f91db99858a54e214a207b379829913c05fde674"
-  }
-}

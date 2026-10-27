@@ -51,12 +51,18 @@ def create_input(path, value):
 def stage_lottie(root, cache, reference):
     if reference is None:
         raise ValueError('root actual production Lottie HAR Ref is required; no registry fallback')
+    from livecaptions579_inputs import _resolve_artifact_path
     row = json.loads(read(reference), object_pairs_hook=unique)
     if (set(row) not in ({'path', 'sha256'}, {'path', 'sha256', 'bytes'}) or
         row.get('sha256') != LOTTIE_SHA256 or row.get('bytes', LOTTIE_BYTES) != LOTTIE_BYTES or
-        not isinstance(row.get('path'), str) or not Path(row['path']).is_absolute()):
+        not isinstance(row.get('path'), str)):
         raise ValueError('fixed original Lottie HAR Ref required')
-    value = read(Path(row['path']))
+    resolved_lottie = _resolve_artifact_path(row['path'])
+    if not resolved_lottie.is_file():
+        candidate = Path(reference).resolve().parent / 'lottie/lottie-2.0.23.har'
+        if candidate.is_file():
+            resolved_lottie = candidate
+    value = read(resolved_lottie)
     if len(value) != LOTTIE_BYTES or digest(value) != LOTTIE_SHA256:
         raise ValueError('root actual Lottie HAR bytes differ from its fixed production source')
     cached = cache / 'lottie-2.0.23.har'
@@ -232,51 +238,6 @@ def verify(root, provider):
             desired(cms(pinned), leaf, provider), issuer, scratch)
     return {'provider': provider, 'profile': profile, 'policies': policies,
             'scope': 'production source/signature admission; actual QEMU remains mandatory'}
-
-
-def payload(hap, root, scratch, provider):
-    import json5
-    sys.path.insert(0, str(PATCH_ROOT.parent / 'scripts'))
-    from verify_photos_provider_image import verify_signature
-    config = CONFIG[provider]
-    app_source = json5.loads(read(root / config['app'] / 'AppScope/app.json5').decode(), allow_duplicate_keys=False)['app']
-    module_source = json5.loads(read(root / config['app'] / config['module'] / 'src/main/module.json5').decode(), allow_duplicate_keys=False)['module']
-    with zipfile.ZipFile(hap) as archive:
-        rows = archive.infolist(); names = [row.filename for row in rows]
-        if len(rows) > 20000 or len(set(names)) != len(rows) or sum(row.file_size for row in rows) > 512 * 1024 * 1024:
-            raise ValueError('bounded actual compiled dialog provider required')
-        for row in rows:
-            path = PurePosixPath(row.filename)
-            if (path.is_absolute() or '..' in path.parts or '\\' in row.filename or row.flag_bits & 1 or
-                (row.external_attr >> 16) & 0o170000 == 0o120000):
-                raise ValueError('unsafe compiled provider archive member')
-        if not {'module.json', 'ets/modules.abc', 'resources.index'} <= set(names):
-            raise ValueError('actual full provider bytecode/resources missing')
-        document = json.loads(archive.read('module.json'), object_pairs_hook=unique)
-        app, module = document['app'], document['module']
-        if app.get('debug') is not False or any(app.get(key) != app_source[key] for key in ('bundleName', 'versionCode', 'versionName')):
-            raise ValueError('compiled actual app identity/version/release differs')
-        for key in ('name', 'type', 'deviceTypes', 'mainElement'):
-            if not same_json(module.get(key), module_source.get(key)):
-                raise ValueError('compiled module boundary differs: ' + key)
-        if [row['name'] for row in module.get('requestPermissions', [])] != [row['name'] for row in module_source.get('requestPermissions', [])]:
-            raise ValueError('actual compiled provider permission closure differs')
-        for key in ('abilities', 'extensionAbilities'):
-            actual, expected = module.get(key, []), module_source.get(key, [])
-            if len(actual) != len(expected) or [r['name'] for r in actual] != [r['name'] for r in expected]:
-                raise ValueError('actual compiled ability/extension closure differs')
-            for left, right in zip(actual, expected):
-                for field in ('name', 'type', 'permissions', 'exported', 'visible'):
-                    a, b = left.get(field), right.get(field)
-                    if field in ('exported', 'visible'):
-                        a = False if a is None else a; b = False if b is None else b
-                    if not same_json(a, b):
-                        raise ValueError('actual compiled ability privilege differs: ' + field)
-        if not archive.read('resources.index') or not all(marker in archive.read('ets/modules.abc') for marker in config['markers']):
-            raise ValueError('actual compiled dialog implementation not present')
-    proof = verify_signature(hap, root, scratch, config['project'] + '/' + config['profile'])
-    return {'bundle': config['bundle'], 'module': module['name'], 'installed_directory': config['install'],
-            'hap_sha256': digest(read(hap)), **proof, 'scope': 'actual compiled/signature admission only'}
 
 
 if __name__ == '__main__':

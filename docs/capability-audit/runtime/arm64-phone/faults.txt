@@ -1,5 +1,0 @@
-# target=127.0.0.1:5665
-# device=phone
-# arch=arm64
-# command=hidumper -e --list -n 200
-no records found.

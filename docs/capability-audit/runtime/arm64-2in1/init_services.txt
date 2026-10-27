@@ -1,5 +1,0 @@
-# target=127.0.0.1:5665
-# device=2in1
-# arch=arm64
-# command=begetctl dump_service all
-dump service info

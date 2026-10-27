@@ -1,7 +1,0 @@
-# source=/private/tmp/ohos_vulkan_probe_arm64
-# target=127.0.0.1:5666
-FileTransfer finish, Size:15200, File count = 1, time:1ms rate:15200.00kB/s
-dlopen(libvulkan.so)=0xe2c28b2560160d98
-vkEnumerateInstanceVersion=0 version=1.3.275
-vkCreateInstance=-9 instance=0
-exit=3

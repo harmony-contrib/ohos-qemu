@@ -1,7 +1,0 @@
-{
-  "name": "entry",
-  "version": "1.0.0",
-  "dependencies": {
-    "sherpa_onnx": "file:../sherpa_onnx-1.11.2.har"
-  }
-}

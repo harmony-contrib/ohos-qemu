@@ -24,7 +24,7 @@ import tempfile
 import zipfile
 
 REPOSITORY = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPOSITORY / 'ci/capability-audit'))
+sys.path.insert(0, str(REPOSITORY / 'patches/lib'))
 from livecaptions579_arm32_contract import admit, elf32, har_proof, raw, ref, ref2, require, tar_members
 from livecaptions579_arm32_sources import DEPENDENCIES, LIBS, ORT_SHA, RPATH_PATCH, RPATH_SOURCE_SHA
 from livecaptions579_native import PREFIX, recipe
@@ -126,9 +126,12 @@ def extract(archive, destination, strip_root=False):
                     'native source link chain escapes the extracted tree')
 
 
-def sdk_root(source):
+def sdk_root(source, cache_root=None):
+    cache_base = cache_root.resolve() if cache_root is not None else Path(os.environ.get('CACHE_ROOT', '/Volumes/PSSD/qemu')).resolve()
     for candidate in (source / 'prebuilts/ohos-sdk/linux/20/native',
-                      Path('/Volumes/PSSD/qemu/artifacts/ohos-native-sdk26-linux/native')):
+                      source / 'prebuilts/ohos-sdk/linux/26.0.0/native',
+                      source / 'out/sdk/packages/ohos-sdk/linux/native',
+                      cache_base / 'artifacts/ohos-native-sdk26-linux/native'):
         candidate = candidate.resolve()
         if (candidate / 'build/cmake/ohos.toolchain.cmake').is_file():
             return candidate
@@ -372,8 +375,9 @@ def main():
     args = parser.parse_args()
     require(sys.platform.startswith('linux'), 'run inside the existing Linux Docker build container')
     source_root = args.source_root.resolve()
-    cache = args.cache_root.resolve() / 'artifacts/livecaptions-lottie-7.0'
-    sdk = sdk_root(source_root)
+    cache_root = args.cache_root.resolve()
+    cache = cache_root / 'artifacts/livecaptions-lottie-7.0'
+    sdk = sdk_root(source_root, cache_root)
     output = cache / 'arm32-prebuilt'
     output.mkdir(parents=True, exist_ok=True)
     work_root = output / '.work'

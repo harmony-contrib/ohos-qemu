@@ -1,2 +1,0 @@
-[Info]App install path:/private/tmp/ohos-capability-probe-v7/entry/build/default/outputs/default/entry-default-signed.hap msg:install bundle successfully. 
-AppMod finish

@@ -1,7 +1,0 @@
-{
-  "memory_peak": "340975616",
-  "socket_dir_uid": 1022,
-  "socket_dir_gid": 1022,
-  "socket_dir_mode": "0o700",
-  "endpoint_exists_after_cleanup": false
-}

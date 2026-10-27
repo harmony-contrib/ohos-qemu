@@ -24,9 +24,8 @@ for their architecture and device profile before delivery.
 # Single development branch and agent coordination
 
 All ongoing fixes land on `codex/ohos7-integrated-development` in this checkout.
-Do not create agent branches or additional worktrees for this effort. Historical
-branch tips and retired worktrees are recorded in
-`docs/capability-audit/integration-20261019/README.md`.
+Do not create agent branches or additional worktrees for this effort. Architecture
+and adaptation documentation is maintained under [`docs/README.md`](docs/README.md).
 
 The parent agent assigns disjoint file paths before parallel editing. An agent
 must request reassignment before touching a path owned by another agent. Shared

@@ -1,3 +1,0 @@
-# Observed only in host-attempt-01: libobjc/libxpc/libSystem initializer keeps
-# its class initialization list. No application or backend test symbol matches.
-leak:_fetchInitializingClassList

@@ -1,4 +1,0 @@
-{"run_id": "19c3f8d21ad44e2db65a930fcb4d2df7", "scenario": "screen-deny", "seq": 0, "uid": 20010001, "pid": 1201, "active_ms": 10000, "event": "identity", "cycle": 0, "detail": ""}
-{"run_id": "19c3f8d21ad44e2db65a930fcb4d2df7", "scenario": "screen-deny", "seq": 1, "uid": 20010001, "pid": 1201, "active_ms": 10001, "event": "fixture.parser-only", "cycle": 0, "detail": "No actual guest, no media acceptance"}
-{"run_id": "19c3f8d21ad44e2db65a930fcb4d2df7", "scenario": "screen-deny", "seq": 2, "uid": 20010001, "pid": 1201, "active_ms": 10002, "event": "cleanup.end", "cycle": 0, "detail": "[]"}
-{"run_id": "19c3f8d21ad44e2db65a930fcb4d2df7", "scenario": "screen-deny", "seq": 3, "uid": 20010001, "pid": 1201, "active_ms": 10003, "event": "summary", "cycle": 0, "detail": "{\"caller_completed\": true, \"independent_decode_required\": true}"}

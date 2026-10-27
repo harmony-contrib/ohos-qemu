@@ -1,7 +1,0 @@
-{
-  "scope": "Actual official API26 diagnostic native compilation and Hvigor DoNativeStrip output; not guest or gate",
-  "source_HAP": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r50-child-default-full-real-sdk-01/entry/build/default/outputs/default/entry-default-unsigned.hap",
-  "source_HAP_sha256": "d598380476e68eef283ef93e510685a7f7528ecd0cfefb8b487471d77a647295",
-  "compiled_sha256": "a5698213f84ace205f5e3be27cb4aafe2f96a9da799bd12217606fb6ba6cb189",
-  "stripped_sha256": "de650f1383de1f1f6d0f651a64357b82840697c8586d83486b69826b2cf82bbe"
-}

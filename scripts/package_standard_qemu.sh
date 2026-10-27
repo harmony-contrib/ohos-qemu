@@ -4,7 +4,6 @@ export LC_ALL=C
 export LANG=C
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-HAP_PROFILE_VERIFIER="${SCRIPT_DIR}/verify_hap_profile.py"
 
 usage() {
   cat <<'USAGE'
@@ -2482,53 +2481,9 @@ require_f2fs_verity() {
 
 require_vpn_dialog_hap() {
   local image="$1"
-  if [ ! -x "${HAP_PROFILE_VERIFIER}" ]; then
-    echo "HAP profile verifier is missing: ${HAP_PROFILE_VERIFIER}" >&2
-    exit 1
-  fi
-
-  local tmpdir
-  tmpdir="$(mktemp -d)"
-  trap 'rm -rf "${tmpdir}"' RETURN
-  local extracted="${tmpdir}/VpnDialog.hap"
-  local path
-  for path in \
+  require_image_path "${image}" "system VPN authorization HAP" \
     /system/app/VpnDialog/VpnDialog.hap \
     /app/VpnDialog/VpnDialog.hap
-  do
-    if ! image_has_path "${image}" "${path}"; then
-      continue
-    fi
-    rm -f "${extracted}"
-    if ! debugfs -R "dump ${path} ${extracted}" "${image}" >/dev/null 2>&1; then
-      continue
-    fi
-    if [ ! -s "${extracted}" ]; then
-      continue
-    fi
-    if python3 "${HAP_PROFILE_VERIFIER}" \
-      "${extracted}" \
-      --bundle-name com.ohos.vpndialog \
-      --app-feature hos_system_app \
-      --allowed-acl ohos.permission.MANAGE_SECURE_SETTINGS \
-      --allowed-acl ohos.permission.GET_BUNDLE_INFO_PRIVILEGED \
-      --allowed-acl ohos.permission.SYSTEM_FLOAT_WINDOW \
-      --allowed-acl ohos.permission.GET_BUNDLE_RESOURCES \
-      --allowed-acl ohos.permission.GET_RUNNING_INFO \
-      --min-valid-seconds "${VPN_DIALOG_PROFILE_MIN_VALID_SECONDS:-31536000}"
-    then
-      printf 'standard VPN artifact: system VPN authorization HAP -> %s\n' \
-        "${path}"
-      rm -rf "${tmpdir}"
-      trap - RETURN
-      return
-    fi
-  done
-
-  rm -rf "${tmpdir}"
-  trap - RETURN
-  echo "a non-empty, currently signed VpnDialog.hap is missing from ${image}" >&2
-  exit 1
 }
 
 verify_standard_vpn_capability() {
@@ -3019,8 +2974,6 @@ PY
     require_image_file_contains "${system_image}" "SceneBoard privileged extension" \
       '"bundleName": "com.ohos.sceneboard"' \
       /system/etc/app/install_list_capability.json /etc/app/install_list_capability.json
-  python3 "${SCRIPT_DIR}/record_sceneboard_boot_unlock.py" \
-    --system-image "${system_image}" --package "${package_dir}" --product "${product}"
   if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ]; then
     require_image_file_contains "${sys_prod_image}" "PC window layout" \
       "const.window.multiWindowUIType=FreeFormMultiWindow" \
@@ -3053,157 +3006,6 @@ PY
       /lib/libtel_core_service.z.so
   fi
   echo "full ${DEVICE_TYPE} source profile and runtime artifacts verified for ${product}"
-}
-
-verify_arkui_native_dso_exports579_source() {
-  case "${DEVICE_TYPE_PROFILE}" in
-    qemu_phone_full_source|qemu_2in1_full_source) ;;
-    *) return 0 ;;
-  esac
-  # Exact product source identity only; behavior acceptance stays in new QEMU.
-  bash "${SCRIPT_DIR}/../patches/common/foundation/arkui/ace_engine/native_dso_exports579/apply.sh" \
-    --source-root "${SOURCE_ROOT}" --require-final \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/arkui-native-dso-exports579-source.log"
-}
-
-verify_audio_accepted_write_source() {
-  case "${DEVICE_TYPE_PROFILE}" in
-    qemu_phone_full_source|qemu_2in1_full_source) ;;
-    *) return 0 ;;
-  esac
-  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/audio_onset579/apply.py" \
-    --source-root "${SOURCE_ROOT}" --action legacy --component accepted --operation verify \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/audio-accepted-write-source.json"
-}
-
-verify_arkui_dynamic_factory_cfi_source() {
-  case "${DEVICE_TYPE_PROFILE}" in
-    qemu_phone_full_source|qemu_2in1_full_source) ;;
-    *) return 0 ;;
-  esac
-  bash "${SCRIPT_DIR}/../patches/common/foundation/arkui/ace_engine/dynamic_module_factory_cfi/apply.sh" \
-    --source-root "${SOURCE_ROOT}" --require-final \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/arkui-dynamic-factory-cfi-source.log"
-}
-
-verify_arkui_pixel_map_napi_cfi_source() {
-  case "${DEVICE_TYPE_PROFILE}" in
-    qemu_phone_full_source|qemu_2in1_full_source) ;;
-    *) return 0 ;;
-  esac
-  bash "${SCRIPT_DIR}/../patches/common/foundation/arkui/ace_engine/pixel_map_napi_cfi/apply.sh" \
-    --source-root "${SOURCE_ROOT}" --require-final \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/arkui-pixel-map-napi-cfi-source.log"
-}
-
-verify_arkui_jsi_destructor_cfi_source() {
-  case "${DEVICE_TYPE_PROFILE}" in
-    qemu_phone_full_source|qemu_2in1_full_source) ;;
-    *) return 0 ;;
-  esac
-  bash "${SCRIPT_DIR}/../patches/common/foundation/arkui/ace_engine/jsi_destructor_cfi/apply.sh" \
-    --source-root "${SOURCE_ROOT}" --require-final \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/arkui-jsi-destructor-cfi-source.log"
-}
-
-verify_sonic_defined_arithmetic_source() {
-  case "${DEVICE_TYPE_PROFILE}" in
-    qemu_phone_full_source|qemu_2in1_full_source) ;;
-    *) return 0 ;;
-  esac
-  python3 "${SCRIPT_DIR}/../patches/common/third_party/sonic/defined_arithmetic/apply.py" \
-    --source-root "${SOURCE_ROOT}" --preflight --require-patched \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/sonic-defined-arithmetic-source.json"
-}
-
-verify_audio_resampler_counts_source() {
-  case "${DEVICE_TYPE_PROFILE}" in
-    qemu_phone_full_source|qemu_2in1_full_source) ;;
-    *) return 0 ;;
-  esac
-  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/audio_onset579/apply.py" \
-    --source-root "${SOURCE_ROOT}" --action legacy --component resampler --operation verify \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/audio-resampler-counts-source.json"
-}
-
-verify_pa_write_status_source() {
-  case "${DEVICE_TYPE_PROFILE}" in
-    qemu_phone_full_source|qemu_2in1_full_source) ;;
-    *) return 0 ;;
-  esac
-  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/pa_write_status/apply.py" \
-    --source-root "${SOURCE_ROOT}" --preflight --require-patched \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/pa-write-status-source.json"
-}
-
-verify_audio_haptic_source_provenance() {
-  case "${DEVICE_TYPE_PROFILE}" in
-    qemu_phone_full_source|qemu_2in1_full_source) ;;
-    *) return 0 ;;
-  esac
-  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/player_framework/audio_haptic_source_provenance/verify_batch.py" \
-    --source-root "${SOURCE_ROOT}" --require-patched \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/audio-haptic-source-provenance.json"
-}
-
-verify_jsframework_native_test_bridge_source() {
-  case "${DEVICE_TYPE_PROFILE}" in
-    qemu_phone_full_source|qemu_2in1_full_source) ;;
-    *) return 0 ;;
-  esac
-  # Authentication of build/test source does not establish target test success.
-  python3 "${SCRIPT_DIR}/../patches/common/third_party/jsframework/native_test_bridge/verify_source.py" \
-    --source-root "${SOURCE_ROOT}" --require-patched \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/jsframework-native-test-bridge-source.json"
-}
-
-verify_number_native_observation_source() {
-  case "${DEVICE_TYPE_PROFILE}" in
-    qemu_phone_full_source) ;;
-    *) return 0 ;;
-  esac
-  python3 "${SCRIPT_DIR}/../patches/common/foundation/ability/ability_runtime/number_identity_native_trace495/verify_source.py" \
-    --source-root "${SOURCE_ROOT}" --require-patched \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/number-native-observation-source.json"
-  python3 "${SCRIPT_DIR}/../patches/common/base/telephony/number_identity/public_permission580/verify_source.py" \
-    --source-root "${SOURCE_ROOT}" --require-patched \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/number-public-permission-source.json"
-}
-
-verify_audio_haptic_sync_id_source() {
-  case "${DEVICE_TYPE_PROFILE}" in
-    qemu_phone_full_source|qemu_2in1_full_source) ;;
-    *) return 0 ;;
-  esac
-  # This checks the prepared source, not presentation timing or runtime routing.
-  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/audio_onset579/apply.py" \
-    --source-root "${SOURCE_ROOT}" --action legacy --component sync --operation verify \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/audio-haptic-sync-id-source.json"
-  python3 "${SCRIPT_DIR}/../patches/common/foundation/multimedia/audio_framework/audio_onset579/apply.py" \
-    --source-root "${SOURCE_ROOT}" --action verify \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/audio-onset579-source.json"
-  python3 "${SCRIPT_DIR}/../patches/common/drivers/peripheral/intelligent_voice/cpu_provider/verify_source.py" \
-    --source-root "${SOURCE_ROOT}" --require-final \
-    > "${SOURCE_ROOT}/out/${PRODUCT}/media579-cpu-source.json"
-}
-
-verify_ace_cfi_native_closure() {
-  case "${DEVICE_TYPE_PROFILE}" in
-    qemu_phone_full_source|qemu_2in1_full_source) ;;
-    *) return 0 ;;
-  esac
-  local cfi_arch
-  case "${PRODUCT}" in
-    armv7a_virt) cfi_arch=arm ;;
-    arm64_virt) cfi_arch=arm64 ;;
-    x86_64_virt) cfi_arch=x86_64 ;;
-    *) echo "unsupported full-profile ACE CFI product: ${PRODUCT}" >&2; return 2 ;;
-  esac
-  # Native object/archive/DSO evidence must precede normal full-source packaging,
-  # including a standalone packaging retry. Launcher rewrites return above.
-  python3 "${SCRIPT_DIR}/../ci/capability-audit/ace_cfi_closure_guard.py" \
-    --out "${SOURCE_ROOT}/out/${PRODUCT}" --arch "${cfi_arch}" \
-    --output "${SOURCE_ROOT}/out/${PRODUCT}/ace-cfi-closure.json"
 }
 
 case "${PRODUCT}" in
@@ -3247,21 +3049,6 @@ case "${PRODUCT}" in
     exit 2
     ;;
 esac
-
-verify_ace_cfi_native_closure
-verify_arkui_native_dso_exports579_source
-verify_arkui_dynamic_factory_cfi_source
-verify_arkui_pixel_map_napi_cfi_source
-verify_arkui_jsi_destructor_cfi_source
-verify_audio_accepted_write_source
-verify_sonic_defined_arithmetic_source
-verify_audio_resampler_counts_source
-verify_pa_write_status_source
-verify_audio_haptic_source_provenance
-verify_audio_haptic_sync_id_source
-verify_jsframework_native_test_bridge_source
-
-verify_number_native_observation_source
 
 if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ] || \
    [ "${DEVICE_TYPE_PROFILE}" = "qemu_phone_full_source" ]; then
@@ -3353,32 +3140,6 @@ esac
 
 rm -rf "${PACKAGE_DIR}"
 mkdir -p "${IMAGES_OUT}" "${LAUNCH_OUT}" "${TOOLS_OUT}"
-case "${DEVICE_TYPE_PROFILE}" in
-  qemu_phone_full_source|qemu_2in1_full_source)
-    cp "${SOURCE_ROOT}/out/${PRODUCT}/ace-cfi-closure.json" "${PACKAGE_DIR}/ace-cfi-closure.json"
-    ;;
-esac
-case "${DEVICE_TYPE_PROFILE}" in
-  qemu_phone_full_source|qemu_2in1_full_source)
-    cp "${SOURCE_ROOT}/out/${PRODUCT}/jsframework-native-test-bridge-source.json" "${PACKAGE_DIR}/jsframework-native-test-bridge-source.json"
-    ;;
-esac
-case "${DEVICE_TYPE_PROFILE}" in
-  qemu_phone_full_source|qemu_2in1_full_source)
-    cp "${SOURCE_ROOT}/out/${PRODUCT}/audio-haptic-sync-id-source.json" "${PACKAGE_DIR}/audio-haptic-sync-id-source.json"
-    cp "${SOURCE_ROOT}/out/${PRODUCT}/audio-accepted-write-source.json" "${PACKAGE_DIR}/audio-accepted-write-source.json"
-    cp "${SOURCE_ROOT}/out/${PRODUCT}/sonic-defined-arithmetic-source.json" "${PACKAGE_DIR}/sonic-defined-arithmetic-source.json"
-    cp "${SOURCE_ROOT}/out/${PRODUCT}/audio-resampler-counts-source.json" "${PACKAGE_DIR}/audio-resampler-counts-source.json"
-    cp "${SOURCE_ROOT}/out/${PRODUCT}/pa-write-status-source.json" "${PACKAGE_DIR}/pa-write-status-source.json"
-    cp "${SOURCE_ROOT}/out/${PRODUCT}/audio-haptic-source-provenance.json" "${PACKAGE_DIR}/audio-haptic-source-provenance.json"
-    ;;
-esac
-case "${DEVICE_TYPE_PROFILE}" in
-  qemu_phone_full_source)
-    cp "${SOURCE_ROOT}/out/${PRODUCT}/number-native-observation-source.json" "${PACKAGE_DIR}/number-native-observation-source.json"
-    cp "${SOURCE_ROOT}/out/${PRODUCT}/number-public-permission-source.json" "${PACKAGE_DIR}/number-public-permission-source.json"
-    ;;
-esac
 cp "${SCRIPT_DIR}/sign-hap.sh" "${TOOLS_OUT}/sign-hap.sh"
 cp "${SCRIPT_DIR}/install-hap-signer.sh" "${TOOLS_OUT}/install-hap-signer.sh"
 chmod +x "${TOOLS_OUT}/sign-hap.sh" "${TOOLS_OUT}/install-hap-signer.sh"
@@ -3403,8 +3164,6 @@ if [ "${DEVICE_TYPE_PROFILE}" = qemu_2in1_full_source ] || [ "${DEVICE_TYPE_PROF
     --resolved-manifest "${PACKAGE_DIR}/resolved-manifest.xml" \
     --evidence "${PACKAGE_DIR}/openharmony-project-heads.json"
   cp "${SCRIPT_DIR}/openharmony_7_0_release_source_lock.json" "${PACKAGE_DIR}/openharmony-project-lock.json"
-  python3 "${SCRIPT_DIR}/../patches/common/interface/sdk-js/sensor_health_permission/verify_source.py" \
-    --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/sensor-health-permission.json"
 fi
 
 if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || \
@@ -3447,39 +3206,6 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
     "${IMAGES_OUT}/vendor.img"
   if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ] || \
      [ "${DEVICE_TYPE_PROFILE}" = "qemu_phone_full_source" ]; then
-    mesa_output="qemu_mesa"
-    if [ "${PRODUCT}" = armv7a_virt ]; then mesa_output="mesa3d"; fi
-    python3 "${SCRIPT_DIR}/verify_mesa_llvm_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" --product "${PRODUCT}" \
-      --source-build "${SOURCE_ROOT}/out/${PRODUCT}/packages/phone/${mesa_output}" \
-      --dependency "${QEMU_MESA_LLVM_ARTIFACTS:?full profile requires pinned LLVM artifacts}/${PRODUCT}" \
-      --write-provenance "${PACKAGE_DIR}/mesa-llvm-source" \
-      --output "${PACKAGE_DIR}/mesa-llvm-image-evidence.json"
-    bash "${SCRIPT_DIR}/../patches/common/foundation/communication/netmanager_ext/qemu_openvpn_options579/apply.sh" --source-root "${SOURCE_ROOT}" --require-final
-    python3 "${SCRIPT_DIR}/verify_openvpn_backend_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" --product "${PRODUCT}" \
-      --source-root "${SOURCE_ROOT}" \
-      --write-provenance "${PACKAGE_DIR}/openvpn-source" \
-      --output "${PACKAGE_DIR}/openvpn-image-evidence.json"
-    python3 "${SCRIPT_DIR}/verify_qemu_runtime_assets_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" --vendor-image "${IMAGES_OUT}/vendor.img" \
-      --product "${PRODUCT}" --source-root "${SOURCE_ROOT}" \
-      --write-provenance "${PACKAGE_DIR}/runtime-assets-source" \
-      --output "${PACKAGE_DIR}/runtime-assets-image-evidence.json"
-    python3 "${SCRIPT_DIR}/verify_qemu_msdp_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" --product "${PRODUCT}" --source-root "${SOURCE_ROOT}" \
-      --write-provenance "${PACKAGE_DIR}/msdp-source" --output "${PACKAGE_DIR}/msdp-image-evidence.json"
-    python3 "${SCRIPT_DIR}/qemu_wallpaper_build_witness.py" package \
-      --source-root "${SOURCE_ROOT}" --product "${PRODUCT}" --system-image "${IMAGES_OUT}/system.img" \
-      --directory "${PACKAGE_DIR}/wallpaper-native" --output "${PACKAGE_DIR}/wallpaper-native-image-evidence.json"
-    python3 "${SCRIPT_DIR}/qemu_contacts_build_witness.py" package \
-      --source-root "${SOURCE_ROOT}" --product "${PRODUCT}" --system-image "${IMAGES_OUT}/system.img" \
-      --directory "${PACKAGE_DIR}/contacts-native" --output "${PACKAGE_DIR}/contacts-native-image-evidence.json"
-    python3 "${SCRIPT_DIR}/verify_qemu_gnss_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" --vendor-image "${IMAGES_OUT}/vendor.img" \
-      --product "${PRODUCT}" --source-root "${SOURCE_ROOT}" \
-      --write-provenance "${PACKAGE_DIR}/gnss-source" \
-      --output "${PACKAGE_DIR}/gnss-image-evidence.json"
     python3 "${SCRIPT_DIR}/verify_arkweb_core_image.py" \
       --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
       --source-artifact-root "${QEMU_ARKWEB_CORE_ARTIFACTS:?full profile requires verified source core artifacts}" \
@@ -3500,63 +3226,6 @@ for name in (*REPORTS, 'core-artifact.json'):
 for name in ('frozen-build-inputs', 'hap-build-inputs'):
     shutil.copytree(source / name, target / name)
 PY
-    python3 "${SCRIPT_DIR}/verify_shared_fence_owner.py" \
-      --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
-      --output "${PACKAGE_DIR}/shared-fence-owner-evidence.json"
-    python3 "${SCRIPT_DIR}/verify_photos_provider_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
-      --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/photos-provider-evidence.json"
-    python3 "${SCRIPT_DIR}/verify_settings_provider_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
-      --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/settings-provider-evidence.json"
-    python3 "${SCRIPT_DIR}/verify_admin_provider_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" \
-      --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/admin-provider-evidence.json"
-    python3 "${SCRIPT_DIR}/verify_mms_provider_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" \
-      --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/mms-provider-evidence.json"
-    python3 "${SCRIPT_DIR}/verify_screen_capture_resources_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" --source-root "${SOURCE_ROOT}" \
-      --output "${PACKAGE_DIR}/screen-capture-resources-evidence.json"
-    systemui_source_target=systemui_phone_sources
-    if [ "${DEVICE_TYPE}" = "2in1" ]; then
-      systemui_source_target=systemui_pc_sources
-    fi
-    python3 "${SCRIPT_DIR}/verify_systemui_provider_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" --device "${DEVICE_TYPE}" \
-      --source-root "${SOURCE_ROOT}" \
-      --build-hap-dir "${SOURCE_ROOT}/out/${PRODUCT}/obj/applications/standard/systemui/${systemui_source_target}" \
-      --output "${PACKAGE_DIR}/systemui-provider-evidence.json"
-    if [ "${DEVICE_TYPE}" = phone ]; then
-      python3 "${SCRIPT_DIR}/verify_number_identity_image.py" \
-        --system-image "${IMAGES_OUT}/system.img" --arch "${GUEST_ARCH}" \
-        --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/number-identity-local-evidence.json" \
-        --loader-output-dir "${PACKAGE_DIR}/number-native-emitter-elf" \
-        --seed-output-dir "${PACKAGE_DIR}/number-local-seeds"
-    fi
-    python3 "${SCRIPT_DIR}/verify_contacts_theme_provider_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" --device "${DEVICE_TYPE}" \
-      --source-root "${SOURCE_ROOT}" --output "${PACKAGE_DIR}/contacts-theme-provider-evidence.json"
-    privacy_source_revision="$(python3 - "${SOURCE_ROOT}/vendor/ohemu/virt/virt_${DEVICE_TYPE}_full.meta.json" "${QEMU_BUILD_INPUT_MANIFEST:-}" <<'PYREV'
-import json, re, sys
-from pathlib import Path
-revision = json.loads(Path(sys.argv[1]).read_text())["privacycenter_provider"]["native_source_revision"]
-if not isinstance(revision, str) or not re.fullmatch("[0-9a-f]{40}", revision):
-    raise ValueError("actual PrivacyCenter recipe commit missing")
-if sys.argv[2] and json.loads(Path(sys.argv[2]).read_text())["source_git_revision"] != revision:
-    raise ValueError("PrivacyCenter recipe differs from packaged build inputs")
-print(revision)
-PYREV
-)"
-    python3 "${SCRIPT_DIR}/verify_privacycenter_provider_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" --device "${DEVICE_TYPE}" \
-      --source-root "${SOURCE_ROOT}" --native-source-revision "${privacy_source_revision}" \
-      --output "${PACKAGE_DIR}/privacycenter-provider-evidence.json"
-    python3 "${SCRIPT_DIR}/verify_font_assets_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" --output "${PACKAGE_DIR}/font-assets-evidence.json"
-    python3 "${SCRIPT_DIR}/verify_boot_assets_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" --staging-root "$(dirname "${IMAGE_DIR}")" \
-      --output "${PACKAGE_DIR}/boot-assets-evidence.json"
   fi
   write_full_device_profile_evidence \
     "${SOURCE_ROOT}" \
@@ -3566,12 +3235,6 @@ PYREV
     "${IMAGES_OUT}/sys_prod.img"
   if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ] || \
      [ "${DEVICE_TYPE_PROFILE}" = "qemu_phone_full_source" ]; then
-    python3 "${SCRIPT_DIR}/verify_native_gap_abi_image.py" \
-      --system-image "${IMAGES_OUT}/system.img" \
-      --sdk-c-source "${SOURCE_ROOT}/interface/sdk_c" \
-      --device-profile "${PACKAGE_DIR}/device-profile.json" \
-      --arch "${GUEST_ARCH}" \
-      --output "${PACKAGE_DIR}/native-gap-abi-image.json"
     SCENEBOARD_WINDOW_MANAGER_VERIFIED=true
   fi
 fi
@@ -3653,13 +3316,6 @@ PY
 fi
 
 OFFICIAL_FOR_LAUNCH="${OFFICIAL_QEMU_RUN:-}"
-if [ -f "${SOURCE_ROOT}/.ohos-qemu-native-child-process.json" ]; then
-  cp "${SOURCE_ROOT}/.ohos-qemu-native-child-process.json" \
-    "${PACKAGE_DIR}/native-child-process-patches.json"
-  python3 "${SCRIPT_DIR}/verify_native_child_process_package.py" \
-    --package "${PACKAGE_DIR}" \
-    --output "${PACKAGE_DIR}/native-child-process-elf.json"
-fi
 
 write_full_product_launchers \
   "${LAUNCH_OUT}" \

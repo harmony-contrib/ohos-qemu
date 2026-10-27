@@ -82,6 +82,7 @@ NO_PREBUILT_SDK="${NO_PREBUILT_SDK:-0}"
 PREPARE_ONLY="${PREPARE_ONLY:-0}"
 SOURCE_PREPARE_ONLY="${SOURCE_PREPARE_ONLY:-0}"
 PRODUCTS="${PRODUCTS:-arm64_virt x86_64_virt armv7a_virt}"
+python3 "${SCRIPT_DIR}/prepare_livecaptions_lottie_cache.py" --cache-root "${CACHE_ROOT}" >/dev/null
 QEMU_LIVE_CAPTIONS_INPUTS="${QEMU_LIVE_CAPTIONS_INPUTS:-}"
 QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${QEMU_LIVE_CAPTIONS_INPUTS_SHA256:-}"
 QEMU_LIVE_CAPTIONS_ABI="${QEMU_LIVE_CAPTIONS_ABI:-}"
@@ -187,7 +188,11 @@ fi
 # A clean host still falls back to Ubuntu and lets the inner build script
 # install the exact package set.
 if [ -z "${DOCKER_IMAGE}" ]; then
-  if docker image inspect ohos-qemu-build-env:7.0-release >/dev/null 2>&1; then
+  if [ "${QEMU_HOST_GN_QEMU_USER}" = 1 ] && \
+     docker image inspect ohos-qemu-build-env:7.0-release-gn-qemu-user >/dev/null 2>&1; then
+    DOCKER_IMAGE=ohos-qemu-build-env:7.0-release-gn-qemu-user
+    SKIP_APT="${SKIP_APT:-1}"
+  elif docker image inspect ohos-qemu-build-env:7.0-release >/dev/null 2>&1; then
     DOCKER_IMAGE=ohos-qemu-build-env:7.0-release
     SKIP_APT="${SKIP_APT:-1}"
   elif docker image inspect ohos-qemu-build-env:deps >/dev/null 2>&1; then
@@ -484,6 +489,11 @@ OHOS_LFS_ASSET_ROOT="${OHOS_LFS_ASSET_ROOT}" \
 LFS_JOBS="${LFS_JOBS}" \
   bash "${LFS_CACHE_PREPARER}"
 
+python3 "${SCRIPT_DIR}/prepare_sceneboard_runtime_assets.py" \
+  --cache-root "${CACHE_ROOT}" \
+  --asset-root "${SCENEBOARD_RUNTIME_ASSET_ROOT}" \
+  --lfs-asset-root "${OHOS_LFS_ASSET_ROOT}" >/dev/null
+
 seed_source_volume
 
 # Keep every long-running build on one immutable scripts/patches snapshot.
@@ -504,37 +514,6 @@ exec > >(tee -a "${LOG_FILE}") 2>&1
 DOCKER_MEMORY_SWAP_ARGS=()
 if [ -n "${DOCKER_BUILD_MEMORY_SWAP:-}" ]; then
   DOCKER_MEMORY_SWAP_ARGS=(--memory-swap "${DOCKER_BUILD_MEMORY_SWAP}")
-fi
-
-# DATA and immutable evidence are assembled only for an actual ARM32 build.
-# The already-existing F17 Owner supplies its UUID and concrete source inputs.
-MEDIA579_INPUT_MOUNTS=()
-MEDIA579_INPUT_ENV=()
-if [ "${PRODUCTS}" = armv7a_virt ] && [ -n "${QEMU_MEDIA579_NORMAL_SOURCE:-}" ] && \
-   [ "${PREPARE_ONLY}" != 1 ] && [ "${SOURCE_PREPARE_ONLY}" != 1 ]; then
-  media579_result="${LOG_DIR}/normal-media579-arm32-data-result.json"
-  python3 "${SCRIPT_DIR}/prepare_media579_arm32_inputs.py" \
-    --normal-source "${QEMU_MEDIA579_NORMAL_SOURCE:?actual normal SOURCE required}" \
-    --normal-source-sha256 "${QEMU_MEDIA579_NORMAL_SOURCE_SHA256:?actual normal SOURCE checksum required}" \
-    --representative-gate "${QEMU_MEDIA579_REPRESENTATIVE_GATE:?actual final QEMU gate required}" \
-    --representative-gate-sha256 "${QEMU_MEDIA579_REPRESENTATIVE_GATE_SHA256:?actual final gate checksum required}" \
-    --sdk-native "${QEMU_MEDIA579_SDK_NATIVE:?actual Linux native SDK required}" \
-    --sdk-metadata-sha256 "${QEMU_MEDIA579_SDK_METADATA_SHA256:?actual selected SDK metadata checksum required}" \
-    --source-commit "${QEMU_MEDIA579_SOURCE_COMMIT:?actual selected commit required}" \
-    --source-root "${OHOS_ROOT}" --product armv7a_virt --device "${DEVICE_TYPE}" \
-    --normal-build-run-id "${QEMU_MEDIA579_NORMAL_RUN_ID:?original normal Owner UUID required}" \
-    --output "${LOG_DIR}" > "${media579_result}"
-  IFS=$'\t' read -r QEMU_MEDIA579_ARM32_INPUTS QEMU_MEDIA579_ARM32_INPUTS_SHA256 media579_mounts media579_mounts_sha < <(
-    python3 - "${media579_result}" <<'JSON'
-import json,sys
-v=json.load(open(sys.argv[1]));print('\t'.join((v['inputs']['path'],v['inputs']['sha256'],v['mounts']['path'],v['mounts']['sha256'])))
-JSON
-  )
-  python3 "${SCRIPT_DIR}/prepare_media579_arm32_inputs.py" --print-mounts "${media579_mounts}" --mounts-sha256 "${media579_mounts_sha}" > "${LOG_DIR}/normal-media579-arm32-readonly-paths.txt"
-  while IFS= read -r media579_path; do
-    MEDIA579_INPUT_MOUNTS+=(--mount "type=bind,src=${media579_path},dst=${media579_path},readonly")
-  done < "${LOG_DIR}/normal-media579-arm32-readonly-paths.txt"
-  MEDIA579_INPUT_ENV=(-e "QEMU_MEDIA579_ARM32_INPUTS=${QEMU_MEDIA579_ARM32_INPUTS}" -e "QEMU_MEDIA579_ARM32_INPUTS_SHA256=${QEMU_MEDIA579_ARM32_INPUTS_SHA256}" -e "QEMU_MEDIA579_NORMAL_RUN_ID=${QEMU_MEDIA579_NORMAL_RUN_ID}")
 fi
 
 exec docker run --rm \
@@ -612,6 +591,7 @@ exec docker run --rm \
   -e QEMU_SERIALIZE_SHARED_ARKOALA_GENERATOR=1 \
   -e QEMU_FIX_VIRTIOFS_KERNEL_COPY=1 \
   -e QEMU_CCACHE_ON_OUT_VOLUME=1 \
+  -e FAST_REBUILD="${FAST_REBUILD:-0}" \
   -e OHOS_SKIP_KERNEL_REBUILD_IF_COMPLETE="${OHOS_SKIP_KERNEL_REBUILD_IF_COMPLETE:-0}" \
   -e QEMU_BUILD_INPUT_MANIFEST=/work/build-inputs.json \
   -v "${CACHE_ROOT}:${CACHE_ROOT}" \
@@ -619,8 +599,6 @@ exec docker run --rm \
   ${PACKAGE_MOUNT_ARGS[@]+"${PACKAGE_MOUNT_ARGS[@]}"} \
   ${ARTIFACT_MOUNT_ARGS[@]+"${ARTIFACT_MOUNT_ARGS[@]}"} \
   ${KNOWLEDGE_INPUT_MOUNT_ARGS[@]+"${KNOWLEDGE_INPUT_MOUNT_ARGS[@]}"} \
-  ${MEDIA579_INPUT_MOUNTS[@]+"${MEDIA579_INPUT_MOUNTS[@]}"} \
-  ${MEDIA579_INPUT_ENV[@]+"${MEDIA579_INPUT_ENV[@]}"} \
   --mount "type=volume,src=${DOCKER_SOURCE_VOLUME},dst=${OHOS_ROOT}" \
   --mount "type=volume,src=${DOCKER_OUT_VOLUME},dst=${OHOS_ROOT}/out" \
   -v "${BUILD_INPUT_ROOT}:/work:ro" \

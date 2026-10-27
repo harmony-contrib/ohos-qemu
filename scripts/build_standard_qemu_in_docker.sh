@@ -1234,6 +1234,13 @@ PYREV
 }
 
 restore_staged_sceneboard_lfs_assets() {
+  if [ ! -f "${SCENEBOARD_RUNTIME_ASSET_ROOT}/SceneBoard.hap" ]; then
+    python3 "${SCRIPT_DIR}/prepare_sceneboard_runtime_assets.py" \
+      --cache-root "${CACHE_ROOT}" \
+      --asset-root "${SCENEBOARD_RUNTIME_ASSET_ROOT}" \
+      --lfs-asset-root "${OHOS_LFS_ASSET_ROOT}" \
+      --source-root "${OHOS_ROOT}" >/dev/null
+  fi
   # A previous architecture leaves the renewed HAPs in the persistent source
   # volume. Restore only those exact staged files to their pinned originals so
   # the LFS baseline audit can run again before this build stages them anew.
@@ -1725,39 +1732,14 @@ PY
     build_args+=(--device-type default --build-only-load=true)
   else
     build_args+=(--build-only-load=false)
+    if [ "${FAST_REBUILD:-0}" = "1" ] && [ -f "${OHOS_ROOT}/out/${product}/build.ninja" ]; then
+      build_args+=(--fast-rebuild=true)
+    fi
     if [ -n "${DEVICE_TYPE}" ]; then
       build_args+=(--device-type "${DEVICE_TYPE}")
     fi
   fi
-  if [ "${BUILD_ONLY_LOAD}" != "1" ] && { [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; }; then
-    python3 "${SCRIPT_DIR}/qemu_msdp_build_witness.py" begin --source-root "${OHOS_ROOT}" --product "${product}"
-    python3 "${SCRIPT_DIR}/qemu_wallpaper_build_witness.py" begin --source-root "${OHOS_ROOT}" --product "${product}"
-    python3 "${SCRIPT_DIR}/qemu_contacts_build_witness.py" begin --source-root "${OHOS_ROOT}" --product "${product}"
-  fi
-  local build_argv_json="${OHOS_ROOT}/out/${product}/qemu-full-build-argv.json"
-  mkdir -p "$(dirname "${build_argv_json}")"
-  python3 - "${build_argv_json}" "${build_args[@]}" <<'PY'
-import json
-from pathlib import Path
-import sys
-Path(sys.argv[1]).write_text(json.dumps(sys.argv[2:], indent=2) + '\n')
-PY
   "${build_args[@]}" 2>&1 | tee "${CACHE_ROOT}/logs/build_${product}_${DEVICE_TYPE:-default}.log"
-  if [ "${BUILD_ONLY_LOAD}" != "1" ] && { [ "${DEVICE_TYPE}" = phone ] || [ "${DEVICE_TYPE}" = 2in1 ]; }; then
-    local witness witness_failed=0
-    for witness in qemu_msdp_build_witness qemu_wallpaper_build_witness qemu_contacts_build_witness; do
-      local witness_args=(finish --source-root "${OHOS_ROOT}" --product "${product}"
-        --build-log "${CACHE_ROOT}/logs/build_${product}_${DEVICE_TYPE:-default}.log")
-      if [ "${witness}" = qemu_contacts_build_witness ]; then
-        witness_args+=(--build-argv-json "${build_argv_json}" --build-exit-code 0
-          --execution-log "${OHOS_ROOT}/out/${product}/build.log")
-      fi
-      if ! python3 "${SCRIPT_DIR}/${witness}.py" "${witness_args[@]}"; then
-        witness_failed=1
-      fi
-    done
-    [ "${witness_failed}" = 0 ] || return 1
-  fi
   if [ "${DEVICE_TYPE}" = "phone" ] || [ "${DEVICE_TYPE}" = "2in1" ]; then
     python3 "${PATCH_ROOT}/lib/permission_profile.py" \
       --source-root "${OHOS_ROOT}" --product "${product}" --device "${DEVICE_TYPE}"
@@ -2507,9 +2489,227 @@ for script in scripts:
             if replacement not in text:
                 raise SystemExit(f"missing copytree call in {script}")
             text = text.replace(replacement, restore_block, 1)
+        old_bs_run_cmd = """def run_cmd(cmd, execution_path=None):
+    attempt = 0
+    while attempt < 3:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=execution_path
+        )"""
+        new_bs_run_cmd = """def run_cmd(cmd, execution_path=None):
+    env = os.environ.copy()
+    node18_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../prebuilts/build-tools/common/nodejs/node-v18.20.1-linux-x64/bin"))
+    if os.path.isdir(node18_root):
+        env["PATH"] = node18_root + ":" + env.get("PATH", "")
+        if cmd and os.path.basename(cmd[0]) == "npm":
+            cmd = [os.path.join(node18_root, "npm")] + list(cmd[1:])
+    attempt = 0
+    while attempt < 3:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=execution_path,
+            env=env
+        )"""
+        if old_bs_run_cmd in text:
+            text = text.replace(old_bs_run_cmd, new_bs_run_cmd, 1)
     if text != original_text:
         script.write_text(text)
     print(f"configured shared-filesystem Node launcher copy in {script}")
+
+bindings_script = source_root / "arkcompiler/ets_frontend/ets2panda/bindings/build_bindings.py"
+if bindings_script.is_file():
+    btext = bindings_script.read_text()
+    borig = btext
+    btext = btext.replace("symlinks=True)", "symlinks=False)")
+    old_run_cmd = """def run_cmd(cmd, execution_path=None):
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                           stdin=subprocess.PIPE,
+                           stderr=subprocess.PIPE,
+                           cwd=execution_path)"""
+    new_run_cmd = """def run_cmd(cmd, execution_path=None):
+    env = os.environ.copy()
+    node18_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../prebuilts/build-tools/common/nodejs/node-v18.20.1-linux-x64/bin"))
+    if os.path.isdir(node18_root):
+        env["PATH"] = node18_root + ":" + env.get("PATH", "")
+        if cmd and os.path.basename(cmd[0]) == "npm":
+            cmd = [os.path.join(node18_root, "npm")] + list(cmd[1:])
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                           stdin=subprocess.PIPE,
+                           stderr=subprocess.PIPE,
+                           cwd=execution_path,
+                           env=env)"""
+    if old_run_cmd in btext:
+        btext = btext.replace(old_run_cmd, new_run_cmd, 1)
+    if btext != borig:
+        bindings_script.write_text(btext)
+    print(f"configured Node 18 launcher in {bindings_script}")
+
+for rel, old, new in [
+    ("foundation/communication/netmanager_base/services/netmanagernative/bpf/include/netfirewall/netfirewall_utils.h",
+     "#include <bpf/bpf_endian.h>", "#include <bpf_endian.h>"),
+    ("foundation/communication/netmanager_base/services/netmanagernative/bpf/include/netfirewall/netfirewall_utils.h",
+     "#include <linux/udp.h>", "#include <linux/udp.h>\n#ifndef udphdr\n#define udphdr __kernel_udphdr\n#endif"),
+    ("foundation/communication/netmanager_base/services/netmanagernative/bpf/include/netfirewall/netfirewall_domain.h",
+     "#include <bpf/bpf_helpers.h>", "#include <bpf_helpers.h>"),
+    ("foundation/communication/netmanager_base/services/netmanagernative/bpf/include/netfirewall/netfirewall_match.h",
+     "#include <bpf/bpf_helpers.h>", "#include <bpf_helpers.h>"),
+]:
+    p = source_root / rel
+    if p.is_file():
+        t = p.read_text()
+        if old in t:
+            p.write_text(t.replace(old, new, 1))
+
+bm = source_root / "foundation/communication/netmanager_base/services/netmanagernative/bpf/include/bitmap_manager.h"
+if bm.is_file():
+    bmt = bm.read_text()
+    if "#include <mutex>" not in bmt:
+        bm.write_text(bmt.replace("#include <string>", "#include <mutex>\n#include <string>", 1))
+
+nfm = source_root / "foundation/communication/netmanager_ext/frameworks/js/napi/netfirewall/src/netfirewall_module.cpp"
+if nfm.is_file():
+    nfmt = nfm.read_text()
+    old_ret = "        DECLARE_NAPI_FUNCTION(FUNCTION_GET_INTERCEPT_RECORDS, GetInterceptRecords),\n        });\n    return exports;\n}"
+    new_ret = "        DECLARE_NAPI_FUNCTION(FUNCTION_GET_INTERCEPT_RECORDS, GetInterceptRecords),\n        });\n}"
+    if old_ret in nfmt:
+        nfm.write_text(nfmt.replace(old_ret, new_ret, 1))
+
+nfc_h = source_root / "foundation/communication/netmanager_ext/interfaces/innerkits/netfirewallclient/include/netfirewall_client.h"
+if nfc_h.is_file():
+    nfcht = nfc_h.read_text()
+    old_inc = '#include "system_ability_load_callback_stub.h"'
+    new_inc = '''#if __has_include("system_ability_load_callback_stub.h")
+#include "system_ability_load_callback_stub.h"
+#else
+#include "../../../../../../systemabilitymgr/samgr/interfaces/innerkits/samgr_proxy/include/system_ability_load_callback_stub.h"
+#endif'''
+    if old_inc in nfcht and "__has_include" not in nfcht:
+        nfc_h.write_text(nfcht.replace(old_inc, new_inc, 1))
+
+bpf_inc = source_root / "foundation/communication/netmanager_base/services/netmanagernative/bpf/include/netfirewall"
+if bpf_inc.is_dir():
+    ev_path = bpf_inc / "netfirewall_event.h"
+    if ev_path.is_file():
+        evt = ev_path.read_text()
+        old_log_intercept = """static __always_inline void log_intercept(struct match_tuple *tuple)
+{
+    if (!tuple) {
+        return;
+    }
+
+    struct intercept_event ev = {
+        .dir = tuple->dir,
+        .family = tuple->family,
+        .protocol = tuple->protocol,
+        .sport = tuple->sport,
+        .dport = tuple->dport,
+        .appuid = tuple->appuid,
+    };
+
+    if (AF_INET == tuple->family) {
+        ev.ipv4.saddr = tuple->ipv4.saddr;
+        ev.ipv4.daddr = tuple->ipv4.daddr;
+    } else if (AF_INET6 == tuple->family) {
+        ev.ipv6.saddr = tuple->ipv6.saddr;
+        ev.ipv6.daddr = tuple->ipv6.daddr;
+    }
+    output_to_user(EVENT_INTERCEPT, &ev, sizeof(struct intercept_event));
+}"""
+        new_log_intercept = """static __always_inline void log_intercept(struct match_tuple *tuple)
+{
+    if (!tuple) {
+        return;
+    }
+    struct event *e = bpf_ringbuf_reserve(&EVENT_MAP, sizeof(struct event), 0);
+    if (!e) {
+        return;
+    }
+    memset(e, 0, sizeof(struct event));
+    e->type = EVENT_INTERCEPT;
+    e->len = sizeof(struct intercept_event);
+    e->intercept.dir = tuple->dir;
+    e->intercept.family = tuple->family;
+    e->intercept.protocol = tuple->protocol;
+    e->intercept.sport = tuple->sport;
+    e->intercept.dport = tuple->dport;
+    e->intercept.appuid = tuple->appuid;
+    if (AF_INET == tuple->family) {
+        e->intercept.ipv4.saddr = tuple->ipv4.saddr;
+        e->intercept.ipv4.daddr = tuple->ipv4.daddr;
+    } else if (AF_INET6 == tuple->family) {
+        e->intercept.ipv6.saddr = tuple->ipv6.saddr;
+        e->intercept.ipv6.daddr = tuple->ipv6.daddr;
+    }
+    bpf_ringbuf_submit(e, 0);
+}"""
+        if old_log_intercept in evt:
+            ev_path.write_text(evt.replace(old_log_intercept, new_log_intercept, 1))
+
+    map_path = bpf_inc / "netfirewall_map.h"
+    if map_path.is_file():
+        mapt = map_path.read_text()
+        scratch_def = """
+struct netfirewall_percpu_scratch {
+    struct domain_hash_key domain_key;
+    struct bitmap bitmap_key;
+};
+
+bpf_map_def SEC("maps") NETFIREWALL_SCRATCH_MAP = {
+    .type = BPF_MAP_TYPE_PERCPU_ARRAY,
+    .key_size = sizeof(__u32),
+    .value_size = sizeof(struct netfirewall_percpu_scratch),
+    .max_entries = 1,
+    .map_flags = 0,
+    .inner_map_idx = 0,
+    .numa_node = 0,
+};
+#endif // NET_FIREWALL_MAP_H"""
+        if "NETFIREWALL_SCRATCH_MAP" not in mapt:
+            map_path.write_text(mapt.replace("#endif // NET_FIREWALL_MAP_H", scratch_def, 1))
+
+    dom_path = bpf_inc / "netfirewall_domain.h"
+    if dom_path.is_file():
+        domt = dom_path.read_text()
+        old_q = "        __u16 key_len = 0;\n        struct domain_hash_key key = { 0 };"
+        new_q = """        __u16 key_len = 0;
+        __u32 scratch_id = 0;
+        struct netfirewall_percpu_scratch *scratch = bpf_map_lookup_elem(&NETFIREWALL_SCRATCH_MAP, &scratch_id);
+        if (!scratch) {
+            return 0;
+        }
+        #define key (scratch->domain_key)
+        memset(&key, 0, sizeof(key));"""
+        if old_q in domt:
+            domt = domt.replace(old_q, new_q)
+        old_loop = "    for (__u16 i = 0; i < DNS_ANSWER_CNT; i++) {"
+        new_loop = "    #pragma clang loop unroll(disable)\n    for (__u16 i = 0; i < DNS_ANSWER_CNT; i++) {"
+        if old_loop in domt and "unroll(disable)" not in domt:
+            domt = domt.replace(old_loop, new_loop, 1)
+        anchor = "static __always_inline __u16 MatchDefaultActionMap"
+        if "#define key" in domt and "#undef key" not in domt:
+            domt = domt.replace(anchor, "#undef key\n" + anchor, 1)
+        dom_path.write_text(domt)
+
+    nf_path = bpf_inc / "netfirewall.h"
+    if nf_path.is_file():
+        nft = nf_path.read_text()
+        old_b = "    struct bitmap key = { 0 };\n    if (!match_action_key(skb, &tuple, &key)) {"
+        new_b = """    __u32 scratch_id = 0;
+    struct netfirewall_percpu_scratch *scratch = bpf_map_lookup_elem(&NETFIREWALL_SCRATCH_MAP, &scratch_id);
+    if (!scratch) {
+        return SK_PASS;
+    }
+    if (!match_action_key(skb, &tuple, &scratch->bitmap_key)) {"""
+        if old_b in nft:
+            nft = nft.replace(old_b, new_b)
+            nft = nft.replace("match_action(&tuple, &key)", "match_action(&tuple, &scratch->bitmap_key)")
+            nf_path.write_text(nft)
 PY
 }
 
@@ -3136,12 +3336,36 @@ PYPLAN
 apply_qemu_capability_patch_plan() {
   # Preserve input ages only for exact retained component bytes. Every normal
   # guard still runs, and changed contents retain their new input timestamps.
-  local source_times_directory source_times_snapshot
+  local source_times_directory source_times_snapshot extra_times_snapshot
   source_times_directory="$(mktemp -d "${CACHE_ROOT}/logs/source-prefix-times579.XXXXXX")"
   source_times_snapshot="${source_times_directory}/capture.json"
+  extra_times_snapshot="${source_times_directory}/extra_capture.json"
   python3 "${PATCH_ROOT}/lib/qemu_preserve_source_times579.py" --source-root "${OHOS_ROOT}" \
     --snapshot "${source_times_snapshot}" --action capture \
     2>&1 | tee "${source_times_directory}/capture.log"
+  python3 - "${OHOS_ROOT}" "${PATCH_ROOT}" "${extra_times_snapshot}" <<'PY'
+import hashlib, json, os, re, sys
+from pathlib import Path
+root, patch_root, out_path = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve(), Path(sys.argv[3])
+candidates = set()
+for p in list(patch_root.rglob("*.json")) + list((patch_root.parent / "scripts").glob("*.py")):
+    try:
+        text = p.read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        continue
+    for m in re.findall(r'"((?:applications|arkcompiler|base|build|commonlibrary|developtools|device|drivers|foundation|interface|kernel|test|third_party|vendor)/[^"\n\r]+)"', text):
+        candidates.add(m)
+records = {}
+for rel in sorted(candidates):
+    fp = root / rel
+    try:
+        st = fp.lstat()
+        if os.path.isfile(fp) and not os.path.islink(fp):
+            records[rel] = [hashlib.sha256(fp.read_bytes()).hexdigest(), st.st_atime_ns, st.st_mtime_ns]
+    except Exception:
+        pass
+out_path.write_text(json.dumps(records), encoding="utf-8")
+PY
   # Restore the complete USB/MIDI/MTP predecessor, including all three new files.
   # Partial/unknown vectors remain untouched; all original guards still run.
   bash "${QEMU_USB_MIDI_SHARED_DEVICE_SCRIPT}" --source-root "${OHOS_ROOT}" --rewind \
@@ -3688,8 +3912,6 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/verify_settings_select_parameters.log"
   bash "${PATCH_ROOT}/common/base/theme/wallpaper_mgr/qemu_renderer/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_wallpaper_qemu_renderer.log"
-  python3 "${SCRIPT_DIR}/verify_ui_extension_identity_batch.py" --source-root "${OHOS_ROOT}" \
-    2>&1 | tee "${CACHE_ROOT}/logs/preflight_ui_extension_identity_batch.log"
   bash "${ARKUI_NATIVE_IDENTITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_arkui_native_identity.log"
   bash "${AMS_NATIVE_IDENTITY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3710,8 +3932,6 @@ apply_qemu_capability_patch_plan() {
     2>&1 | tee "${CACHE_ROOT}/logs/apply_arkui_cfi_coverage.log"
   python3 "${ARKUI_CFI_COVERAGE_COMPONENT_SCRIPT%/*}/verify_source.py" --source-root "${OHOS_ROOT}" --require-patched \
     2>&1 | tee "${CACHE_ROOT}/logs/verify_arkui_cfi_coverage.log"
-  python3 "${SCRIPT_DIR}/verify_ui_extension_identity_batch.py" --source-root "${OHOS_ROOT}" --require-patched \
-    2>&1 | tee "${CACHE_ROOT}/logs/verify_ui_extension_identity_batch.log"
   bash "${ARKUI_NATIVE_DSO_EXPORTS_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_arkui_native_dso_exports579.log"
   bash "${ARKUI_DYNAMIC_FACTORY_CFI_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
@@ -3892,6 +4112,7 @@ apply_qemu_capability_patch_plan() {
     echo "Caption source preparation requires one actual product/ABI per normal build invocation" >&2
     return 1
   fi
+  python3 "${SCRIPT_DIR}/prepare_livecaptions_lottie_cache.py" --cache-root "${CACHE_ROOT}" >/dev/null
   if [ "${PRODUCTS[0]}" = armv7a_virt ]; then
     python3 "${SCRIPT_DIR}/prepare_armv7a_sherpa_inputs.py" \
       --source-root "${OHOS_ROOT}" --cache-root "${CACHE_ROOT}" \
@@ -4006,10 +4227,84 @@ PY
   bash "${QEMU_USB_MIDI_SHARED_DEVICE_SCRIPT}" --source-root "${OHOS_ROOT}" \
     --product "${PRODUCTS[@]}" --profile "${usb_midi_source_profile}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_usb_midi_shared_device.log"
+  if [ "${DEVICE_TYPE_BUILD_PROFILE}" = "qemu_2in1_full_source" ]; then
+    python3 - "${OHOS_ROOT}" "${PATCH_ROOT}/lib" "${PRODUCTS[@]}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1]).resolve()
+sys.path.insert(0, sys.argv[2])
+from device_contract import contract_overlay
+
+products = sys.argv[3:]
+eff_path = root / "vendor/ohemu/virt/virt_2in1_full.json"
+meta_path = root / "vendor/ohemu/virt/virt_2in1_full.meta.json"
+eff = json.loads(eff_path.read_text(encoding="utf-8"))
+meta = json.loads(meta_path.read_text(encoding="utf-8"))
+
+enables = {
+    "SystemCapability.Communication.NetManager.Eap": (
+        "communication", "netmanager_ext",
+        "Official 2in1 capability; enable upstream EAP NAPI/IPC implementation and matching declaration.",
+    ),
+    "SystemCapability.Multimedia.Audio.DeviceEnhance": (
+        "multimedia", "audio_framework",
+        "Official 2in1 capability; enable upstream AudioDeviceEnhanceManager and matching declaration.",
+    ),
+}
+for sub in eff.get("subsystems", []):
+    for comp in sub.get("components", []):
+        for cap, (s_name, c_name, _reason) in enables.items():
+            if sub.get("subsystem") == s_name and comp.get("component") == c_name:
+                vals = [v for v in comp.get("syscap", []) if v.split("=", 1)[0].strip() != cap]
+                comp["syscap"] = vals + [f"{cap} = true"]
+
+meta.setdefault("enabled_required_syscaps", {}).update({
+    cap: {"part": f"{s_name}:{c_name}", "reason": reason}
+    for cap, (s_name, c_name, reason) in sorted(enables.items())
+})
+eff_path.write_text(json.dumps(eff, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+configs = {
+    "arm64_virt": "vendor/ohemu/qemu_arm64_linux_full/config.json",
+    "x86_64_virt": "vendor/ohemu/qemu_x86_64_linux_full/config.json",
+    "armv7a_virt": "vendor/ohemu/qemu_armv7a_linux_full/config.json",
+}
+for product in products:
+    cfg_path = root / configs[product]
+    if not cfg_path.is_file():
+        continue
+    overlay_rel = f"vendor/ohemu/virt/virt_2in1_contract_{product}.json"
+    cfg_doc = json.loads(cfg_path.read_text(encoding="utf-8"))
+    cfg_for_visit = dict(cfg_doc, inherit=[i for i in cfg_doc.get("inherit", []) if i != overlay_rel])
+    overlay = contract_overlay(root, cfg_for_visit, meta)
+    (root / overlay_rel).write_text(json.dumps(overlay, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+print("configured 2in1 required SysCap contract declarations for:", " ".join(products))
+PY
+  fi
   # Pin only the existing developer-mode sh permissions for the new QEMU types.
   bash "${PATCH_ROOT}/common/base/security/selinux_adapter/qemu_sh_baseline/apply.sh" \
     --source-root "${OHOS_ROOT}" --profile "${usb_midi_source_profile}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_sh_baseline.log"
+  python3 - "${OHOS_ROOT}" "${extra_times_snapshot}" <<'PY'
+import hashlib, json, os, sys
+from pathlib import Path
+root, snap_path = Path(sys.argv[1]).resolve(), Path(sys.argv[2])
+if snap_path.is_file():
+    records = json.loads(snap_path.read_text(encoding="utf-8"))
+    restored = 0
+    for rel, (digest, atime_ns, mtime_ns) in records.items():
+        fp = root / rel
+        try:
+            if fp.is_file() and not fp.is_symlink() and hashlib.sha256(fp.read_bytes()).hexdigest() == digest:
+                os.utime(fp, ns=(atime_ns, mtime_ns), follow_symlinks=False)
+                restored += 1
+        except Exception:
+            pass
+    print(f"restored unchanged source mtimes for {restored} additional files")
+PY
   # Hash actual, fully patched kernel/config/HDI sources before any traversal.
   # Directory mtimes and a shell environment flag cannot invalidate Ninja's
   # old Image output; the GN action now consumes this stable fingerprint.
@@ -4050,13 +4345,6 @@ main() {
 
   local product
   for product in "${PRODUCTS[@]}"; do
-    if [ "${product}" = "armv7a_virt" ] && [ -n "${QEMU_MEDIA579_ARM32_INPUTS:-}" ]; then
-      python3 -B "${MEDIA579_CPU_COMPONENT}/normal_arm32_entry.py" \
-        --inputs "${QEMU_MEDIA579_ARM32_INPUTS:?actual normal Owner ARM32 DATA required}" \
-        --inputs-sha256 "${QEMU_MEDIA579_ARM32_INPUTS_SHA256:?actual ARM32 DATA checksum required}" \
-        --product "${product}" --device "${DEVICE_TYPE}" --source-root "${OHOS_ROOT}" \
-        2>&1 | tee "${CACHE_ROOT}/logs/normal_media579_arm32_${DEVICE_TYPE}.log"
-    fi
     build_product "${product}"
     if [ "${BUILD_ONLY_LOAD}" != "1" ]; then
       package_product "${product}"

@@ -1,3 +1,0 @@
-image_effect.create=1
-image_effect.add_brightness=1 count=1
-image_effect.release=0
