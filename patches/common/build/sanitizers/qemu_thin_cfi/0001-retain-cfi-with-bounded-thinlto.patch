@@ -1,0 +1,45 @@
+--- a/build/config/sanitizers/BUILD.gn
++++ b/build/config/sanitizers/BUILD.gn
+@@ -8,6 +8,11 @@
+ import("//build/misc/overrides/build.gni")
+ import("//build/ohos_var.gni")
+ import("//build/toolchain/toolchain.gni")
++
++_qemu_cfi_lto_flag = "-flto"
++if (is_ohos && qemu_thin_cfi) {
++  _qemu_cfi_lto_flag = "-flto=thin"
++}
+ 
+ # Contains the dependencies needed for sanitizers to link into executables and
+ # shared_libraries.
+@@ -631,7 +636,7 @@
+ 
+     configs = [ "//build/config/gcc:symbol_visibility_default" ]
+     cflags = [
+-      "-flto",
++      _qemu_cfi_lto_flag,
+       "-fsanitize=cfi",
+       "-fsanitize-blacklist=" +
+           rebase_path(_cfi_blocklist_path, root_build_dir),
+@@ -672,7 +677,7 @@
+   configs = [ ":cfi_config_release" ]
+   cflags = [ "-fsanitize-cfi-cross-dso" ]
+   ldflags = [
+-    "-flto",
++    _qemu_cfi_lto_flag,
+     "-fsanitize=cfi",
+     "-fsanitize-cfi-cross-dso",
+   ]
+--- a/build/config/sanitizers/sanitizers.gni
++++ b/build/config/sanitizers/sanitizers.gni
+@@ -117,6 +117,10 @@
+ 
+   # The global switch of cfi debug mode.
+   cfi_debug = false
++
++  # QEMU retains CFI while using bounded ThinLTO instead of monolithic LTO.
++  # Other products preserve their existing full-LTO CFI configuration.
++  qemu_thin_cfi = false
+ 
+   # Policy of security-related compilation configs, based on device performance.
+   #   "high":     High-load security policy enabled. Suitable for High-performance devices.

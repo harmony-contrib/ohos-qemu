@@ -1,0 +1,126 @@
+--- a/foundation/communication/ipc/ipc/native/src/core/invoker/source/binder_invoker.cpp
++++ b/foundation/communication/ipc/ipc/native/src/core/invoker/source/binder_invoker.cpp
+@@ -1759,7 +1759,11 @@
+     }
+ 
+     sptr<IRemoteObject> remoteObject = nullptr;
+-    auto *flat = reinterpret_cast<const flat_binder_object *>(buffer);
++    flat_binder_object alignedObject {};
++    if (memcpy_s(&alignedObject, sizeof(alignedObject), buffer, sizeof(alignedObject)) != EOK) {
++        return nullptr;
++    }
++    const auto* flat = &alignedObject;
+     switch (flat->hdr.type) {
+         case BINDER_TYPE_BINDER: {
+             auto stubObject = reinterpret_cast<IRemoteObject *>(flat->cookie);
+@@ -1797,7 +1801,11 @@
+         return fd;
+     }
+ 
+-    auto *flat = reinterpret_cast<const flat_binder_object *>(buffer);
++    flat_binder_object alignedObject {};
++    if (memcpy_s(&alignedObject, sizeof(alignedObject), buffer, sizeof(alignedObject)) != EOK) {
++        return fd;
++    }
++    const auto* flat = &alignedObject;
+     if (flat->hdr.type == BINDER_TYPE_FD || flat->hdr.type == BINDER_TYPE_FDR) {
+         fd = flat->handle;
+         ZLOGD(LABEL, "fd:%{public}d", fd);
+--- a/foundation/communication/ipc/ipc/native/src/core/framework/source/message_parcel.cpp
++++ b/foundation/communication/ipc/ipc/native/src/core/framework/source/message_parcel.cpp
+@@ -284,63 +284,47 @@
+ 
+ void MessageParcel::ClearFileDescriptor()
+ {
+-    size_t dataOffset = 0;
+-    binder_size_t *object = nullptr;
+-    const flat_binder_object *flat = nullptr;
+-    for (size_t i = 0; i < GetOffsetsSize(); i++) {
+-        object = reinterpret_cast<binder_size_t *>(GetObjectOffsets());
+-        if (object == nullptr) {
+-            ZLOGE(LOG_LABEL, "object get by GetObjectOffsets() is nullptr");
+-            break;
+-        }
+-        // offset + size
+-        dataOffset = object[i] + sizeof(flat_binder_object);
+-        if (dataOffset > GetDataSize()) {
+-            ZLOGE(LOG_LABEL, "object offset is overflow, dataOffset:%{public}zu dataSize:%{public}zu", dataOffset,
+-                GetDataSize());
+-            break;
+-        }
+-        uintptr_t data = GetData();
+-        if (data == 0) {
+-            ZLOGE(LOG_LABEL, "data get by GetData() is invalid");
+-            break;
+-        }
+-        flat = reinterpret_cast<flat_binder_object *>(data + object[i]);
+-        if (flat->hdr.type == BINDER_TYPE_FD && flat->handle > 0) {
+-            ::close(flat->handle);
++    const auto* objects = reinterpret_cast<const binder_size_t*>(GetObjectOffsets());
++    if (objects == nullptr || GetData() == 0) {
++        return;
++    }
++    for (size_t i = 0; i < GetOffsetsSize(); ++i) {
++        const binder_size_t offset = objects[i];
++        if (offset > GetDataSize() || sizeof(flat_binder_object) > GetDataSize() - offset) {
++            ZLOGE(LOG_LABEL, "object offset is outside parcel data");
++            break;
++        }
++        flat_binder_object flat {};
++        if (memcpy_s(&flat, sizeof(flat), reinterpret_cast<const void*>(GetData() + offset), sizeof(flat)) != EOK) {
++            break;
++        }
++        const int32_t fd = static_cast<int32_t>(flat.handle);
++        if (flat.hdr.type == BINDER_TYPE_FD && fd >= 0) {
++            ::close(fd);
+         }
+     }
+ }
+ 
+ bool MessageParcel::ContainFileDescriptors() const
+ {
+-    size_t dataOffset = 0;
+-    binder_size_t *object = nullptr;
+-    const flat_binder_object *flat = nullptr;
+-    for (size_t i = 0; i < GetOffsetsSize(); i++) {
+-        object = reinterpret_cast<binder_size_t *>(GetObjectOffsets());
+-        if (object == nullptr) {
+-            ZLOGE(LOG_LABEL, "object get by GetObjectOffsets() is nullptr");
+-            break;
+-        }
+-        // offset + size
+-        dataOffset = object[i] + sizeof(flat_binder_object);
+-        if (dataOffset > GetDataSize()) {
+-            ZLOGE(LOG_LABEL, "object offset is overflow, dataOffset:%{public}zu dataSize:%{public}zu", dataOffset,
+-                GetDataSize());
+-            break;
+-        }
+-        uintptr_t data = GetData();
+-        if (data == 0) {
+-            ZLOGE(LOG_LABEL, "data get by GetData() is invalid");
+-            break;
+-        }
+-        flat = reinterpret_cast<flat_binder_object *>(data + object[i]);
+-        if (flat->hdr.type == BINDER_TYPE_FD) {
++    const auto* objects = reinterpret_cast<const binder_size_t*>(GetObjectOffsets());
++    if (objects == nullptr || GetData() == 0) {
++        return false;
++    }
++    for (size_t i = 0; i < GetOffsetsSize(); ++i) {
++        const binder_size_t offset = objects[i];
++        if (offset > GetDataSize() || sizeof(flat_binder_object) > GetDataSize() - offset) {
++            ZLOGE(LOG_LABEL, "object offset is outside parcel data");
++            break;
++        }
++        flat_binder_object flat {};
++        if (memcpy_s(&flat, sizeof(flat), reinterpret_cast<const void*>(GetData() + offset), sizeof(flat)) != EOK) {
++            break;
++        }
++        if (flat.hdr.type == BINDER_TYPE_FD) {
+             return true;
+         }
+     }
+-
+     return false;
+ }
+ 

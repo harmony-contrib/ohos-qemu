@@ -1,0 +1,9 @@
+diff --git a/base/hiviewdfx/hiview/framework/native/unified_collection/graphic_memory/graphic_memory.cpp b/base/hiviewdfx/hiview/framework/native/unified_collection/graphic_memory/graphic_memory.cpp
+--- a/base/hiviewdfx/hiview/framework/native/unified_collection/graphic_memory/graphic_memory.cpp
++++ b/base/hiviewdfx/hiview/framework/native/unified_collection/graphic_memory/graphic_memory.cpp
+@@ -120,4 +120,5 @@
+                (dmaInfo.name == "render_service" && it->second.name == "composer_host")) {
+         it->second.pid = dmaInfo.pid;
++        it->second.name = dmaInfo.name;
+     }
+ }

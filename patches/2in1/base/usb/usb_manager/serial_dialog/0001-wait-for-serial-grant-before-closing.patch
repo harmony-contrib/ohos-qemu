@@ -1,0 +1,224 @@
+diff --git a/base/usb/usb_manager/frameworks/dialog/dialog_ui/usb_right_dialog/src/main/ets/ServiceExtAbility/UsbDialogAbility.ts b/base/usb/usb_manager/frameworks/dialog/dialog_ui/usb_right_dialog/src/main/ets/ServiceExtAbility/UsbDialogAbility.ts
+index 30fa78f..b6d962e 100644
+--- a/base/usb/usb_manager/frameworks/dialog/dialog_ui/usb_right_dialog/src/main/ets/ServiceExtAbility/UsbDialogAbility.ts
++++ b/base/usb/usb_manager/frameworks/dialog/dialog_ui/usb_right_dialog/src/main/ets/ServiceExtAbility/UsbDialogAbility.ts
+@@ -14,36 +14,55 @@
+  */
+ 
+ import UIExtensionAbility from '@ohos.app.ability.UIExtensionAbility';
+-import UIExtensionContentSession from '@ohos.app.ability.UIExtensionContentSession';
+-import rpc from '@ohos.rpc';
+-import {terminateDialog} from '../util/DialogUtil';
++import UIExtensionContentSession from '@ohos.app.ability.UIExtensionContentSession';
++import Want from '@ohos.app.ability.Want';
++import rpc from '@ohos.rpc';
++import {terminateDialog} from '../util/DialogUtil';
++import {SerialDialogRequest} from '../util/SerialDialogRequest';
+ 
+ let TAG: string = 'UsbService';
+ 
+ const BG_COLOR = '#00000000';
+-const COLOR_MODE_NOT_SET = -1;
++const COLOR_MODE_NOT_SET = -1;
++
++function serialParameter(want: Want, key: string): string {
++  let value = want.parameters?.[key];
++  return typeof value === 'string' ? value : '';
++}
+ 
+ export default class UsbDialogAbility extends UIExtensionAbility {
+   /**
+    * Lifecycle function, called back when a service extension is started for initialization.
+    */
+-  onSessionCreate(want, session): void {
++  onSessionCreate(want: Want, session: UIExtensionContentSession): void {
+     console.log(TAG + 'UsbDialogAbility onSessionCreate');
+     console.log(JSON.stringify(want));
+ 
+-    globalThis.extensionContext = this.context;
+-    globalThis.want = want;
+-    globalThis.windowNum = 0;
+-
+-    try {
+-      AppStorage.setOrCreate('session', session);
+-      let page = want?.parameters?.['portName'] !== undefined ? 'pages/SerialDialog' : 'pages/UsbDialog';
+-      (session as UIExtensionContentSession)?.loadContent(page);
+-      (session as UIExtensionContentSession)?.setWindowBackgroundColor(BG_COLOR);
++    let isSerial: boolean = want.parameters?.['portName'] !== undefined;
++    try {
++      if (isSerial) {
++        let request = new SerialDialogRequest(serialParameter(want, 'tokenId'), serialParameter(want, 'deviceId'),
++          serialParameter(want, 'appName'), serialParameter(want, 'portName'), () => session.terminateSelf());
++        session.loadContent('pages/SerialDialog', new LocalStorage({ serialRequest: request }));
++      } else {
++        // Preserve the existing USB route; Serial never replaces its globals.
++        globalThis.extensionContext = this.context;
++        globalThis.want = want;
++        globalThis.windowNum = 0;
++        AppStorage.setOrCreate('session', session);
++        session.loadContent('pages/UsbDialog');
++      }
++      session.setWindowBackgroundColor(BG_COLOR);
+       this.context?.getApplicationContext()?.setColorMode(COLOR_MODE_NOT_SET);
+     } catch (error) {
+       console.error(TAG + 'UsbFunctionSwitchAbility onSessionCreate error: ' + error?.code);
+-      terminateDialog();
++      if (isSerial) {
++        session.terminateSelf().catch((closeError: Error) => {
++          console.error(TAG + 'terminate own Serial session failed: ' + JSON.stringify(closeError));
++        });
++      } else {
++        terminateDialog();
++      }
+     }
+   }
+ 
+diff --git a/base/usb/usb_manager/frameworks/dialog/dialog_ui/usb_right_dialog/src/main/ets/pages/SerialDialog.ets b/base/usb/usb_manager/frameworks/dialog/dialog_ui/usb_right_dialog/src/main/ets/pages/SerialDialog.ets
+index f42951c..1689c5f 100644
+--- a/base/usb/usb_manager/frameworks/dialog/dialog_ui/usb_right_dialog/src/main/ets/pages/SerialDialog.ets
++++ b/base/usb/usb_manager/frameworks/dialog/dialog_ui/usb_right_dialog/src/main/ets/pages/SerialDialog.ets
+@@ -14,17 +14,18 @@
+  */
+ 
+ import { AlertDialog } from '@ohos.arkui.advanced.Dialog'
+-import { terminateDialog } from '../util/DialogUtil';
+-import serial from '@ohos.busManager.serial'
++import { SerialDialogRequest } from '../util/SerialDialogRequest';
++import { BusinessError } from '@ohos.base';
+ 
+-@Entry
++@Entry({ useSharedStorage: true })
+ @Component
+ struct SerialDialogComponent {
++  @LocalStorageProp('serialRequest') private request: SerialDialogRequest = new SerialDialogRequest();
++
+   confirmDialogController: CustomDialogController = new CustomDialogController({
+     builder: AlertDialog({
+       primaryTitle: $r('app.string.serial_right_title'),
+-      content: $r('app.string.usb_right_content', globalThis.want?.parameters?.['appName'],
+-        globalThis.want?.parameters?.['portName']),
++      content: $r('app.string.usb_right_content', this.request.appName, this.request.portName),
+       primaryButton: {
+         value: $r('app.string.notAllowButton'),
+         action: () => {
+@@ -35,20 +36,7 @@ struct SerialDialogComponent {
+       secondaryButton: {
+         value: $r('app.string.allowButton'),
+         action: () => {
+-          try {
+-            let tokenId: string = globalThis.want.parameters['tokenId'];
+-            let deviceId: string = globalThis.want.parameters['deviceId'];
+-            console.info('SerialRight allowed');
+-            serial.addPortAuthorization(tokenId, deviceId).then(() => {
+-              console.info('SerialRight addPortAuthorization success');
+-            }).catch((err: Error) => {
+-              console.error('SerialRight addPortAuthorization failed: ' + JSON.stringify(err));
+-            });
+-          } catch (err) {
+-            console.error('SerialRight ConfirmDialog onClick error: ' + JSON.stringify(err));
+-          } finally {
+-            this.closeDialog()
+-          }
++          this.authorizePort();
+         }
+       },
+     }),
+@@ -59,13 +47,25 @@ struct SerialDialogComponent {
+     }
+   })
+ 
+-  closeDialog() {
++  async authorizePort(): Promise<void> {
++    try {
++      await this.request.authorizePort();
++      console.info('SerialRight addPortAuthorization completed');
++    } catch (error) {
++      let err: BusinessError = error;
++      console.error('SerialRight addPortAuthorization failed: code=' + err.code + ', message=' + err.message);
++    }
++  }
++
++  closeDialog(): void {
+     console.info('SerialRight close dialog');
+-    terminateDialog();
++    this.request.close().catch((error: BusinessError) => {
++      console.error('SerialRight close own session failed: code=' + error.code + ', message=' + error.message);
++    });
+   }
+ 
+   aboutToAppear(): void {
+-    console.info('SerialRight show dialog', JSON.stringify(globalThis.want));
++    console.info('SerialRight show dialog for port=' + this.request.portName);
+     setTimeout(() => {
+         this.confirmDialogController.open();
+     });
+diff --git a/base/usb/usb_manager/frameworks/dialog/dialog_ui/usb_right_dialog/src/main/ets/util/SerialDialogRequest.ts b/base/usb/usb_manager/frameworks/dialog/dialog_ui/usb_right_dialog/src/main/ets/util/SerialDialogRequest.ts
+new file mode 100644
+index 0000000..3b29d4d
+--- /dev/null
++++ b/base/usb/usb_manager/frameworks/dialog/dialog_ui/usb_right_dialog/src/main/ets/util/SerialDialogRequest.ts
+@@ -0,0 +1,64 @@
++/*
++ * Copyright (c) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++import serial from '@ohos.busManager.serial';
++
++// One immutable request and one captured native session per content page.
++// Never obtain authorization parameters or close targets from global storage.
++export class SerialDialogRequest {
++  readonly tokenId: string;
++  readonly deviceId: string;
++  readonly appName: string;
++  readonly portName: string;
++  private readonly terminateSession: () => Promise<void>;
++  private authorizationPending: boolean = false;
++  private closePromise: Promise<void> | undefined = undefined;
++
++  constructor(tokenId: string = '', deviceId: string = '', appName: string = '', portName: string = '',
++    terminateSession: () => Promise<void> = () => Promise.reject(new Error('missing Serial content session'))) {
++    this.tokenId = tokenId;
++    this.deviceId = deviceId;
++    this.appName = appName;
++    this.portName = portName;
++    this.terminateSession = terminateSession;
++  }
++
++  async authorizePort(): Promise<void> {
++    if (this.authorizationPending) {
++      return;
++    }
++    this.authorizationPending = true;
++    try {
++      if (this.tokenId.length === 0 || this.deviceId.length === 0 || this.portName.length === 0) {
++        throw new Error('missing Serial authorization request parameters');
++      }
++      await serial.addPortAuthorization(this.tokenId, this.deviceId);
++    } finally {
++      try {
++        await this.close();
++      } catch (error) {
++        // Do not replace the actual numeric grant error with a close failure.
++        console.error('SerialRight terminate own session failed: ' + JSON.stringify(error));
++      }
++    }
++  }
++
++  async close(): Promise<void> {
++    if (this.closePromise === undefined) {
++      this.closePromise = this.terminateSession();
++    }
++    await this.closePromise;
++  }
++}

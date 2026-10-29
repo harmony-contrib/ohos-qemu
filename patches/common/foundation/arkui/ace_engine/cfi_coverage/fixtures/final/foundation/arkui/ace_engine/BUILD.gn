@@ -1,0 +1,226 @@
+# Copyright (c) 2021-2024 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+
+# Source sets do not inherit sanitizer policy from the final libace_compatible.
+# Keep CFI metadata and platform link flags on the complete ACE common carrier.
+if (is_ohos && current_os == "ohos") {
+  ohos_sanitizer_config("ace_cfi_config") {
+    sanitize = {
+      cfi = true
+      cfi_cross_dso = true
+      debug = ace_sanitize_debug
+    }
+  }
+}
+
+# Common config for Ability Cross-platform Environment(ACE) source
+config("ace_config") {
+  if (is_ohos && current_os == "ohos") {
+    configs = [ ":ace_cfi_config" ]
+  }
+  include_dirs = [
+    "$ace_root",
+    "$ace_root/frameworks",
+    "$ace_root/interfaces/inner_api/ace_kit/include",
+    "$root_out_dir/arkui/framework",
+  ]
+
+  if (use_hilog) {
+    include_dirs += [ "$hilog_root/interfaces/native/innerkits/include" ]
+  }
+
+  if (is_ohos_standard_system && !use_mingw_win && !use_mac && !use_linux) {
+    include_dirs += [ "$ace_root/adapter/ohos/services/uiservice/include" ]
+  }
+  defines = ace_common_defines
+
+  if (is_wearable_product) {
+    defines += ace_wearable_defines
+  }
+
+  if (is_ivi_product) {
+    defines += ace_ivi_defines
+  }
+
+  cflags = [
+    "-fvisibility=hidden",
+    "-fdata-sections",
+    "-ffunction-sections",
+    "-Wno-non-c-typedef-for-linkage",
+    "-Os",
+    "-Werror=return-stack-address",
+    "-Werror=anon-enum-enum-conversion",
+    "-Werror=sizeof-array-div",
+    "-Werror=undefined-var-template",
+    "-Werror=nonportable-include-path",
+    "-Werror=user-defined-warnings",
+    "-Werror=null-pointer-arithmetic",
+    "-Werror=enum-compare-switch",
+    "-Werror=absolute-value",
+    "-Werror=header-guard",
+    "-Werror=int-to-pointer-cast",
+    "-Werror=pointer-to-int-cast",
+    "-Werror=int-in-bool-context",
+    "-Werror=xor-used-as-pow",
+    "-Werror=unknown-warning-option",
+    "-Werror=abstract-final-class",
+    "-Werror=range-loop-construct",
+    "-Werror=incompatible-pointer-types",
+    "-DUNITEST_FRIEND_CLASS=",
+  ]
+
+  if (is_arkui_x) {
+    cflags -= [
+      "-Werror=anon-enum-enum-conversion",
+      "-Werror=incompatible-pointer-types",
+    ]
+  }
+
+  if (is_ohos && is_clang && (target_cpu == "arm" || target_cpu == "arm64") &&
+      enhanced_opt) {
+    if (ace_engine_feature_enable_pgo) {
+      cflags += [
+        "-fprofile-use=" + rebase_path(
+                "${ace_engine_feature_pgo_path}/libace_compatible.profdata",
+                root_build_dir),
+        "-Wno-error=backend-plugin",
+        "-Wno-profile-instr-out-of-date",
+        "-Wno-profile-instr-unprofiled",
+      ]
+    }
+    if (ace_engine_feature_enable_atomic) {
+      cflags += [ "-moutline-atomics" ]
+    }
+  }
+
+  if (ace_engine_enable_circle_feature) {
+    cflags += [ "-DARKUI_CIRCLE_FEATURE" ]
+  }
+
+  cflags_cc = [
+    "-fvisibility-inlines-hidden",
+    "-Wno-non-c-typedef-for-linkage",
+    "-Os",
+  ]
+
+  if (ace_engine_feature_enable_digital_crown) {
+    cflags += [ "-DSUPPORT_DIGITAL_CROWN" ]
+  }
+
+  if (use_mingw_win) {
+    cflags_cc += [ "-std=c++17" ]
+  }
+
+  if (use_linux) {
+    cflags_cc += [ "-std=c++17" ]
+  }
+
+  ldflags = []
+  if (ace_engine_feature_enable_coverage) {
+    cflags += [ "--coverage" ]
+    ldflags += [ "--coverage" ]
+  }
+
+  if (ace_engine_enable_reduce_eh_frame) {
+    cflags += [
+      "-fno-unwind-tables",
+      "-fno-asynchronous-unwind-tables",
+      "-fomit-frame-pointer",
+    ]
+    cflags_cc += [
+      "-fno-unwind-tables",
+      "-fno-asynchronous-unwind-tables",
+      "-fomit-frame-pointer",
+    ]
+  }
+
+  if (ace_engine_enable_reduce_eh_frame && target_os == "ios") {
+    cflags -= [ "-Os" ]
+    cflags += [
+      "-Oz",
+    ]
+
+    cflags_cc -= [ "-Os" ]
+    cflags_cc += [
+      "-Oz",
+    ]
+  }
+}
+
+config("ace_test_config") {
+  visibility = [ ":*" ]
+  visibility += [
+    "//foundation/arkui/ace_engine/build/*",
+    "//foundation/arkui/ace_engine/frameworks/bridge/test/unittest/*",
+    "//foundation/arkui/ace_engine/frameworks/core/*",
+    "//foundation/arkui/ace_engine/test/fuzztest/*",
+    "//foundation/arkui/ace_engine/test/unittest/*",
+  ]
+  include_dirs = [
+    "$ace_root",
+    "$ace_root/frameworks",
+    "$ace_root/interfaces/inner_api/ace_kit/include",
+    "$root_out_dir/arkui/framework",
+  ]
+
+  cflags_cc = []
+  defines = ace_common_defines
+
+  if (is_ohos_standard_system && !use_mingw_win && !use_mac && !use_linux) {
+    include_dirs += [ "$ace_root/adapter/ohos/services/uiservice/include" ]
+
+    cflags_cc += [
+      "-Wno-thread-safety-attributes",
+      "-Wno-thread-safety-analysis",
+      "-Wno-non-c-typedef-for-linkage",
+    ]
+    defines += [ "OHOS_STANDARD_SYSTEM" ]
+  }
+
+  if (!is_ohos_standard_system) {
+    defines += [ "ENABLE_NATIVE_VIEW" ]
+  }
+
+  defines += [ "OHOS_PLATFORM" ]
+
+  if (is_wearable_product) {
+    defines += ace_wearable_defines
+  }
+
+  cflags = [
+    "-fvisibility=hidden",
+    "-fdata-sections",
+    "-ffunction-sections",
+    "-DUNITEST_FRIEND_CLASS=",
+  ]
+
+  cflags_cc += [ "-fvisibility-inlines-hidden" ]
+  ldflags = [ "-Wl,-gc-sections" ]
+
+  if (ace_engine_feature_enable_coverage) {
+    cflags += [ "--coverage" ]
+    ldflags += [ "--coverage" ]
+  }
+}
+
+config("ace_coverage_config") {
+  cflags = []
+  ldflags = []
+  if (ace_engine_feature_enable_coverage) {
+    cflags += [ "--coverage" ]
+    ldflags += [ "--coverage" ]
+  }
+}

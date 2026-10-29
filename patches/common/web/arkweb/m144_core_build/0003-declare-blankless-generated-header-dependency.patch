@@ -1,0 +1,11 @@
+diff --git a/src/base/BUILD.gn b/src/base/BUILD.gn
+--- a/src/base/BUILD.gn
++++ b/src/base/BUILD.gn
+@@ -1175,6 +1175,7 @@ component("base") {
+   if (is_ohos && enable_arkweb) {
+     sources += arkweb_base_ext_sources
+     deps += [ "//arkweb//build/features", "//base/third_party/xdg_user_dirs"]
++    deps += [ "//build:robolectric_buildflags" ]
+     if (is_component_build) {
+       deps += [ "//content/public/common:switches" ]
+     }

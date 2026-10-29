@@ -1,0 +1,17 @@
+{
+  "schema": "native-qrcode-cfi-source/v1",
+  "project": "commonlibrary/qrcode_generator",
+  "revision": "993bd298a703301b21bb60fc1e352626558a66e7",
+  "files": [
+    {
+      "relative": "BUILD.gn",
+      "original_sha256": "860f6e139e30f954dc8c3dbc69ba497575ac172ccd39587e7d4248de9e806644",
+      "final_sha256": "c5e3749364e02e0df0fb7a2f71e5770f151b9df4f3b75c40cb76160ecd592aa4"
+    }
+  ],
+  "patch": "0001-keep-real-qrcode-archive-CFI-metadata.patch",
+  "patch_sha256": "e67d77fbf7c6f298bdfc7ca4e8b49bae602abf5565aab2a7b04d96568b83d2dd",
+  "scope": "real nonempty qrcode archive metadata for ACE linked input closure",
+  "actual_gn_compile_solink_runtime_pending": true,
+  "first_artifact_behavior_gate_passed": false
+}

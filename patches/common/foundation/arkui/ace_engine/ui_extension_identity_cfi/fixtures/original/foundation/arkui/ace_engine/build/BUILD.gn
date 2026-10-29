@@ -1,0 +1,233 @@
+# Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+import("//foundation/arkui/ace_engine/build/ace_controller.gni")
+import("//foundation/arkui/ace_engine/build/ace_lib.gni")
+
+# generate libace_engine and libace_debug targets
+foreach(item, ace_platforms) {
+  platform = item.name
+  engine_config = {
+  }
+  engine_config = item.config
+  support_engines = []
+  support_engines = engine_config.js_engines
+
+  # generate libace_static lib
+  libace_static("libace_static_" + item.name) {
+    platform = item.name
+    config = {
+    }
+
+    if (defined(item.config)) {
+      config = item.config
+    }
+  }
+
+  # generate separated libace_engine lib
+  if (current_os == "ohos") {
+    build_in_engine = defined(engine_config.use_build_in_js_engine) &&
+                      engine_config.use_build_in_js_engine
+    foreach(engine, support_engines) {
+      if (!build_in_engine) {
+        # generate libace_engine
+        ace_bridge_engine("libace_engine_${engine.engine_name}_${platform}") {
+          platform = item.name
+          engine_name = engine.engine_name
+          build_type = "engine"
+          use_js_debug = false
+        }
+
+        # generate libace_engine_debug
+        if (defined(engine.have_debug) && engine.have_debug) {
+          ace_bridge_engine(
+              "libace_engine_${engine.engine_name}_debug_${platform}") {
+            platform = item.name
+            engine_name = engine.engine_name
+            build_type = "engine"
+            use_js_debug = true
+          }
+        }
+
+        # generate libace_engine_declarative
+        ace_bridge_engine(
+            "libace_engine_declarative_${engine.engine_name}_${platform}") {
+          platform = item.name
+          engine_name = engine.engine_name
+          build_type = "engine_declarative"
+        }
+      }
+
+      # generate libace_engine_pa
+      if (defined(engine_config.js_pa_support) && engine_config.js_pa_support &&
+          platform != "ohos_ng") {
+        ace_bridge_engine("libace_engine_pa_${engine.engine_name}") {
+          platform = item.name
+          engine_name = engine.engine_name
+          build_type = "engine_pa"
+          pa_engine_path = engine_config.pa_engine_path
+        }
+      }
+    }
+  }
+}
+
+# Config for reduceing eh_frame section on aosp platform to save rom size.
+config("reduce_eh_frame_config") {
+  if (!use_mingw_win && !use_mac && !use_linux) {
+    cflags = [
+      "-fno-unwind-tables",
+      "-fomit-frame-pointer",
+    ]
+    cflags_cc = cflags
+  }
+}
+
+config("ace_engine_public_config") {
+  if (use_hilog) {
+    defines = [ "USE_HILOG" ]
+  }
+}
+
+config("lto_link_config") {
+  if (enable_lto_O0) {
+    ldflags = [ "-Wl,--lto-O0" ]
+  } else {
+    ldflags = [ "-Wl,--lto-O2" ]
+  }
+  if (ace_engine_feature_enable_pgo && enable_enhanced_opt) {
+    ldflags += [
+      "-Wl,-mllvm,-force-sched-model=${ace_engine_feature_sched_model}",
+      "-Wl,-Bsymbolic",
+    ]
+    if (ace_engine_feature_enable_codemerge && !is_asan && !ace_engine_feature_enable_coverage) {
+      ldflags += [
+        "-Wl,-plugin-opt=-split-machine-functions",
+        "-Wl,-mllvm",
+        "-Wl,-fixup-unconditional-branch-unsafely",
+        "-Wl,--no-create-thunks-introduced-by-mfs",
+        "-Wl,-mllvm",
+        "-Wl,-mfs-psi-cutoff=999500",
+        "-Wl,-z",
+        "-Wl,keep-text-section-prefix",
+        "-Wl,--symbol-ordering-file=" +
+            rebase_path("${ace_engine_feature_pgo_path}/libace_compatible.txt",
+                        root_build_dir),
+        "-Wl,--no-warn-symbol-ordering",
+      ]
+    }
+    if (ace_engine_feature_enable_inst_prefetch && target_cpu == "arm64") {
+      ldflags += [
+        "-Wl,-mllvm,--aarch64-enable-inst-prefetch",
+        "-Wl,-mllvm,--mir-cachemiss-profile-l2i=" + rebase_path(
+                "${ace_engine_feature_pgo_path}/afdo/libace_compatible.z-l2i.afdo",
+                root_build_dir),
+      ]
+    }
+  }
+}
+
+ohos_shared_library("libace_compatible") {
+  public_configs = [
+    ":ace_engine_public_config",
+    "$ace_root/interfaces/inner_api/ace_kit:ace_kit_config",
+  ]
+  external_deps = []
+  if (use_hilog) {
+    external_deps += [ "hilog:libhilog" ]
+  }
+  deps = [ "$ace_root/interfaces/inner_api/ace_kit:ace_kit" ]
+  if (is_ohos) {
+    sanitize = {
+      integer_overflow = true
+      boundary_sanitize = true
+      debug = ace_sanitize_debug
+    }
+    if (is_clang && target_cpu == "arm64") {
+      ldflags = [ 
+        "-Wl,--emit-relocs",
+        "-Wl,--no-relax", 
+        "-mno-fix-cortex-a53-843419" 
+      ]
+    }
+    deps += [ "$ace_root/build:libace_static_ohos" ]
+    deps += [ "$ace_root/adapter/ohos/services/etc:ace_engine_param" ]
+    version_script = "libace.map"
+    innerapi_tags = [ "platformsdk" ]
+    configs = [ "$ace_root:ace_coverage_config" ]
+    if (is_clang && (target_cpu == "arm" || target_cpu == "arm64") &&
+        enhanced_opt) {
+      configs += [ ":lto_link_config" ]
+    }
+  } else if (use_mingw_win) {
+    deps += [ "$ace_root/build:libace_static_windows" ]
+  } else if (use_mac) {
+    deps += [ "$ace_root/build:libace_static_mac" ]
+  } else if (use_linux) {
+    deps += [ "$ace_root/build:libace_static_linux" ]
+  }
+  public_external_deps = external_deps
+  part_name = ace_engine_part
+  subsystem_name = ace_engine_subsystem
+}
+
+ohos_shared_library("libace_compatible_components") {
+  deps = [ ":libace_compatible" ]
+  if (is_ohos) {
+    deps += [ "$ace_root/frameworks/compatible:ace_compatible_source_ohos" ]
+  } else if (use_mingw_win) {
+    deps += [ "$ace_root/frameworks/compatible:ace_compatible_source_windows" ]
+  } else if (use_mac) {
+    deps += [ "$ace_root/frameworks/compatible:ace_compatible_source_mac" ]
+  } else if (use_linux) {
+    deps += [ "$ace_root/frameworks/compatible:ace_compatible_source_linux" ]
+  }
+  part_name = ace_engine_part
+  subsystem_name = ace_engine_subsystem
+}
+
+if (!is_asan && ace_engine_feature_enable_libace) {
+  ohos_shared_library("libace") {
+    external_deps = []
+    if (use_hilog) {
+      external_deps += [ "hilog:libhilog" ]
+    }
+    deps = [ "$ace_root/interfaces/inner_api/ace_kit:ace_kit" ]
+    if (is_ohos) {
+      sanitize = {
+        integer_overflow = true
+        boundary_sanitize = true
+        debug = ace_sanitize_debug
+      }
+      deps += [ "$ace_root/build:libace_static_ohos_ng" ]
+      version_script = "libace.map"
+      innerapi_tags = [ "platformsdk" ]
+      configs = [ "$ace_root:ace_coverage_config" ]
+    } else if (use_mingw_win) {
+      deps += [ "$ace_root/build:libace_static_windows" ]
+    } else if (use_mac) {
+      deps += [ "$ace_root/build:libace_static_mac" ]
+    } else if (use_linux) {
+      deps += [ "$ace_root/build:libace_static_linux" ]
+    }
+    public_external_deps = external_deps
+    part_name = ace_engine_part
+    subsystem_name = ace_engine_subsystem
+  }
+} else {
+  group("libace") {
+    # fake target for asan
+  }
+}

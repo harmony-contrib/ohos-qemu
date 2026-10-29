@@ -1,0 +1,45 @@
+{
+  "schema": "guarded-product-source-vector579/v1",
+  "scope": "ordinary product preparation; QEMU runtime not accepted",
+  "projects": {
+    "applications/standard/settings": "0aba461c750fda71977c2f5186ca0e756ecfc6ca"
+  },
+  "files": {
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/constant/Constants.ets": [
+      "1632dc3a3941b374b41782d931c1d4cb0b591a5fc0a5c78453db6387532bae4b",
+      "2fa393176ec4dd5e4f6f5a1d14fdaf3c665fb8505b003a85b7d09d7e93595c43"
+    ],
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/controller/FunctionSelectMenuController.ets": [
+      "6e29d474d039a21fb3ae13be23eca67253ebf6f5aca7d176ab00775a67589eff",
+      "3cae223c789cd344b787524a17815c7d9ef90aaf7e651924108bb63f1b15a15e"
+    ],
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/dialog/controller/SelectFunctionController.ets": [
+      "d0ba07b9503c29eca3dfb0fb88ecdf52fedba86eb1f09842d05448a2230d2345",
+      "3317c2daf0b84c27be748c9b438a3bf2bf5fd8d8dffb7d07f252e4ca57e9bab8"
+    ],
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/dialog/view/AccessibilityReConfirmDialog.ets": [
+      "56d47de1ba75f09eb02f71b652f305255b0604a75b1d503bb5b2b9e9a5113d6b",
+      "8afc78f9a09505e1e8d359edb80b37621e7ecef4747e8b98d2b831aaabef024a"
+    ],
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/dialog/view/AccessibilityShortKeyDialog.ets": [
+      "b87c542ac8ca56f4f55ab92d702863c325d9bc0ef3c1ca500e8fee2670bb09b1",
+      "af4f54d63d4c90b1269447a557c80e9bf528b636b1c17d3d44cc8976c9ac60d4"
+    ],
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/dialog/view/ReConfirmDialogComponent.ets": [
+      "cfaf98d8e5fabe56cf1f6912f799b7b59cb5cc65a0e4cf4ffab0278437833a94",
+      "48f31ace9d1e6effecb293ccf61cfeb652a5f6339c7bea65e94f1c3b91859a09"
+    ],
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/utils/AccessibilityCommonModel.ets": [
+      "2f25a5d31d381c2b486b98865023d9b043c2f0222984bc37ff2e3e12e88e8dc4",
+      "32efae2af3d7127f51a65d83b9bef0a9eafea01a4238781d363bac4ffa5773ec"
+    ],
+    "applications/standard/settings/product/phone/src/main/resources/base/element/string.json": [
+      "d61c7fc0a57f6c0400db326abf854c6248387023b40adeb9f21c26bd35d01d58",
+      "716027e4e21bb3721f148f38c2c88d78e14ac04541a1b51addf046336b5b17c7"
+    ],
+    "applications/standard/settings/product/phone/src/main/resources/zh_CN/element/string.json": [
+      "ae025701c3dfa5fe53cd191f3bdb2254e3323e9b820efd756dbc4249f4347a7a",
+      "9e738c2d0d780e74ed1abdf2416a2821c1e2935936e9c3be367d107452c8bd5e"
+    ]
+  }
+}

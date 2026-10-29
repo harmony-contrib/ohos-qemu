@@ -1,0 +1,25 @@
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/BUILD.gn b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/BUILD.gn
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/BUILD.gn
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/BUILD.gn
+@@ -121,3 +121,6 @@
+     defines = [ "STA_INSTANCE_MAX_NUM=$wifi_feature_with_sta_num" ]
++    if (!wifi_feature_with_hdi_chip_supported) {
++      defines += [ "WIFI_SOFTWARE_SCAN_BACKEND" ]
++    }
+     if (wifi_feature_with_local_security_detect) {
+       defines += [ "WIFI_LOCAL_SECURITY_DETECT_ENABLE" ]
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_state_machine.cpp b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_state_machine.cpp
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_state_machine.cpp
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_state_machine.cpp
+@@ -125,5 +125,11 @@
+ 
+     /* init supportHwPnoFlag value */
++#ifdef WIFI_SOFTWARE_SCAN_BACKEND
++    // The WPA HDI has no PNO offload API. Use the existing timed software path
++    // instead of accepting a persisted hardware-only configuration.
++    supportHwPnoFlag = false;
++#else
+     supportHwPnoFlag = WifiSettings::GetInstance().GetSupportHwPnoFlag(m_instId);
++#endif
+ 
+     if (!InitialStateMachine("ScanStateMachine")) {

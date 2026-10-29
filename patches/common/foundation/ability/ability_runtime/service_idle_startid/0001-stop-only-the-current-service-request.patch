@@ -1,0 +1,484 @@
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets
+@@ -36,9 +36,11 @@
+   private requestQueue: Promise<void> = Promise.resolve();
+   private active: boolean = true;
+   private lifecycle: number = 0;
++  private latestStartId: number = 0;
+ 
+   async onCreate(want: Want) {
+     this.active = true;
++    this.latestStartId = 0;
+     ++this.lifecycle;
+     LogUtil.showInfo(TAG, 'onCreate');
+   }
+@@ -48,10 +50,30 @@
+       return;
+     }
+     const lifecycle: number = this.lifecycle;
++    this.latestStartId = startId;
+     const action: string = want?.action?.toString() ?? '';
+     LogUtil.showInfo(TAG, `onRequest abilityName:${want?.abilityName} bundleName:${want?.bundleName} action:${action}`);
+     // Serialize notification actions until the real configuration operation completes.
+-    this.requestQueue = this.requestQueue.then(() => this.handleRequest(action, lifecycle));
++    this.requestQueue = this.requestQueue.then(() => this.handleRequest(action, lifecycle))
++      .then(() => this.stopIfIdle(startId, lifecycle));
++  }
++
++  private async stopIfIdle(startId: number, lifecycle: number): Promise<void> {
++    if (!this.active || lifecycle !== this.lifecycle || this.latestStartId !== startId) {
++      return;
++    }
++    try {
++      const context = this.context;
++      const stopped: boolean = await context.terminateSelfIfStartId(startId);
++      if (this.active && lifecycle === this.lifecycle) {
++        LogUtil.info(`${TAG} conditional idle stop startId:${startId} accepted:${stopped}`);
++      }
++      // A newer AMS request makes stopped=false. Keep this queue usable for it.
++    } catch (e) {
++      if (this.active && lifecycle === this.lifecycle) {
++        LogUtil.error(`${TAG} conditional idle stop failed startId:${startId} code:${e?.code} message:${e?.message}`);
++      }
++    }
+   }
+ 
+   private async handleRequest(action: string, lifecycle: number): Promise<void> {
+--- a/foundation/ability/ability_runtime/frameworks/js/napi/service_extension_context/service_extension_context.js
++++ b/foundation/ability/ability_runtime/frameworks/js/napi/service_extension_context/service_extension_context.js
+@@ -119,6 +119,13 @@
+     return this.__context_impl__.terminateSelf(callback);
+   }
+ 
++  terminateSelfIfStartId(expectedStartId) {
++    if (arguments.length !== 1) {
++      throw new ParamError();
++    }
++    return this.__context_impl__.terminateSelfIfStartId(expectedStartId);
++  }
++
+   requestModalUIExtension(want, callback) {
+     return this.__context_impl__.requestModalUIExtension(want, callback);
+   }
+--- a/foundation/ability/ability_runtime/frameworks/native/ability/native/js_service_extension_context.cpp
++++ b/foundation/ability/ability_runtime/frameworks/native/ability/native/js_service_extension_context.cpp
+@@ -16,7 +16,9 @@
+ #include "js_service_extension_context.h"
+ 
+ #include <chrono>
++#include <cmath>
+ #include <cstdint>
++#include <limits>
+ 
+ #include "ability_business_error.h"
+ #include "ability_manager_client.h"
+@@ -149,6 +151,11 @@
+         GET_NAPI_INFO_AND_CALL(env, info, JsServiceExtensionContext, OnTerminateAbility);
+     }
+ 
++    static napi_value TerminateAbilityIfStartId(napi_env env, napi_callback_info info)
++    {
++        GET_NAPI_INFO_AND_CALL(env, info, JsServiceExtensionContext, OnTerminateAbilityIfStartId);
++    }
++
+     static napi_value ConnectAbility(napi_env env, napi_callback_info info)
+     {
+         GET_NAPI_INFO_AND_CALL(env, info, JsServiceExtensionContext, OnConnectAbility);
+@@ -1035,6 +1042,50 @@
+         return result;
+     }
+ 
++    napi_value OnTerminateAbilityIfStartId(napi_env env, NapiCallbackInfo& info)
++    {
++        double supplied = 0;
++        napi_valuetype suppliedType = napi_undefined;
++        if (info.argc != ARGC_ONE ||
++            napi_typeof(env, info.argv[INDEX_ZERO], &suppliedType) != napi_ok || suppliedType != napi_number ||
++            napi_get_value_double(env, info.argv[INDEX_ZERO], &supplied) != napi_ok ||
++            !std::isfinite(supplied) || supplied <= 0 ||
++            supplied > std::numeric_limits<int32_t>::max() || std::floor(supplied) != supplied) {
++            ThrowInvalidParamError(env, "expectedStartId must be one positive int32 from onRequest");
++            return CreateJsUndefined(env);
++        }
++        // Capture the delivered ID now, before any async execute or newer onRequest.
++        const int32_t expectedStartId = static_cast<int32_t>(supplied);
++        auto innerErrCode = std::make_shared<ErrCode>(ERR_OK);
++        auto stopped = std::make_shared<bool>(false);
++        NapiAsyncTask::ExecuteCallback execute = [weak = context_, expectedStartId, innerErrCode, stopped]() {
++            auto context = weak.lock();
++            if (!context) {
++                *innerErrCode = static_cast<int32_t>(AbilityErrorCode::ERROR_CODE_INVALID_CONTEXT);
++                return;
++            }
++            *innerErrCode = context->TerminateAbilityIfStartId(expectedStartId, *stopped);
++        };
++        NapiAsyncTask::CompleteCallback complete =
++            [innerErrCode, stopped](napi_env env, NapiAsyncTask& task, int32_t status) {
++                HandleScope handleScope(env);
++                if (status != napi_ok) {
++                    task.Reject(env, CreateJsError(env, static_cast<int32_t>(AbilityErrorCode::ERROR_CODE_INNER),
++                        "conditional termination async task did not complete"));
++                } else if (*innerErrCode == ERR_OK) {
++                    task.Resolve(env, CreateJsValue(env, *stopped));
++                } else if (*innerErrCode == static_cast<int32_t>(AbilityErrorCode::ERROR_CODE_INVALID_CONTEXT)) {
++                    task.Reject(env, CreateJsError(env, *innerErrCode, "context is released"));
++                } else {
++                    task.Reject(env, CreateJsErrorByNativeErr(env, *innerErrCode));
++                }
++            };
++        napi_value result = nullptr;
++        NapiAsyncTask::ScheduleHighQos("JSServiceExtensionContext::OnTerminateAbilityIfStartId",
++            env, CreateAsyncTaskWithLastParam(env, nullptr, std::move(execute), std::move(complete), &result));
++        return result;
++    }
++
+     napi_value OnConnectAbility(napi_env env, NapiCallbackInfo& info)
+     {
+         HITRACE_METER_NAME(HITRACE_TAG_ABILITY_MANAGER, __PRETTY_FUNCTION__);
+@@ -1704,6 +1755,8 @@
+     BindNativeFunction(env, object, "startAbilityAsCaller",
+         moduleName, JsServiceExtensionContext::StartAbilityAsCaller);
+     BindNativeFunction(env, object, "terminateSelf", moduleName, JsServiceExtensionContext::TerminateAbility);
++    BindNativeFunction(env, object, "terminateSelfIfStartId", moduleName,
++        JsServiceExtensionContext::TerminateAbilityIfStartId);
+     BindNativeFunction(
+         env, object, "connectServiceExtensionAbility", moduleName, JsServiceExtensionContext::ConnectAbility);
+     BindNativeFunction(env, object, "disconnectAbility",
+--- a/foundation/ability/ability_runtime/frameworks/native/appkit/ability_runtime/service_extension_context.cpp
++++ b/foundation/ability/ability_runtime/frameworks/native/appkit/ability_runtime/service_extension_context.cpp
+@@ -228,6 +228,12 @@
+     return ret;
+ }
+ 
++ErrCode ServiceExtensionContext::TerminateAbilityIfStartId(int32_t expectedStartId, bool &stopped)
++{
++    return AAFwk::AbilityManagerClient::GetInstance()->TerminateServiceExtensionAbilityIfStartId(
++        token_, expectedStartId, stopped);
++}
++
+ ErrCode ServiceExtensionContext::TerminateAbility()
+ {
+     TAG_LOGI(AAFwkTag::APPKIT, "begin");
+--- a/foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_client.h
++++ b/foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_client.h
+@@ -529,6 +529,9 @@
+      */
+     ErrCode TerminateAbility(sptr<IRemoteObject> token, int resultCode, const Want *resultWant);
+ 
++    int32_t TerminateServiceExtensionAbilityIfStartId(const sptr<IRemoteObject> &token,
++        int32_t expectedStartId, bool &stopped);
++
+     /**
+      * StartSelf, start the ability itself with token.
+      *
+--- a/foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_interface.h
++++ b/foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_interface.h
+@@ -23,6 +23,7 @@
+ 
+ #include "aa_tools/ability_start_with_wait_observer_interface.h"
+ #include "ability_connect_callback_interface.h"
++#include "ability_manager_errors.h"
+ #include "ability_manager_ipc_interface_code.h"
+ #include "ability_running_info.h"
+ #include "ability_scheduler_interface.h"
+@@ -2903,6 +2904,13 @@
+     {
+         return ERR_OK;
+     }
++    // Appended to preserve existing virtual-method positions. Legacy implementations fail closed.
++    virtual int32_t TerminateServiceExtensionAbilityIfStartId(const sptr<IRemoteObject> &token,
++        int32_t expectedStartId, bool &stopped)
++    {
++        stopped = false;
++        return ERR_CAPABILITY_NOT_SUPPORT;
++    }
+ };
+ }  // namespace AAFwk
+ }  // namespace OHOS
+--- a/foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_ipc_interface_code.h
++++ b/foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_ipc_interface_code.h
+@@ -779,6 +779,9 @@
+ 
+     // unregister sa interceptor
+     UNREGISTER_SA_INTERCEPTOR = 6178,
++
++    // Stop only the self SERVICE extension generation whose last dispatched startId matches.
++    TERMINATE_SERVICE_EXTENSION_IF_START_ID = 6179,
+ };
+ }  // namespace AAFwk
+ }  // namespace OHOS
+--- a/foundation/ability/ability_runtime/interfaces/kits/native/appkit/ability_runtime/service_extension_context.h
++++ b/foundation/ability/ability_runtime/interfaces/kits/native/appkit/ability_runtime/service_extension_context.h
+@@ -164,6 +164,9 @@
+      */
+     ErrCode TerminateAbility();
+ 
++    // Stop this SERVICE extension only if no newer start has been accepted by AMS.
++    ErrCode TerminateAbilityIfStartId(int32_t expectedStartId, bool &stopped);
++
+     ErrCode RequestModalUIExtension(const Want &want);
+ 
+     ErrCode PreStartMission(const std::string& bundleName, const std::string& moduleName,
+--- a/foundation/ability/ability_runtime/services/abilitymgr/include/ability_connect_manager.h
++++ b/foundation/ability/ability_runtime/services/abilitymgr/include/ability_connect_manager.h
+@@ -86,6 +86,9 @@
+      */
+     int TerminateAbility(const sptr<IRemoteObject> &token);
+ 
++    int32_t TerminateServiceExtensionAbilityIfStartId(const sptr<IRemoteObject> &token,
++        int32_t expectedStartId, bool &stopped);
++
+     /**
+      * StopServiceAbility with request.
+      *
+--- a/foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_proxy.h
++++ b/foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_proxy.h
+@@ -448,6 +448,9 @@
+     virtual int TerminateAbility(
+         const sptr<IRemoteObject> &token, int resultCode, const Want *resultWant = nullptr) override;
+ 
++    int32_t TerminateServiceExtensionAbilityIfStartId(const sptr<IRemoteObject> &token,
++        int32_t expectedStartId, bool &stopped) override;
++
+     /**
+      * BackToCallerAbilityWithResult, return to the caller ability.
+      *
+--- a/foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_service.h
++++ b/foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_service.h
+@@ -631,6 +631,9 @@
+     virtual int TerminateAbility(const sptr<IRemoteObject> &token, int resultCode = DEFAULT_INVAL_VALUE,
+         const Want *resultWant = nullptr) override;
+ 
++    int32_t TerminateServiceExtensionAbilityIfStartId(const sptr<IRemoteObject> &token,
++        int32_t expectedStartId, bool &stopped) override;
++
+     /**
+      * TerminateUIServiceExtensionAbility, terminate the UIServiceExtensionAbility.
+      *
+--- a/foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_stub.h
++++ b/foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_stub.h
+@@ -76,6 +76,7 @@
+ 
+ private:
+     int TerminateAbilityInner(MessageParcel &data, MessageParcel &reply);
++    int TerminateServiceExtensionAbilityIfStartIdInner(MessageParcel &data, MessageParcel &reply);
+     int BackToCallerInner(MessageParcel &data, MessageParcel &reply);
+     int32_t TerminateUIServiceExtensionAbilityInner(MessageParcel &data, MessageParcel &reply);
+     int TerminateUIExtensionAbilityInner(MessageParcel &data, MessageParcel &reply);
+--- a/foundation/ability/ability_runtime/services/abilitymgr/src/ability_connect_manager.cpp
++++ b/foundation/ability/ability_runtime/services/abilitymgr/src/ability_connect_manager.cpp
+@@ -118,6 +118,46 @@
+     return TerminateAbilityInner(token);
+ }
+ 
++int32_t AbilityConnectManager::TerminateServiceExtensionAbilityIfStartId(const sptr<IRemoteObject> &token,
++    int32_t expectedStartId, bool &stopped)
++{
++    stopped = false;
++    if (!token || expectedStartId <= 0) {
++        return ERR_INVALID_VALUE;
++    }
++    std::lock_guard guard(serialMutex_);
++    // Never use a cached/terminating record or a replacement's URI as this self token.
++    auto abilityRecord = GetExtensionByTokenFromServiceMap(token);
++    CHECK_POINTER_AND_RETURN(abilityRecord, ERR_CONNECT_MANAGER_NULL_ABILITY_RECORD);
++    const auto &info = abilityRecord->GetAbilityInfo();
++    if (info.type != AppExecFwk::AbilityType::EXTENSION ||
++        info.extensionAbilityType != AppExecFwk::ExtensionAbilityType::SERVICE) {
++        return ERR_WRONG_INTERFACE_CALL;
++    }
++    if (abilityRecord->GetStartId() != expectedStartId || abilityRecord->IsTerminating()) {
++        TAG_LOGI(AAFwkTag::EXT, "conditional stop stale, expected=%{public}d current=%{public}d record=%{public}d",
++            expectedStartId, abilityRecord->GetStartId(), abilityRecord->GetRecordId());
++        return ERR_OK;
++    }
++    {
++        // StartAbilityLocked takes serialMutex_ before this same queue lock. A request
++        // accepted while a command is pending has not yet received its new startId.
++        std::lock_guard pendingGuard(startServiceReqListLock_);
++        auto pending = startServiceReqList_.find(abilityRecord->GetURI());
++        if (pending != startServiceReqList_.end() && pending->second && !pending->second->empty()) {
++            TAG_LOGI(AAFwkTag::EXT, "conditional stop has pending start, expected=%{public}d record=%{public}d",
++                expectedStartId, abilityRecord->GetRecordId());
++            return ERR_OK;
++        }
++    }
++    TAG_LOGI(AAFwkTag::EXT, "conditional stop accepted, startId=%{public}d record=%{public}d",
++        expectedStartId, abilityRecord->GetRecordId());
++    MoveToTerminatingMap(abilityRecord);
++    int32_t result = TerminateAbilityLocked(token);
++    stopped = result == ERR_OK;
++    return result;
++}
++
+ int AbilityConnectManager::TerminateAbilityInner(const sptr<IRemoteObject> &token)
+ {
+     auto abilityRecord = GetExtensionByTokenFromServiceMap(token);
+--- a/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_client.cpp
++++ b/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_client.cpp
+@@ -494,6 +494,15 @@
+     CHECK_POINTER_RETURN_NOT_CONNECTED(abms);
+     TAG_LOGD(AAFwkTag::ABILITYMGR, "call");
+     return abms->TerminateAbility(token, resultCode, resultWant);
++}
++
++int32_t AbilityManagerClient::TerminateServiceExtensionAbilityIfStartId(const sptr<IRemoteObject> &token,
++    int32_t expectedStartId, bool &stopped)
++{
++    stopped = false;
++    auto abms = GetAbilityManager();
++    CHECK_POINTER_RETURN_NOT_CONNECTED(abms);
++    return abms->TerminateServiceExtensionAbilityIfStartId(token, expectedStartId, stopped);
+ }
+ 
+ ErrCode AbilityManagerClient::StartSelf(sptr<IRemoteObject> token)
+--- a/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_proxy.cpp
++++ b/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_proxy.cpp
+@@ -1250,6 +1250,34 @@
+         return error;
+     }
+     return reply.ReadInt32();
++}
++
++int32_t AbilityManagerProxy::TerminateServiceExtensionAbilityIfStartId(const sptr<IRemoteObject> &token,
++    int32_t expectedStartId, bool &stopped)
++{
++    stopped = false;
++    if (!token || expectedStartId <= 0) {
++        return ERR_INVALID_VALUE;
++    }
++    MessageParcel data;
++    MessageParcel reply;
++    MessageOption option;
++    if (!WriteInterfaceToken(data) || !data.WriteRemoteObject(token) || !data.WriteInt32(expectedStartId)) {
++        return INNER_ERR;
++    }
++    int32_t transport = SendRequest(AbilityManagerInterfaceCode::TERMINATE_SERVICE_EXTENSION_IF_START_ID,
++        data, reply, option);
++    if (transport != NO_ERROR) {
++        return transport;
++    }
++    int32_t result = INNER_ERR;
++    bool accepted = false;
++    if (!reply.ReadInt32(result) || !reply.ReadBool(accepted) || reply.GetReadableBytes() != 0 ||
++        (result != ERR_OK && accepted)) {
++        return INNER_ERR;
++    }
++    stopped = accepted;
++    return result;
+ }
+ 
+ int AbilityManagerProxy::BackToCallerAbilityWithResult(const sptr<IRemoteObject> &token, int resultCode,
+--- a/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp
++++ b/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp
+@@ -4909,9 +4909,20 @@
+         return result;
+     }
+ 
++    // The modal provider must not trust caller-supplied reserved identity fields.
++    // Derive the local caller from the token validated above, before preserving
++    // the existing root-host override for nested UI extensions.
++    UpdateCallerInfoUtil::GetInstance().UpdateCallerInfoFromToken(abilityRequest.want, callerToken);
+     sptr<IRemoteObject> parentToken = extensionSessionInfo->parentToken;
+     if (parentToken && parentToken != callerToken) {
+         UpdateCallerInfoUtil::GetInstance().UpdateCallerInfoFromToken(abilityRequest.want, parentToken);
++    }
++    // The network dialog edits the direct calling application's policy, even
++    // when that application itself is a hosted UIExtension. Do not confuse the
++    // preserved root-host caller identity above with this immediate caller.
++    if (abilityInfo.bundleName == "com.ohos.communicationsetting" &&
++        abilityInfo.name == "UIExtensionProvider") {
++        abilityRequest.want.SetParam("ohos.net.policy.callerUid", callerRecord->GetUid());
+     }
+ 
+     result = JudgeAbilityVisibleControl(abilityInfo);
+@@ -5192,6 +5203,29 @@
+         return ERR_OK;
+     }
+     return TerminateAbilityWithFlag(token, resultCode, resultWant, true);
++}
++
++int32_t AbilityManagerService::TerminateServiceExtensionAbilityIfStartId(const sptr<IRemoteObject> &token,
++    int32_t expectedStartId, bool &stopped)
++{
++    stopped = false;
++    if (expectedStartId <= 0 || !VerificationAllToken(token)) {
++        return ERR_INVALID_VALUE;
++    }
++    auto abilityRecord = Token::GetAbilityRecordByToken(token);
++    CHECK_POINTER_AND_RETURN(abilityRecord, ERR_INVALID_VALUE);
++    if (!JudgeSelfCalled(abilityRecord)) {
++        return CHECK_PERMISSION_FAILED;
++    }
++    const auto &info = abilityRecord->GetAbilityInfo();
++    if (info.type != AppExecFwk::AbilityType::EXTENSION ||
++        info.extensionAbilityType != AppExecFwk::ExtensionAbilityType::SERVICE || IsSystemUiApp(info)) {
++        return ERR_WRONG_INTERFACE_CALL;
++    }
++    auto userId = abilityRecord->GetApplicationInfo().uid / BASE_USER_RANGE;
++    auto connectManager = GetConnectManagerByUserId(userId, info.extensionAbilityType);
++    CHECK_POINTER_AND_RETURN(connectManager, ERR_INVALID_VALUE);
++    return connectManager->TerminateServiceExtensionAbilityIfStartId(token, expectedStartId, stopped);
+ }
+ 
+ int AbilityManagerService::StartSelf(sptr<IRemoteObject> token)
+--- a/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_stub.cpp
++++ b/foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_stub.cpp
+@@ -55,6 +55,9 @@
+     if (interfaceCode == AbilityManagerInterfaceCode::TERMINATE_ABILITY) {
+         return TerminateAbilityInner(data, reply);
+     }
++    if (interfaceCode == AbilityManagerInterfaceCode::TERMINATE_SERVICE_EXTENSION_IF_START_ID) {
++        return TerminateServiceExtensionAbilityIfStartIdInner(data, reply);
++    }
+     if (interfaceCode == AbilityManagerInterfaceCode::MINIMIZE_ABILITY) {
+         return MinimizeAbilityInner(data, reply);
+     }
+@@ -1257,6 +1260,21 @@
+     reply.WriteInt32(result);
+     if (resultWant != nullptr) {
+         delete resultWant;
++    }
++    return NO_ERROR;
++}
++
++int AbilityManagerStub::TerminateServiceExtensionAbilityIfStartIdInner(MessageParcel &data, MessageParcel &reply)
++{
++    sptr<IRemoteObject> token = data.ReadRemoteObject();
++    int32_t expectedStartId = 0;
++    if (!token || !data.ReadInt32(expectedStartId) || expectedStartId <= 0 || data.GetReadableBytes() != 0) {
++        return IPC_STUB_ERR;
++    }
++    bool stopped = false;
++    int32_t result = TerminateServiceExtensionAbilityIfStartId(token, expectedStartId, stopped);
++    if (!reply.WriteInt32(result) || !reply.WriteBool(stopped)) {
++        return IPC_STUB_ERR;
+     }
+     return NO_ERROR;
+ }
+--- a/interface/sdk-js/api/application/ServiceExtensionContext.d.ts
++++ b/interface/sdk-js/api/application/ServiceExtensionContext.d.ts
+@@ -820,6 +820,23 @@
+   terminateSelf(): Promise<void>;
+ 
+   /**
++   * Requests termination only when this SERVICE extension has no newer accepted start request.
++   * Pass the exact positive startId delivered to onRequest after completing that request's work.
++   * A false result leaves the service running so newer requests can continue.
++   *
++   * @param { int } expectedStartId - Positive int32 startId delivered to this instance's onRequest.
++   * @returns { Promise<boolean> } True when the matching instance entered termination, false for a newer request.
++   * @throws { BusinessError } 401 - expectedStartId is not a positive int32.
++   * @throws { BusinessError } 16000011 - The context does not exist.
++   * @throws { BusinessError } 16000050 - The service, token or transport failed.
++   * @syscap SystemCapability.Ability.AbilityRuntime.Core
++   * @systemapi
++   * @stagemodelonly
++   * @since 26.0.0 dynamic
++   */
++  terminateSelfIfStartId(expectedStartId: int): Promise<boolean>;
++
++  /**
+    * Connects this ability to a ServiceExtensionAbility. This API can be called only on the main thread.
+    *
+    * > **NOTE**

@@ -1,0 +1,36 @@
+diff --git a/applications/standard/calendardata/BUILD.gn b/applications/standard/calendardata/BUILD.gn
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/calendardata/BUILD.gn
+@@ -0,0 +1,23 @@
++# Copyright (c) 2026 Harmony Contrib
++# SPDX-License-Identifier: Apache-2.0
++import("//build/ohos.gni")
++
++# Build the provider from the same fixed calendar_data checkout as its NAPI.
++# Hvigor resolves the five local HARs; they must not remain external imports.
++ohos_app("calendardata_hap") {
++  # Hvigor owns Stage resources and all five local HAR dependencies.
++  deps = []
++  certificate_profile = "signature/Calendardata.p7b"
++  hap_name = "CalendarData"
++  part_name = "calendar_data"
++  subsystem_name = "applications"
++  module_install_dir = "app/com.ohos.calendardata"
++  sdk_home = "//prebuilts/ohos-sdk/linux"
++  sdk_type_name = [ "sdk.dir" ]
++  assemble_type = "assembleHap"
++  build_level = "module"
++  build_modules = [ "entry" ]
++  js_build_mode = "release"
++}
++# No separately downloaded CalendarData HAP is used by this target.
++# EditorUIExtensionAbility is still absent and is not claimed by this repair.
+diff --git a/applications/standard/calendardata/bundle.json b/applications/standard/calendardata/bundle.json
+--- a/applications/standard/calendardata/bundle.json
++++ b/applications/standard/calendardata/bundle.json
+@@ -56,3 +56,4 @@
+                 "service_group": [
++                    "//applications/standard/calendardata:calendardata_hap",
+                     "//applications/standard/calendardata/calendarmanager:calendarmanager",
+                     "//applications/standard/calendardata/calendarmanager/cj:cj_calendar_manager_ffi"

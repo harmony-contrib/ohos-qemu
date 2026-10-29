@@ -1,0 +1,28 @@
+diff --git a/applications/standard/hap/BUILD.gn b/applications/standard/hap/BUILD.gn
+--- a/applications/standard/hap/BUILD.gn
++++ b/applications/standard/hap/BUILD.gn
+@@ -218,11 +218,19 @@
+   subsystem_name = "applications"
+ }
+
+-ohos_prebuilt_etc("mms_hap") {
+-  source = hap_src_dir + "Mms.hap"
+-  module_install_dir = "app/com.ohos.mms"
+-  part_name = "prebuilt_hap"
+-  subsystem_name = "applications"
++if (defined(product_name) &&
++    (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++     product_name == "x86_64_virt")) {
++  group("mms_hap") {
++    deps = [ "//applications/standard/mms:mms_hap" ]
++  }
++} else {
++  ohos_prebuilt_etc("mms_hap") {
++    source = hap_src_dir + "Mms.hap"
++    module_install_dir = "app/com.ohos.mms"
++    part_name = "prebuilt_hap"
++    subsystem_name = "applications"
++  }
+ }
+
+ ohos_prebuilt_etc("contacts_hap") {

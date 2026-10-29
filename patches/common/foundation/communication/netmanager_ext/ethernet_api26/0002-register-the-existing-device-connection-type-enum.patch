@@ -1,0 +1,28 @@
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/ethernet/ethernet_module.cpp b/foundation/communication/netmanager_ext/frameworks/js/napi/ethernet/ethernet_module.cpp
+--- a/foundation/communication/netmanager_ext/frameworks/js/napi/ethernet/ethernet_module.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/ethernet/ethernet_module.cpp
+@@ -20,6 +20,7 @@
+ #include "get_all_active_ifaces_context.h"
+ #include "get_device_infomation.h"
+ #include "get_mac_address_context.h"
++#include "ethernet_device_info.h"
+ #include "get_iface_config_context.h"
+ #include "mac_address_info.h"
+ #include "interface_configuration.h"
+@@ -198,6 +199,16 @@ napi_value RegisterEthernetInterface(napi_env env, napi_value exports)
+     napi_value ipSetMOdes = NapiUtils::CreateObject(env);
+     NapiUtils::DefineProperties(env, ipSetMOdes, ipSetMode);
+     NapiUtils::SetNamedProperty(env, exports, IP_SET_MODE, ipSetMOdes);
++    // The public API returns this native enum in EthernetDeviceInfo. Export
++    // the same values, independently of the optional firewall feature.
++    napi_value connectionTypes = NapiUtils::CreateObject(env);
++    NapiUtils::DefineProperties(env, connectionTypes, {
++        DECLARE_NAPI_STATIC_PROPERTY("BUILT_IN",
++            NapiUtils::CreateInt32(env, static_cast<int32_t>(DeviceConnectionType::BUILT_IN))),
++        DECLARE_NAPI_STATIC_PROPERTY("EXTERNAL",
++            NapiUtils::CreateInt32(env, static_cast<int32_t>(DeviceConnectionType::EXTERNAL))),
++    });
++    NapiUtils::SetNamedProperty(env, exports, "DeviceConnectionType", connectionTypes);
+     AddCleanupHook(env);
+     return exports;
+ }

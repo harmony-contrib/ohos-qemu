@@ -1,0 +1,205 @@
+diff --git a/device/qemu/common/virt_full/kernel/BUILD.gn b/device/qemu/common/virt_full/kernel/BUILD.gn
+--- a/device/qemu/common/virt_full/kernel/BUILD.gn
++++ b/device/qemu/common/virt_full/kernel/BUILD.gn
+@@ -41,6 +41,12 @@
+ action("build_kernel") {
+-  script = "build_kernel.sh"
+-  sources = [ kernel_source_dir ]
++  script = "build_kernel_with_evidence.sh"
++  # A directory's mtime does not change when a nested source is patched.
++  # Preparation hashes actual kernel/config/HDI inputs before GN traversal.
++  sources = [
++    kernel_source_dir,
++    "//.ohos-qemu-kernel-inputs.json",
++  ]
+   outputs = [ "$root_build_dir/packages/phone/images/$kernel_image" ]
++  outputs += [ "$root_build_dir/packages/phone/images/kernel-inputs.json" ]
+   outputs += kernel_module_outputs
+   args = [
+diff --git a/device/qemu/common/virt_full/kernel/build_kernel_with_evidence.sh b/device/qemu/common/virt_full/kernel/build_kernel_with_evidence.sh
+new file mode 100755
+--- /dev/null
++++ b/device/qemu/common/virt_full/kernel/build_kernel_with_evidence.sh
+@@ -0,0 +1,21 @@
++#!/usr/bin/env bash
++# Only an executed, successful kernel build may create this certificate.
++set -euo pipefail
++[ "$#" -eq 7 ] || { echo "expected seven GN kernel arguments" >&2; exit 2; }
++SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++SOURCE_ROOT="$(cd "${SCRIPT_DIR}/../../../../.." && pwd)"
++HELPER="${SCRIPT_DIR}/kernel_input_evidence.py"
++EXPECTED="$(python3 "${HELPER}" check-inputs --source-root "${SOURCE_ROOT}")"
++IMAGE_DIR="$(python3 -c 'from pathlib import Path; import sys; print((Path(sys.argv[1]) / sys.argv[2]).resolve())' "${SCRIPT_DIR}" "$3")"
++MODULES_DIR="$(python3 -c 'from pathlib import Path; import sys; print(Path(sys.argv[1]).resolve())' "$7")"
++case "$6" in
++  arm) IMAGE=zImage ;;
++  arm64|riscv64) IMAGE=Image ;;
++  x86_64) IMAGE=bzImage ;;
++  *) echo "unsupported kernel architecture: $6" >&2; exit 2 ;;
++esac
++# The old file-existence shortcut has no source identity. Never certify it.
++OHOS_SKIP_KERNEL_REBUILD_IF_COMPLETE=0 bash "${SCRIPT_DIR}/build_kernel.sh" "$@"
++python3 "${HELPER}" record --source-root "${SOURCE_ROOT}" \
++  --expected-inputs-sha256 "${EXPECTED}" --image "${IMAGE_DIR}/${IMAGE}" \
++  --modules-dir "${MODULES_DIR}" --arch "$6" --certificate "${IMAGE_DIR}/kernel-inputs.json"
+diff --git a/device/qemu/common/virt_full/kernel/kernel_input_evidence.py b/device/qemu/common/virt_full/kernel/kernel_input_evidence.py
+new file mode 100644
+--- /dev/null
++++ b/device/qemu/common/virt_full/kernel/kernel_input_evidence.py
+@@ -0,0 +1,156 @@
++#!/usr/bin/env python3
++"""Bind an actually rebuilt QEMU kernel and modules to prepared source inputs."""
++import argparse
++import hashlib
++import json
++import os
++from pathlib import Path
++import subprocess
++
++ROOTS = (
++    "kernel/linux/linux-6.6", "kernel/linux/common_modules",
++    "device/qemu/common/virt_full/kernel", "drivers/hdf_core",
++    "third_party/bounds_checking_function", "third_party/FreeBSD/sys/dev/evdev",
++    "vendor/ohemu/virt/hdf_config/khdf",
++    "kernel/linux/linux-5.10/scripts/ohos-check-dir.sh",
++)
++MODULES = (
++    "rtw89_core.ko", "rtw89_pci.ko", "rtw89_8852a.ko", "rtw89_8852ae.ko",
++    "mt7601u.ko", "mac80211_hwsim.ko", "virt_wifi.ko", "libarc4.ko",
++    "mac80211.ko", "cfg80211.ko", "iwlwifi.ko", "iwlmvm.ko",
++)
++KIND = "qemu_linux_6_6_prepared_kernel_inputs"
++OUTPUT_KIND = "qemu_linux_6_6_built_kernel_evidence"
++
++def sha(path):
++    digest = hashlib.sha256()
++    with path.open("rb") as stream:
++        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
++            digest.update(chunk)
++    return digest.hexdigest()
++
++def collect(root, roots=ROOTS):
++    root = root.resolve()
++    files = {}
++    for relative in roots:
++        source = root / relative
++        if not source.exists():
++            raise ValueError(f"missing kernel input root: {relative}")
++        directory = source if source.is_dir() else source.parent
++        scope = "." if source.is_dir() else source.name
++        output = subprocess.run(
++            ["git", "-C", str(directory), "--literal-pathspecs", "ls-files", "-z",
++             "--cached", "--others", "--exclude-standard", "--", scope],
++            check=True, capture_output=True).stdout
++        found = 0
++        for raw in output.split(b"\0"):
++            if not raw:
++                continue
++            path = directory / os.fsdecode(raw)
++            name = str(path.relative_to(root))
++            # Kernel/HDF compilation may create ignored products in linked
++            # source directories. They are outputs, never source identities.
++            if (path.suffix in (".o", ".a", ".ko", ".cmd", ".pyc", ".hcb") or
++                    path.name.endswith(".o.d") or "__pycache__" in path.parts):
++                continue
++            if path.is_symlink():
++                target = os.readlink(path)
++                value = {"symlink": target}
++                if path.is_file():
++                    value["target_sha256"] = sha(path)
++            elif path.is_file():
++                value = {"sha256": sha(path), "mode": path.stat().st_mode & 0o777}
++            else:
++                raise ValueError(f"missing/non-file kernel input: {name}")
++            files[name] = value
++            found += 1
++        if not found:
++            raise ValueError(f"empty kernel input root: {relative}")
++    tree_sha = hashlib.sha256(json.dumps(files, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
++    return {"schema_version": 1, "kind": KIND, "roots": list(roots),
++            "source_tree_sha256": tree_sha, "file_count": len(files), "files": files}
++
++def load_inputs(root):
++    path = root / ".ohos-qemu-kernel-inputs.json"
++    document = json.loads(path.read_text())
++    if document.get("kind") != KIND or document.get("schema_version") != 1 or document.get("roots") != list(ROOTS):
++        raise ValueError("unrecognized prepared kernel input metadata")
++    if document != collect(root):
++        raise ValueError("kernel source/config/HDI inputs changed after preparation")
++    return path, document
++
++def write(path, document):
++    content = json.dumps(document, sort_keys=True, indent=2) + "\n"
++    if path.is_file() and path.read_text() == content:
++        return
++    temporary = path.with_name(path.name + ".tmp")
++    if temporary.exists():
++        raise ValueError(f"unexpected pending metadata file: {temporary}")
++    temporary.write_text(content)
++    temporary.replace(path)
++
++def artifacts(image, modules_dir):
++    if not image.is_file() or image.stat().st_size == 0:
++        raise ValueError("missing or empty built kernel image")
++    modules = {}
++    for name in MODULES:
++        path = modules_dir / name
++        if not path.is_file() or path.stat().st_size == 0:
++            raise ValueError(f"missing/empty kernel module: {name}")
++        modules[name] = sha(path)
++    return sha(image), modules
++
++def record(root, image, modules_dir, arch, expected):
++    path, inputs = load_inputs(root)
++    if sha(path) != expected:
++        raise ValueError("kernel input metadata changed during compilation")
++    image_sha, modules = artifacts(image, modules_dir)
++    return {"schema_version": 1, "kind": OUTPUT_KIND,
++            "source_tree_sha256": inputs["source_tree_sha256"],
++            "inputs_metadata_sha256": expected, "kernel_arch": arch,
++            "image_name": image.name, "image_sha256": image_sha, "modules_sha256": modules,
++            "note": "Source/build provenance only; boot and behavior validation are still required."}
++
++def verify(root, image, modules_dir, arch, certificate):
++    inputs_path, inputs = load_inputs(root)
++    document = json.loads(certificate.read_text())
++    expected = record(root, image, modules_dir, arch, sha(inputs_path))
++    if document != expected or document.get("source_tree_sha256") != inputs["source_tree_sha256"]:
++        raise ValueError("stale, altered or mismatched kernel build evidence")
++    return document
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("command", choices=("prepare", "check-inputs", "record", "verify"))
++    parser.add_argument("--source-root", type=Path, required=True)
++    parser.add_argument("--image", type=Path)
++    parser.add_argument("--modules-dir", type=Path)
++    parser.add_argument("--arch", choices=("arm", "arm64", "x86_64", "riscv64"))
++    parser.add_argument("--expected-inputs-sha256")
++    parser.add_argument("--certificate", type=Path)
++    args = parser.parse_args()
++    root = args.source_root.resolve()
++    if args.command == "prepare":
++        path = root / ".ohos-qemu-kernel-inputs.json"
++        if path.exists() and json.loads(path.read_text()).get("kind") != KIND:
++            raise ValueError("refusing to overwrite unrelated source-root metadata")
++        document = collect(root)
++        write(path, document)
++        print(f"prepared kernel input fingerprint: {document['source_tree_sha256']} ({document['file_count']} files)")
++    elif args.command == "check-inputs":
++        path, _ = load_inputs(root)
++        print(sha(path))
++    else:
++        if not args.image or not args.modules_dir or not args.arch or not args.certificate:
++            parser.error("image, modules-dir, arch and certificate are required")
++        if args.command == "record":
++            if not args.expected_inputs_sha256:
++                parser.error("expected-inputs-sha256 is required")
++            document = record(root, args.image, args.modules_dir, args.arch, args.expected_inputs_sha256)
++            write(args.certificate, document)
++        else:
++            document = verify(root, args.image, args.modules_dir, args.arch, args.certificate)
++        print(f"kernel provenance {args.command}: {document['image_sha256']}")
++
++if __name__ == "__main__":
++    main()

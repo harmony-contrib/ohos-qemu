@@ -1,0 +1,154 @@
+diff --git a/applications/standard/settings/product/phone/src/main/ets/pages/home/controller/PageRouteController.ets b/applications/standard/settings/product/phone/src/main/ets/pages/home/controller/PageRouteController.ets
+--- a/applications/standard/settings/product/phone/src/main/ets/pages/home/controller/PageRouteController.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/pages/home/controller/PageRouteController.ets
+@@ -82,6 +82,7 @@ const PAGE_PATH_MAP: Map<string, string> = new Map<string, string>([
+   [NavEntryKey.FAR_FIELD_COMMUNICATION_SERVICE_PRIVACY, '../../Setting/MoreConnection/FarFieldCommunicationPage'],
+   [NavEntryKey.THEME_ENTRY, '../../Setting/Theme/ThemePage'],
+   [NavEntryKey.DISPLAY_ENTRY, '../../Setting/Display/DisplaySettingsPage'],
++  ['screen_refresh_rate_entry', '../../Setting/Display/QemuRefreshRatePage'],
+   [NavEntryKey.VOLUME_ENTRY, '../../Setting/Volume/VolumeSettingsPage'],
+   [NavEntryKey.SOUND_EFFECT_DETAIL, '../../Setting/Volume/SoundEffectDetailPage'],
+   [NavEntryKey.PHONE_NOTIFICATION_SETTINGS_ENTRY, '../../Setting/SystemUi/SystemUiPage'],
+diff --git a/applications/standard/settings/product/phone/src/main/ets/Setting/Display/controller/QemuRefreshRateController.ets b/applications/standard/settings/product/phone/src/main/ets/Setting/Display/controller/QemuRefreshRateController.ets
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Display/controller/QemuRefreshRateController.ets
+@@ -0,0 +1,56 @@
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import screen from '@ohos.screen';
++
++export function mainScreen(screens: screen.Screen[]): screen.Screen {
++  const candidates = screens.filter((item: screen.Screen) => item.sourceMode === screen.ScreenSourceMode.SCREEN_MAIN);
++  if (candidates.length !== 1) throw new Error('Expected one actual main screen');
++  const current = candidates[0];
++  const ids: number[] = [];
++  for (const mode of current.supportedModeInfo) {
++    if (!Number.isInteger(mode.id) || mode.id < 0 || ids.includes(mode.id) ||
++      !Number.isInteger(mode.width) || mode.width <= 0 || !Number.isInteger(mode.height) || mode.height <= 0 ||
++      !Number.isInteger(mode.refreshRate) || mode.refreshRate <= 0) {
++      throw new Error('Invalid actual screen mode');
++    }
++    ids.push(mode.id);
++  }
++  if (!ids.includes(current.activeModeIndex)) throw new Error('Active screen mode is not reported');
++  return current;
++}
++
++export function refreshChoices(current: screen.Screen): screen.ScreenModeInfo[] {
++  const active = current.supportedModeInfo.find((mode: screen.ScreenModeInfo) => mode.id === current.activeModeIndex);
++  if (active === undefined) throw new Error('Missing actual active mode');
++  // A refresh-rate page must never implicitly change the resolution.
++  return current.supportedModeInfo.filter((mode: screen.ScreenModeInfo) =>
++    mode.width === active.width && mode.height === active.height);
++}
++
++export class QemuRefreshRateController {
++  private changing: boolean = false;
++
++  async read(): Promise<screen.Screen> {
++    return mainScreen(await screen.getAllScreens());
++  }
++
++  async change(modeId: number): Promise<screen.Screen> {
++    if (this.changing) throw new Error('Screen mode change is already pending');
++    this.changing = true;
++    try {
++      const before = await this.read();
++      if (!Number.isInteger(modeId) || !refreshChoices(before).some(
++        (mode: screen.ScreenModeInfo) => mode.id === modeId)) {
++        throw new Error('Requested refresh mode is not supported at the current resolution');
++      }
++      if (before.activeModeIndex === modeId) return before;
++      await before.setScreenActiveMode(modeId);
++      const after = await this.read();
++      if (after.id !== before.id || after.activeModeIndex !== modeId) {
++        throw new Error('Display service did not apply the requested refresh mode');
++      }
++      return after;
++    } finally {
++      this.changing = false;
++    }
++  }
++}
+diff --git a/applications/standard/settings/product/phone/src/main/ets/Setting/Display/QemuRefreshRatePage.ets b/applications/standard/settings/product/phone/src/main/ets/Setting/Display/QemuRefreshRatePage.ets
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Display/QemuRefreshRatePage.ets
+@@ -0,0 +1,77 @@
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import screen from '@ohos.screen';
++import { PageLoader } from '@ohos/settings.common/src/main/ets/framework/common/PageLoader';
++import { PageType, SettingPageModel } from '@ohos/settings.common/src/main/ets/framework/model/SettingPageModel';
++import { QemuRefreshRateController, refreshChoices } from './controller/QemuRefreshRateController';
++
++@Component
++struct QemuRefreshRateSettings {
++  @State private modes: screen.ScreenModeInfo[] = [];
++  @State private activeMode: number = -1;
++  @State private pending: boolean = false;
++  @State private failure: string = '';
++  private controller: QemuRefreshRateController = new QemuRefreshRateController();
++  private generation: number = 0;
++
++  private async load(modeId?: number): Promise<void> {
++    if (this.pending) return;
++    const generation = ++this.generation;
++    this.pending = true;
++    this.failure = '';
++    try {
++      const current = modeId === undefined ? await this.controller.read() : await this.controller.change(modeId);
++      if (generation !== this.generation) return;
++      this.modes = refreshChoices(current);
++      this.activeMode = current.activeModeIndex;
++    } catch (error) {
++      if (generation === this.generation) {
++        this.failure = 'Display service: ' + String(error);
++      }
++    } finally {
++      if (generation === this.generation) this.pending = false;
++    }
++  }
++
++  build() {
++    NavDestination() {
++      Column({ space: 16 }) {
++        ForEach(this.modes, (mode: screen.ScreenModeInfo) => {
++          Row({ space: 16 }) {
++            Text(mode.refreshRate.toString() + ' Hz').id('qemu-refresh-rate-' + mode.id.toString())
++            Blank()
++            Radio({ value: mode.id.toString(), group: 'actual-screen-refresh-rate' })
++              .checked(this.activeMode === mode.id)
++              .enabled(!this.pending)
++              .onChange((checked: boolean) => { if (checked) this.load(mode.id); })
++          }.width('100%').padding(16)
++        }, (mode: screen.ScreenModeInfo) => mode.id.toString())
++        if (this.pending) { LoadingProgress().width(32).height(32) }
++        if (this.failure.length > 0) { Text(this.failure).id('qemu-refresh-rate-error') }
++      }.padding(16).width('100%')
++    }
++    .title($r('app.string.screen_refresh_rate_title'))
++    .backgroundColor($r('sys.color.ohos_id_color_titlebar_sub_bg'))
++    .onShown(() => { this.pending = false; this.load(); })
++    .onHidden(() => { this.generation++; })
++  }
++}
++
++@Builder
++function refreshRateBuilder(param: object): void {
++  QemuRefreshRateSettings();
++}
++
++function refreshRatePage(): SettingPageModel {
++  return {
++    id: 'QemuRefreshRate',
++    url: 'screen_refresh_rate_entry',
++    type: PageType.PAGE_TYPE_CUSTOM,
++    title: $r('app.string.screen_refresh_rate_title'),
++    hdsNavDestinationUx: false
++  };
++}
++
++PageLoader.load('screen_refresh_rate_entry', {
++  configGenerator: refreshRatePage,
++  pageBuilder: wrapBuilder(refreshRateBuilder),
++});

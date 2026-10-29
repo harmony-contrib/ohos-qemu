@@ -1,0 +1,79 @@
+diff --git a/foundation/distributedhardware/device_manager/interfaces/kits/js/src/native_devicemanager_js.cpp b/foundation/distributedhardware/device_manager/interfaces/kits/js/src/native_devicemanager_js.cpp
+--- a/foundation/distributedhardware/device_manager/interfaces/kits/js/src/native_devicemanager_js.cpp
++++ b/foundation/distributedhardware/device_manager/interfaces/kits/js/src/native_devicemanager_js.cpp
+@@ -3570,2 +3570,28 @@
++static napi_value RegisterAuthForm(napi_env env, napi_value exports)
++{
++    const DmAuthForm forms[] = {
++        DmAuthForm::INVALID_TYPE, DmAuthForm::PEER_TO_PEER,
++        DmAuthForm::IDENTICAL_ACCOUNT, DmAuthForm::ACROSS_ACCOUNT
++    };
++    const char *names[] = {
++        "INVALID_TYPE", "PEER_TO_PEER", "IDENTICAL_ACCOUNT", "ACROSS_ACCOUNT"
++    };
++    napi_value result = nullptr;
++    if (napi_create_object(env, &result) != napi_ok) {
++        return nullptr;
++    }
++    for (size_t index = 0; index < sizeof(forms) / sizeof(forms[0]); ++index) {
++        napi_value member = nullptr;
++        if (napi_create_int32(env, static_cast<int32_t>(forms[index]), &member) != napi_ok ||
++            napi_set_named_property(env, result, names[index], member) != napi_ok) {
++            return nullptr;
++        }
++    }
++    if (napi_set_named_property(env, exports, "AuthForm", result) != napi_ok) {
++        return nullptr;
++    }
++    return exports;
++}
++
+ static napi_value Export(napi_env env, napi_value exports)
+ {
+@@ -3579,3 +3605,3 @@
+     DeviceManagerNapi::InitSubscribeCapEnum(env, exports);
+-    return exports;
++    return RegisterAuthForm(env, exports);
+ }
+diff --git a/foundation/distributedhardware/device_manager/interfaces/kits/js/src/native_devicemanager_js_fail_to_support.cpp b/foundation/distributedhardware/device_manager/interfaces/kits/js/src/native_devicemanager_js_fail_to_support.cpp
+--- a/foundation/distributedhardware/device_manager/interfaces/kits/js/src/native_devicemanager_js_fail_to_support.cpp
++++ b/foundation/distributedhardware/device_manager/interfaces/kits/js/src/native_devicemanager_js_fail_to_support.cpp
+@@ -17,3 +17,4 @@
+ #include "native_devicemanager_js_fail_to_support.h"
+ #include "dm_error_type.h"
++#include "dm_device_info.h"
+ 
+@@ -348,2 +349,28 @@
++static napi_value RegisterAuthForm(napi_env env, napi_value exports)
++{
++    const DmAuthForm forms[] = {
++        DmAuthForm::INVALID_TYPE, DmAuthForm::PEER_TO_PEER,
++        DmAuthForm::IDENTICAL_ACCOUNT, DmAuthForm::ACROSS_ACCOUNT
++    };
++    const char *names[] = {
++        "INVALID_TYPE", "PEER_TO_PEER", "IDENTICAL_ACCOUNT", "ACROSS_ACCOUNT"
++    };
++    napi_value result = nullptr;
++    if (napi_create_object(env, &result) != napi_ok) {
++        return nullptr;
++    }
++    for (size_t index = 0; index < sizeof(forms) / sizeof(forms[0]); ++index) {
++        napi_value member = nullptr;
++        if (napi_create_int32(env, static_cast<int32_t>(forms[index]), &member) != napi_ok ||
++            napi_set_named_property(env, result, names[index], member) != napi_ok) {
++            return nullptr;
++        }
++    }
++    if (napi_set_named_property(env, exports, "AuthForm", result) != napi_ok) {
++        return nullptr;
++    }
++    return exports;
++}
++
+ static napi_value Export(napi_env env, napi_value exports)
+ {
+@@ -350,3 +377,3 @@
+     DeviceManagerNapiFailToSupport::Init(env, exports);
+-    return exports;
++    return RegisterAuthForm(env, exports);
+ }

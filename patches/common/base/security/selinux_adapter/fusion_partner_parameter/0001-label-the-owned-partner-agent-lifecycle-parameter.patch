@@ -1,0 +1,26 @@
+diff --git a/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/parameter.te b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/parameter.te
+new file mode 100644
+--- /dev/null
++++ b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/parameter.te
+@@ -0,0 +1,3 @@
++# SPDX-License-Identifier: Apache-2.0
++# Internal lifecycle flag owned by PartnerDeviceAgent, not all persist.* keys.
++type fusion_partner_enable_param, parameter_attr, system_parameter_attr, system_internal_parameter_attr;
+diff --git a/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/parameter_contexts b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/parameter_contexts
+new file mode 100644
+--- /dev/null
++++ b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/parameter_contexts
+@@ -0,0 +1,2 @@
++# SPDX-License-Identifier: Apache-2.0
++persist.fusion_connectivity.enable_partner_agent u:object_r:fusion_partner_enable_param:s0
+diff --git a/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/system/fusion_partner_parameter.te b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/system/fusion_partner_parameter.te
+new file mode 100644
+--- /dev/null
++++ b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/system/fusion_partner_parameter.te
+@@ -0,0 +1,6 @@
++# SPDX-License-Identifier: Apache-2.0
++# The service owns this flag; init loads its default and SAMGR reads it for
++# on-demand service lifetime. Keep application and other service writes denied.
++allow partner_device_agent fusion_partner_enable_param:parameter_service { set };
++allow init fusion_partner_enable_param:parameter_service { set };
++allow { partner_device_agent samgr init } fusion_partner_enable_param:file { map open read };

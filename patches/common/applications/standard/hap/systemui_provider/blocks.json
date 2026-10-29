@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "scope": "seven disjoint fixed definitions only; independent ScreenLock and every other byte retained",
+  "blocks": [
+    {
+      "target": "navigationBar_hap",
+      "before": "ohos_prebuilt_etc(\"navigationBar_hap\") {\n  source = \"SystemUI-NavigationBar.hap\"\n  module_install_dir = \"app/com.ohos.systemui\"\n  part_name = \"prebuilt_hap\"\n  subsystem_name = \"applications\"\n}\n",
+      "after": "if (defined(product_name) &&\n    (product_name == \"arm64_virt\" || product_name == \"armv7a_virt\" ||\n     product_name == \"x86_64_virt\")) {\n  group(\"navigationBar_hap\") {\n    deps = [ \"//applications/standard/systemui:systemui_hap\" ]\n  }\n} else {\n  ohos_prebuilt_etc(\"navigationBar_hap\") {\n    source = \"SystemUI-NavigationBar.hap\"\n    module_install_dir = \"app/com.ohos.systemui\"\n    part_name = \"prebuilt_hap\"\n    subsystem_name = \"applications\"\n  }\n}\n"
+    },
+    {
+      "target": "statusBar_hap",
+      "before": "ohos_prebuilt_etc(\"statusBar_hap\") {\n  source = \"SystemUI-StatusBar.hap\"\n  module_install_dir = \"app/com.ohos.systemui\"\n  part_name = \"prebuilt_hap\"\n  subsystem_name = \"applications\"\n}\n",
+      "after": "if (defined(product_name) &&\n    (product_name == \"arm64_virt\" || product_name == \"armv7a_virt\" ||\n     product_name == \"x86_64_virt\")) {\n  group(\"statusBar_hap\") {\n    deps = [ \"//applications/standard/systemui:systemui_hap\" ]\n  }\n} else {\n  ohos_prebuilt_etc(\"statusBar_hap\") {\n    source = \"SystemUI-StatusBar.hap\"\n    module_install_dir = \"app/com.ohos.systemui\"\n    part_name = \"prebuilt_hap\"\n    subsystem_name = \"applications\"\n  }\n}\n"
+    },
+    {
+      "target": "notificationManagement_hap",
+      "before": "ohos_prebuilt_etc(\"notificationManagement_hap\") {\n  source = \"SystemUI-NotificationManagement.hap\"\n  module_install_dir = \"app/com.ohos.systemui\"\n  part_name = \"prebuilt_hap\"\n  subsystem_name = \"applications\"\n}\n",
+      "after": "if (defined(product_name) &&\n    (product_name == \"arm64_virt\" || product_name == \"armv7a_virt\" ||\n     product_name == \"x86_64_virt\")) {\n  group(\"notificationManagement_hap\") {\n    deps = [ \"//applications/standard/systemui:systemui_hap\" ]\n  }\n} else {\n  ohos_prebuilt_etc(\"notificationManagement_hap\") {\n    source = \"SystemUI-NotificationManagement.hap\"\n    module_install_dir = \"app/com.ohos.systemui\"\n    part_name = \"prebuilt_hap\"\n    subsystem_name = \"applications\"\n  }\n}\n"
+    },
+    {
+      "target": "volumePanel_hap",
+      "before": "ohos_prebuilt_etc(\"volumePanel_hap\") {\n  source = \"SystemUI-VolumePanel.hap\"\n  module_install_dir = \"app/com.ohos.systemui\"\n  part_name = \"prebuilt_hap\"\n  subsystem_name = \"applications\"\n}\n",
+      "after": "if (defined(product_name) &&\n    (product_name == \"arm64_virt\" || product_name == \"armv7a_virt\" ||\n     product_name == \"x86_64_virt\")) {\n  group(\"volumePanel_hap\") {\n    deps = [ \"//applications/standard/systemui:systemui_hap\" ]\n  }\n} else {\n  ohos_prebuilt_etc(\"volumePanel_hap\") {\n    source = \"SystemUI-VolumePanel.hap\"\n    module_install_dir = \"app/com.ohos.systemui\"\n    part_name = \"prebuilt_hap\"\n    subsystem_name = \"applications\"\n  }\n}\n"
+    },
+    {
+      "target": "dropdownPanel_hap",
+      "before": "ohos_prebuilt_etc(\"dropdownPanel_hap\") {\n  source = \"SystemUI-DropdownPanel.hap\"\n  module_install_dir = \"app/com.ohos.systemui\"\n  part_name = \"prebuilt_hap\"\n  subsystem_name = \"applications\"\n}\n",
+      "after": "if (defined(product_name) &&\n    (product_name == \"arm64_virt\" || product_name == \"armv7a_virt\" ||\n     product_name == \"x86_64_virt\")) {\n  group(\"dropdownPanel_hap\") {\n    deps = [ \"//applications/standard/systemui:systemui_hap\" ]\n  }\n} else {\n  ohos_prebuilt_etc(\"dropdownPanel_hap\") {\n    source = \"SystemUI-DropdownPanel.hap\"\n    module_install_dir = \"app/com.ohos.systemui\"\n    part_name = \"prebuilt_hap\"\n    subsystem_name = \"applications\"\n  }\n}\n"
+    },
+    {
+      "target": "systemui_hap",
+      "before": "ohos_prebuilt_etc(\"systemui_hap\") {\n  source = \"SystemUI.hap\"\n  module_install_dir = \"app/com.ohos.systemui\"\n  part_name = \"prebuilt_hap\"\n  subsystem_name = \"applications\"\n}\n",
+      "after": "if (defined(product_name) &&\n    (product_name == \"arm64_virt\" || product_name == \"armv7a_virt\" ||\n     product_name == \"x86_64_virt\")) {\n  group(\"systemui_hap\") {\n    deps = [ \"//applications/standard/systemui:systemui_hap\" ]\n  }\n} else {\n  ohos_prebuilt_etc(\"systemui_hap\") {\n    source = \"SystemUI.hap\"\n    module_install_dir = \"app/com.ohos.systemui\"\n    part_name = \"prebuilt_hap\"\n    subsystem_name = \"applications\"\n  }\n}\n"
+    },
+    {
+      "target": "systemDialog_hap",
+      "before": "ohos_prebuilt_etc(\"systemDialog_hap\") {\n  source = \"SystemUI-SystemDialog.hap\"\n  module_install_dir = \"app/com.ohos.systemui\"\n  part_name = \"prebuilt_hap\"\n  subsystem_name = \"applications\"\n}\n",
+      "after": "if (defined(product_name) &&\n    (product_name == \"arm64_virt\" || product_name == \"armv7a_virt\" ||\n     product_name == \"x86_64_virt\")) {\n  group(\"systemDialog_hap\") {\n    deps = [ \"//applications/standard/systemui:systemui_hap\" ]\n  }\n} else {\n  ohos_prebuilt_etc(\"systemDialog_hap\") {\n    source = \"SystemUI-SystemDialog.hap\"\n    module_install_dir = \"app/com.ohos.systemui\"\n    part_name = \"prebuilt_hap\"\n    subsystem_name = \"applications\"\n  }\n}\n"
+    }
+  ]
+}

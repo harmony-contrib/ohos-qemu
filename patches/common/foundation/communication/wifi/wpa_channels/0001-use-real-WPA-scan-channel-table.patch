@@ -1,0 +1,84 @@
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_common/BUILD.gn b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_common/BUILD.gn
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_common/BUILD.gn
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_common/BUILD.gn
+@@ -287,6 +287,8 @@
+     if (wifi_feature_with_hdi_chip_supported) {
+       defines += [ "HDI_CHIP_INTERFACE_SUPPORT" ]
+       external_deps += [ "drivers_interface_wlan:libchip_proxy_2.0" ]
++    } else {
++      defines += [ "WIFI_SOFTWARE_SCAN_BACKEND" ]
+     }
+ 
+     if (wifi_feature_network_selection) {
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_common/wifi_channel_helper.cpp b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_common/wifi_channel_helper.cpp
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_common/wifi_channel_helper.cpp
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_common/wifi_channel_helper.cpp
+@@ -20,5 +20,7 @@
+ #include "wifi_settings.h"
+ #ifdef HDI_CHIP_INTERFACE_SUPPORT
+ #include "hal_device_manage.h"
++#elif defined(WIFI_SOFTWARE_SCAN_BACKEND)
++#include "wifi_sta_hal_interface.h"
+ #endif
+ #include "wifi_country_code_manager.h"
+@@ -106,5 +108,9 @@
+             WIFI_LOGE("ap iface get 2g frequencies failed.");
+         }
+     }
++#elif defined(WIFI_SOFTWARE_SCAN_BACKEND)
++    if (WifiStaHalInterface::GetInstance().GetSupportFrequencies(ifaceName, band, freqs2G) != WIFI_HAL_OPT_OK) {
++        WIFI_LOGE("WPA get 2g frequencies failed.");
++    }
+ #endif
+     band = static_cast<int>(ScanBandType::SCAN_BAND_5_GHZ);
+@@ -116,5 +122,9 @@
+             WIFI_LOGE("ap iface get 5g frequencies failed.");
+         }
+     }
++#elif defined(WIFI_SOFTWARE_SCAN_BACKEND)
++    if (WifiStaHalInterface::GetInstance().GetSupportFrequencies(ifaceName, band, freqs5G) != WIFI_HAL_OPT_OK) {
++        WIFI_LOGE("WPA get 5g frequencies failed.");
++    }
+ #endif
+     band = static_cast<int>(ScanBandType::SCAN_BAND_5_GHZ_DFS_ONLY);
+@@ -126,5 +136,9 @@
+             WIFI_LOGE("ap iface get 5g DFS frequencies failed.");
+         }
+     }
++#elif defined(WIFI_SOFTWARE_SCAN_BACKEND)
++    if (WifiStaHalInterface::GetInstance().GetSupportFrequencies(ifaceName, band, freqsDfs) != WIFI_HAL_OPT_OK) {
++        WIFI_LOGE("WPA get DFS frequencies failed.");
++    }
+ #endif
+     mValidFreqs[ScanBandType::SCAN_BAND_24_GHZ] = freqs2G;
+@@ -144,4 +158,23 @@
+     std::unique_lock<std::mutex> lock(mMutex);
++#ifdef WIFI_SOFTWARE_SCAN_BACKEND
++    // A missing/failed band table must not silently become an all-band scan.
++    // Do not let a caller's old output make an unavailable band look usable.
++    freqs.clear();
++    const int mask = static_cast<int>(band);
++    if (mask != 1 && mask != 2 && mask != 3 && mask != 4 && mask != 6 && mask != 7) {
++        return false;
++    }
++    for (const auto part : {ScanBandType::SCAN_BAND_24_GHZ, ScanBandType::SCAN_BAND_5_GHZ,
++                           ScanBandType::SCAN_BAND_5_GHZ_DFS_ONLY}) {
++        if ((mask & static_cast<int>(part)) != 0) {
++            const auto &supported = mValidFreqs[part];
++            freqs.insert(freqs.end(), supported.begin(), supported.end());
++        }
++    }
++    std::sort(freqs.begin(), freqs.end());
++    freqs.erase(std::unique(freqs.begin(), freqs.end()), freqs.end());
++    return !freqs.empty();
++#else
+     switch (band) {
+         case ScanBandType::SCAN_BAND_24_GHZ: {
+             freqs.assign(mValidFreqs[ScanBandType::SCAN_BAND_24_GHZ].begin(),
+@@ -191,5 +224,6 @@
+             WIFI_LOGE("bandType(%{public}d) is error.\n", band);
+             return false;
+     }
++#endif
+ }
+ 

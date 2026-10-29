@@ -1,0 +1,40 @@
+diff --git a/kernel/linux/linux-6.6/include/linux/dma-buf.h b/kernel/linux/linux-6.6/include/linux/dma-buf.h
+--- a/kernel/linux/linux-6.6/include/linux/dma-buf.h
++++ b/kernel/linux/linux-6.6/include/linux/dma-buf.h
+@@ -22,6 +22,7 @@
+ #include <linux/fs.h>
+ #include <linux/dma-fence.h>
+ #include <linux/wait.h>
++#include <linux/sched.h>
+ 
+ struct device;
+ struct dma_buf;
+@@ -425,6 +426,12 @@ struct dma_buf {
+ 	 */
+ 	struct dma_resv *resv;
+ 
++#ifdef CONFIG_DMABUF_PROCESS_INFO
++	/** @exp_pid: PID of the task which exported this buffer. */
++	pid_t exp_pid;
++	/** @exp_task_comm: Name of the task which exported this buffer. */
++	char exp_task_comm[TASK_COMM_LEN];
++#endif
+ 	/** @poll: for userspace poll support */
+ 	wait_queue_head_t poll;
+ 
+@@ -631,4 +638,15 @@ int dma_buf_vmap(struct dma_buf *dmabuf, struct iosys_map *map);
+ void dma_buf_vunmap(struct dma_buf *dmabuf, struct iosys_map *map);
+ int dma_buf_vmap_unlocked(struct dma_buf *dmabuf, struct iosys_map *map);
+ void dma_buf_vunmap_unlocked(struct dma_buf *dmabuf, struct iosys_map *map);
++
++#ifdef CONFIG_DMABUF_PROCESS_INFO
++/**
++ * get_dma_buf_from_file - Return the DMA-BUF associated with a file, or NULL
++ * @f: File to inspect. The caller must hold a reference to this file.
++ *
++ * The returned buffer is borrowed from @f; no buffer reference is acquired.
++ * NULL is returned for invalid files and files which are not DMA-BUFs.
++ */
++struct dma_buf *get_dma_buf_from_file(struct file *f);
++#endif /* CONFIG_DMABUF_PROCESS_INFO */
+ #endif /* __DMA_BUF_H__ */

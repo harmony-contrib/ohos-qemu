@@ -1,0 +1,11 @@
+diff --git a/device/qemu/common/virt_full/hardware/gpu/BUILD.gn b/device/qemu/common/virt_full/hardware/gpu/BUILD.gn
+--- a/device/qemu/common/virt_full/hardware/gpu/BUILD.gn
++++ b/device/qemu/common/virt_full/hardware/gpu/BUILD.gn
+@@ -30,6 +30,7 @@
+   inputs = [
+     "mesa_kms_mapping/apply_mesa_kms_mapping.py",
+     "mesa_kms_mapping/0001-serialize-displaytarget-mapping.patch",
++    "mesa_kms_mapping/0002-serialize-import-reference-and-final-destroy.patch",
+   ]
+   deps = [
+     "//third_party/expat:expat",

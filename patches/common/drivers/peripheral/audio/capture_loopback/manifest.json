@@ -1,0 +1,39 @@
+{
+  "component": "capture-loopback",
+  "projects": {
+    "drivers/peripheral": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+    "device/qemu": "b017aee8e2dfc97e45aeb508facc1527c3d06f4b"
+  },
+  "files": {
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_soundcard.c": {
+      "before": "4f31ddb5d0cae6a92f48784f8d319003963443ffae9dd9ec3fabf84f29023d49",
+      "after": "0b37b04751610f930f106a003a9aafe1578e9487548e31b936a52e9628c5ff45",
+      "payload": "alsa_soundcard.c"
+    },
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_soundcard.h": {
+      "before": "c7812c5c10904979d26a641fb4c001078c8989fa2fb5c498d5fb1491a2d4c92c",
+      "after": "474018cd5268161667c343d127c0f41a7b7bd493c45d23d69b199394cf634c04",
+      "payload": "alsa_soundcard.h"
+    },
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_capture.c": {
+      "before": "3a772a14fc4a374bcf5a229637bc368cd16dc51d5c03671315663d2c94860633",
+      "after": "83aee461a3afa7c9064c98f8df8b8ee5c353c15242a0852793c980790c792876",
+      "payload": "alsa_snd_capture.c"
+    },
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c": {
+      "before": "840ca5c6f103d1e59ab847604e590260447dde2e80f1a78d62cca5c724466439",
+      "after": "bd4733dfbcba936c333a2291de33b889eb880d4b1728ca05f9524a1ba502457c",
+      "payload": "vendor_capture.c"
+    },
+    "device/qemu/common/virt_full/audio_alsa/vendor_capture.c": {
+      "before": "1da3601cbc3d710c8724fbc5a0b9a96d91af8b8df821e02bb3d7018f0ac10eea",
+      "after": "7e091fa9dcac9239d66c719d6cc61626094542dd15e51693b521e9a1fb3cc6be",
+      "payload": "qemu_vendor_capture.c"
+    },
+    "drivers/peripheral/audio/hdi_service/primary_impl/src/audio_capture.c": {
+      "before": "39a1999183b2fc836d96d216a108601a7e58abae0d72983194d347630c7ba363",
+      "after": "0a69f7b026a7e26678dba0403362b9108eb241661500aab3467b5316a3657dd1",
+      "payload": "audio_capture.c"
+    }
+  }
+}

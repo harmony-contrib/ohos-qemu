@@ -1,0 +1,49 @@
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp b/foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp
+--- a/foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp
++++ b/foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp
+@@ -35,3 +35,4 @@
+ #include "media_analysis_progress_column.h"
++#include "media_column.h"
+ #include "media_device_column.h"
+ #include "media_directory_type_column.h"
+@@ -556,3 +557,29 @@
+     const Contract contracts[] = {
++        // Public source flags reuse the existing database source discriminator.
++        {"AssetSourceType", {
++            {"MEDIA", static_cast<int32_t>(FileSourceTypes::MEDIA)},
++            {"FILE_MANAGER", static_cast<int32_t>(FileSourceTypes::FILE_MANAGER)},
++        }},
++        {"FieldType", {
++            {"NONE", 0},
++            {"ANALYSIS_PEOPLE", 1},
++            {"ANALYSIS_LABEL", 2},
++            {"ANALYSIS_CITY", 3},
++            {"YEAR", 4},
++            {"MONTH", 5},
++            {"DAY", 6},
++            {"HOLIDAY", 7},
++            {"MEDIA_TYPE", 8},
++        }},
++        {"RankingMethod", {{"RANDOM_VOTE", 0}}},
++        {"SearchSuggestionType", {
++            {"TIME_GEO_LABEL", 0},
++            {"TIME_GEO", 1},
++            {"TIME_LABEL", 2},
++            {"TIME_PEOPLE_GEO_LABEL", 3},
++            {"TIME_PEOPLE_GEO", 4},
++            {"TIME_PEOPLE_LABEL", 5},
++            {"TIME_PEOPLE", 6},
++        }},
+         {"PhotoRiskStatus", {
+             {"UNIDENTIFIED", static_cast<int32_t>(PhotoRiskStatus::UNIDENTIFIED)},
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js b/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
+--- a/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
++++ b/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
+@@ -1572,3 +1572,7 @@
+   PhotoRiskStatus: photoAccessHelper.PhotoRiskStatus,
++  AssetSourceType: photoAccessHelper.AssetSourceType,
++  FieldType: photoAccessHelper.FieldType,
++  RankingMethod: photoAccessHelper.RankingMethod,
++  SearchSuggestionType: photoAccessHelper.SearchSuggestionType,
+   CoverUriSource: photoAccessHelper.CoverUriSource,
+   ThumbnailVisibility: photoAccessHelper.ThumbnailVisibility,

@@ -1,0 +1,13 @@
+diff --git a/kernel/linux/linux-6.6/drivers/media/test-drivers/vivid/vivid-core.c b/kernel/linux/linux-6.6/drivers/media/test-drivers/vivid/vivid-core.c
+--- a/kernel/linux/linux-6.6/drivers/media/test-drivers/vivid/vivid-core.c
++++ b/kernel/linux/linux-6.6/drivers/media/test-drivers/vivid/vivid-core.c
+@@ -116,3 +116,3 @@
+ static unsigned int node_types[VIVID_MAX_DEVS] = {
+-	[0 ... (VIVID_MAX_DEVS - 1)] = 0xe1d3d
++	[0 ... (VIVID_MAX_DEVS - 1)] = 0x1
+ };
+@@ -135,3 +135,3 @@
+-static unsigned num_inputs[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = 4 };
++static unsigned num_inputs[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = 1 };
+ module_param_array(num_inputs, uint, NULL, 0444);
+ MODULE_PARM_DESC(num_inputs, " number of inputs, default is 4");

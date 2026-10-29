@@ -1,0 +1,42 @@
+# Product-installed real C API dependencies and licensed model assets.
+import("//build/ohos.gni")
+assert(current_cpu == "arm64" || current_cpu == "x64" || current_cpu == "x86_64" || current_cpu == "arm")
+_abi = current_cpu
+if (_abi == "x64") { _abi = "x86_64" }
+if (_abi == "arm") { _abi = "armeabi-v7a" }
+if (_abi == "arm64") { _abi = "arm64-v8a" }
+_names = [
+  [ "cpu_sherpa", "libsherpa-onnx-c-api.so" ],
+  [ "cpu_ort", "libonnxruntime.so" ],
+  [ "cpu_cxx", "libc++_shared.so" ],
+]
+foreach(_pair, _names) {
+  ohos_prebuilt_shared_library(_pair[0]) {
+    source = "prebuilt/${_abi}/${_pair[1]}"
+    output = _pair[1]
+    module_install_dir = "lib64"
+    if (current_cpu == "arm") {
+      module_install_dir = "lib"
+    }
+    strip_enable = false
+    install_enable = true
+    install_images = [ chipset_base_dir ]
+    subsystem_name = "hdf"
+    part_name = "drivers_peripheral_intelligent_voice"
+  }
+}
+_assets = [ "encoder.onnx", "decoder.onnx", "joiner.onnx", "tokens.txt", "speaker.onnx", "pinyin.txt", "NOTICES.txt", "INPUTS.json" ]
+group("cpu_voice_assets") {
+  deps = []
+  foreach(_file, _assets) { deps += [ ":cpu_voice_asset_${string_replace(_file, ".", "_")}" ] }
+}
+foreach(_file, _assets) {
+  ohos_prebuilt_etc("cpu_voice_asset_${string_replace(_file, ".", "_")}") {
+    source = "assets/${_file}"
+    output = _file
+    module_install_dir = "etc/intelligent_voice/cpu"
+    install_images = [ chipset_base_dir ]
+    part_name = "drivers_peripheral_intelligent_voice"
+    subsystem_name = "hdf"
+  }
+}

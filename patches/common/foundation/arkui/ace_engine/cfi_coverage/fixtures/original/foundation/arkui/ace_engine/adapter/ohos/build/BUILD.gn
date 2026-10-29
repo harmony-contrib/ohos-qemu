@@ -1,0 +1,130 @@
+# Copyright (c) 2021-2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/arkui/ace_engine/ace_config.gni")
+import("//foundation/arkui/ace_engine/build/ace_controller.gni")
+
+component_modules = [
+  "button",
+  "badge",
+  "container_reader",
+  "dynamiclayout",
+  "counter",
+  "data_panel",
+  "gauge",
+  "hyperlink",
+  "text_clock",
+  "text_field",
+  "checkbox",
+  "panel",
+  "patternlock",
+  "qrcode",
+  "rating",
+  "waterflow",
+  "lazy_waterflow_layout",
+  "linear_split",
+  "side_bar",
+  "marquee",
+  "progress",
+  "texttimer",
+  "navigator",
+  "sheet",
+  "stepper",
+  "radio",
+  "slider",
+  "time_picker",
+  "calendar_picker",
+  "indexer",
+  "loading_progress",
+  "symbol",
+  "span",
+  "rich_editor",
+  "menu",
+  "lazy_column_layout",
+  "tabswiper",
+  "toggle",
+  "dialog",
+  "image_animator",
+  "date_picker",
+  "text_picker",
+  "select",
+  "bubble",
+]
+
+if (!ace_engine_feature_wearable) {
+    component_modules += [ "folder_stack", ]
+}
+
+component_modules_libs = []
+
+foreach(module, component_modules) {
+  sub_name = string_replace(module, "_", "")
+  module_name = "arkui_$sub_name"
+  module_path = module
+  if (module == "span") {
+    module_path = "text/span"
+  }
+  ohos_shared_library(module_name) {
+    deps = []
+    if (is_ohos) {
+      deps += [ "$ace_root/frameworks/core/components_ng/pattern/${module_path}:ace_core_components_${module}_pattern_ng_ohos" ]
+    } else if (use_mingw_win) {
+      deps += [ "$ace_root/frameworks/core/components_ng/pattern/${module_path}:ace_core_components_${module}_pattern_ng_windows" ]
+    } else if (use_mac) {
+      deps += [ "$ace_root/frameworks/core/components_ng/pattern/${module_path}:ace_core_components_${module}_pattern_ng_mac" ]
+    } else if (use_linux) {
+      deps += [ "$ace_root/frameworks/core/components_ng/pattern/${module_path}:ace_core_components_${module}_pattern_ng_linux" ]
+    }
+
+    deps += [
+      "$ace_root/build:libace_compatible",
+      "$ace_root/frameworks/core:ace_container_scope"
+    ]
+
+    part_name = ace_engine_part
+    subsystem_name = ace_engine_subsystem
+  }
+  component_modules_libs += [ ":$module_name" ]
+}
+
+# Install packages
+group("ace_packages") {
+  # core library for Ability Cross-platform Environment(ACE) JS
+  deps = [
+    "$ace_root/adapter/ohos/tools:tools_target",
+    "$ace_root/advanced_ui_component:advanced_ui_component",
+    "$ace_root/advanced_ui_component_static:advanced_ui_component_static",
+    "$ace_root/build:libace",
+    "$ace_root/build:libace_compatible",
+    "$ace_root/build:libace_compatible_components",
+    "$ace_root/build:libace_engine_pa_ark",
+    "$ace_root/component_ext:component_ext",
+    "$ace_root/frameworks/base/network:ace_network",
+    "$ace_root/frameworks/bridge/arkts_frontend:arkoala_abc_prebuild",
+    "$ace_root/frameworks/bridge/arkts_frontend:arkts_frontend_native_package",
+    "$ace_root/frameworks/bridge/cj_frontend:cj_frontend_ohos",
+    "$ace_root/interfaces/inner_api:innerkits_target",
+    "$ace_root/interfaces/inner_api/ace:ace_forward_compatibility",
+    "$ace_root/interfaces/inner_api/ace:ace_uicontent",
+    "$ace_root/interfaces/napi/kits:napi_group",
+    "$ace_root/interfaces/native:ace_packages_ndk",
+  ]
+
+  deps += [ "$ace_root/frameworks/bridge/arkts_frontend/koala_projects/arkoala-arkts/arkui-ohos/src/ani/native:arkoala_native_ani" ]
+
+  if (is_asan || !ace_engine_feature_enable_libace) {
+    deps -= [ "$ace_root/build:libace" ]
+  }
+  deps += component_modules_libs
+}

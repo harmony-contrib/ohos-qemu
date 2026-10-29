@@ -1,0 +1,994 @@
+--- a/base/location/location/frameworks/native/locator_sdk/ILocatorService.idl
++++ b/base/location/location/frameworks/native/locator_sdk/ILocatorService.idl
+@@ -89,4 +89,6 @@
+     [ipccode 63] void IsGnssFenceServiceSupported([out] boolean isGnssFenceSupported);
+     [ipccode 64] void IsCachedGnssServiceSupported([out] boolean isCachedGnssSupported);
+     [ipccode 65] void GetLocationIconStatus([out] int status);
++    [ipccode 66] void StartBluetoothSearch([in] List<String> deviceIds, [in] boolean hasRssiThreshold, [in] int rssiThreshold, [in] IBluetoothScanResultCallback cb);
++    [ipccode 67] void StopBluetoothSearch([in] IBluetoothScanResultCallback cb);
+ }
+\ No newline at end of file
+--- a/base/location/location/interfaces/inner_api/include/locator_impl.h
++++ b/base/location/location/interfaces/inner_api/include/locator_impl.h
+@@ -731,6 +731,9 @@
+      * @return Returns ERRCODE_SUCCESS if Get perform locating app list.
+      */
+     LocationErrCode GetLocationIconStatus(int32_t& status);
++    LocationErrCode StartBluetoothSearch(const std::vector<std::string>& deviceIds, bool hasRssiThreshold,
++        int32_t rssiThreshold, const sptr<IBluetoothScanResultCallback>& callback);
++    LocationErrCode StopBluetoothSearch(const sptr<IBluetoothScanResultCallback>& callback);
+     LocationErrCode GetAppsPerformLocating(std::vector<AppIdentity>& performLocatingAppList);
+
+     void ResetLocatorProxy(const wptr<IRemoteObject> &remote);
+--- a/base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp
++++ b/base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp
+@@ -1916,6 +1916,32 @@
+ #endif
+ }
+
++LocationErrCode LocatorImpl::StartBluetoothSearch(const std::vector<std::string>& deviceIds,
++    bool hasRssiThreshold, int32_t rssiThreshold, const sptr<IBluetoothScanResultCallback>& callback)
++{
++    if (!SaLoadWithStatistic::InitLocationSa(LOCATION_LOCATOR_SA_ID)) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    auto proxy = GetProxy();
++    if (proxy == nullptr) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    return CommonUtils::ErrCodeToLocationErrCode(
++        proxy->StartBluetoothSearch(deviceIds, hasRssiThreshold, rssiThreshold, callback));
++}
++
++LocationErrCode LocatorImpl::StopBluetoothSearch(const sptr<IBluetoothScanResultCallback>& callback)
++{
++    if (!SaLoadWithStatistic::InitLocationSa(LOCATION_LOCATOR_SA_ID)) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    auto proxy = GetProxy();
++    if (proxy == nullptr) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    return CommonUtils::ErrCodeToLocationErrCode(proxy->StopBluetoothSearch(callback));
++}
++
+ LocationErrCode LocatorImpl::GetLocationIconStatus(int32_t& status)
+ {
+     if (!SaLoadWithStatistic::InitLocationSa(LOCATION_LOCATOR_SA_ID)) {
+--- a/base/location/location/services/location_locator/locator/include/locator_ability.h
++++ b/base/location/location/services/location_locator/locator/include/locator_ability.h
+@@ -203,6 +203,9 @@
+     ErrCode AddBeaconFence(const BeaconFenceRequest& beaconFenceRequest) override;
+     ErrCode RemoveBeaconFence(const BeaconFence& beaconFence) override;
+     ErrCode GetLocationIconStatus(int32_t& status) override;
++    ErrCode StartBluetoothSearch(const std::vector<std::string>& deviceIds, bool hasRssiThreshold,
++        int32_t rssiThreshold, const sptr<IBluetoothScanResultCallback>& callback) override;
++    ErrCode StopBluetoothSearch(const sptr<IBluetoothScanResultCallback>& callback) override;
+     ErrCode GetAppsPerformLocating(std::vector<AppIdentity>& performLocatingAppList) override;
+
+     std::shared_ptr<std::map<std::string, std::list<std::shared_ptr<Request>>>> GetRequests();
+--- a/base/location/location/services/location_locator/locator/source/locator_ability.cpp
++++ b/base/location/location/services/location_locator/locator/source/locator_ability.cpp
+@@ -458,6 +458,7 @@
+             code, identity.ToString().c_str(), std::to_string(CommonUtils::GetCurrentTimeStamp()).c_str());
+     if (code == LocatorInterfaceCode::UNREG_SWITCH_CALLBACK ||
+         code == LocatorInterfaceCode::STOP_LOCATING ||
++        code == LocatorInterfaceCode::STOP_BLUETOOTH_SEARCH ||
+         code == LocatorInterfaceCode::DISABLE_LOCATION_MOCK ||
+         code == LocatorInterfaceCode::UNREG_LOCATION_ERROR ||
+         code == LocatorInterfaceCode::UNREG_LOCATING_REQUIRED_DATA_CALLBACK) {
+@@ -2141,6 +2142,28 @@
+ #else
+     return ERRCODE_SERVICE_UNAVAILABLE;
+ #endif
++}
++
++ErrCode LocatorAbility::StartBluetoothSearch(const std::vector<std::string>& deviceIds,
++    bool hasRssiThreshold, int32_t rssiThreshold, const sptr<IBluetoothScanResultCallback>& callback)
++{
++    AppIdentity identity;
++    GetAppIdentityInfo(identity);
++    if (!CheckRequestAvailable(LocatorInterfaceCode::START_BLUETOOTH_SEARCH, identity) ||
++        !PermissionManager::CheckApproximatelyPermission(identity.GetTokenId(), identity.GetFirstTokenId())) {
++        return LOCATION_ERRCODE_PERMISSION_DENIED;
++    }
++    return LocatorRequiredDataManager::GetInstance()->StartBluetoothSearch(
++        callback, identity, deviceIds, hasRssiThreshold, rssiThreshold);
++}
++
++ErrCode LocatorAbility::StopBluetoothSearch(const sptr<IBluetoothScanResultCallback>& callback)
++{
++    AppIdentity identity;
++    GetAppIdentityInfo(identity);
++    // A caller must be able to release its scanner after permission revocation
++    // or a user switch. Ownership is checked against the stored token and uid.
++    return LocatorRequiredDataManager::GetInstance()->StopBluetoothSearch(callback, identity);
+ }
+
+ ErrCode LocatorAbility::SubscribeBluetoothScanResultChange(
+--- a/base/location/location/services/location_locator/locator/include/locator_required_data_manager.h
++++ b/base/location/location/services/location_locator/locator/include/locator_required_data_manager.h
+@@ -18,6 +18,8 @@
+
+ #include <map>
+ #include <mutex>
++#include <set>
++#include <vector>
+ #include <singleton.h>
+ #include <string>
+
+@@ -234,6 +236,13 @@
+     LocatingRequiredDataConfig config_;
+ };
+
++struct BluetoothSearchFilter {
++    std::set<std::string> deviceIds;
++    bool hasRssiThreshold = false;
++    int32_t rssiThreshold = 0;
++    bool Matches(const BluetoothScanResult& result) const;
++};
++
+ class LocatorRequiredDataManager {
+ public:
+     LocatorRequiredDataManager();
+@@ -246,8 +255,13 @@
+     void ReportBluetoothScanResult(const std::unique_ptr<BluetoothScanResult>& bluetoothScanResult);
+     void StartScanBluetoothDevice(sptr<IBluetoothScanResultCallback> callback, AppIdentity identity);
+     void StopScanBluetoothDevice(sptr<IRemoteObject> callbackObj);
+-    void StartBluetoothScan();
+-    void StoptBluetoothScan();
++    LocationErrCode StartBluetoothSearch(const sptr<IBluetoothScanResultCallback>& callback,
++        const AppIdentity& identity, const std::vector<std::string>& deviceIds,
++        bool hasRssiThreshold, int32_t rssiThreshold);
++    LocationErrCode StopBluetoothSearch(const sptr<IBluetoothScanResultCallback>& callback,
++        const AppIdentity& identity);
++    LocationErrCode StartBluetoothScan();
++    LocationErrCode StoptBluetoothScan();
+     void HandleRefreshBluetoothRequest();
+     bool GetBluetoothScanStatus();
+     void SetBluetoothScanStatus(bool bluetoothScanStatus);
+@@ -289,11 +303,16 @@
+     void SetIsWifiCallbackRegistered(bool isWifiCallbackRegistered);
+     void ReportMatchData(const std::vector<std::shared_ptr<LocatingRequiredData>>& result,
+         sptr<ILocatingRequiredDataCallback> locatingRequiredDataCallback, LocatorRequiredInfo locatorRequiredInfo);
+-    std::shared_ptr<Bluetooth::BleCentralManager> bleCentralManager_;
+     bool isWifiCallbackRegistered_ = false;
+     std::mutex wifiRegisteredMutex_;
+     WifiEvent wifiScanEventCallback_ = {0};
+ #endif
++#ifdef BLUETOOTH_ENABLE
++    std::shared_ptr<Bluetooth::BleCentralManager> bleCentralManager_;
++#endif
++    bool HasActiveBluetoothRequests();
++    std::mutex bluetoothScanOperationMutex_;
++    std::map<sptr<IRemoteObject>, BluetoothSearchFilter> bluetoothSearchFilters_;
+     std::mutex mutex_;
+     std::mutex bluetoothcallbacksMapMutex_;
+     std::map<sptr<IRemoteObject>, LocatorRequiredInfo> callbacksMap_;
+--- a/base/location/location/services/location_locator/locator/source/locator_required_data_manager.cpp
++++ b/base/location/location/services/location_locator/locator/source/locator_required_data_manager.cpp
+@@ -13,6 +13,9 @@
+  * limitations under the License.
+  */
+ #include "locator_required_data_manager.h"
++
++#include <algorithm>
++#include <cctype>
+ #include "location_log.h"
+ #include "matching_wlan_info.h"
+ #include <algorithm>
+@@ -239,6 +242,91 @@
+     return nullptr;
+ }
+
++static std::string NormalizeBluetoothDeviceId(std::string deviceId)
++{
++    std::transform(deviceId.begin(), deviceId.end(), deviceId.begin(),
++        [](unsigned char value) { return static_cast<char>(std::tolower(value)); });
++    return deviceId;
++}
++
++bool BluetoothSearchFilter::Matches(const BluetoothScanResult& result) const
++{
++    return deviceIds.count(NormalizeBluetoothDeviceId(result.GetDeviceId())) != 0 &&
++        (!hasRssiThreshold || result.GetRssi() > rssiThreshold);
++}
++
++LocationErrCode LocatorRequiredDataManager::StartBluetoothSearch(
++    const sptr<IBluetoothScanResultCallback>& callback, const AppIdentity& identity,
++    const std::vector<std::string>& deviceIds, bool hasRssiThreshold, int32_t rssiThreshold)
++{
++#ifdef BLUETOOTH_ENABLE
++    if (callback == nullptr || callback->AsObject() == nullptr) {
++        return ERRCODE_INVALID_PARAM;
++    }
++    if (!HookUtils::ExecuteHookWhenStartScanBluetoothDevice(identity.GetBundleName(), TYPE_BLE)) {
++        return ERRCODE_SCAN_FAIL;
++    }
++    auto object = callback->AsObject();
++    sptr<IRemoteObject::DeathRecipient> death(new (std::nothrow) BluetoothScanCallbackDeathRecipient());
++    if (death == nullptr) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    BluetoothSearchFilter filter;
++    filter.hasRssiThreshold = hasRssiThreshold;
++    filter.rssiThreshold = rssiThreshold;
++    for (const auto& deviceId : deviceIds) {
++        filter.deviceIds.insert(NormalizeBluetoothDeviceId(deviceId));
++    }
++    {
++        std::lock_guard<std::mutex> lock(bluetoothcallbacksMapMutex_);
++        if (bluetoothcallbacksMap_.size() >= MAX_CALLBACKS_MAP_NUM || bluetoothcallbacksMap_.count(object) != 0) {
++            return ERRCODE_SCAN_FAIL;
++        }
++        bluetoothcallbacksMap_.emplace(object, std::make_pair(identity, death));
++        bluetoothSearchFilters_.emplace(object, std::move(filter));
++    }
++    if (!object->AddDeathRecipient(death)) {
++        RemoveBluetoothScanCallback(object);
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    auto result = StartBluetoothScan();
++    if (result != ERRCODE_SUCCESS) {
++        RemoveBluetoothScanCallbackDeathRecipientByCallback(object);
++        RemoveBluetoothScanCallback(object);
++    }
++    return result;
++#else
++    return ERRCODE_NOT_SUPPORTED;
++#endif
++}
++
++LocationErrCode LocatorRequiredDataManager::StopBluetoothSearch(
++    const sptr<IBluetoothScanResultCallback>& callback, const AppIdentity& identity)
++{
++#ifdef BLUETOOTH_ENABLE
++    if (callback == nullptr || callback->AsObject() == nullptr) {
++        return ERRCODE_INVALID_PARAM;
++    }
++    auto object = callback->AsObject();
++    {
++        std::lock_guard<std::mutex> lock(bluetoothcallbacksMapMutex_);
++        auto entry = bluetoothcallbacksMap_.find(object);
++        if (entry != bluetoothcallbacksMap_.end() &&
++            (entry->second.first.GetTokenId() != identity.GetTokenId() ||
++            entry->second.first.GetUid() != identity.GetUid() || bluetoothSearchFilters_.count(object) == 0)) {
++            return LOCATION_ERRCODE_PERMISSION_DENIED;
++        }
++    }
++    RemoveBluetoothScanCallbackDeathRecipientByCallback(object);
++    RemoveBluetoothScanCallback(object);
++    // Recheck all current users of the shared scanner at execution time. An old
++    // stop request must not stop a scanner acquired by a newer request.
++    return StoptBluetoothScan();
++#else
++    return ERRCODE_NOT_SUPPORTED;
++#endif
++}
++
+ void LocatorRequiredDataManager::StartScanBluetoothDevice(sptr<IBluetoothScanResultCallback> callback,
+     AppIdentity identity)
+ {
+@@ -289,6 +377,7 @@
+     auto iter = bluetoothcallbacksMap_.find(callbackObj);
+     if (iter != bluetoothcallbacksMap_.end()) {
+         bluetoothcallbacksMap_.erase(iter);
++        bluetoothSearchFilters_.erase(callbackObj);
+     }
+     LBSLOGI(LOCATOR, "after RemoveBluetoothScanCallback, callback size:%{public}zu",
+         bluetoothcallbacksMap_.size());
+@@ -598,8 +687,13 @@
+         }
+         auto deathRecipientPair = pair.second;
+         AppIdentity identity = deathRecipientPair.first;
+-        if (CommonUtils::IsAppBelongCurrentAccount(identity) &&
+-            PermissionManager::CheckLocationPermission(identity.GetTokenId(), identity.GetFirstTokenId()) &&
++        auto filter = bluetoothSearchFilters_.find(callback);
++        bool publicSearch = filter != bluetoothSearchFilters_.end();
++        bool permitted = publicSearch ?
++            PermissionManager::CheckApproximatelyPermission(identity.GetTokenId(), identity.GetFirstTokenId()) :
++            PermissionManager::CheckLocationPermission(identity.GetTokenId(), identity.GetFirstTokenId());
++        if (bluetoothScanResult != nullptr && (!publicSearch || filter->second.Matches(*bluetoothScanResult)) &&
++            CommonUtils::IsAppBelongCurrentAccount(identity) && permitted &&
+             HookUtils::ExecuteHookWhenReportBluetoothScanResult(identity.GetBundleName(), TYPE_BLE) &&
+             !ProxyFreezeManager::GetInstance()->IsProxyPid(identity.GetPid())) {
+             bluetoothScanResultCallback->OnBluetoothScanResultChange(bluetoothScanResult);
+@@ -628,48 +722,71 @@
+ #endif
+ }
+
+-void LocatorRequiredDataManager::StartBluetoothScan()
+-{
++LocationErrCode LocatorRequiredDataManager::StartBluetoothScan()
++{
++#ifdef BLUETOOTH_ENABLE
++    std::lock_guard<std::mutex> operationLock(bluetoothScanOperationMutex_);
++    if (!HasActiveBluetoothRequests()) {
++        return ERRCODE_SCAN_FAIL;
++    }
++    if (GetBluetoothScanStatus()) {
++        return ERRCODE_SUCCESS;
++    }
+     if (bleCentralManager_ == nullptr) {
+-        LBSLOGE(LOCATOR, "%{public}s, bleCentralManager_ == nullptr", __func__);
+-        return;
++        return ERRCODE_SCAN_FAIL;
+     }
+     Bluetooth::BleScanSettings settings;
+     settings.SetScanMode(Bluetooth::SCAN_MODE::SCAN_MODE_LOW_POWER);
+-    std::vector<Bluetooth::BleScanFilter> filters;
+-    Bluetooth::BleScanFilter scanFilter;
+-    filters.push_back(scanFilter);
+-
+-    bleCentralManager_->StartScan(settings, filters);
++    std::vector<Bluetooth::BleScanFilter> filters(1);
++    if (bleCentralManager_->StartScan(settings, filters) != 0) {
++        return ERRCODE_SCAN_FAIL;
++    }
+     SetBluetoothScanStatus(true);
+-}
+-
+-void LocatorRequiredDataManager::StoptBluetoothScan()
+-{
+-    if (bleCentralManager_ == nullptr) {
+-        LBSLOGE(LOCATOR, "%{public}s, bleCentralManager_ == nullptr", __func__);
+-        return;
+-    }
+-    bleCentralManager_->StopScan();
++    return ERRCODE_SUCCESS;
++#else
++    return ERRCODE_NOT_SUPPORTED;
++#endif
++}
++
++LocationErrCode LocatorRequiredDataManager::StoptBluetoothScan()
++{
++#ifdef BLUETOOTH_ENABLE
++    std::lock_guard<std::mutex> operationLock(bluetoothScanOperationMutex_);
++    if (HasActiveBluetoothRequests() || !GetBluetoothScanStatus()) {
++        return ERRCODE_SUCCESS;
++    }
++    if (bleCentralManager_ == nullptr || bleCentralManager_->StopScan() != 0) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
+     SetBluetoothScanStatus(false);
++    return ERRCODE_SUCCESS;
++#else
++    return ERRCODE_NOT_SUPPORTED;
++#endif
++}
++
++bool LocatorRequiredDataManager::HasActiveBluetoothRequests()
++{
++    std::lock_guard<std::mutex> lock(bluetoothcallbacksMapMutex_);
++    for (const auto& entry : bluetoothcallbacksMap_) {
++        auto identity = entry.second.first;
++        bool publicSearch = bluetoothSearchFilters_.count(entry.first) != 0;
++        bool permitted = publicSearch ?
++            PermissionManager::CheckApproximatelyPermission(identity.GetTokenId(), identity.GetFirstTokenId()) :
++            PermissionManager::CheckLocationPermission(identity.GetTokenId(), identity.GetFirstTokenId());
++        if (permitted && CommonUtils::IsAppBelongCurrentAccount(identity) &&
++            !ProxyFreezeManager::GetInstance()->IsProxyPid(identity.GetPid())) {
++            return true;
++        }
++    }
++    return false;
+ }
+
+ void LocatorRequiredDataManager::HandleRefreshBluetoothRequest()
+ {
+-    int activeNumber = 0;
+-    {
+-        std::unique_lock<std::mutex> lock(bluetoothcallbacksMapMutex_);
+-        for (auto iter = bluetoothcallbacksMap_.begin(); iter != bluetoothcallbacksMap_.end(); iter++) {
+-            auto deathRecipientPair = iter->second;
+-            auto appIdentity = deathRecipientPair.first;
+-            if (!ProxyFreezeManager::GetInstance()->IsProxyPid(appIdentity.GetPid())) {
+-                activeNumber ++;
+-            }
+-        }
+-    }
+-    if (activeNumber > 0 && !GetBluetoothScanStatus()) {
++    if (HasActiveBluetoothRequests()) {
+         SendStartBluetoothScanEvent();
+-    } else if (activeNumber == 0 && GetBluetoothScanStatus()) {
++    } else {
+         SendStopBluetoothScanEvent();
+     }
+ }
+--- a/base/location/location/frameworks/js/napi/include/location_napi_adapter.h
++++ b/base/location/location/frameworks/js/napi/include/location_napi_adapter.h
+@@ -28,6 +28,8 @@
+
+ namespace OHOS {
+ namespace Location {
++napi_value StartBluetoothSearch(napi_env env, napi_callback_info info);
++napi_value StopBluetoothSearch(napi_env env, napi_callback_info info);
+ napi_value GetLocationIconStatus(napi_env env, napi_callback_info info);
+ napi_value GetLastLocation(napi_env env, napi_callback_info info);
+ napi_value IsLocationEnabled(napi_env env, napi_callback_info info);
+--- a/base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp
++++ b/base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp
+@@ -14,6 +14,16 @@
+  */
+
+ #include "location_napi_adapter.h"
++
++#include <atomic>
++#include <cmath>
++#include <limits>
++#include <memory>
++#include <mutex>
++#include <string>
++#include <vector>
++#include "bluetooth_scan_result_callback_napi.h"
++#include "napi/native_node_api.h"
+ #include "location_log.h"
+ #include "location_napi_errcode.h"
+ #include "constant_definition.h"
+@@ -34,6 +44,204 @@
+ std::map<std::shared_ptr<BeaconFence>, sptr<LocationGnssGeofenceCallbackNapi>> g_beaconFenceRequestMap;
+ std::mutex g_gnssGeofenceCallbackHostMutex;
+ std::mutex g_beaconFenceRequestMutex;
++
++struct BluetoothSearchRegistration {
++    napi_env env = nullptr;
++    sptr<BluetoothScanResultCallbackNapi> callback;
++    std::shared_ptr<LocatorImpl> client;
++    std::atomic<bool> active {true};
++    std::shared_ptr<BluetoothSearchRegistration>* cleanupData = nullptr;
++};
++
++static std::mutex g_bluetoothSearchMutex;
++static std::vector<std::shared_ptr<BluetoothSearchRegistration>> g_bluetoothSearches;
++
++static void CleanupBluetoothSearch(void* data)
++{
++    std::unique_ptr<std::shared_ptr<BluetoothSearchRegistration>> holder(
++        static_cast<std::shared_ptr<BluetoothSearchRegistration>*>(data));
++    auto registration = *holder;
++    registration->active.store(false);
++    registration->cleanupData = nullptr;
++    registration->callback->DeleteHandler();
++    sptr<IBluetoothScanResultCallback> callback = registration->callback;
++    registration->client->StopBluetoothSearch(callback);
++}
++
++static bool ReadBluetoothSearchRequest(napi_env env, napi_value request,
++    std::vector<std::string>& deviceIds, bool& hasRssiThreshold, int32_t& rssiThreshold)
++{
++    napi_value array = nullptr;
++    bool isArray = false;
++    if (napi_get_named_property(env, request, "deviceIdArray", &array) != napi_ok ||
++        napi_is_array(env, array, &isArray) != napi_ok || !isArray) {
++        return false;
++    }
++    uint32_t size = 0;
++    if (napi_get_array_length(env, array, &size) != napi_ok) {
++        return false;
++    }
++    for (uint32_t index = 0; index < size; ++index) {
++        napi_value element = nullptr;
++        napi_valuetype type = napi_undefined;
++        size_t length = 0;
++        if (napi_get_element(env, array, index, &element) != napi_ok ||
++            napi_typeof(env, element, &type) != napi_ok || type != napi_string ||
++            napi_get_value_string_utf8(env, element, nullptr, 0, &length) != napi_ok) {
++            return false;
++        }
++        std::vector<char> buffer(length + 1);
++        if (napi_get_value_string_utf8(env, element, buffer.data(), buffer.size(), &length) != napi_ok) {
++            return false;
++        }
++        deviceIds.emplace_back(buffer.data(), length);
++    }
++    bool hasProperty = false;
++    if (napi_has_named_property(env, request, "rssiThreshold", &hasProperty) != napi_ok) {
++        return false;
++    }
++    if (hasProperty) {
++        napi_value value = nullptr;
++        napi_valuetype type = napi_undefined;
++        if (napi_get_named_property(env, request, "rssiThreshold", &value) != napi_ok ||
++            napi_typeof(env, value, &type) != napi_ok) {
++            return false;
++        }
++        if (type != napi_undefined) {
++            double threshold = 0;
++            if (type != napi_number || napi_get_value_double(env, value, &threshold) != napi_ok ||
++                !std::isfinite(threshold) || std::trunc(threshold) != threshold ||
++                threshold < std::numeric_limits<int32_t>::min() || threshold > std::numeric_limits<int32_t>::max()) {
++                return false;
++            }
++            hasRssiThreshold = true;
++            rssiThreshold = static_cast<int32_t>(threshold);
++        }
++    }
++    return true;
++}
++
++static bool IsBluetoothSearchCallback(napi_env env, napi_value callback,
++    const std::shared_ptr<BluetoothSearchRegistration>& registration)
++{
++    if (!registration->active.load() || registration->env != env) {
++        return false;
++    }
++    napi_value saved = nullptr;
++    bool equal = false;
++    auto reference = registration->callback->GetHandleCb();
++    return reference != nullptr && napi_get_reference_value(env, reference, &saved) == napi_ok &&
++        napi_strict_equals(env, saved, callback, &equal) == napi_ok && equal;
++}
++
++napi_value StartBluetoothSearch(napi_env env, napi_callback_info info)
++{
++    size_t argc = 3;
++    napi_value argv[3] = {nullptr};
++    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
++    napi_valuetype requestType = napi_undefined;
++    napi_valuetype callbackType = napi_undefined;
++    if (argc != 2 || napi_typeof(env, argv[0], &requestType) != napi_ok || requestType != napi_object ||
++        napi_typeof(env, argv[1], &callbackType) != napi_ok || callbackType != napi_function) {
++        HandleSyncErrCode(env, ERRCODE_INVALID_PARAM);
++        return nullptr;
++    }
++    std::vector<std::string> deviceIds;
++    bool hasRssiThreshold = false;
++    int32_t rssiThreshold = 0;
++    if (!ReadBluetoothSearchRequest(env, argv[0], deviceIds, hasRssiThreshold, rssiThreshold)) {
++        HandleSyncErrCode(env, ERRCODE_INVALID_PARAM);
++        return nullptr;
++    }
++    {
++        std::lock_guard<std::mutex> lock(g_bluetoothSearchMutex);
++        for (auto iter = g_bluetoothSearches.begin(); iter != g_bluetoothSearches.end();) {
++            if (!(*iter)->active.load()) {
++                iter = g_bluetoothSearches.erase(iter);
++            } else {
++                if (IsBluetoothSearchCallback(env, argv[1], *iter)) {
++                    HandleSyncErrCode(env, ERRCODE_INVALID_PARAM);
++                    return nullptr;
++                }
++                ++iter;
++            }
++        }
++    }
++    auto registration = std::make_shared<BluetoothSearchRegistration>();
++    registration->env = env;
++    registration->client = Locator::GetInstance();
++    registration->callback = sptr<BluetoothScanResultCallbackNapi>(new (std::nothrow) BluetoothScanResultCallbackNapi());
++    if (registration->client == nullptr || registration->callback == nullptr) {
++        HandleSyncErrCode(env, ERRCODE_SERVICE_UNAVAILABLE);
++        return nullptr;
++    }
++    napi_ref reference = nullptr;
++    NAPI_CALL(env, napi_create_reference(env, argv[1], 1, &reference));
++    registration->callback->SetEnv(env);
++    registration->callback->SetHandleCb(reference);
++    sptr<IBluetoothScanResultCallback> callback = registration->callback;
++    auto errorCode = registration->client->StartBluetoothSearch(
++        deviceIds, hasRssiThreshold, rssiThreshold, callback);
++    if (errorCode != ERRCODE_SUCCESS) {
++        registration->callback->DeleteHandler();
++        HandleSyncErrCode(env, errorCode);
++        return nullptr;
++    }
++    auto holder = std::make_unique<std::shared_ptr<BluetoothSearchRegistration>>(registration);
++    if (napi_add_env_cleanup_hook(env, CleanupBluetoothSearch, holder.get()) != napi_ok) {
++        registration->callback->DeleteHandler();
++        registration->client->StopBluetoothSearch(callback);
++        HandleSyncErrCode(env, ERRCODE_SERVICE_UNAVAILABLE);
++        return nullptr;
++    }
++    registration->cleanupData = holder.release();
++    {
++        std::lock_guard<std::mutex> lock(g_bluetoothSearchMutex);
++        g_bluetoothSearches.push_back(registration);
++    }
++    return UndefinedNapiValue(env);
++}
++
++napi_value StopBluetoothSearch(napi_env env, napi_callback_info info)
++{
++    size_t argc = 2;
++    napi_value argv[2] = {nullptr};
++    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
++    napi_valuetype callbackType = napi_undefined;
++    if (argc > 1 || (argc == 1 && (napi_typeof(env, argv[0], &callbackType) != napi_ok ||
++        (callbackType != napi_function && callbackType != napi_undefined)))) {
++        HandleSyncErrCode(env, ERRCODE_INVALID_PARAM);
++        return nullptr;
++    }
++    bool allCallbacks = argc == 0 || callbackType == napi_undefined;
++    std::lock_guard<std::mutex> lock(g_bluetoothSearchMutex);
++    for (auto iter = g_bluetoothSearches.begin(); iter != g_bluetoothSearches.end();) {
++        auto registration = *iter;
++        if (!registration->active.load()) {
++            iter = g_bluetoothSearches.erase(iter);
++            continue;
++        }
++        if (registration->env != env || (!allCallbacks && !IsBluetoothSearchCallback(env, argv[0], registration))) {
++            ++iter;
++            continue;
++        }
++        sptr<IBluetoothScanResultCallback> callback = registration->callback;
++        auto errorCode = registration->client->StopBluetoothSearch(callback);
++        if (errorCode != ERRCODE_SUCCESS) {
++            HandleSyncErrCode(env, errorCode);
++            return nullptr;
++        }
++        registration->active.store(false);
++        registration->callback->DeleteHandler();
++        auto cleanupData = registration->cleanupData;
++        if (napi_remove_env_cleanup_hook(env, CleanupBluetoothSearch, cleanupData) == napi_ok) {
++            registration->cleanupData = nullptr;
++            delete cleanupData;
++        }
++        iter = g_bluetoothSearches.erase(iter);
++    }
++    return UndefinedNapiValue(env);
++}
+
+ napi_value GetLocationIconStatus(napi_env env, napi_callback_info info)
+ {
+--- a/base/location/location/frameworks/js/napi/source/location_napi_entry.cpp
++++ b/base/location/location/frameworks/js/napi/source/location_napi_entry.cpp
+@@ -414,6 +414,8 @@
+         DECLARE_NAPI_FUNCTION("isBeaconFenceSupported", IsBeaconFenceSupported),
+         DECLARE_NAPI_FUNCTION("getActiveGeoFences", GetActiveGeoFences),
+         DECLARE_NAPI_FUNCTION("getLocationIconStatus", GetLocationIconStatus),
++        DECLARE_WRITABLE_NAPI_FUNCTION("startBluetoothSearch", StartBluetoothSearch),
++        DECLARE_WRITABLE_NAPI_FUNCTION("stopBluetoothSearch", StopBluetoothSearch),
+
+         DECLARE_NAPI_PROPERTY("LocationRequestPriority", LocationRequestPriorityTypeConstructor(env)),
+         DECLARE_NAPI_PROPERTY("LocationRequestScenario", LocationRequestScenarioTypeConstructor(env)),
+--- a/base/location/location/frameworks/js/napi/include/bluetooth_scan_result_callback_napi.h
++++ b/base/location/location/frameworks/js/napi/include/bluetooth_scan_result_callback_napi.h
+@@ -15,6 +15,9 @@
+
+ #ifndef BLUETOOTH_SCAN_RESULT_CALLBACK_NAPI_H
+ #define BLUETOOTH_SCAN_RESULT_CALLBACK_NAPI_H
++
++#include <memory>
++#include <mutex>
+
+ #include "iremote_stub.h"
+ #include "napi/native_api.h"
+@@ -39,6 +42,7 @@
+     void DoSendWork(uv_loop_s *&loop, uv_work_t *&work);
+     void OnBluetoothScanResultChange(const std::unique_ptr<BluetoothScanResult>& bluetoothScanResult) override;
+     void DeleteHandler();
++    void DispatchScanResult(const std::shared_ptr<BluetoothScanResult>& result);
+     bool FindCallback();
+     napi_ref GetHandleCb();
+     void SetHandleCb(const napi_ref& handlerCb);
+--- a/base/location/location/frameworks/js/napi/source/bluetooth_scan_result_callback_napi.cpp
++++ b/base/location/location/frameworks/js/napi/source/bluetooth_scan_result_callback_napi.cpp
+@@ -15,12 +15,16 @@
+
+ #include "bluetooth_scan_result_callback_napi.h"
+
++#include <memory>
++#include <mutex>
++
+ #include "ipc_object_stub.h"
+ #include "ipc_skeleton.h"
+ #include "js_native_api.h"
+ #include "message_option.h"
+ #include "message_parcel.h"
+ #include "napi/native_common.h"
++#include "napi/native_node_api.h"
+ #include "uv.h"
+
+ #include "constant_definition.h"
+@@ -166,55 +170,52 @@
+     const std::unique_ptr<BluetoothScanResult>& bluetoothScanResult)
+ {
+     std::unique_lock<std::mutex> guard(mutex_);
+-    uv_loop_s *loop = nullptr;
+-    if (env_ == nullptr) {
+-        LBSLOGD(BLUETOOTH_CALLBACK, "env_ is nullptr.");
+-        return;
+-    }
+-    if (handlerCb_ == nullptr) {
+-        LBSLOGE(BLUETOOTH_CALLBACK, "handler is nullptr.");
+-        return;
+-    }
+-    NAPI_CALL_RETURN_VOID(env_, napi_get_uv_event_loop(env_, &loop));
+-    if (loop == nullptr) {
+-        LBSLOGE(BLUETOOTH_CALLBACK, "loop == nullptr.");
+-        return;
+-    }
+-    uv_work_t *work = new (std::nothrow) uv_work_t;
+-    if (work == nullptr) {
+-        LBSLOGE(BLUETOOTH_CALLBACK, "work == nullptr.");
+-        return;
+-    }
+-    auto context = new (std::nothrow) BluetoothScanResultAsyncContext(env_);
+-    if (context == nullptr) {
+-        LBSLOGE(BLUETOOTH_CALLBACK, "context == nullptr.");
+-        delete work;
+-        return;
+-    }
+-    if (!InitContext(context)) {
+-        LBSLOGE(BLUETOOTH_CALLBACK, "InitContext fail");
+-        delete work;
+-        delete context;
+-        return;
+-    }
+-    context->bluetoothScanResult = std::make_unique<BluetoothScanResult>(*bluetoothScanResult);
+-    work->data = context;
+-    DoSendWork(loop, work);
++    if (env_ == nullptr || handlerCb_ == nullptr || bluetoothScanResult == nullptr) {
++        return;
++    }
++    sptr<BluetoothScanResultCallbackNapi> callback(this);
++    auto result = std::make_shared<BluetoothScanResult>(*bluetoothScanResult);
++    // Own the callback object until dispatch, not an unowned/reusable napi_ref.
++    // DeleteHandler clears its env/ref before the JS loop can dispatch old work.
++    napi_send_event(env_, [callback, result]() { callback->DispatchScanResult(result); }, napi_eprio_immediate);
++}
++
++void BluetoothScanResultCallbackNapi::DispatchScanResult(const std::shared_ptr<BluetoothScanResult>& result)
++{
++    std::unique_lock<std::mutex> guard(mutex_);
++    if (env_ == nullptr || handlerCb_ == nullptr || result == nullptr) {
++        return;
++    }
++    napi_env env = env_;
++    napi_handle_scope scope = nullptr;
++    if (napi_open_handle_scope(env, &scope) != napi_ok || scope == nullptr) {
++        return;
++    }
++    napi_value handler = nullptr;
++    napi_value event = nullptr;
++    napi_value receiver = nullptr;
++    auto copy = std::make_unique<BluetoothScanResult>(*result);
++    if (napi_get_reference_value(env, handlerCb_, &handler) != napi_ok || handler == nullptr ||
++        napi_create_object(env, &event) != napi_ok || napi_get_undefined(env, &receiver) != napi_ok) {
++        napi_close_handle_scope(env, scope);
++        return;
++    }
++    BluetoothScanResultToJs(env, copy, event);
++    guard.unlock();
++    napi_value callbackResult = nullptr;
++    napi_call_function(env, receiver, handler, 1, &event, &callbackResult);
++    napi_close_handle_scope(env, scope);
+ }
+
+ void BluetoothScanResultCallbackNapi::DeleteHandler()
+ {
+-    LBSLOGD(BLUETOOTH_CALLBACK, "before DeleteHandler");
+-    std::unique_lock<std::mutex> guard(mutex_);
+-    if (env_ == nullptr) {
+-        LBSLOGE(BLUETOOTH_CALLBACK, "env is nullptr.");
+-        return;
+-    }
++    std::unique_lock<std::mutex> guard(mutex_);
+     DeleteBlueToothCallback(handlerCb_);
+-    if (handlerCb_ != nullptr) {
+-        NAPI_CALL_RETURN_VOID(env_, napi_delete_reference(env_, handlerCb_));
+-        handlerCb_ = nullptr;
+-    }
++    if (env_ != nullptr && handlerCb_ != nullptr) {
++        napi_delete_reference(env_, handlerCb_);
++    }
++    handlerCb_ = nullptr;
++    env_ = nullptr;
+ }
+ } // namespace Location
+ } // namespace OHOS
+--- a/base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h
++++ b/base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h
+@@ -83,4 +83,6 @@
+-    GET_LOCATION_ICON_STATUS = 65
++    GET_LOCATION_ICON_STATUS = 65,
++    START_BLUETOOTH_SEARCH = 66,
++    STOP_BLUETOOTH_SEARCH = 67
+ };
+
+ enum class GeoConvertInterfaceCode {
+--- a/base/location/location/services/location_locator/locator/include/request_manager.h
++++ b/base/location/location/services/location_locator/locator/include/request_manager.h
+@@ -86,6 +86,7 @@
+     void ProxySendLocationRequest(std::string abilityName, WorkRecord& workRecord);
+     sptr<IRemoteObject> GetRemoteObject(std::string abilityName);
+     bool IsUidInProcessing(int32_t uid);
++    bool UpdateUsingFinePermission(std::shared_ptr<Request> request, bool isStart);
+     bool UpdateUsingApproximatelyPermission(std::shared_ptr<Request> request, const bool isStart);
+     bool ActiveLocatingStrategies(const std::shared_ptr<Request>& request);
+     bool AddRequestToWorkRecord(std::string abilityName, std::shared_ptr<Request>& request,
+@@ -93,6 +94,8 @@
+     bool IsRequestAvailable(std::shared_ptr<Request>& request);
+     void UpdateRunningUids(const std::shared_ptr<Request>& request, std::string abilityName, bool isAdd);
+     void ReportDataToResSched(std::string state, const pid_t pid, const pid_t uid);
++    // Guarded by permissionRecordMutex_, independently of approximate-use accounting.
++    std::map<pid_t, int32_t> fineWorkingPidsCountMap_;
+     std::map<int32_t, int32_t> runningUidMap_;
+     std::map<sptr<IRemoteObject>, std::shared_ptr<LocationErrRequest>> locationErrorCallbackMap_;
+     static ffrt::mutex requestMutex_;
+--- a/base/location/location/services/location_locator/locator/source/request_manager.cpp
++++ b/base/location/location/services/location_locator/locator/source/request_manager.cpp
+@@ -14,6 +14,9 @@
+  */
+
+ #include "request_manager.h"
++
++#include <cmath>
++#include <vector>
+
+ #include "privacy_kit.h"
+ #include "privacy_error.h"
+@@ -86,16 +89,65 @@
+
+ bool RequestManager::UpdateUsingPermission(std::shared_ptr<Request> request, const bool isStart)
+ {
+-    std::unique_lock<ffrt::mutex> lock(permissionRecordMutex_, std::defer_lock);
+-    lock.lock();
++    std::unique_lock<ffrt::mutex> lock(permissionRecordMutex_);
+     if (request == nullptr) {
+-        LBSLOGE(REQUEST_MANAGER, "request is null");
+-        lock.unlock();
+-        return false;
+-    }
+-    bool ret = UpdateUsingApproximatelyPermission(request, isStart);
+-    lock.unlock();
+-    return ret;
++        return false;
++    }
++    if (!isStart) {
++        bool fineStopped = UpdateUsingFinePermission(request, false);
++        bool approximateStopped = UpdateUsingApproximatelyPermission(request, false);
++        return fineStopped && approximateStopped;
++    }
++    auto tokenId = request->GetTokenId();
++    auto firstTokenId = request->GetFirstTokenId();
++    if (PermissionManager::CheckApproximatelyPermission(tokenId, firstTokenId)) {
++        return UpdateUsingFinePermission(request, false) && UpdateUsingApproximatelyPermission(request, true);
++    }
++    if (PermissionManager::CheckLocationPermission(tokenId, firstTokenId)) {
++        return UpdateUsingApproximatelyPermission(request, false) && UpdateUsingFinePermission(request, true);
++    }
++    return false;
++}
++
++bool RequestManager::UpdateUsingFinePermission(std::shared_ptr<Request> request, bool isStart)
++{
++    auto locator = LocatorAbility::GetInstance();
++    auto tokenId = request->GetTokenId();
++    auto pid = request->GetPid();
++    if (isStart && !request->GetLocationPermState()) {
++        auto& count = fineWorkingPidsCountMap_[pid];
++        if (count == 0) {
++            auto result = PrivacyKit::StartUsingPermission(tokenId, ACCESS_LOCATION, pid);
++            if (result != ERRCODE_SUCCESS && result != Security::AccessToken::ERR_PERMISSION_ALREADY_START_USING &&
++                locator->IsHapCaller(tokenId)) {
++                fineWorkingPidsCountMap_.erase(pid);
++                return false;
++            }
++        }
++        ++count;
++        request->SetLocationPermState(true);
++        auto result = locator->UpdatePermissionUsedRecord(tokenId, ACCESS_LOCATION, request->GetPermUsedType(), 1, 0);
++        if (result != ERRCODE_SUCCESS && locator->IsHapCaller(tokenId)) {
++            UpdateUsingFinePermission(request, false);
++            return false;
++        }
++    } else if (!isStart && request->GetLocationPermState()) {
++        auto entry = fineWorkingPidsCountMap_.find(pid);
++        if (entry == fineWorkingPidsCountMap_.end() || entry->second <= 0) {
++            return false;
++        }
++        if (entry->second == 1) {
++            auto result = PrivacyKit::StopUsingPermission(tokenId, ACCESS_LOCATION, pid);
++            if (result != ERRCODE_SUCCESS && locator->IsHapCaller(tokenId)) {
++                return false;
++            }
++        }
++        if (--entry->second == 0) {
++            fineWorkingPidsCountMap_.erase(entry);
++        }
++        request->SetLocationPermState(false);
++    }
++    return true;
+ }
+
+ bool RequestManager::UpdateUsingApproximatelyPermission(std::shared_ptr<Request> request, const bool isStart)
+@@ -493,40 +545,66 @@
+
+ bool RequestManager::IsLocatingInCurrentAccount()
+ {
+-    // Keep the same request -> permission lock order as request deletion.
+-    std::unique_lock<ffrt::mutex> requestsLock(requestMutex_);
+-    std::unique_lock<ffrt::mutex> permissionLock(permissionRecordMutex_);
+-    auto locator = LocatorAbility::GetInstance();
+-    auto requests = locator->GetRequests();
+-    if (requests == nullptr) {
+-        return false;
+-    }
+-    for (const auto& entry : *requests) {
+-        if (entry.first != GNSS_ABILITY && entry.first != NETWORK_ABILITY && entry.first != FUSED_ABILITY) {
+-            continue;
+-        }
+-        for (auto request : entry.second) {
+-            if (request == nullptr || request->GetRequestConfig() == nullptr ||
+-                !request->GetApproximatelyPermState() || !IsRequestAvailable(request)) {
++    struct RequestState {
++        int32_t uid;
++        int32_t pid;
++        uint32_t tokenId;
++        uint32_t firstTokenId;
++        bool usingFine;
++        bool usingApproximate;
++        int32_t fixNumber;
++        int64_t timestamp;
++        int32_t timeoutMs;
++    };
++    std::vector<RequestState> snapshot;
++    {
++        // std::lock does not retain either lock while waiting for the other.
++        // Permission checks, account queries and RDB/IPC run after both are released.
++        std::scoped_lock<ffrt::mutex, ffrt::mutex> lock(requestMutex_, permissionRecordMutex_);
++        auto requests = LocatorAbility::GetInstance()->GetRequests();
++        if (requests == nullptr) {
++            return false;
++        }
++        for (const auto& entry : *requests) {
++            if (entry.first != GNSS_ABILITY && entry.first != NETWORK_ABILITY && entry.first != FUSED_ABILITY) {
+                 continue;
+             }
+-            AppIdentity identity;
+-            identity.SetUid(request->GetUid());
+-            identity.SetTokenId(request->GetTokenId());
+-            if (!CommonUtils::IsAppBelongCurrentAccount(identity)) {
+-                continue;
++            for (const auto& request : entry.second) {
++                if (request == nullptr || !request->GetIsRequesting()) {
++                    continue;
++                }
++                auto config = request->GetRequestConfig();
++                if (config == nullptr || (!request->GetLocationPermState() && !request->GetApproximatelyPermState())) {
++                    continue;
++                }
++                snapshot.push_back({request->GetUid(), request->GetPid(), request->GetTokenId(),
++                    request->GetFirstTokenId(), request->GetLocationPermState(), request->GetApproximatelyPermState(),
++                    config->GetFixNumber(), config->GetTimeStamp(), config->GetTimeOut()});
+             }
+-            auto tokenId = request->GetTokenId();
+-            auto firstTokenId = request->GetFirstTokenId();
+-            if (!PermissionManager::CheckLocationPermission(tokenId, firstTokenId) &&
+-                !PermissionManager::CheckApproximatelyPermission(tokenId, firstTokenId)) {
+-                continue;
+-            }
+-            auto userId = CommonUtils::GetUserIdByUid(request->GetUid());
+-            if (LocationDataRdbManager::QuerySwitchStateForUser(userId) == ENABLED ||
+-                locator->GetLocationSwitchIgnoredFlag(tokenId)) {
+-                return true;
+-            }
++        }
++    }
++    auto activeIds = LocationAccountManager::GetInstance()->GetActiveUserIds();
++    auto now = CommonUtils::GetCurrentTime();
++    for (const auto& state : snapshot) {
++        AppIdentity identity;
++        identity.SetUid(state.uid);
++        identity.SetTokenId(state.tokenId);
++        if (!CommonUtils::IsAppBelongActiveAccounts(identity, activeIds) ||
++            !CommonUtils::IsAppBelongCurrentAccount(identity) ||
++            ProxyFreezeManager::GetInstance()->IsProxyPid(state.pid) ||
++            (state.fixNumber == 1 && std::fabs(now - state.timestamp) > state.timeoutMs / MILLI_PER_SEC)) {
++            continue;
++        }
++        bool fine = state.usingFine && PermissionManager::CheckLocationPermission(state.tokenId, state.firstTokenId);
++        bool approximate = state.usingApproximate &&
++            PermissionManager::CheckApproximatelyPermission(state.tokenId, state.firstTokenId);
++        if (!fine && !approximate) {
++            continue;
++        }
++        auto userId = CommonUtils::GetUserIdByUid(state.uid);
++        if (LocationDataRdbManager::QuerySwitchStateForUser(userId) == ENABLED ||
++            LocatorAbility::GetInstance()->GetLocationSwitchIgnoredFlag(state.tokenId)) {
++            return true;
+         }
+     }
+     return false;

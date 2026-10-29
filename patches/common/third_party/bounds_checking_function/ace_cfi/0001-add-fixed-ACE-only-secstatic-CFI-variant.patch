@@ -1,0 +1,32 @@
+--- a/third_party/bounds_checking_function/BUILD.gn
++++ b/third_party/bounds_checking_function/BUILD.gn
+@@ -61,6 +61,29 @@
+     part_name = "bounds_checking_function"
+     subsystem_name = "thirdparty"
+   }
++  # Only the ACE smartlayout consumer uses this CFI metadata variant.
++  if (is_ohos && current_os == "ohos") {
++    ohos_static_library("libsec_static_ace_cfi") {
++      sanitize = {
++        cfi = true
++        cfi_cross_dso = true
++      }
++      sources = libsec_sources
++      public_configs = [ ":libsec_public_config" ]
++
++      cflags = [
++        "-D_INC_STRING_S",
++        "-D_INC_WCHAR_S",
++        "-D_SECIMP=//",
++        "-D_STDIO_S_DEFINED",
++        "-D_INC_STDIO_S",
++        "-D_INC_STDLIB_S",
++        "-D_INC_MEMORY_S",
++      ]
++      part_name = "bounds_checking_function"
++      subsystem_name = "thirdparty"
++    }
++  }
+   ohos_shared_library("libsec_shared") {
+     sources = libsec_sources
+     public_configs = [ ":libsec_public_config" ]

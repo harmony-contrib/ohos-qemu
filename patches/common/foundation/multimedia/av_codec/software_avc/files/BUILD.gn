@@ -1,0 +1,56 @@
+# Copyright (c) 2026 Harmony Contrib
+# SPDX-License-Identifier: Apache-2.0
+import("//build/ohos.gni")
+
+if (product_name == "armv7a_virt" || product_name == "arm64_virt" ||
+    product_name == "x86_64_virt") {
+  avc_lib_dir = "lib64"
+  if (target_cpu == "arm") {
+    avc_lib_dir = "lib"
+  }
+  ohos_prebuilt_shared_library("qemu_avc_backend_library") {
+    source = "artifacts/${target_cpu}/libavcenc_ohos.z.so"
+    output = "libavcenc_ohos.z.so"
+    install_images = [ "system" ]
+    module_install_dir = avc_lib_dir
+    subsystem_name = "multimedia"
+    part_name = "av_codec"
+    install_enable = true
+  }
+  avc_notices = [
+    "openh264-LICENSE",
+    "libc++-LICENSE.TXT",
+    "libc++abi-LICENSE.TXT",
+    "compiler-rt-LICENSE.TXT",
+  ]
+  foreach(notice, avc_notices) {
+    ohos_prebuilt_etc("qemu_avc_" + notice) {
+      source = "licenses/" + notice
+      output = notice
+      module_install_dir = "etc/notice/qemu_avc"
+      install_images = [ "system" ]
+      subsystem_name = "multimedia"
+      part_name = "av_codec"
+    }
+  }
+  ohos_prebuilt_etc("qemu_avc_provenance") {
+    source = "provenance.json"
+    output = "provenance.json"
+    module_install_dir = "etc/notice/qemu_avc"
+    install_images = [ "system" ]
+    subsystem_name = "multimedia"
+    part_name = "av_codec"
+  }
+  group("backend") {
+    deps = [
+      ":qemu_avc_backend_library",
+      ":qemu_avc_provenance",
+    ]
+    foreach(notice, avc_notices) {
+      deps += [ ":qemu_avc_" + notice ]
+    }
+  }
+} else {
+  group("backend") {
+  }
+}

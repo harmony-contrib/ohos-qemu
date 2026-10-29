@@ -1,0 +1,6 @@
+{
+  "name": "F09-complete-pipe-schema-44100-input",
+  "files": {
+    "vendor/ohemu/virt/hals/audio/config/audio_policy_config_new.xml": "5adbfe3e7366d3cd20cfe2091cda8b295ecf1a889e3b4db4aef3a8c19afbf038"
+  }
+}

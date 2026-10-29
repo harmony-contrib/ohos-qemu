@@ -1,0 +1,177 @@
+{
+  "schema": "real-sherpa1112-prebuilt-cpu-dependencies/v1",
+  "libraries": [
+    {
+      "abi": "arm64-v8a",
+      "original_har": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps-providers579-candidate/research/sherpa_onnx-1.11.2.har",
+        "sha256": "d196941c571f4bd7dd98e6c03097aa4873b9a934ceced64800fb85b25892e6a0",
+        "bytes": 13894230
+      },
+      "member": "package/libs/arm64-v8a/libsherpa-onnx-c-api.so",
+      "file": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-provider-scope-candidate/candidate/component/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/assets/native/arm64-v8a/libsherpa-onnx-c-api.so",
+        "sha256": "dafe889309536c25bcd3e07e9ff2a67659589fe16bd55fb0cbc2fb8d98c76aea",
+        "bytes": 3314336
+      },
+      "elf": {
+        "elf_class": 64,
+        "endianness": "little",
+        "machine": 183,
+        "soname": [
+          "libsherpa-onnx-c-api.so"
+        ],
+        "needed": [
+          "libhilog_ndk.z.so",
+          "librawfile.z.so",
+          "libonnxruntime.so",
+          "libc++_shared.so",
+          "libc.so"
+        ]
+      },
+      "normal_role": "prebuilt dependency; never claimed source compiled"
+    },
+    {
+      "abi": "arm64-v8a",
+      "original_har": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps-providers579-candidate/research/sherpa_onnx-1.11.2.har",
+        "sha256": "d196941c571f4bd7dd98e6c03097aa4873b9a934ceced64800fb85b25892e6a0",
+        "bytes": 13894230
+      },
+      "member": "package/libs/arm64-v8a/libonnxruntime.so",
+      "file": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-provider-scope-candidate/candidate/component/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/assets/native/arm64-v8a/libonnxruntime.so",
+        "sha256": "f9fd9080a10f2b93323d597225fbaa63d06f93b384bdfdd7285db9a9115fcc2b",
+        "bytes": 12930856
+      },
+      "elf": {
+        "elf_class": 64,
+        "endianness": "little",
+        "machine": 183,
+        "soname": [
+          "libonnxruntime.so"
+        ],
+        "needed": [
+          "libc++_shared.so",
+          "libc.so"
+        ]
+      },
+      "normal_role": "prebuilt dependency; never claimed source compiled"
+    },
+    {
+      "abi": "arm64-v8a",
+      "original_har": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps-providers579-candidate/research/sherpa_onnx-1.11.2.har",
+        "sha256": "d196941c571f4bd7dd98e6c03097aa4873b9a934ceced64800fb85b25892e6a0",
+        "bytes": 13894230
+      },
+      "member": "package/libs/arm64-v8a/libc++_shared.so",
+      "file": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-provider-scope-candidate/candidate/component/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/assets/native/arm64-v8a/libc++_shared.so",
+        "sha256": "3cecd922ef5e1289d988506741ed6a96bc028ae2cdc528f9459af6a000e1218b",
+        "bytes": 1261960
+      },
+      "elf": {
+        "elf_class": 64,
+        "endianness": "little",
+        "machine": 183,
+        "soname": [
+          "libc++_shared.so"
+        ],
+        "needed": [
+          "libc.so"
+        ]
+      },
+      "normal_role": "prebuilt dependency; never claimed source compiled"
+    },
+    {
+      "abi": "x86_64",
+      "original_har": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps-providers579-candidate/research/sherpa_onnx-1.11.2.har",
+        "sha256": "d196941c571f4bd7dd98e6c03097aa4873b9a934ceced64800fb85b25892e6a0",
+        "bytes": 13894230
+      },
+      "member": "package/libs/x86_64/libsherpa-onnx-c-api.so",
+      "file": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-provider-scope-candidate/candidate/component/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/assets/native/x86_64/libsherpa-onnx-c-api.so",
+        "sha256": "8e7704ca37e2113c67521b338748d82b71b9edef511e556c37f10fed57de1fd8",
+        "bytes": 3730032
+      },
+      "elf": {
+        "elf_class": 64,
+        "endianness": "little",
+        "machine": 62,
+        "soname": [
+          "libsherpa-onnx-c-api.so"
+        ],
+        "needed": [
+          "libhilog_ndk.z.so",
+          "librawfile.z.so",
+          "libonnxruntime.so",
+          "libc++_shared.so",
+          "libc.so"
+        ]
+      },
+      "normal_role": "prebuilt dependency; never claimed source compiled"
+    },
+    {
+      "abi": "x86_64",
+      "original_har": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps-providers579-candidate/research/sherpa_onnx-1.11.2.har",
+        "sha256": "d196941c571f4bd7dd98e6c03097aa4873b9a934ceced64800fb85b25892e6a0",
+        "bytes": 13894230
+      },
+      "member": "package/libs/x86_64/libonnxruntime.so",
+      "file": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-provider-scope-candidate/candidate/component/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/assets/native/x86_64/libonnxruntime.so",
+        "sha256": "80abf5a65b6f07977b7d994d79bf5dd380e3db51a947fc571c872c631331c18b",
+        "bytes": 15011792
+      },
+      "elf": {
+        "elf_class": 64,
+        "endianness": "little",
+        "machine": 62,
+        "soname": [
+          "libonnxruntime.so"
+        ],
+        "needed": [
+          "libc++_shared.so",
+          "libc.so"
+        ]
+      },
+      "normal_role": "prebuilt dependency; never claimed source compiled"
+    },
+    {
+      "abi": "x86_64",
+      "original_har": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-apps-providers579-candidate/research/sherpa_onnx-1.11.2.har",
+        "sha256": "d196941c571f4bd7dd98e6c03097aa4873b9a934ceced64800fb85b25892e6a0",
+        "bytes": 13894230
+      },
+      "member": "package/libs/x86_64/libc++_shared.so",
+      "file": {
+        "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-provider-scope-candidate/candidate/component/patches/common/drivers/peripheral/intelligent_voice/cpu_provider/assets/native/x86_64/libc++_shared.so",
+        "sha256": "fb22756b3cece1bc7a05f9fdc79b9a09eeb59a67fc43a1ab095fe04a5cb37e1b",
+        "bytes": 1294440
+      },
+      "elf": {
+        "elf_class": 64,
+        "endianness": "little",
+        "machine": 62,
+        "soname": [
+          "libc++_shared.so"
+        ],
+        "needed": [
+          "libc.so"
+        ]
+      },
+      "normal_role": "prebuilt dependency; never claimed source compiled"
+    }
+  ],
+  "source_archive": {
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-media579-provider-scope-candidate/research/upstream/sherpa-onnx-v1.11.2.tar.gz",
+    "sha256": "076031e8801d0f079f008733ad3ad73140ca57ca024bb114a69943eef93f76ba",
+    "bytes": 8310954
+  },
+  "runtime_pass": false
+}

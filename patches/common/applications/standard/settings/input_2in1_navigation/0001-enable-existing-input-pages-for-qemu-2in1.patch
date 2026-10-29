@@ -1,0 +1,12 @@
+diff --git a/applications/standard/settings/napi/settings/open_network_settings/napi_open_settings_page_util.cpp b/applications/standard/settings/napi/settings/open_network_settings/napi_open_settings_page_util.cpp
+--- a/applications/standard/settings/napi/settings/open_network_settings/napi_open_settings_page_util.cpp
++++ b/applications/standard/settings/napi/settings/open_network_settings/napi_open_settings_page_util.cpp
+@@ -61,6 +61,8 @@ const static std::unordered_set<std::string> supportedPageForTabletList = {
+ };
+ 
+ const static std::unordered_set<std::string> supportedPageForPCList = {
++    SettingsPageUrl::INPUT_PAGE,
++    SettingsPageUrl::INPUT_DETAIL_PAGE,
+     SettingsPageUrl::BIOMETRICS_PASSWORD_PAGE,
+     SettingsPageUrl::DISPLAY_PAGE,
+     SettingsPageUrl::SCREEN_REFRESH_RATE_PAGE,

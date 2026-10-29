@@ -1,0 +1,27 @@
+diff --git a/src/chrome/test/BUILD.gn b/src/chrome/test/BUILD.gn
+--- a/src/chrome/test/BUILD.gn
++++ b/src/chrome/test/BUILD.gn
+@@ -53,6 +53,14 @@
+ import("//ui/webui/webui_features.gni")
+ import("//v8/gni/v8.gni")
+ import("//arkweb/build/features/features.gni")
++
++_colors_info_tool =
++    "//chrome/browser/new_tab_page/chrome_colors:generate_colors_info"
++if (is_ohos) {
++  # Unit-test aggregation must use the same host build-time generator.
++  _colors_info_tool =
++      "//chrome/browser/new_tab_page/chrome_colors:generate_colors_info($host_toolchain)"
++}
+ 
+ assert(!is_ios, "Chromium/iOS shouldn't use anything in //chrome")
+ assert(!is_fuchsia, "Fuchsia shouldn't use anything in //chrome")
+@@ -7005,7 +7013,7 @@
+     "//chrome/browser/net:key_pinning_proto",
+     "//chrome/browser/net:probe_message_proto",
+     "//chrome/browser/new_tab_page/chrome_colors:generate_chrome_colors_info",
+-    "//chrome/browser/new_tab_page/chrome_colors:generate_colors_info",
++    _colors_info_tool,
+     "//chrome/browser/notifications:unit_tests",
+     "//chrome/browser/optimization_guide:test_support",
+     "//chrome/browser/optimization_guide:unit_tests",

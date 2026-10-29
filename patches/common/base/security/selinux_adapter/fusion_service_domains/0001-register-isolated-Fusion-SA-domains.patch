@@ -1,0 +1,36 @@
+diff --git a/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/type.te b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/type.te
+--- a/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/type.te
++++ b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/type.te
+@@ -14,3 +14,6 @@
+ type fusion_host, hdfdomain, domain;
+ typeattribute fusion_host violator_vendor_system_etc_read;
+ 
++# Keep the services in the dedicated identities already declared by init.
++type fusion_ranging, sadomain, domain;
++type partner_device_agent, sadomain, domain;
+diff --git a/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/service.te b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/service.te
+new file mode 100644
+--- /dev/null
++++ b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/service.te
+@@ -0,0 +1,4 @@
++# SPDX-License-Identifier: Apache-2.0
++# Separate registration objects; neither service may publish the other's SA.
++type sa_fusion_ranging_service, sa_service_attr;
++type sa_partner_device_agent_service, sa_service_attr;
+diff --git a/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/service_contexts b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/service_contexts
+new file mode 100644
+--- /dev/null
++++ b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/public/service_contexts
+@@ -0,0 +1,3 @@
++# SPDX-License-Identifier: Apache-2.0
++8631 u:object_r:sa_fusion_ranging_service:s0
++8630 u:object_r:sa_partner_device_agent_service:s0
+diff --git a/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/system/fusion_services.te b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/system/fusion_services.te
+new file mode 100644
+--- /dev/null
++++ b/base/security/selinux_adapter/sepolicy/ohos_policy/communication/fusion_connectivity/system/fusion_services.te
+@@ -0,0 +1,4 @@
++# SPDX-License-Identifier: Apache-2.0
++# Domain/entrypoint defaults come from sadomain, not a privileged alias.
++allow fusion_ranging sa_fusion_ranging_service:samgr_class { add get };
++allow partner_device_agent sa_partner_device_agent_service:samgr_class { add get };

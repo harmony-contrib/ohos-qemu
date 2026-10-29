@@ -1,0 +1,38 @@
+--- a/vendor/ohemu/virt/hdf_config/uhdf/device_info.hcs
++++ b/vendor/ohemu/virt/hdf_config/uhdf/device_info.hcs
+@@ -41,6 +41,22 @@
+                 }
+             }
+         }
++        ril :: host {
++            hostName = "riladapter_host";
++            priority = 50;
++            uid = "radio";
++            gid = ["radio", "uhdf_driver", "log"];
++            caps = ["NET_ADMIN"];
++            ril_device :: device {
++                device0 :: deviceNode {
++                    policy = 2;
++                    priority = 100;
++                    preload = 0;
++                    moduleName = "libril_driver.z.so";
++                    serviceName = "ril_service";
++                }
++            }
++        }
+         bluetooth :: host {
+             hostName = "blue_host";
+             priority = 50;
+--- a/base/telephony/core_service/services/etc/param/telephony.para
++++ b/base/telephony/core_service/services/etc/param/telephony.para
+@@ -18,4 +18,8 @@
+ const.telephony.satellite.supported=0
+ persist.telephony.retrystrategy.allow=true
+ persist.telephony.setupfail.delay=3000
+-persist.telephony.modemdend.delay=1000
+\ No newline at end of file
++persist.telephony.modemdend.delay=1000
++
++# QEMU reference AT transport; no modem/SIM/IMS provider is synthesized.
++const.sys.radio.vendorlib.path=libril_vendor.z.so
++const.telephony.ril.attty.path=/dev/ttyUSB0

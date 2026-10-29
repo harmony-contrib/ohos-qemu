@@ -1,0 +1,620 @@
+--- /dev/null
++++ b/applications/standard/call/CallSetting/BUILD.gn
+@@ -0,0 +1,21 @@
++# Copyright (c) 2026 Harmony Contrib
++# SPDX-License-Identifier: Apache-2.0
++import("//build/ohos.gni")
++
++# The complete official default/common/cust application is compiled. Its
++# existing real APN list/details/data-share implementation serves the modal.
++ohos_app("callsetting_hap") {
++  deps = []
++  certificate_profile = "signature/callsetting.p7b"
++  hap_name = "CallSetting"
++  part_name = "prebuilt_hap"
++  subsystem_name = "applications"
++  module_install_dir = "app/com.ohos.callsetting"
++  sdk_home = "//prebuilts/ohos-sdk/linux"
++  sdk_type_name = [ "sdk.dir" ]
++  assemble_type = "assembleHap"
++  build_level = "module"
++  js_build_mode = "release"
++  build_modules = [ "default" ]
++  hap_list = [ "CallSetting-default-default-unsigned:CallSetting" ]
++}
+--- a/applications/standard/call/CallSetting/build-profile.json5
++++ b/applications/standard/call/CallSetting/build-profile.json5
+@@ -1,33 +1,17 @@
+ {
+   "app": {
+-    "signingConfigs": [
+-      {
+-        "name": "release",
+-        "type": "OpenHarmony",
+-        "material": {
+-          "certpath": "signature/OpenHarmony.cer",
+-          "keyAlias": "OpenHarmony Application Release",
+-          "keyPassword": "000000163A9BEF81ADA41E16D3F578F3797BD91F31DD8CA8A098B3D1336A40CDAF1FA8943BBB",
+-          "profile": "signature/callsetting.p7b",
+-          "signAlg": "SHA256withECDSA",
+-          "storeFile": "signature/OpenHarmony.p12",
+-          "storePassword": "00000016FDA1D772B52A9228CEB59EF23467EFB6F77F125284178A34CB7C4B9D1A74C162330F"
+-        }
+-      }
+-    ],
+     "products": [
+       {
+         "name": "default",
+-        "signingConfig": "release",
++        "compileSdkVersion": "26.0.0",
+         "compatibleSdkVersion": 23,
+-        "compileSdkVersion": "26.0.0",
+         "targetSdkVersion": 23,
+         "runtimeOS": "OpenHarmony"
+       }
+     ],
+     "buildModeSet": [
+       {
+-        "name": "debug",
++        "name": "debug"
+       },
+       {
+         "name": "release"
+@@ -62,10 +46,6 @@
+     {
+       "name": "cust",
+       "srcPath": "./feature/cust",
+-    },
+-    {
+-      "name": "wearable",
+-      "srcPath": "./product/wearable",
+       "targets": [
+         {
+           "name": "default",
+@@ -76,4 +56,4 @@
+       ]
+     }
+   ]
+-}
+\ No newline at end of file
++}
+--- a/applications/standard/call/CallSetting/common/src/main/ets/utils/ApnDataStorageCommon.ets
++++ b/applications/standard/call/CallSetting/common/src/main/ets/utils/ApnDataStorageCommon.ets
+@@ -96,40 +96,26 @@
+       .and()
+       .equalTo('proxy_ip_address', common.proxy.description + ':' + common.port.description);
+     let columns = ['*'];
+-    await dataShareHelper.query(this.addUriParam(this.uri, 'simId', simId), da, columns).then(async (queryData) => {
+-      LogUtils.i(TAG, 'dataInsert query succeed, rowCount : ' + queryData.rowCount);
+-      if (queryData.rowCount > 0) {
+-        queryData.goToFirstRow();
+-        let profileID = queryData.getLong(DataShareEnum.profile_id);
+-        common.profileID = profileID;
+-        LogUtils.i(TAG, '[dataInsert dataUpdate]' + JSON.stringify(profileID));
++    const existing = await dataShareHelper.query(this.addUriParam(this.uri, 'simId', simId), da, columns);
++    try {
++      if (existing.rowCount > 0 && existing.goToFirstRow()) {
++        const profileID = existing.getLong(DataShareEnum.profile_id);
+         await this.dataUpdate(profileID, common);
+       } else {
+-        let data: ValuesBucket = {};
+-        data = await this.initSaveData(common);
+-        LogUtils.i(TAG, '[dataInsert insert]');
+-        data = this.checkApnData(data);
+-        await dataShareHelper.insert(this.uri, data).then(insertData => {
+-          LogUtils.i(TAG, 'insert succeed, data : ' + insertData);
+-        }).catch((err: BusinessError) => {
+-          LogUtils.e(TAG, `insert error: code: ${err.code}, message: ${err.message} `);
+-        })
+-      }
+-      queryData.close();
+-    }).catch((err: BusinessError) => {
+-      LogUtils.e(TAG, `query error: code: ${err.code}, message: ${err.message} `);
+-    })
+-  }
+-
+-  public async dataDelete(profileID: number) {
+-    let da = new dataSharePredicates.DataSharePredicates();
+-    da.equalTo('profile_id', Number(profileID));
+-    LogUtils.i(TAG, '[dataDelete]' + JSON.stringify(profileID));
+-    await dataShareHelper.delete(this.uri, da).then(data => {
+-      LogUtils.i(TAG, 'delete succeed, data : ' + data);
+-    }).catch((err: BusinessError) => {
+-      LogUtils.e(TAG, `insert error: code: ${err.code}, message: ${err.message} `);
+-    })
++        const values = this.checkApnData(await this.initSaveData(common));
++        const inserted = await dataShareHelper.insert(this.uri, values);
++        if (inserted < 0) { throw new Error('Actual APN insert failed: ' + inserted); }
++        LogUtils.i(TAG, 'Actual APN insert returned:' + inserted);
++      }
++    } finally { existing.close(); }
++  }
++
++  public async dataDelete(profileID: number): Promise<void> {
++    const predicate = new dataSharePredicates.DataSharePredicates();
++    predicate.equalTo('profile_id', profileID);
++    const deleted = await dataShareHelper.delete(this.uri, predicate);
++    if (deleted < 0) { throw new Error('Actual APN delete failed: ' + deleted); }
++    LogUtils.i(TAG, 'Actual APN delete returned:' + deleted);
+   }
+ 
+   public async dataReset(simId: number) {
+@@ -157,31 +143,26 @@
+     return `${uri}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+   }
+ 
+-  public async dataUpdate(profileID: number, value: DetailsCommon) {
+-    let da = new dataSharePredicates.DataSharePredicates();
+-    da.equalTo('profile_id', Number(profileID));
+-    let va: ValuesBucket = await this.initSaveData(value, true);
+-    va = this.checkApnData(va);
+-    LogUtils.i(TAG, '[dataUpdate]');
+-    await dataShareHelper.update(this.uri, da, va).then((data) => {
+-      LogUtils.i(TAG, 'update succeed, data : ' + data);
+-    }).catch((err: BusinessError) => {
+-      LogUtils.e(TAG, `insert error: code: ${err.code}, message: ${err.message} `);
+-    })
+-  }
+-
+-  public async preferApnDataUpdate(simId: number, profileId: number) {
+-    LogUtils.i(TAG, 'preferApnDataUpdate');
+-    let preferApnData: ValuesBucket = {
+-      'sim_id': Number(simId),
+-      'profile_id': Number(profileId)
+-    }
+-    let preferPredicates = new dataSharePredicates.DataSharePredicates();
+-    await dataShareHelper.update(this.preferApnUri, preferPredicates, preferApnData).then((data) => {
+-      LogUtils.i(TAG, 'preferApnDataUpdate succeed, data : ' + data);
+-    }).catch((err: BusinessError) => {
+-      LogUtils.e(TAG, `preferApnDataUpdate error: code: ${err.code}, message: ${err.message} `);
+-    })
++  public async dataUpdate(profileID: number, value: DetailsCommon): Promise<void> {
++    const predicate = new dataSharePredicates.DataSharePredicates();
++    predicate.equalTo('profile_id', profileID);
++    const values = this.checkApnData(await this.initSaveData(value, true));
++    const changed = await dataShareHelper.update(this.uri, predicate, values);
++    if (changed < 0) { throw new Error('Actual APN update failed: ' + changed); }
++    LogUtils.i(TAG, 'Actual APN update returned:' + changed);
++  }
++
++  public async preferApnDataUpdate(simId: number, profileId: number): Promise<void> {
++    if (dataShareHelper === undefined) {
++      throw new Error('Actual APN DataShare helper is unavailable');
++    }
++    const values: ValuesBucket = { sim_id: simId, profile_id: profileId };
++    const predicates = new dataSharePredicates.DataSharePredicates();
++    const changed = await dataShareHelper.update(this.preferApnUri, predicates, values);
++    if (changed < 0) {
++      throw new Error('Actual preferred APN update failed: ' + changed);
++    }
++    LogUtils.i(TAG, 'preferApnDataUpdate returned:' + changed);
+   }
+ 
+   public preferApnDataQuery(simId: number): Promise<number> {
+--- a/applications/standard/call/CallSetting/common/src/main/ets/utils/ApnDetailsCommon.ets
++++ b/applications/standard/call/CallSetting/common/src/main/ets/utils/ApnDetailsCommon.ets
+@@ -222,14 +222,14 @@
+   }
+ 
+   async deleteData() {
++    await this.dataStorage.dataDelete(this.profileID);
+     let icc = await sim.getSimIccId(this.cardType);
+     await this.sharedPreferences.getFromPreferences('selectAPN_common_' + icc, -1)
+-      .then((data: preferences.ValueType) => {
++      .then(async (data: preferences.ValueType) => {
+         if (data === this.profileID) {
+-          this.sharedPreferences.saveToPreferences('selectAPN_common_' + icc, -1);
++          await this.sharedPreferences.saveToPreferences('selectAPN_common_' + icc, -1);
+         }
+       });
+-    await this.dataStorage.dataDelete(this.profileID);
+   }
+ 
+   private numberToArray(bearerBitmask: number): number[] {
+--- a/applications/standard/call/CallSetting/common/src/main/ets/utils/ApnListCommon.ets
++++ b/applications/standard/call/CallSetting/common/src/main/ets/utils/ApnListCommon.ets
+@@ -141,17 +141,22 @@
+     if (this.cardType === -1) {
+       return;
+     }
+-    if (value === this.selectCommon) {
+-      return;
+-    }
+-    this.selectCommon = value;
+-    AppStorage.setOrCreate('selectId', this.selectCommon);
+-    let icc = await sim.getSimIccId(this.cardType);
+-    await this.sharedPreferences.saveToPreferences('selectAPN_common_' + icc, this.selectCommon);
+-    // select a APN means user wants to set as prefer.
+-    this.setPreferApn();
+-    // 选择apn打点
+-    ReportUtil.getInstance().reportSelectApn(this.selectCommon, this.cardType);
++    const account = await sim.getSimAccountInfo(this.cardType);
++    if (!account || !Number.isInteger(account.simId) || account.simId < 0) {
++      throw new Error('Actual SIM account is unavailable');
++    }
++    await this.dataStorage.initData();
++    await this.dataStorage.preferApnDataUpdate(account.simId, value);
++    const committed = await this.dataStorage.preferApnDataQuery(account.simId);
++    if (committed !== value) {
++      throw new Error('Preferred APN was not confirmed by the real service');
++    }
++    const icc = await sim.getSimIccId(this.cardType);
++    await this.sharedPreferences.saveToPreferences('selectAPN_common_' + icc, value);
++    this.selectCommon = committed;
++    AppStorage.setOrCreate('selectId', committed);
++    LogUtils.i(TAG, 'Preferred APN committed profileId:' + committed + ', simId:' + account.simId);
++    ReportUtil.getInstance().reportSelectApn(committed, this.cardType);
+   }
+ 
+   public setPreferApn() {
+--- a/applications/standard/call/CallSetting/hvigor/hvigor-config.json5
++++ b/applications/standard/call/CallSetting/hvigor/hvigor-config.json5
+@@ -1,20 +1 @@
+-{
+-  "modelVersion": "6.0.0",
+-  "dependencies": {
+-//    "@ohos/hypium-plugin": "1.0.10-rc1",
+-//    "fs-extra": "10.0.1",
+-//    "execa": "5.1.1"
+-  },
+-  "execution": {
+-    // "daemon": true,                          /* Enable daemon compilation. Default: true */
+-    // "incremental": true,                     /* Enable incremental compilation. Default: true */
+-    // "parallel": true,                        /* Enable parallel compilation. Default: true */
+-    // "typeCheck": false,                      /* Enable typeCheck. Default: false */
+-  },
+-  "logging": {
+-    // "level": "info"                          /* Define the log level. Value: [ "debug" | "info" | "warn" | "error" ]. Default: "info" */
+-  },
+-  "debugging": {
+-    // "stacktrace": false                      /* Disable stacktrace compilation. Default: false */
+-  }
+-}
+\ No newline at end of file
++{"modelVersion":"6.0.0","dependencies":{},"execution":{"analyze":"normal","daemon":true,"incremental":true,"parallel":true,"typeCheck":true},"logging":{"level":"info"},"debugging":{"stacktrace":false},"nodeOptions":{"maxOldSpaceSize":4096}}
+--- a/applications/standard/call/CallSetting/oh-package.json5
++++ b/applications/standard/call/CallSetting/oh-package.json5
+@@ -8,7 +8,5 @@
+   "license": "ISC",
+   "dependencies": {
+   },
+-  "devDependencies": {
+-    "@ohos/hypium": "1.0.16"
+-  }
++  "devDependencies": {}
+ }
+\ No newline at end of file
+--- a/applications/standard/call/CallSetting/product/default/oh-package.json5
++++ b/applications/standard/call/CallSetting/product/default/oh-package.json5
+@@ -6,8 +6,8 @@
+   "author": "",
+   "license": "",
+   "dependencies": {
+-    "@ohos/common": "../../common",
+-    "@ohos/cust": "../../feature/cust",
++    "@ohos/common": "file:../../common",
++    "@ohos/cust": "file:../../feature/cust",
+ //    "@hms-security/agoh-base-sdk": "1.4.6-300",
+ //    "@hms-paf/ui-widget-base": "14.16.9-314",
+ //    "@hms-paf/ui-widget-emptypage": "14.16.9-314",
+@@ -15,7 +15,7 @@
+ //    "@hms-paf/ui-widget-about-v2": "14.17.7-304",
+ //    "@hms-paf/ui-widget-permission-v2": "14.17.7-304",
+ //    "@hms-paf/ui-widget-webview-v2": "14.17.7-304",
+-    "@ohos/lottie": "2.0.23"
++    "@ohos/lottie": "file:libs/lottie-2.0.23.har"
+   },
+   "overrides": {
+ //    "@hms-security/agoh-base-sdk": "1.4.6-300",
+--- /dev/null
++++ b/applications/standard/call/CallSetting/product/default/src/main/ets/CallSettingDialogAbility/GeneralCallSettingDialogAbility.ets
+@@ -0,0 +1,65 @@
++/*
++ * Copyright (c) 2026 Harmony Contrib
++ * SPDX-License-Identifier: Apache-2.0
++ */
++import UIExtensionAbility from '@ohos.app.ability.UIExtensionAbility';
++import UIExtensionContentSession from '@ohos.app.ability.UIExtensionContentSession';
++import Want from '@ohos.app.ability.Want';
++import common from '@ohos.app.ability.common';
++import data from '@ohos.telephony.data';
++import sim from '@ohos.telephony.sim';
++import { BusinessError } from '@ohos.base';
++import { Constants, LogUtils, MobileDataGlobalContextHelper } from '@ohos/common/CommonIndex';
++
++interface SystemApnSessionState {
++  session: UIExtensionContentSession;
++  slotId: number;
++}
++
++const TAG: string = 'GeneralCallSettingDialogAbility';
++
++export default class GeneralCallSettingDialogAbility extends UIExtensionAbility {
++  private currentSession: UIExtensionContentSession | undefined;
++
++  onSessionCreate(want: Want, session: UIExtensionContentSession): void {
++    if (this.currentSession !== undefined ||
++      (want.deviceId !== undefined && want.deviceId.length > 0) ||
++      want.parameters?.['dialogReason'] !== 'SYSTEM_APN_SETTINGS') {
++      session.terminateSelf();
++      return;
++    }
++    this.currentSession = session;
++    this.openApnSession(want, session);
++  }
++
++  private async openApnSession(want: Want, session: UIExtensionContentSession): Promise<void> {
++    try {
++      const requested: number = want.parameters?.['slotId'] as number;
++      const current: number = await data.getDefaultCellularDataSlotId();
++      // The public native launcher promises the actual default active SIM.
++      // An arbitrary direct Want must not select a different or stale slot.
++      if (!Number.isInteger(requested) || requested < 0 || requested >= sim.getMaxSimCount() ||
++        requested !== current || !(await sim.isSimActive(current))) {
++        session.terminateSelf();
++        return;
++      }
++      if (this.currentSession !== session) { return; }
++      MobileDataGlobalContextHelper.getContext().set<common.UIExtensionContext>(
++        Constants.SETTINGS_ABILITY_CONTEXT, this.context);
++      const initialState: SystemApnSessionState = { session: session, slotId: current };
++      const storage: LocalStorage = new LocalStorage(initialState);
++      session.loadContent('pages/SystemApnDialogPage', storage);
++      session.setWindowBackgroundColor('#00000000');
++      LogUtils.i(TAG, `System APN modal opened slot:${current}`);
++    } catch (error) {
++      const actual: BusinessError = error as BusinessError;
++      LogUtils.e(TAG, `System APN modal failed code:${actual.code} message:${actual.message}`);
++      if (this.currentSession === session) { session.terminateSelf(); }
++    }
++  }
++
++  onSessionDestroy(session: UIExtensionContentSession): void {
++    if (this.currentSession === session) { this.currentSession = undefined; }
++    LogUtils.i(TAG, 'System APN modal destroyed');
++  }
++}
+--- a/applications/standard/call/CallSetting/product/default/src/main/ets/common/components/ApnDetailDialogContent.ets
++++ b/applications/standard/call/CallSetting/product/default/src/main/ets/common/components/ApnDetailDialogContent.ets
+@@ -111,6 +111,7 @@
+           text: this.inputText as string,
+           controller: this.textController
+         })
++          .id('system-apn-field-input')
+           .backgroundColor(Color.Transparent)
+           .type(InputType.Number)
+           .width('100%')
+@@ -157,6 +158,7 @@
+           text: this.inputText as string,
+           controller: this.textController
+         })
++          .id('system-apn-field-input')
+           .backgroundColor(Color.Transparent)
+           .borderRadius($r('sys.float.corner_radius_none'))
+           .width('100%')
+--- a/applications/standard/call/CallSetting/product/default/src/main/ets/pages/ApnDetails.ets
++++ b/applications/standard/call/CallSetting/product/default/src/main/ets/pages/ApnDetails.ets
+@@ -303,7 +303,7 @@
+       primaryButton: {
+         value: $r('app.string.Apn_OK'),
+         action: () => {
+-          this.dialogController.close();
++          this.dialogMsgController.close();
+         }
+       }
+     }),
+@@ -345,6 +345,7 @@
+               await this.deleteData();
+               this.pathInfos.pop()
+             })
++            .id('system-apn-delete')
+             .visibility(this.common.profileID !== -1 && this.common.isDefault === 1 ?
+             Visibility.Visible : Visibility.None)
+             .width('100%')
+@@ -397,6 +398,7 @@
+     //     }
+     //   }
+     // })
++    .id('system-apn-details')
+     .hideTitleBar(true)
+     //.title(this.myTitleBar)
+     .padding({ top: 40  })
+@@ -576,7 +578,8 @@
+           return;
+         }
+         this.onDialogButton(item);
+-      });
++      })
++      .id('system-apn-field-' + item.key);
+     }
+   }
+ 
+--- a/applications/standard/call/CallSetting/product/default/src/main/ets/pages/ApnList.ets
++++ b/applications/standard/call/CallSetting/product/default/src/main/ets/pages/ApnList.ets
+@@ -47,6 +47,10 @@
+ 
+ @Component
+ export default struct apn {
++  closeDialog?: () => void;
++  private leaveApn(): void {
++    if (this.closeDialog !== undefined) { this.closeDialog(); } else { this.pathInfos.pop(); }
++  }
+   @State @Watch('watchCommon') common: ApnListCommon = new ApnListCommon();
+   @StorageLink('hasSimCard1') @Watch('watchHasSim') hasSimCard1: boolean = false;
+   @StorageLink('hasSimCard2') @Watch('watchHasSim') hasSimCard2: boolean = false;
+@@ -89,6 +93,10 @@
+   }
+ 
+   pushApnDetails(params: ParamsType) {
++    if (this.closeDialog !== undefined) {
++      this.pathInfos.pushPathByName('apnDetails', params);
++      return;
++    }
+     DynamicLoader.getInstance().callFunction('apnDetails').then(() => {
+       this.pathInfos.pushPathByName('apnDetails', params);
+     });
+@@ -102,7 +110,7 @@
+       await this.common.getAllApnList();
+       await this.common.getSelectApn();
+     } else {
+-      this.pathInfos.pop();
++      this.leaveApn();
+       LogUtils.e(TAG, 'aboutToAppear getParams null');
+     }
+     LogUtils.i(TAG, '[cardType]' + JSON.stringify(this.common.cardType));
+@@ -114,11 +122,11 @@
+     // Temporarily return to the previous page, which is more friendly behavior.
+     if (this.common.cardType === 0) {
+       if (!this.hasSimCard1) {
+-        this.pathInfos.pop();
++        this.leaveApn();
+       }
+     } else if (this.common.cardType === 1) {
+       if (!this.hasSimCard2) {
+-        this.pathInfos.pop();
++        this.leaveApn();
+       }
+     }
+   }
+@@ -137,7 +145,7 @@
+       await this.common.getAllApnList();
+       await this.common.getSelectApn();
+     } else {
+-      this.pathInfos.pop();
++      this.leaveApn();
+       LogUtils.e(TAG, 'aboutToAppear getParams null');
+     }
+     LogUtils.i(TAG, '[cardType]' + JSON.stringify(this.common.cardType));
+@@ -236,11 +244,12 @@
+           isSaveIconRequired: false,
+           contentMargin:{top:LengthMetrics.px(100)},
+           onCancel:()=>{
+-            this.pathInfos.pop()
++            this.leaveApn()
+           }
+         })
+           .layoutWeight(1)
+         Image($r("app.media.ic_public_more"))
++          .id('system-apn-menu')
+           .height(36)
+           .width(36)
+           .margin({top:LengthMetrics.px(100)})
+@@ -260,6 +269,11 @@
+         }
+       }.layoutWeight(1)
+     }
++    .onBackPressed(() => {
++      if (this.closeDialog === undefined) { return false; }
++      this.closeDialog();
++      return true;
++    })
+     .hideTitleBar(true)
+     .height('100%')
+     // .titleBar({
+@@ -356,6 +370,7 @@
+       left: getPaddingByDevice(),
+       right: getPaddingByDevice()
+     })
++    .id('system-apn-list')
+     .cachedCount(20)
+     .size({ height: 'calc(100% - 56vp)' })
+     .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
+@@ -528,6 +543,7 @@
+   MyMenu(){
+     Menu(){
+       MenuItem({content: $r('app.string.APN_Creating_an_APN')})
++        .id('system-apn-create')
+         .onClick(()=> {
+             let params: ParamsType = {
+               cardType: this.common.cardType,
+@@ -658,6 +674,7 @@
+               .onClick(async () => {
+                 await this.selectButton();
+               })
++              .id('system-apn-select-' + this.buttonData.id)
+               .padding({ left: $r('sys.float.padding_level4'), right: $r('sys.float.padding_level4') })
+ 
+               Button() {
+@@ -679,6 +696,7 @@
+               .constraintSize({ minHeight: 48 })
+               .width(24)
+               .margin({ left: $r('sys.float.padding_level2'), right: $r('sys.float.padding_level4') })
++              .id('system-apn-edit-' + this.buttonData.id)
+               .accessibilityText($r('app.string.details'))
+               .backgroundColor($r('sys.color.comp_background_primary'))
+             }
+--- /dev/null
++++ b/applications/standard/call/CallSetting/product/default/src/main/ets/pages/SystemApnDialogPage.ets
+@@ -0,0 +1,47 @@
++/*
++ * Copyright (c) 2026 Harmony Contrib
++ * SPDX-License-Identifier: Apache-2.0
++ */
++import UIExtensionContentSession from '@ohos.app.ability.UIExtensionContentSession';
++import ApnList from './ApnList';
++import ApnDetails from './ApnDetails';
++
++interface SystemApnNavigationParams {
++  cardType: number;
++}
++
++const storage: LocalStorage = LocalStorage.getShared();
++
++@Entry(storage)
++@Component
++struct SystemApnDialogPage {
++  @Provide('pathInfos') pathInfos: NavPathStack = new NavPathStack();
++  private session: UIExtensionContentSession = storage.get<UIExtensionContentSession>('session') as UIExtensionContentSession;
++  private slotId: number = storage.get<number>('slotId') as number;
++  private started: boolean = false;
++
++  @Builder
++  destination(name: string) {
++    if (name === 'apnIndex') {
++      ApnList({ closeDialog: () => this.session.terminateSelf() })
++    } else if (name === 'apnDetails') {
++      ApnDetails()
++    }
++  }
++
++  build() {
++    Navigation(this.pathInfos) {
++    }
++    .navDestination(this.destination)
++    .hideNavBar(true)
++    .id('system-apn-settings-navigation')
++    .onAppear(() => {
++      if (!this.started) {
++        this.started = true;
++        const parameters: SystemApnNavigationParams = { cardType: this.slotId };
++        this.pathInfos.pushPathByName('apnIndex', parameters);
++      }
++    })
++    .width('100%').height('100%')
++  }
++}
+--- a/applications/standard/call/CallSetting/product/default/src/main/module.json5
++++ b/applications/standard/call/CallSetting/product/default/src/main/module.json5
+@@ -93,6 +93,13 @@
+     ],
+     "extensionAbilities": [
+       {
++        "name": "GeneralCallSettingDialogAbility",
++        "srcEntry": "./ets/CallSettingDialogAbility/GeneralCallSettingDialogAbility.ets",
++        "description": "System APN settings",
++        "exported": true,
++        "type": "sys/commonUI"
++      },
++      {
+         "name": "com.ohos.callsetting.MainAbility",
+         "srcEntry": "./ets/MainAbility/MainAbility.ets",
+         "description": "$string:extesionability_description",
+--- a/applications/standard/call/CallSetting/product/default/src/main/resources/base/profile/main_pages.json
++++ b/applications/standard/call/CallSetting/product/default/src/main/resources/base/profile/main_pages.json
+@@ -1,5 +1,6 @@
+ {
+   "src": [
++    "pages/SystemApnDialogPage",
+     "pages/Index",
+     "pages/MobileDataIndex",
+     "pages/BannerGuidePage",

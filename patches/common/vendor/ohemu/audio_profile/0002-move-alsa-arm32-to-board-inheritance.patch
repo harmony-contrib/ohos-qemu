@@ -1,0 +1,10 @@
+diff --git a/vendor/ohemu/qemu_armv7a_linux_full/config.json b/vendor/ohemu/qemu_armv7a_linux_full/config.json
+--- a/vendor/ohemu/qemu_armv7a_linux_full/config.json
++++ b/vendor/ohemu/qemu_armv7a_linux_full/config.json
+@@ -39,6 +39,2 @@
+         },
+-        {
+-          "component": "alsa-lib",
+-          "features": []
+-        },
+         {

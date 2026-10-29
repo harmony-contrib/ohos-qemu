@@ -1,0 +1,153 @@
+--- a/foundation/communication/ipc/ipc/native/src/core/invoker/source/binder_invoker.cpp
++++ b/foundation/communication/ipc/ipc/native/src/core/invoker/source/binder_invoker.cpp
+@@ -70,6 +70,44 @@
+ #define PIDUID_OFFSET 2
+ using namespace OHOS::HiviewDFX;
+ static constexpr HiviewDFX::HiLogLabel LABEL = { LOG_CORE, LOG_ID_IPC_BINDER_INVOKER, "BinderInvoker" };
++// Only kernel-delivered transactions may enter this helper. Ordinary FD
++// objects belong to userspace; FDA arrays are closed by BC_FREE_BUFFER in the
++// kernel, and FDR is not a Linux Binder object type.
++static void CloseDeliveredFileDescriptors(const binder_transaction_data& transaction)
++{
++    const size_t dataSize = static_cast<size_t>(transaction.data_size);
++    const size_t offsetsBytes = static_cast<size_t>(transaction.offsets_size);
++    const uintptr_t data = static_cast<uintptr_t>(transaction.data.ptr.buffer);
++    const uintptr_t offsets = static_cast<uintptr_t>(transaction.data.ptr.offsets);
++    if (dataSize != transaction.data_size || offsetsBytes != transaction.offsets_size ||
++        data != transaction.data.ptr.buffer || offsets != transaction.data.ptr.offsets ||
++        data == 0 || offsets == 0 || offsetsBytes % sizeof(binder_size_t) != 0 ||
++        dataSize > UINTPTR_MAX - data || offsetsBytes > UINTPTR_MAX - offsets) {
++        return;
++    }
++    const size_t count = offsetsBytes / sizeof(binder_size_t);
++    if (count > dataSize / sizeof(binder_object_header)) {
++        return;
++    }
++    for (size_t i = 0; i < count; ++i) {
++        binder_size_t offset = 0;
++        if (memcpy_s(&offset, sizeof(offset), reinterpret_cast<const void*>(
++            offsets + i * sizeof(offset)), sizeof(offset)) != EOK || offset > dataSize ||
++            sizeof(flat_binder_object) > dataSize - static_cast<size_t>(offset)) {
++            continue;
++        }
++        flat_binder_object object {};
++        if (memcpy_s(&object, sizeof(object), reinterpret_cast<const void*>(data + offset),
++            sizeof(object)) != EOK) {
++            continue;
++        }
++        const int32_t fd = static_cast<int32_t>(object.handle);
++        if (object.hdr.type == BINDER_TYPE_FD && fd >= 0) {
++            ::close(fd);
++        }
++    }
++}
++
+ #ifndef CONFIG_IPC_SINGLE
+ static constexpr pid_t INVALID_PID = -1;
+ static constexpr int32_t BINDER_ALIGN_BYTES = 8;
+@@ -984,6 +1022,8 @@
+     auto binderAllocator = new (std::nothrow) BinderAllocator();
+     if (binderAllocator == nullptr) {
+         ZLOGE(LABEL, "BinderAllocator Creation failed");
++        CloseDeliveredFileDescriptors(tr);
++        FreeBuffer(reinterpret_cast<void*>(tr.data.ptr.buffer));
+         return;
+     }
+     auto data = std::make_unique<MessageParcel>(binderAllocator);
+@@ -1131,10 +1171,15 @@
+         ZLOGE(LABEL, "HandleReply read tr failed");
+         return IPC_INVOKER_INVALID_DATA_ERR;
+     }
+-    const binder_transaction_data *tr = reinterpret_cast<const binder_transaction_data *>(buffer);
++    binder_transaction_data alignedTransaction {};
++    if (memcpy_s(&alignedTransaction, sizeof(alignedTransaction), buffer, readSize) != EOK) {
++        return IPC_INVOKER_INVALID_DATA_ERR;
++    }
++    const binder_transaction_data *tr = &alignedTransaction;
+ 
+     if (reply == nullptr) {
+         ZLOGD(LABEL, "no need reply, free the buffer");
++        CloseDeliveredFileDescriptors(*tr);
+         FreeBuffer(reinterpret_cast<void *>(tr->data.ptr.buffer));
+         return IPC_INVOKER_INVALID_REPLY_ERR;
+     }
+@@ -1143,6 +1188,7 @@
+         isStubRet = true;
+         int32_t status = *reinterpret_cast<const int32_t *>(tr->data.ptr.buffer);
+         ZLOGD(LABEL, "received status code:%{public}d, free the buffer", status);
++        CloseDeliveredFileDescriptors(*tr);
+         FreeBuffer(reinterpret_cast<void *>(tr->data.ptr.buffer));
+         return status;
+     }
+@@ -1150,12 +1196,14 @@
+     auto allocator = new (std::nothrow) BinderAllocator();
+     if (allocator == nullptr) {
+         ZLOGE(LABEL, "create BinderAllocator object failed");
++        CloseDeliveredFileDescriptors(*tr);
+         FreeBuffer(reinterpret_cast<void *>(tr->data.ptr.buffer));
+         return IPC_INVOKER_INVALID_DATA_ERR;
+     }
+     if (!reply->SetAllocator(allocator)) {
+         ZLOGD(LABEL, "SetAllocator failed");
+         delete allocator;
++        CloseDeliveredFileDescriptors(*tr);
+         FreeBuffer(reinterpret_cast<void *>(tr->data.ptr.buffer));
+         return IPC_INVOKER_INVALID_DATA_ERR;
+     }
+--- a/foundation/communication/ipc/ipc/native/src/core/framework/source/message_parcel.cpp
++++ b/foundation/communication/ipc/ipc/native/src/core/framework/source/message_parcel.cpp
+@@ -51,6 +51,8 @@
+ #endif
+ static constexpr OHOS::HiviewDFX::HiLogLabel LOG_LABEL = { LOG_CORE, LOG_ID_IPC_PARCEL, "MessageParcel" };
+ 
++static constexpr int REMOTE_RAW_DATA_FD = -2;
++
+ void AcquireObject(flat_binder_object *flat, const void *cookie)
+ {
+     if (flat == nullptr) {
+@@ -106,11 +108,11 @@
+         kernelMappedRead_ = nullptr;
+     }
+ 
+-    if (readRawDataFd_ > 0) {
++    if (readRawDataFd_ >= 0) {
+         ::fdsan_close_with_tag(readRawDataFd_, IPC_FD_TAG);
+         readRawDataFd_ = -1;
+     }
+-    if (writeRawDataFd_ > 0) {
++    if (writeRawDataFd_ >= 0) {
+         ::fdsan_close_with_tag(writeRawDataFd_, IPC_FD_TAG);
+         writeRawDataFd_ = -1;
+     }
+@@ -428,14 +430,15 @@
+     ZLOGD(LOG_LABEL, "enter");
+     rawData_ = rawData;
+     rawDataSize_ = size;
+-    writeRawDataFd_ = 0;
++    // A negative state marker cannot be confused with an owned FD 0.
++    writeRawDataFd_ = REMOTE_RAW_DATA_FD;
+     return true;
+ }
+ 
+ const void *MessageParcel::ReadRawDataInner(size_t size)
+ {
+-    /* if rawDataFd_ == 0 means rawData is received from remote */
+-    if (rawData_ != nullptr && writeRawDataFd_ == 0) {
++    /* REMOTE_RAW_DATA_FD means rawData is received from remote. */
++    if (rawData_ != nullptr && writeRawDataFd_ == REMOTE_RAW_DATA_FD) {
+         /* should read fd for move readCursor of parcel */
+         int32_t tmpfd = ReadFileDescriptor();
+         if (tmpfd >= 0) {
+@@ -563,7 +566,11 @@
+         ::close(fd);
+         return nullptr;
+     }
+-    return new (std::nothrow) Ashmem(fd, size);
++    sptr<Ashmem> ashmem = new (std::nothrow) Ashmem(fd, size);
++    if (ashmem == nullptr) {
++        ::close(fd);
++    }
++    return ashmem;
+ }
+ 
+ bool MessageParcel::Append(MessageParcel &data)

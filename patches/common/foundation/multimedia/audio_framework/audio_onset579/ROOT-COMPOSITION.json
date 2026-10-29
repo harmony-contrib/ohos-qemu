@@ -1,0 +1,45 @@
+{
+  "busy_seal_source": {
+    "bytes": 38514,
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-audio579-product-review-candidate/FROZEN.json",
+    "sha256": "391cec697ff12ab905c102ee18184461815b65cc96a1a31021e48a1e7be4f150"
+  },
+  "canonical_predecessor": {
+    "bytes": 47377,
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-audio579-full-port-composed-successor/FROZEN.json",
+    "sha256": "63edccf6102e0fce594e6c126a68af986d54dd02336ad0a2324eb08cc69d8bb0"
+  },
+  "compiled": false,
+  "exact_previous_epochs": [
+    "canonical63ed",
+    "corrected391",
+    "legacy72"
+  ],
+  "first_artifact_behavior_gate_passed": false,
+  "fullport": {
+    "bytes": 50517,
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-arm32-onset579-full-port-candidate/FROZEN.json",
+    "sha256": "3d99047a2170749ddaf721aa3d9dc810ce33bed0d5d00c236b510a062ea7c54f"
+  },
+  "generic": {
+    "bytes": 37749,
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-six579-production-port-review-candidate/FROZEN.json",
+    "sha256": "febb0cf44bb7b4bca6d57acdacf6197418709be404da860ffda685970e276658"
+  },
+  "global_actual_clock_review": {
+    "bytes": 2118,
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-audio579-clock-reviewed-successor/ACTUAL-SOURCE-REVIEW.json",
+    "sha256": "67f6565084be76e213ed367de61522ad34e440f298513641f5b256c37a736653"
+  },
+  "namespace_protocol_body_unchanged": true,
+  "per_package_kernel_config_boot_admission_still_required": true,
+  "product_vector": {
+    "bytes": 55968,
+    "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-audio579-clock-reviewed-successor/PRODUCT-VECTOR.json",
+    "sha256": "d111d8f20bcd5e1004719ac4fa6008e1c6e4b528e52518581d281167b9ba966d"
+  },
+  "runtime_pass": false,
+  "schema": "root-audio579-composed-source/v5",
+  "source_only": true,
+  "source_preimage": "72d4d45b6d52955ab8b2c6b6cf9993c50775e019"
+}

@@ -63,7 +63,10 @@ while IFS=$'\t' read -r repo_root relative remote oid expected_size extra; do
       exit 1
     fi
     temp="${target}.ohos-qemu-lfs.$$"
-    cp -p "${object}" "${temp}"
+    # Materializing different bytes must invalidate Ninja's previous copy.
+    # Cache objects can predate an already-built placeholder; retaining their
+    # timestamp would let that stale output survive an incremental rebuild.
+    cp "${object}" "${temp}"
     mv "${temp}" "${target}"
     restored=$((restored + 1))
   fi

@@ -1,0 +1,263 @@
+--- a/foundation/graphic/graphic_3d/3d_scene_adapter/src/scene_adapter.cpp
++++ b/foundation/graphic/graphic_3d/3d_scene_adapter/src/scene_adapter.cpp
+@@ -160,6 +160,7 @@
+ 
+ struct EngineInstance {
+     void* libHandle_ = nullptr;
++    bool pluginsLoaded_ = false;
+     SCENE_NS::IApplicationContext::Ptr applicationContext_;
+     BASE_NS::shared_ptr<RENDER_NS::IRenderContext> renderContext_;
+     BASE_NS::shared_ptr<CORE_NS::IEngine> engine_;
+@@ -338,6 +339,7 @@
+ 
+     if (engineInstance_.libHandle_ == nullptr) {
+         WIDGET_LOGE("%s, open lib fail %s", __func__, dlerror());
++        return false;
+     }
+ #undef TO_STRING
+ #undef LIB_NAME
+@@ -347,6 +349,7 @@
+             LOAD_FUNC(CORE_NS::GetPluginRegister, "_ZN4Core17GetPluginRegisterEv") &&
+             LOAD_FUNC(CORE_NS::IsDebugBuild, "_ZN4Core12IsDebugBuildEv") &&
+             LOAD_FUNC(CORE_NS::GetVersion, "_ZN4Core13GetVersionRevEv"))) {
++        ShutdownPluginRegistry();
+         return false;
+     }
+ #undef LOAD_FUNC
+@@ -356,7 +359,7 @@
+ 
+ bool SceneAdapter::LoadPlugins(const CORE_NS::PlatformCreateInfo& platformCreateInfo)
+ {
+-    if (engineInstance_.libHandle_) {
++    if (engineInstance_.pluginsLoaded_) {
+         WIDGET_LOGI("%s, already loaded", __func__);
+         return true;
+     }
+@@ -379,6 +382,7 @@
+         WIDGET_LOGE("fail to load scene widget plugin");
+         return false;
+     }
++    engineInstance_.pluginsLoaded_ = true;
+     WIDGET_LOGI("load plugin success");
+     return true;
+ }
+@@ -391,32 +395,62 @@
+     engineThread = tr.GetTaskQueue(ENGINE_THREAD);
+     if (!engineThread) {
+         engineThread = obr.Create<META_NS::ITaskQueue>(META_NS::ClassId::ThreadedTaskQueue);
+-        tr.RegisterTaskQueue(engineThread, ENGINE_THREAD);
++        if (!engineThread || !tr.RegisterTaskQueue(engineThread, ENGINE_THREAD)) {
++            WIDGET_LOGE("Failed to create/register engineThread");
++            return false;
++        }
+     }
+     ioThread = tr.GetTaskQueue(IO_QUEUE);
+     if (!ioThread) {
+         ioThread = obr.Create<META_NS::ITaskQueue>(META_NS::ClassId::ThreadedTaskQueue);
+-        tr.RegisterTaskQueue(ioThread, IO_QUEUE);
++        if (!ioThread || !tr.RegisterTaskQueue(ioThread, IO_QUEUE)) {
++            WIDGET_LOGE("Failed to create/register ioThread");
++            return false;
++        }
+     }
+     releaseThread = tr.GetTaskQueue(JS_RELEASE_THREAD);
+     if (!releaseThread) {
+         auto& obr = META_NS::GetObjectRegistry();
+         releaseThread = obr.Create<META_NS::ITaskQueue>(META_NS::ClassId::ThreadedTaskQueue);
+-        tr.RegisterTaskQueue(releaseThread, JS_RELEASE_THREAD);
++        if (!releaseThread || !tr.RegisterTaskQueue(releaseThread, JS_RELEASE_THREAD)) {
++            WIDGET_LOGE("Failed to create/register releaseThread");
++            return false;
++        }
+     }
+ 
+     bool inited = false;
+     auto initCheck = META_NS::MakeCallback<META_NS::ITaskQueueWaitableTask>([&inited]() {
+-        inited = (engineInstance_.engine_ != nullptr);
++        inited = engineInitSuccessful_ && engineInstance_.engine_ && engineInstance_.renderContext_ &&
++            engineInstance_.applicationContext_ && engineInstance_.applicationContext_->GetRenderContext();
+         return META_NS::IAny::Ptr{};
+     });
+-    engineThread->AddWaitableTask(initCheck)->Wait();
++    auto initCheckResult = engineThread->AddWaitableTask(initCheck);
++    if (!initCheckResult) {
++        WIDGET_LOGE("Failed to schedule engine initialization check");
++        return false;
++    }
++    initCheckResult->Wait();
+     if (inited) {
+         WIDGET_LOGI("engine already inited");
+         return true;
+     }
+ 
+-    auto engineInit = META_NS::MakeCallback<META_NS::ITaskQueueWaitableTask>([platformCreateInfo]() {
++    auto engineInit = META_NS::MakeCallback<META_NS::ITaskQueueWaitableTask>([platformCreateInfo, &inited]() {
++        // Partial initialization must not be mistaken for a usable scene engine.
++        struct Rollback {
++            bool& initialized;
++            ~Rollback()
++            {
++                if (!initialized) {
++                    engineInstance_.applicationContext_.reset();
++                    engineInstance_.renderContext_.reset();
++                    engineInstance_.engine_.reset();
++                }
++            }
++        } rollback{inited};
++        engineInstance_.applicationContext_.reset();
++        engineInstance_.renderContext_.reset();
++        engineInstance_.engine_.reset();
+         setpriority(0, 0, ENGINE_SERVICE_PRIORITY);
+         auto& obr = META_NS::GetObjectRegistry();
+         // Initialize lumeengine/render etc
+@@ -453,10 +487,17 @@
+             renderCreateInfo.deviceCreateInfo = deviceCreateInfo;
+         }
+ 
++        auto classFactory = engineInstance_.engine_->GetInterface<CORE_NS::IClassFactory>();
++        if (!classFactory) {
++            WIDGET_LOGE("Render context class factory is missing");
++            return META_NS::IAny::Ptr{};
++        }
+         engineInstance_.renderContext_.reset(
+-            static_cast<RENDER_NS::IRenderContext*>(engineInstance_.engine_->GetInterface<CORE_NS::IClassFactory>()
+-                                                        ->CreateInstance(RENDER_NS::UID_RENDER_CONTEXT)
+-                                                        .release()));
++            static_cast<RENDER_NS::IRenderContext*>(classFactory->CreateInstance(RENDER_NS::UID_RENDER_CONTEXT).release()));
++        if (!engineInstance_.renderContext_) {
++            WIDGET_LOGE("Render context instance is missing");
++            return META_NS::IAny::Ptr{};
++        }
+ 
+         auto rrc = engineInstance_.renderContext_->Init(renderCreateInfo);
+         if (rrc != RENDER_NS::RenderResultCode::RENDER_SUCCESS) {
+@@ -482,20 +523,39 @@
+         // Use engine file manager for our resource manager
+         auto resources =
+             META_NS::GetObjectRegistry().Create<CORE_NS::IResourceManager>(META_NS::ClassId::FileResourceManager);
++        if (!resources) {
++            WIDGET_LOGE("File resource manager is missing");
++            return META_NS::IAny::Ptr{};
++        }
+         resources->SetFileManager(CORE_NS::IFileManager::Ptr(&fileManager));
+ 
+         engineInstance_.applicationContext_ =
+             META_NS::GetObjectRegistry().Create<SCENE_NS::IApplicationContext>(SCENE_NS::ClassId::ApplicationContext);
+-        if (engineInstance_.applicationContext_) {
+-            SCENE_NS::IApplicationContext::ApplicationContextInfo info{
+-                engineThread, appThread, engineInstance_.renderContext_, resources, SCENE_NS::SceneOptions{}};
+-            engineInstance_.applicationContext_->Initialize(info);
+-        }
+-
+-        doc->GetProperty<META_NS::SharedPtrIInterface>("EngineQueue")->SetValue(engineThread);
+-        doc->GetProperty<META_NS::SharedPtrIInterface>("AppQueue")->SetValue(appThread);
++        if (!engineInstance_.applicationContext_) {
++            WIDGET_LOGE("Scene application context is missing");
++            return META_NS::IAny::Ptr{};
++        }
++        SCENE_NS::IApplicationContext::ApplicationContextInfo info{
++            engineThread, appThread, engineInstance_.renderContext_, resources, SCENE_NS::SceneOptions{}};
++        if (!engineInstance_.applicationContext_->Initialize(info)) {
++            WIDGET_LOGE("Scene application context initialization failed");
++            return META_NS::IAny::Ptr{};
++        }
++        auto sceneRenderContext = engineInstance_.applicationContext_->GetRenderContext();
++        if (!sceneRenderContext || !engineInstance_.applicationContext_->GetSceneManager()) {
++            WIDGET_LOGE("Scene render context/scene manager is missing");
++            return META_NS::IAny::Ptr{};
++        }
++        auto engineQueueProperty = doc->GetProperty<META_NS::SharedPtrIInterface>("EngineQueue");
++        auto appQueueProperty = doc->GetProperty<META_NS::SharedPtrIInterface>("AppQueue");
++        if (!engineQueueProperty || !appQueueProperty) {
++            WIDGET_LOGE("Scene engine/application queue property is missing");
++            return META_NS::IAny::Ptr{};
++        }
++        engineQueueProperty->SetValue(engineThread);
++        appQueueProperty->SetValue(appThread);
+         doc->AddProperty(META_NS::ConstructProperty<SCENE_NS::IRenderContext::Ptr>(
+-            "RenderContext", engineInstance_.applicationContext_->GetRenderContext(), flags));
++            "RenderContext", sceneRenderContext, flags));
+ 
+         WIDGET_LOGD("register shader paths");
+         static constexpr const RENDER_NS::IShaderManager::ShaderFilePathDesc desc{"shaders://"};
+@@ -514,10 +574,16 @@
+         // if we never render a single frame, we will get "false positive" leaks of gpu resources.
+         engineInstance_.renderContext_->GetRenderer().RenderFrame({});
+         WIDGET_LOGI("init engine success");
++        inited = true;
+         return META_NS::IAny::Ptr{};
+     });
+-    engineThread->AddWaitableTask(engineInit)->Wait();
+-    return true;
++    auto initResult = engineThread->AddWaitableTask(engineInit);
++    if (!initResult) {
++        WIDGET_LOGE("Failed to schedule engine initialization");
++        return false;
++    }
++    initResult->Wait();
++    return inited;
+ }
+ 
+ void SceneAdapter::SetSceneObj(META_NS::IObject::Ptr pt)
+@@ -710,6 +776,7 @@
+ 
+ void SceneAdapter::DeinitRenderThread()
+ {
++    engineInitSuccessful_ = false;
+     RETURN_IF_NULL(engineThread);
+     if (renderTask) {
+         engineThread->CancelTask(renderTask);
+@@ -752,6 +819,8 @@
+ 
+ void SceneAdapter::ShutdownPluginRegistry()
+ {
++    engineInitSuccessful_ = false;
++    engineInstance_.pluginsLoaded_ = false;
+     if (engineInstance_.libHandle_ == nullptr) {
+         return;
+     }
+@@ -1268,10 +1337,7 @@
+ 
+ bool SceneAdapter::LoadPluginByUid(const BASE_NS::Uid& uid)
+ {
+-    if (engineInstance_.libHandle_) {
+-        WIDGET_LOGI("%s, already loaded", __func__);
+-        return true;
+-    }
++    // A loaded engine library says nothing about this particular plugin UID.
+     if (!LoadEngineLib()) {
+         return false;
+     }
+--- a/foundation/graphic/graphic_3d/kits/js/src/RenderContextJS.cpp
++++ b/foundation/graphic/graphic_3d/kits/js/src/RenderContextJS.cpp
+@@ -864,13 +864,17 @@
+         return promise.Reject(err);
+     }
+ 
++    BASE_NS::string uri = NormalizeUri(ExtractUri(ctx));
++    auto sceneManager = CreateSceneManager(uri);
++    if (!sceneManager) {
++        return promise.Reject("Creating scene manager failed");
++    }
++
+     const auto jsQ = AcquireJsQueue(env);
+     auto queueRefCount = interface_cast<INodeJSTaskQueue>(jsQ);
+     if (!queueRefCount) {
+         return promise.Reject("Error creating a JS task queue");
+     }
+-
+-    BASE_NS::string uri = NormalizeUri(ExtractUri(ctx));
+ 
+     auto convertToJs = [promise, uri, queueRefCount = BASE_NS::move(queueRefCount)](
+                            SCENE_NS::IScene::Ptr scene) mutable {
+@@ -878,10 +882,6 @@
+         queueRefCount->Release();
+     };
+ 
+-    auto sceneManager = CreateSceneManager(uri);
+-    if (!sceneManager) {
+-        return promise.Reject("Creating scene manager failed");
+-    }
+     auto params = interface_pointer_cast<META_NS::IMetadata>(META_NS::GetObjectRegistry().GetDefaultObjectContext());
+     if (params) {
+         RenderContextJSPrivate::PopulateCustomParams(params);

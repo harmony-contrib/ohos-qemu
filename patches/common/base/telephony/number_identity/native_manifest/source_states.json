@@ -1,0 +1,16 @@
+{
+  "schema": "number-identity-hvigor-native-manifest382/v1",
+  "project": "base/telephony/number_identity",
+  "revision": "50e1330646432ce166e7981c577f25f46c90e7ac",
+  "files": [
+    [
+      "entry/src/main/module.json5",
+      "42ff53888c007c5ba76a4462c05a0b10d196692b484f25897d3db0602d47d1e6",
+      "9b0a2d769cf812b7bd0bc8b1e9e674ccc0fc174762417b138442bfeccc06d8b0"
+    ]
+  ],
+  "patch": "0001-restore-schema-valid-native-provider-module.patch",
+  "patch_sha256": "8131b9830ddad5e762f79a5a949261b7f55837b4225be41dd5f06ef488bb9bb1",
+  "source_only": true,
+  "build_or_guest_pass": false
+}

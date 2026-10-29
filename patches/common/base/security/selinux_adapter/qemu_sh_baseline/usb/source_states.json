@@ -1,0 +1,12 @@
+{
+  "schema": "guarded-product-source-vector579/v1",
+  "projects": {
+    "base/security/selinux_adapter": "cfc1d5b31a7438dbc87763f9222f00337221cf21"
+  },
+  "files": {
+    "base/security/selinux_adapter/sepolicy/whitelist/qemu_usb_sh.baseline": [
+      null,
+      "6f635571d9eccc1fe71128e2ca4995e1e52b1150b8cc3cd2d8e46df8db338a01"
+    ]
+  }
+}

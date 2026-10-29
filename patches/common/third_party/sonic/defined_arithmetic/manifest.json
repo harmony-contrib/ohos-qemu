@@ -1,0 +1,25 @@
+{
+  "schema": "sonic-defined-arithmetic536/v1",
+  "scope": "defined centered PCM, coefficient, and saturating interpolation arithmetic in actual Sonic C only; source-only candidate and normal finite host checks; no target/runtime/HW acceptance",
+  "files": {
+    "third_party/sonic/sonic.c": {
+      "before_sha256": "a72add092178f7eb6c107cd64568234220f5c3827e6bd8d0a7045734ed77e7b8",
+      "after_sha256": "9f4971824ece8b75c1e198bdd2ef1f05e1832a6d703157fc782dba4c31f8ac67",
+      "before_bytes": 41924,
+      "after_bytes": 41634,
+      "mode": 420
+    }
+  },
+  "prerequisites": {
+    "third_party/sonic/sonic.h": "bba781f021738a150180241c742b16e6415b74dbcef09ebdef25ee5413357f55"
+  },
+  "patch_sha256": "7d0f4b022b2d2ce3a8d0c305ddc1e4444dfd1b879f5aa6562c050dbd4a36cf34",
+  "source_commit": null,
+  "source_kit": null,
+  "actual_package": null,
+  "target_compiled": false,
+  "runtime_passed": false,
+  "source_frame_zero_proven": false,
+  "hardware_playback_proven": false,
+  "first_artifact_behavior_gate_passed": false
+}

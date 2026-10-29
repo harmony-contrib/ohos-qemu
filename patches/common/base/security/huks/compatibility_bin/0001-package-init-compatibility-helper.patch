@@ -1,0 +1,16 @@
+diff --git a/base/security/huks/BUILD.gn b/base/security/huks/BUILD.gn
+--- a/base/security/huks/BUILD.gn
++++ b/base/security/huks/BUILD.gn
+@@ -105,11 +105,9 @@ group("service_group") {
+     deps = [
+       "//base/security/huks/services/huks_standard:huks_service",
+       "//base/security/huks/services/huks_standard/huks_service/main/os_dependency/sa/sa_profile:huks_sa_profile",
++      "//base/security/huks/services/huks_standard/huks_service/main:hks_compatibility_bin",
+     ]
+     if (huks_enable_ukey_config == true) {
+       deps += [ "//base/security/huks/services/huks_standard/huks_service/extension/ukey:libhuks_external_crypto_ext_core" ]
+     }
+-    if (huks_use_rkc_in_standard) {
+-      deps += [ "//base/security/huks/services/huks_standard/huks_service/main:hks_compatibility_bin" ]
+-    }
+     if (huks_security_level == "software") {

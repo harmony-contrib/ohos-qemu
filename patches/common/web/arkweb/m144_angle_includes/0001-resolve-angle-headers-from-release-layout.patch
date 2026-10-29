@@ -1,0 +1,52 @@
+diff --git a/src/arkweb/chromium_ext/third_party/angle/src/common/ohos_util.cpp b/src/arkweb/chromium_ext/third_party/angle/src/common/ohos_util.cpp
+--- a/src/arkweb/chromium_ext/third_party/angle/src/common/ohos_util.cpp
++++ b/src/arkweb/chromium_ext/third_party/angle/src/common/ohos_util.cpp
+@@ -16,7 +16,7 @@
+-#include "../../../../../../../../../src/third_party/angle/src/common/platform.h"
++#include "common/platform.h"
+ #include "ohos_util.h"
+ 
+ #if defined(ANGLE_PLATFORM_OHOS)
+-#include "../../../../../../../../../src/third_party/ohos_ndk/includes/ohos_adapter/hilog_adapter.h"
+-#include "../../../../../../../../../src/third_party/ohos_ndk/includes/ohos_adapter/ohos_adapter_helper.h"
++#include "../../../../../../third_party/ohos_ndk/includes/ohos_adapter/hilog_adapter.h"
++#include "../../../../../../third_party/ohos_ndk/includes/ohos_adapter/ohos_adapter_helper.h"
+ #endif
+diff --git a/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/DisplayOhos.cpp b/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/DisplayOhos.cpp
+--- a/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/DisplayOhos.cpp
++++ b/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/DisplayOhos.cpp
+@@ -18,4 +18,4 @@
+ #include "DisplayOhos.h"
+ 
+-#include "../../../../../../../../src/third_party/angle/src/libANGLE/Display.h"
++#include "libANGLE/Display.h"
+ #include "NativeBufferImageSiblingOhos.h"
+diff --git a/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/DisplayOhos.h b/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/DisplayOhos.h
+--- a/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/DisplayOhos.h
++++ b/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/DisplayOhos.h
+@@ -24,5 +24,5 @@
+ 
+-#include "../../../../../../../../src/third_party/angle/src/libANGLE/renderer/gl/egl/DisplayEGL.h"
++#include "libANGLE/renderer/gl/egl/DisplayEGL.h"
+ 
+ namespace rx
+ {
+diff --git a/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/NativeBufferImageSiblingOhos.cpp b/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/NativeBufferImageSiblingOhos.cpp
+--- a/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/NativeBufferImageSiblingOhos.cpp
++++ b/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/NativeBufferImageSiblingOhos.cpp
+@@ -18,4 +18,4 @@
+ #include "NativeBufferImageSiblingOhos.h"
+ #include "../../../../../common/ohos_util.h"
+-#include "../../../../../../../../../src/third_party/ohos_ndk/includes/ohos_adapter/hilog_adapter.h"
++#include "../../../../../../../../../../third_party/ohos_ndk/includes/ohos_adapter/hilog_adapter.h"
+ 
+diff --git a/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/NativeBufferImageSiblingOhos.h b/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/NativeBufferImageSiblingOhos.h
+--- a/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/NativeBufferImageSiblingOhos.h
++++ b/src/arkweb/chromium_ext/third_party/angle/src/libANGLE/renderer/gl/egl/ohos/NativeBufferImageSiblingOhos.h
+@@ -21,5 +21,5 @@
+ 
+-#include "../../../../../../../../src/third_party/angle/src/libANGLE/renderer/gl/egl/ExternalImageSiblingEGL.h"
++#include "libANGLE/renderer/gl/egl/ExternalImageSiblingEGL.h"
+ 
+ namespace rx
+ {

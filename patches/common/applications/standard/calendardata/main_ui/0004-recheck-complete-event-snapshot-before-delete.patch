@@ -1,0 +1,176 @@
+diff --git a/applications/standard/calendardata/entry/src/main/ets/calendar/CalendarBusinessController.ets b/applications/standard/calendardata/entry/src/main/ets/calendar/CalendarBusinessController.ets
+--- a/applications/standard/calendardata/entry/src/main/ets/calendar/CalendarBusinessController.ets
++++ b/applications/standard/calendardata/entry/src/main/ets/calendar/CalendarBusinessController.ets
+@@ -364,19 +364,143 @@
+     return (error.message || fallback) + (error.code ? `（${error.code}）` : '');
+   }
+ 
++  private deleteString(value: string | undefined): string {
++    if (value === undefined) {
++      return 'undefined';
++    }
++    if (typeof value !== 'string' || value.length > 5000) {
++      throw new Error('日程数据无法安全比较，请刷新后重试');
++    }
++    return JSON.stringify(value);
++  }
++
++  private deleteNumber(value: number | undefined): string {
++    if (value === undefined) {
++      return 'undefined';
++    }
++    if (typeof value !== 'number' || !Number.isFinite(value)) {
++      throw new Error('日程数据无法安全比较，请刷新后重试');
++    }
++    return JSON.stringify(value);
++  }
++
++  private deleteBoolean(value: boolean | undefined): string {
++    if (value === undefined) {
++      return 'undefined';
++    }
++    if (typeof value !== 'boolean') {
++      throw new Error('日程数据无法安全比较，请刷新后重试');
++    }
++    return value ? 'true' : 'false';
++  }
++
++  private deleteSnapshot(event: calendarManager.Event): string {
++    // Explicit SDK Event projection: no object/key order or JSON coercion can
++    // hide a changed public field. Unknown shapes cannot authorize deletion.
++    if (event === null || typeof event !== 'object' || Array.isArray(event) ||
++      Object.keys(event).some((key: string) => !['id', 'type', 'title', 'startTime', 'endTime',
++        'isAllDay', 'location', 'description', 'reminderTime', 'recurrenceRule', 'attendee', 'service',
++        'identifier', 'isLunar', 'timeZone', 'instanceStartTime', 'instanceEndTime'].includes(key))) {
++      throw new Error('日程数据无法安全比较，请刷新后重试');
++    }
++    this.checkEvents([event]);
++    const fields: string[] = [this.deleteNumber(event.id), this.deleteNumber(event.type),
++      this.deleteString(event.title), this.deleteNumber(event.startTime), this.deleteNumber(event.endTime),
++      this.deleteBoolean(event.isAllDay), this.deleteString(event.description),
++      event.identifier === null ? 'null' : this.deleteString(event.identifier),
++      this.deleteBoolean(event.isLunar), this.deleteString(event.timeZone)];
++    if (!this.editable(event)) {
++      throw new Error('日程无法安全比较或已变更为只读类型，请刷新后重试');
++    }
++    // Instances are query-derived, not independent base Event fields. Only the
++    // non-recurring ordinary event can be edited: its instance must equal base
++    // times, or both derived fields may be omitted by getEvents().
++    if (!((event.instanceStartTime === undefined && event.instanceEndTime === undefined) ||
++      (event.instanceStartTime === event.startTime && event.instanceEndTime === event.endTime))) {
++      throw new Error('日程实例与原始时间不一致，请刷新后重试');
++    }
++    fields.push('recurrenceRule:undefined');
++    if (event.location === undefined || event.location === null) {
++      fields.push(event.location === undefined ? 'undefined' : 'null');
++    } else {
++      const location = event.location;
++      if (typeof location !== 'object' || Array.isArray(location) ||
++        Object.keys(location).some((key: string) => !['location', 'longitude', 'latitude'].includes(key))) {
++        throw new Error('日程地点无法安全比较，请刷新后重试');
++      }
++      fields.push(JSON.stringify([this.deleteString(location.location),
++        this.deleteNumber(location.longitude), this.deleteNumber(location.latitude)]));
++    }
++    if (event.reminderTime === undefined) {
++      fields.push('undefined');
++    } else {
++      if (!Array.isArray(event.reminderTime) || Object.keys(event.reminderTime).length !== event.reminderTime.length) {
++        throw new Error('日程提醒无法安全比较，请刷新后重试');
++      }
++      const reminders: string[] = [];
++      for (const value of event.reminderTime) {
++        if (typeof value !== 'number') {
++          throw new Error('日程提醒无法安全比较，请刷新后重试');
++        }
++        reminders.push(this.deleteNumber(value));
++      }
++      fields.push(JSON.stringify(reminders));
++    }
++    if (event.attendee === undefined || event.attendee === null) {
++      fields.push(event.attendee === undefined ? 'undefined' : 'null');
++    } else {
++      if (!Array.isArray(event.attendee) || Object.keys(event.attendee).length !== event.attendee.length) {
++        throw new Error('日程参与者无法安全比较，请刷新后重试');
++      }
++      const attendees: string[] = [];
++      for (const attendee of event.attendee) {
++        if (attendee === null || typeof attendee !== 'object' || Array.isArray(attendee) ||
++          Object.keys(attendee).some((key: string) => !['name', 'email', 'role', 'type', 'status'].includes(key)) ||
++          typeof attendee.name !== 'string' || typeof attendee.email !== 'string' ||
++          (attendee.role !== undefined && attendee.role !== 'organizer' && attendee.role !== 'participant') ||
++          (attendee.type !== undefined && (!Number.isInteger(attendee.type) || attendee.type < 1 || attendee.type > 3)) ||
++          (attendee.status !== undefined && (!Number.isInteger(attendee.status) || attendee.status < 0 || attendee.status > 4))) {
++          throw new Error('日程参与者无法安全比较，请刷新后重试');
++        }
++        attendees.push(JSON.stringify([this.deleteString(attendee.name), this.deleteString(attendee.email),
++          this.deleteString(attendee.role), this.deleteNumber(attendee.type), this.deleteNumber(attendee.status)]));
++      }
++      fields.push(JSON.stringify(attendees));
++    }
++    if (event.service === undefined) {
++      fields.push('undefined');
++    } else {
++      const service = event.service;
++      if (service === null || typeof service !== 'object' || Array.isArray(service) ||
++        Object.keys(service).some((key: string) => !['type', 'uri', 'description'].includes(key)) ||
++        !['Meeting', 'Watching', 'Repayment', 'Live', 'Shopping', 'Trip', 'Class', 'SportsEvents',
++          'SportsExercise'].includes(service.type) || typeof service.uri !== 'string') {
++        throw new Error('日程服务无法安全比较，请刷新后重试');
++      }
++      fields.push(JSON.stringify([this.deleteString(service.type), this.deleteString(service.uri),
++        this.deleteString(service.description)]));
++    }
++    return JSON.stringify(fields);
++  }
++
+   async remove(id: number, confirmed: boolean): Promise<void> {
++    const selected = this.view.selected;
+     if (!confirmed || !this.active || this.disposed || this.writing || !this.view.ready ||
+       !Number.isInteger(id) || id <= 0 || id > 2147483647 ||
+-      this.view.selected?.id !== id || !this.editable(this.view.selected)) {
++      selected === undefined || selected.id !== id) {
+       return;
+     }
+     const generation = this.generation;
+     let submitted = false;
++    let refreshRequired = false;
+     this.writing = true;
+     this.view.error = '';
+     this.view.notice = '';
+     this.emit();
+     try {
++      refreshRequired = true;
++      const displayedSnapshot = this.deleteSnapshot(selected);
++      refreshRequired = false;
+       const calendar = this.calendar();
+       if (!await this.requestWrite(generation)) {
+         return;
+@@ -390,12 +514,15 @@
+       if (!this.current(generation)) {
+         return;
+       }
++      refreshRequired = true;
+       this.checkEvents(current);
+-      if (current.length !== 1 || current[0].id !== id || !this.editable(current[0]) ||
+-        current[0].title !== this.view.selected?.title || current[0].startTime !== this.view.selected?.startTime ||
+-        current[0].endTime !== this.view.selected?.endTime || current[0].description !== this.view.selected?.description) {
++      if (current.length !== 1 || current[0].id !== id ||
++        this.deleteSnapshot(current[0]) !== displayedSnapshot) {
+         throw new Error('日程已变更，请刷新后重试');
+       }
++      // This read/compare/delete is still not an atomic CAS: the public API
++      // accepts only the ID, with no expected-version transaction argument.
++      refreshRequired = false;
+       submitted = true;
+       await calendar.deleteEvent(id);
+       if (this.current(generation)) {
+@@ -409,7 +536,7 @@
+     } finally {
+       this.readFilter = undefined;
+       this.writing = false;
+-      if ((submitted || generation !== this.generation) && this.active && !this.disposed) {
++      if ((submitted || refreshRequired || generation !== this.generation) && this.active && !this.disposed) {
+         const error = this.current(generation) ? this.view.error : '';
+         const notice = this.current(generation) ? this.view.notice : '';
+         const refreshGeneration = this.generation + 1;

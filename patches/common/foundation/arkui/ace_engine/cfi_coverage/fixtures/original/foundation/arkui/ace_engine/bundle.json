@@ -1,0 +1,362 @@
+{
+    "name": "@ohos/ace_engine",
+    "description": "ArkUI Cross-Platform Engine for UI layout measure and paint",
+    "version": "3.1",
+    "license": "Apache-2.0",
+    "publishAs": "code-segment",
+    "segment": {
+        "destPath": "foundation/arkui/ace_engine"
+    },
+    "dirs": {},
+    "scripts": {},
+    "component": {
+        "name": "ace_engine",
+        "subsystem": "arkui",
+        "syscap": [
+            "SystemCapability.ArkUI.ArkUI.Full",
+            "SystemCapability.ArkUI.ArkUI.Lite",
+            "SystemCapability.ArkUI.ArkUI.Circle"
+        ],
+        "features": [
+            "ace_engine_feature_enable_accessibility",
+            "ace_engine_feature_enable_aps",
+            "ace_engine_feature_enable_web",
+            "ace_engine_feature_enable_pgo",
+            "ace_engine_feature_enable_codemerge",
+            "ace_engine_feature_enable_inst_prefetch",
+            "ace_engine_feature_pgo_path",
+            "ace_engine_feature_enable_atomic",
+            "ace_engine_feature_enable_coverage",
+            "ace_engine_feature_enable_point_light",
+            "ace_engine_feature_enable_split_mode",
+            "ace_engine_feature_enable_nav_split_mode",
+            "ace_engine_feature_asbng_path",
+            "ace_engine_feature_sched_model",
+            "ace_engine_feature_wearable",
+            "ace_engine_feature_enable_gpu",
+            "ace_engine_feature_enable_form_size_change_animation",
+            "ace_engine_feature_form_menu_enable",
+            "ace_engine_feature_enable_event_extra_handling",
+            "ace_engine_enable_circle_feature",
+            "ace_engine_feature_enable_long_press_gesture_extra_handling",
+            "ace_engine_feature_enable_upgrade_skia",
+            "ace_engine_feature_enable_preload_dynamic_module",
+            "ace_engine_feature_enable_default_click_sound",
+            "ace_engine_feature_enable_material_customized"
+        ],
+        "adapted_system_type": [
+            "standard"
+        ],
+        "rom": "25600KB",
+        "ram": "102400KB",
+        "hisysevent_config": [
+            "//foundation/arkui/ace_engine/adapter/ohos/build/hisysevent.yaml"
+        ],
+        "deps": {
+            "components": [
+                "ability_base",
+                "hilog",
+                "hitrace",
+                "accessibility",
+                "frame_aware_sched",
+                "ability_runtime",
+                "api_metrics",
+                "ipc",
+                "samgr",
+                "preferences",
+                "relational_store",
+                "hisysevent",
+                "napi",
+                "hiview",
+                "hichecker",
+                "window_manager",
+                "c_utils",
+                "eventhandler",
+                "bundle_framework",
+                "ets_runtime",
+                "form_fwk",
+                "pasteboard",
+                "kv_store",
+                "udmf",
+                "os_account",
+                "graphic_2d",
+                "graphic_3d",
+                "graphic_surface",
+                "safwk",
+                "common_event_service",
+                "data_share",
+                "resource_management",
+                "runtime_core",
+                "i18n",
+                "hicollie",
+                "netmanager_base",
+                "netstack",
+                "init",
+                "image_framework",
+                "player_framework",
+                "audio_framework",
+                "access_token",
+                "input",
+                "webview",
+                "imf",
+                "device_status",
+                "soc_perf",
+                "security_component_manager",
+                "camera_framework",
+                "media_library",
+                "app_file_service",
+                "ets_utils",
+                "bounds_checking_function",
+                "libxml2",
+                "ffrt",
+                "icu",
+                "miscdevice",
+                "cJSON",
+                "curl",
+                "css-what",
+                "jsframework",
+                "opencl-headers",
+                "opengles",
+                "opencv",
+                "zlib",
+                "skia",
+                "libuv",
+                "resource_schedule_service",
+                "background_task_mgr",
+                "request",
+                "sdk",
+                "screenlock_mgr",
+                "video_processing_engine",
+                "egl",
+                "qrcode_generator"
+            ],
+            "third_party": []
+        },
+        "build": {
+            "group_type": {
+                "base_group": [],
+                "fwk_group": [
+                    "//foundation/arkui/ace_engine/adapter/ohos/build:ace_packages",
+                    "//foundation/arkui/ace_engine/frameworks/bridge/cj_frontend:cj_frontend_ohos",
+                    "//foundation/arkui/ace_engine/interfaces/ets:ace_ani_package"
+                ],
+                "service_group": [
+                    "//foundation/arkui/ace_engine/adapter/ohos/services:services_target",
+                    "//foundation/arkui/ace_engine/adapter/ohos/sa_profile:ace_sa_profile",
+                    "//foundation/arkui/ace_engine/adapter/ohos/services/etc:ohos.para.dac",
+                    "//foundation/arkui/ace_engine/adapter/ohos/services/etc:ohos.timepicker.ogg",
+                    "//foundation/arkui/ace_engine/adapter/ohos/services/uiservice:ui_service.cfg"
+                ]
+            },
+            "inner_kits": [
+                {
+                    "header": {
+                        "header_base": "//foundation/arkui/ace_engine/interfaces/inner_api/ace/",
+                        "header_files": [
+                            "navigation_controller.h",
+                            "ui_content.h",
+                            "ui_event.h",
+                            "ui_event_observer.h",
+                            "viewport_config.h",
+                            "serialized_gesture.h",
+                            "serializeable_object.h",
+                            "modal_ui_extension_config.h",
+                            "node_module_inner.h"
+                        ]
+                    },
+                    "name": "//foundation/arkui/ace_engine/interfaces/inner_api/ace:ace_uicontent"
+                },
+                {
+                    "header": {
+                        "header_base": "//foundation/arkui/ace_engine/interfaces/inner_api/ace/",
+                        "header_files": [
+                            "ace_forward_compatibility.h",
+                            "ai/data_detector_interface.h",
+                            "ai/data_url_analyzer.h",
+                            "share/text_share_interface.h",
+                            "ai/image_analyzer.h",
+                            "ai/image_analyzer_interface.h"
+                        ]
+                    },
+                    "name": "//foundation/arkui/ace_engine/interfaces/inner_api/ace:ace_forward_compatibility"
+                },
+                {
+                    "header": {
+                        "header_base": "//foundation/arkui/ace_engine/interfaces/inner_api/form_render/include",
+                        "header_files": [
+                            "form_renderer_group.h"
+                        ]
+                    },
+                    "name": "//foundation/arkui/ace_engine/interfaces/inner_api/form_render:ace_form_render"
+                },
+                {
+                    "header": {
+                        "header_base": "//foundation/arkui/ace_engine/interfaces/inner_api/drawable_descriptor",
+                        "header_files": [
+                            "drawable_descriptor.h"
+                        ]
+                    },
+                    "name": "//foundation/arkui/ace_engine/interfaces/inner_api/drawable_descriptor:drawable_descriptor"
+                },
+                {
+                    "header": {
+                        "header_base": "//foundation/arkui/ace_engine/interfaces/inner_api/xcomponent_controller/",
+                        "header_files": [
+                            "xcomponent_controller.h"
+                        ]
+                    },
+                    "name": "//foundation/arkui/ace_engine/interfaces/inner_api/xcomponent_controller:ace_xcomponent_controller"
+                },
+                {
+                    "header": {
+                        "header_base": "//foundation/arkui/ace_engine/",
+                        "header_files": [
+                            "adapter/preview/entrance/ace_ability.h",
+                            "adapter/preview/entrance/ace_run_args.h"
+                        ]
+                    },
+                    "name": "//foundation/arkui/ace_engine/build:libace"
+                },
+                {
+                    "header": {
+                        "header_base": "//foundation/arkui/ace_engine/interfaces/native",
+                        "header_files": [
+                            "node/native_drawable_descriptor.h",
+                            "native_interface_xcomponent.h",
+                            "native_node.h",
+                            "native_interface.h",
+                            "native_type.h",
+                            "native_node_ani.h",
+                            "native_node_napi.h"
+                        ]
+                    },
+                    "name": "//foundation/arkui/ace_engine/interfaces/native:ace_ndk"
+                },
+                {
+                    "header": {
+                        "header_base": "//foundation/arkui/ace_engine/",
+                        "header_files": [
+                            "adapter/preview/entrance/ace_ability.h",
+                            "adapter/preview/entrance/ace_run_args.h"
+                        ]
+                    },
+                    "name": "//foundation/arkui/ace_engine/build:libace_compatible"
+                },
+                {
+                    "header": {
+                        "header_base": "//foundation/arkui/ace_engine/frameworks/core/common/",
+                        "header_files": [
+                            "container_scope.h"
+                        ]
+                    },
+                    "name": "//foundation/arkui/ace_engine/frameworks/core:ace_container_scope"
+                },
+                {
+                    "header": {
+                        "header_base": "//foundation/arkui/ace_engine/interfaces/inner_api/ui_session/",
+                        "header_files": [
+                            "ui_content_service_interface.h",
+                            "ui_content_proxy.h",
+                            "param_config.h",
+                            "ui_content_proxy_error_code.h"
+                        ]
+                    },
+                    "name": "//foundation/arkui/ace_engine/interfaces/inner_api/ui_session:ui_session"
+                },
+                {
+                    "header": {
+                        "header_base": "//foundation/arkui/ace_engine/frameworks/bridge/cj_frontend",
+                        "header_files": [
+                            "runtime/cj_runtime_delegate.h"
+                        ]
+                    },
+                    "name": "//foundation/arkui/ace_engine/frameworks/bridge/cj_frontend:cj_frontend_ohos"
+                },
+                {
+                    "name": "//foundation/arkui/ace_engine/frameworks/bridge/arkts_frontend/koala_projects/inner_api:copy_arkui_ets"
+                },
+                {
+                    "header": {
+                        "header_base": "//foundation/arkui/ace_engine/interfaces/inner_api/drawable",
+                        "header_files": [
+                            "drawable_descriptor_ani.h"
+                        ]
+                    },
+                    "name": "//foundation/arkui/ace_engine/interfaces/inner_api/drawable:drawable_inner_ani"
+                }
+            ],
+            "test": [
+                "//foundation/arkui/ace_engine/test/unittest:unittest",
+                "//foundation/arkui/ace_engine/test/benchmark:benchmark"
+            ],
+            "conditions": {
+                "//foundation/arkui/ace_engine/interfaces/inner_api/ace:ace_uicontent": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/interfaces/inner_api/ace:ace_forward_compatibility": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/interfaces/inner_api/form_render:ace_form_render": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/interfaces/inner_api/drawable_descriptor:drawable_descriptor": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/interfaces/inner_api/xcomponent_controller:ace_xcomponent_controller": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/build:libace": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/interfaces/native:ace_ndk": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/build:libace_compatible": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/frameworks/core:ace_container_scope": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/interfaces/inner_api/ui_session:ui_session": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/frameworks/bridge/cj_frontend:cj_frontend_ohos": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/frameworks/bridge/arkts_frontend/koala_projects/inner_api:copy_arkui_ets": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/interfaces/inner_api/drawable:drawable_inner_ani": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/test/unittest:unittest": {
+                    "compile_mode": ["cross", "host", "target"]
+                },
+                "//foundation/arkui/ace_engine/test/benchmark:benchmark": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/adapter/ohos/build:ace_packages": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/adapter/ohos/services:services_target": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/adapter/ohos/sa_profile:ace_sa_profile": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/adapter/ohos/services/etc:ohos.para.dac": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/adapter/ohos/services/etc:ohos.timepicker.ogg": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/adapter/ohos/services/uiservice:ui_service.cfg": {
+                    "compile_mode": ["cross"]
+                },
+                "//foundation/arkui/ace_engine/interfaces/ets:ace_ani_package": {
+                    "compile_mode": ["cross"]
+                }
+            }
+        }
+    }
+}

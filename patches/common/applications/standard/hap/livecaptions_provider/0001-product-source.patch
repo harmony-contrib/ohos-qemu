@@ -1,0 +1,883 @@
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/AppScope/app.json5
+@@ -0,0 +1,12 @@
++{
++  "app": {
++    "bundleName": "com.ohos.vassistant",
++    "vendor": "OpenHarmony",
++    "versionCode": 1000000,
++    "versionName": "1.0.0",
++    "icon": "$media:app_icon",
++    "label": "$string:app_name",
++    "minAPIVersion": 23,
++    "targetAPIVersion": 26
++  }
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/AppScope/resources/base/element/string.json
+@@ -0,0 +1,8 @@
++{
++  "string": [
++    {
++      "name": "app_name",
++      "value": "Live captions (English)"
++    }
++  ]
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/AppScope/resources/base/media/app_icon.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect width="96" height="96" rx="20" fill="#175BC5"/><rect x="14" y="24" width="68" height="48" rx="8" fill="none" stroke="white" stroke-width="6"/><path d="M25 40h20m6 0h20M25 55h34m6 0h6" stroke="white" stroke-width="6"/></svg>
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/AppScope/resources/zh_CN/element/string.json
+@@ -0,0 +1,8 @@
++{
++  "string": [
++    {
++      "name": "app_name",
++      "value": "实时字幕（英语）"
++    }
++  ]
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/BUILD.gn
+@@ -0,0 +1,19 @@
++# Copyright (c) 2026 Harmony Contrib
++# SPDX-License-Identifier: Apache-2.0
++import("//build/ohos.gni")
++
++# Real source app compiled by the normal platform app/sign/package graph.
++ohos_app("vassistant_livecaptions579") {
++  deps = []
++  certificate_profile = "signature/vassistant.p7b"
++  hap_name = "VAssistant"
++  part_name = "prebuilt_hap"
++  subsystem_name = "applications"
++  module_install_dir = "app/com.ohos.vassistant"
++  sdk_home = "//prebuilts/ohos-sdk/linux"
++  sdk_type_name = [ "sdk.dir" ]
++  assemble_type = "assembleHap"
++  build_level = "module"
++  js_build_mode = "release"
++  build_modules = [ "entry" ]
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/build-profile.json5
+@@ -0,0 +1,35 @@
++{
++  "app": {
++    "products": [
++      {
++        "name": "default",
++        "compileSdkVersion": "26.0.0",
++        "compatibleSdkVersion": 23,
++        "targetSdkVersion": 26,
++        "runtimeOS": "OpenHarmony"
++      }
++    ],
++    "buildModeSet": [
++      {
++        "name": "debug"
++      },
++      {
++        "name": "release"
++      }
++    ]
++  },
++  "modules": [
++    {
++      "name": "entry",
++      "srcPath": "./entry",
++      "targets": [
++        {
++          "name": "default",
++          "applyToProducts": [
++            "default"
++          ]
++        }
++      ]
++    }
++  ]
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/build-profile.json5
+@@ -0,0 +1,15 @@
++{
++  "apiType": "stageMode",
++  "buildOption": {
++    "sourceOption": {
++      "workers": [
++        "./src/main/ets/workers/CaptionWorker.ets"
++      ]
++    }
++  },
++  "targets": [
++    {
++      "name": "default"
++    }
++  ]
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/hvigorfile.ts
+@@ -0,0 +1 @@
++module.exports = require('@ohos/hvigor-ohos-plugin').hapTasks;
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/oh-package.json5
+@@ -0,0 +1,7 @@
++{
++  "name": "entry",
++  "version": "1.0.0",
++  "dependencies": {
++    "sherpa_onnx": "file:../sherpa_onnx-1.11.2.har"
++  }
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/ets/common/CaptionActions.ets
+@@ -0,0 +1,14 @@
++// Each UI instance addresses its own actual session. A stale window callback
++// can never dispatch to a replacement merely because a global current changed.
++export class CaptionActions {
++  private static closeHandlers: Map<string, () => void> = new Map();
++  static register(session: string, close: () => void): void {
++    if (CaptionActions.closeHandlers.has(session)) { throw new Error('duplicate real caption session'); }
++    CaptionActions.closeHandlers.set(session, close);
++  }
++  static unregister(session: string): void { CaptionActions.closeHandlers.delete(session); }
++  static close(session: string): void {
++    const handler = CaptionActions.closeHandlers.get(session);
++    if (handler !== undefined) { handler(); }
++  }
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/ets/common/CaptionProtocol.ets
+@@ -0,0 +1,24 @@
++import { common } from '@kit.AbilityKit';
++
++// Private main-thread/worker protocol: no request can supply recognized text.
++export interface CaptionInput {
++  kind: string;
++  session: string;
++  sequence: number;
++  context?: common.Context;
++  samples?: Float32Array;
++}
++export interface CaptionOutput {
++  kind: string;
++  session: string;
++  sequence: number;
++  samples: number;
++  segments: number;
++  text: string;
++  language: string;
++  message: string;
++}
++export const SAMPLE_RATE: number = 16000;
++export const WINDOW_SAMPLES: number = 512;
++export const MAX_BUFFERED_SAMPLES: number = SAMPLE_RATE * 15;
++export const MAX_SEGMENT_SAMPLES: number = SAMPLE_RATE * 30;
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/ets/common/CaptionSession.ets
+@@ -0,0 +1,287 @@
++import { common } from '@kit.AbilityKit';
++import { BusinessError } from '@kit.BasicServicesKit';
++import audio from '@ohos.multimedia.audio';
++import accessibility from '@ohos.accessibility';
++import display from '@ohos.display';
++import window from '@ohos.window';
++import worker, { ErrorEvent, MessageEvents } from '@ohos.worker';
++import util from '@ohos.util';
++import { CaptionInput, CaptionOutput, SAMPLE_RATE, MAX_BUFFERED_SAMPLES } from './CaptionProtocol';
++import { CaptionActions } from './CaptionActions';
++import { captionTrace } from './CaptionTrace';
++
++interface CaptionStorageState {
++  session: string;
++  text: string;
++  status: string;
++  fontScale: number;
++  fontColor: string;
++  backgroundColor: string;
++}
++
++// No public RPC exposes this class, the worker or its input. The only source of
++// waveform input is the owned, user-authorized native AudioCapturer callback.
++export class CaptionSession {
++  private readonly initialState: CaptionStorageState = { session: '', text: '',
++    status: '正在准备本地英语字幕', fontScale: 100, fontColor: '#FFFFFFFF', backgroundColor: '#EE000000' };
++  readonly storage: LocalStorage = new LocalStorage(this.initialState);
++  readonly id: string;
++  private readonly context: common.ServiceExtensionContext;
++  private readonly closeRequested: () => void;
++  private readonly becameVisible: () => void;
++  private readonly failed: (reason: Error) => void;
++  private closed: boolean = false;
++  private running: boolean = false;
++  private capturer: audio.AudioCapturer | undefined = undefined;
++  private model: worker.ThreadWorker | undefined = undefined;
++  private overlay: window.Window | undefined = undefined;
++  private captions: accessibility.CaptionsManager | undefined = undefined;
++  private pendingReadyReject: ((reason: Error) => void) | undefined = undefined;
++  private pendingAuthorityReject: ((reason: Error) => void) | undefined = undefined;
++  private workerExit: Promise<number> | undefined = undefined;
++  private workerExited: boolean = false;
++  private exitCode: number = -1;
++  private stopPromise: Promise<void> | undefined = undefined;
++  private queued: Float32Array[] = [];
++  private buffered: number = 0;
++  private inFlight: number = 0;
++  private sequence: number = 0;
++  private captured: number = 0;
++  private processed: number = 0;
++  private segments: number = 0;
++  private lines: string[] = [];
++  private readonly onStyle = (style: accessibility.CaptionsStyle): void => {
++    if (this.closed) { return; }
++    this.storage.setOrCreate('fontScale', Math.max(1, Math.min(200, style.fontScale)));
++    this.storage.setOrCreate('fontColor', style.fontColor);
++    this.storage.setOrCreate('backgroundColor', style.backgroundColor);
++  };
++  private readonly onState = (state: audio.AudioState): void => {
++    captionTrace(this.id, 'capture_state', this.sequence, this.captured, this.segments, state);
++    if (!this.closed && this.running && state !== audio.AudioState.STATE_RUNNING) {
++      this.deferFailure(new Error('native capture left running state'));
++    }
++  };
++  private readonly onRead = (buffer: ArrayBuffer): void => {
++    // Capturer APIs are never called inside this real-time read callback.
++    if (this.closed || !this.running) { return; }
++    if (buffer.byteLength <= 0 || buffer.byteLength % 2 !== 0) {
++      this.deferFailure(new Error('native capture returned invalid S16LE bytes')); return;
++    }
++    const count: number = buffer.byteLength / 2;
++    if (this.buffered + count > MAX_BUFFERED_SAMPLES) {
++      this.deferFailure(new Error('local recognizer cannot keep up with real captured audio')); return;
++    }
++    const data: DataView = new DataView(buffer);
++    const samples: Float32Array = new Float32Array(count);
++    for (let index: number = 0; index < count; ++index) {
++      samples[index] = data.getInt16(index * 2, true) / 32768;
++    }
++    this.queued.push(samples); this.buffered += count; this.captured += count;
++    Promise.resolve().then((): void => { this.pump(); });
++  };
++
++  constructor(id: string, context: common.ServiceExtensionContext,
++    closeRequested: () => void, becameVisible: () => void, failed: (reason: Error) => void) {
++    this.id = id;
++    this.context = context;
++    this.closeRequested = closeRequested;
++    this.becameVisible = becameVisible;
++    this.failed = failed;
++    this.storage.setOrCreate('session', id);
++  }
++  private active(): void { if (this.closed) { throw new Error('caption session was cancelled'); } }
++  private deferFailure(reason: Error): void {
++    Promise.resolve().then((): void => { if (!this.closed) { this.failed(reason); } });
++  }
++  cancel(): void {
++    if (this.closed) { return; }
++    this.closed = true; this.running = false;
++    CaptionActions.unregister(this.id);
++    captionTrace(this.id, 'cancel', this.sequence, this.captured, this.segments);
++    const reason: Error = new Error('caption session was cancelled');
++    if (this.pendingReadyReject !== undefined) { this.pendingReadyReject(reason); this.pendingReadyReject = undefined; }
++    if (this.pendingAuthorityReject !== undefined) { this.pendingAuthorityReject(reason); this.pendingAuthorityReject = undefined; }
++  }
++  async start(): Promise<void> {
++    this.active();
++    const noticeBytes: Uint8Array = await this.context.resourceManager.getRawFileContent('LIVE_CAPTIONS_NOTICES.txt');
++    this.active();
++    if (noticeBytes.byteLength < 100 || noticeBytes.byteLength > 2 * 1024 * 1024) { throw new Error('full admitted model/software notices are absent'); }
++    this.storage.setOrCreate('notices', new util.TextDecoder('utf-8', { fatal: true }).decodeToString(noticeBytes));
++    CaptionActions.register(this.id, (): void => { if (!this.closed) { this.closeRequested(); } });
++    this.captions = accessibility.getCaptionsManager();
++    this.onStyle(this.captions.style); this.captions.on('styleChange', this.onStyle);
++    const screen: display.Display = display.getDefaultDisplaySync();
++    const width: number = Math.min(screen.width - 24, 1000);
++    const height: number = Math.min(260, Math.floor(screen.height / 3));
++    if (width < 200 || height < 100) { throw new Error('default display cannot contain caption controls'); }
++    const overlay = await window.createWindow({ name: 'LiveCaptions_' + this.id,
++      windowType: window.WindowType.TYPE_FLOAT, ctx: this.context });
++    this.overlay = overlay; this.active();
++    await overlay.resize(width, height); this.active();
++    await overlay.moveWindowTo(Math.floor((screen.width - width) / 2), screen.height - height - 16); this.active();
++    await overlay.setWindowFocusable(false); this.active();
++    await overlay.loadContent('pages/Captions', this.storage); this.active();
++    await overlay.showWindow(); this.active();
++    captionTrace(this.id, 'window_visible', 0, 0, 0);
++    this.becameVisible(); this.active();
++    await this.withDeadline(this.loadModel(), 180000, 'local model initialization deadline'); this.active();
++    this.storage.setOrCreate('status', '请在系统授权窗口确认捕获播放音频');
++    const capturer = await audio.createAudioCapturer({
++      streamInfo: { samplingRate: audio.AudioSamplingRate.SAMPLE_RATE_16000,
++        channels: audio.AudioChannel.CHANNEL_1, sampleFormat: audio.AudioSampleFormat.SAMPLE_FORMAT_S16LE,
++        encodingType: audio.AudioEncodingType.ENCODING_TYPE_RAW },
++      capturerInfo: { source: audio.SourceType.SOURCE_TYPE_PLAYBACK_CAPTURE, capturerFlags: 0 },
++      playbackCaptureMode: audio.AudioPlaybackCaptureMode.MODE_MEDIA | audio.AudioPlaybackCaptureMode.MODE_EXCLUDING_SELF });
++    this.capturer = capturer; this.active();
++    const format: audio.AudioStreamInfo = await capturer.getStreamInfo(); this.active();
++    if (format.samplingRate !== SAMPLE_RATE || format.channels !== audio.AudioChannel.CHANNEL_1 ||
++      format.sampleFormat !== audio.AudioSampleFormat.SAMPLE_FORMAT_S16LE ||
++      format.encodingType !== audio.AudioEncodingType.ENCODING_TYPE_RAW) {
++      throw new Error('native capture negotiated incompatible audio format');
++    }
++    capturer.on('readData', this.onRead); capturer.on('stateChange', this.onState);
++    captionTrace(this.id, 'capture_created', 0, 0, 0, await capturer.getAudioStreamId()); this.active();
++    await this.requestAuthority(capturer); this.active();
++    // Native requestPlaybackCaptureStart SUCCESS already calls AudioCapturer::Start.
++    // Calling legacy .start() here would violate the modern capture contract.
++    if (capturer.state !== audio.AudioState.STATE_RUNNING) { throw new Error('authorized stream is not actually running'); }
++    this.running = true;
++    this.storage.setOrCreate('status', '正在本地识别英语播放音频');
++    captionTrace(this.id, 'capture_running', 0, 0, 0, capturer.state);
++  }
++  private requestAuthority(capturer: audio.AudioCapturer): Promise<void> {
++    return new Promise<void>((resolve, reject): void => {
++      this.pendingAuthorityReject = reject;
++      try {
++        captionTrace(this.id, 'authority_requested', 0, 0, 0);
++        capturer.requestPlaybackCaptureStart((state: audio.PlaybackCaptureStartState): void => {
++          // Always record the actual native status, even if cancellation won.
++          captionTrace(this.id, 'authority_callback', this.sequence, this.captured, this.segments, state);
++          this.pendingAuthorityReject = undefined;
++          if (this.closed) { reject(new Error('cancelled before native authority callback')); return; }
++          if (state === audio.PlaybackCaptureStartState.STATE_SUCCESS) { resolve(); }
++          else { reject(new Error('native playback capture authorization/start status ' + state.toString())); }
++        });
++      } catch (error) { this.pendingAuthorityReject = undefined; reject(error as BusinessError); }
++    });
++  }
++  private loadModel(): Promise<void> {
++    return new Promise<void>((resolve, reject): void => {
++      this.pendingReadyReject = reject;
++      const model = new worker.ThreadWorker('entry/ets/workers/CaptionWorker.ets', { name: 'LiveCaptionsLocalASR' });
++      this.model = model;
++      this.workerExit = new Promise<number>((exited): void => {
++        model.onexit = (code: number): void => {
++          this.workerExited = true; this.exitCode = code; exited(code);
++          captionTrace(this.id, 'worker_exit', this.sequence, this.captured, this.segments, code);
++          if (this.pendingReadyReject !== undefined) { this.pendingReadyReject(new Error('native worker exited during model load')); }
++          this.pendingReadyReject = undefined;
++          if (!this.closed) { this.deferFailure(new Error('local recognizer worker exited')); }
++        };
++      });
++      model.onerror = (event: ErrorEvent): void => {
++        const reason: Error = new Error('local recognizer worker error: ' + event.message);
++        if (this.pendingReadyReject !== undefined) { this.pendingReadyReject(reason); }
++        this.pendingReadyReject = undefined; this.deferFailure(reason);
++      };
++      model.onmessageerror = (): void => { this.deferFailure(new Error('local recognizer message failed')); };
++      model.onmessage = (event: MessageEvents): void => {
++        const output = event.data as CaptionOutput;
++        if (this.closed) { return; }
++        if (output.session !== this.id || !Number.isInteger(output.sequence) ||
++          !Number.isInteger(output.samples) || output.samples < this.processed || output.samples > this.captured ||
++          !Number.isInteger(output.segments) || output.segments < this.segments) {
++          this.deferFailure(new Error('local worker session/counter mismatch')); return;
++        }
++        if (output.kind === 'ready') {
++          if (output.sequence !== 0 || this.sequence !== 0 || this.pendingReadyReject === undefined) {
++            this.deferFailure(new Error('unexpected model-ready event')); return;
++          }
++          this.pendingReadyReject = undefined;
++          captionTrace(this.id, 'model_ready', 0, 0, 0); resolve();
++        } else if (output.kind === 'error') {
++          const reason: Error = new Error(output.message);
++          if (this.pendingReadyReject !== undefined) { this.pendingReadyReject(reason); }
++          this.pendingReadyReject = undefined; this.deferFailure(reason);
++        } else if ((output.kind === 'result' || output.kind === 'ack') && output.sequence === this.sequence && this.inFlight > 0) {
++          this.processed = output.samples; this.segments = output.segments;
++          if (output.kind === 'result') {
++            if (typeof output.text !== 'string' || output.text.length === 0) { this.deferFailure(new Error('empty native result')); return; }
++            // Keep a bounded visible transcript. It is never journalled or sent remotely.
++            this.lines.push(output.text); if (this.lines.length > 12) { this.lines.shift(); }
++            this.storage.setOrCreate('text', this.lines.join('\n'));
++            captionTrace(this.id, 'caption_rendered', this.sequence, this.processed, this.segments);
++          } else {
++            this.buffered -= this.inFlight; this.inFlight = 0;
++            captionTrace(this.id, 'pcm_ack', this.sequence, this.processed, this.segments); this.pump();
++          }
++        } else { this.deferFailure(new Error('unexpected recognizer event order')); }
++      };
++      const input: CaptionInput = { kind: 'init', session: this.id, sequence: 0, context: this.context };
++      model.postMessage(input);
++    });
++  }
++  private withDeadline<T>(operation: Promise<T>, milliseconds: number, message: string): Promise<T> {
++    // A deadline reports failure; it never manufactures worker completion.
++    return new Promise<T>((resolve, reject): void => {
++      const timer: number = setTimeout((): void => { reject(new Error(message)); }, milliseconds);
++      operation.then((value: T): void => { clearTimeout(timer); resolve(value); },
++        (reason: Error): void => { clearTimeout(timer); reject(reason); });
++    });
++  }
++  private pump(): void {
++    if (this.closed || !this.running || this.model === undefined || this.inFlight !== 0 || this.queued.length === 0) { return; }
++    const samples = this.queued.shift();
++    if (samples === undefined) { return; }
++    this.inFlight = samples.length; ++this.sequence;
++    const input: CaptionInput = { kind: 'pcm', session: this.id, sequence: this.sequence, samples };
++    this.model.postMessage(input);
++  }
++  stop(): Promise<void> {
++    this.cancel();
++    if (this.stopPromise === undefined) { this.stopPromise = this.release(); }
++    return this.stopPromise;
++  }
++  private async release(): Promise<void> {
++    const errors: Error[] = [];
++    this.queued = []; this.buffered = 0;
++    const capturer = this.capturer; this.capturer = undefined;
++    if (capturer !== undefined) {
++      try { capturer.off('readData', this.onRead); } catch (error) { errors.push(error as Error); }
++      try { capturer.off('stateChange', this.onState); } catch (error) { errors.push(error as Error); }
++      if (capturer.state === audio.AudioState.STATE_RUNNING || capturer.state === audio.AudioState.STATE_PAUSED) {
++        try { await capturer.stop(); captionTrace(this.id, 'capture_stopped', this.sequence, this.captured, this.segments, capturer.state); }
++        catch (error) { errors.push(error as Error); }
++      }
++      try { await capturer.release(); captionTrace(this.id, 'capture_released', this.sequence, this.captured, this.segments, capturer.state); }
++      catch (error) { errors.push(error as Error); }
++    }
++    const model = this.model; this.model = undefined;
++    if (model !== undefined) {
++      try {
++        if (!this.workerExited) { model.terminate(); }
++        const exit = this.workerExit;
++        if (exit === undefined) { throw new Error('worker lacks actual exit observer'); }
++        const code: number = await this.withDeadline(exit, 15000, 'actual worker exit deadline');
++        if (code !== 0) { throw new Error('actual recognizer worker exited abnormally ' + code.toString()); }
++      } catch (error) { errors.push(error as Error); }
++    }
++    if (this.captions !== undefined) {
++      try { this.captions.off('styleChange', this.onStyle); } catch (error) { errors.push(error as Error); }
++      this.captions = undefined;
++    }
++    const overlay = this.overlay; this.overlay = undefined;
++    if (overlay !== undefined) {
++      try { await overlay.destroyWindow(); captionTrace(this.id, 'window_destroyed', this.sequence, this.captured, this.segments); }
++      catch (error) { errors.push(error as Error); }
++    }
++    if (errors.length > 0) {
++      captionTrace(this.id, 'cleanup_error', this.sequence, this.captured, this.segments,
++        (errors[0] as BusinessError).code || -1);
++      throw errors[0];
++    }
++    captionTrace(this.id, 'resources_released', this.sequence, this.captured, this.segments, this.exitCode);
++  }
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/ets/common/CaptionTrace.ets
+@@ -0,0 +1,11 @@
++import hilog from '@ohos.hilog';
++import process from '@ohos.process';
++
++// No recognized text or captured audio is written to persistent product logs.
++// UI is the consumer; counters and native statuses describe actual operations.
++export function captionTrace(session: string, event: string, sequence: number,
++  samples: number, segments: number, code: number = 0): void {
++  hilog.info(0xFF70, 'LiveCaptions',
++    'LC uid=%{public}d pid=%{public}d session=%{public}s event=%{public}s sequence=%{public}d samples=%{public}d segments=%{public}d code=%{public}d',
++    process.uid, process.pid, session, event, sequence, samples, segments, code);
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/ets/common/ModelProfile.ets
+@@ -0,0 +1,20 @@
++// Single admitted model, from fixed OpenHarmony-SIG NonStreamingAsrModels case 2.
++// English only. No SenseVoice/remote/text fallback or run-time model selector.
++import { OfflineRecognizerConfig } from 'sherpa_onnx';
++export const MODEL_DIRECTORY: string = 'sherpa-onnx-whisper-tiny.en';
++export const VAD_MODEL: string = 'silero_vad.onnx';
++export function recognizerConfig(): OfflineRecognizerConfig {
++  const config = new OfflineRecognizerConfig();
++  config.featConfig.sampleRate = 16000;
++  config.modelConfig.whisper.encoder = MODEL_DIRECTORY + '/tiny.en-encoder.int8.onnx';
++  config.modelConfig.whisper.decoder = MODEL_DIRECTORY + '/tiny.en-decoder.int8.onnx';
++  config.modelConfig.whisper.language = 'en';
++  config.modelConfig.whisper.task = 'transcribe';
++  config.modelConfig.tokens = MODEL_DIRECTORY + '/tiny.en-tokens.txt';
++  config.modelConfig.modelType = 'whisper';
++  config.modelConfig.provider = 'cpu';
++  config.modelConfig.numThreads = 1;
++  config.modelConfig.debug = false;
++  config.ruleFsts = ''; config.ruleFars = '';
++  return config;
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/ets/pages/Captions.ets
+@@ -0,0 +1,33 @@
++import { CaptionActions } from '../common/CaptionActions';
++
++const entryOptions: EntryOptions = { useSharedStorage: true };
++
++@Entry(entryOptions)
++@Component
++struct Captions {
++  @State private showNotices: boolean = false;
++  @LocalStorageLink('notices') notices: string = '';
++  @LocalStorageLink('session') session: string = '';
++  @LocalStorageLink('text') text: string = '';
++  @LocalStorageLink('status') status: string = '正在准备本地字幕';
++  @LocalStorageLink('fontScale') fontScale: number = 100;
++  @LocalStorageLink('fontColor') fontColor: number | string = '#FFFFFFFF';
++  @LocalStorageLink('backgroundColor') captionBackgroundColor: number | string = '#EE000000';
++
++  build() {
++    Column({ space: 8 }) {
++      Row() {
++        Text('实时字幕（英语）').fontSize(16).fontColor(this.fontColor).layoutWeight(1)
++        Button('许可').id('live-captions-notices').onClick((): void => { this.showNotices = !this.showNotices; })
++        Button('关闭').id('live-captions-close')
++          .onClick((): void => { CaptionActions.close(this.session); })
++      }.width('100%')
++      Text(this.status).id('live-captions-status').fontSize(12).fontColor(this.fontColor)
++      Scroll() {
++        Text(this.showNotices ? this.notices : (this.text.length > 0 ? this.text : '尚未识别到英语语音')).id('live-captions-text')
++          .fontSize(20 * Math.max(1, Math.min(this.fontScale, 200)) / 100)
++          .fontColor(this.fontColor).width('100%')
++      }.layoutWeight(1).width('100%')
++    }.padding(12).width('100%').height('100%').backgroundColor(this.captionBackgroundColor).borderRadius(12)
++  }
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/ets/service/AiCaptionServiceExtAbility.ets
+@@ -0,0 +1,120 @@
++import ServiceExtensionAbility from '@ohos.app.ability.ServiceExtensionAbility';
++import { Want } from '@kit.AbilityKit';
++import { BusinessError } from '@kit.BasicServicesKit';
++import settings from '@ohos.settings';
++import util from '@ohos.util';
++import { CaptionSession } from '../common/CaptionSession';
++import { captionTrace } from '../common/CaptionTrace';
++
++class ServiceEpoch {
++  static owner: string = '';
++}
++const ENABLED_KEY: string = 'vassistant_ai_caption_enable';
++const CLOSE_URI: string = 'ohos://vassistant/caption?action=close';
++
++export default class AiCaptionServiceExtAbility extends ServiceExtensionAbility {
++  private readonly instance: string = util.generateRandomUUID();
++  private destroyed: boolean = false;
++  private generation: number = 0;
++  private desiredOpen: boolean = false;
++  private latestStartId: number = 0;
++  private activeSession: CaptionSession | undefined = undefined;
++  private queue: Promise<void> = Promise.resolve();
++  onCreate(want: Want): void {
++    ServiceEpoch.owner = this.instance;
++    // The user-table key describes the visible requested caption session, not
++    // ASR/capture success. Native running/result counters remain separate.
++    this.setEnabled(false);
++    this.context.getApplicationContext().setSupportedProcessCache(false);
++    captionTrace(this.instance, 'service_created', 0, 0, 0);
++  }
++  onRequest(want: Want, startId: number): void {
++    this.latestStartId = startId;
++    if (!Number.isInteger(startId) || startId <= 0 ||
++      (want.uri !== undefined && want.uri !== '' && want.uri !== CLOSE_URI)) {
++      captionTrace(this.instance, 'request_rejected', 0, 0, 0, startId);
++      if (!this.desiredOpen && this.activeSession === undefined && startId > 0) {
++        const idleGeneration: number = this.generation;
++        this.enqueue(async (): Promise<void> => { await this.stopIfCurrent(startId, idleGeneration); });
++      }
++      return;
++    }
++    const close: boolean = want.uri === CLOSE_URI;
++    this.desiredOpen = !close;
++    captionTrace(this.instance, close ? 'request_close' : 'request_open', 0, 0, 0, startId);
++    const generation: number = ++this.generation;
++    // Cancellation is synchronous. New onRequest invalidates old native/UI
++    // callbacks before any awaited cleanup/initialization can complete.
++    this.activeSession?.cancel();
++    this.enqueue(async (): Promise<void> => {
++      await this.releaseActive();
++      if (!this.current(generation)) { return; }
++      this.setEnabled(false);
++      if (close) { await this.stopIfCurrent(startId, generation); return; }
++      const id: string = util.generateRandomUUID();
++      const session = new CaptionSession(id, this.context,
++        (): void => { this.stopSession(session, startId, generation); },
++        (): void => { if (this.current(generation) && this.activeSession === session) { this.setEnabled(true); } },
++        (reason: Error): void => { this.failSession(session, startId, generation, reason); });
++      this.activeSession = session;
++      try { await session.start(); }
++      catch (error) {
++        if (this.current(generation) && this.activeSession === session) {
++          this.failSession(session, startId, generation, error as Error);
++        }
++      }
++    });
++  }
++  private current(generation: number): boolean {
++    return !this.destroyed && ServiceEpoch.owner === this.instance && this.generation === generation;
++  }
++  private setEnabled(value: boolean): void {
++    if (ServiceEpoch.owner !== this.instance) { return; }
++    if (!settings.setValueSync(this.context, ENABLED_KEY, value ? 'true' : 'false', settings.domainName.USER_PROPERTY)) {
++      throw new Error('actual user caption state write failed');
++    }
++  }
++  private enqueue(operation: () => Promise<void>): void {
++    // A real error is logged; later requests still reach the cleanup path.
++    this.queue = this.queue.then(operation).catch((error: BusinessError): void => {
++      captionTrace(this.instance, 'service_error', 0, 0, 0, error.code || -1);
++    });
++  }
++  private async releaseActive(): Promise<void> {
++    const prior = this.activeSession;
++    if (prior !== undefined) { await prior.stop(); }
++    if (this.activeSession === prior) { this.activeSession = undefined; }
++  }
++  private stopSession(session: CaptionSession, startId: number, generation: number): void {
++    if (!this.current(generation) || this.activeSession !== session) { return; }
++    session.cancel(); this.desiredOpen = false; this.setEnabled(false);
++    const idleStartId: number = this.latestStartId;
++    const stoppedGeneration: number = ++this.generation;
++    this.enqueue(async (): Promise<void> => {
++      await this.releaseActive();
++      if (this.current(stoppedGeneration)) { await this.stopIfCurrent(idleStartId, stoppedGeneration); }
++    });
++  }
++  private failSession(session: CaptionSession, startId: number, generation: number, reason: Error): void {
++    if (!this.current(generation) || this.activeSession !== session) { return; }
++    captionTrace(session.id, 'session_error', 0, 0, 0, (reason as BusinessError).code || -1);
++    this.stopSession(session, startId, generation);
++  }
++  private async stopIfCurrent(startId: number, generation: number): Promise<void> {
++    if (!this.current(generation) || this.latestStartId !== startId || this.activeSession !== undefined) { return; }
++    const accepted: boolean = await this.context.terminateSelfIfStartId(startId);
++    // false means newer real AMS work exists; preserve it, never fall back to
++    // the unconditioned terminateSelf API.
++    captionTrace(this.instance, 'conditional_stop', 0, 0, 0, accepted ? startId : -startId);
++  }
++  onDestroy(): void {
++    this.destroyed = true; this.desiredOpen = false; ++this.generation;
++    this.activeSession?.cancel();
++    if (ServiceEpoch.owner === this.instance) {
++      this.setEnabled(false); ServiceEpoch.owner = '';
++    }
++    // No asynchronous old-generation state write can clobber a new instance.
++    this.enqueue(async (): Promise<void> => { await this.releaseActive(); });
++    captionTrace(this.instance, 'service_destroyed', 0, 0, 0, this.latestStartId);
++  }
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/ets/workers/CaptionWorker.ets
+@@ -0,0 +1,113 @@
++/*
++ * Adapted from OpenHarmony-SIG applications_ai_model_samples AsrAndTts,
++ * revision 2b768749568a9cff787c2f822913bfe5e9c78684.
++ * Copyright (c) 2025 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ * http://www.apache.org/licenses/LICENSE-2.0
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++import worker, { MessageEvents, ThreadWorkerGlobalScope } from '@ohos.worker';
++import { BusinessError } from '@kit.BasicServicesKit';
++import { OfflineRecognizer, OfflineStream, SpeechSegment, Vad, VadConfig, SileroVadConfig } from 'sherpa_onnx';
++import { CaptionInput, CaptionOutput, SAMPLE_RATE, WINDOW_SAMPLES, MAX_SEGMENT_SAMPLES } from '../common/CaptionProtocol';
++import { VAD_MODEL, recognizerConfig } from '../common/ModelProfile';
++
++const port: ThreadWorkerGlobalScope = worker.workerPort;
++let recognizer: OfflineRecognizer | undefined = undefined;
++let detector: Vad | undefined = undefined;
++let session: string = '';
++let sequence: number = 0;
++let acceptedSamples: number = 0;
++let decodedSegments: number = 0;
++let sinceFlush: number = 0;
++let tail: Float32Array = new Float32Array(0);
++let failed: boolean = false;
++
++function send(kind: string, text: string = '', language: string = '', message: string = ''): void {
++  const output: CaptionOutput = { kind, session, sequence, samples: acceptedSamples,
++    segments: decodedSegments, text, language, message };
++  port.postMessage(output);
++}
++function decodeSegments(): void {
++  if (detector === undefined || recognizer === undefined) { throw new Error('actual recognizer is absent'); }
++  while (!detector.isEmpty()) {
++    // Copy owned samples; pop cannot invalidate memory supplied to the stream.
++    const segment: SpeechSegment = detector.front(false);
++    try {
++      if (segment.samples.length < SAMPLE_RATE / 5) { continue; }
++      if (segment.samples.length > MAX_SEGMENT_SAMPLES) { throw new Error('speech segment exceeds bounded session input'); }
++      const stream: OfflineStream = recognizer.createStream();
++      stream.acceptWaveform({ samples: segment.samples, sampleRate: SAMPLE_RATE });
++      recognizer.decode(stream);
++      const result = recognizer.getResult(stream);
++      ++decodedSegments;
++      // Only native result text is displayed; model metadata tags are removed.
++      const text: string = result.text.replace(/<\|[^|>]+\|>/g, '').trim();
++      if (text.length > 0) { send('result', text, result.lang); }
++    } finally { detector.pop(); }
++  }
++}
++function accept(samples: Float32Array): void {
++  if (detector === undefined || samples.length <= 0 || samples.length > MAX_SEGMENT_SAMPLES) {
++    throw new Error('bounded real PCM required');
++  }
++  for (let i: number = 0; i < samples.length; ++i) {
++    if (!Number.isFinite(samples[i]) || samples[i] < -1 || samples[i] > 1) { throw new Error('invalid real PCM value'); }
++  }
++  acceptedSamples += samples.length;
++  const joined = new Float32Array(tail.length + samples.length);
++  joined.set(tail); joined.set(samples, tail.length);
++  let offset: number = 0;
++  while (offset + WINDOW_SAMPLES <= joined.length) {
++    detector.acceptWaveform(joined.subarray(offset, offset + WINDOW_SAMPLES));
++    offset += WINDOW_SAMPLES; sinceFlush += WINDOW_SAMPLES;
++    decodeSegments();
++    // Bound uninterrupted speech. Ordinary chunks do not reset/flush VAD.
++    if (sinceFlush >= SAMPLE_RATE * 15) {
++      detector.flush(); decodeSegments(); detector.reset(); sinceFlush = 0;
++    }
++  }
++  tail = joined.slice(offset);
++}
++port.onmessage = (event: MessageEvents): void => {
++  const input = event.data as CaptionInput;
++  try {
++    if (failed || typeof input.session !== 'string' || !/^[a-f0-9-]{36}$/.test(input.session) ||
++      !Number.isInteger(input.sequence)) { throw new Error('invalid private worker session'); }
++    if (input.kind === 'init') {
++      if (recognizer !== undefined || detector !== undefined || input.sequence !== 0 || input.context === undefined) {
++        throw new Error('one genuine worker initialization required');
++      }
++      session = input.session;
++      const manager = input.context.resourceManager;
++      recognizer = new OfflineRecognizer(recognizerConfig(), manager);
++      detector = new Vad(new VadConfig(new SileroVadConfig(VAD_MODEL, 0.5, 0.2, 0.4, WINDOW_SAMPLES),
++        SAMPLE_RATE, false, 1), 30, manager);
++      detector.reset();
++      // Calls the real native handle after initialization, not a model pass bit.
++      if (!detector.isEmpty()) { throw new Error('fresh detector contains unexpected audio'); }
++      send('ready');
++    } else if (input.kind === 'pcm') {
++      if (input.session !== session || input.sequence !== sequence + 1 || input.samples === undefined) {
++        throw new Error('real PCM sequence/session mismatch');
++      }
++      sequence = input.sequence;
++      accept(input.samples);
++      send('ack');
++    } else { throw new Error('worker accepts initialization and captured PCM only'); }
++  } catch (error) {
++    failed = true;
++    const actual = error as BusinessError;
++    send('error', '', '', typeof actual.message === 'string' ? actual.message : 'native worker failed');
++  }
++};
++port.onmessageerror = (event: MessageEvents): void => {
++  failed = true;
++  send('error', '', '', 'private worker message could not be delivered');
++};
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/module.json5
+@@ -0,0 +1,40 @@
++{
++  "module": {
++    "name": "entry",
++    "type": "entry",
++    "deviceTypes": [
++      "default",
++      "tablet",
++      "2in1"
++    ],
++    "deliveryWithInstall": true,
++    "installationFree": false,
++    "pages": "$profile:main_pages",
++    "requestPermissions": [
++      {
++        "name": "ohos.permission.MANAGE_SETTINGS"
++      },
++      {
++        "name": "ohos.permission.SYSTEM_FLOAT_WINDOW"
++      },
++      {
++        "name": "ohos.permission.WRITE_ACCESSIBILITY_CONFIG"
++      },
++      {
++        "name": "ohos.permission.MANAGE_SECURE_SETTINGS"
++      }
++    ],
++    "extensionAbilities": [
++      {
++        "name": "AiCaptionServiceExtAbility",
++        "srcEntry": "./ets/service/AiCaptionServiceExtAbility.ets",
++        "type": "service",
++        "exported": true,
++        "permissions": [
++          "ohos.permission.WRITE_ACCESSIBILITY_CONFIG"
++        ]
++      }
++    ],
++    "abilities": []
++  }
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/entry/src/main/resources/base/profile/main_pages.json
+@@ -0,0 +1,5 @@
++{
++  "src": [
++    "pages/Captions"
++  ]
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/hvigor/hvigor-config.json5
+@@ -0,0 +1 @@
++{"modelVersion":"6.0.0","dependencies":{}}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/hvigorfile.ts
+@@ -0,0 +1 @@
++module.exports = require('@ohos/hvigor-ohos-plugin').appTasks;
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/oh-package.json5
+@@ -0,0 +1,9 @@
++{
++  "modelVersion": "6.0.0",
++  "name": "vassistant",
++  "version": "1.0.0",
++  "license": "Apache-2.0",
++  "dependencies": {},
++  "devDependencies": {},
++  "dynamicDependencies": {}
++}
+--- /dev/null
++++ b/applications/standard/hap/vassistant_livecaptions579/signature/profile-template.json
+@@ -0,0 +1,30 @@
++{
++  "version-name": "2.0.0",
++  "version-code": 2,
++  "app-distribution-type": "os_integration",
++  "uuid": "a0bb8e78-77d3-47dd-8cc0-2efa21aa5790",
++  "validity": {
++    "not-before": 1594865258,
++    "not-after": 2208988800
++  },
++  "type": "release",
++  "bundle-info": {
++    "developer-id": "OpenHarmony",
++    "distribution-certificate": "",
++    "bundle-name": "com.ohos.vassistant",
++    "apl": "system_basic",
++    "app-feature": "hos_system_app"
++  },
++  "acls": {
++    "allowed-acls": [
++      "ohos.permission.MANAGE_SETTINGS",
++      "ohos.permission.SYSTEM_FLOAT_WINDOW",
++      "ohos.permission.WRITE_ACCESSIBILITY_CONFIG",
++      "ohos.permission.MANAGE_SECURE_SETTINGS"
++    ]
++  },
++  "permissions": {
++    "restricted-permissions": []
++  },
++  "issuer": "pki_internal"
++}

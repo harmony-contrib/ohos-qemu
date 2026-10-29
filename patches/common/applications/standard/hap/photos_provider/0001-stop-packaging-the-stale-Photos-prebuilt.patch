@@ -1,0 +1,21 @@
+diff --git a/applications/standard/hap/BUILD.gn b/applications/standard/hap/BUILD.gn
+--- a/applications/standard/hap/BUILD.gn
++++ b/applications/standard/hap/BUILD.gn
+@@ -132,9 +132,2 @@
+ 
+-ohos_prebuilt_etc("photos_hap") {
+-  source = hap_src_dir + "Photos.hap"
+-  module_install_dir = "app/com.ohos.photos"
+-  part_name = "prebuilt_hap"
+-  subsystem_name = "applications"
+-}
+-
+ ohos_prebuilt_etc("music_demo_hap") {
+@@ -429,3 +422,2 @@
+     "//applications/standard/hap:notificationManagement_hap",
+-    ":photos_hap",
+     "//applications/standard/hap:screenLock_hap",
+@@ -488,3 +480,2 @@
+       "//applications/standard/hap:notificationManagement_hap",
+-      ":photos_hap",
+       "//applications/standard/hap:screenLock_hap",

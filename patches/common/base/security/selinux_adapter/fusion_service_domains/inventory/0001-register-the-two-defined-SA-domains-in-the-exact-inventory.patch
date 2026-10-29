@@ -1,0 +1,12 @@
+diff --git a/base/security/selinux_adapter/sepolicy/whitelist/flex/domain_baseline.json b/base/security/selinux_adapter/sepolicy/whitelist/flex/domain_baseline.json
+--- a/base/security/selinux_adapter/sepolicy/whitelist/flex/domain_baseline.json
++++ b/base/security/selinux_adapter/sepolicy/whitelist/flex/domain_baseline.json
+@@ -1,6 +1,8 @@
+ {
+     "user": {
+         "sadomain": [
++            "fusion_ranging",
++            "partner_device_agent",
+             "sdc",
+             "work_scheduler_service",
+             "asset_service",

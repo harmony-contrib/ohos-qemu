@@ -1,0 +1,22 @@
+--- a/base/telephony/number_identity/BUILD.gn
++++ b/base/telephony/number_identity/BUILD.gn
+@@ -39,7 +39,7 @@
+   build_level = "module"
+   build_modules = [ "numberidentity" ]
+   if (defined(sign_hap_py_path)) {
+-    certificate_profile = "${certificate_profile_path}"
++    certificate_profile = "./signature/NumberIdentity.hapRelease.p7b"
+     key_alias = "NumberIdentity"
+     private_key_path = "NumberIdentity"
+     compatible_version = "11"
+--- a/base/telephony/number_identity/number_mark/src/number_mark_ability.cpp
++++ b/base/telephony/number_identity/number_mark/src/number_mark_ability.cpp
+@@ -987,7 +987,7 @@
+ void NumberMarkAbility::dealMarkSource(const NumberMarkModel &numberMark, DataShareValuesBucket &values)
+ {
+     NUMBER_IDENTITY_LOGI("mark type: %{public}d, supplier: %{public}s.",
+-        numberMark.MarkType(), numberMark.supplier->c_str());
++        numberMark.MarkType(), numberMark.supplier.value_or("").c_str());
+     if (numberMark.MarkType() == MarkType::MARK_TYPE_FRAUD && numberMark.supplier == CALL_MARK_SOURCE_FOR_AFS) {
+         bool isAntiFraudCenterSwitchOn =
+             isAntifraudSwitchOn(ANTIFRAUD_CENTER_BUNDLE_NAME, ANTIFRAUD_CENTER_SWITCH);

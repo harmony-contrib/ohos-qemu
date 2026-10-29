@@ -1,0 +1,69 @@
+diff --git a/base/startup/appspawn/modules/common/appspawn_common.c b/base/startup/appspawn/modules/common/appspawn_common.c
+--- a/base/startup/appspawn/modules/common/appspawn_common.c
++++ b/base/startup/appspawn/modules/common/appspawn_common.c
+@@ -79,5 +79,23 @@
+-int __attribute__((weak)) SetUserId(char *userIdStr)
++int SetUserId(char *userIdStr)
+ {
+-    APPSPAWN_LOGV("SetUserId called (weak implementation)");
+-    return 0;
++    /* Account isolation is required with normal AND custom sandboxes. */
++    APPSPAWN_CHECK(userIdStr != NULL, return -1, "userIdStr == NULL");
++    char *endPtr = NULL;
++    errno = 0;
++    long long value = strtoll(userIdStr, &endPtr, 10);
++    APPSPAWN_CHECK(endPtr != userIdStr && *endPtr == '\0' && errno != ERANGE,
++        return -1, "Invalid userId string %{public}s", userIdStr);
++    APPSPAWN_CHECK(value >= 0 && value <= UINT32_MAX,
++        return -1, "UserId out of uint32_t range: %{public}s", userIdStr);
++    uint32_t userId = (uint32_t)value;
++    int fd = open("/dev/access_token_id", O_WRONLY | O_CLOEXEC);
++    APPSPAWN_CHECK(fd >= 0, return -1, "Cannot open access_token_id: %{public}s", strerror(errno));
++    int ret = ioctl(fd, _IOW('A', 12, uint32_t), &userId);
++    int savedErrno = errno;
++    close(fd);
++    if (ret != 0) {
++        APPSPAWN_LOGE("Cannot set kernel userId %{public}u: %{public}s", userId, strerror(savedErrno));
++    }
++    errno = savedErrno;
++    return ret;
+ }
+diff --git a/base/startup/appspawn/modules/common/appspawn_custom_config.cpp b/base/startup/appspawn/modules/common/appspawn_custom_config.cpp
+--- a/base/startup/appspawn/modules/common/appspawn_custom_config.cpp
++++ b/base/startup/appspawn/modules/common/appspawn_custom_config.cpp
+@@ -167,35 +167,3 @@
+-int SetUserId(char *userIdStr)
+-{
+-    APPSPAWN_CHECK(userIdStr != nullptr, return -1, "userIdStr == nullptr.");
+-    APPSPAWN_LOGV("SetUserId called with userId=%{public}s", userIdStr);
+-    char *endPtr = nullptr;
+-    errno = 0;
+-    const int numberBase = 10;
+-    long long tmpUserId = strtoll(userIdStr, &endPtr, numberBase);
+-    APPSPAWN_CHECK(endPtr != userIdStr, return -1,
+-        "Failed to convert userId string '%s': no valid digits", userIdStr);
+-    APPSPAWN_CHECK(*endPtr == '\0', return -1,
+-        "Failed to convert userId string '%s': extra characters '%s'", userIdStr, endPtr);
+-    APPSPAWN_CHECK(errno != ERANGE, return -1,
+-        "UserId string '%s' causes long integer overflow/underflow", userIdStr);
+-    if (tmpUserId < 0 || tmpUserId > UINT32_MAX) {
+-        APPSPAWN_LOGE("UserId value %lld from string '%s' is out of uint32_t range [0, %u]",
+-            tmpUserId, userIdStr, UINT32_MAX);
+-        return -1;
+-    }
+-
+-    uint32_t userId = static_cast<uint32_t>(tmpUserId);
+-    int fdIoctl = open(HDAC_DEV, O_WRONLY);
+-    APPSPAWN_CHECK(fdIoctl >= 0, return -1,
+-        "Failed to open %{public}s: %{public}s", HDAC_DEV, strerror(errno));
+-    int rc = ioctl(fdIoctl, ACCESS_TOKENID_SET_USERID, &userId);
+-    if (rc < 0) {
+-        APPSPAWN_LOGE("Failed to set userId=%{public}u: %{public}s", userId, strerror(errno));
+-    }
+-    close(fdIoctl);
+-    return rc;
+-}
+-
+ int GetUserId(uint32_t *userId)
+ {
+     APPSPAWN_CHECK(userId != nullptr, return -1, "userId == nullptr.");

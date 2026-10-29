@@ -1,5 +1,9 @@
 # OpenHarmony-7.0-Release @ f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549
 # repo_root\trelative_path\tupstream_repo\tsha256_oid\tsize_bytes
+foundation/graphic/graphic_2d	frameworks/bootanimation/data/bootpic.zip	https://gitcode.com/openharmony/graphic_graphic_2d	73a1231722160079c472b18b0af4a89d5b32fd804e4e3ff721a3676c28e57589	1363678
+foundation/graphic/graphic_2d	frameworks/bootanimation/data/bootvideo.mp4	https://gitcode.com/openharmony/graphic_graphic_2d	e17936c58519250cb114e8735a05fe2c0bb50d4954a20a0b67b9e652ef276114	144170
+base/global/system_resources	fonts/HMOSColorEmojiCompat.ttf	https://gitcode.com/openharmony/global_system_resources	a01627a733f1ff723a4eba9f0c4a2ca47e111ea91f2b56eceed1ef50846639cc	16819640
+base/global/system_resources	fonts/HarmonyOS_Sans_SC.ttf	https://gitcode.com/openharmony/global_system_resources	8978e05044e7089ad6a9de38c505c8148305607983487435a916d2610700a7ca	20617156
 applications/standard/hap	AudioPicker.hap	https://gitcode.com/openharmony/applications_hap	daa6081a2feb8f6be94439da648984d8e31dd4167d1a40c88aa0793e782d399f	265211
 applications/standard/hap	Calc_Demo.hap	https://gitcode.com/openharmony/applications_hap	d489884365fa6511af657b86e70bcb4acd7442ef221c8ee23c7d258a2f8ba4fb	285490
 applications/standard/hap	CalendarData.hap	https://gitcode.com/openharmony/applications_hap	ad3f3b5dc19bfc80d2a1a2ff646541eb560b7e339542f1d1cc682dd2c5321457	341561

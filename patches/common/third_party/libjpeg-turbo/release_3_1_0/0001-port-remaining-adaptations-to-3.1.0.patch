@@ -1,0 +1,304 @@
+diff --git a/third_party/libjpeg-turbo/Add-loongarch64.patch b/third_party/libjpeg-turbo/Add-loongarch64.patch
+--- a/third_party/libjpeg-turbo/Add-loongarch64.patch
++++ b/third_party/libjpeg-turbo/Add-loongarch64.patch
+@@ -1,25 +1,21 @@
+-From 97ca1ba6c5db46675e08899cfda80edf326a21af Mon Sep 17 00:00:00 2001
+-From: doupengda <doupengda@loongson.cn>
+-Date: Mon, 5 Dec 2022 02:46:49 +0000
+-Subject: [PATCH] Add loongarch64
+-
+----
+- CMakeLists.txt | 2 +-
+- 1 file changed, 1 insertion(+), 1 deletion(-)
+-
+-diff --git a/CMakeLists.txt b/CMakeLists.txt
+-index c01ec25..693cfc4 100644
+---- a/CMakeLists.txt
+-+++ b/CMakeLists.txt
+-@@ -927,7 +927,7 @@ if(CPU_TYPE STREQUAL "x86_64" OR CPU_TYPE STREQUAL "i386")
+-   # manually.
+-   endif()
+- else()
+--  if((CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64") AND
+-+  if((CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64" OR CPU_TYPE STREQUAL "loongarch64") AND
+-     NOT CMAKE_C_COMPILER_ID STREQUAL "Clang" AND NOT MSVC)
+-     set(DEFAULT_FLOATTEST fp-contract)
+-   else()
+--- 
+-2.33.0
+-
++diff --git a/CMakeLists.txt b/CMakeLists.txt
++--- a/CMakeLists.txt
+++++ b/CMakeLists.txt
++@@ -1056,7 +1056,7 @@ if(CPU_TYPE STREQUAL "x86_64" OR CPU_TYPE STREQUAL "i386")
++   elseif(CPU_TYPE STREQUAL "x86_64")
++     set(DEFAULT_FLOATTEST8 no-fp-contract)
++   endif()
++-elseif(CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64")
+++elseif(CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64" OR CPU_TYPE STREQUAL "loongarch64")
++   if(CMAKE_C_COMPILER_ID MATCHES "Clang")
++     if(CMAKE_C_COMPILER_ID MATCHES "AppleClang")
++       # Xcode 14.3 and later
++@@ -1104,7 +1104,7 @@ if(CPU_TYPE STREQUAL "x86_64")
++ 
++ if(CPU_TYPE STREQUAL "x86_64")
++   set(DEFAULT_FLOATTEST12 no-fp-contract)
++-elseif(CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64")
+++elseif(CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64" OR CPU_TYPE STREQUAL "loongarch64")
++   if(CMAKE_C_COMPILER_ID MATCHES "Clang")
++     if(CMAKE_C_COMPILER_ID MATCHES "AppleClang")
++       # Xcode 14.3 and later
+diff --git a/third_party/libjpeg-turbo/liteos_adapting.patch b/third_party/libjpeg-turbo/liteos_adapting.patch
+--- a/third_party/libjpeg-turbo/liteos_adapting.patch
++++ b/third_party/libjpeg-turbo/liteos_adapting.patch
+@@ -1,22 +1,19 @@
+-diff --git a/src/jmorecfg.h b/src/jmorecfg.h
+-old mode 100644
+-new mode 100755
+-index fb3a9cf..f206757
+---- a/src/jmorecfg.h
+-+++ b/src/jmorecfg.h
+-@@ -133,15 +133,6 @@ typedef short INT16;
+-  * same regardless of any external headers that may be included.
+-  */
+-
+--#ifndef XMD_H                   /* X11/xmd.h correctly defines INT32 */
+--#ifndef _BASETSD_H_             /* Microsoft defines it in basetsd.h */
+--#ifndef _BASETSD_H              /* MinGW is slightly different */
+--#ifndef QGLOBAL_H               /* Qt defines it in qglobal.h */
+--typedef long INT32;
+--#endif
+--#endif
+--#endif
+--#endif
+-
+- /* Datatype used for image dimensions.  The JPEG standard only supports
+-  * images up to 64K*64K due to 16-bit fields in SOF markers.  Therefore
+\ No newline at end of file
++diff --git a/src/jmorecfg.h b/src/jmorecfg.h
++--- a/src/jmorecfg.h
+++++ b/src/jmorecfg.h
++@@ -133,6 +133,7 @@ typedef short INT16;
++  * same regardless of any external headers that may be included.
++  */
++ 
+++#ifndef LITEOS_M_TYPE_DEFINE     /* LiteOS supplies its own INT32 */
++ #ifndef XMD_H                   /* X11/xmd.h correctly defines INT32 */
++ #ifndef _BASETSD_H_             /* Microsoft defines it in basetsd.h */
++ #ifndef _BASETSD_H              /* MinGW is slightly different */
++@@ -142,6 +143,7 @@ typedef long INT32;
++ #endif
++ #endif
++ #endif
+++#endif
++ 
++ /* Datatype used for image dimensions.  The JPEG standard only supports
++  * images up to 64K*64K due to 16-bit fields in SOF markers.  Therefore
+diff --git a/third_party/libjpeg-turbo/libjpeg-turbo-2.1.x-bugfix.patch b/third_party/libjpeg-turbo/libjpeg-turbo-2.1.x-bugfix.patch
+--- a/third_party/libjpeg-turbo/libjpeg-turbo-2.1.x-bugfix.patch
++++ b/third_party/libjpeg-turbo/libjpeg-turbo-2.1.x-bugfix.patch
+@@ -1,169 +1,35 @@
+-diff --git a/java/TJUnitTest.java b/java/TJUnitTest.java
+-index 91ad5fd..07c59d8 100644
+---- a/java/TJUnitTest.java
+-+++ b/java/TJUnitTest.java
+-@@ -837,6 +837,54 @@ final class TJUnitTest {
+-     if (tjd != null) tjd.close();
+-   }
+-
+-+  static void overflowTest() throws Exception {
+-+    /* Ensure that the various buffer size methods don't overflow */
+-+    int size = 0;
+-+    boolean exception = false;
+-+    try {
+-+      exception = false;
+-+      size = TJ.bufSize(18919, 18919, TJ.SAMP_444);
+-+    } catch (Exception e) { exception = true; }
+-+    if (!exception || size != 0)
+-+      throw new Exception("TJ.bufSize() overflow");
+-+    try {
+-+      exception = false;
+-+      size = TJ.bufSizeYUV(26755, 1, 26755, TJ.SAMP_444);
+-+    } catch (Exception e) { exception = true; }
+-+    if (!exception || size != 0)
+-+      throw new Exception("TJ.bufSizeYUV() overflow");
+-+    try {
+-+      exception = false;
+-+      size = TJ.bufSizeYUV(26754, 3, 26754, TJ.SAMP_444);
+-+    } catch (Exception e) { exception = true; }
+-+    if (!exception || size != 0)
+-+      throw new Exception("TJ.bufSizeYUV() overflow");
+-+    try {
+-+      exception = false;
+-+      size = TJ.bufSizeYUV(26754, -1, 26754, TJ.SAMP_444);
+-+    } catch (Exception e) { exception = true; }
+-+    if (!exception || size != 0)
+-+      throw new Exception("TJ.bufSizeYUV() overflow");
+-+    try {
+-+      exception = false;
+-+      size = TJ.planeSizeYUV(0, 46341, 0, 46341, TJ.SAMP_444);
+-+    } catch (Exception e) { exception = true; }
+-+    if (!exception || size != 0)
+-+      throw new Exception("TJ.planeSizeYUV() overflow");
+-+    try {
+-+      exception = false;
+-+      size = TJ.planeWidth(0, Integer.MAX_VALUE, TJ.SAMP_420);
+-+    } catch (Exception e) { exception = true; }
+-+    if (!exception || size != 0)
+-+      throw new Exception("TJ.planeWidth() overflow");
+-+    try {
+-+      exception = false;
+-+      size = TJ.planeHeight(0, Integer.MAX_VALUE, TJ.SAMP_420);
+-+    } catch (Exception e) { exception = true; }
+-+    if (!exception || size != 0)
+-+      throw new Exception("TJ.planeHeight() overflow");
+-+  }
+-+
+-   static void bufSizeTest() throws Exception {
+-     int w, h, i, subsamp;
+-     byte[] srcBuf, dstBuf = null;
+-@@ -912,6 +960,7 @@ final class TJUnitTest {
+-       }
+-       if (doYUV)
+-         FORMATS_4BYTE[4] = -1;
+-+      overflowTest();
+-       doTest(35, 39, bi ? FORMATS_3BYTEBI : FORMATS_3BYTE, TJ.SAMP_444,
+-              testName);
+-       doTest(39, 41, bi ? FORMATS_4BYTEBI : FORMATS_4BYTE, TJ.SAMP_444,
+-
+-diff --git a/src/jcphuff.c b/src/jcphuff.c
+-index 1101987..7c9d7cf 100644
+---- a/src/jcphuff.c
+-+++ b/src/jcphuff.c
+-@@ -664,7 +664,7 @@ encode_mcu_AC_first(j_compress_ptr cinfo
+-       emit_restart(entropy, entropy->next_restart_num);
+-
+- #ifdef WITH_SIMD
+--  cvalue = values = (UJCOEF *)PAD((JUINTPTR)values_unaligned, 16);
+-+  cvalue = values = (UJCOEF *)PAD((size_t)values_unaligned, 16);
+- #else
+-   /* Not using SIMD, so alignment is not needed */
+-   cvalue = values = values_unaligned;
+-@@ -934,7 +934,7 @@ encode_mcu_AC_refine(j_compress_ptr cinf
+-       emit_restart(entropy, entropy->next_restart_num);
+-
+- #ifdef WITH_SIMD
+--  cabsvalue = absvalues = (UJCOEF *)PAD((JUINTPTR)absvalues_unaligned, 16);
+-+  cabsvalue = absvalues = (UJCOEF *)PAD((size_t)absvalues_unaligned, 16);
+- #else
+-   /* Not using SIMD, so alignment is not needed */
+-   cabsvalue = absvalues = absvalues_unaligned;
+-diff --git a/src/jerror.c b/src/jerror.c
+-index 936c4f5..aa0c6ee 100644
+---- a/src/jerror.c
+-+++ b/src/jerror.c
+-@@ -26,6 +26,7 @@
+- #include "jpeglib.h"
+- #include "jversion.h"
+- #include "jerror.h"
+-+#include <stdlib.h>
+-
+- #ifdef USE_WINDOWS_MESSAGEBOX
+- #include <windows.h>
+-
+-diff --git a/src/tjunittest.c b/src/tjunittest.c
+-index f59939f..38ada63 100644
+---- a/src/tjunittest.c
+-+++ b/src/tjunittest.c
+-@@ -711,10 +711,10 @@ static void overflowTest(void)
+-   CHECKSIZE(tj3YUVPlaneSize());
+-   ulsize = tjPlaneSizeYUV(0, 65536, 0, 65536, TJSAMP_444);
+-   CHECKSIZEUL(tjPlaneSizeYUV());
+--  intsize = tj3YUVPlaneWidth(0, INT_MAX, TJSAMP_420);
+--  CHECKSIZEINT(tj3YUVPlaneWidth());
+--  intsize = tj3YUVPlaneHeight(0, INT_MAX, TJSAMP_420);
+--  CHECKSIZEINT(tj3YUVPlaneHeight());
+-+  intsize = tjPlaneWidth(0, INT_MAX, TJSAMP_420);
+-+  CHECKSIZEINT(tjPlaneWidth());
+-+  intsize = tjPlaneHeight(0, INT_MAX, TJSAMP_420);
+-+  CHECKSIZEINT(tjPlaneHeight());
+-
+- bailout:
+-   return;
+-diff --git a/java/turbojpeg-jni.c b/java/turbojpeg-jni.c
+-index 1b728e3..053edbd 100644
+---- a/java/turbojpeg-jni.c
+-+++ b/java/turbojpeg-jni.c
+-@@ -97,10 +97,10 @@
+- JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJ_bufSize
+-   (JNIEnv *env, jclass cls, jint width, jint height, jint jpegSubsamp)
+- {
+--  size_t retval = tj3JPEGBufSize(width, height, jpegSubsamp);
+-+  unsigned long retval = tj3JPEGBufSize(width, height, jpegSubsamp);
+-
+--  if (retval == 0) THROW_ARG(tj3GetErrorStr(NULL));
+--  if (retval > (size_t)INT_MAX)
+-+  if (retval == (unsigned long)-1) THROW_ARG(tj3GetErrorStr(NULL));
+-+  if (retval > (unsigned long)INT_MAX)
+-     THROW_ARG("Image is too large");
+-
+- bailout:
+-@@ -111,10 +111,10 @@ bailout:
+- JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJ_bufSizeYUV__IIII
+-   (JNIEnv *env, jclass cls, jint width, jint align, jint height, jint subsamp)
+- {
+--  size_t retval = tj3YUVBufSize(width, align, height, subsamp);
+-+  unsigned long retval = tj3YUVBufSize(width, align, height, subsamp);
+-
+--  if (retval == 0) THROW_ARG(tj3GetErrorStr(NULL));
+--  if (retval > (size_t)INT_MAX)
+-+  if (retval == unsigned long)-1) THROW_ARG(tj3GetErrorStr(NULL));
+-+  if (retval > (unsigned long)INT_MAX)
+-     THROW_ARG("Image is too large");
+-
+- bailout:
+-@@ -126,10 +126,10 @@ JNIEXPORT jint JNICALL Java_org_libjpegt
+-   (JNIEnv *env, jclass cls, jint componentID, jint width, jint stride,
+-    jint height, jint subsamp)
+- {
+--  size_t retval = tj3YUVPlaneSize(componentID, width, stride, height, subsamp);
+-+  unsigned long retval = tj3YUVPlaneSize(componentID, width, stride, height, subsamp);
+-
+--  if (retval == 0) THROW_ARG(tj3GetErrorStr(NULL));
+--  if (retval > (size_t)INT_MAX)
+-+  if (retval == unsigned long)-1) THROW_ARG(tj3GetErrorStr(NULL));
+-+  if (retval > (unsigned long)INT_MAX)
+-     THROW_ARG("Image is too large");
+-
+- bailout:
+-
++diff --git a/src/jcphuff.c b/src/jcphuff.c
++index 1101987..7c9d7cf 100644
++--- a/src/jcphuff.c
+++++ b/src/jcphuff.c
++@@ -664,7 +664,7 @@ encode_mcu_AC_first(j_compress_ptr cinfo
++       emit_restart(entropy, entropy->next_restart_num);
++
++ #ifdef WITH_SIMD
++-  cvalue = values = (UJCOEF *)PAD((JUINTPTR)values_unaligned, 16);
+++  cvalue = values = (UJCOEF *)PAD((size_t)values_unaligned, 16);
++ #else
++   /* Not using SIMD, so alignment is not needed */
++   cvalue = values = values_unaligned;
++@@ -934,7 +934,7 @@ encode_mcu_AC_refine(j_compress_ptr cinf
++       emit_restart(entropy, entropy->next_restart_num);
++
++ #ifdef WITH_SIMD
++-  cabsvalue = absvalues = (UJCOEF *)PAD((JUINTPTR)absvalues_unaligned, 16);
+++  cabsvalue = absvalues = (UJCOEF *)PAD((size_t)absvalues_unaligned, 16);
++ #else
++   /* Not using SIMD, so alignment is not needed */
++   cabsvalue = absvalues = absvalues_unaligned;
++diff --git a/src/jerror.c b/src/jerror.c
++index 936c4f5..aa0c6ee 100644
++--- a/src/jerror.c
+++++ b/src/jerror.c
++@@ -26,6 +26,7 @@
++ #include "jpeglib.h"
++ #include "jversion.h"
++ #include "jerror.h"
+++#include <stdlib.h>
++
++ #ifdef USE_WINDOWS_MESSAGEBOX
++ #include <windows.h>
++

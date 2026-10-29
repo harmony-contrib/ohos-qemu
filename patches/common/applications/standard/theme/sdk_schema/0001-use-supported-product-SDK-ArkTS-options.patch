@@ -1,0 +1,26 @@
+diff --git a/applications/standard/theme/product/phone/build-profile.json5 b/applications/standard/theme/product/phone/build-profile.json5
+--- a/applications/standard/theme/product/phone/build-profile.json5
++++ b/applications/standard/theme/product/phone/build-profile.json5
+@@ -1,8 +1,6 @@
+ {
+   "apiType": 'stageMode',
+-  "buildOption": {
+-    "arkEnable": true
+-  },
++  "buildOption": {},
+   "targets": [
+     {
+       "name": "default",
+diff --git a/applications/standard/theme/product/pad/build-profile.json5 b/applications/standard/theme/product/pad/build-profile.json5
+--- a/applications/standard/theme/product/pad/build-profile.json5
++++ b/applications/standard/theme/product/pad/build-profile.json5
+@@ -1,8 +1,6 @@
+ {
+   "apiType": 'stageMode',
+-  "buildOption": {
+-    "arkEnable": true
+-  },
++  "buildOption": {},
+   "targets": [
+     {
+       "name": "default",

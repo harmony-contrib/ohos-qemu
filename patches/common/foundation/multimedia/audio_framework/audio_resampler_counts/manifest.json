@@ -1,0 +1,46 @@
+{
+  "schema": "audio-resampler-counts526/v1",
+  "scope": "actual software consumed/produced per-channel frames and leading padding; source-only candidate, no target/guest/source-frame0/HW/onset proof",
+  "files": {
+    "foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/proresampler/audio_proresampler.cpp": {
+      "before_sha256": "2800be54dec4d922d591048f7412fc85064fd32a2097e19d326ec1aade3af51e",
+      "after_sha256": "57fb5087b25cfe119b0408ba5c6209de88679ae0cd04685b62762ae3f862df6a",
+      "before_bytes": 11640,
+      "after_bytes": 12664,
+      "mode": 420
+    },
+    "foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/include/audio_proresampler.h": {
+      "before_sha256": "094c96d303b17b0da6c833cd44a039c475487172e386f9ed46c2df8e58851601",
+      "after_sha256": "909f0aab0097a23d89fa18da4c533c85d6dea4d2b0c5facd732376418cd0ddf2",
+      "before_bytes": 2268,
+      "after_bytes": 2769,
+      "mode": 420
+    },
+    "foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_audio_format_converter_node.cpp": {
+      "before_sha256": "5e333b5a8b4f1e3b93fdf387ee94bf67bf9dcd26bc9d3430445124e8155b488c",
+      "after_sha256": "9403b4080b81ff628129de99badd8739bace3092814241f6658ee03f5e542849",
+      "before_bytes": 41704,
+      "after_bytes": 48163,
+      "mode": 420
+    },
+    "foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_audio_format_converter_node.h": {
+      "before_sha256": "abb6057e82010c02ece590781450fbde47889129dfab57ca268bc9648ef89087",
+      "after_sha256": "6add879044a09fbe6f32457e9db2739d9a9bac68e52443178c062f2d39659d5c",
+      "before_bytes": 5007,
+      "after_bytes": 5282,
+      "mode": 420
+    }
+  },
+  "prerequisites": {
+    "foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/proresampler/audio_proresampler_process.c": "c359ae30f31c3f67d6db6136f1d2141e455d79496adffa67d2e5b13152d3bd4b",
+    "foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/include/audio_proresampler_process.h": "7b11af539e400f0e961c9054781bb3e7c4e3f6d872bb575320225e00cae7e07c",
+    "foundation/multimedia/audio_framework/services/audio_engine/plugin/resample/include/resampler.h": "b6b20ecfd014f8373d1d66a9fa2b2b5dff2f10c380b1cd3249578ce6070aea30"
+  },
+  "patch_sha256": "974c1fadd597631dd10479541ec501b64fe61914ed5024492a759c3c5cdbca00",
+  "source_commit": null,
+  "source_kit": null,
+  "actual_package": null,
+  "target_compiled": false,
+  "guest_validated": false,
+  "hardware_playback_proven": false
+}

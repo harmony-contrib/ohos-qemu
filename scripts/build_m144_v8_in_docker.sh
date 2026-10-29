@@ -1,128 +1,30 @@
 #!/usr/bin/env bash
+# Build V8 from the same complete, locked release graph as ArkWebCore.
 set -euo pipefail
-
-export LANG=C.UTF-8
-export LC_ALL=C.UTF-8
-
-WORK_ROOT="${M144_WORK_ROOT:-/workspace}"
+main() {
+export LANG=C.UTF-8 LC_ALL=C.UTF-8 DEPOT_TOOLS_UPDATE=0
+WORK_ROOT="${M144_WORK_ROOT:-/workspace/release}"
 SOURCE_ROOT="${WORK_ROOT}/src"
 ARTIFACT_ROOT="${M144_ARTIFACT_ROOT:-/artifacts}"
 OHOS_ROOT="${OHOS_ROOT:-/ohos}"
-BUILD_JOBS="${M144_BUILD_JOBS:-$(nproc)}"
-SYNC_JOBS="${M144_SYNC_JOBS:-8}"
-SKIP_SYNC="${M144_SKIP_SYNC:-0}"
+BUILD_JOBS="${M144_BUILD_JOBS:-4}"
 SKIP_APT="${M144_SKIP_APT:-0}"
-
-CHROMIUM_REVISION=4ae5a7f106cdf9d3f42acd1c6ab007140dcd249f
-V8_REVISION=1170083e0a717f67cead0abe20900f273ae01fb5
-ARKWEB_REVISION=eff888fcd48ce0aa4dc4bf7b2474ed77f0353fa2
-CEF_REVISION=d154063ab448260480a75a4e755a18aaf0baf7c4
-WEBVIEW_REVISION=93dce838eea694887c707c28b3f4f0fa85f87326
-DEPOT_TOOLS_REVISION=2e88a3f08bd8c4a0014eae82729beca935f7f188
-
 ARCHES=("$@")
-if [ "${#ARCHES[@]}" -eq 0 ]; then
-  ARCHES=(arm arm64 x86_64)
-fi
+[ "${#ARCHES[@]}" -gt 0 ] || { echo "specify at least one V8 architecture" >&2; exit 2; }
 for arch in "${ARCHES[@]}"; do
-  case "${arch}" in arm|arm64|x86_64) ;; *)
-    echo "unsupported V8 architecture: ${arch}" >&2
-    exit 2
-    ;;
-  esac
+  case "${arch}" in arm|arm64|x86_64) ;; *) echo "unsupported V8 architecture" >&2; exit 2 ;; esac
 done
-case "${SKIP_APT}" in 0|1) ;; *)
-  echo "M144_SKIP_APT must be 0 or 1" >&2
-  exit 2
-esac
-
-for repository in "${SOURCE_ROOT}" "${SOURCE_ROOT}/v8" \
-  "${SOURCE_ROOT}/arkweb" "${SOURCE_ROOT}/cef" \
-  "${SOURCE_ROOT}/arkweb/deps_code/webview"; do
-  [ -d "${repository}/.git" ] || {
-    echo "M144 repository is missing: ${repository}" >&2
-    exit 1
-  }
-done
-[ "$(git -C "${SOURCE_ROOT}" rev-parse HEAD)" = "${CHROMIUM_REVISION}" ] || {
-  echo "chromium_src revision mismatch" >&2; exit 1;
+[ "${M144_GN_ONLY:-0}" = 1 ] || [ ! -e "${ARTIFACT_ROOT}/manifest.json" ] || {
+  echo "refusing to overwrite previously recorded V8 artifacts; select a new artifact root" >&2; exit 1;
 }
-[ "$(git -C "${SOURCE_ROOT}/v8" rev-parse HEAD)" = "${V8_REVISION}" ] || {
-  echo "chromium_v8 revision mismatch" >&2; exit 1;
-}
-[ "$(git -C "${SOURCE_ROOT}/arkweb" rev-parse HEAD)" = "${ARKWEB_REVISION}" ] || {
-  echo "chromium_arkweb revision mismatch" >&2; exit 1;
-}
-[ "$(git -C "${SOURCE_ROOT}/cef" rev-parse HEAD)" = "${CEF_REVISION}" ] || {
-  echo "chromium_cef revision mismatch" >&2; exit 1;
-}
-[ "$(git -C "${SOURCE_ROOT}/arkweb/deps_code/webview" rev-parse HEAD)" = "${WEBVIEW_REVISION}" ] || {
-  echo "OpenHarmony webview revision mismatch" >&2; exit 1;
-}
-
-if [ ! -d "${WORK_ROOT}/depot_tools/.git" ]; then
-  git clone --filter=blob:none https://chromium.googlesource.com/chromium/tools/depot_tools.git \
-    "${WORK_ROOT}/depot_tools"
-fi
-git -C "${WORK_ROOT}/depot_tools" fetch --depth=1 origin "${DEPOT_TOOLS_REVISION}"
-git -C "${WORK_ROOT}/depot_tools" checkout --detach "${DEPOT_TOOLS_REVISION}"
-if [ ! -f "${WORK_ROOT}/depot_tools/python3_bin_reldir.txt" ]; then
-  (
-    cd "${WORK_ROOT}/depot_tools"
-    # Pinned depot_tools does not bootstrap its Python when auto-update is
-    # disabled. GN's wrapper requires this pointer before its first launch.
-    # shellcheck disable=SC1091
-    source ./bootstrap_python3
-    bootstrap_python3
-  )
-fi
-export PATH="${WORK_ROOT}/depot_tools:${PATH}"
-export DEPOT_TOOLS_UPDATE=0
-
-python3 - "${WORK_ROOT}/.gclient" <<'PY'
-from pathlib import Path
-import sys
-
-Path(sys.argv[1]).write_text(
-    """solutions = [{
-  'name': 'src',
-  'url': 'https://github.com/OpenHarmony-TPC/chromium_src.git',
-  'managed': False,
-  'custom_deps': {'src/v8': None},
-  'custom_vars': {
-    'checkout_configuration': 'small',
-    'checkout_linux': True,
-    'checkout_android': False,
-    'checkout_fuchsia': False,
-  },
-}]
-target_os = ['linux']
-target_os_only = True
-""",
-    encoding="utf-8",
-)
-PY
-
-if [ "${SKIP_SYNC}" != "1" ]; then
-  (
-    cd "${WORK_ROOT}"
-    gclient sync --nohooks --no-history --shallow --jobs "${SYNC_JOBS}"
-  )
-fi
-
-if [ ! -x "${WORK_ROOT}/depot_tools/gn" ]; then
-  echo "pinned depot_tools did not provision Chromium GN" >&2
-  exit 1
-fi
-
+mkdir -p "${ARTIFACT_ROOT}"
+python3 /work/scripts/prepare_m144_release_sources.py --verify-only --work-root "${WORK_ROOT}" \
+  --evidence "${ARTIFACT_ROOT}/release-source-pins-${M144_RELEASE_RUN_ID:-$(date -u +%Y%m%dT%H%M%SZ)-$$}.json"
+DEPOT="${SOURCE_ROOT}/third_party/depot_tools"
+export PATH="${DEPOT}:${PATH}"
 CHROMIUM_CLANG="${SOURCE_ROOT}/third_party/llvm-build/Release+Asserts/bin/clang"
-if [ ! -x "${CHROMIUM_CLANG}" ]; then
-  (
-    cd "${SOURCE_ROOT}"
-    python3 tools/clang/scripts/update.py
-  )
-fi
-
+[ -x "${CHROMIUM_CLANG}" ] || { echo "locked release compiler missing" >&2; exit 1; }
+[ "$("${SOURCE_ROOT}/third_party/node/linux/node-linux-x64/bin/node" --version)" = v24.11.1 ]
 ensure_arm_snapshot_host_toolchain() {
   local arch
   local needs_i386=0
@@ -172,12 +74,12 @@ SDK_NATIVE="${OHOS_ROOT}/prebuilts/ohos-sdk/linux/26.0.0/native"
   echo "OpenHarmony API 26 native SDK is missing: ${SDK_NATIVE}" >&2
   exit 1
 }
-mkdir -p "${SOURCE_ROOT}/ohos_sdk/openharmony"
-if [ -e "${SOURCE_ROOT}/ohos_sdk/openharmony/native" ] || \
-   [ -L "${SOURCE_ROOT}/ohos_sdk/openharmony/native" ]; then
-  rm -rf "${SOURCE_ROOT}/ohos_sdk/openharmony/native"
+if [ ! -f "${WORK_ROOT}/qemu-core-sdk-api26/preparation-evidence.json" ]; then
+  python3 /work/scripts/prepare_m144_core_sdk.py --source-root "${SOURCE_ROOT}" --ohos-root "${OHOS_ROOT}"
 fi
-ln -s "${SDK_NATIVE}" "${SOURCE_ROOT}/ohos_sdk/openharmony/native"
+python3 /work/scripts/build_m144_sdk_bti_runtimes.py --source /m144-tool-sources/sdk-llvm15 \
+  --sdk "${WORK_ROOT}/qemu-core-sdk-api26/native" \
+  --original-sdk "${SDK_NATIVE}"
 
 ARKWEB_BUILD_ROOT="${SOURCE_ROOT}/arkweb/build"
 mkdir -p "${WORK_ROOT}/arkweb-prepare-log"
@@ -205,8 +107,8 @@ if [ ! -f "${SOURCE_ROOT}/cef/cef_paths.gypi" ]; then
   )
 fi
 
-GN="${WORK_ROOT}/depot_tools/gn"
-NINJA="${WORK_ROOT}/depot_tools/ninja"
+GN="${SOURCE_ROOT}/third_party/depot_tools/gn"
+NINJA="${SOURCE_ROOT}/third_party/depot_tools/ninja"
 STRIP="${SDK_NATIVE}/llvm/bin/llvm-strip"
 [ -x "${NINJA}" ] || { echo "Chromium ninja is missing: ${NINJA}" >&2; exit 1; }
 [ -x "${STRIP}" ] || { echo "OpenHarmony llvm-strip is missing: ${STRIP}" >&2; exit 1; }
@@ -287,7 +189,8 @@ for arch in "${ARCHES[@]}"; do
     v8_use_external_startup_data=false
     v8_deprecation_warnings=false
     v8_use_libm_trig_functions=false
-    v8_enable_i18n_support=false
+    v8_enable_i18n_support=true
+    icu_use_data_file=false
     v8_enable_builtins_optimization=false
     cppgc_enable_slim_write_barrier=false
     v8_enable_pointer_compression_8gb=false
@@ -298,8 +201,9 @@ for arch in "${ARCHES[@]}"; do
     cd "${SOURCE_ROOT}"
     "${GN}" gen "${out_dir}" --root-target=//v8:v8_shared \
       --args="${gn_args}"
-    "${NINJA}" -C "${out_dir}" -j "${BUILD_JOBS}" v8:v8_shared
   )
+  if [ "${M144_GN_ONLY:-0}" = 1 ]; then continue; fi
+  "${NINJA}" -C "${SOURCE_ROOT}/${out_dir}" -j "${BUILD_JOBS}" v8:v8_shared
 
   unstripped="${SOURCE_ROOT}/${out_dir}/lib.unstripped/libv8_shared.so"
   if [ ! -s "${unstripped}" ]; then
@@ -310,14 +214,20 @@ for arch in "${ARCHES[@]}"; do
     exit 1
   }
   arch_root="${ARTIFACT_ROOT}/v8/${arch}"
-  rm -rf "${arch_root}"
+  [ ! -e "${arch_root}" ] || { echo "refusing to replace existing V8 output: ${arch_root}" >&2; exit 1; }
   mkdir -p "${arch_root}/lib.unstripped_v8/lib.unstripped"
+  cp "${SOURCE_ROOT}/${out_dir}/args.gn" "${arch_root}/args.gn"
   install -m 0644 "${unstripped}" \
     "${arch_root}/lib.unstripped_v8/lib.unstripped/libv8_shared.so"
   "${STRIP}" --strip-unneeded "${unstripped}" -o "${arch_root}/libv8_shared.so"
 done
 
-rm -rf "${ARTIFACT_ROOT}/v8-include/v8-include"
+if [ "${M144_GN_ONLY:-0}" = 1 ]; then
+  echo 'Prepared explicit pinned dependency GN graphs, not V8 artifacts'
+  return 0
+fi
+
+[ ! -e "${ARTIFACT_ROOT}/v8-include/v8-include" ] || { echo "refusing to replace existing public V8 headers" >&2; exit 1; }
 mkdir -p "${ARTIFACT_ROOT}/v8-include/v8-include"
 cp -a "${SOURCE_ROOT}/v8/include/." \
   "${ARTIFACT_ROOT}/v8-include/v8-include/"
@@ -373,10 +283,16 @@ manifest = {
     "webview_revision": revision(source_root / "arkweb/deps_code/webview"),
     "source_commit_date": commit_date(source_root),
     "ohos_sdk_api": 26,
+    "runtime_configuration": {"v8_enable_i18n_support": True, "icu_use_data_file": False,
+                              "v8_use_external_startup_data": False},
+    "build_args_sha256": {str(path.relative_to(artifact_root)): hashlib.sha256(path.read_bytes()).hexdigest()
+                          for path in sorted((artifact_root / "v8").glob("*/args.gn"))},
     "libcxx_abi_namespace": "__h",
     "libcxx_abi_version": 1,
     "build_target": "v8:v8_shared",
     "source_patches": sorted(path.name for path in patch_root.glob("*.patch")),
+    "source_patch_sha256": {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+                            for path in sorted(patch_root.glob("*.patch"))},
     "headers_sha256": header_digest.hexdigest(),
     "artifacts": records,
 }
@@ -389,3 +305,6 @@ VALIDATE=(--artifact-root "${ARTIFACT_ROOT}")
 for arch in "${ARCHES[@]}"; do VALIDATE+=(--arch "${arch}"); done
 python3 /work/patches/common/arkcompiler/jsvm/validate_artifacts.py "${VALIDATE[@]}"
 echo "ArkWeb M144 V8 artifacts are ready: ${ARTIFACT_ROOT}"
+
+}
+main "$@"

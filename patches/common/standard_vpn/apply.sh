@@ -60,6 +60,7 @@ COMPONENTS=(
   vendor_product
   vpn_dialog
   qemu_mesa
+  graphic_2d_egl
   validate
 )
 for component in "${COMPONENTS[@]}"; do

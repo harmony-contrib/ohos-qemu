@@ -165,16 +165,29 @@ commands are not retained as compatibility wrappers:
 ```bash
 bash patches/phone/apply.sh \
   --source-root /path/to/openharmony \
-  --artifact-root /path/to/jsvm-m144 \
+  --v8-artifact-root /path/to/jsvm-m144 \
+  --core-artifact-root /path/to/source-arkweb-core \
+  --vulkan-artifact-root /path/to/swiftshader-m144 \
+  --avc-artifact-root /path/to/avc-m144 \
   --lfs-asset-root /path/to/openharmony-7.0-lfs \
   --product arm64_virt
 
 bash patches/2in1/apply.sh \
   --source-root /path/to/openharmony \
-  --artifact-root /path/to/jsvm-m144 \
+  --v8-artifact-root /path/to/jsvm-m144 \
+  --core-artifact-root /path/to/source-arkweb-core \
+  --vulkan-artifact-root /path/to/swiftshader-m144 \
+  --avc-artifact-root /path/to/avc-m144 \
   --lfs-asset-root /path/to/openharmony-7.0-lfs \
   --product arm64_virt
 ```
+
+Run these source-only entries inside the prepared local Ubuntu 22.04 Docker
+environment. Both invoke the exact ordered `apply_qemu_capability_patch_plan`
+used by the full builder, including graphics, providers, audio, camera,
+kernel and the profile-specific Serial integration. They do not sync, build,
+package or assert runtime success. All four dependency roots are required;
+the old ambiguous `--artifact-root` option is not retained.
 
 Every leaf component has its own `apply.sh`, and each stable source change is
 an independently reviewable numbered patch. The aggregate entries apply, in
@@ -192,7 +205,7 @@ dependency order:
 - JSVM linked to the pinned ArkWeb/Chromium M144 `v8_shared` artifact;
 - the armv7a product components when `armv7a_virt` is selected.
 
-Build the M144 engine artifacts for all supported guest architectures first:
+For standalone V8 artifacts (not the complete ArkWeb core HAP):
 
 ```bash
 scripts/build_m144_v8.sh arm arm64 x86_64
@@ -300,53 +313,34 @@ changes PID or emits a new fault log.
 ## Phone and 2in1 deviceType package matrix
 
 The matrix entry point builds both full source profiles for all three supported
-standard QEMU architectures and emits exactly six suffixed packages. The
-source baseline is the `OpenHarmony-7.0-Release` manifest pinned at
-`f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549`; `master` is not used:
+standard QEMU architectures and emits all six suffixed packages (`phone,2in1` ×
+`arm64_virt,x86_64_virt,armv7a_virt`). The source baseline is the
+`OpenHarmony-7.0-Release` manifest pinned at
+`f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549` paired with the pinned Chromium/ArkWeb
+M144 source lock ([`scripts/m144_release_source_lock.json`](scripts/m144_release_source_lock.json)):
 
 ```bash
-PACKAGE_ROOT=/Volumes/PSSD/qemu/packages/device-matrix \
-BUILD_JOBS=12 KERNEL_BUILD_JOBS=6 \
-scripts/run_device_type_matrix_build_docker.sh
+export CACHE_ROOT=/Volumes/PSSD/qemu
+export PACKAGE_ROOT="${CACHE_ROOT}/packages/device-matrix"
+
+DOCKER_BUILD_CPUS=10 \
+DOCKER_BUILD_MEMORY=20g \
+DOCKER_BUILD_MEMORY_SWAP=24g \
+BUILD_JOBS=8 \
+KERNEL_BUILD_JOBS=8 \
+CCACHE_MAXSIZE=80G \
+bash scripts/run_device_type_matrix_build_docker.sh
 ```
 
-The matrix is `phone,2in1` × `armv7a_virt,arm64_virt,x86_64_virt`. It is
-restartable (`MATRIX_SKIP_EXISTING=1` by default), strictly verifies every
-package, and writes `SHA256SUMS` plus `matrix-manifest.json`. Before traversing
-the six builds it initializes the pinned source, applies the complete patch set
-for all selected products, validates the prepared product configurations, and
-records a resolved revision manifest. It uses one native Linux source/out
-volume and defaults to pruning `out/<product>` immediately
-after its package is archived, while retaining ccache and kernel objects. The
-matrix caps ccache at 4 GiB by default so image assembly retains disk headroom;
-set `CCACHE_MAXSIZE` explicitly on hosts with more space. This
-keeps the six-package build usable on hosts that cannot hold six complete Ninja
-trees at once. `PACKAGE_ROOT` may be placed outside `CACHE_ROOT`; the Docker
-runner bind-mounts it separately, which is useful for temporary package staging
-when the build cache disk is nearly full. Set
-`PRUNE_PRODUCT_OUT_AFTER_PACKAGE=0` only when enough Docker disk space is
-available. When switching between phone and 2in1 profiles, the builder writes
-the profile stamp atomically and retries while Docker-backed storage makes
-newly reclaimed blocks visible. The retry window can be adjusted with
-`PROFILE_STAMP_WRITE_RETRIES` and `PROFILE_STAMP_WRITE_RETRY_DELAY`.
+For detailed architecture, source baseline locks, from-zero build instructions
+on a new machine, and subsystem adaptation references, see:
 
-Complete phone packages inherit a current-tree-compatible profile derived from
-`productdefine/common/inherit/phone.json`; complete 2in1 packages use the same
-strategy with `2in1.json`. Both retain the QEMU `rich.json` base and board
-display adaptations, and both carry auditable resolved-part evidence.
+- [**Adaptation Documentation Index**](docs/README.md)
+- [**Architecture and Source Baseline**](docs/architecture-and-baseline.md)
+- [**From-Zero Build and Packaging Guide**](docs/build-and-packaging-guide.md)
+- [**Subsystem Adaptations and Technical Reference**](docs/subsystem-adaptations.md)
 
 ## 2in1 deviceType packages
-
-Multi-package changes must pass runtime validation on the first newly packaged
-artifact before the remaining packages are built; see [AGENTS.md](AGENTS.md).
-The shared system patches fix Native child-process argument queries and the
-150 KiB parameter boundary. The [direct C API regression](ci/native-child-process/README.md)
-provides the corresponding package validation.
-The [six-package release record](ci/native-child-process/RELEASE-20260917.md)
-lists archive hashes, runtime evidence, and ARMv7a validation limits.
-The [enabled six-package record](ci/native-child-process/RELEASE-20260917-enabled.md)
-tracks archives with Native child processes available at first boot; all six
-passed the direct C API regression.
 
 Complete **deviceType=2in1** QEMU packages are source-built. The QEMU product
 keeps its existing `rich.json` base (applications, SDK, code signing, and VPN)
@@ -356,139 +350,20 @@ selection, while QEMU-specific board/display requirements remain enabled.
 The 2in1 profile enables SceneBoard and the PC window layout, installs
 `/etc/sceneboard.config` as `ENABLED`, and sets
 `const.window.multiWindowUIType=FreeFormMultiWindow` plus
-`persist.sceneboard.ispcmode=true`. It stages four signed SceneBoard HAPs from
-`SCENEBOARD_RUNTIME_ASSET_ROOT`; see
-[the asset checksums and provisioning requirements](patches/2in1/sceneboard_runtime/README.md).
-The SceneBoard HAPs are checked for privileged-extension authorization,
-signature validity, ABI coverage, and exact packaged hashes. These additions
-apply only to 2in1 builds; existing phone packages do not require rebuilding.
-The 7.0 AbilityManager removes its first-boot UI-ability interceptor only after
-it has received both `usual.event.USER_UNLOCKED` and
-`usual.event.SCREEN_UNLOCKED` for the same user. The upstream SceneBoard
-prebuilt publishes the older `common.event.UNLOCK_SCREEN`; the 2in1 runtime
-asset corrects that event name. For headless QEMU boots, a 2in1-only init
-configuration publishes both required events after
-`bootevent.boot.completed=true`, when AbilityManager has subscribed and user
-100 is ready. `USER_UNLOCKED` carries 100 in the common-event code, while
-`SCREEN_UNLOCKED` carries it as the Want `userId` parameter. The CEM change
-adds that Want parameter and uses the current-user route so the native process
-does not hit CES's system-HAP-only special-user check. Phone images do not
-install these services and the existing phone archives remain unchanged.
-Applications calling the snapshot and main-window enumeration APIs must request
-and receive `ohos.permission.CUSTOM_SCREEN_CAPTURE`. Privacy-mode and cursor-lock
-APIs also require `ohos.permission.PRIVACY_WINDOW` and
-`ohos.permission.LOCK_WINDOW_CURSOR`, respectively.
-The 2in1 source component also adds `/system/app/SceneBoard` to BMS's
-`install_list.json` and adds the signing certificate and privileged-extension
-authorization to `install_list_capability.json`. Without these first-boot
-entries the HAP files remain on disk but SceneBoard is not installed, and the
-first user cannot finish starting. The package verifier checks both entries.
+`persist.sceneboard.ispcmode=true`. It automatically reconstructs and stages the
+five signed SceneBoard runtime HAPs (`SceneBoard.hap`, `NotificationManagement.hap`,
+`ThemeService.hap`, `ThemeComponent.hap`, `SecurityPrivacyCenter.hap`) via
+[`scripts/prepare_sceneboard_runtime_assets.py`](scripts/prepare_sceneboard_runtime_assets.py)
+using `${OHOS_LFS_ASSET_ROOT}` and [`patches/assets/sceneboard-runtime-delta.tar.gz`](patches/assets/sceneboard-runtime-delta.tar.gz).
+
+To build a single package (`phone` or `2in1`) directly in Docker:
 
 ```bash
-# macOS/Apple Silicon host with Docker or OrbStack. OpenHarmony's host
-# prebuilts require the default linux/amd64 container.
+DEVICE_TYPE=2in1 \
 PRODUCTS=arm64_virt \
 PACKAGE_ROOT=/Volumes/PSSD/qemu/packages/2in1-full \
-scripts/run_2in1_full_build_docker.sh
+bash scripts/run_2in1_full_build_docker.sh
 ```
-
-The runner mounts the checkout and `out/` on the case-sensitive Docker volumes
-`ohos-qemu-7_0-release-source` and `ohos-qemu-7_0-release-out`. By default the
-source volume is initialized directly from the pinned 7.0 Release manifest;
-the host checkout is not copied into it. The output volume is reused
-incrementally. This is required on macOS: Taihe generates case-distinct
-paths such as `SourceType` and `sourceType`, and a full compile can exhaust
-VirtioFS file handles while reading the checkout. Ccache and its temporary
-files also live in the output volume. The QEMU runner builds the pinned SDK by
-default because ArkWeb M144 consumes its generated NDK libraries. A component
-patch makes musl's Cortex-M porting script POSIX-safe so Ubuntu's dash shell
-reliably installs the intended empty `crtplus.c` and the SDK no longer fails on
-`__aeabi_unwind_cpp_pr0`. Set `NO_PREBUILT_SDK=1` only for products that do not
-consume the generated SDK.
-
-Although the immutable upstream manifest declares GitCode project remotes,
-the runner rewrites those URLs to the official `github.com/openharmony`
-mirrors by default. Because the GitHub organization is a read-only mirror and
-does not expose the 7.0 branch for every project, the checked-in fallback map
-pins affected repositories to their immutable `OpenHarmony-v7.0-Release`
-commit. All 35 fallback repositories are fetched once on the host as shallow
-bare caches in `$CACHE_ROOT/git-mirrors/openharmony-7.0-release`; 25 come from
-GitHub and only the 10 repositories without a usable GitHub release tag come
-directly from GitCode. Docker reads their exact peeled commits through a local
-remote, avoiding both moving branches and annotated-tag checkout ambiguity.
-Some 7.0 GitHub mirrors also expose former Git LFS files as explanatory text
-stubs that `git lfs pull` cannot discover. A second pinned map caches the 77
-affected objects (about 724 MiB) concurrently on the host, verifies their
-OID/size, and restores them before source-profile or architecture traversal.
-This includes release HAPs, ArkWebCore, Arkoala packages, ICU, and phone-number
-data; archive formats are checked before the build starts. The cache defaults
-to `$CACHE_ROOT/artifacts/openharmony-7.0-lfs`, with 10 download jobs controlled
-by `LFS_JOBS`.
-The QEMU GPU source build additionally needs historical Mesa 21.3.3 commit
-`995d2506d18924b48db0cf40e6ad7de04fc4e558`, which is no longer present in a
-fresh 7.0 GitHub-mirror checkout. The host runner fetches that exact commit
-from GitHub into `$CACHE_ROOT/git-mirrors/qemu-mesa`, validates its `VERSION`,
-and the Mesa component imports it before build-graph traversal. Ninja therefore
-never performs an unpinned network fetch.
-Set `OHOS_PROJECT_MIRROR` to a path-compatible
-mirror, or to an empty value to disable rewriting and the fallback manifest.
-Source synchronization defaults to 16 network jobs and 4 checkout jobs; tune
-them with `REPO_JOBS` and `REPO_CHECKOUT_JOBS`. The host fallback cache uses 10
-parallel jobs by default (`FALLBACK_JOBS`).
-The documentation-only `docs` project is explicitly omitted from this build
-manifest because it is not an input to any of the six QEMU images and its
-multi-gigabyte Git history is not needed for product compilation.
-GitHub domains are also added to the build container's `NO_PROXY` list by
-default so multi-gigabyte Git packs do not traverse a local HTTP proxy; adjust
-that list with `OHOS_GITHUB_NO_PROXY` when required by the host network.
-
-Set `DOCKER_SOURCE_SEED=1 DOCKER_SOURCE_REFRESH=1` only when intentionally
-seeding from a compatible host OpenHarmony checkout. A reused source volume is
-rejected when its manifest commit differs from the pinned revision.
-
-Each complete package contains `device-profile.json`, including the upstream
-2in1 profile hash, effective inherit chain, resolved part list, compatibility
-adaptations, and validated 2in1/QEMU feature flags. Packaging also requires the
-DLP manager/service, UI appearance service, Wukong, HNP, Launcher, and SystemUI
-runtime artifacts. The source component also installs
-`const.bms.supportAppTypes=2in1,phone,default,tablet` in the QEMU product parameters:
-the current signed Launcher/SystemUI HAPs advertise `default/tablet`, and BMS
-needs this compatibility list to register them and complete first-user account
-activation when the runtime device type is `2in1`.
-
-Offline verification:
-
-```bash
-scripts/verify_device_type_package.sh \
-  --package /path/to/openharmony-qemu-arm64-arm64_virt-2in1 \
-  --expect-device-type 2in1 \
-  --require-full-2in1 \
-  --require-scene-window
-
-scripts/verify_device_type_package.sh \
-  --package /path/to/openharmony-qemu-arm64-arm64_virt-phone \
-  --expect-device-type phone \
-  --require-full-phone
-```
-
-For a freshly archived 2in1 package, the runtime check boots a private QEMU
-guest, runs the PR #156 WindowManager tests, and checks all 21 Native child
-regression cases. Set `QEMU_SMOKE_ACCEL=hvf` for arm64 on Apple Silicon; use
-`tcg` for x86_64 and armv7a on that host.
-
-```bash
-BINDINGS_EXAMPLES=/path/to/ohos-native-bindings/examples-ui \
-QEMU_SMOKE_ACCEL=hvf \
-ci/window-manager/validate-package.sh arm64 \
-  /path/to/openharmony-qemu-arm64-arm64_virt-2in1.tar.gz \
-  /path/to/validation/arm64-2in1
-```
-
-`scripts/repackage_device_type.sh` remains available for compatibility testing,
-but it only injects system parameters into an existing image and marks the
-result `device_type_profile=param_only`. Such a package is not considered a
-complete 2in1 build and fails `--require-full-2in1`. CI coverage for both paths
-is in `ci/device-type/test.sh`.
 
 ## License
 

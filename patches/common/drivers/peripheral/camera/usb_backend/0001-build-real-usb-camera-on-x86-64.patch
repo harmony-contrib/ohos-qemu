@@ -1,0 +1,13 @@
+diff --git a/drivers/peripheral/camera/BUILD.gn b/drivers/peripheral/camera/BUILD.gn
+--- a/drivers/peripheral/camera/BUILD.gn
++++ b/drivers/peripheral/camera/BUILD.gn
+@@ -32,3 +32,3 @@
+   group("camera_hal") {
+-    if (target_cpu == "x86_64" && !is_emulator) {
++    if (target_cpu == "x86_64" && !is_emulator && !drivers_peripheral_camera_feature_usb) {
+       deps = []
+@@ -57,3 +57,3 @@
+   group("camera_hal_unittest") {
+-    if (target_cpu == "x86_64" && !is_emulator) {
++    if (target_cpu == "x86_64" && !is_emulator && !drivers_peripheral_camera_feature_usb) {
+       deps = []

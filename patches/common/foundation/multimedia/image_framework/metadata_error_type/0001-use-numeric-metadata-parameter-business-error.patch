@@ -1,0 +1,12 @@
+diff --git a/foundation/multimedia/image_framework/frameworks/kits/js/common/image_source_napi.cpp b/foundation/multimedia/image_framework/frameworks/kits/js/common/image_source_napi.cpp
+--- a/foundation/multimedia/image_framework/frameworks/kits/js/common/image_source_napi.cpp
++++ b/foundation/multimedia/image_framework/frameworks/kits/js/common/image_source_napi.cpp
+@@ -4253,6 +4253,7 @@ napi_value ImageSourceNapi::ReadImageMetadataByType(napi_env env, napi_callback_info info)
+     napi_get_undefined(env, &result);
+     napi_status status;
+     std::unique_ptr<ImageSourceAsyncContext> asyncContext = UnwrapContextForReadImageMetadataByType(env, info);
+     if (asyncContext == nullptr) {
+-        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_SOURCE_INVALID_PARAMETER, "async context unwrap failed");
++        return ImageNapiUtils::ThrowExceptionError(env, IMAGE_SOURCE_INVALID_PARAMETER,
++            "async context unwrap failed", true);
+     }

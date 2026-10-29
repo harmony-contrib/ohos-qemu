@@ -1,0 +1,319 @@
+--- a/frameworks/js/audio_haptic/src/audio_haptic_common_napi.cpp
++++ b/frameworks/js/audio_haptic/src/audio_haptic_common_napi.cpp
+@@ -54,9 +54,10 @@
+     napi_value error = nullptr;
+     napi_value message = nullptr;
+     napi_value code = nullptr;
+-    napi_create_string_utf8(env, (std::to_string(errCode)).c_str(), NAPI_AUTO_LENGTH, &code);
++    napi_create_int32(env, errCode, &code);
+     napi_create_string_utf8(env, errMessage.c_str(), NAPI_AUTO_LENGTH, &message);
+-    napi_create_error(env, code, message, &error);
++    napi_create_error(env, nullptr, message, &error);
++    napi_set_named_property(env, error, "code", code);
+     napi_reject_deferred(env, deferred, error);
+ }
+ 
+@@ -126,6 +127,13 @@
+     return true;
+ }
+ 
++bool AudioHapticCommonNapi::VerifyVibratePermission()
++{
++    const auto token = static_cast<Security::AccessToken::AccessTokenID>(IPCSkeleton::GetSelfTokenID());
++    return token != 0 && Security::AccessToken::AccessTokenKit::VerifyAccessToken(token,
++        "ohos.permission.VIBRATE") == Security::AccessToken::PERMISSION_GRANTED;
++}
++
+ bool AudioHapticCommonNapi::VerifySelfSystemPermission()
+ {
+     Security::AccessToken::FullTokenID selfTokenID = IPCSkeleton::GetSelfTokenID();
+@@ -136,6 +144,9 @@
+ {
+     std::string errMessage;
+     switch (code) {
++        case NAPI_ERR_VIBRATE_PERMISSION_DENIED:
++            errMessage = "Permission denied: ohos.permission.VIBRATE";
++            break;
+         case NAPI_ERR_INPUT_INVALID:
+             errMessage = NAPI_ERR_INPUT_INVALID_INFO;
+             break;
+--- a/frameworks/js/audio_haptic/include/audio_haptic_common_napi.h
++++ b/frameworks/js/audio_haptic/include/audio_haptic_common_napi.h
+@@ -23,6 +23,7 @@
+ 
+ namespace OHOS {
+ namespace Media {
++const int32_t  NAPI_ERR_VIBRATE_PERMISSION_DENIED = 201;
+ const int32_t  NAPI_ERR_INPUT_INVALID = 401;
+ const int32_t  NAPI_ERR_OPERATE_NOT_ALLOWED = 5400102;
+ const int32_t  NAPI_ERR_IO_ERROR = 5400103;
+@@ -64,6 +65,7 @@
+     static bool InitPromiseFunc(napi_env env, napi_callback_info info,
+         AsyncContext* asyncContext, napi_value* promise, size_t paramLength);
+     static bool VerifySelfSystemPermission();
++    static bool VerifyVibratePermission();
+     static bool InitNormalFunc(napi_env env, napi_callback_info info,
+         void **native, napi_value *argv, size_t paramLength);
+ };
+--- a/frameworks/js/audio_haptic/src/audio_haptic_player/audio_haptic_player_napi.cpp
++++ b/frameworks/js/audio_haptic/src/audio_haptic_player/audio_haptic_player_napi.cpp
+@@ -14,6 +14,7 @@
+  */
+ 
+ #include "audio_haptic_player_napi.h"
++#include "audio_haptic_player_impl.h"
+ 
+ #include "audio_haptic_log.h"
+ 
+@@ -95,6 +96,13 @@
+                 obj->callbackNapi_ = std::make_shared<AudioHapticPlayerCallbackNapi>(env);
+                 CHECK_AND_RETURN_RET_LOG(obj->callbackNapi_ != nullptr, result, "No memory");
+                 int32_t ret = obj->audioHapticPlayer_->SetAudioHapticPlayerCallback(obj->callbackNapi_);
++                // The actual AudioHapticPlayerFactory constructs AudioHapticPlayerImpl
++                // for both latency branches. No RTTI or public-vtable extension.
++                std::static_pointer_cast<AudioHapticPlayerImpl>(obj->audioHapticPlayer_)->
++                    SetPublicationCallback(obj->callbackNapi_);
++                MEDIA_LOGI("AHPublication stage=napi-bind wrapper=%{public}p player=%{public}p callback=%{public}p",
++                    obj.get(), std::static_pointer_cast<AudioHapticPlayerImpl>(obj->audioHapticPlayer_).get(),
++                    obj->callbackNapi_.get());
+                 MEDIA_LOGI("Constructor: SetAudioHapticPlayerCallback %{public}s",
+                     ret == 0 ? "succeess" : "failed");
+             }
+@@ -388,9 +396,20 @@
+     if (!context->status) {
+         napi_get_undefined(env, &result[PARAM0]);
+     } else {
++        // Preserve the actual native failure as the standard public numeric
++        // BusinessError, including invalid-operation after Release.
++        int32_t errorCode = NAPI_ERR_OPERATE_NOT_ALLOWED;
++        if (context->status == MSERR_OPEN_FILE_FAILED) { errorCode = NAPI_ERR_IO_ERROR; }
++        else if (context->status == MSERR_SERVICE_DIED) { errorCode = NAPI_ERR_SERVICE_DIED; }
++        else if (context->status == MSERR_UNSUPPORT_FILE) { errorCode = NAPI_ERR_UNSUPPORTED_FORMAT; }
+         napi_value message = nullptr;
+-        napi_create_string_utf8(env, "Error: Operation is not supported or failed", NAPI_AUTO_LENGTH, &message);
++        napi_value code = nullptr;
++        int32_t messageCode = errorCode;
++        const std::string errorMessage = AudioHapticCommonNapi::GetMessageByCode(messageCode);
++        napi_create_string_utf8(env, errorMessage.c_str(), NAPI_AUTO_LENGTH, &message);
+         napi_create_error(env, nullptr, message, &result[PARAM0]);
++        napi_create_int32(env, errorCode, &code);
++        napi_set_named_property(env, result[PARAM0], "code", code);
+     }
+ 
+     if (context->deferred) {
+--- a/frameworks/js/audio_haptic/src/audio_haptic_manager_napi.cpp
++++ b/frameworks/js/audio_haptic/src/audio_haptic_manager_napi.cpp
+@@ -695,7 +695,15 @@
+             return result;
+         }
+     }
++    // The public SDK contract requires VIBRATE at createPlayer, including a
++    // muted player. Query the real current process token before native creation
++    // or preload; never rely on a later asynchronous vibrator-service failure.
+     napi_create_promise(env, &asyncContext->deferred, &result);
++    if (!AudioHapticCommonNapi::VerifyVibratePermission()) {
++        AudioHapticCommonNapi::PromiseReject(env, asyncContext->deferred, NAPI_ERR_VIBRATE_PERMISSION_DENIED);
++        return result;
++    }
++
+ 
+     napi_create_string_utf8(env, "CreatePlayer", NAPI_AUTO_LENGTH, &resource);
+     status = napi_create_async_work(env, nullptr, resource, AsyncCreatePlayer,
+@@ -752,6 +760,10 @@
+             napi_create_string_utf8(env, "CreatePlayer Error: Operation is not supported or failed",
+                 NAPI_AUTO_LENGTH, &message);
+             napi_create_error(env, nullptr, message, &result[PARAM0]);
++            napi_value code = nullptr;
++            napi_create_int32(env, NAPI_ERR_OPERATE_NOT_ALLOWED, &code);
++            napi_set_named_property(env, result[PARAM0], "code", code);
++            context->status = ERROR;
+             napi_get_undefined(env, &result[PARAM1]);
+         } else {
+             napi_get_undefined(env, &result[PARAM0]);
+--- a/frameworks/js/audio_haptic/src/audio_haptic_player/audio_haptic_player_callback_napi.cpp
++++ b/frameworks/js/audio_haptic/src/audio_haptic_player/audio_haptic_player_callback_napi.cpp
+@@ -29,6 +29,20 @@
+ 
+ namespace OHOS {
+ namespace Media {
++// Diagnostic addresses originate at the actual callback and captured Session.
++// Pending events strongly retain Session; historical address reuse is not a JS epoch.
++static void TracePublication(const char *stage, const char *eventName, void *instance,
++    const std::shared_ptr<AudioHapticPlaybackSession> &session, bool loop, bool accepted)
++{
++    MEDIA_LOGI("AHPublication stage=%{public}s event=%{public}s scope=%{public}s callback=%{public}p "
++        "session=%{public}p backend=%{public}p end_observed=%{public}d confirmed=%{public}d "
++        "loop=%{public}d accepted=%{public}d", stage, eventName,
++        session ? "normal" : "legacy-fast-unidentified", instance, session.get(),
++        session ? reinterpret_cast<void *>(session->backendDiagnosticIdentity) : nullptr,
++        session ? static_cast<int32_t>(session->end.load()) : -1,
++        session ? static_cast<int32_t>(session->playConfirmed.load()) : 0, loop, accepted);
++}
++
+ AudioHapticPlayerCallbackNapi::AudioHapticPlayerCallbackNapi(napi_env env)
+     : env_(env)
+ {
+@@ -97,6 +111,19 @@
+ 
+ void AudioHapticPlayerCallbackNapi::OnInterrupt(const AudioStandard::InterruptEvent &interruptEvent)
+ {
++    QueueInterrupt(nullptr, interruptEvent); // legacy/fast public delivery
++}
++
++void AudioHapticPlayerCallbackNapi::OnSessionInterrupt(const std::shared_ptr<AudioHapticPlaybackSession> &session,
++    const AudioStandard::InterruptEvent &interruptEvent)
++{
++    CHECK_AND_RETURN_LOG(session != nullptr, "normal interrupt requires its source Session");
++    QueueInterrupt(session, interruptEvent);
++}
++
++void AudioHapticPlayerCallbackNapi::QueueInterrupt(const std::shared_ptr<AudioHapticPlaybackSession> &session,
++    const AudioStandard::InterruptEvent &interruptEvent)
++{
+     std::lock_guard<std::mutex> lock(cbMutex_);
+     MEDIA_LOGI("OnInterrupt: hintType: %{public}d for js", interruptEvent.hintType);
+     CHECK_AND_RETURN_LOG(audioInterruptCb_ != nullptr, "Cannot find the reference of interrupt callback");
+@@ -106,6 +133,9 @@
+     cb->callback = audioInterruptCb_;
+     cb->callbackName = AUDIO_INTERRUPT_CALLBACK_NAME;
+     cb->interruptEvent = interruptEvent;
++    cb->playbackSession = session;
++    cb->callbackIdentity = this;
++    TracePublication("queue-attempt", "interrupt", this, session, false, true);
+     return OnInterruptJsCallback(cb);
+ }
+ 
+@@ -116,6 +146,11 @@
+         return;
+     }
+     AudioHapticPlayerJsCallback *event = jsCb.release();
++    // The JS thread may finish/delete event before napi_send_event returns.
++    // Keep diagnostic snapshots independently of the queued context lifetime.
++    const auto sourceSession = event->playbackSession;
++    void *sourceCallbackIdentity = event->callbackIdentity;
++    const bool sourceLoop = event->loopEOS;
+     auto task = [event]() {
+         std::shared_ptr<AudioHapticPlayerJsCallback> context(
+             static_cast<AudioHapticPlayerJsCallback*>(event),
+@@ -123,6 +158,10 @@
+                 delete ptr;
+         });
+         CHECK_AND_RETURN_LOG(event != nullptr, "event is nullptr");
++        const bool accepted = IsAudioHapticPublicationLive(event->playbackSession, false, false);
++        TracePublication(accepted ? "task-admitted" : "task-dropped", "interrupt", event->callbackIdentity,
++            event->playbackSession, false, accepted);
++        CHECK_AND_RETURN_LOG(accepted, "discard retired normal interrupt before JS publication");
+         std::string request = event->callbackName;
+         napi_env env = event->callback->env_;
+         napi_ref callback = event->callback->cb_;
+@@ -152,6 +191,8 @@
+         napi_close_handle_scope(env, scope);
+     };
+     auto ret = napi_send_event(env_, task, napi_eprio_high, "audioInterrupt");
++    TracePublication(ret == napi_status::napi_ok ? "enqueue" : "enqueue-failed", "interrupt",
++        sourceCallbackIdentity, sourceSession, sourceLoop, ret == napi_status::napi_ok);
+     if (ret != napi_status::napi_ok) {
+         MEDIA_LOGE("Failed to SendEvent, ret = %{public}d", ret);
+         delete event;
+@@ -159,6 +200,19 @@
+ }
+ 
+ void AudioHapticPlayerCallbackNapi::OnEndOfStream(void)
++{
++    QueueEndOfStream(nullptr, false); // legacy/fast public delivery
++}
++
++void AudioHapticPlayerCallbackNapi::OnSessionEndOfStream(const std::shared_ptr<AudioHapticPlaybackSession> &session,
++    bool isLoop)
++{
++    CHECK_AND_RETURN_LOG(session != nullptr, "normal EOS requires its source Session");
++    QueueEndOfStream(session, isLoop);
++}
++
++void AudioHapticPlayerCallbackNapi::QueueEndOfStream(const std::shared_ptr<AudioHapticPlaybackSession> &session,
++    bool isLoop)
+ {
+     std::lock_guard<std::mutex> lock(cbMutex_);
+     MEDIA_LOGI("OnEndOfStream in succeed");
+@@ -168,6 +222,10 @@
+     CHECK_AND_RETURN_LOG(cb != nullptr, "No memory");
+     cb->callback = endOfStreamCb_;
+     cb->callbackName = END_OF_STREAM_CALLBACK_NAME;
++    cb->playbackSession = session;
++    cb->loopEOS = isLoop;
++    cb->callbackIdentity = this;
++    TracePublication("queue-attempt", "eos", this, session, isLoop, true);
+     return OnEndOfStreamJsCallback(cb);
+ }
+ 
+@@ -183,6 +241,11 @@
+         return;
+     }
+     AudioHapticPlayerJsCallback *event = jsCb.release();
++    // The JS thread may finish/delete event before napi_send_event returns.
++    // Keep diagnostic snapshots independently of the queued context lifetime.
++    const auto sourceSession = event->playbackSession;
++    void *sourceCallbackIdentity = event->callbackIdentity;
++    const bool sourceLoop = event->loopEOS;
+     auto task = [event]() {
+         std::shared_ptr<AudioHapticPlayerJsCallback> context(
+             static_cast<AudioHapticPlayerJsCallback*>(event),
+@@ -190,6 +253,10 @@
+                 delete ptr;
+         });
+         CHECK_AND_RETURN_LOG(event != nullptr, "event is nullptr");
++        const bool accepted = IsAudioHapticPublicationLive(event->playbackSession, true, event->loopEOS);
++        TracePublication(accepted ? "task-admitted" : "task-dropped", "eos", event->callbackIdentity,
++            event->playbackSession, event->loopEOS, accepted);
++        CHECK_AND_RETURN_LOG(accepted, "discard retired normal EOS before JS publication");
+         std::string request = event->callbackName;
+         napi_env env = event->callback->env_;
+         napi_ref callback = event->callback->cb_;
+@@ -213,6 +280,8 @@
+         napi_close_handle_scope(env, scope);
+     };
+     auto ret = napi_send_event(env_, task, napi_eprio_high, "endOfStream");
++    TracePublication(ret == napi_status::napi_ok ? "enqueue" : "enqueue-failed", "eos",
++        sourceCallbackIdentity, sourceSession, sourceLoop, ret == napi_status::napi_ok);
+     if (ret != napi_status::napi_ok) {
+         MEDIA_LOGE("Failed to SendEvent, ret = %{public}d", ret);
+         delete event;
+--- a/frameworks/js/audio_haptic/include/audio_haptic_player/audio_haptic_player_callback_napi.h
++++ b/frameworks/js/audio_haptic/include/audio_haptic_player/audio_haptic_player_callback_napi.h
+@@ -22,11 +22,12 @@
+ 
+ #include "audio_haptic_log.h"
+ #include "audio_haptic_player.h"
++#include "audio_haptic_publication_callback.h"
+ #include "audio_haptic_common_napi.h"
+ 
+ namespace OHOS {
+ namespace Media {
+-class AudioHapticPlayerCallbackNapi : public AudioHapticPlayerCallback {
++class AudioHapticPlayerCallbackNapi : public AudioHapticPlayerCallback, public AudioHapticPublicationCallback {
+ public:
+     explicit AudioHapticPlayerCallbackNapi(napi_env env);
+     ~AudioHapticPlayerCallbackNapi();
+@@ -35,13 +36,22 @@
+     void OnInterrupt(const AudioStandard::InterruptEvent &interruptEvent) override;
+     void OnEndOfStream(void) override;
+     void OnError(int32_t errorCode) override;
++    void OnSessionEndOfStream(const std::shared_ptr<AudioHapticPlaybackSession> &session, bool isLoop) override;
++    void OnSessionInterrupt(const std::shared_ptr<AudioHapticPlaybackSession> &session,
++        const AudioStandard::InterruptEvent &interruptEvent) override;
+ private:
+     struct AudioHapticPlayerJsCallback {
+         std::shared_ptr<AutoRef> callback = nullptr;
+         std::string callbackName = "unknown";
++        std::shared_ptr<AudioHapticPlaybackSession> playbackSession;
++        bool loopEOS = false;
++        void *callbackIdentity = nullptr;
+         AudioStandard::InterruptEvent interruptEvent;
+     };
+ 
++    void QueueInterrupt(const std::shared_ptr<AudioHapticPlaybackSession> &session,
++        const AudioStandard::InterruptEvent &interruptEvent);
++    void QueueEndOfStream(const std::shared_ptr<AudioHapticPlaybackSession> &session, bool isLoop);
+     void OnInterruptJsCallback(std::unique_ptr<AudioHapticPlayerJsCallback> &jsCb);
+     void OnEndOfStreamJsCallback(std::unique_ptr<AudioHapticPlayerJsCallback> &jsCb);
+ 

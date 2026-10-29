@@ -1,0 +1,37 @@
+diff --git a/src/third_party/ohos_nweb_hap/dependencies/rk/signature/UnsgnedReleasedProfileTemplate.json b/src/third_party/ohos_nweb_hap/dependencies/rk/signature/UnsgnedReleasedProfileTemplate.json
+--- a/src/third_party/ohos_nweb_hap/dependencies/rk/signature/UnsgnedReleasedProfileTemplate.json
++++ b/src/third_party/ohos_nweb_hap/dependencies/rk/signature/UnsgnedReleasedProfileTemplate.json
+@@ -5,7 +5,7 @@
+     "uuid": "5027b99e-5f9e-465d-9508-a9e0134ffe18",
+     "validity": {
+         "not-before": 1594865258,
+-        "not-after": 1689473258
++        "not-after": 2208988800
+     },
+     "type": "release",
+     "bundle-info": {
+diff --git a/src/arkweb/build/sign.sh b/src/arkweb/build/sign.sh
+--- a/src/arkweb/build/sign.sh
++++ b/src/arkweb/build/sign.sh
+@@ -15,14 +15,15 @@
+-set -x
++set -euo pipefail
++
++if [ -n "${HW_HARMONY_ENGINE_ROOT:-}" ]; then
++  cd "${HW_HARMONY_ENGINE_ROOT}"
++fi
+ 
+ build_type="$1"
+ root_path="."
+ sdk_path="${root_path}/src/ohos_sdk"
+-sign_tool_path="${sdk_path}/24/toolchains/lib"
++sign_tool_path="${sdk_path}/26/toolchains/lib"
+ nosign_hap_path="${root_path}/src/out/${build_type}/ohos_nweb.hap"
+ sign_hap_path="${root_path}/src/out/${build_type}/NWeb-${build_type}.hap"
+-profile_path="${root_path}/src/third_party/ohos_nweb_hap/signature"
++profile_path="${root_path}/src/third_party/ohos_nweb_hap/dependencies/rk/signature"
+ 
+-if [ -d $HW_HARMONY_ENGINE_ROOT ]; then
+-  cd $HW_HARMONY_ENGINE_ROOT
+-fi
+ java -jar ${sign_tool_path}/hap-sign-tool.jar sign-profile -keyAlias "openharmony application profile release" -signAlg "SHA256withECDSA" -mode "localSign" -profileCertFile "${sign_tool_path}/OpenHarmonyProfileRelease.pem" -inFile "${profile_path}/UnsgnedReleasedProfileTemplate.json" -keystoreFile "${sign_tool_path}/OpenHarmony.p12" -outFile "openharmony_nweb.p7b" -keyPwd "123456" -keystorePwd "123456"

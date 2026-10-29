@@ -1,0 +1,24 @@
+--- a/foundation/distributeddatamgr/pasteboard/interfaces/kits/napi/src/napi_systempasteboard.cpp
++++ b/foundation/distributeddatamgr/pasteboard/interfaces/kits/napi/src/napi_systempasteboard.cpp
+@@ -457,6 +457,9 @@
+         int32_t ret = PasteboardClient::GetInstance()->GetPasteData(*context->pasteData);
+         if (ret == static_cast<int32_t>(PasteboardError::TASK_PROCESSING)) {
+             context->SetErrInfo(ret, "Another getData is being processed");
++        } else if (ret == static_cast<int32_t>(PasteboardError::PERMISSION_VERIFICATION_ERROR)) {
++            context->SetErrInfo(static_cast<int32_t>(JSErrorCode::NO_PERMISSION),
++                "Permission verification failed. The application cannot read the clipboard.");
+         } else {
+             context->status = napi_ok;
+         }
+@@ -1052,6 +1055,11 @@
+     int32_t ret = (value != nullptr) ? *value : static_cast<int32_t>(PasteboardError::TIMEOUT_ERROR);
+     processorEvent->SetEvent("getDataSync", ret, ret == static_cast<int32_t>(PasteboardError::E_OK) ?
+         EventReportResult::EVENT_REPORT_SUCCESS : EventReportResult::EVENT_REPORT_FAIL);
++    if (!CheckExpression(env, ret != static_cast<int32_t>(PasteboardError::PERMISSION_VERIFICATION_ERROR),
++        JSErrorCode::NO_PERMISSION,
++        "Permission verification failed. The application cannot read the clipboard.")) {
++        return nullptr;
++    }
+     return instance;
+ }
+ 

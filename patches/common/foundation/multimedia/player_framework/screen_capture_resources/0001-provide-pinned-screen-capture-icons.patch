@@ -1,0 +1,343 @@
+diff --git a/foundation/multimedia/player_framework/services/etc/image/capsule.svg b/foundation/multimedia/player_framework/services/etc/image/capsule.svg
+new file mode 100644
+index 0000000000000000000000000000000000000000..1e663a05e52da46e2aa636f1e9fc6c3e4379700f
+--- /dev/null
++++ b/foundation/multimedia/player_framework/services/etc/image/capsule.svg
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24" height="24" viewBox="0 0 24 24" version="1.1">
++    <!-- Generator: Sketch 63.1 (92452) - https://sketch.com -->
++    <title>Public/ic_public_video</title>
++    <desc>Created with Sketch.</desc>
++    <g id="_Public/ic_public_video" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
++        <path d="M18.5,16.25 C18.5,18.1829966 16.9329966,19.75 15,19.75 L3.5,19.75 C1.56700338,19.75 0,18.1829966 0,16.25 L0,7.75 C0,5.81700338 1.56700338,4.25 3.5,4.25 L15,4.25 C16.9309935,4.25 18.4967519,5.81375738 18.5,7.74399186 L18.5,16.25 Z M15.0622948,5.75095171 L3.5,5.75 C2.41627143,5.75 1.53386428,6.61195944 1.50095171,7.68770517 L1.5,16.25 C1.5,17.3337286 2.36195944,18.2161357 3.43770517,18.2490483 L15,18.25 C16.0837286,18.25 16.9661357,17.3880406 16.9990483,16.3122948 L17,7.75 C17,6.66627143 16.1380406,5.78386428 15.0622948,5.75095171 Z M21.4365407,6.85498937 C22.2922763,6.40572819 23.3501852,6.7352408 23.7994463,7.59097638 C23.9048305,7.79170811 23.9699543,8.01051217 23.9917885,8.23510122 L24,8.4044357 L24,15.5955643 C24,16.5620626 23.2164983,17.3455643 22.25,17.3455643 C22.0232864,17.3455643 21.799286,17.3015173 21.590286,17.2164526 L21.4365407,17.1450106 L19.5,16.128 L19.5,14.433 L22.1337915,15.8169138 C22.1472334,15.8239708 22.1612425,15.829764 22.1756381,15.8342489 L22.2198037,15.843734 L22.25,15.8455643 C22.3683467,15.8455643 22.4674868,15.7633309 22.4933973,15.652887 L22.5,15.5955643 L22.5,8.4044357 L22.4927317,8.34459161 L22.4927317,8.34459161 L22.4713495,8.28822723 L22.4563079,8.26319502 C22.3974902,8.17705097 22.2915628,8.13746321 22.1921954,8.16114853 L22.1337915,8.18308622 L19.5,9.565 L19.5,7.871 L21.4365407,6.85498937 Z" id="_形状" fill="#000000" fill-rule="nonzero"/>
++    </g>
++</svg>
+\ No newline at end of file
+diff --git a/foundation/multimedia/player_framework/services/etc/image/capsule_stop.svg b/foundation/multimedia/player_framework/services/etc/image/capsule_stop.svg
+new file mode 100644
+index 0000000000000000000000000000000000000000..93cbbbe4ba598f54c4bd2e94fd42f6e8982b4aef
+--- /dev/null
++++ b/foundation/multimedia/player_framework/services/etc/image/capsule_stop.svg
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<svg viewBox="0 0 76 76" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
++    <!-- Generator: Sketch 63.1 (92452) - https://sketch.com -->
++    <title>ic/camera/shutter/take_video_stop</title>
++    <desc>Created with Sketch.</desc>
++    <g id="ic/camera/shutter/take_video_stop" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
++        <rect id="Rectangle-11" fill="#FFFFFF" x="27" y="27" width="22" height="22" rx="2"></rect>
++        <path d="M38,76 C17.0131795,76 0,58.9868205 0,38 C0,17.0131795 17.0131795,0 38,0 C58.9868205,0 76,17.0131795 76,38 C76,58.9868205 58.9868205,76 38,76 Z M38,75 C58.4345357,75 75,58.4345357 75,38 C75,17.5654643 58.4345357,1 38,1 C17.5654643,1 1,17.5654643 1,38 C1,58.4345357 17.5654643,75 38,75 Z" id="Oval" fill="#FFFFFF" fill-rule="nonzero"></path>
++    </g>
++</svg>
+\ No newline at end of file
+diff --git a/foundation/multimedia/player_framework/services/etc/image/mic.svg b/foundation/multimedia/player_framework/services/etc/image/mic.svg
+new file mode 100644
+index 0000000000000000000000000000000000000000..e1d226160dc9c2b6151358df1277d59368add867
+--- /dev/null
++++ b/foundation/multimedia/player_framework/services/etc/image/mic.svg
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24" height="24" viewBox="0 0 24 24" version="1.1">
++    <title>Public/ic_public_voice</title>
++    <defs>
++        <path d="M18.75,10.5 C19.1642136,10.5 19.5,10.8357864 19.5,11.25 C19.5,15.1388445 16.5402456,18.3364013 12.750487,18.7129202 L12.75,21.25 C12.75,21.6642136 12.4142136,22 12,22 C11.6005798,22 11.2740848,21.68777 11.2512732,21.2940682 L11.25,21.25 L11.2505192,18.7130201 C7.46027831,18.3369673 4.5,15.1391887 4.5,11.25 C4.5,10.8357864 4.83578644,10.5 5.25,10.5 C5.66421356,10.5 6,10.8357864 6,11.25 C6,14.5637085 8.6862915,17.25 12,17.25 C15.3137085,17.25 18,14.5637085 18,11.25 C18,10.8357864 18.3357864,10.5 18.75,10.5 Z M12,2 C14.209139,2 16,3.790861 16,6 L16,6 L16,11.25 C16,13.459139 14.209139,15.25 12,15.25 C9.790861,15.25 8,13.459139 8,11.25 L8,11.25 L8,6 C8,3.790861 9.790861,2 12,2 Z M12,3.5 C10.6192881,3.5 9.5,4.61928813 9.5,6 L9.5,6 L9.5,11.25 C9.5,12.6307119 10.6192881,13.75 12,13.75 C13.3807119,13.75 14.5,12.6307119 14.5,11.25 L14.5,11.25 L14.5,6 C14.5,4.61928813 13.3807119,3.5 12,3.5 Z" id="_path-1"/>
++    </defs>
++    <g id="_Public/ic_public_voice" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
++        <mask id="_mask-2" fill="white">
++            <use xlink:href="#_path-1"/>
++        </mask>
++        <use id="_形状结合" fill="#000000" fill-rule="nonzero" xlink:href="#_path-1"/>
++    </g>
++</svg>
+\ No newline at end of file
+diff --git a/foundation/multimedia/player_framework/services/etc/image/mic_off.svg b/foundation/multimedia/player_framework/services/etc/image/mic_off.svg
+new file mode 100644
+index 0000000000000000000000000000000000000000..a3351338a7cf4f8bf67370a91c8c295acb00e40f
+--- /dev/null
++++ b/foundation/multimedia/player_framework/services/etc/image/mic_off.svg
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24" height="24" viewBox="0 0 24 24" version="1.1">
++    <title>ohos_ic_public_voice_off</title>
++    <defs>
++        <path d="M4.97739819,10.5 C5.39161175,10.5 5.72739819,10.8357864 5.72739819,11.25 C5.72739819,14.5637085 8.41368969,17.25 11.7273982,17.25 C13.5635881,17.25 15.2071307,16.425179 16.3077264,15.1258366 L17.3716859,16.1889824 C16.1516948,17.5820603 14.4242557,18.519545 12.4778852,18.7129202 L12.4773982,21.25 C12.4773982,21.6642136 12.1416117,22 11.7273982,22 C11.327978,22 11.001483,21.68777 10.9786714,21.2940682 L10.9773982,21.25 L10.9779174,18.7130201 C7.18767649,18.3369673 4.22739819,15.1391887 4.22739819,11.25 C4.22739819,10.8357864 4.56318462,10.5 4.97739819,10.5 Z M18.4773982,10.5 C18.8916117,10.5 19.2273982,10.8357864 19.2273982,11.25 C19.2273982,12.7791299 18.76978,14.2013774 17.9840228,15.3872632 L16.8960882,14.2989346 C17.4242817,13.4054461 17.7273982,12.3631214 17.7273982,11.25 C17.7273982,10.8357864 18.0631846,10.5 18.4773982,10.5 Z M7.72739819,6.545 L9.22739819,8.045 L9.22739819,11.25 C9.22739819,12.6307119 10.3466863,13.75 11.7273982,13.75 C12.5980077,13.75 13.3646765,13.3049769 13.8123346,12.6300005 L14.8862294,13.7042332 C14.1543473,14.6448802 13.0115394,15.25 11.7273982,15.25 C9.51825919,15.25 7.72739819,13.459139 7.72739819,11.25 L7.72739819,6.545 Z M11.7273982,2 C13.9365372,2 15.7273982,3.790861 15.7273982,6 L15.7273982,11.25 C15.7273982,11.8048967 15.6144082,12.3334032 15.4101805,12.8137671 L14.2022374,11.6060456 C14.2188194,11.4897511 14.2273982,11.3708774 14.2273982,11.25 L14.2273982,6 C14.2273982,4.61928813 13.1081101,3.5 11.7273982,3.5 C10.3466863,3.5 9.22739819,4.61928813 9.22739819,6 L9.22739819,6.632 L7.80549936,5.20948486 C8.17244185,3.3789691 9.78888228,2 11.7273982,2 Z" id="path-1"/>
++    </defs>
++    <g id="ohos_ic_public_voice_off" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
++        <mask id="mask-2" fill="#FFFFFF">
++            <use xlink:href="#path-1"/>
++        </mask>
++        <use id="形状结合" fill="#000000" fill-rule="nonzero" xlink:href="#path-1"/>
++        <path d="M3.24127635,3 C3.52245384,2.71882251 3.97134457,2.70757541 4.26593912,2.9662587 L4.30193652,3 L20.5682465,19.3847763 C20.8611397,19.6776695 20.8611397,20.1525433 20.5682465,20.4454365 C20.287069,20.726614 19.8381783,20.7378611 19.5435838,20.4791778 L19.5075864,20.4454365 L3.24127635,4.06066017 C2.94838313,3.76776695 2.94838313,3.29289322 3.24127635,3 Z" id="path-2" fill="#000000" fill-rule="nonzero" />
++    </g>
++</svg>
+\ No newline at end of file
+diff --git a/foundation/multimedia/player_framework/services/etc/image/notification.png b/foundation/multimedia/player_framework/services/etc/image/notification.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..f55834d8d33f0b592b1cf70e41b12549fe044a22
+GIT binary patch
+literal 3864
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/foundation/multimedia/player_framework/services/etc/image/stop_dark.png b/foundation/multimedia/player_framework/services/etc/image/stop_dark.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..1f21c84443d0302abfc6c2896c1ade08398d94a0
+GIT binary patch
+literal 2795
+zcmaJ@c{r47A0|tdBt&wQG1ext8qAC>W9&wft*m2aFfsdJ2$eIoqs`U{DI`+Kb|iEv
+zM4ZEfve&UBOUKegM0L(L)2Y7ikJI;F*ZV%t^Sgfc{oC&6y54kmHwOhd4LLC}F$E__
+zoQH5_iC!6L;rHB&<OJcen`7t8IZO}b#1L3yF&h#+gbZ+^62izHWCAIc*+sSx6O%Bc
+zc=~dD@vaymoeCj{d>~vZLx>g=v#{ne2*e072M|IIqtGmY%gqmf01C+x=wpJ1;Tg8%
+zaEfCbi+niF&65}xK}3^))>Z%uE=EW|C36S>E;W+I#&9ixpLsFDy~qp&0zSKNA}oRb
+zB;|{D2iVeCWPl086ikF8VE{8U1a1mLn!t?!2pHT93NwMiOu;ZX28O~Q;D9d=P#BFx
+z3dMNf?7zeko-Bdk91a5mg~r6hKw^v`bXFJ?jz*)QFa#8V01G|9>{uFyzy;ITI$s%Z
+zWHymSVQ?sP8bHKI2%$%DEP=vI|0#jW_(n@(e`%AjVNfoC0fj?gqLRKk;_?6Al}i2Q
+z&E|NJ|C{f>60<#H8DyvjnN5#k5ru;b)e(haU~E}r0*B7>q|+n6cF{eY&Y`oz=?s9a
+zt*C1#fFYhhq|ijheV<WyJjRK}<`8H^vJ=h{DCB`qC?t$2+6;|E;t)6#77d5n+1S{l
+zjO}e;XoRi3G2Gb1{wo$oCq_}pG|pEn=`+>_X$FJaeithe1eGC-j3cus(PWZ6i%tc6
+zE*wMoelD=@@_oUQ{xz4+b-=%ig$k2_ipKjt<Nj(AYDl#GCSKv;oBYW%q2^gaaT9j(
+zB*nzG9&y6icydP<0(xBheRiIB!iT|nT%ERHZBn~&Q@}LoCiU>6kIxsTMH7pANAjr$
+zYCT%0hy3#%6nQ3LAD#>Fz-zdeWhLK*Axxd`^P1A<OL{||^o<YC$CIq$wPyL|TNAg<
+zbvMucmAL%t@$rQ9OGLkvQGq~Uu$l?vr~z!!a>d6E?Oss1BVQdcwq~vWmhgk_bMj{A
+zj!l_gc@aDxJM2B(dr+N=UiQyXlg@qVz4lxiF4kA?R%Uf7XnLc)*-2}B2Tkd=a-#Of
+zZCMRz(+@OhP^{JvvzAd1q{Iqe(XL<b_PCkXy}eae+hJJuv{FCsyyAUc@0xmiS4+co
+zuNw%$kygy)9zqJkw&;r4#F+W}{C6)UvkilJFzm3Nh5l;6fo*R065rp;u)-x72Inw-
+zev@C_-2naZLzcZ(;MIeDMQJEUu9Gid6?y1ET(7~>Sg^7D#YcI~cAZG3weg(Jy2(hS
+zN*=RSdvdR~=E-I^^@L9n35t1t6iZI}w8|A*o@AejUM)mBUK~vqZxtux1pA4bESaN%
+zA=0kRm99!_u9wd=A)8-Fm=Wgr9Wv)+GI$xFAX)2OvMv*b`U73wt<r=Gy(P6?(-l&h
+zaGy$LEpW7q3dpPH68>ae>CV(989F!5`Bg<hvl3(IRfEnx6yjDbvU?JSa@|1dFU{r7
+z4d*t#+_;!NGM{ob{p`8CA1?QV3NCd%ojr1GoJk97p$=zslnE|fKc~KAkq>KlN;5;A
+z9FR>Ij*00Dep3I+!sw*dTy23tNLfo%>%2s2b&~ZB<Z=BOLzE&qwwHPDY)x*+6W%W^
+z8+Q+Hb)CA#Xzu^B@#5ly)%>Ft?(eOZ*9OesvE?mqV-*p+PX>f*&&;&jdV{O`Bycr4
+zMprqTkWlHPxF0s)%YB!8G}_b9Px7CAxGH1%JbHg}2yY=pKQk_oliHwbm@xHdnhK10
+z9s7QKKvgpnTULy}egVqn^%1Y(Z(Y<x<y5}P(1Z+D<)o`-U41xsGoeDF=7h$IflucS
+z<YrJcRbbw}EX%$_{kt-!3mI;_wGworFk5}!E$<Q)2e(<!rxpFjUHkDJX^rWm-Fgk)
+z{L6v^`w$&_57a3qUvWu{)*T;}u_h>9A6t{A*2|tKix2$x_;=pAN7&6Bf;Yp*&2vEd
+zp;gP7j;|L6^R+EhE&M*6VsxcOLyM^ubwlO7ORkRm)n7ndi%!X37LVPLTjcW=R3X!|
+z;?!m}?c)b;yPwWDp*-a_8_i}|pw>1_L*-v32T_>H?FTo0nm%J$Rr=HQwLX>8CNH<;
+zIjLnm^`q?vcW6WmRbX$NKi1EiexEd+t4KUk?^1o9*&Y9^8#xH!V*>&4?pCKw2A8(T
+zcNOy;eoL+C7;X1-RQ15;pFf5V2FKdv$`Kc*&)yJ`fJ*ZtupL4Y@a0`uF3SOjL`d3|
+zWQ!w~K31pevm1OsrE(SePL40)y?)$Xy#X3cI&<6q>{`?1=N-Ev){_3j&JG=IEMr^=
+zP92vPmN>X|k#A~PCAW(OE~5I>`FT%vuoR{!S%AGc;j=QsP+biEFM+<l+aJi;zRD%=
+z=xh5i<umoa*_hvaBR8$Q*dY5rR&B++aQxB;HQbw3acr*9##=Kk@Z&+eG$AETuM6-~
+zL)=HlPLS6WSiTYjs+7&14mv|t(a-%*QU=QgliuwNeP5!lngb^FI7ylGl=~}199&7)
+z3ZDwd!$O9<W)2-DWbCXdU-BG&uWe8s<Sy4P)94<<iu>sPyIrSJjew<udRU~!5ClA0
+zQDyAY2(B;9I)T0Xpj3H#sU82LN?#)|3{`Yt&uZYK_>mU4f#Qwi1HbO--@q23sxQpE
+zbHl|ruc#r5+G}6z>U$9~BBg+*Y{U)S?fJRt%G=kCGfI>9J(f`o>%zNtQ<}(AXyx@U
+ztCy=xAZMc5DtU!X-Y*A0O!O9r-zOFzxnHgg<j|&>D8D^B(Y#;EVfDAj1!vMyQz<H^
+zwbJHs_htuf#z?QH#(Udf-DbGQJ0+r;f4y@QB4vK11ft;?KO7|K0H5c-WzQhJ4LIm!
+z>%jgA(&+W|W?#Pf!>Ou0!QxZ~V`8(mAfwPRSn7mc+Oo00iYcY3>$>bJvuvy=xMQv<
+zCf+vpr}pOFV`Y538Y<~#o*9R5^_kjce&kGDl#F@nOaW!wXk98{>b`;$c_A%i+=zZR
+z01+FVF*2vT$!eGcXQaq$*l=4RNryM_>IY#<>us|EtJ)z_FAlh>X(woYFw=pvG%{O_
+z-!S)BMHo?}YEi?{%7izX2G%KKKAq(%MhaS{lTS$lfWundYDR`1)~-bzEh$uy2&i|9
+zkgM9_=Qhi4Tg-f#^iDj;ubdKrI^JP>Y&p;Ke&mn0J>9nDh_?u}njdvklHDxk|0W}Q
+zftgo)bxU=-+(UAyRh?V*V6@uFY#nCceFM~y!MCxIr3E!EVRr}gGk6mN*(e@pCm*D|
+oCLuWvwNjGwN&Nfzr~MDboNsSn%R^43iGDww?A&m-vB63I0WZ?LQvd(}
+
+literal 0
+HcmV?d00001
+
+diff --git a/foundation/multimedia/player_framework/services/etc/image/stop.png b/foundation/multimedia/player_framework/services/etc/image/stop.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..1f21c84443d0302abfc6c2896c1ade08398d94a0
+GIT binary patch
+literal 2795
+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
+
+literal 0
+HcmV?d00001
+
+diff --git a/foundation/multimedia/player_framework/services/etc/image/capsule_stop_live2.svg b/foundation/multimedia/player_framework/services/etc/image/capsule_stop_live2.svg
+new file mode 100644
+index 0000000000000000000000000000000000000000..93cbbbe4ba598f54c4bd2e94fd42f6e8982b4aef
+--- /dev/null
++++ b/foundation/multimedia/player_framework/services/etc/image/capsule_stop_live2.svg
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<svg viewBox="0 0 76 76" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
++    <!-- Generator: Sketch 63.1 (92452) - https://sketch.com -->
++    <title>ic/camera/shutter/take_video_stop</title>
++    <desc>Created with Sketch.</desc>
++    <g id="ic/camera/shutter/take_video_stop" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
++        <rect id="Rectangle-11" fill="#FFFFFF" x="27" y="27" width="22" height="22" rx="2"></rect>
++        <path d="M38,76 C17.0131795,76 0,58.9868205 0,38 C0,17.0131795 17.0131795,0 38,0 C58.9868205,0 76,17.0131795 76,38 C76,58.9868205 58.9868205,76 38,76 Z M38,75 C58.4345357,75 75,58.4345357 75,38 C75,17.5654643 58.4345357,1 38,1 C17.5654643,1 1,17.5654643 1,38 C1,58.4345357 17.5654643,75 38,75 Z" id="Oval" fill="#FFFFFF" fill-rule="nonzero"></path>
++    </g>
++</svg>
+\ No newline at end of file
+diff --git a/foundation/multimedia/player_framework/services/etc/image/light.svg b/foundation/multimedia/player_framework/services/etc/image/light.svg
+new file mode 100644
+index 0000000000000000000000000000000000000000..93cbbbe4ba598f54c4bd2e94fd42f6e8982b4aef
+--- /dev/null
++++ b/foundation/multimedia/player_framework/services/etc/image/light.svg
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<svg viewBox="0 0 76 76" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
++    <!-- Generator: Sketch 63.1 (92452) - https://sketch.com -->
++    <title>ic/camera/shutter/take_video_stop</title>
++    <desc>Created with Sketch.</desc>
++    <g id="ic/camera/shutter/take_video_stop" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
++        <rect id="Rectangle-11" fill="#FFFFFF" x="27" y="27" width="22" height="22" rx="2"></rect>
++        <path d="M38,76 C17.0131795,76 0,58.9868205 0,38 C0,17.0131795 17.0131795,0 38,0 C58.9868205,0 76,17.0131795 76,38 C76,58.9868205 58.9868205,76 38,76 Z M38,75 C58.4345357,75 75,58.4345357 75,38 C75,17.5654643 58.4345357,1 38,1 C17.5654643,1 1,17.5654643 1,38 C1,58.4345357 17.5654643,75 38,75 Z" id="Oval" fill="#FFFFFF" fill-rule="nonzero"></path>
++    </g>
++</svg>
+\ No newline at end of file
+diff --git a/foundation/multimedia/player_framework/services/etc/image/pause.svg b/foundation/multimedia/player_framework/services/etc/image/pause.svg
+new file mode 100644
+index 0000000000000000000000000000000000000000..82f0d73ee6660243b803276f1efd60dfe732006b
+--- /dev/null
++++ b/foundation/multimedia/player_framework/services/etc/image/pause.svg
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24" height="24" viewBox="0 0 24 24" version="1.1">
++    <title>Public/ic_public_pause</title>
++    <defs>
++        <path d="M7.5,3.5 C8.32842712,3.5 9,4.17157288 9,5 L9,19 C9,19.8284271 8.32842712,20.5 7.5,20.5 C6.67157288,20.5 6,19.8284271 6,19 L6,5 C6,4.17157288 6.67157288,3.5 7.5,3.5 Z M16.5,3.5 C17.3284271,3.5 18,4.17157288 18,5 L18,19 C18,19.8284271 17.3284271,20.5 16.5,20.5 C15.6715729,20.5 15,19.8284271 15,19 L15,5 C15,4.17157288 15.6715729,3.5 16.5,3.5 Z" id="_path-1"/>
++    </defs>
++    <g id="_Public/ic_public_pause" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
++        <mask id="_mask-2" fill="white">
++            <use xlink:href="#_path-1"/>
++        </mask>
++        <use id="_Combined-Shape" fill="#000000" xlink:href="#_path-1"/>
++    </g>
++</svg>
+\ No newline at end of file
+diff --git a/foundation/multimedia/player_framework/services/etc/image/play.svg b/foundation/multimedia/player_framework/services/etc/image/play.svg
+new file mode 100644
+index 0000000000000000000000000000000000000000..ae8523a8bc9c77928b433cae056241e9d44b4a61
+--- /dev/null
++++ b/foundation/multimedia/player_framework/services/etc/image/play.svg
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24" height="24" viewBox="0 0 24 24" version="1.1">
++    <title>Public/ic_public_play</title>
++    <defs>
++        <path d="M15.9178985,6.64969378 L22.2241113,17.6299232 C22.9117482,18.8272204 22.4985869,20.3552615 21.3012896,21.0428985 C20.9224145,21.2604957 20.4931281,21.375 20.0562128,21.375 L7.44378717,21.375 C6.06307529,21.375 4.94378717,20.2557119 4.94378717,18.875 C4.94378717,18.4380847 5.05829147,18.0087984 5.27588871,17.6299232 L11.5821015,6.64969378 C12.2697385,5.45239653 13.7977796,5.03923521 14.9950768,5.72687214 C15.3789642,5.94734799 15.6974226,6.26580643 15.9178985,6.64969378 Z" id="_path-1"/>
++    </defs>
++    <g id="_Public/ic_public_play" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
++        <mask id="_mask-2" fill="white">
++            <use xlink:href="#_path-1"/>
++        </mask>
++        <use id="_多边形备份-5" fill="#000000" transform="translate(13.750000, 12.125000) rotate(-270.000000) translate(-13.750000, -12.125000) " xlink:href="#_path-1"/>
++    </g>
++</svg>
+\ No newline at end of file

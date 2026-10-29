@@ -1,0 +1,64 @@
+# Copyright (c) 2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#type medialibrary_hap, normal_hap_attr, hap_domain, domain;
+
+#type medialibrary_hap_data_file, normal_hap_data_file_attr, hap_file_attr, data_file_attr, file_attr;
+
+allow medialibrary_hap mimetype_file:file { open read getattr };
+binder_call(medialibrary_hap, privacy_service);
+allow medialibrary_hap media_library_param:parameter_service { set };
+allow medialibrary_hap paramservice_socket:sock_file { write };
+allow medialibrary_hap kernel:unix_stream_socket { connectto };
+allow medialibrary_hap data_app_el2_file:file { append };
+allow medialibrary_hap data_app_el2_group_file:file { append };
+
+neverallow { hap_domain -ringtonelibrary_hap -medialibrary_hap -system_basic_hap -init -samgr -hdf_devmgr } media_library_param:parameter_service { set };
+
+allow medialibrary_hap hmdfs:dir { ioctl };
+allowxperm medialibrary_hap hmdfs:dir ioctl { 0xf547 0xf546 };
+neverallowxperm medialibrary_hap hmdfs:dir ioctl ~{ 0xf547 0xf546 };
+
+#avc: denied { use } for pid=1650, comm="/system/bin/sa_main"  path="/dev/ashmem" dev="" ino=1 scontext=u:r:medialibrary_hap:s0 tcontext=u:r:camera_service:s0 tclass=fd permissive=0
+allow medialibrary_hap camera_service:fd { use };
+
+# avc:  denied  { get } for service=usbfn_mtp_interface_service sid=u:r:medialibrary_hap:s0 scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:hdf_usbfn_mtp_interface_service:s0 tclass=hdf_devmgr_class permissive=0
+allow medialibrary_hap hdf_usbfn_mtp_interface_service:hdf_devmgr_class { get };
+
+# avc: denied { read write } for pid=3641, comm="/system/bin/appspawn" path="/dev/fuse" dev="" ino=15 scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:dev_fuse_file:s0 tclass=chr_file permissive=1
+allow medialibrary_hap dev_fuse_file:chr_file { read write };
+
+# avc:  denied  { watch } for  pid=1261 comm="MtpMonitor::Run" path="/storage/External/6342293E7EBCAF49" dev="mmcblk1p2" ino=5 scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:ntfs:s0 tclass=dir permissive=0
+# avc:  denied  { watch_reads } for  pid=1257 comm="MtpMonitor::Run" path="/storage/External/0F83-08EF" dev="mmcblk1p1" ino=1 scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:vfat:s0 tclass=dir permissive=0
+allow medialibrary_hap ntfs:dir { watch watch_reads };
+allow medialibrary_hap exfat:dir { watch watch_reads };
+allow medialibrary_hap vfat:dir { watch_reads };
+
+allow medialibrary_hap sandbox_manager_service:fd { use };
+
+# avc: denied { ioctl } for pid=3684, comm="/system/bin/appspawn" path="/dev/access_token_id" dev="" ino=4 ioctlcmd=0x5413 scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:dev_at_file:s0 tclass=chr_file permissive=1
+allow medialibrary_hap dev_at_file:chr_file { ioctl };
+
+# avc: denied { ioctl } for pid=3684, comm="/system/bin/appspawn" path="/storage/cloud/files/Photo/6/IMG_1745832970_070.jpg" dev="/data/service/el2/100/hmdfs/account" ino=11529215046068543986 ioctlcmd=0xf205 scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:hmdfs:s0 tclass=file permissive=1
+allow medialibrary_hap hmdfs:file { ioctl };
+
+# avc: denied { ioctl } for pid=3684, comm="/system/bin/appspawn" path="/dev/access_token_id" dev="" ino=4 ioctlcmd=0x5413 scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:dev_at_file:s0 tclass=chr_file permissive=1
+allowxperm medialibrary_hap dev_at_file:chr_file ioctl { 0x5413 };
+
+# avc: denied { ioctl } for pid=3684, comm="/system/bin/appspawn" path="/storage/cloud/files/.thumbs/Photo/14/IMG_1745833179_3374.HEIC/temp_1745050668267_LCD.jpg" dev="/data/service/el2/100/hmdfs/account" ino=11529215046068542715 ioctlcmd=0x5413 scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:hmdfs:s0 tclass=file permissive=1
+# avc: denied { ioctl } for pid=3684, comm="/system/bin/appspawn" path="/storage/cloud/files/Photo/6/IMG_1745832970_070.jpg" dev="/data/service/el2/100/hmdfs/account" ino=11529215046068543986 ioctlcmd=0xf205 scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:hmdfs:s0 tclass=file permissive=1
+# avc: denied { ioctl } for pid=3684, comm="/system/bin/appspawn" path="/storage/cloud/files/Photo/11/IMG_1745833015_1579.HEIC" dev="/data/service/el2/100/hmdfs/account" ino=11529250227965747175 ioctlcmd=0xf20a scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:hmdfs:s0 tclass=file permissive=1
+allowxperm medialibrary_hap hmdfs:file ioctl { 0x5413 0xf205 0xf20a };
+
+allow medialibrary_hap epfs:file { ioctl };
+allowxperm medialibrary_hap epfs:file ioctl { 0x7101 0x7102 };

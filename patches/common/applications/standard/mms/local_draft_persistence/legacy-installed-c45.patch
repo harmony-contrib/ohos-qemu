@@ -1,0 +1,478 @@
+diff --git a/applications/standard/mms/entry/src/main/ets/pages/conversation/CreateNewConversation.ets b/applications/standard/mms/entry/src/main/ets/pages/conversation/CreateNewConversation.ets
+--- a/applications/standard/mms/entry/src/main/ets/pages/conversation/CreateNewConversation.ets
++++ b/applications/standard/mms/entry/src/main/ets/pages/conversation/CreateNewConversation.ets
+@@ -487,6 +487,7 @@
+   }
+ 
+   aboutToDisappear(): void {
++    this.mCreateNewConversationViewModle.stopLocalTextDraft();
+     this.inputMethodSetting.off('imeShow', this.emitterKeyboard);
+     this.mCreateNewConversationViewModle.removeAirPlaneMode();
+     this.mCreateNewConversationViewModle.removeSatelliteMode();
+@@ -530,9 +531,33 @@
+     AudioPlayerService.setAudioFilePlayState(undefined, 'stopped');
+     this.resetTitle();
+     if (AppStorage.get('curBp') as string !== common.STR.DEVICE_MOBILE_PHONE) {
++      if (this.mCreateNewConversationViewModle.canPersistLocalTextDraft()) {
++        this.persistLocalTextDraftAndBackground();
++        return true;
++      }
+       return false;
+     }
+     return this.mCreateNewConversationViewModle.onBackPress(this.context);
++  }
++
++  private async persistLocalTextDraftAndBackground(): Promise<void> {
++    const model = this.mCreateNewConversationViewModle;
++    if (model.localDraftSaving) {
++      return;
++    }
++    try {
++      if (await model.persistLocalTextDraft()) {
++        // Consume Back until the actual message row and session have committed.
++        if (model === this.mCreateNewConversationViewModle && model.canPersistLocalTextDraft()) {
++          await this.context.moveAbilityToBackground();
++        }
++      } else {
++        promptAction.showToast({ message: $r('app.string.failed') });
++      }
++    } catch (error) {
++      HiLog.e(TAG, 'local draft background request failed');
++      promptAction.showToast({ message: $r('app.string.failed') });
++    }
+   }
+ 
+   @Builder
+@@ -1323,6 +1348,7 @@
+     .onShown(() => {
+       this.destinationShow();
+     })
++    .enabled(!this.mCreateNewConversationViewModle.localDraftSaving)
+     .onBackPressed(() => {
+       return this.destinationBackPress();
+     })
+@@ -1650,6 +1676,9 @@
+   }
+ 
+   windowStageEventTypeChange() {
++    if (this.mCreateNewConversationViewModle.skipPausedDraftSave()) {
++      return;
++    }
+     if (this.windowStageEventType === window.WindowStageEventType.PAUSED) {
+       // 保存草稿
+       this.mCreateNewConversationViewModle.setDraftModel(() => {
+diff --git a/applications/standard/mms/entry/src/main/ets/pages/conversation/CreateNewConversationViewModle.ets b/applications/standard/mms/entry/src/main/ets/pages/conversation/CreateNewConversationViewModle.ets
+--- a/applications/standard/mms/entry/src/main/ets/pages/conversation/CreateNewConversationViewModle.ets
++++ b/applications/standard/mms/entry/src/main/ets/pages/conversation/CreateNewConversationViewModle.ets
+@@ -230,6 +230,13 @@
+   public isSend: boolean = false
+   public isTextAsMms: boolean = false;
+   public hasAttachment: boolean = false;
++  public localDraftSaving: boolean = false;
++  private localDraftTask: Promise<boolean> | null = null;
++  private localDraftGeneration: number = 0;
++  private localDraftStopped: boolean = false;
++  private localDraftOptedIn: boolean = false;
++  private localDraftMessageId: number = 0;
++  private localDraftTelephone: string = '';
+   public draftModel: DraftModel = new DraftModel()
+   public newEmojiLength: number = 0;
+   get canSendMmsMessage() {
+@@ -252,6 +259,17 @@
+   }
+ 
+   onInit(context: Context, pageInfos: NavPathStack) {
++    if (this.localDraftTask !== null) {
++      this.stopLocalTextDraft();
++      this.localDraftTask.then(() => this.onInit(context, pageInfos));
++      return;
++    }
++    // A route initialization starts a fresh editing epoch, unlike onShow.
++    this.localDraftGeneration++;
++    this.localDraftStopped = false;
++    this.localDraftOptedIn = false;
++    this.localDraftMessageId = 0;
++    this.localDraftTelephone = '';
+     HiLog.i(TAG, 'onInit');
+     this.pageInfos = pageInfos;
+     this.isSmartOpen = SharedPreferencesUtils.getFromPreferences('isOpenSmart', false) as boolean;
+@@ -551,6 +569,7 @@
+   }
+ 
+   release() {
++    this.stopLocalTextDraft();
+     this.textValue = '';
+     this.receiveContactValue = '';
+     this.isDraft = false;
+@@ -831,7 +850,99 @@
+     }
+   }
+ 
++  canPersistLocalTextDraft(): boolean {
++    const contacts = this.getSelectContacts();
++    const telephone = this.receiveContactValue || (contacts.length === 1 ? contacts[0].telephone : '');
++    const blank = this.textValue === '' && !this.isDraft && this.localDraftMessageId === 0;
++    return !this.localDraftStopped && !this.isSend && !this.isRcsMms && !this.isEditMms &&
++      !this.isTextAsMms && this.mAttachAreaCtrl.mmDisplaySource.length === 0 && contacts.length <= 1 &&
++      (blank || TelephoneUtil.isPhoneNumber(telephone)) &&
++      (this.localDraftMessageId === 0 || TelephoneUtil.dealTelephoneSort(telephone) === this.localDraftTelephone);
++  }
++
++  stopLocalTextDraft(): void {
++    this.localDraftStopped = true;
++    this.localDraftGeneration++;
++  }
++
++  skipPausedDraftSave(): boolean {
++    return this.localDraftSaving || (this.localDraftOptedIn && this.localDraftStopped);
++  }
++
++  persistLocalTextDraft(): Promise<boolean> {
++    this.localDraftOptedIn = true;
++    if (this.localDraftTask !== null) {
++      return this.localDraftTask;
++    }
++    this.localDraftSaving = true;
++    // Defer snapshot construction until the task is installed; even a synchronous
++    // snapshot failure must release the one-save gate.
++    this.localDraftTask = Promise.resolve().then(() => this.persistLocalTextDraftNow()).finally(() => {
++      this.localDraftSaving = false;
++      this.localDraftTask = null;
++    });
++    return this.localDraftTask;
++  }
++
++  private async persistLocalTextDraftNow(): Promise<boolean> {
++    try {
++      const generation = this.localDraftGeneration;
++      const model = JSON.parse(JSON.stringify(this.draftModel)) as DraftModel;
++      const action = this.getDraftActionData([]);
++      action.isNewMsg = true;
++      action.telephone = this.strContactsNumber;
++      action.selectContacts = JSON.parse(JSON.stringify(this.getSelectContacts())) as selectContactType[];
++      action.receiveContactValue = this.receiveContactValue;
++      model.actionData = action;
++      const current = (): boolean => this.canPersistLocalTextDraft() &&
++        this.localDraftGeneration === generation && this.textValue === action.content &&
++        this.receiveContactValue === action.receiveContactValue &&
++        JSON.stringify(this.getSelectContacts()) === JSON.stringify(action.selectContacts);
++      const result = await DraftUtils.getInstance().persistLocalTextDraft(this.context, model,
++        this.localDraftMessageId, this.localDraftTelephone, current);
++      if (!current()) {
++        return false;
++      }
++      if (result.invalidated) {
++        this.stopLocalTextDraft();
++        return false;
++      }
++      if (!result.saved && result.msgId <= 0) {
++        return false;
++      }
++      const oldThreadId = this.threadId;
++      this.threadId = result.threadId;
++      this.selectContactsMap.set(this.threadId, action.selectContacts);
++      if (oldThreadId !== this.threadId) {
++        this.selectContactsMap.delete(oldThreadId);
++      }
++      this.localDraftMessageId = result.msgId;
++      this.localDraftTelephone = result.telephone;
++      this.draftGroupId = result.groupId;
++      this.isDraft = result.msgId > 0;
++      this.draftContent = result.storedText;
++      // Refresh this editor, rather than the unrelated global ConversationController.
++      this.draftModel.initialDraftText = result.storedText;
++      this.draftModel.isHasSetValueForInitialDraftText = true;
++      this.draftModel.initialSelectContacts = action.selectContacts;
++      this.draftModel.hasGetContactsThreadID = this.threadId;
++      this.draftModel.isHasGetContacts = true;
++      this.draftModel.actionData = action;
++      if (result.saved) {
++        HiLog.i(TAG, 'local text draft committed');
++      }
++      return result.saved;
++    } catch (error) {
++      HiLog.e(TAG, 'local text draft did not commit');
++      return false;
++    }
++  }
++
+   setDraftModel(callback: Function, isNeedToSetNull: boolean = true) {
++    if (this.localDraftTask !== null) {
++      this.localDraftTask.then(() => this.setDraftModel(callback, isNeedToSetNull));
++      return;
++    }
+     if (this.timeoutID >= 0) {
+       clearInterval(this.timeoutID)
+       this.timeoutID = -1
+@@ -1629,6 +1740,10 @@
+   }
+ 
+   async deleteDraftDataByThread() {
++    if (this.localDraftTask !== null) {
++      await this.localDraftTask;
++    }
++    this.stopLocalTextDraft();
+     HiLog.i(TAG, 'deleteDraftDataByThread: threadId is:' + this.threadId);
+     let threadIds: number[] = [this.threadId];
+     let actionData: Record<string, number | number[]> = {
+@@ -1952,6 +2067,10 @@
+   }
+ 
+   async jumpToConversationPage(isNeedSend: boolean, isNeedsendAudio: boolean, isRCS: boolean) {
++    if (this.localDraftTask !== null) {
++      await this.localDraftTask;
++    }
++    this.stopLocalTextDraft();
+     GlobalContext.getContext().setObject('isFromNewCreatMessage', true)
+     HiLog.i(TAG, 'jumpToConversationPage')
+     this.isSend = true; //用于草稿逻辑
+diff --git a/applications/standard/mms/entry/src/main/ets/service/ConversationListService.ets b/applications/standard/mms/entry/src/main/ets/service/ConversationListService.ets
+--- a/applications/standard/mms/entry/src/main/ets/service/ConversationListService.ets
++++ b/applications/standard/mms/entry/src/main/ets/service/ConversationListService.ets
+@@ -48,6 +48,16 @@
+ 
+ const TAG = 'ConversationListService';
+ 
++export interface LocalTextDraftResult {
++  saved: boolean;
++  threadId: number;
++  groupId: number;
++  msgId: number;
++  telephone: string;
++  storedText: string;
++  invalidated: boolean;
++}
++
+ export class ChangeIdInfo {
+   public delIdArr: string[] = [];
+   public updateIdArr: string[] = [];
+@@ -931,6 +941,186 @@
+    * @param valueBucket New Data
+    * @callback callback
+    */
++  private localTextDraftTail: Promise<void> = Promise.resolve();
++
++  public async persistLocalTextDraft(actionData: LooseObject, expectedMsgId: number,
++    expectedTelephone: string, previousText: string, stillCurrent: () => boolean,
++    context: Context): Promise<LocalTextDraftResult> {
++    const previous = this.localTextDraftTail;
++    let finish: () => void = () => {};
++    this.localTextDraftTail = new Promise<void>(resolve => { finish = resolve; });
++    await previous;
++    try {
++      return await this.writeLocalTextDraft(actionData, expectedMsgId, expectedTelephone,
++        previousText, stillCurrent, context);
++    } finally {
++      finish();
++    }
++  }
++
++  private async writeLocalTextDraft(action: LooseObject, expectedMsgId: number,
++    expectedTelephone: string, previousText: string, stillCurrent: () => boolean,
++    context: Context): Promise<LocalTextDraftResult> {
++    const failed: LocalTextDraftResult = { saved: false, threadId: 0, groupId: 0, msgId: 0, telephone: '', storedText: '', invalidated: false };
++    const service = ConversationService.getInstance();
++    const param = this.dealSendResults(action);
++    const telephone = param.telephone as string;
++    if (!stillCurrent() || (expectedMsgId > 0 && telephone !== expectedTelephone)) {
++      return failed;
++    }
++    if (action.content === '' && !action.isDraft && expectedMsgId === 0) {
++      return { saved: true, threadId: action.threadId, groupId: 0, msgId: 0, telephone: telephone,
++        storedText: '', invalidated: false };
++    }
++    const session = await new Promise<LooseObject>(resolve => {
++      this.querySessionByTelephone(telephone, resolve, context);
++    });
++    if (session.code !== common.int.SUCCESS || !stillCurrent()) {
++      return failed;
++    }
++    let threadId = session.response?.id ?? 0;
++    if (action.threadId > 0 && action.threadId !== threadId) {
++      failed.invalidated = true;
++      return failed; // A deleted/replaced session is never recreated from an old editor.
++    }
++    let drafts: LooseObject[] = [];
++    if (threadId > 0) {
++      const rows = await service.querySmsMmsInfoByConditionAsync(context,
++        { threadId: threadId, msgState: common.int.SEND_DRAFT });
++      if (rows.code !== common.int.SUCCESS || !stillCurrent()) {
++        return failed;
++      }
++      drafts = rows.abilityResult as LooseObject[];
++    }
++    let msgId = expectedMsgId;
++    let groupId: number = 0;
++    if (drafts.length > 0) {
++      const row = drafts[0];
++      if (drafts.length !== 1 || row.msgType !== common.MSG_TYPE.NORMAL || row.rcsId > 0 ||
++        row.msgContent !== previousText ||
++        (msgId > 0 ? row.msgId !== msgId : !action.isDraft || row.groupId !== action.groupId)) {
++        failed.invalidated = true;
++        return failed; // Do not replace an unknown or more recent draft.
++      }
++      msgId = row.msgId;
++      groupId = row.groupId;
++    } else if (msgId > 0 || action.isDraft) {
++      failed.invalidated = true;
++      return failed; // Already deleted/sent: no insert fallback.
++    }
++    if (msgId > 0) {
++      const condition: LooseObject = {
++        threadId: threadId, msgId: msgId, groupId: groupId, msgState: common.int.SEND_DRAFT
++      };
++      if (!stillCurrent()) {
++        return failed;
++      }
++      const changed = await new Promise<LooseObject>(resolve => {
++        if (action.content === '') {
++          service.deleteSmsInfoByCondition(context, condition, resolve);
++        } else {
++          service.updateSmsMmsInfoByCondition(context, condition,
++            { msg_content: action.content, start_time: String(Date.now()) }, resolve);
++        }
++      });
++      if (changed.code !== common.int.SUCCESS || Number(changed.abilityResult) !== 1 || !stillCurrent()) {
++        if (changed.code === common.int.SUCCESS && Number(changed.abilityResult) === 0) {
++          failed.invalidated = true;
++        }
++        return failed;
++      }
++      if (action.content === '') {
++        const latest = await new Promise<LooseObject>(resolve => {
++          service.queryMessageDetailAll(context, {
++            actionDataName: Constant.ACTION_DATA_NAME_QUERY_SMS_MMS_INFO_ALL,
++            threadId: threadId, page: 1, contactsNum: 1
++          }, resolve, 0);
++        });
++        if (latest.code !== common.int.SUCCESS || !stillCurrent()) {
++          return failed;
++        }
++        const messages = (latest.response as mmsListType[]).filter(item => item.sendStatus !== common.int.SEND_DRAFT);
++        const cleared = await new Promise<LooseObject>(resolve => {
++          this.updateLastItemContent({ threadId: threadId, mmsList: messages }, resolve,
++            context, true, session.response.messageCount);
++        });
++        if (cleared.code !== common.int.SUCCESS || Number(cleared.abilityResult) !== 1 || !stillCurrent()) {
++          return failed;
++        }
++        return { saved: true, threadId: threadId, groupId: 0, msgId: 0, telephone: telephone,
++          storedText: '', invalidated: false };
++      }
++    } else {
++      if (!stillCurrent()) {
++        return failed;
++      }
++      if (threadId <= 0) {
++        const created = await new Promise<LooseObject>(resolve => {
++          this.insertSession({ telephone: telephone, content: param.content, contacts_num: param.contactsNum,
++            sms_type: param.smsType, unread_count: 0, sending_status: common.int.SEND_MESSAGE_SENDING,
++            has_draft: common.has_draft.HAVE, time: param.timestamp, has_mms: 0, has_attachment: 0,
++            contact_id: action.selectContacts.map((item: selectContactType) => item.rawContactId || '').join(','),
++            contact_name: action.selectContacts.map((item: selectContactType) => item.contactName || item.telephone).join(',')
++          }, resolve, context);
++        });
++        if (created.code !== common.int.SUCCESS || Number(created.abilityResult) <= 0 || !stillCurrent()) {
++          return failed;
++        }
++        threadId = Number(created.abilityResult);
++      }
++      const maximum = await new Promise<LooseObject>(resolve => service.queryMaxGroupIdInMmsInfoTable(resolve, context));
++      if (maximum.code !== common.int.SUCCESS || !Number.isSafeInteger(Number(maximum.abilityResult)) ||
++        Number(maximum.abilityResult) < 0 || !stillCurrent()) {
++        return failed;
++      }
++      if (!Number.isSafeInteger(service.maxGroupId) ||
++        !Number.isSafeInteger(Math.max(service.maxGroupId, Number(maximum.abilityResult)) + 1)) {
++        return failed;
++      }
++      service.maxGroupId = Math.max(service.maxGroupId, Number(maximum.abilityResult)) + 1;
++      groupId = service.maxGroupId;
++      const inserted = await new Promise<LooseObject>(resolve => {
++        service.insertMessageDetailByMaxGroupId(param, action, threadId, groupId, resolve, context);
++      });
++      if (inserted.initDatas?.length !== 1 || Number(inserted.initDatas[0].id) <= 0) {
++        return failed;
++      }
++      msgId = Number(inserted.initDatas[0].id);
++    }
++    const identity: LooseObject = {
++      threadId: threadId, msgId: msgId, groupId: groupId, msgState: common.int.SEND_DRAFT
++    };
++    const actual = await service.querySmsMmsInfoByConditionAsync(context, identity);
++    if (actual.code !== common.int.SUCCESS) {
++      return failed;
++    }
++    const stored = actual.abilityResult as LooseObject[];
++    if (stored.length !== 1 || stored[0].msgContent !== action.content) {
++      failed.invalidated = true;
++      return failed;
++    }
++    // Retain proven ownership even if the subsequent session update fails, so
++    // retry updates this exact row instead of inserting a duplicate.
++    failed.threadId = threadId;
++    failed.groupId = groupId;
++    failed.msgId = msgId;
++    failed.telephone = telephone;
++    failed.storedText = action.content;
++    if (!stillCurrent()) {
++      return failed;
++    }
++    const committed = await new Promise<LooseObject>(resolve => {
++      this.updateSessionByCondition(context, { threadId: threadId }, {
++        content: action.content, has_draft: common.has_draft.HAVE, time: Date.now(), has_attachment: 0, has_mms: 0
++      }, resolve, true);
++    });
++    if (committed.code !== common.int.SUCCESS || Number(committed.abilityResult) !== 1 || !stillCurrent()) {
++      return failed;
++    }
++    return { saved: true, threadId: threadId, groupId: groupId, msgId: msgId, telephone: telephone,
++      storedText: action.content, invalidated: false };
++  }
++
+   public insertSessionDraft(actionData: LooseObject, callback: Function, context: Context): void {
+     let param = this.dealSendResults(actionData);
+     if (actionData.selectContacts && actionData.selectContacts.length > 0) {
+diff --git a/applications/standard/mms/entry/src/main/ets/utils/DraftUtils.ets b/applications/standard/mms/entry/src/main/ets/utils/DraftUtils.ets
+--- a/applications/standard/mms/entry/src/main/ets/utils/DraftUtils.ets
++++ b/applications/standard/mms/entry/src/main/ets/utils/DraftUtils.ets
+@@ -19,7 +19,7 @@
+   mmsListType, selectContactType } from '../pages/conversation/conversationController';
+ import { GlobalContext } from '../MainAbility/GlobalHelper';
+ import LooseObject from '../data/LooseObject';
+-import ConversationListService from '../service/ConversationListService';
++import ConversationListService, { LocalTextDraftResult } from '../service/ConversationListService';
+ import common from '../data/commonData';
+ import commonData from '../data/commonData';
+ import HiLog from './HiLog';
+@@ -29,6 +29,7 @@
+ import Constant from '../data/Constant';
+ import { display } from '@kit.ArkUI';
+ import DeviceUtil from './DeviceUtil';
++import TelephoneUtil from './TelephoneUtil';
+ import { isMmsMapMessageByMmsListType } from './MmsUtil';
+ 
+ export class ActionData {
+@@ -121,6 +122,22 @@
+     return DraftUtils._instance
+   }
+ 
++  // Only the explicit wide-screen Back path opts in. Legacy draft callers are unchanged.
++  public persistLocalTextDraft(context: Context, model: DraftModel, expectedMsgId: number,
++    expectedTelephone: string, stillCurrent: () => boolean): Promise<LocalTextDraftResult> {
++    const action = model.actionData;
++    const contacts = action.selectContacts;
++    const telephone = action.receiveContactValue || (contacts.length === 1 ? contacts[0].telephone : '');
++    const blank = action.content === '' && !action.isDraft && expectedMsgId === 0;
++    if (!stillCurrent() || action.isMms || action.mmsSource.length !== 0 || contacts.length > 1 ||
++      (!blank && !TelephoneUtil.isPhoneNumber(telephone))) {
++      return Promise.resolve({ saved: false, threadId: 0, groupId: 0, msgId: 0, telephone: '',
++        storedText: '', invalidated: false });
++    }
++    return ConversationListService.getInstance().persistLocalTextDraft(action, expectedMsgId,
++      expectedTelephone, model.initialDraftText, stillCurrent, context);
++  }
++
+   // 是否需要保存草稿
+   private isNeedUpdateDraft(context: Context, draftModel: DraftModel, isNeedContact?: boolean): boolean {
+     if (!draftModel) {

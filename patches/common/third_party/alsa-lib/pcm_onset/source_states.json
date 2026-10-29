@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "component": "alsa-pcm-onset443-qemu452",
+  "scope": "source-only exact integration; not GN/native/DSO/runtime/onset acceptance",
+  "files": {
+    "third_party/alsa-lib/BUILD.gn": {
+      "before": {
+        "sha256": "d7ba75a9591c70b1e463cd8c9463777a1da6b9f194a4ec0aee4a685edd5e2cbb",
+        "bytes": 13935
+      },
+      "after": {
+        "sha256": "d57190261f98cd3975b0a8173b98b90c9f022f5b13f5b88bbca0c62de8b30c41",
+        "bytes": 14156
+      },
+      "payload": "BUILD.gn",
+      "guard_only": false
+    },
+    "third_party/alsa-lib/src/pcm/pcm_hw.c": {
+      "before": {
+        "sha256": "c7eceb39266147061ec78a83212b8250010b83a192b3f81ee4b23736cbb1019b",
+        "bytes": 57940
+      },
+      "after": {
+        "sha256": "d6dfc03c36ec0d78414c39047e43e55d81f3d0497361235aea40c977ea949f71",
+        "bytes": 61029
+      },
+      "payload": "pcm_hw.c",
+      "guard_only": false
+    },
+    "third_party/alsa-lib/src/pcm/pcm_local.h": {
+      "before": {
+        "sha256": "f80f07d42cac6eee46d53518917030324a790afebac04c119cc0b9966c0fa2cd",
+        "bytes": 52680
+      },
+      "after": {
+        "sha256": "f80f07d42cac6eee46d53518917030324a790afebac04c119cc0b9966c0fa2cd",
+        "bytes": 52680
+      },
+      "payload": null,
+      "guard_only": true
+    },
+    "third_party/alsa-lib/src/pcm/media398_onset.h": {
+      "before": null,
+      "after": {
+        "sha256": "7dd8cf8102dda20a9211e9d56e79416626fcaf5c8ddc449ace5bd37fcc9438d2",
+        "bytes": 33433
+      },
+      "payload": "media398_onset.h",
+      "guard_only": false
+    },
+    "third_party/alsa-lib/src/pcm/media398_wire.h": {
+      "before": null,
+      "after": {
+        "sha256": "89e44af7fcc7f2f40e1fb60bdc9fba26de690049034f9d5e943d6b65b50be1da",
+        "bytes": 1034
+      },
+      "payload": "media398_wire.h",
+      "guard_only": false
+    }
+  },
+  "upstream_GN_arg": "alsa_lib_pcm_onset_diagnostic_enable",
+  "upstream_GN_default": false,
+  "target": "libasound",
+  "macro": "MEDIA398_ONSET_DIAGNOSTIC=1",
+  "unchanged_target": "libalsa_midi",
+  "predecessor443": {
+    "sha256": "2627cd721c9e7af118a3e7351b112dc6f03db0a793f68282ec117fc2aa8cc196",
+    "bytes": 43065
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "schema": "settings579-conditional-idle-stop-source-vector/v3",
+  "scope": "source-only candidate; NOT build/runtime acceptance",
+  "projects": {
+    "foundation/ability/ability_runtime": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8",
+    "interface/sdk-js": "43e34facc58b9c0f15c58571554ddd7eaa004455",
+    "applications/standard/settings": "0aba461c750fda71977c2f5186ca0e756ecfc6ca"
+  },
+  "precondition": "Actual parent-owned build after existing patches; Settings after accessibility_service_completion 0001 and 0002; old parcel and all existing product edits retained; root serial composition also adds trusted local modal caller identity without replacing the independent conditional-stop changes",
+  "source_records": [
+    "root-api-ability579-current/SOURCE.json",
+    "root-settings-camera579-current/SOURCE.json",
+    "root-apps578-full-runtime-candidate/product-netpolicy/AMS-TRUSTED-CALLER.patch"
+  ],
+  "files": {
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets": [
+      "f97a094aeb689abb6d26470db61e4048690d3060d5ecfe0e94528ac8d730a825",
+      "2f2742e73a4379fa1413fcfb44eb86f2a36addcbecd82a25c65ad41a8ccfb34e"
+    ],
+    "foundation/ability/ability_runtime/frameworks/js/napi/service_extension_context/service_extension_context.js": [
+      "5ec3186733e11fa275efe952b9e723fd2245fe770f3c424342c67e63aca0ff8f",
+      "5af45bf9390711dd064272df44141d20595212c48f70c058e6c37bcfd506fc3d"
+    ],
+    "foundation/ability/ability_runtime/frameworks/native/ability/native/js_service_extension_context.cpp": [
+      "d6ba5b1eaba5c0325db00c2dc8d512cf7ef6865a70b1833daa20cdc676b06ae3",
+      "0d7dcd29b5fde218ba473b74def468778bb63b62c1c1679fbde3b03fd9448cd6"
+    ],
+    "foundation/ability/ability_runtime/frameworks/native/appkit/ability_runtime/service_extension_context.cpp": [
+      "9dea6ca51aa4193d06a4eb44597fa99db683497dc86592d3dfaeebe22858ce21",
+      "95c52ae1a8d38b14cd7fe129420095e4b60bef4e737c15da7f795efc8eae73d0"
+    ],
+    "foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_client.h": [
+      "28b93cdbb4ee413cebd2300afc510cab6eaed7bb65a8235d76fe4a9d5d2136f4",
+      "55a94d196289cfba53d2b11f53e37248d270d390c80a974c16299e368611cefc"
+    ],
+    "foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_interface.h": [
+      "cb4fb6949b79d833f929692217bc4511ac00865d98c6a87c1251721537825e88",
+      "78ecdcc61f2b1b2fb332555a223850b19b30429e4c08a53e7c215b8a6da74eb2"
+    ],
+    "foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_ipc_interface_code.h": [
+      "6f803b62615a942d7ee4793aa86cae0fa88b7f17f284dbd1812cf3a75fc63231",
+      "878200e6c08c7ffc5caa01ccc13f401ceb80e68611b54ce05136fdb5b36444df"
+    ],
+    "foundation/ability/ability_runtime/interfaces/kits/native/appkit/ability_runtime/service_extension_context.h": [
+      "c78c7043a9d67ccc3b85349e68f29bf4dd1643493d1509a2d2f3975d604fee56",
+      "26c2fae820891e92a7d57e1d337a7e32d9a237818633241cfb1af8fb2949946f"
+    ],
+    "foundation/ability/ability_runtime/services/abilitymgr/include/ability_connect_manager.h": [
+      "2802e87d7ff46758bd651f0ae056c9597d43bce8682e462cf32620c975884cc8",
+      "209d3e5214fb244f665752b572ef617a803f18cbdd211b99fbd0baf5373a33ae"
+    ],
+    "foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_proxy.h": [
+      "9db82bad682b886d8aa1376609919d90434d997666e0be06422f5235f4149e1b",
+      "d39dd8052b38c8460f8949a0af4e0dbb13d46920840c2f045938c5de0c893c7d"
+    ],
+    "foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_service.h": [
+      "313803832a2a46537b0ac9649d1c6fbfca9540a8aaa2e3895f6f8ec7ce8c28fc",
+      "3bd8401bc3d7192cb0e8ae7ae8aba03db0d68799698a3027ebec21e4e626287c"
+    ],
+    "foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_stub.h": [
+      "527eaee73b819ce0eb09b0b1ee06e9e8175ef90d39610e0e0ca551efbf91ee00",
+      "1cdf5ba081fde209f137db8b1b089e32cdb6e0e86ac8abf1a7ecc09357841feb"
+    ],
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_connect_manager.cpp": [
+      "d1d7f7c5f7e38c4f14a72c8e7e0bb3143f96488dc07608316155abc27fff89e2",
+      "4d81329c7fa52582fa712a480baac44135fff5eb9f9a140e69049561c9b25d66"
+    ],
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_client.cpp": [
+      "be3bd9a97cf9f8bd53432f1c54e0ebcf6cc3f3d31929da78c5f124eb139930bf",
+      "943b83f76a707994d6a1e6be748013a22009c4c4af53e1986874b93263c63ed8"
+    ],
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_proxy.cpp": [
+      "cc828c0089ba20ceeea591122b1542ea438c6193276a204a4bdcb40490dadeae",
+      "d36793c2d96c8779ed7f50e781a6264dba68108508fc5e900c1b789976efde38"
+    ],
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp": [
+      "87121b721efbc8f5e25f185b562e8d7d96b329eed2260e84997060890f356dd0",
+      "5c79649860dabce5b1ef3a6902a38f9aea4b5370b71aa8e06ccfdc9049c4eeb0"
+    ],
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_stub.cpp": [
+      "1a6c3fea391c0be5fa04c89de678082c88d194f5a28f50830c011b4bdfb8aeb6",
+      "ae22747a973a2ae86ecc261aacffde6fc0517d1e87af05ff60e0a6ef0ff3aee9"
+    ],
+    "interface/sdk-js/api/application/ServiceExtensionContext.d.ts": [
+      "0cb3dc0289fcd759d6be6b3eee4f54e6ced393fe42fee93738c653fa6296eed2",
+      "1bee4b82d2cb51dd59cd02f98b19a6a002abb4399b2ae16e7aca35a2e6da863d"
+    ]
+  },
+  "legacy_final": {
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets": "e0358662d8a5d53c6627a8a2392243036b8fb23c222e2290b5245d7bbf2d7a50",
+    "foundation/ability/ability_runtime/frameworks/js/napi/service_extension_context/service_extension_context.js": "5af45bf9390711dd064272df44141d20595212c48f70c058e6c37bcfd506fc3d",
+    "foundation/ability/ability_runtime/frameworks/native/ability/native/js_service_extension_context.cpp": "a6e17567ddbef26dbbbf2c4c156ebdc9b08078c5d904b82b7f7121de1dcca78d",
+    "foundation/ability/ability_runtime/frameworks/native/appkit/ability_runtime/service_extension_context.cpp": "95c52ae1a8d38b14cd7fe129420095e4b60bef4e737c15da7f795efc8eae73d0",
+    "foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_client.h": "55a94d196289cfba53d2b11f53e37248d270d390c80a974c16299e368611cefc",
+    "foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_interface.h": "78ecdcc61f2b1b2fb332555a223850b19b30429e4c08a53e7c215b8a6da74eb2",
+    "foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_ipc_interface_code.h": "878200e6c08c7ffc5caa01ccc13f401ceb80e68611b54ce05136fdb5b36444df",
+    "foundation/ability/ability_runtime/interfaces/kits/native/appkit/ability_runtime/service_extension_context.h": "26c2fae820891e92a7d57e1d337a7e32d9a237818633241cfb1af8fb2949946f",
+    "foundation/ability/ability_runtime/services/abilitymgr/include/ability_connect_manager.h": "209d3e5214fb244f665752b572ef617a803f18cbdd211b99fbd0baf5373a33ae",
+    "foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_proxy.h": "d39dd8052b38c8460f8949a0af4e0dbb13d46920840c2f045938c5de0c893c7d",
+    "foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_service.h": "3bd8401bc3d7192cb0e8ae7ae8aba03db0d68799698a3027ebec21e4e626287c",
+    "foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_stub.h": "1cdf5ba081fde209f137db8b1b089e32cdb6e0e86ac8abf1a7ecc09357841feb",
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_connect_manager.cpp": "4d81329c7fa52582fa712a480baac44135fff5eb9f9a140e69049561c9b25d66",
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_client.cpp": "943b83f76a707994d6a1e6be748013a22009c4c4af53e1986874b93263c63ed8",
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_proxy.cpp": "d36793c2d96c8779ed7f50e781a6264dba68108508fc5e900c1b789976efde38",
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp": "5c79649860dabce5b1ef3a6902a38f9aea4b5370b71aa8e06ccfdc9049c4eeb0",
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_stub.cpp": "ae22747a973a2ae86ecc261aacffde6fc0517d1e87af05ff60e0a6ef0ff3aee9",
+    "interface/sdk-js/api/application/ServiceExtensionContext.d.ts": "1bee4b82d2cb51dd59cd02f98b19a6a002abb4399b2ae16e7aca35a2e6da863d"
+  },
+  "migration": {
+    "scope": "complete original eighteen-file legacy final only; unknown or mixed states refused",
+    "changed_file": "foundation/ability/ability_runtime/frameworks/native/ability/native/js_service_extension_context.cpp",
+    "legacy_patch": "0002-upgrade-legacy-napi-typeof.patch",
+    "reason": "real first arm64 phone build rejects undeclared GetType; use checked napi_typeof without changing argument or async semantics"
+  },
+  "previous_napi_final": {
+    "applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets": "e0358662d8a5d53c6627a8a2392243036b8fb23c222e2290b5245d7bbf2d7a50",
+    "foundation/ability/ability_runtime/frameworks/js/napi/service_extension_context/service_extension_context.js": "5af45bf9390711dd064272df44141d20595212c48f70c058e6c37bcfd506fc3d",
+    "foundation/ability/ability_runtime/frameworks/native/ability/native/js_service_extension_context.cpp": "0d7dcd29b5fde218ba473b74def468778bb63b62c1c1679fbde3b03fd9448cd6",
+    "foundation/ability/ability_runtime/frameworks/native/appkit/ability_runtime/service_extension_context.cpp": "95c52ae1a8d38b14cd7fe129420095e4b60bef4e737c15da7f795efc8eae73d0",
+    "foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_client.h": "55a94d196289cfba53d2b11f53e37248d270d390c80a974c16299e368611cefc",
+    "foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_interface.h": "78ecdcc61f2b1b2fb332555a223850b19b30429e4c08a53e7c215b8a6da74eb2",
+    "foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_ipc_interface_code.h": "878200e6c08c7ffc5caa01ccc13f401ceb80e68611b54ce05136fdb5b36444df",
+    "foundation/ability/ability_runtime/interfaces/kits/native/appkit/ability_runtime/service_extension_context.h": "26c2fae820891e92a7d57e1d337a7e32d9a237818633241cfb1af8fb2949946f",
+    "foundation/ability/ability_runtime/services/abilitymgr/include/ability_connect_manager.h": "209d3e5214fb244f665752b572ef617a803f18cbdd211b99fbd0baf5373a33ae",
+    "foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_proxy.h": "d39dd8052b38c8460f8949a0af4e0dbb13d46920840c2f045938c5de0c893c7d",
+    "foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_service.h": "3bd8401bc3d7192cb0e8ae7ae8aba03db0d68799698a3027ebec21e4e626287c",
+    "foundation/ability/ability_runtime/services/abilitymgr/include/ability_manager_stub.h": "1cdf5ba081fde209f137db8b1b089e32cdb6e0e86ac8abf1a7ecc09357841feb",
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_connect_manager.cpp": "4d81329c7fa52582fa712a480baac44135fff5eb9f9a140e69049561c9b25d66",
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_client.cpp": "943b83f76a707994d6a1e6be748013a22009c4c4af53e1986874b93263c63ed8",
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_proxy.cpp": "d36793c2d96c8779ed7f50e781a6264dba68108508fc5e900c1b789976efde38",
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_service.cpp": "5c79649860dabce5b1ef3a6902a38f9aea4b5370b71aa8e06ccfdc9049c4eeb0",
+    "foundation/ability/ability_runtime/services/abilitymgr/src/ability_manager_stub.cpp": "ae22747a973a2ae86ecc261aacffde6fc0517d1e87af05ff60e0a6ef0ff3aee9",
+    "interface/sdk-js/api/application/ServiceExtensionContext.d.ts": "1bee4b82d2cb51dd59cd02f98b19a6a002abb4399b2ae16e7aca35a2e6da863d"
+  },
+  "sdk26_declaration": "Normal source prepare installs the exact implemented terminateSelfIfStartId(number): Promise<boolean> declaration in selected fixed SDK26; no checker suppression or native implementation substitution."
+}

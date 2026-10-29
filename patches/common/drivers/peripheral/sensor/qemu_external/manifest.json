@@ -1,0 +1,101 @@
+{
+  "project": "drivers/peripheral",
+  "revision": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+  "feature": "drivers_peripheral_sensor_feature_qemu_external",
+  "originals": {
+    "drivers/peripheral/sensor/sensor.gni": {
+      "before": "a997c12d5a68797fcce3f8db7e92eaea71da10735e32a4b38a8f12bce93c8e5a",
+      "after": "5f27090088cc517bafc94ebc99e8f36219e5095dc05091bdbe2323c007d720f2"
+    },
+    "drivers/peripheral/sensor/bundle.json": {
+      "before": "412d4eb7ea791efb70fbf37a7147f80d56c1dcc7f3815c2c094cf72bd0e517d7",
+      "after": "e64d8644d1e1888be7d69e2a47db3364c5450b7223b7bcfdd92c7f629763f9c0"
+    },
+    "drivers/peripheral/sensor/hdi_impl/BUILD.gn": {
+      "before": "593dc5799e8a6317cce6ce9ce911aa95640fd6eafa12d0ac7f88bd6321e52acc",
+      "after": "bee5ea39d24207609ff2629a9809d9889e675e8dac42e162279a68fb3b76acfb"
+    }
+  },
+  "files": {
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.cpp": {
+      "component_file": "files/hdi_impl/qemu_sensor_input.cpp",
+      "sha256": "c5b22821e22a87bb2b17613b21ec6c2f91d0980b9d8584af7bcafcb1c1b440c0"
+    },
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.h": {
+      "component_file": "files/hdi_impl/qemu_sensor_input.h",
+      "sha256": "01954d0d3e04ccc47d1cc376a52764d6dabc01646dc27d61d39e1f0aa51fba69"
+    },
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_protocol.h": {
+      "component_file": "files/hdi_impl/qemu_sensor_protocol.h",
+      "sha256": "4c0f8e9a1a2cc85aac9b62ccd5aed97ae0de3d051ba79009f2fb102dee9236f1"
+    },
+    "drivers/peripheral/sensor/hdi_impl/qemu_sensor_vdi.cpp": {
+      "component_file": "files/hdi_impl/qemu_sensor_vdi.cpp",
+      "sha256": "277481b611de090bc040809656f6ff7d2efe93de72af6cd3141f475734d89592"
+    },
+    "drivers/peripheral/sensor/hdi_impl/qemu_rotation_input.cpp": {
+      "component_file": "files/hdi_impl/qemu_rotation_input.cpp",
+      "sha256": "b46f15a091a37b82d0351aac218e41e946ae9688ace0c832565bd46f16980120"
+    },
+    "drivers/peripheral/sensor/hdi_impl/qemu_rotation_input.h": {
+      "component_file": "files/hdi_impl/qemu_rotation_input.h",
+      "sha256": "f9cb32945cbcf5deafdf08b00728bc58445642b82579a606dd184ab82e772974"
+    },
+    "drivers/peripheral/sensor/hdi_impl/qemu_rotation_protocol.h": {
+      "component_file": "files/hdi_impl/qemu_rotation_protocol.h",
+      "sha256": "aa5e0f33b5f6152e77143a0f2658b8d15de5abc43b5dc8d4c5a7f78657ad1325"
+    },
+    "drivers/peripheral/sensor/hdi_impl/qemu_headposture_input.cpp": {
+      "component_file": "files/hdi_impl/qemu_headposture_input.cpp",
+      "sha256": "60a797e0b655cbcef8c9490ba8fada29461ac66b87c54ea4c020d9d1817fa3aa"
+    },
+    "drivers/peripheral/sensor/hdi_impl/qemu_headposture_input.h": {
+      "component_file": "files/hdi_impl/qemu_headposture_input.h",
+      "sha256": "f371ea939460bcdc6553d9c8bdeeb7192f6638329e7f01ff5a531c9c64f219ce"
+    },
+    "drivers/peripheral/sensor/hdi_impl/qemu_headposture_protocol.h": {
+      "component_file": "files/hdi_impl/qemu_headposture_protocol.h",
+      "sha256": "4c7c733c4031a8f19f89df3bb1d46e20fa9c55bf379663ac77d55b919643bb83"
+    }
+  },
+  "patch_sha256": "b0b263a452e3bcd6423f67f0a368d64af7f09cc83752196c9dc946298e4c16f1",
+  "legacy": {
+    "originals": {
+      "drivers/peripheral/sensor/sensor.gni": "5f27090088cc517bafc94ebc99e8f36219e5095dc05091bdbe2323c007d720f2",
+      "drivers/peripheral/sensor/bundle.json": "e64d8644d1e1888be7d69e2a47db3364c5450b7223b7bcfdd92c7f629763f9c0",
+      "drivers/peripheral/sensor/hdi_impl/BUILD.gn": "74f826f2d93caa088f95153932861d8957230689071431a18be16742f2f5a549"
+    },
+    "files": {
+      "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.cpp": "c5b22821e22a87bb2b17613b21ec6c2f91d0980b9d8584af7bcafcb1c1b440c0",
+      "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.h": "01954d0d3e04ccc47d1cc376a52764d6dabc01646dc27d61d39e1f0aa51fba69",
+      "drivers/peripheral/sensor/hdi_impl/qemu_sensor_protocol.h": "4c0f8e9a1a2cc85aac9b62ccd5aed97ae0de3d051ba79009f2fb102dee9236f1",
+      "drivers/peripheral/sensor/hdi_impl/qemu_sensor_vdi.cpp": "40a0ad3a6ac7e16d6b4c3ed7d337b25e538e81ea78639c0545c7b2544b305fac"
+    }
+  },
+  "legacy_edit": {
+    "path": "drivers/peripheral/sensor/hdi_impl/BUILD.gn",
+    "before": "      \"qemu_sensor_input.cpp\",\n",
+    "after": "      \"qemu_sensor_input.cpp\",\n      \"qemu_rotation_input.cpp\",\n      \"qemu_headposture_input.cpp\",\n"
+  },
+  "rotation_legacy": {
+    "originals": {
+      "drivers/peripheral/sensor/sensor.gni": "5f27090088cc517bafc94ebc99e8f36219e5095dc05091bdbe2323c007d720f2",
+      "drivers/peripheral/sensor/bundle.json": "e64d8644d1e1888be7d69e2a47db3364c5450b7223b7bcfdd92c7f629763f9c0",
+      "drivers/peripheral/sensor/hdi_impl/BUILD.gn": "0cbf676ac1c450ae8234054d482cb9fb787fa7bee7d02b37049165978733a7f6"
+    },
+    "files": {
+      "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.cpp": "c5b22821e22a87bb2b17613b21ec6c2f91d0980b9d8584af7bcafcb1c1b440c0",
+      "drivers/peripheral/sensor/hdi_impl/qemu_sensor_input.h": "01954d0d3e04ccc47d1cc376a52764d6dabc01646dc27d61d39e1f0aa51fba69",
+      "drivers/peripheral/sensor/hdi_impl/qemu_sensor_protocol.h": "4c0f8e9a1a2cc85aac9b62ccd5aed97ae0de3d051ba79009f2fb102dee9236f1",
+      "drivers/peripheral/sensor/hdi_impl/qemu_sensor_vdi.cpp": "9da73f2633c3d188f98b32c333dfaf13ea681abeb93047bdf702af06cb44e247",
+      "drivers/peripheral/sensor/hdi_impl/qemu_rotation_input.cpp": "b46f15a091a37b82d0351aac218e41e946ae9688ace0c832565bd46f16980120",
+      "drivers/peripheral/sensor/hdi_impl/qemu_rotation_input.h": "f9cb32945cbcf5deafdf08b00728bc58445642b82579a606dd184ab82e772974",
+      "drivers/peripheral/sensor/hdi_impl/qemu_rotation_protocol.h": "aa5e0f33b5f6152e77143a0f2658b8d15de5abc43b5dc8d4c5a7f78657ad1325"
+    },
+    "edit": {
+      "path": "drivers/peripheral/sensor/hdi_impl/BUILD.gn",
+      "before": "      \"qemu_rotation_input.cpp\",\n",
+      "after": "      \"qemu_rotation_input.cpp\",\n      \"qemu_headposture_input.cpp\",\n"
+    }
+  }
+}

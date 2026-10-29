@@ -1,0 +1,52 @@
+diff --git a/device/qemu/common/virt_full/kernel/firmware/BUILD.gn b/device/qemu/common/virt_full/kernel/firmware/BUILD.gn
+--- a/device/qemu/common/virt_full/kernel/firmware/BUILD.gn
++++ b/device/qemu/common/virt_full/kernel/firmware/BUILD.gn
+@@ -30,10 +30,33 @@
+   part_name = virt_part_name
+ }
+ 
++# These signed upstream assets are pinned and verified by the QEMU build recipe.
++# Keep cfg80211's existing built-in certificate and signature enforcement.
++foreach(regdb_file, [ "regulatory.db", "regulatory.db.p7s" ]) {
++  ohos_prebuilt_etc(regdb_file) {
++    source = "//device/soc/unisoc/p7885/hardware/wcn/$regdb_file"
++    install_images = [ "system" ]
++    module_install_dir = "lib/firmware"
++    subsystem_name = virt_subsystem_name
++    part_name = virt_part_name
++  }
++}
++
++ohos_prebuilt_etc("qemu-regulatory.cfg") {
++  source = "qemu-regulatory.cfg"
++  install_images = [ "vendor" ]
++  relative_install_dir = "init"
++  subsystem_name = virt_subsystem_name
++  part_name = virt_part_name
++}
++
+ group("virt_firmware") {
+   deps = [
++    ":regulatory.db",
++    ":regulatory.db.p7s",
++    ":qemu-regulatory.cfg",
+     ":rtw8852a_fw",
+     ":iwlwifi_fw",
+     ":iwlwifi_pnvm"
+   ]
+ }
+diff --git a/device/qemu/common/virt_full/kernel/firmware/qemu-regulatory.cfg b/device/qemu/common/virt_full/kernel/firmware/qemu-regulatory.cfg
+new file mode 100644
+--- /dev/null
++++ b/device/qemu/common/virt_full/kernel/firmware/qemu-regulatory.cfg
+@@ -0,0 +1,10 @@
++{
++    "jobs": [
++        {
++            "name": "pre-init",
++            "cmds": [
++                "write /sys/module/firmware_class/parameters/path /system/lib/firmware"
++            ]
++        }
++    ]
++}

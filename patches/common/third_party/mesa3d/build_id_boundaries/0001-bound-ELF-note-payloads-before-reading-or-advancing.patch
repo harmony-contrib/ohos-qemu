@@ -1,0 +1,65 @@
+diff --git a/src/util/build_id.c b/src/util/build_id.c
+--- a/src/util/build_id.c
++++ b/src/util/build_id.c
+@@ -75,29 +75,42 @@
+       if (info->dlpi_phdr[i].p_type != PT_NOTE)
+          continue;
+ 
+-      struct build_id_note *note = (void *)(info->dlpi_addr +
+-                                            info->dlpi_phdr[i].p_vaddr);
+-      ptrdiff_t len = info->dlpi_phdr[i].p_filesz;
++      const unsigned char *cursor = (const void *)(info->dlpi_addr +
++                                                  info->dlpi_phdr[i].p_vaddr);
++      size_t len = info->dlpi_phdr[i].p_filesz;
+ 
+-      while (len >= sizeof(struct build_id_note)) {
+-         if (note->nhdr.n_type == NT_GNU_BUILD_ID &&
+-            note->nhdr.n_descsz != 0 &&
+-            note->nhdr.n_namesz == 4 &&
+-            memcmp(note->name, "GNU", 4) == 0) {
+-            data->note = note;
++      while (len >= sizeof(ElfW(Nhdr))) {
++         ElfW(Nhdr) header;
++         memcpy(&header, cursor, sizeof(header));
++
++         /* Validate each payload and its padding before any dereference or
++          * addition. Note sizes are 32-bit even when size_t is 32-bit. */
++         size_t namesz = header.n_namesz;
++         size_t descsz = header.n_descsz;
++         size_t available = len - sizeof(header);
++         if (namesz > available)
++            break;
++         available -= namesz;
++         size_t namepad = (4 - (namesz & 3)) & 3;
++         if (namepad > available)
++            break;
++         available -= namepad;
++         if (descsz > available)
++            break;
++         available -= descsz;
++         size_t descpad = (4 - (descsz & 3)) & 3;
++         if (descpad > available)
++            break;
++
++         if (header.n_type == NT_GNU_BUILD_ID && descsz != 0 && namesz == 4 &&
++             ((uintptr_t)cursor % _Alignof(ElfW(Nhdr))) == 0 &&
++             memcmp(cursor + sizeof(header), "GNU", 4) == 0) {
++            data->note = (struct build_id_note *)(void *)cursor;
+             return 1;
+          }
+ 
+-         size_t offset = sizeof(ElfW(Nhdr)) +
+-                         ALIGN_POT(note->nhdr.n_namesz, 4) +
+-                         ALIGN_POT(note->nhdr.n_descsz, 4);
+-         note = (struct build_id_note *)((char *)note + offset);
+-
+-         // 05 00 00 00 04 00 00 00 4f 48 4f 53 00 01 00 00 00 00 00 00
+-         if (note->nhdr.n_type == 0x534f484f && note > 20) {
+-            // .note.ohos.ident is not a valid PT_NOTE section, use offset in section header later
+-            offset = 20;
+-         }
++         size_t offset = len - (available - descpad);
++         cursor += offset;
+          len -= offset;
+       }
+    }

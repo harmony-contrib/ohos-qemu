@@ -1,0 +1,65 @@
+diff --git a/base/startup/appspawn/modules/nweb_adapter/nwebspawn_adapter.cpp b/base/startup/appspawn/modules/nweb_adapter/nwebspawn_adapter.cpp
+--- a/base/startup/appspawn/modules/nweb_adapter/nwebspawn_adapter.cpp
++++ b/base/startup/appspawn/modules/nweb_adapter/nwebspawn_adapter.cpp
+@@ -20,6 +20,8 @@
+ #include <map>
+ #include <mutex>
+ #include <string>
++#include <signal.h>
++#include <unistd.h>
+ 
+ #ifdef __MUSL__
+ #include <cerrno>
+@@ -54,6 +56,42 @@
+ static RenderIpcFds g_renderIpcFds = {-1, -1, -1};
+ }  // namespace
+ 
++static void ExitRendererOnTermination(int signalNumber)
++{
++    // Only async-signal-safe operations: Chromium observes the process exit
++    // and reports it to the browser, which owns renderer recovery.
++    _exit(128 + signalNumber);
++}
++
++static bool EnableRendererNamespaceTermination(const std::string &processType)
++{
++    if (processType != "render" || getpid() != 1) {
++        return true;
++    }
++    // Namespace init ignores default-action SIGTERM, including M144's
++    // kill(getpid(), SIGTERM). An explicit disposition keeps PID isolation
++    // intact while making the public terminateRenderProcess API effective.
++    struct sigaction previous {};
++    if (sigaction(SIGTERM, nullptr, &previous) != 0) {
++        APPSPAWN_LOGE("query renderer SIGTERM disposition failed: %{public}d", errno);
++        return false;
++    }
++    if (previous.sa_handler == SIG_IGN) {
++        APPSPAWN_LOGE("renderer SIGTERM was explicitly ignored");
++        return false;
++    }
++    if (previous.sa_handler != SIG_DFL) {
++        return true; // Preserve an engine-owned explicit handler.
++    }
++    struct sigaction action {};
++    action.sa_handler = ExitRendererOnTermination;
++    if (sigemptyset(&action.sa_mask) != 0 || sigaction(SIGTERM, &action, nullptr) != 0) {
++        APPSPAWN_LOGE("install renderer SIGTERM disposition failed: %{public}d", errno);
++        return false;
++    }
++    return true;
++}
++
+ static bool SetSeccompPolicyForRenderer(void *nwebRenderHandle)
+ {
+ #ifdef WITH_SECCOMP
+@@ -182,6 +220,9 @@
+     char *processTypeChar = reinterpret_cast<char *>(GetAppPropertyExt(
+         reinterpret_cast<AppSpawningCtx *>(client), MSG_EXT_NAME_PROCESS_TYPE, &len));
+     std::string processType = (processTypeChar != nullptr) ? std::string(processTypeChar) : "";
++    if (!EnableRendererNamespaceTermination(processType)) {
++        return -1;
++    }
+     if (processType == "render" && !SetSeccompPolicyForRenderer(nwebRenderHandle)) {
+         return -1;
+     }

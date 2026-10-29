@@ -1,0 +1,231 @@
+diff --git a/base/security/huks/utils/compatibility_bin/compatibility_standard_bin.c b/base/security/huks/utils/compatibility_bin/compatibility_standard_bin.c
+--- a/base/security/huks/utils/compatibility_bin/compatibility_standard_bin.c
++++ b/base/security/huks/utils/compatibility_bin/compatibility_standard_bin.c
+@@ -1,102 +1,125 @@
+-/*
+- * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *    http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#include <dirent.h>
+-#include <errno.h>
+-#include <unistd.h>
+-#include <sys/types.h>
+-#include <stdio.h>
+-#include <sys/stat.h>
+-#include <stdbool.h>
+-
+-#include <securec.h>
+-
+-/**
+- * This bin file is used in l2 device triggered when device initializing
+-*/
+-
+-#include "hilog/log.h"
+-#define LOG_ENGINE LOG_CORE
+-#define LOG_PUBLIC "{public}"
+-#undef LOG_DOMAIN
+-#define LOG_DOMAIN 0xD002F00 /* Security subsystem's domain id */
+-
+-#define HKS_LOG_E(fmt, arg...) HILOG_ERROR(LOG_ENGINE, "%" LOG_PUBLIC "s: " fmt "\n", __func__, ##arg)
+-
+-#define HUKS_SERVICE_UID 3510
+-#define DIR_TYPE 4
+-#define DEFAULT_PATH_LEN 1024
+-#define DEFAULT_HUKS_PATH_PERMISSION 0700
+-
+-#include <stdio.h>
+-
+-#include <errno.h>
+-
+-static void ChangeDirAndFilesPerm(const char *path)
+-{
+-    HKS_LOG_E("enter ChangeDirAndFilesPerm");
+-    DIR *dir;
+-    struct dirent *ptr;
+-    dir = opendir(path);
+-    if (dir == NULL) {
+-        return;
+-    }
+-    int ret = EOK;
+-    while ((ptr = readdir(dir)) != NULL) {
+-        if (strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0) {
+-            continue;
+-        }
+-        char curPath[DEFAULT_PATH_LEN] = { 0 };
+-
+-        ret = strcpy_s(curPath, DEFAULT_PATH_LEN, path);
+-        if (ret != EOK) {
+-            break;
+-        }
+-        ret = strcat_s(curPath, DEFAULT_PATH_LEN, "/");
+-        if (ret != EOK) {
+-            break;
+-        }
+-        ret = strcat_s(curPath, DEFAULT_PATH_LEN, ptr->d_name);
+-        if (ret != EOK) {
+-            break;
+-        }
+-
+-        ret = chown(curPath, HUKS_SERVICE_UID, HUKS_SERVICE_UID);
+-        if (ret != EOK) {
+-            break;
+-        }
+-        if ((ptr->d_type != DIR_TYPE)) {
+-            if (chmod(curPath, S_IRUSR | S_IWUSR) < 0) {
+-                break;
+-            }
+-        } else {
+-            if (chmod(curPath, S_IRWXU) < 0) {
+-                break;
+-            }
+-            ChangeDirAndFilesPerm(curPath);
+-        }
+-    }
+-    if (ret != EOK) {
+-        printf("chmod dir and file failed! errno = 0x%x \n", errno);
+-    }
+-    (void)closedir(dir);
+-}
+-
+-int main(void)
+-{
+-    const char *path = "/data/data/huks_service";
+-    // change directories and files permission
+-    ChangeDirAndFilesPerm(path);
+-}
++/*
++ * Copyright (c) 2023-2023 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *    http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include <dirent.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <stdint.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <unistd.h>
++
++#define HUKS_SERVICE_UID 3510
++#define MAX_DIRECTORY_DEPTH 128
++
++/* Migrate only real legacy files beneath already-open directory descriptors.
++ * Never follow links or modify permissions through attacker-swappable paths. */
++static int ChangeDirAndFilesPerm(int parentFd, unsigned int depth,
++    uint64_t *directories, uint64_t *files)
++{
++    if (depth > MAX_DIRECTORY_DEPTH) {
++        return -ELOOP;
++    }
++    int scanFd = dup(parentFd);
++    if (scanFd < 0) {
++        return -errno;
++    }
++    DIR *directory = fdopendir(scanFd);
++    if (directory == NULL) {
++        int status = -errno;
++        (void)close(scanFd);
++        return status;
++    }
++    int status = 0;
++    for (;;) {
++        errno = 0;
++        struct dirent *entry = readdir(directory);
++        if (entry == NULL) {
++            status = errno == 0 ? 0 : -errno;
++            break;
++        }
++        if (entry->d_name[0] == '.' && (entry->d_name[1] == '\0' ||
++            (entry->d_name[1] == '.' && entry->d_name[2] == '\0'))) {
++            continue;
++        }
++        int childFd = openat(parentFd, entry->d_name,
++            O_RDONLY | O_NOFOLLOW | O_CLOEXEC | O_NONBLOCK);
++        if (childFd < 0) {
++            status = -errno;
++            break;
++        }
++        struct stat info;
++        if (fstat(childFd, &info) != 0) {
++            status = -errno;
++        } else if (S_ISDIR(info.st_mode)) {
++            status = ChangeDirAndFilesPerm(childFd, depth + 1, directories, files);
++            if (status == 0 && fchown(childFd, HUKS_SERVICE_UID, HUKS_SERVICE_UID) != 0) {
++                status = -errno;
++            }
++            if (status == 0 && fchmod(childFd, S_IRWXU) != 0) {
++                status = -errno;
++            }
++            if (status == 0) {
++                ++*directories;
++            }
++        } else if (S_ISREG(info.st_mode) && info.st_nlink == 1) {
++            if (fchown(childFd, HUKS_SERVICE_UID, HUKS_SERVICE_UID) != 0 ||
++                fchmod(childFd, S_IRUSR | S_IWUSR) != 0) {
++                status = -errno;
++            } else {
++                ++*files;
++            }
++        } else {
++            status = -EINVAL;
++        }
++        if (close(childFd) != 0 && status == 0) {
++            status = -errno;
++        }
++        if (status != 0) {
++            break;
++        }
++    }
++    if (closedir(directory) != 0 && status == 0) {
++        status = -errno;
++    }
++    return status;
++}
++
++int main(void)
++{
++    uint64_t directories = 0;
++    uint64_t files = 0;
++    int rootFd = open("/data/data/huks_service", O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
++    int status = rootFd < 0 ? -errno : ChangeDirAndFilesPerm(rootFd, 0, &directories, &files);
++    if (rootFd >= 0 && close(rootFd) != 0 && status == 0) {
++        status = -errno;
++    }
++    /* Init sends stdout to /dev/null. Log actual completion without key aliases. */
++    char message[192];
++    int length = snprintf(message, sizeof(message),
++        "HUKS_COMPATIBILITY pid=%ld uid=%ld status=%d directories=%llu files=%llu\n",
++        (long)getpid(), (long)geteuid(), status, (unsigned long long)directories, (unsigned long long)files);
++    if (length > 0 && (size_t)length < sizeof(message)) {
++        (void)fputs(message, stdout);
++        int logFd = open("/dev/kmsg", O_WRONLY | O_NOFOLLOW | O_CLOEXEC);
++        if (logFd >= 0) {
++            (void)dprintf(logFd, "<6>%s", message);
++            (void)close(logFd);
++        }
++    }
++    return status == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
++}

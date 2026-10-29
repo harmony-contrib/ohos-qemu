@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "scope": "exact E exported preimages and F proposed source ONLY; no compile/runtime claim",
+  "project": "base/theme/wallpaper_mgr",
+  "revision": "42256bdeaa504da4ae4d038c24d42a4601e3a6cf",
+  "export14": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-postcycle-native-readonly-export-14-01/public-source/exports.json",
+    "sha256": "fb7357c1823163f12e1eb5ce295b6e85777103bd411797bb92cb9117a0bf34ba"
+  },
+  "states": {
+    "pristine": {
+      "services/src/wallpaper_service.cpp": "3271676807142d4b03664db0850c0d58d11ec0258941f98bd5658d57003038ac",
+      "services/src/wallpaper_extension_ability_connection.cpp": "1870196dae94f714357da2532de88c55f8b020bcb6bf105b86c3dbdc0edb317d",
+      "services/src/wallpaper_common_event_subscriber.cpp": "d7737bc2bb719e76f1dc5cbf0af625f0719bfa5ea3c94dcc1c9c3db084db91c6",
+      "services/include/wallpaper_common_event_subscriber.h": "1682122e6c15e514159b353a0fec50d99360e7eddd29d9f67f39366758061c77",
+      "services/src/wallpaper_extension_ability_death_recipient.cpp": "e7489497ccead3689af09a0b279b8b254c00244df907a64dca78fe1f4a1d66f9",
+      "services/include/wallpaper_service.h": "ee7544a8ee8b0d4911122afa4f4d15ce3f3af74c037a06ff64a307b014a814ba",
+      "services/include/wallpaper_extension_ability_connection.h": "60dc04caae98b9cc7f19643d23857a64c6dff44d5868b60a09486656ae133f12",
+      "services/BUILD.gn": "16c6df2d65364e8a54582a1736d950053d41abe3e945b04fda3caff8ac0b97dd",
+      "services/include/qemu_wallpaper_renderer.h": null,
+      "services/src/qemu_wallpaper_renderer.cpp": null
+    },
+    "E": {
+      "services/src/wallpaper_service.cpp": "5590864bd8e51f2223e03bc709207c1a1619d36abcf0b812f31ec67e0c47f1c4",
+      "services/src/wallpaper_extension_ability_connection.cpp": "1870196dae94f714357da2532de88c55f8b020bcb6bf105b86c3dbdc0edb317d",
+      "services/src/wallpaper_common_event_subscriber.cpp": "d7737bc2bb719e76f1dc5cbf0af625f0719bfa5ea3c94dcc1c9c3db084db91c6",
+      "services/include/wallpaper_common_event_subscriber.h": "1682122e6c15e514159b353a0fec50d99360e7eddd29d9f67f39366758061c77",
+      "services/src/wallpaper_extension_ability_death_recipient.cpp": "e7489497ccead3689af09a0b279b8b254c00244df907a64dca78fe1f4a1d66f9",
+      "services/include/wallpaper_service.h": "ee7544a8ee8b0d4911122afa4f4d15ce3f3af74c037a06ff64a307b014a814ba",
+      "services/include/wallpaper_extension_ability_connection.h": "60dc04caae98b9cc7f19643d23857a64c6dff44d5868b60a09486656ae133f12",
+      "services/BUILD.gn": "3308963b13350d8ab5d19965a94d244a1ab98dda7141d518b4225ac8ca74d824",
+      "services/include/qemu_wallpaper_renderer.h": null,
+      "services/src/qemu_wallpaper_renderer.cpp": null
+    },
+    "F": {
+      "services/BUILD.gn": "2e680cc60e4d235232e86737953a07b5c8dbf7b37d348da5e2492029329631e8",
+      "services/include/qemu_wallpaper_renderer.h": "9357c4c407a9341c7ca351ef172e8be802ecc8552942e7e73a5a225031d4301a",
+      "services/include/wallpaper_common_event_subscriber.h": "1682122e6c15e514159b353a0fec50d99360e7eddd29d9f67f39366758061c77",
+      "services/include/wallpaper_extension_ability_connection.h": "60dc04caae98b9cc7f19643d23857a64c6dff44d5868b60a09486656ae133f12",
+      "services/include/wallpaper_service.h": "d950321b3d233291fdf576492e5d3d1c7b1f4d904e47c535153d63fdaba09421",
+      "services/src/qemu_wallpaper_renderer.cpp": "54eeedfa8563053a2009e072dba24ad58b33a38d8e2037326105666e8893459b",
+      "services/src/wallpaper_common_event_subscriber.cpp": "d7737bc2bb719e76f1dc5cbf0af625f0719bfa5ea3c94dcc1c9c3db084db91c6",
+      "services/src/wallpaper_extension_ability_connection.cpp": "1870196dae94f714357da2532de88c55f8b020bcb6bf105b86c3dbdc0edb317d",
+      "services/src/wallpaper_extension_ability_death_recipient.cpp": "e7489497ccead3689af09a0b279b8b254c00244df907a64dca78fe1f4a1d66f9",
+      "services/src/wallpaper_service.cpp": "10c5000ef4a14cbc1790f6ea6e0a73168a862c03be19ba47e19680dd99229728"
+    }
+  },
+  "patch_sha256": {
+    "0001-real-wallpaper-settings-and-renderer.patch": "97a1c91c07dd56be7940608a5bed9dd041d8139341dc3999e8912d1bd5fbfc0f",
+    "0002-recover-real-renderer-after-public-desktop-updates.patch": "579f0898870c0005aa328bf41135788f16daafca8611f7dd5ddaaa40974ecf6e"
+  },
+  "API_export22": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-UI-and-Wallpaper-contract-readonly-export-22-01/public-source/exports.json",
+    "sha256": "d8eea24c66a376ca9ba11194c75500221f95094a4a67b7245ea69f523ea30cfe",
+    "declarations": {
+      "foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_client.h": "28b93cdbb4ee413cebd2300afc510cab6eaed7bb65a8235d76fe4a9d5d2136f4",
+      "foundation/ability/ability_runtime/interfaces/inner_api/ability_manager/include/ability_manager_interface.h": "cb4fb6949b79d833f929692217bc4511ac00865d98c6a87c1251721537825e88",
+      "base/notification/eventhandler/interfaces/inner_api/event_handler.h": "6431fdc4b4aef2d2d6043406c61c39c88afb9ffdae6ad0113f37a06234f06392"
+    }
+  },
+  "supersedes_source_manifest_sha256": "72b794c3e5d1e9624c02edd3b854ffa1318ebea4e8e97591fb6d2675156a5c19",
+  "revision_note": "host18 repair: Git new-file metadata only; all E and F source hashes unchanged"
+}

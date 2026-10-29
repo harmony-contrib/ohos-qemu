@@ -1,0 +1,25 @@
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_common/wifi_channel_helper.cpp b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_common/wifi_channel_helper.cpp
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_common/wifi_channel_helper.cpp
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_common/wifi_channel_helper.cpp
+@@ -61,3 +61,7 @@
+ int WifiChannelHelper::GetValidBands(std::vector<BandType> &bands)
+ {
++#ifdef WIFI_SOFTWARE_SCAN_BACKEND
++    // Construction may precede WPA startup; regulatory updates are asynchronous.
++    UpdateValidFreqs();
++#endif
+     std::unique_lock<std::mutex> lock(mMutex);
+@@ -92,3 +96,6 @@
+ int WifiChannelHelper::GetValidChannels(ChannelsTable &channelsInfo)
+ {
++#ifdef WIFI_SOFTWARE_SCAN_BACKEND
++    UpdateValidFreqs();
++#endif
+     std::unique_lock<std::mutex> lock(mMutex);
+@@ -158,3 +165,6 @@
+ bool WifiChannelHelper::GetAvailableScanFreqs(ScanBandType band, std::vector<int32_t>& freqs)
+ {
++#ifdef WIFI_SOFTWARE_SCAN_BACKEND
++    UpdateValidFreqs();
++#endif
+     std::unique_lock<std::mutex> lock(mMutex);

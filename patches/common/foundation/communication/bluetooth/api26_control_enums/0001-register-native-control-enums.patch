@@ -1,0 +1,63 @@
+diff --git a/foundation/communication/bluetooth/frameworks/js/napi/src/connection/native_module_connection.cpp b/foundation/communication/bluetooth/frameworks/js/napi/src/connection/native_module_connection.cpp
+--- a/foundation/communication/bluetooth/frameworks/js/napi/src/connection/native_module_connection.cpp
++++ b/foundation/communication/bluetooth/frameworks/js/napi/src/connection/native_module_connection.cpp
+@@ -24,10 +24,59 @@
+ namespace OHOS {
+ namespace Bluetooth {
++static napi_status RegisterControlEnums(napi_env env, napi_value exports)
++{
++    struct Member { const char *name; int32_t value; };
++    static const Member object[] = {
++        {"LEFT_EAR", ControlObject::LEFT_EAR},
++        {"RIGHT_EAR", ControlObject::RIGHT_EAR},
++        {"LEFT_RIGHT_EAR", ControlObject::LEFT_RIGHT_EAR},
++    };
++    static const Member type[] = {
++        {"PLAY", ControlType::PLAY}, {"VIBRATE", ControlType::VIBRATE},
++        {"FLASH", ControlType::FLASH}, {"LOCK", ControlType::LOCK}, {"ERASE", ControlType::ERASE},
++    };
++    static const Member value[] = {
++        {"DISABLE", ControlTypeVal::DISABLE}, {"ENABLE", ControlTypeVal::ENABLE}, {"QUERY", ControlTypeVal::QUERY},
++    };
++    struct Enum { const char *name; const Member *members; size_t count; };
++    static const Enum enums[] = {
++        {"ControlObject", object, sizeof(object) / sizeof(object[0])},
++        {"ControlType", type, sizeof(type) / sizeof(type[0])},
++        {"ControlTypeValue", value, sizeof(value) / sizeof(value[0])},
++    };
++    for (const auto &entry : enums) {
++        napi_value object = nullptr;
++        napi_status status = napi_create_object(env, &object);
++        if (status != napi_ok) {
++            return status;
++        }
++        for (size_t index = 0; index < entry.count; ++index) {
++            napi_value value = nullptr;
++            status = napi_create_int32(env, entry.members[index].value, &value);
++            if (status != napi_ok) {
++                return status;
++            }
++            status = napi_set_named_property(env, object, entry.members[index].name, value);
++            if (status != napi_ok) {
++                return status;
++            }
++        }
++        status = napi_set_named_property(env, exports, entry.name, object);
++        if (status != napi_ok) {
++            return status;
++        }
++    }
++    return napi_ok;
++}
++
+ EXTERN_C_START
+ /*
+  * Module initialization function
+  */
+ static napi_value Init(napi_env env, napi_value exports)
+ {
++    if (RegisterControlEnums(env, exports) != napi_ok) {
++        return nullptr;
++    }
+     HITRACE_METER_NAME(HITRACE_TAG_OHOS, "connection init");
+     HILOGD("-----connection Init start------");

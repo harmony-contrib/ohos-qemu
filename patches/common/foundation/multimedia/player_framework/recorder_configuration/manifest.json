@@ -1,0 +1,13 @@
+{
+  "component": "recorder-configuration",
+  "projects": {
+    "foundation/multimedia/player_framework": "3d3b1231db27561e8978652d7ae867c12f488d9a"
+  },
+  "files": {
+    "foundation/multimedia/player_framework/frameworks/native/capi/recorder/native_avrecorder.cpp": {
+      "before": "691a6aa6db55a42c47728377b5bdd845de11e801ab6f4879c14445fea65e3d1d",
+      "after": "8615d5571d04b972c869c1ccd056328847a0ca6da64bf20beacd56a0770b6c82",
+      "payload": "native_avrecorder.cpp"
+    }
+  }
+}

@@ -1,0 +1,1 @@
+Export SuggestionType and translate native NONE/RELATED/SIM into the public SDK numbers 0/1/2 for real LocaleItem results. The internal ABI and suggestion algorithms are unchanged. Unknown native values and every NAPI failure stop with an error. No permission checks change. This is a candidate, not guest validation.

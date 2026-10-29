@@ -1,0 +1,40 @@
+diff --git a/foundation/barrierfree/accessibility/interfaces/kits/napi/accessibility_config/src/native_module.cpp b/foundation/barrierfree/accessibility/interfaces/kits/napi/accessibility_config/src/native_module.cpp
+--- a/foundation/barrierfree/accessibility/interfaces/kits/napi/accessibility_config/src/native_module.cpp
++++ b/foundation/barrierfree/accessibility/interfaces/kits/napi/accessibility_config/src/native_module.cpp
+@@ -619,3 +619,36 @@
++static napi_value RegisterPublicBlinkEnums(napi_env env, napi_value exports)
++{
++    struct Member { const char *name; int32_t value; };
++    const Member modes[] = {
++        { "SINGLE_BLINK", 1 }, { "CONTINUOUS_BLINK", 2 },
++    };
++    const Member scenarios[] = {
++        { "ALARM", 1 }, { "NOTIFICATION", 2 }, { "CALL", 3 }, { "TESTING", 4 },
++    };
++    const Member results[] = {
++        { "SUCCESS", 0 }, { "ALREADY_FLASHING", 1 }, { "DEVICE_IN_USE", 2 },
++        { "FLASH_BLINKING_UNSUPPORTED", 3 }, { "SCREEN_BLINKING_UNSUPPORTED", 4 },
++        { "FEATURE_DISABLED", 5 },
++    };
++    const struct { const char *name; const Member *members; size_t count; } contracts[] = {
++        { "BlinkingMode", modes, sizeof(modes) / sizeof(modes[0]) },
++        { "BlinkingScenario", scenarios, sizeof(scenarios) / sizeof(scenarios[0]) },
++        { "BlinkResultCode", results, sizeof(results) / sizeof(results[0]) },
++    };
++    for (const auto &contract : contracts) {
++        napi_value object = nullptr;
++        NAPI_CALL(env, napi_create_object(env, &object));
++        for (size_t index = 0; index < contract.count; ++index) {
++            napi_value value = nullptr;
++            NAPI_CALL(env, napi_create_int32(env, contract.members[index].value, &value));
++            NAPI_CALL(env, napi_set_named_property(env, object, contract.members[index].name, value));
++        }
++        NAPI_CALL(env, napi_set_named_property(env, exports, contract.name, object));
++    }
++    return exports;
++}
++
+ static napi_value InitConfigModule(napi_env env, napi_value exports)
+ {
++    NAPI_ASSERT(env, RegisterPublicBlinkEnums(env, exports) != nullptr, "failed to create blinking enum objects");
+     napi_property_descriptor desc[] = {

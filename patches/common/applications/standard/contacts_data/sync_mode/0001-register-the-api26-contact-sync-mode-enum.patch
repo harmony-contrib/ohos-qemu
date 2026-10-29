@@ -1,0 +1,32 @@
+diff --git a/applications/standard/contacts_data/contacts/src/contacts_api.cpp b/applications/standard/contacts_data/contacts/src/contacts_api.cpp
+--- a/applications/standard/contacts_data/contacts/src/contacts_api.cpp
++++ b/applications/standard/contacts_data/contacts/src/contacts_api.cpp
+@@ -3473,16 +3473,16 @@
+ napi_value DeclareModeConst(napi_env env, napi_value exports)
+ {
+-    // FilterType
++    // ContactSyncMode
+     napi_property_descriptor desc[] = {
+         DECLARE_NAPI_STATIC_PROPERTY("MODE_INCREMENTAL",
+             ContactsNapiUtils::ToInt32Value(env, static_cast<int32_t>(MODE_INCREMENTAL))),
+-        DECLARE_NAPI_STATIC_PROPERTY("DEFAULT_SELECT",
++        DECLARE_NAPI_STATIC_PROPERTY("MODE_CLOUD_BASED",
+             ContactsNapiUtils::ToInt32Value(env, static_cast<int32_t>(MODE_CLOUD_BASED))),
+     };
+     napi_value result = nullptr;
+-    napi_define_class(env, "ContactsSyncMode", NAPI_AUTO_LENGTH, ContactsNapiUtils::CreateClassConstructor, nullptr,
++    napi_define_class(env, "ContactSyncMode", NAPI_AUTO_LENGTH, ContactsNapiUtils::CreateClassConstructor, nullptr,
+         sizeof(desc) / sizeof(*desc), desc, &result);
+-    napi_set_named_property(env, exports, "ContactsSyncMode", result);
++    napi_set_named_property(env, exports, "ContactSyncMode", result);
+     return exports;
+ }
+ 
+@@ -3531,6 +3531,7 @@
+     DeclareFilterConditionConst(env, exports);
+     DeclareDataFieldConst(env, exports);
+     DeclareFilterTypeConst(env, exports);
++    DeclareModeConst(env, exports);
+ }
+ } // namespace ContactsApi
+ } // namespace OHOS

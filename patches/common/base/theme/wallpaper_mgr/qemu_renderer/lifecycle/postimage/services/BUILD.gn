@@ -1,0 +1,197 @@
+# Copyright (C) 2022-2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../wallpaper.gni")
+
+config("wallpaper_service_config") {
+  visibility = [ ":*" ]
+  include_dirs = [
+    "include",
+    "${wallpaper_path}/utils/dfx/hisysevent_adapter",
+    "${wallpaper_path}/utils/dfx/hidumper_adapter",
+  ]
+}
+
+ohos_shared_library("wallpaper_service") {
+  sources = [
+    "src/component_name.cpp",
+    "src/wallpaper_common_event_manager.cpp",
+    "src/wallpaper_common_event_subscriber.cpp",
+    "src/wallpaper_data.cpp",
+    "src/wallpaper_event_listener_proxy.cpp",
+    "src/wallpaper_service.cpp",
+    "src/wallpaper_service_cb_proxy.cpp",
+  ]
+
+  public_configs = [ ":wallpaper_service_config" ]
+  include_dirs = [
+    "${wallpaper_path}/frameworks/native/include",
+    "${wallpaper_path}/utils/include",
+  ]
+  deps = [
+    "${utils_path}:wallpaper_utils",
+    "${wallpaper_path}/frameworks/native:wallpaper_service_proxy",
+  ]
+  external_deps = [
+    "ability_runtime:ability_connect_callback_stub",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokenid_sdk",
+    "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
+    "config_policy:configpolicy_util",
+    "eventhandler:libeventhandler",
+    "graphic_2d:color_manager",
+    "graphic_2d:color_picker",
+    "hilog:libhilog",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "cJSON:cjson",
+    "memmgr:memmgrclient",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "window_manager:libwsutils",
+  ]
+  cflags_cc = [
+    "-fexceptions",
+    "-fvisibility=hidden",
+    "-fvisibility-inlines-hidden",
+    "-fdata-sections",
+    "-ffunction-sections",
+    "-Os",
+  ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+    integer_overflow = true
+    boundary_sanitize = true
+    ubsan = true
+  }
+  branch_protector_ret = "pac_ret"
+
+  defines = []
+  # Match the existing QEMU OpenVPN adapter's actual standard product names.
+  # Do not redirect stock products or a real ThemeService implementation.
+  if (!theme_service &&
+      (product_name == "armv7a_virt" || product_name == "arm64_virt" ||
+       product_name == "x86_64_virt")) {
+    defines += [ "QEMU_WALLPAPER_RENDERER" ]
+    sources += [ "src/qemu_wallpaper_renderer.cpp" ]
+  }
+  if (theme_service) {
+    defines += [ "THEME_SERVICE" ]
+  } else {
+    external_deps += [
+      "ability_runtime:ability_manager",
+      "ability_runtime:abilitykit_native",
+    ]
+    sources += [
+      "src/wallpaper_extension_ability_connection.cpp",
+      "src/wallpaper_extension_ability_death_recipient.cpp",
+    ]
+  }
+
+  subsystem_name = "theme"
+  part_name = "wallpaper_mgr"
+}
+
+ohos_static_library("wallpaper_service_static") {
+  sources = [
+    "src/component_name.cpp",
+    "src/wallpaper_common_event_manager.cpp",
+    "src/wallpaper_common_event_subscriber.cpp",
+    "src/wallpaper_data.cpp",
+    "src/wallpaper_event_listener_proxy.cpp",
+    "src/wallpaper_service.cpp",
+    "src/wallpaper_service_cb_proxy.cpp",
+  ]
+
+  public_configs = [ ":wallpaper_service_config" ]
+  include_dirs = [
+    "${wallpaper_path}/frameworks/native/include",
+    "${wallpaper_path}/utils/include",
+  ]
+  deps = [
+    "${utils_path}:wallpaper_utils",
+    "${wallpaper_path}/frameworks/native:wallpaper_service_proxy",
+  ]
+  external_deps = [
+    "ability_runtime:ability_connect_callback_stub",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokenid_sdk",
+    "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
+    "config_policy:configpolicy_util",
+    "eventhandler:libeventhandler",
+    "graphic_2d:color_manager",
+    "graphic_2d:color_picker",
+    "hilog:libhilog",
+    "hitrace:hitrace_meter",
+    "image_framework:image_native",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "cJSON:cjson",
+    "memmgr:memmgrclient",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "window_manager:libwsutils",
+  ]
+  cflags_cc = [
+    "-fdata-sections",
+    "-ffunction-sections",
+    "-Os",
+  ]
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+    integer_overflow = true
+    boundary_sanitize = true
+    ubsan = true
+  }
+  branch_protector_ret = "pac_ret"
+
+  defines = []
+  # Match the existing QEMU OpenVPN adapter's actual standard product names.
+  # Do not redirect stock products or a real ThemeService implementation.
+  if (!theme_service &&
+      (product_name == "armv7a_virt" || product_name == "arm64_virt" ||
+       product_name == "x86_64_virt")) {
+    defines += [ "QEMU_WALLPAPER_RENDERER" ]
+    sources += [ "src/qemu_wallpaper_renderer.cpp" ]
+  }
+  if (theme_service) {
+    defines += [ "THEME_SERVICE" ]
+  } else {
+    external_deps += [
+      "ability_runtime:ability_manager",
+      "ability_runtime:abilitykit_native",
+    ]
+    sources += [
+      "src/wallpaper_extension_ability_connection.cpp",
+      "src/wallpaper_extension_ability_death_recipient.cpp",
+    ]
+  }
+
+  subsystem_name = "theme"
+  part_name = "wallpaper_mgr"
+}

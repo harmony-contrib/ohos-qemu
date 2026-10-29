@@ -1,0 +1,205 @@
+diff --git a/foundation/communication/wifi/wifi/bundle.json b/foundation/communication/wifi/wifi/bundle.json
+--- a/foundation/communication/wifi/wifi/bundle.json
++++ b/foundation/communication/wifi/wifi/bundle.json
+@@ -121,6 +121,7 @@
+                 "image_framework",
+                 "init",
+                 "ipc",
++                "libnl",
+                 "napi",
+                 "netmanager_base",
+                 "netmanager_ext",
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/BUILD.gn b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/BUILD.gn
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/BUILD.gn
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/BUILD.gn
+@@ -207,6 +207,9 @@
+     if (wifi_feature_with_hdi_chip_supported) {
+       defines += [ "HDI_CHIP_INTERFACE_SUPPORT" ]
+       external_deps += [ "drivers_interface_wlan:libchip_proxy_2.0" ]
++    } else if (wifi_feature_with_hdi_wpa_supported) {
++      defines += [ "WIFI_SOFTWARE_AP_REGULATORY_BACKEND" ]
++      external_deps += [ "libnl:libnl_share" ]
+     }
+
+     cflags = memory_optimization_cflags
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_ap_hal_interface.cpp b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_ap_hal_interface.cpp
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_ap_hal_interface.cpp
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_ap_hal_interface.cpp
+@@ -18,6 +18,9 @@
+ #include "hal_device_manage.h"
+ #include "wifi_log.h"
+ #include "wifi_error_no.h"
++#ifdef WIFI_SOFTWARE_AP_REGULATORY_BACKEND
++#include "wifi_software_regulatory.h"
++#endif
+
+ #undef LOG_TAG
+ #define LOG_TAG "WifiApHalInterface"
+@@ -192,6 +195,8 @@
+         return WIFI_HAL_OPT_FAILED;
+     }
+     return WIFI_HAL_OPT_OK;
++#elif defined(WIFI_SOFTWARE_AP_REGULATORY_BACKEND)
++    return OhosQemuSoftwareRegulatory::SetAndReadBack(ifaceName, code) ? WIFI_HAL_OPT_OK : WIFI_HAL_OPT_FAILED;
+ #endif
+     return WIFI_HAL_OPT_FAILED;
+ }
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_software_regulatory.h b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_software_regulatory.h
+new file mode 100644
+--- /dev/null
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_software_regulatory.h
+@@ -0,0 +1,154 @@
++// Apply a real cfg80211 regulatory request and require kernel readback.
++#ifndef OHOS_WIFI_SOFTWARE_REGULATORY_H
++#define OHOS_WIFI_SOFTWARE_REGULATORY_H
++#include <chrono>
++#include <cstring>
++#include <linux/nl80211.h>
++#include <net/if.h>
++#include <netlink/attr.h>
++#include <netlink/genl/ctrl.h>
++#include <netlink/genl/genl.h>
++#include <netlink/msg.h>
++#include <netlink/netlink.h>
++#include <netlink/socket.h>
++#include <string>
++#include <sys/socket.h>
++#include <thread>
++
++namespace OhosQemuSoftwareRegulatory {
++struct Reply {
++    bool ack = false;
++    bool failed = false;
++    bool valid = false;
++    std::string alpha2;
++};
++inline bool ValidCountry(const std::string &country)
++{
++    return country.size() == 2 && country[0] >= 'A' && country[0] <= 'Z' &&
++        country[1] >= 'A' && country[1] <= 'Z';
++}
++inline int Error(sockaddr_nl *, nlmsgerr *, void *data)
++{
++    static_cast<Reply *>(data)->failed = true;
++    return NL_STOP;
++}
++inline int Ack(nl_msg *, void *data)
++{
++    static_cast<Reply *>(data)->ack = true;
++    return NL_STOP;
++}
++inline int KernelOnly(nl_msg *message, void *data)
++{
++    const sockaddr_nl *source = nlmsg_get_src(message);
++    if (source == nullptr || source->nl_family != AF_NETLINK || source->nl_pid != 0) {
++        static_cast<Reply *>(data)->failed = true;
++        return NL_STOP;
++    }
++    return NL_OK;
++}
++inline int RegulatoryReply(nl_msg *message, void *data)
++{
++    auto &reply = *static_cast<Reply *>(data);
++    nlmsghdr *header = nlmsg_hdr(message);
++    nlattr *attributes[NL80211_ATTR_MAX + 1] = {};
++    if (!genlmsg_valid_hdr(header, 0) ||
++        genlmsg_parse(header, 0, attributes, NL80211_ATTR_MAX, nullptr) < 0) {
++        reply.failed = true;
++        return NL_STOP;
++    }
++    auto *generic = static_cast<genlmsghdr *>(nlmsg_data(header));
++    const nlattr *alpha2 = attributes[NL80211_ATTR_REG_ALPHA2];
++    if (generic->cmd != NL80211_CMD_GET_REG || alpha2 == nullptr || nla_len(alpha2) != 3) {
++        reply.failed = true;
++        return NL_STOP;
++    }
++    const char *value = static_cast<const char *>(nla_data(alpha2));
++    if (value[2] != '\0') {
++        reply.failed = true;
++        return NL_STOP;
++    }
++    reply.alpha2.assign(value, 2);
++    reply.valid = true;
++    return NL_OK;
++}
++inline bool Exchange(nl_sock *socket, nl_msg *message, Reply &reply, bool query)
++{
++    reply = Reply{};
++    if (nl_socket_modify_cb(socket, NL_CB_MSG_IN, NL_CB_CUSTOM, KernelOnly, &reply) < 0 ||
++        nl_socket_modify_cb(socket, NL_CB_ACK, NL_CB_CUSTOM, Ack, &reply) < 0 ||
++        nl_socket_modify_cb(socket, NL_CB_VALID, NL_CB_CUSTOM, RegulatoryReply, &reply) < 0 ||
++        nl_socket_modify_err_cb(socket, NL_CB_CUSTOM, Error, &reply) < 0 ||
++        nl_send_auto_complete(socket, message) < 0) {
++        return false;
++    }
++    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
++    while (!reply.ack && !reply.failed && std::chrono::steady_clock::now() < deadline) {
++        const int result = nl_recvmsgs_default(socket);
++        if (result < 0 && result != -NLE_AGAIN && result != -NLE_INTR) {
++            reply.failed = true;
++        }
++    }
++    return reply.ack && !reply.failed && (!query || reply.valid);
++}
++inline bool SetAndReadBack(const std::string &interface, const std::string &country)
++{
++    if (!ValidCountry(country) || interface.empty() || interface.size() >= IF_NAMESIZE ||
++        interface.find('\0') != std::string::npos || if_nametoindex(interface.c_str()) == 0) {
++        return false;
++    }
++    nl_sock *socket = nl_socket_alloc();
++    if (socket == nullptr) {
++        return false;
++    }
++    bool success = false;
++    do {
++        if (genl_connect(socket) < 0) {
++            break;
++        }
++        timeval timeout{0, 250000};
++        if (setsockopt(nl_socket_get_fd(socket), SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) != 0 ||
++            setsockopt(nl_socket_get_fd(socket), SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) != 0) {
++            break;
++        }
++        const int family = genl_ctrl_resolve(socket, "nl80211");
++        if (family < 0) {
++            break;
++        }
++        nl_msg *request = nlmsg_alloc();
++        if (request == nullptr) {
++            break;
++        }
++        Reply reply;
++        const bool sent = genlmsg_put(request, NL_AUTO_PORT, NL_AUTO_SEQ, family, 0,
++            NLM_F_ACK, NL80211_CMD_REQ_SET_REG, 0) != nullptr &&
++            nla_put_string(request, NL80211_ATTR_REG_ALPHA2, country.c_str()) == 0 &&
++            Exchange(socket, request, reply, false);
++        nlmsg_free(request);
++        if (!sent) {
++            break;
++        }
++        // Regulatory requests are asynchronous: acceptance is not applied-state proof.
++        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
++        do {
++            nl_msg *query = nlmsg_alloc();
++            if (query == nullptr) {
++                break;
++            }
++            const bool read = genlmsg_put(query, NL_AUTO_PORT, NL_AUTO_SEQ, family, 0,
++                NLM_F_ACK, NL80211_CMD_GET_REG, 0) != nullptr && Exchange(socket, query, reply, true);
++            nlmsg_free(query);
++            if (!read) {
++                break;
++            }
++            if (reply.alpha2 == country) {
++                success = true;
++                break;
++            }
++            std::this_thread::sleep_for(std::chrono::milliseconds(50));
++        } while (std::chrono::steady_clock::now() < deadline);
++    } while (false);
++    nl_socket_free(socket);
++    return success;
++}
++} // namespace OhosQemuSoftwareRegulatory
++#endif

@@ -1,0 +1,402 @@
+--- a/foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn
++++ b/foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn
+@@ -724,6 +724,7 @@
+     "player_framework:media_client",
+     "relational_store:native_dataability",
+     "relational_store:native_rdb",
++    "samgr:samgr_proxy",
+     "relational_store:rdb_data_share_adapter",
+     "window_manager:libwmutil",
+   ]
+--- a/foundation/multimedia/media_library/frameworks/js/src/knowledge_content_napi.cpp
++++ b/foundation/multimedia/media_library/frameworks/js/src/knowledge_content_napi.cpp
+@@ -15,11 +15,16 @@
+ #include "accesstoken_kit.h"
+ #include "ipc_skeleton.h"
+ #include "medialibrary_napi_utils.h"
+-#include "media_asset_rdbstore.h"
++#include "datashare_helper.h"
++#include "datashare_result_set.h"
++#include "iservice_registry.h"
++#include "system_ability_definition.h"
++#include "userfilemgr_uri.h"
+ #include <algorithm>
+ #include <cerrno>
+ #include <cmath>
+ #include <limits>
++#include <iterator>
+ #include <memory>
+ #include <sys/random.h>
+ namespace OHOS::Media {
+@@ -38,15 +43,19 @@
+     std::string value;
+     int32_t count = 0;
+ };
++static_assert(sizeof(Suggestion) >= Knowledge::MIN_ACCOUNTED_ROW_BYTES);
++static_assert(sizeof(Knowledge::Entity) + sizeof(std::string) >= Knowledge::MIN_ACCOUNTED_ROW_BYTES);
+ struct Work {
+     napi_async_work work = nullptr;
+     napi_deferred deferred = nullptr;
+-    Knowledge::Query query;
++    std::vector<std::string> wire;
+     bool related = false;
+     // Omission does not impose an arbitrary recommendation limit.
+     size_t count = std::numeric_limits<size_t>::max();
+     size_t resultBytes = 0;
+     int32_t error = 0;
++    int32_t rowCount = 0;
++    int32_t rowsRead = 0;
+     std::string message;
+     std::vector<Knowledge::Entity> entities;
+     std::vector<Suggestion> suggestions;
+@@ -175,29 +184,53 @@
+     work.resultBytes += bytes;
+     return true;
+ }
+-bool NextRow(const std::shared_ptr<NativeRdb::ResultSet> &result, Work &work)
+-{
+-    // StepResultSet is a bounded native cursor. Do not GetRowCount/preload all rows.
++bool PrepareCursor(const std::shared_ptr<DataShare::DataShareResultSet> &result, Work &work)
++{
++    // Actual DataShare EOF and OnGo errors share the same E_ERROR status. Its
++    // own GoToRow implementation also pre-counts. Only a checked bounded count
++    // can define EOF; IsEnded would also misclassify a failed OnGo as EOF.
+     work.error = AccessError();
+     if (work.error != 0) return false;
++    const int status = result->GetRowCount(work.rowCount);
++    if (status != DataShare::E_OK || work.rowCount < 0 ||
++        static_cast<size_t>(work.rowCount) > Knowledge::SERVICE_ROW_LIMIT) {
++        work.error = INTERNAL;
++        work.message = "Knowledge phase=cursor-count rc=" + std::to_string(status) +
++            "; rows=" + std::to_string(work.rowCount);
++        return false;
++    }
++    work.rowsRead = 0;
++    return true;
++}
++bool NextRow(const std::shared_ptr<DataShare::DataShareResultSet> &result, Work &work)
++{
++    work.error = AccessError();
++    if (work.error != 0 || work.rowsRead == work.rowCount) return false;
+     const int status = result->GoToNextRow();
+-    if (status == NativeRdb::E_ROW_OUT_RANGE) return false;
+-    if (status != NativeRdb::E_OK) {
++    if (status != DataShare::E_OK) {
+         work.error = INTERNAL;
+-        work.message = "Knowledge cursor failed";
+-        return false;
+-    }
++        work.message = "Knowledge phase=cursor-next rc=" + std::to_string(status) +
++            "; row=" + std::to_string(work.rowsRead);
++        return false;
++    }
++    ++work.rowsRead;
+     return true;
+ }
+-void ReadEntities(const std::shared_ptr<NativeRdb::ResultSet> &result, Work &work)
+-{
++
++void ReadEntities(const std::shared_ptr<DataShare::DataShareResultSet> &result, Work &work)
++{
++    if (!PrepareCursor(result, work)) return;
+     while (NextRow(result,work)) {
+         Knowledge::Entity entity;
+         std::string alias;
+-        if (result->GetInt(0, entity.field) != NativeRdb::E_OK ||
+-            result->GetString(1, entity.id) != NativeRdb::E_OK || result->GetString(2, entity.name) != NativeRdb::E_OK ||
+-            result->GetString(3, alias) != NativeRdb::E_OK || result->GetLong(4, entity.votes) != NativeRdb::E_OK ||
+-            entity.id.empty() || entity.name.empty() || entity.votes <= 0 || !Knowledge::HasProducer(entity.field) ||
++        const int codes[] = {result->GetInt(0, entity.field), result->GetString(1, entity.id),
++            result->GetString(2, entity.name), result->GetString(3, alias), result->GetLong(4, entity.votes)};
++        if (std::any_of(std::begin(codes), std::end(codes), [](int code) { return code != DataShare::E_OK; })) {
++            work.error = INTERNAL; work.message = "Knowledge phase=entity-columns rc=";
++            for (int code : codes) work.message += std::to_string(code) + ",";
++            return;
++        }
++        if (entity.id.empty() || entity.name.empty() || entity.votes <= 0 || !Knowledge::HasProducer(entity.field) ||
+             entity.id.size() > MAX_STRING_BYTES || entity.name.size() > MAX_STRING_BYTES || alias.size() > MAX_STRING_BYTES) {
+             work.error = INTERNAL;
+             return;
+@@ -213,14 +246,20 @@
+         }
+     }
+ }
+-void ReadSuggestions(const std::shared_ptr<NativeRdb::ResultSet> &result, Work &work)
+-{
++void ReadSuggestions(const std::shared_ptr<DataShare::DataShareResultSet> &result, Work &work)
++{
++    if (!PrepareCursor(result, work)) return;
+     while (NextRow(result,work)) {
+         Suggestion suggestion;
+         int64_t count = 0;
+-        if (result->GetInt(0, suggestion.type) != NativeRdb::E_OK ||
+-            result->GetString(1, suggestion.value) != NativeRdb::E_OK || result->GetLong(2, count) != NativeRdb::E_OK ||
+-            suggestion.type < 0 || suggestion.type > 6 || suggestion.value.empty() ||
++        const int codes[] = {result->GetInt(0, suggestion.type), result->GetString(1, suggestion.value),
++            result->GetLong(2, count)};
++        if (std::any_of(std::begin(codes), std::end(codes), [](int code) { return code != DataShare::E_OK; })) {
++            work.error = INTERNAL; work.message = "Knowledge phase=suggestion-columns rc=";
++            for (int code : codes) work.message += std::to_string(code) + ",";
++            return;
++        }
++        if (suggestion.type < 0 || suggestion.type > 6 || suggestion.value.empty() ||
+             suggestion.value.size() > MAX_STRING_BYTES || count <= 0 || count > std::numeric_limits<int32_t>::max()) {
+             work.error = INTERNAL;
+             return;
+@@ -237,21 +276,37 @@
+     if (work.error != 0) {
+         return;
+     }
+-    std::vector<NativeRdb::ValueObject> args;
+-    for (const auto &argument : work.query.args) {
+-        if (std::holds_alternative<int64_t>(argument)) {
+-            args.emplace_back(std::get<int64_t>(argument));
+-        } else {
+-            args.emplace_back(std::get<std::string>(argument));
+-        }
+-    }
+-    auto result = MediaAssetRdbStore::GetInstance()->QueryByStep(work.query.sql, args);
+-    if (result == nullptr) {
+-        if (result != nullptr) {
+-            result->Close();
+-        }
+-        work.error = INTERNAL;
+-        work.message = "Knowledge database query unavailable";
++    // The public caller has no service database path dependency. Connect through
++    // the same real DataShare owner used when getAssets cannot use the sandbox.
++    auto manager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
++    if (manager == nullptr) {
++        work.error = INTERNAL; work.message = "Knowledge phase=client-sa-manager result=null; rc=unavailable";
++        return;
++    }
++    auto remote = manager->GetSystemAbility(STORAGE_MANAGER_MANAGER_ID);
++    if (remote == nullptr) {
++        work.error = INTERNAL; work.message = "Knowledge phase=client-system-ability result=null; rc=unavailable";
++        return;
++    }
++    auto [createCode, helper] = DataShare::DataShareHelper::Create(remote, MEDIALIBRARY_DATA_URI, "");
++    if (createCode != DataShare::E_OK || helper == nullptr) {
++        if (helper != nullptr) helper->Release();
++        work.error = INTERNAL; work.message = "Knowledge phase=client-helper-create rc=" + std::to_string(createCode) +
++            "; result=" + std::string(helper == nullptr ? "null" : "present");
++        return;
++    }
++    Uri uri(std::string(MEDIALIBRARY_DATA_URI) + "/knowledge-content");
++    DataShare::DataSharePredicates predicates;
++    DataShare::DatashareBusinessError business;
++    auto result = helper->Query(uri, predicates, work.wire, &business);
++    const int32_t businessCode = business.GetCode();
++    if (result == nullptr || businessCode != 0) {
++        if (result != nullptr) result->Close();
++        work.error = businessCode == PERMISSION || businessCode == SYSTEM_APP || businessCode == PARAMETER ?
++            businessCode : INTERNAL;
++        work.message = "Knowledge phase=service-query result=" + std::string(result == nullptr ? "null" : "present") +
++            "; business_rc=" + std::to_string(businessCode);
++        if (!helper->Release()) work.message += "; helper_release=false";
+         return;
+     }
+     if (work.related) {
+@@ -259,7 +314,13 @@
+     } else {
+         ReadSuggestions(result, work);
+     }
+-    result->Close();
++    const int32_t closeCode = result->Close();
++    if (closeCode != 0 && work.error == 0) {
++        work.error = INTERNAL; work.message = "Knowledge phase=cursor-close rc=" + std::to_string(closeCode);
++    }
++    if (!helper->Release() && work.error == 0) {
++        work.error = INTERNAL; work.message = "Knowledge phase=helper-release result=false";
++    }
+     if (work.error == 0 && work.related) {
+         if (work.entities.empty() || work.count == 0) {
+             work.entities.clear();
+@@ -443,7 +504,7 @@
+         std::any_of(suggestionFields.begin(), suggestionFields.end(), [](int32_t field) {return !Knowledge::HasProducer(field);})) {
+         return Throw(env, INTERNAL, "Requested knowledge field has no indexed producer");
+     }
+-    work->query = Knowledge::Related(topic, topicFields, suggestionFields);
++    work->wire = Knowledge::RelatedWire(topic, topicFields, suggestionFields);
+     return Schedule(env, std::move(work));
+ }
+ napi_value KnowledgeContentNapi::GetSearchSuggestion(napi_env env, napi_callback_info info)
+@@ -460,7 +521,7 @@
+         return Throw(env, SCENARIO, "Search suggestion types must contain 1 to 7 valid entries");
+     }
+     auto work = std::make_unique<Work>();
+-    work->query = Knowledge::Suggestions(types);
++    work->wire = Knowledge::SuggestionsWire(types);
+     return Schedule(env, std::move(work));
+ }
+ napi_value KnowledgeContentNapi::Init(napi_env env, napi_value exports)
+--- a/foundation/multimedia/media_library/frameworks/js/src/knowledge_content_query.cpp
++++ b/foundation/multimedia/media_library/frameworks/js/src/knowledge_content_query.cpp
+@@ -126,6 +126,62 @@
+     }
+     return query;
+ }
++namespace {
++constexpr const char *SERVICE_WIRE = "KnowledgeContent.service.v1";
++void WriteFields(std::vector<std::string> &wire, const std::vector<int32_t> &fields)
++{
++    wire.push_back(std::to_string(fields.size()));
++    for (int32_t field : fields) wire.push_back(std::to_string(field));
++}
++bool ReadFields(const std::vector<std::string> &wire, size_t &position,
++    std::vector<int32_t> &fields, int32_t minimum, int32_t maximum)
++{
++    // Counts and enums have single canonical decimal digits (at most 8 fields).
++    if (position >= wire.size() || wire[position].size() != 1 ||
++        wire[position][0] < '1' || wire[position][0] > '8') return false;
++    const size_t count = static_cast<size_t>(wire[position++][0] - '0');
++    if (count > static_cast<size_t>(maximum - minimum + 1) || count > wire.size() - position) return false;
++    for (size_t n = 0; n < count; ++n) {
++        const auto &token = wire[position++];
++        if (token.size() != 1 || token[0] < '0' + minimum || token[0] > '0' + maximum) return false;
++        const int32_t field = token[0] - '0';
++        if (std::find(fields.begin(), fields.end(), field) != fields.end()) return false;
++        fields.push_back(field);
++    }
++    return true;
++}
++} // namespace
++std::vector<std::string> RelatedWire(const std::string &topic, const std::vector<int32_t> &topicFields,
++    const std::vector<int32_t> &suggestionFields)
++{
++    std::vector<std::string> wire = {SERVICE_WIRE, "related", topic};
++    WriteFields(wire, topicFields); WriteFields(wire, suggestionFields);
++    return wire;
++}
++std::vector<std::string> SuggestionsWire(const std::vector<int32_t> &types)
++{
++    std::vector<std::string> wire = {SERVICE_WIRE, "suggestions"};
++    WriteFields(wire, types); return wire;
++}
++bool DecodeServiceWire(const std::vector<std::string> &wire, Query &query)
++{
++    if (wire.size() < 4 || wire.size() > 21 || wire[0] != SERVICE_WIRE) return false;
++    std::vector<int32_t> fields, suggestions;
++    size_t position = 0;
++    if (wire[1] == "related") {
++        if (wire[2].size() > 64 * 1024) return false;
++        position = 3;
++        if (!ReadFields(wire, position, fields, 1, 8) ||
++            !ReadFields(wire, position, suggestions, 1, 8) || position != wire.size()) return false;
++        query = Related(wire[2], fields, suggestions);
++    } else if (wire[1] == "suggestions") {
++        position = 2;
++        if (!ReadFields(wire, position, fields, 0, 6) || position != wire.size()) return false;
++        query = Suggestions(fields);
++    } else return false;
++    return !query.sql.empty();
++}
++
+ std::vector<Entity> RandomVote(std::vector<Entity> candidates, size_t count, std::mt19937_64 &random)
+ {
+     // Exponential-race weighted sampling without replacement. With no explicit
+--- a/foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_query.h
++++ b/foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_query.h
+@@ -20,6 +20,11 @@
+ #include <vector>
+ namespace OHOS::Media::Knowledge {
+ using Argument = std::variant<int64_t, std::string>;
++// Every original Account() row costs at least two int32s and one std::string.
++// The extra sentinel row makes a possible truncation an explicit resource error.
++constexpr size_t MIN_ACCOUNTED_ROW_BYTES = 2 * sizeof(int32_t) + sizeof(std::string);
++constexpr size_t SERVICE_ROW_LIMIT = (8 * 1024 * 1024) / MIN_ACCOUNTED_ROW_BYTES;
++
+ struct Query {
+     std::string sql;
+     std::vector<Argument> args;
+@@ -38,6 +43,13 @@
+ Query Related(const std::string &topic, const std::vector<int32_t> &topicFields,
+     const std::vector<int32_t> &suggestionFields);
+ Query Suggestions(const std::vector<int32_t> &types);
++// Fixed internal DataShare protocol. No raw SQL, database path or bind expression
++// crosses IPC. The service reconstructs the same query from bounded typed data.
++std::vector<std::string> RelatedWire(const std::string &topic, const std::vector<int32_t> &topicFields,
++    const std::vector<int32_t> &suggestionFields);
++std::vector<std::string> SuggestionsWire(const std::vector<int32_t> &types);
++bool DecodeServiceWire(const std::vector<std::string> &wire, Query &query);
++
+ std::vector<Entity> RandomVote(std::vector<Entity> candidates, size_t count, std::mt19937_64 &random);
+ } // namespace OHOS::Media::Knowledge
+ #endif
+--- a/foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/BUILD.gn
++++ b/foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/BUILD.gn
+@@ -252,6 +252,7 @@
+     "${MEDIALIB_THUMBNAIL_PATH}/include",
+     "${MEDIALIB_FACARD_PATH}/include",
+     "${MEDIALIB_NEW_SERVICES_PATH}/media_rdbstore/include/rdbstore",
++    "${MEDIALIB_INTERFACES_PATH}/kits/js/include",
+     "${MEDIALIB_NEW_SERVICES_PATH}/media_kv_db/include",
+     "${MEDIALIB_BUSINESS_PATH}/media_analysis_data_manager/include/dao/table",
+   ]
+@@ -931,6 +932,7 @@
+     "${MEDIALIB_NEW_SERVICES_PATH}/media_rdbstore/src/rdbstore/media_upgrade.cpp",
+     "${MEDIALIB_NEW_SERVICES_PATH}/media_rdbstore/src/rdbstore/medialibrary_rdbstore.cpp",
+     "${MEDIALIB_NEW_SERVICES_PATH}/media_rdbstore/src/rdbstore/knowledge_holiday_index.cpp",
++    "${MEDIALIB_JS_PATH}/src/knowledge_content_query.cpp",
+     "${MEDIALIB_NEW_SERVICES_PATH}/media_rdbstore/src/rdbstore/medialibrary_restore.cpp",
+     "${MEDIALIB_NEW_SERVICES_PATH}/media_rdbstore/src/rdbstore/medialibrary_upgrade_utils.cpp",
+     "${MEDIALIB_SERVICES_PATH}/media_dfx/src/dfx_anco_manager.cpp",
+--- a/foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/src/media_datashare_ext_ability.cpp
++++ b/foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/src/media_datashare_ext_ability.cpp
+@@ -15,6 +15,9 @@
+ #define MLOG_TAG "Extension"
+ 
+ #include "media_datashare_ext_ability.h"
++#include "knowledge_content_query.h"
++#include "medialibrary_rdbstore.h"
++#include "rdb_utils.h"
+ 
+ #include "app_mgr_client.h"
+ #include "cloud_media_asset_manager.h"
+@@ -985,6 +988,47 @@
+ shared_ptr<DataShareResultSet> MediaDataShareExtAbility::Query(const Uri &uri,
+     const DataSharePredicates &predicates, vector<string> &columns, DatashareBusinessError &businessError)
+ {
++    // Fixed internal Knowledge route. The HAP never opens the service database
++    // and cannot send SQL. Check the actual IPC caller before decoding input.
++    if (uri.ToString() == std::string(MEDIALIBRARY_DATA_URI) + "/knowledge-content") {
++        if (!PermissionUtils::IsSystemApp()) {
++            businessError.SetCode(202); return nullptr;
++        }
++        if (!PermissionUtils::CheckCallerPermission("ohos.permission.READ_IMAGEVIDEO")) {
++            businessError.SetCode(201); return nullptr;
++        }
++        Knowledge::Query query;
++        if (!predicates.GetOperationList().empty() || !predicates.GetWhereClause().empty() ||
++            !predicates.GetWhereArgs().empty() || !Knowledge::DecodeServiceWire(columns, query)) {
++            businessError.SetCode(13900020); return nullptr;
++        }
++        auto store = MediaLibraryRdbStore::GetRaw();
++        if (store == nullptr) {
++            MEDIA_ERR_LOG("Knowledge phase=service-rdb-open result=null; underlying_rc=unavailable");
++            businessError.SetCode(23800301); return nullptr;
++        }
++        std::vector<NativeRdb::ValueObject> args;
++        for (const auto &value : query.args) {
++            if (std::holds_alternative<int64_t>(value)) args.emplace_back(std::get<int64_t>(value));
++            else args.emplace_back(std::get<std::string>(value));
++        }
++        // DataShare's own GoToRow pre-counts; cap work by the existing 8MiB
++        // response budget. The sentinel count is rejected, never truncated to success.
++        const auto sql = query.sql + " LIMIT " + std::to_string(Knowledge::SERVICE_ROW_LIMIT + 1);
++        auto result = store->QueryByStep(sql, args, false);
++        if (result == nullptr) {
++            MEDIA_ERR_LOG("Knowledge phase=service-query result=null; underlying_rc=unavailable");
++            businessError.SetCode(23800301); return nullptr;
++        }
++        // Reuse the same real RDB/DataShare bridge as MediaLibraryDataManager.
++        // No explicit service pre-count or preload; the client checks the bounded count.
++        auto bridge = RdbUtils::ToResultSetBridge(result);
++        if (bridge == nullptr) {
++            result->Close(); businessError.SetCode(23800301); return nullptr;
++        }
++        businessError.SetCode(0);
++        return std::make_shared<DataShareResultSet>(bridge);
++    }
+     MediaLibraryCommand cmd(uri);
+     PermParam permParam = {.isWrite = false};
+     CHECK_AND_RETURN_RET_LOG(permissionHandler_ != nullptr, nullptr, "permissionHandler_ is nullptr");

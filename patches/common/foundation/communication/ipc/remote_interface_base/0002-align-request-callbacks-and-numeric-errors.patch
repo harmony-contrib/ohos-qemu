@@ -1,0 +1,100 @@
+diff --git a/foundation/communication/ipc/ipc/native/src/napi_common/include/napi_remote_object_internal.h b/foundation/communication/ipc/ipc/native/src/napi_common/include/napi_remote_object_internal.h
+--- a/foundation/communication/ipc/ipc/native/src/napi_common/include/napi_remote_object_internal.h
++++ b/foundation/communication/ipc/ipc/native/src/napi_common/include/napi_remote_object_internal.h
+@@ -123,6 +123,7 @@
+     int32_t traceId;
+ };
+ 
+ napi_value MakeSendRequestResult(SendRequestParam *param);
++void MakeSendRequestCallbackArgs(SendRequestParam *param, napi_value result, napi_value *args);
+ } // namespace OHOS
+ #endif // NAPI_IPC_OHOS_REMOTE_OBJECT_H
+diff --git a/foundation/communication/ipc/ipc/native/src/napi_common/source/napi_remote_object.cpp b/foundation/communication/ipc/ipc/native/src/napi_common/source/napi_remote_object.cpp
+--- a/foundation/communication/ipc/ipc/native/src/napi_common/source/napi_remote_object.cpp
++++ b/foundation/communication/ipc/ipc/native/src/napi_common/source/napi_remote_object.cpp
+@@ -1425,8 +1425,22 @@
+     return result;
+ }
+ 
++void MakeSendRequestCallbackArgs(SendRequestParam *param, napi_value result, napi_value *args)
++{
++    // The SDK AsyncCallback contract is (BusinessError | null, result).
++    // Keep the transport result and Promise path unchanged.
++    if (param->errCode == 0) {
++        napi_get_null(param->env, &args[0]);
++        args[1] = result;
++    } else {
++        NapiError error(errorDesc::COMMUNICATION_ERROR);
++        args[0] = error.GetError(param->env);
++        napi_get_undefined(param->env, &args[1]);
++    }
++}
++
+ static void AfterWorkCallback(SendRequestParam *param)
+ {
+     if (param->callback != nullptr) {
+         ZLOGI(LOG_LABEL, "callback started");
+         napi_handle_scope scope = nullptr;
+@@ -1440,7 +1454,9 @@
+         napi_value callbackValue = nullptr;
+         napi_get_reference_value(param->env, param->callback, &callbackValue);
+         napi_value cbResult = nullptr;
+-        napi_call_function(param->env, nullptr, callbackValue, 1, &result, &cbResult);
++        napi_value args[2] = {nullptr, nullptr};
++        MakeSendRequestCallbackArgs(param, result, args);
++        napi_call_function(param->env, nullptr, callbackValue, 2, args, &cbResult);
+         napi_delete_reference(param->env, param->jsCodeRef);
+         napi_delete_reference(param->env, param->jsDataRef);
+         napi_delete_reference(param->env, param->jsReplyRef);
+diff --git a/foundation/communication/ipc/ipc/native/src/napi/src/napi_remote_proxy.cpp b/foundation/communication/ipc/ipc/native/src/napi/src/napi_remote_proxy.cpp
+--- a/foundation/communication/ipc/ipc/native/src/napi/src/napi_remote_proxy.cpp
++++ b/foundation/communication/ipc/ipc/native/src/napi/src/napi_remote_proxy.cpp
+@@ -65,7 +65,9 @@
+     napi_value callback = nullptr;
+     napi_get_reference_value(env, param->callback, &callback);
+     napi_value cbResult = nullptr;
+-    napi_call_function(env, nullptr, callback, 1, &result, &cbResult);
++    napi_value args[2] = {nullptr, nullptr};
++    MakeSendRequestCallbackArgs(param, result, args);
++    napi_call_function(env, nullptr, callback, 2, args, &cbResult);
+     napi_delete_reference(env, param->jsCodeRef);
+     napi_delete_reference(env, param->jsDataRef);
+     napi_delete_reference(env, param->jsReplyRef);
+diff --git a/foundation/communication/ipc/ipc/native/src/napi_common/source/napi_rpc_error.cpp b/foundation/communication/ipc/ipc/native/src/napi_common/source/napi_rpc_error.cpp
+--- a/foundation/communication/ipc/ipc/native/src/napi_common/source/napi_rpc_error.cpp
++++ b/foundation/communication/ipc/ipc/native/src/napi_common/source/napi_rpc_error.cpp
+@@ -38,28 +38,28 @@
+         "Failed to call dup function. Possible causes: The file descriptor has already been closed."}}
+ };
+ 
+ napi_value NapiError::GetError(napi_env& env) const
+ {
+     napi_value napiError = nullptr;
+     if (!IsError()) {
+         napi_get_undefined(env, &napiError);
+         return napiError;
+     }
+ 
+     napi_value napiCode = nullptr;
+     std::string msg = napiErrMap_[errorCode_].errorMsg;
+     int code = napiErrMap_[errorCode_].errorCode;
+-    std::string codeStr = std::to_string(code);
+-
+-    NAPI_CALL(env, napi_create_string_utf8(env, codeStr.c_str(), codeStr.size(), &napiCode));
+-    napi_value napiMsg = nullptr;
+-    NAPI_CALL(env, napi_create_string_utf8(env, msg.c_str(), msg.size(), &napiMsg));
+-    NAPI_CALL(env, napi_create_error(env, napiCode, napiMsg, &napiError));
++
++    NAPI_CALL(env, napi_create_int32(env, code, &napiCode));
++    napi_value napiMsg = nullptr;
++    NAPI_CALL(env, napi_create_string_utf8(env, msg.c_str(), msg.size(), &napiMsg));
++    NAPI_CALL(env, napi_create_error(env, nullptr, napiMsg, &napiError));
++    NAPI_CALL(env, napi_set_named_property(env, napiError, "code", napiCode));
+ 
+     ZLOGD(LOG_LABEL, "throw error code:%{public}d, msg:%{public}s,", code, msg.c_str());
+     return napiError;
+ }
+ 
+ napi_value NapiError::ThrowError(napi_env& env, int32_t code)
+ {
+     Error(code);

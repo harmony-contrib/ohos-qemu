@@ -1,12 +1,15 @@
 # 2in1 patch set
 
-`apply.sh` is the standalone 2in1 entry point. It applies the 2in1 product
-profile plus every common component and requires a validated ArkWeb M144 V8
-artifact directory.
+`apply.sh` calls the full Docker builder's single ordered capability patch plan
+for 2in1, including Serial. Run inside prepared local Ubuntu 22.04 Docker.
+It requires all four validated release dependencies and does not build/package.
 
 ```sh
 bash patches/2in1/apply.sh --source-root /path/to/openharmony \
-  --artifact-root /path/to/jsvm-m144 \
+  --v8-artifact-root /path/to/jsvm-m144 \
+  --core-artifact-root /path/to/source-arkweb-core \
+  --vulkan-artifact-root /path/to/swiftshader-m144 \
+  --avc-artifact-root /path/to/avc-m144 \
   --lfs-asset-root /path/to/openharmony-7.0-lfs \
   --product arm64_virt
 ```

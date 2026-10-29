@@ -1,0 +1,45 @@
+diff --git a/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/jsview/js_view.cpp b/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/jsview/js_view.cpp
+--- a/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/jsview/js_view.cpp
++++ b/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/jsview/js_view.cpp
+@@ -110,7 +110,8 @@
+     return pipeline->GetEnvironmentManager();
+ }
+ 
+-std::optional<JSRef<JSVal>> MakeSystemEnvValue(const std::string& key, const std::optional<NG::SystemEnvValue>& value)
++std::optional<JSRef<JSVal>> MakeSystemEnvValue(
++    const std::string& key, const std::optional<NG::SystemEnvValue>& value, const RefPtr<NG::UINode>& node)
+ {
+     if (key == NG::ENV_KEY_DIRECTION) {
+         if (!value) {
+@@ -130,7 +131,12 @@
+         }
+     }
+     if (key == NG::ENV_KEY_FONT_SCALE) {
+-        CHECK_NULL_RETURN(value, std::nullopt);
++        if (!value) {
++            CHECK_NULL_RETURN(node, std::nullopt);
++            auto pipeline = node->GetContext();
++            CHECK_NULL_RETURN(pipeline, std::nullopt);
++            return JSRef<JSVal>::Make(ToJSValue(static_cast<double>(pipeline->GetFontScale())));
++        }
+         auto doubleValue = value->GetDouble();
+         CHECK_NULL_RETURN(doubleValue, JSVal::Undefined());
+         return JSRef<JSVal>::Make(ToJSValue(*doubleValue));
+@@ -1571,7 +1577,7 @@
+     if (environmentManager->FindSystemEnvValueByKey(node, key, queryResult)) {
+         queryValue.emplace(queryResult);
+     }
+-    auto jsValue = MakeSystemEnvValue(key, queryValue);
++    auto jsValue = MakeSystemEnvValue(key, queryValue, node);
+     if (jsValue) {
+         info.SetReturnValue(*jsValue);
+         return;
+@@ -1650,7 +1656,7 @@
+         [weak = WeakClaim(this)](const std::string& key, const std::optional<NG::SystemEnvValue>& value) {
+             auto self = weak.Upgrade();
+             CHECK_NULL_VOID(self);
+-            auto jsValue = MakeSystemEnvValue(key, value);
++            auto jsValue = MakeSystemEnvValue(key, value, AceType::DynamicCast<NG::UINode>(self->GetViewNode()));
+             if (self->updateEnvCallback_) {
+                 self->updateEnvCallback_(key, jsValue);
+             }

@@ -1,0 +1,13 @@
+--- a/base/security/selinux_adapter/sepolicy/ohos_policy/telephony/telephony_sa/system/riladapter_host.te
++++ b/base/security/selinux_adapter/sepolicy/ohos_policy/telephony/telephony_sa/system/riladapter_host.te
+@@ -69,3 +69,10 @@
+ allow riladapter_host data_local:dir search;
+ allow riladapter_host dev_console_file:chr_file { read write };
+ allow riladapter_host hdf_devhost_exec:file { getattr open };
++
++# QEMU reference AT transport: owned PTY slave behind the configured AT symlink.
++# Keep DAC ownership radio-only and SELinux enforcing; never grant TIOCSTI.
++allow riladapter_host dev_file:lnk_file read;
++allow riladapter_host dev_pts_file:dir search;
++allow riladapter_host devpts:chr_file { open read write ioctl };
++allowxperm riladapter_host devpts:chr_file ioctl { 0x5401 0x5402 };

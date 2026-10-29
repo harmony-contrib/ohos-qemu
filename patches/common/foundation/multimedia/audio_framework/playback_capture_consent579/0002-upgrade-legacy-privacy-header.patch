@@ -1,0 +1,38 @@
+--- a/foundation/multimedia/audio_framework/services/audio_service/server/include/capturer_in_server.h
++++ b/foundation/multimedia/audio_framework/services/audio_service/server/include/capturer_in_server.h
+@@ -19,7 +19,7 @@
+ #include <mutex>
+ #include <atomic>
+ #include <chrono>
+-#include "audio_privacy_ui_ext_connection.h"
++#include "refbase.h"
+ #include "i_capturer_stream.h"
+ #include "i_stream_listener.h"
+ #include "oh_audio_buffer.h"
+@@ -32,6 +32,7 @@
+ 
+ namespace OHOS {
+ namespace AudioStandard {
++class AudioPrivacyUIExtConnection;
+ class CapturerInServer : public IStatusCallback, public IReadCallback, public IHandler,
+     public std::enable_shared_from_this<CapturerInServer> {
+ public:
+@@ -176,7 +177,7 @@
+     bool privacyAuthorityCompleting_ = false;
+     bool privacyAuthorityReleased_ = false;
+     std::chrono::steady_clock::time_point privacyAuthorityDeadline_;
+-    sptr<AudioPrivacyUIExtConnection> privacyUiConnection_ = nullptr;
++    sptr<AudioPrivacyUIExtConnection> privacyUiConnection_;
+ 
+     std::mutex runnerMutex_;
+     std::shared_ptr<CallbackHandler> callbackHandler_ = nullptr;
+--- a/foundation/multimedia/audio_framework/services/audio_service/server/src/capturer_in_server.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_service/server/src/capturer_in_server.cpp
+@@ -72,6 +72,7 @@
+ }
+ 
+ CapturerInServer::CapturerInServer(AudioProcessConfig processConfig, std::weak_ptr<IStreamListener> streamListener)
++    : privacyUiConnection_(nullptr)
+ {
+     processConfig_ = processConfig;
+     streamListener_ = streamListener;

@@ -1,0 +1,205 @@
+diff --git a/third_party/jsoncpp/install.py b/third_party/jsoncpp/install.py
+--- a/third_party/jsoncpp/install.py
++++ b/third_party/jsoncpp/install.py
+@@ -1,90 +1,111 @@
+-#!/usr/bin/env python
+-# -*- coding: utf-8 -*-
+-# Copyright (c) 2023 Huawei Device Co., Ltd.
+-# Licensed under the Apache License, Version 2.0 (the "License");
+-# you may not use this file except in compliance with the License.
+-# You may obtain a copy of the License at
+-#
+-#     http://www.apache.org/licenses/LICENSE-2.0
+-#
+-# Unless required by applicable law or agreed to in writing, software
+-# distributed under the License is distributed on an "AS IS" BASIS,
+-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-# See the License for the specific language governing permissions and
+-# limitations under the License.
+-
+-import argparse
+-import os
+-import subprocess
+-import sys
+-
+-THIS_FILE_PATH = os.path.dirname(os.path.abspath(__file__))
+-
+-def untar_file(tar_file_path, extract_path, extract_dir_path):
+-    try:
+-        if os.path.exists(extract_path):
+-            rm_cmd = ['rm', '-rf', extract_path]
+-            subprocess.run(rm_cmd, check=True)
+-
+-        tar_cmd = ['tar', '-zxvf', tar_file_path, '-C', extract_dir_path]
+-        print("tar_cmd:{}".format(tar_cmd))
+-        subprocess.run(tar_cmd, check=True)
+-
+-    except Exception as e:
+-        print("tar error!")
+-        return
+-
+-
+-def apply_patch(patch_file, target_dir):
+-    try:
+-        if not os.path.exists(target_dir):
+-            return
+-
+-        patch_cmd = ['patch', '-p1', "--fuzz=0", "--no-backup-if-mismatch", '-i', patch_file, '-d', target_dir]
+-        print("patch_cmd:{}".format(patch_cmd))
+-        subprocess.run(patch_cmd, check=True)
+-
+-    except Exception as e:
+-        print("apply_patch error!")
+-        return
+-
+-
+-def do_patch(args, target_dir):
+-    patch_file = []
+-
+-    for patch in patch_file:
+-        file_path = os.path.join(args.source_file, patch)
+-        apply_patch(file_path, target_dir)
+-
+-def do_copy(source_dir, target_dir):
+-    try:
+-        cp_cmd = ["cp", "-rf", source_dir, target_dir]
+-        print("cp_cmd:{}".format(cp_cmd))
+-        subprocess.run(cp_cmd, check=True)
+-    except Exception as e:
+-        print("copy error!")
+-        return
+-def do_remove(target_dir):
+-    try:
+-        rm_cmd = ["rm", "-rf", target_dir]
+-        subprocess.run(rm_cmd, check=True)
+-    except Exception as e:
+-        print("remove dir:%s error!" % target_dir)
+-        return
+-
+-def main():
+-    libpng_path = argparse.ArgumentParser()
+-    libpng_path.add_argument('--gen-dir', help='generate path of jsoncpp')
+-    libpng_path.add_argument('--source-file', help='jsoncpp source compressed dir')
+-    args = libpng_path.parse_args()
+-    tar_file_path = os.path.join(args.source_file, "jsoncpp-1.9.6.tar.gz")
+-    tmp_dir = os.path.join(THIS_FILE_PATH, "jsoncpp-1.9.6")
+-    untar_file(tar_file_path, tmp_dir, THIS_FILE_PATH)
+-    do_patch(args, tmp_dir)
+-    do_copy(tmp_dir, args.gen_dir)
+-    do_remove(tmp_dir)
+-    return 0
+-
+-
+-if __name__ == '__main__':
+-    sys.exit(main())
++#!/usr/bin/env python
++# -*- coding: utf-8 -*-
++# Copyright (c) 2023 Huawei Device Co., Ltd.
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#     http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++
++import argparse
++import hashlib
++import os
++from pathlib import Path, PurePosixPath
++import subprocess
++import sys
++import tarfile
++import tempfile
++
++ARCHIVE = "jsoncpp-1.9.6.tar.gz"
++TREE = "jsoncpp-1.9.6"
++ARCHIVE_SHA256 = "f93b6dd7ce796b13d02c108bc9f79812245a82e577581c4c9aabe57075c90ea2"
++OUTPUTS = ("src/lib_json/json_reader.cpp", "src/lib_json/json_value.cpp",
++           "src/lib_json/json_writer.cpp", "include/json/json.h")
++
++
++def real_directory(path):
++    path = Path(os.path.abspath(path))
++    if path == Path(path.anchor):
++        raise ValueError("filesystem root is not a generation directory")
++    for part in (path, *path.parents):
++        if part.is_symlink():
++            raise ValueError("generation path must not contain symlinks: " + str(part))
++    if path.exists() and not path.is_dir():
++        raise ValueError("generation path is not a directory: " + str(path))
++    return path
++
++
++def validate_archive(source):
++    archive = source / ARCHIVE
++    if archive.is_symlink() or not archive.is_file():
++        raise ValueError("jsoncpp archive must be a real file")
++    if hashlib.sha256(archive.read_bytes()).hexdigest() != ARCHIVE_SHA256:
++        raise ValueError("unknown jsoncpp 1.9.6 archive")
++    with tarfile.open(archive, "r:gz") as compressed:
++        for member in compressed.getmembers():
++            path = PurePosixPath(member.name)
++            if (path.is_absolute() or ".." in path.parts or not path.parts
++                    or path.parts[0] != TREE or not (member.isfile() or member.isdir())):
++                raise ValueError("unsafe jsoncpp archive member: " + member.name)
++    return archive
++
++
++def verify_tree(tree):
++    if tree.is_symlink() or not tree.is_dir():
++        raise ValueError("jsoncpp generated tree must be a real directory")
++    for entry in tree.rglob("*"):
++        if entry.is_symlink() or not (entry.is_file() or entry.is_dir()):
++            raise ValueError("unsafe jsoncpp generated entry: " + str(entry))
++    for relative in OUTPUTS:
++        entry = tree / relative
++        if not entry.is_file() or entry.stat().st_size == 0:
++            raise ValueError("missing jsoncpp generated output: " + relative)
++
++
++def install(source, generated):
++    source = Path(source).resolve()
++    archive = validate_archive(source)
++    generated = real_directory(generated)
++    if source == generated or source in generated.parents:
++        raise ValueError("jsoncpp generation must not write into source")
++    generated.mkdir(parents=True, exist_ok=True)
++    destination = generated / TREE
++    if destination.exists() or destination.is_symlink():
++        verify_tree(destination)
++    # GN consumes only generated sources and headers. A unique staging tree
++    # avoids source writes and cross-product extraction/removal races.
++    with tempfile.TemporaryDirectory(prefix=".jsoncpp-install-", dir=generated) as temporary:
++        stage = Path(temporary)
++        subprocess.run(["tar", "-xzf", str(archive), "-C", str(stage), "--no-same-owner"], check=True)
++        extracted = stage / TREE
++        verify_tree(extracted)
++        previous = stage / "previous-generated-tree"
++        had_previous = destination.exists()
++        if had_previous:
++            destination.rename(previous)
++        try:
++            extracted.rename(destination)
++        except OSError:
++            if had_previous:
++                previous.rename(destination)
++            raise
++    print("verified jsoncpp 1.9.6 generated sources: " + str(destination))
++
++
++def main():
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--gen-dir", required=True)
++    parser.add_argument("--source-file", required=True)
++    args = parser.parse_args()
++    install(args.source_file, args.gen_dir)
++    return 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())

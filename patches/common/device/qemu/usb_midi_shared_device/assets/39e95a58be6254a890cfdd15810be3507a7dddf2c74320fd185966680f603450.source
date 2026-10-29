@@ -1,0 +1,125 @@
+# Copyright (c) 2021-2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# please put short path ahead.
+# use relative path to mount point.
+genfscon rootfs / u:object_r:rootfs:s0
+
+genfscon proc / u:object_r:proc_file:s0
+genfscon proc /net u:object_r:proc_net:s0
+genfscon proc /net/tcp u:object_r:proc_net_tcp_udp:s0
+genfscon proc /net/udp u:object_r:proc_net_tcp_udp:s0
+
+
+genfscon proc /asound  u:object_r:proc_asound_file:s0
+genfscon proc /bluetooth  u:object_r:proc_bluetooth_file:s0
+genfscon proc /buddyinfo  u:object_r:proc_buddyinfo_file:s0
+genfscon proc /bus  u:object_r:proc_bus_file:s0
+genfscon proc /cgroups  u:object_r:proc_cgroups_file:s0
+genfscon proc /cmdline  u:object_r:proc_cmdline_file:s0
+genfscon proc /config.gz  u:object_r:proc_config_gz_file:s0
+genfscon proc /cpuinfo  u:object_r:proc_cpuinfo_file:s0
+genfscon proc /diskstats  u:object_r:proc_diskstats_file:s0
+genfscon proc /dynamic_debug  u:object_r:proc_dynamic_debug_file:s0
+genfscon proc /filesystems  u:object_r:proc_filesystems_file:s0
+genfscon proc /fs  u:object_r:proc_fs_file:s0
+genfscon proc /gt9xx_config  u:object_r:proc_gt9xx_config_file:s0
+genfscon proc /interrupts  u:object_r:proc_interrupts_file:s0
+genfscon proc /iomem  u:object_r:proc_iomem_file:s0
+genfscon proc /keys  u:object_r:proc_keys_file:s0
+genfscon proc /kmsg  u:object_r:proc_kmsg_file:s0
+genfscon proc /loadavg  u:object_r:proc_loadavg_file:s0
+genfscon proc /mounts u:object_r:proc_mounts_file:s0
+genfscon proc /meminfo  u:object_r:proc_meminfo_file:s0
+genfscon proc /misc  u:object_r:proc_misc_file:s0
+genfscon proc /modules  u:object_r:proc_modules_file:s0
+genfscon proc /mpp_service  u:object_r:proc_mpp_service_file:s0
+genfscon proc /pagetypeinfo  u:object_r:proc_pagetypeinfo_file:s0
+genfscon proc /partitions  u:object_r:proc_partitions_file:s0
+genfscon proc /rkisp-vir0  u:object_r:proc_rkisp_vir0_file:s0
+genfscon proc /slabinfo  u:object_r:proc_slabinfo_file:s0
+genfscon proc /softirqs  u:object_r:proc_softirqs_file:s0
+genfscon proc /stat  u:object_r:proc_stat_file:s0
+genfscon proc /swaps  u:object_r:proc_swaps_file:s0
+genfscon proc /sysrq-trigger  u:object_r:proc_sysrq_trigger_file:s0
+genfscon proc /timer_list  u:object_r:proc_timer_list_file:s0
+genfscon proc /uptime  u:object_r:proc_uptime_file:s0
+genfscon proc /version  u:object_r:proc_version_file:s0
+genfscon proc /vmallocinfo  u:object_r:proc_vmallocinfo_file:s0
+genfscon proc /vmstat  u:object_r:proc_vmstat_file:s0
+genfscon proc /zoneinfo  u:object_r:proc_zoneinfo_file:s0
+genfscon proc /sys/kernel/random/boot_id  u:object_r:proc_boot_id:s0
+genfscon proc /sys/fs/inotify/max_user_watches  u:object_r:proc_max_user_watches:s0
+genfscon proc /dsmm/developer  u:object_r:proc_developer_file:s0
+
+genfscon selinuxfs / u:object_r:selinuxfs:s0
+
+genfscon sysfs / u:object_r:sys_file:s0
+genfscon sysfs /hisys u:object_r:sysfs_hisys_file:s0
+genfscon sysfs /devices/system/cpu  u:object_r:sysfs_devices_system_cpu:s0
+genfscon sysfs /class/gadget_usb   u:object_r:sysfs_gadget_usb:s0
+genfscon sysfs /class/extcon        u:object_r:sysfs_extcon:s0
+genfscon sysfs /class/leds          u:object_r:sysfs_leds:s0
+genfscon sysfs /class/net           u:object_r:sysfs_net:s0
+genfscon sysfs /class/rfkill/rfkill0/state      u:object_r:sysfs_rfkill:s0
+genfscon sysfs /class/rfkill/rfkill1/state      u:object_r:sysfs_rfkill:s0
+genfscon sysfs /class/rfkill/rfkill2/state      u:object_r:sysfs_rfkill:s0
+genfscon sysfs /class/rfkill/rfkill3/state      u:object_r:sysfs_rfkill:s0
+genfscon sysfs /class/rtc                       u:object_r:sysfs_rtc:s0
+genfscon sysfs /class/wakeup                    u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/virtual/gadget_usb     u:object_r:sysfs_gadget_usb:s0
+genfscon sysfs /devices/virtual/block/          u:object_r:sysfs_block_file:s0
+genfscon sysfs /devices/virtual/block/loop      u:object_r:sysfs_block_loop:s0
+genfscon sysfs /devices/virtual/block/zram0     u:object_r:sysfs_block_zram:s0
+genfscon sysfs /devices/virtual/block/zram1     u:object_r:sysfs_block_zram:s0
+genfscon sysfs /devices/virtual/net                         u:object_r:sysfs_net:s0
+genfscon sysfs /devices/virtual/wakeup                      u:object_r:sysfs_wakeup:s0
+genfscon sysfs /fs/ext4/features                            u:object_r:sysfs_fs_ext4_features:s0
+genfscon sysfs /power/autosleep     u:object_r:sysfs_autosleep:s0
+genfscon sysfs /power/state         u:object_r:sysfs_state:s0
+genfscon sysfs /power/suspend_stats  u:object_r:sysfs_suspend_stats:s0
+genfscon sysfs /power/wakeup_count      u:object_r:sysfs_power:s0
+genfscon sysfs /power/wake_lock         u:object_r:sysfs_wake_lck:s0
+genfscon sysfs /power/wake_unlock       u:object_r:sysfs_wake_lck:s0
+genfscon sysfs /kernel/notes            u:object_r:sysfs_kernel_notes:s0
+genfscon sysfs /kernel/wakeup_reasons       u:object_r:sysfs_wakeup_reasons:s0
+genfscon sysfs /kernel/hungtask/userlist       u:object_r:sysfs_hungtask_userlist:s0
+genfscon sysfs /module/tcp_cubic/parameters u:object_r:sysfs_net:s0
+genfscon sysfs /devices/platform/fdd40000.i2c/i2c-0/0-0020/rk808-rtc/rtc/rtc0/hctosys       u:object_r:sysfs_hctosys:s0
+genfscon sysfs /devices/platform/fe5e0000.i2c/i2c-5/5-0051/rtc/rtc1/hctosys    u:object_r:sysfs_hctosys:s0
+
+
+genfscon debugfs / u:object_r:debugfs:s0
+genfscon debugfs /kprobes u:object_r:debugfs_kprobes:s0
+genfscon debugfs /wakeup_sources u:object_r:debugfs_wakeup_sources:s0
+genfscon debugfs /binder/failed_transaction_log u:object_r:debugfs_failed_transaction_log:s0
+genfscon debugfs /binder/state u:object_r:debugfs_state:s0
+genfscon debugfs /binder/stats u:object_r:debugfs_stats:s0
+genfscon debugfs /binder/transactions u:object_r:debugfs_transactions:s0
+genfscon debugfs /binder/transaction_log u:object_r:debugfs_transaction_log:s0
+genfscon debugfs /cma/cma-reserved/used u:object_r:debugfs_used:s0
+
+genfscon tracefs / u:object_r:tracefs:s0
+
+genfscon configfs / u:object_r:configfs:s0
+genfscon configfs /usb_gadget  u:object_r:config_usb_gadget:s0
+
+genfscon cgroup / u:object_r:cgroup:s0
+genfscon functionfs / u:object_r:functionfs:s0
+
+genfscon pstore / u:object_r:pstorefs:s0
+
+genfscon hmdfs / u:object_r:hmdfs:s0
+genfscon epfs / u:object_r:epfs:s0
+genfscon sharefs / u:object_r:sharefs:s0
+genfscon fuse / u:object_r:fuse_file:s0

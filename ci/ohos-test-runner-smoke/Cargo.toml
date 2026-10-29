@@ -1,6 +1,0 @@
-[package]
-name = "ohos-test-runner-smoke"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]

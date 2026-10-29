@@ -1,0 +1,364 @@
+{
+  "schema": "screen-system-live-view578-source/v1",
+  "scope": "source only; require full 8-member before or full after vector, reject mixed/unknown/new-file collision; all existing source regular mode0644; no source/Git/resource operation was executed by author",
+  "managed": [
+    {
+      "path": "applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/common/constants.ts",
+      "before": {
+        "sha256": "7f02b895ada53991fbac489c7963c85855f7f9edc2c369ed5918c8d1e3cfb5ff",
+        "bytes": 4458,
+        "exists": true
+      },
+      "after": {
+        "sha256": "c5a31fd7967cb7bbf4ed98788a2f212b4c1d4dc05b56dc5bc666af4905b5589f",
+        "bytes": 4626
+      },
+      "canonical_mode": "0644"
+    },
+    {
+      "path": "applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/model/NotificationManager.ts",
+      "before": {
+        "sha256": "6505eea4cc127c806ee24f9b0de2abb45ef5581a33928f503d741e0ae9351124",
+        "bytes": 6638,
+        "exists": true
+      },
+      "after": {
+        "sha256": "ebfd669682287355eb825d01fe8e4c7839c3b8c5c86e46c11548a9bfe0f5a7af",
+        "bytes": 6741
+      },
+      "canonical_mode": "0644"
+    },
+    {
+      "path": "applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/model/ParseDataUtil.ts",
+      "before": {
+        "sha256": "5eb5b8126460b1f691b7c830e6260179b43a6c6eb610892c3a493dbcb10d76dc",
+        "bytes": 6902,
+        "exists": true
+      },
+      "after": {
+        "sha256": "a3a5ad8aa28ad217ddec865664fe5d9f33ba18ac3563040cc863b70240dfbe78",
+        "bytes": 8245
+      },
+      "canonical_mode": "0644"
+    },
+    {
+      "path": "applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/model/rule/RuleController.ts",
+      "before": {
+        "sha256": "effb9c538da5151384c939be04ebb175c6935a1f8097adbe679604f4da8ef1e2",
+        "bytes": 5714,
+        "exists": true
+      },
+      "after": {
+        "sha256": "4da5c1ad52f3dd067565cbad0d7c2b8bc4952c8b1e8cac6dbe8d14cb151f6550",
+        "bytes": 6362
+      },
+      "canonical_mode": "0644"
+    },
+    {
+      "path": "applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/view/item/notificationItem.ets",
+      "before": {
+        "sha256": "d858b0b04d57e0306260fb4c9ea5aa147a8832b983c9f9c97194333e43b80950",
+        "bytes": 5358,
+        "exists": true
+      },
+      "after": {
+        "sha256": "c37f4fc6bce40762c6a6c7f1bddb224cc1de4052ff0e52b84f47bd34bf602173",
+        "bytes": 5518
+      },
+      "canonical_mode": "0644"
+    },
+    {
+      "path": "applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/view/item/systemLiveViewItem.ets",
+      "before": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "exists": false
+      },
+      "after": {
+        "sha256": "37f602a3c6a82a2affec3b9a957c50c28dbb8a853824a92a3fe98edb278b5b34",
+        "bytes": 2651
+      },
+      "canonical_mode": "0644"
+    },
+    {
+      "path": "applications/standard/systemui/features/statusbarcomponent/src/main/ets/com/ohos/pages/IconItemComponent.ets",
+      "before": {
+        "sha256": "cc65d71fe1a683afc0d48e95f43266b2811147376d2e1ea66883f132b400a83c",
+        "bytes": 5538,
+        "exists": true
+      },
+      "after": {
+        "sha256": "dfac31933d684016b2ca052ec94c34ea22449a7de67276b077b2590a1358d74b",
+        "bytes": 5621
+      },
+      "canonical_mode": "0644"
+    },
+    {
+      "path": "applications/standard/systemui/product/phone/statusbar/src/main/ets/pages/index.ets",
+      "before": {
+        "sha256": "8a5b6445797c75a3661bd1181822a2e2435f45da8f7c25cf9987ac9682dcc67d",
+        "bytes": 7492,
+        "exists": true
+      },
+      "after": {
+        "sha256": "c4c66967ec9ba481d9c806846a352d95621e6686195d410695ae2d0dfe90c202",
+        "bytes": 7528
+      },
+      "canonical_mode": "0644"
+    }
+  ],
+  "readonly": [
+    {
+      "path": "applications/standard/systemui/entry/phone/src/main/module.json5",
+      "sha256": "186457b6abcdff460afa8200b39ca660f5ebbca1d05d512e32b7aead3303b210",
+      "bytes": 3016,
+      "revision": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01",
+      "scope": "unchanged SystemUI permissions, user visibility, native notification delivery and genuine drawer entry"
+    },
+    {
+      "path": "applications/standard/systemui/entry/pc/src/main/module.json5",
+      "sha256": "d60d6d9bba1333c08086748ac86cc03864dfe36e049655aa7ea2d0467c0bd6e8",
+      "bytes": 2937,
+      "revision": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01",
+      "scope": "unchanged SystemUI permissions, user visibility, native notification delivery and genuine drawer entry"
+    },
+    {
+      "path": "applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/model/NotificationService.ts",
+      "sha256": "452614def28f317ba6fcba01f1bf105da8778df026a4b4fbbc276ee91bc20cb9",
+      "bytes": 6333,
+      "revision": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01",
+      "scope": "unchanged SystemUI permissions, user visibility, native notification delivery and genuine drawer entry"
+    },
+    {
+      "path": "applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/view/item/generalItem.ets",
+      "sha256": "fdf5ecc333fb45f2b0fac987397e9a60dad6f99929b8c081f33ee1983b2c9d49",
+      "bytes": 4585,
+      "revision": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01",
+      "scope": "unchanged SystemUI permissions, user visibility, native notification delivery and genuine drawer entry"
+    },
+    {
+      "path": "applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/view/item/actionComponent.ets",
+      "sha256": "adc460e8511cb260dcd6751977174b48a32e9f8a9e567b26b22ff91771d0e354",
+      "bytes": 4588,
+      "revision": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01",
+      "scope": "unchanged SystemUI permissions, user visibility, native notification delivery and genuine drawer entry"
+    },
+    {
+      "path": "applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/common/CommonUtil.ts",
+      "sha256": "a10c5eab0b7b21268845b11fb4d9ad16aefc2ac90526b73cdff45db41b41bc35",
+      "bytes": 1774,
+      "revision": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01",
+      "scope": "unchanged SystemUI permissions, user visibility, native notification delivery and genuine drawer entry"
+    },
+    {
+      "path": "applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/viewmodel/NotificationViewModel.ts",
+      "sha256": "55676b5a698fbafe7531fd83edba95efbf2c3a67706e50e2dbdb6f77c5336fa2",
+      "bytes": 16777,
+      "revision": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01",
+      "scope": "unchanged SystemUI permissions, user visibility, native notification delivery and genuine drawer entry"
+    },
+    {
+      "path": "applications/standard/systemui/product/phone/statusbar/src/main/ets/pages/common/StatusbarConfig.ts",
+      "sha256": "81ea6b3a5eef56d4e240c83a073e01c12f1440983abd403a1db2f68b6ee82b81",
+      "bytes": 2336,
+      "revision": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01",
+      "scope": "unchanged SystemUI permissions, user visibility, native notification delivery and genuine drawer entry"
+    },
+    {
+      "path": "applications/standard/systemui/product/pc/notificationpanel/src/main/module.json5",
+      "sha256": "c8177414241ffe6faeee88b620df08870df8aaf6430cb8cd663b736f2d20af80",
+      "bytes": 1425,
+      "revision": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01",
+      "scope": "unchanged SystemUI permissions, user visibility, native notification delivery and genuine drawer entry"
+    },
+    {
+      "path": "applications/standard/systemui/product/pc/notificationpanel/src/main/ets/pages/index.ets",
+      "sha256": "1f4f4533291487d4772704dee93e84f359ac9e1a1a8a2a2a055780187a9e92c6",
+      "bytes": 5977,
+      "revision": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01",
+      "scope": "unchanged SystemUI permissions, user visibility, native notification delivery and genuine drawer entry"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/notification.gni",
+      "sha256": "4dd4bc380ebc93b40d1c69e47371ae3c2883c2b1a43bcbe6d4ececb2d61c3fea",
+      "bytes": 6351,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/frameworks/js/napi/BUILD.gn",
+      "sha256": "88b66ba236bb4f32efb06b8ae081df93ce855f12cf1eb7296734de275b88b1dd",
+      "bytes": 4466,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/frameworks/js/napi/src/manager/init_module.cpp",
+      "sha256": "d2ca94aa0a2e2b34ca206c18128a38e6ca27aa0fb7e93fb535ab57fd24b3b73a",
+      "bytes": 16987,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/frameworks/js/napi/src/manager/napi_local_live_view.cpp",
+      "sha256": "a1386664e5397e15c38f97dbe8e080274ff434d654b39de94805ac955718dfba",
+      "bytes": 9226,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/frameworks/js/napi/src/common.cpp",
+      "sha256": "1edcdd4b4deb751730c36c4a3e1430a976bb21ee05e32ec8ed674e6465c00e88",
+      "bytes": 78861,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/frameworks/js/napi/src/common_convert_request.cpp",
+      "sha256": "f4c00a3247c1a646737b9a2c60755e20af1eca934bbac3e6b3b30f9c7ff2d192",
+      "bytes": 82904,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/frameworks/js/napi/src/common_convert_content.cpp",
+      "sha256": "e2a975b289d2934047069c0584002e0b234a2517b60ffb25e5e2a99e37f6081c",
+      "bytes": 66499,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/frameworks/js/napi/src/common_convert_liveview.cpp",
+      "sha256": "4fa6012c401c592dd299854be0a19d871e2851377ed8ebbbac42d18b9a8d4a94",
+      "bytes": 54620,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/frameworks/core/src/ans_notification.cpp",
+      "sha256": "09e97165ba1650cd78b7a03ba74462b6d6699f8cdad8b2c5edd776e068ebca41",
+      "bytes": 144619,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/services/ans/src/system_live_view/advanced_notification_system_live_view_service.cpp",
+      "sha256": "24e6983e03b4b0befa86c86ce2a08d58fb76adab4bad7077e002b4d18a018711",
+      "bytes": 8064,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/services/ans/src/notification_local_live_view_subscriber_manager.cpp",
+      "sha256": "931c3bb133ba681b3a7640257541044ce70eb7d05da5d73210f998ef64866b2c",
+      "bytes": 10730,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/services/ans/src/advanced_notification_utils.cpp",
+      "sha256": "5a1cd0e3da3ece5cddb8e49375b8bc1e03f2f03ceeaa030595c7fb716dceaeef",
+      "bytes": 112345,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/services/ans/src/advanced_notification_publish_service.cpp",
+      "sha256": "e314c7410c652b4a9b0171b4dfedd35fb3b9e888060f5d4f06644b827c56f61e",
+      "bytes": 65003,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/services/ans/src/enable_manager/enable_manager.cpp",
+      "sha256": "8c2ddebf5f0a994741dac3f1b6f6caba51d31d3ad58ff585a60a086dfe76ff74",
+      "bytes": 30485,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "base/notification/distributed_notification_service/services/ans/src/bundle_manager_helper.cpp",
+      "sha256": "9bb62e93aaffd96bfd2566f9cc075d80616e319b2adb094a8bab6c99c43bed90",
+      "bytes": 21527,
+      "revision": "08a878a934511503bca88d3d69c686cc283c198c",
+      "scope": "unchanged exact NAPI, native identity, notification lookup, live-view capability flag, permission and subscriber callback"
+    },
+    {
+      "path": "interface/sdk-js/api/@ohos.notificationManager.d.ts",
+      "sha256": "d03d64ce9103fd468b67255700b76c609c1b170a4cacf8a0be7e65acabe935b4",
+      "bytes": 280800,
+      "revision": "43e34facc58b9c0f15c58571554ddd7eaa004455",
+      "scope": "fixed official system API declaration; no compiler execution"
+    },
+    {
+      "path": "interface/sdk-js/api/notification/notificationContent.d.ts",
+      "sha256": "7ea64db12966b7452e9805efa82e09a473c2ee6651de6ec25e0fe76b0f2238c6",
+      "bytes": 30307,
+      "revision": "43e34facc58b9c0f15c58571554ddd7eaa004455",
+      "scope": "fixed official system API declaration; no compiler execution"
+    },
+    {
+      "path": "interface/sdk-js/api/notification/NotificationCommonDef.d.ts",
+      "sha256": "64d33d2389677339319c18016c2412aea0457a0a093ecfb0322379f7e3ccd376",
+      "bytes": 3159,
+      "revision": "43e34facc58b9c0f15c58571554ddd7eaa004455",
+      "scope": "fixed official system API declaration; no compiler execution"
+    },
+    {
+      "path": "foundation/multimedia/player_framework/services/services/screen_capture/server/screen_capture_server.cpp",
+      "sha256": "385cf6fa2392123f65a9db5847fbb3ab4e65ba7c60a821f354ae5189e85cc81c",
+      "bytes": 250844,
+      "revision": "3d3b1231db27561e8978652d7ae867c12f488d9a",
+      "scope": "actual Owner RO export: Media native publisher UID/type, button stop and state callback"
+    },
+    {
+      "path": "foundation/multimedia/player_framework/services/services/screen_capture/server/screen_capture_server.h",
+      "sha256": "1948991d4f29660291b61adf0132188354441ec5144bfff710c144d85944b74c",
+      "bytes": 25511,
+      "revision": "3d3b1231db27561e8978652d7ae867c12f488d9a",
+      "scope": "actual Owner RO export: Media native publisher UID/type, button stop and state callback"
+    },
+    {
+      "path": "applications/standard/screenshot/AppScope/app.json5",
+      "sha256": "6136b32485337ef638febee74908679c22fa94c2dfd0dfc9a26216ece215687a",
+      "bytes": 245,
+      "revision": "904c518a49fb87dce3a63b49af0caac68b60fb0f",
+      "scope": "actual Owner RO export: original public privacy dialog Allow/Deny callbacks and localized labels"
+    },
+    {
+      "path": "applications/standard/screenshot/product/phone/src/main/ets/PrivacyDialog/DialogPage.ets",
+      "sha256": "34285dde71cd945a46273fbe5896a11472ef3fd0e053ac93f2c0fdb33c8d6f95",
+      "bytes": 5865,
+      "revision": "904c518a49fb87dce3a63b49af0caac68b60fb0f",
+      "scope": "actual Owner RO export: original public privacy dialog Allow/Deny callbacks and localized labels"
+    },
+    {
+      "path": "applications/standard/screenshot/product/phone/src/main/ets/PrivacyDialog/DialogAbility.ets",
+      "sha256": "04f8edf9cd1a5bdea76dbd2f14ac16c5310e1ef7c03a19cccb359c9df507fead",
+      "bytes": 2707,
+      "revision": "904c518a49fb87dce3a63b49af0caac68b60fb0f",
+      "scope": "actual Owner RO export: original public privacy dialog Allow/Deny callbacks and localized labels"
+    },
+    {
+      "path": "applications/standard/screenshot/product/phone/src/main/resources/en_US/element/string.json",
+      "sha256": "43f7d2c1a574f37b431dd735b187103ce1e35e12ab9001572d46793122bec536",
+      "bytes": 1406,
+      "revision": "904c518a49fb87dce3a63b49af0caac68b60fb0f",
+      "scope": "actual Owner RO export: original public privacy dialog Allow/Deny callbacks and localized labels"
+    },
+    {
+      "path": "applications/standard/screenshot/product/phone/src/main/resources/zh_CN/element/string.json",
+      "sha256": "c50c1eee961105fb4a4fd81822067122aaaafb649dd8bc4b685bc0b6bb99038f",
+      "bytes": 1342,
+      "revision": "904c518a49fb87dce3a63b49af0caac68b60fb0f",
+      "scope": "actual Owner RO export: original public privacy dialog Allow/Deny callbacks and localized labels"
+    }
+  ],
+  "feature_requirements": {
+    "player_framework_support_screen_capture_controller": true,
+    "distributed_notification_service_feature_local_liveview": true
+  },
+  "new_managed_before_absent": "applications/standard/systemui/features/noticeitem/src/main/ets/com/ohos/noticeItem/view/item/systemLiveViewItem.ets",
+  "target_compile": false,
+  "actual_guest_validation": false
+}

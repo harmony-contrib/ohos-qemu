@@ -1,0 +1,721 @@
+--- a/base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp
++++ b/base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp
+@@ -340,22 +340,16 @@
+
+ napi_value NapiCallManager::OffRttModifyInd(napi_env env, napi_callback_info info)
+ {
+-    GET_PARAMS(env, info, ONLY_ONE_VALUE);
+-    if ((argc != ONLY_ONE_VALUE) ||
+-        (!NapiCallManagerUtils::MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_function))) {
+-        NapiUtil::ThrowParameterError(env);
+-        return nullptr;
+-    }
+-
+-    auto asyncContext = std::make_unique<AsyncContext>();
+-    if (asyncContext == nullptr) {
+-        TELEPHONY_LOGE("OffRttModifyInd asyncContext nullptr.");
+-        NapiUtil::ThrowParameterError(env);
+-        return nullptr;
+-    }
+-
++    // Request one extra argument so surplus arguments are not silently accepted.
++    GET_PARAMS(env, info, TWO_VALUE_LIMIT);
++    bool noCallback = argc == 0 || (argc == ONLY_ONE_VALUE &&
++        NapiCallManagerUtils::MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_undefined));
++    if (argc > ONLY_ONE_VALUE || (!noCallback &&
++        !NapiCallManagerUtils::MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_function))) {
++        NapiUtil::ThrowParameterError(env);
++        return nullptr;
++    }
+     if (registerStatus_ != TELEPHONY_SUCCESS) {
+-        TELEPHONY_LOGE("OffRttModifyInd registerCallBack failed!");
+         if (registerStatus_ == TELEPHONY_ERR_PERMISSION_ERR) {
+             NapiUtil::ThrowError(env, JS_ERROR_TELEPHONY_PERMISSION_DENIED, OBSERVER_OFF_JS_PERMISSION_ERROR_STRING);
+             return nullptr;
+@@ -364,31 +358,23 @@
+         NapiUtil::ThrowError(env, error.errorCode, error.errorMessage);
+         return nullptr;
+     }
+-
+-    DelayedSingleton<NapiCallAbilityCallback>::GetInstance()->UnRegisterRttModifyIndCallback();
+-    napi_create_reference(env, argv[ARRAY_INDEX_FIRST], DATA_LENGTH_ONE, &(asyncContext->callbackRef));
+-    return HandleAsyncWork(
+-        env, asyncContext.release(), "offRttModifyInd", [](napi_env env, void *data) {}, NativeOffCallBack);
++    DelayedSingleton<NapiCallAbilityCallback>::GetInstance()->UnRegisterRttModifyIndCallback(
++        env, noCallback ? nullptr : argv[ARRAY_INDEX_FIRST]);
++    return NapiCallManagerUtils::CreateUndefined(env);
+ }
+
+ napi_value NapiCallManager::OffReceiveRttMessage(napi_env env, napi_callback_info info)
+ {
+-    GET_PARAMS(env, info, ONLY_ONE_VALUE);
+-    if ((argc != ONLY_ONE_VALUE) ||
+-        (!NapiCallManagerUtils::MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_function))) {
+-        NapiUtil::ThrowParameterError(env);
+-        return nullptr;
+-    }
+-
+-    auto asyncContext = std::make_unique<AsyncContext>();
+-    if (asyncContext == nullptr) {
+-        TELEPHONY_LOGE("OffReceiveRttMessage asyncContext is nullptr.");
+-        NapiUtil::ThrowParameterError(env);
+-        return nullptr;
+-    }
+-
++    // Request one extra argument so surplus arguments are not silently accepted.
++    GET_PARAMS(env, info, TWO_VALUE_LIMIT);
++    bool noCallback = argc == 0 || (argc == ONLY_ONE_VALUE &&
++        NapiCallManagerUtils::MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_undefined));
++    if (argc > ONLY_ONE_VALUE || (!noCallback &&
++        !NapiCallManagerUtils::MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_function))) {
++        NapiUtil::ThrowParameterError(env);
++        return nullptr;
++    }
+     if (registerStatus_ != TELEPHONY_SUCCESS) {
+-        TELEPHONY_LOGE("OffReceiveRttMessage registerCallBack failed!");
+         if (registerStatus_ == TELEPHONY_ERR_PERMISSION_ERR) {
+             NapiUtil::ThrowError(env, JS_ERROR_TELEPHONY_PERMISSION_DENIED, OBSERVER_OFF_JS_PERMISSION_ERROR_STRING);
+             return nullptr;
+@@ -397,29 +383,23 @@
+         NapiUtil::ThrowError(env, error.errorCode, error.errorMessage);
+         return nullptr;
+     }
+-    DelayedSingleton<NapiCallAbilityCallback>::GetInstance()->UnRegisterRttCallMessageCallback();
+-    napi_create_reference(env, argv[ARRAY_INDEX_FIRST], DATA_LENGTH_ONE, &(asyncContext->callbackRef));
+-    return HandleAsyncWork(
+-        env, asyncContext.release(), "offReceiveRttMessage", [](napi_env env, void *data) {}, NativeOffCallBack);
++    DelayedSingleton<NapiCallAbilityCallback>::GetInstance()->UnRegisterRttCallMessageCallback(
++        env, noCallback ? nullptr : argv[ARRAY_INDEX_FIRST]);
++    return NapiCallManagerUtils::CreateUndefined(env);
+ }
+
+ napi_value NapiCallManager::OffRttErrCause(napi_env env, napi_callback_info info)
+ {
+-    GET_PARAMS(env, info, ONLY_ONE_VALUE);
+-    if ((argc != ONLY_ONE_VALUE) ||
+-        (!NapiCallManagerUtils::MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_function))) {
+-        NapiUtil::ThrowParameterError(env);
+-        return nullptr;
+-    }
+-    auto asyncContext = std::make_unique<AsyncContext>();
+-    if (asyncContext == nullptr) {
+-        TELEPHONY_LOGE("OffRttErrCause asyncContext is nullptr.");
+-        NapiUtil::ThrowParameterError(env);
+-        return nullptr;
+-    }
+-
++    // Request one extra argument so surplus arguments are not silently accepted.
++    GET_PARAMS(env, info, TWO_VALUE_LIMIT);
++    bool noCallback = argc == 0 || (argc == ONLY_ONE_VALUE &&
++        NapiCallManagerUtils::MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_undefined));
++    if (argc > ONLY_ONE_VALUE || (!noCallback &&
++        !NapiCallManagerUtils::MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_function))) {
++        NapiUtil::ThrowParameterError(env);
++        return nullptr;
++    }
+     if (registerStatus_ != TELEPHONY_SUCCESS) {
+-        TELEPHONY_LOGE("OffRttErrCause registerCallBack failed!");
+         if (registerStatus_ == TELEPHONY_ERR_PERMISSION_ERR) {
+             NapiUtil::ThrowError(env, JS_ERROR_TELEPHONY_PERMISSION_DENIED, OBSERVER_OFF_JS_PERMISSION_ERROR_STRING);
+             return nullptr;
+@@ -428,12 +408,9 @@
+         NapiUtil::ThrowError(env, error.errorCode, error.errorMessage);
+         return nullptr;
+     }
+-    DelayedSingleton<NapiCallAbilityCallback>::GetInstance()->UnRegisterRttErrCauseCallback();
+-    if (argc == ONLY_ONE_VALUE) {
+-        napi_create_reference(env, argv[ARRAY_INDEX_FIRST], DATA_LENGTH_ONE, &(asyncContext->callbackRef));
+-    }
+-    return HandleAsyncWork(
+-        env, asyncContext.release(), "offRttErrCause", [](napi_env env, void *data) {}, NativeOffCallBack);
++    DelayedSingleton<NapiCallAbilityCallback>::GetInstance()->UnRegisterRttErrCauseCallback(
++        env, noCallback ? nullptr : argv[ARRAY_INDEX_FIRST]);
++    return NapiCallManagerUtils::CreateUndefined(env);
+ }
+ #endif
+
+--- a/base/telephony/call_manager/frameworks/js/napi/src/napi_call_ability_callback.cpp
++++ b/base/telephony/call_manager/frameworks/js/napi/src/napi_call_ability_callback.cpp
+@@ -17,10 +17,14 @@
+
+ #include <securec.h>
+ #include <ctime>
++#include <memory>
++#include <mutex>
++#include <vector>
+
+ #include "call_manager_errors.h"
+ #include "napi_call_manager_utils.h"
+ #include "napi_util.h"
++#include "napi/native_node_api.h"
+ #include "pixel_map.h"
+ #include "pixel_map_napi.h"
+ #include "telephony_log_wrapper.h"
+@@ -48,11 +52,6 @@
+     (void)memset_s(&callDataUsageCallback_, sizeof(EventCallback), 0, sizeof(EventCallback));
+     (void)memset_s(&cameraCapabilitiesCallback_, sizeof(EventCallback), 0, sizeof(EventCallback));
+     (void)memset_s(&callSessionEventCallback_, sizeof(EventCallback), 0, sizeof(EventCallback));
+-#ifdef SUPPORT_RTT_CALL
+-    (void)memset_s(&rttModifyIndCallback_, sizeof(EventCallback), 0, sizeof(EventCallback));
+-    (void)memset_s(&rttErrCauseCallback_, sizeof(EventCallback), 0, sizeof(EventCallback));
+-    (void)memset_s(&rttCallMessageCallback_, sizeof(EventCallback), 0, sizeof(EventCallback));
+-#endif
+     memberFuncMap_[CallResultReportId::GET_CALL_WAITING_REPORT_ID] =
+         [this](AppExecFwk::PacMap &resultInfo) { return ReportGetWaitingInfo(resultInfo); };
+     memberFuncMap_[CallResultReportId::SET_CALL_WAITING_REPORT_ID] =
+@@ -489,40 +488,126 @@
+     (void)memset_s(&stopRttCallback_, sizeof(EventCallback), 0, sizeof(EventCallback));
+ }
+
++// Cleanup hooks and listener removal serialize with service-thread queueing. No
++// N-API reference from an inactive registration may be used by queued work.
++static void CleanupRttCallback(void* data)
++{
++    std::unique_ptr<std::shared_ptr<RttCallbackRegistration>> holder(
++        static_cast<std::shared_ptr<RttCallbackRegistration>*>(data));
++    auto registration = *holder;
++    std::lock_guard<std::mutex> lock(registration->callbackMutex);
++    registration->active.store(false);
++    registration->cleanupData = nullptr;
++}
++
++static void DeleteRttCallbackReferences(EventCallback& callback)
++{
++    if (callback.callbackRef != nullptr) {
++        napi_delete_reference(callback.env, callback.callbackRef);
++    }
++    if (callback.thisVar != nullptr) {
++        napi_delete_reference(callback.env, callback.thisVar);
++    }
++    callback = {};
++}
++
++static void RegisterRttCallback(std::vector<std::shared_ptr<RttCallbackRegistration>>& callbacks,
++    EventCallback eventCallback, std::mutex& callbackMutex)
++{
++    std::lock_guard<std::mutex> lock(callbackMutex);
++    for (auto iter = callbacks.begin(); iter != callbacks.end();) {
++        if (!(*iter)->active.load()) {
++            iter = callbacks.erase(iter);
++            continue;
++        }
++        const auto& current = (*iter)->callback;
++        if (current.env == eventCallback.env) {
++            napi_value currentCallback = nullptr;
++            napi_value newCallback = nullptr;
++            bool equal = false;
++            napi_get_reference_value(current.env, current.callbackRef, &currentCallback);
++            napi_get_reference_value(eventCallback.env, eventCallback.callbackRef, &newCallback);
++            napi_strict_equals(current.env, currentCallback, newCallback, &equal);
++            if (equal) {
++                DeleteRttCallbackReferences(eventCallback);
++                return;
++            }
++        }
++        ++iter;
++    }
++    auto registration = std::make_shared<RttCallbackRegistration>();
++    registration->callback = eventCallback;
++    auto holder = std::make_unique<std::shared_ptr<RttCallbackRegistration>>(registration);
++    if (napi_add_env_cleanup_hook(eventCallback.env, CleanupRttCallback, holder.get()) != napi_ok) {
++        DeleteRttCallbackReferences(eventCallback);
++        napi_throw_error(registration->callback.env, nullptr, "Failed to register RTT environment cleanup");
++        return;
++    }
++    registration->cleanupData = holder.release();
++    callbacks.push_back(registration);
++}
++
++static void UnregisterRttCallback(std::vector<std::shared_ptr<RttCallbackRegistration>>& callbacks,
++    napi_env env, napi_value callback, std::mutex& callbackMutex)
++{
++    std::lock_guard<std::mutex> lock(callbackMutex);
++    for (auto iter = callbacks.begin(); iter != callbacks.end();) {
++        auto registration = *iter;
++        std::lock_guard<std::mutex> registrationLock(registration->callbackMutex);
++        if (!registration->active.load()) {
++            iter = callbacks.erase(iter);
++            continue;
++        }
++        auto& current = registration->callback;
++        bool equal = callback == nullptr;
++        if (current.env == env && callback != nullptr) {
++            napi_value currentCallback = nullptr;
++            napi_get_reference_value(env, current.callbackRef, &currentCallback);
++            napi_strict_equals(env, currentCallback, callback, &equal);
++        }
++        if (current.env != env || !equal) {
++            ++iter;
++            continue;
++        }
++        registration->active.store(false);
++        auto cleanupData = registration->cleanupData;
++        if (napi_remove_env_cleanup_hook(env, CleanupRttCallback, cleanupData) == napi_ok) {
++            registration->cleanupData = nullptr;
++            delete cleanupData;
++        }
++        DeleteRttCallbackReferences(current);
++        iter = callbacks.erase(iter);
++    }
++}
++
+ void NapiCallAbilityCallback::RegisterRttModifyIndCallback(EventCallback eventCallback)
+ {
+-    std::lock_guard<ffrt::mutex> lock(rttCallEvtChangeCallbackMutex_);
+-    rttModifyIndCallback_ = eventCallback;
+-}
+-
+-void NapiCallAbilityCallback::UnRegisterRttModifyIndCallback()
+-{
+-    std::lock_guard<ffrt::mutex> lock(rttCallEvtChangeCallbackMutex_);
+-    (void)memset_s(&rttModifyIndCallback_, sizeof(EventCallback), 0, sizeof(EventCallback));
++    RegisterRttCallback(rttModifyIndCallbacks_, eventCallback, rttCallEvtChangeCallbackMutex_);
++}
++
++void NapiCallAbilityCallback::UnRegisterRttModifyIndCallback(napi_env env, napi_value callback)
++{
++    UnregisterRttCallback(rttModifyIndCallbacks_, env, callback, rttCallEvtChangeCallbackMutex_);
+ }
+
+ void NapiCallAbilityCallback::RegisterRttErrCauseCallback(EventCallback eventCallback)
+ {
+-    std::lock_guard<ffrt::mutex> lock(rttCallErrCauseCallbackMutex_);
+-    rttErrCauseCallback_ = eventCallback;
+-}
+-
+-void NapiCallAbilityCallback::UnRegisterRttErrCauseCallback()
+-{
+-    std::lock_guard<ffrt::mutex> lock(rttCallErrCauseCallbackMutex_);
+-    (void)memset_s(&rttErrCauseCallback_, sizeof(EventCallback), 0, sizeof(EventCallback));
++    RegisterRttCallback(rttErrCauseCallbacks_, eventCallback, rttCallErrCauseCallbackMutex_);
++}
++
++void NapiCallAbilityCallback::UnRegisterRttErrCauseCallback(napi_env env, napi_value callback)
++{
++    UnregisterRttCallback(rttErrCauseCallbacks_, env, callback, rttCallErrCauseCallbackMutex_);
+ }
+
+ void NapiCallAbilityCallback::RegisterRttCallMessageCallback(EventCallback eventCallback)
+ {
+-    std::lock_guard<ffrt::mutex> lock(rttCallMessageCallbackMutex_);
+-    rttCallMessageCallback_ = eventCallback;
+-}
+-
+-void NapiCallAbilityCallback::UnRegisterRttCallMessageCallback()
+-{
+-    std::lock_guard<ffrt::mutex> lock(rttCallMessageCallbackMutex_);
+-    (void)memset_s(&rttCallMessageCallback_, sizeof(EventCallback), 0, sizeof(EventCallback));
++    RegisterRttCallback(rttCallMessageCallbacks_, eventCallback, rttCallMessageCallbackMutex_);
++}
++
++void NapiCallAbilityCallback::UnRegisterRttCallMessageCallback(napi_env env, napi_value callback)
++{
++    UnregisterRttCallback(rttCallMessageCallbacks_, env, callback, rttCallMessageCallbackMutex_);
+ }
+ #endif
+
+@@ -2426,44 +2511,49 @@
+ #ifdef SUPPORT_RTT_CALL
+ int32_t NapiCallAbilityCallback::ReportRttCallEventInfo(const RttEvent &info)
+ {
+-    std::lock_guard<ffrt::mutex> lock(rttCallEvtChangeCallbackMutex_);
+-    if (rttModifyIndCallback_.thisVar == nullptr) {
+-        TELEPHONY_LOGE("rttCallEvtChangeCallback is null!");
+-        return CALL_ERR_CALLBACK_NOT_EXIST;
+-    }
+-    uv_loop_s *loop = nullptr;
+-#if defined(NAPI_VERSION) && NAPI_VERSION >= 2
+-    napi_get_uv_event_loop(rttModifyIndCallback_.env, &loop);
+-#endif
+-    if (loop == nullptr) {
+-        return TELEPHONY_ERR_LOCAL_PTR_NULL;
+-    }
+-    RttCallEvtWork *callRttEventWorker = std::make_unique<RttCallEvtWork>().release();
+-    if (callRttEventWorker == nullptr) {
+-        TELEPHONY_LOGE("callRttEventWorker is nullptr!");
+-        return TELEPHONY_ERR_LOCAL_PTR_NULL;
+-    }
+-    callRttEventWorker->eventInfo = info;
+-    callRttEventWorker->callback = rttModifyIndCallback_;
+-    uv_work_t *work = std::make_unique<uv_work_t>().release();
+-    if (work == nullptr) {
+-        delete callRttEventWorker;
+-        callRttEventWorker = nullptr;
+-        TELEPHONY_LOGE("work is nullptr!");
+-        return TELEPHONY_ERR_LOCAL_PTR_NULL;
+-    }
+-    work->data = (void *)callRttEventWorker;
+-    int32_t errorCode = uv_queue_work_with_qos(
+-        loop, work, [](uv_work_t *work) {
+-            TELEPHONY_LOGD("ReportRttCallEventInfo uv_queue_work_with_qos");
+-        }, ReportRttCallEventInfoWork, uv_qos_default);
+-    if (errorCode != 0) {
+-        TELEPHONY_LOGE("failed to uv_queue_work_with_qos, errorCode: %{public}d", errorCode);
+-        delete callRttEventWorker;
+-        callRttEventWorker = nullptr;
+-        delete work;
+-        work = nullptr;
+-        return TELEPHONY_ERROR;
++    std::lock_guard<std::mutex> lock(rttCallEvtChangeCallbackMutex_);
++    if (rttModifyIndCallbacks_.empty()) {
++        return CALL_ERR_CALLBACK_NOT_EXIST;
++    }
++    for (const auto& registration : rttModifyIndCallbacks_) {
++        std::lock_guard<std::mutex> registrationLock(registration->callbackMutex);
++        if (!registration->active.load()) {
++            continue;
++        }
++        uv_loop_s *loop = nullptr;
++    #if defined(NAPI_VERSION) && NAPI_VERSION >= 2
++        napi_get_uv_event_loop(registration->callback.env, &loop);
++    #endif
++        if (loop == nullptr) {
++            return TELEPHONY_ERR_LOCAL_PTR_NULL;
++        }
++        RttCallEvtWork *callRttEventWorker = std::make_unique<RttCallEvtWork>().release();
++        if (callRttEventWorker == nullptr) {
++            TELEPHONY_LOGE("callRttEventWorker is nullptr!");
++            return TELEPHONY_ERR_LOCAL_PTR_NULL;
++        }
++        callRttEventWorker->eventInfo = info;
++        callRttEventWorker->registration = registration;
++        uv_work_t *work = std::make_unique<uv_work_t>().release();
++        if (work == nullptr) {
++            delete callRttEventWorker;
++            callRttEventWorker = nullptr;
++            TELEPHONY_LOGE("work is nullptr!");
++            return TELEPHONY_ERR_LOCAL_PTR_NULL;
++        }
++        work->data = (void *)callRttEventWorker;
++        int32_t errorCode = uv_queue_work_with_qos(
++            loop, work, [](uv_work_t *work) {
++                TELEPHONY_LOGD("ReportRttCallEventInfo uv_queue_work_with_qos");
++            }, ReportRttCallEventInfoWork, uv_qos_default);
++        if (errorCode != 0) {
++            TELEPHONY_LOGE("failed to uv_queue_work_with_qos, errorCode: %{public}d", errorCode);
++            delete callRttEventWorker;
++            callRttEventWorker = nullptr;
++            delete work;
++            work = nullptr;
++            return TELEPHONY_ERROR;
++        }
+     }
+     return TELEPHONY_SUCCESS;
+ }
+@@ -2475,8 +2565,10 @@
+         TELEPHONY_LOGE("dataWorkerData is nullptr!");
+         return;
+     }
+-    int32_t ret = ReportRttCallEventInfo(dataWorkerData->eventInfo, dataWorkerData->callback);
+-    TELEPHONY_LOGI("ReportRttCallEventInfo result = %{public}d", ret);
++    if (status == 0 && dataWorkerData->registration->active.load()) {
++        int32_t ret = ReportRttCallEventInfo(dataWorkerData->eventInfo, dataWorkerData->registration->callback);
++        TELEPHONY_LOGI("ReportRttCallEventInfo result = %{public}d", ret);
++    }
+     delete dataWorkerData;
+     dataWorkerData = nullptr;
+     delete work;
+@@ -2521,44 +2613,49 @@
+
+ int32_t NapiCallAbilityCallback::ReportRttCallErrorInfo(const RttError &info)
+ {
+-    std::lock_guard<ffrt::mutex> lock(rttCallErrCauseCallbackMutex_);
+-    if (rttErrCauseCallback_.thisVar == nullptr) {
+-        TELEPHONY_LOGE("rttCallErrCauseCallback is null!");
+-        return CALL_ERR_CALLBACK_NOT_EXIST;
+-    }
+-    uv_loop_s *loop = nullptr;
+-#if defined(NAPI_VERSION) && NAPI_VERSION >= 2
+-    napi_get_uv_event_loop(rttErrCauseCallback_.env, &loop);
+-#endif
+-    if (loop == nullptr) {
+-        return TELEPHONY_ERR_LOCAL_PTR_NULL;
+-    }
+-    RttCallErrorWork *callRttErrorWorker = std::make_unique<RttCallErrorWork>().release();
+-    if (callRttErrorWorker == nullptr) {
+-        TELEPHONY_LOGE("callRttErrorWorker is nullptr!");
+-        return TELEPHONY_ERR_LOCAL_PTR_NULL;
+-    }
+-    callRttErrorWorker->errorInfo = info;
+-    callRttErrorWorker->callback = rttErrCauseCallback_;
+-    uv_work_t *work = std::make_unique<uv_work_t>().release();
+-    if (work == nullptr) {
+-        delete callRttErrorWorker;
+-        callRttErrorWorker = nullptr;
+-        TELEPHONY_LOGE("work is nullptr!");
+-        return TELEPHONY_ERR_LOCAL_PTR_NULL;
+-    }
+-    work->data = (void *)callRttErrorWorker;
+-    int32_t errorCode = uv_queue_work_with_qos(
+-        loop, work, [](uv_work_t *work) {
+-            TELEPHONY_LOGD("ReportRttCallErrorInfo uv_queue_work_with_qos");
+-        }, ReportRttCallErrorInfoWork, uv_qos_default);
+-    if (errorCode != 0) {
+-        TELEPHONY_LOGE("failed to uv_queue_work_with_qos, errorCode: %{public}d", errorCode);
+-        delete callRttErrorWorker;
+-        callRttErrorWorker = nullptr;
+-        delete work;
+-        work = nullptr;
+-        return TELEPHONY_ERROR;
++    std::lock_guard<std::mutex> lock(rttCallErrCauseCallbackMutex_);
++    if (rttErrCauseCallbacks_.empty()) {
++        return CALL_ERR_CALLBACK_NOT_EXIST;
++    }
++    for (const auto& registration : rttErrCauseCallbacks_) {
++        std::lock_guard<std::mutex> registrationLock(registration->callbackMutex);
++        if (!registration->active.load()) {
++            continue;
++        }
++        uv_loop_s *loop = nullptr;
++    #if defined(NAPI_VERSION) && NAPI_VERSION >= 2
++        napi_get_uv_event_loop(registration->callback.env, &loop);
++    #endif
++        if (loop == nullptr) {
++            return TELEPHONY_ERR_LOCAL_PTR_NULL;
++        }
++        RttCallErrorWork *callRttErrorWorker = std::make_unique<RttCallErrorWork>().release();
++        if (callRttErrorWorker == nullptr) {
++            TELEPHONY_LOGE("callRttErrorWorker is nullptr!");
++            return TELEPHONY_ERR_LOCAL_PTR_NULL;
++        }
++        callRttErrorWorker->errorInfo = info;
++        callRttErrorWorker->registration = registration;
++        uv_work_t *work = std::make_unique<uv_work_t>().release();
++        if (work == nullptr) {
++            delete callRttErrorWorker;
++            callRttErrorWorker = nullptr;
++            TELEPHONY_LOGE("work is nullptr!");
++            return TELEPHONY_ERR_LOCAL_PTR_NULL;
++        }
++        work->data = (void *)callRttErrorWorker;
++        int32_t errorCode = uv_queue_work_with_qos(
++            loop, work, [](uv_work_t *work) {
++                TELEPHONY_LOGD("ReportRttCallErrorInfo uv_queue_work_with_qos");
++            }, ReportRttCallErrorInfoWork, uv_qos_default);
++        if (errorCode != 0) {
++            TELEPHONY_LOGE("failed to uv_queue_work_with_qos, errorCode: %{public}d", errorCode);
++            delete callRttErrorWorker;
++            callRttErrorWorker = nullptr;
++            delete work;
++            work = nullptr;
++            return TELEPHONY_ERROR;
++        }
+     }
+     return TELEPHONY_SUCCESS;
+ }
+@@ -2570,8 +2667,10 @@
+         TELEPHONY_LOGE("dataWorkerData is nullptr!");
+         return;
+     }
+-    int32_t ret = ReportRttCallErrorInfo(dataWorkerData->errorInfo, dataWorkerData->callback);
+-    TELEPHONY_LOGI("ReportRttCallErrorInfo result = %{public}d", ret);
++    if (status == 0 && dataWorkerData->registration->active.load()) {
++        int32_t ret = ReportRttCallErrorInfo(dataWorkerData->errorInfo, dataWorkerData->registration->callback);
++        TELEPHONY_LOGI("ReportRttCallErrorInfo result = %{public}d", ret);
++    }
+     delete dataWorkerData;
+     dataWorkerData = nullptr;
+     delete work;
+@@ -2618,57 +2717,64 @@
+
+ int32_t NapiCallAbilityCallback::ReportRttCallMessageInfo(AppExecFwk::PacMap &resultInfo)
+ {
+-    std::lock_guard<ffrt::mutex> lock(rttCallMessageCallbackMutex_);
+-    if (rttCallMessageCallback_.thisVar == nullptr) {
+-        TELEPHONY_LOGE("rttCallMessageCallback_ is null!");
+-        return CALL_ERR_CALLBACK_NOT_EXIST;
+-    }
+-    uv_loop_s *loop = nullptr;
+-#if defined(NAPI_VERSION) && NAPI_VERSION >= 2
+-    napi_get_uv_event_loop(rttCallMessageCallback_.env, &loop);
+-#endif
+-    if (loop == nullptr) {
+-        return TELEPHONY_ERR_LOCAL_PTR_NULL;
+-    }
+-    CallSupplementWorker *callRttMsgWorker = std::make_unique<CallSupplementWorker>().release();
+-    if (callRttMsgWorker == nullptr) {
+-        TELEPHONY_LOGE("callRttErrorWorker is nullptr!");
+-        return TELEPHONY_ERR_LOCAL_PTR_NULL;
+-    }
+-    callRttMsgWorker->info = resultInfo;
+-    callRttMsgWorker->callback = rttCallMessageCallback_;
+-    uv_work_t *work = std::make_unique<uv_work_t>().release();
+-    if (work == nullptr) {
+-        delete callRttMsgWorker;
+-        callRttMsgWorker = nullptr;
+-        TELEPHONY_LOGE("work is nullptr!");
+-        return TELEPHONY_ERR_LOCAL_PTR_NULL;
+-    }
+-    work->data = (void *)callRttMsgWorker;
+-    int32_t errorCode = uv_queue_work_with_qos(
+-        loop, work, [](uv_work_t *work) {
+-            TELEPHONY_LOGD("ReportRttMessageInfo uv_queue_work_with_qos");
+-        }, ReportRttCallMessageWork, uv_qos_default);
+-    if (errorCode != 0) {
+-        TELEPHONY_LOGE("failed to uv_queue_work_with_qos, errorCode: %{public}d", errorCode);
+-        delete callRttMsgWorker;
+-        callRttMsgWorker = nullptr;
+-        delete work;
+-        work = nullptr;
+-        return TELEPHONY_ERROR;
++    std::lock_guard<std::mutex> lock(rttCallMessageCallbackMutex_);
++    if (rttCallMessageCallbacks_.empty()) {
++        return CALL_ERR_CALLBACK_NOT_EXIST;
++    }
++    for (const auto& registration : rttCallMessageCallbacks_) {
++        std::lock_guard<std::mutex> registrationLock(registration->callbackMutex);
++        if (!registration->active.load()) {
++            continue;
++        }
++        uv_loop_s *loop = nullptr;
++    #if defined(NAPI_VERSION) && NAPI_VERSION >= 2
++        napi_get_uv_event_loop(registration->callback.env, &loop);
++    #endif
++        if (loop == nullptr) {
++            return TELEPHONY_ERR_LOCAL_PTR_NULL;
++        }
++        RttCallMessageWork *callRttMsgWorker = std::make_unique<RttCallMessageWork>().release();
++        if (callRttMsgWorker == nullptr) {
++            TELEPHONY_LOGE("callRttErrorWorker is nullptr!");
++            return TELEPHONY_ERR_LOCAL_PTR_NULL;
++        }
++        callRttMsgWorker->info = resultInfo;
++        callRttMsgWorker->registration = registration;
++        uv_work_t *work = std::make_unique<uv_work_t>().release();
++        if (work == nullptr) {
++            delete callRttMsgWorker;
++            callRttMsgWorker = nullptr;
++            TELEPHONY_LOGE("work is nullptr!");
++            return TELEPHONY_ERR_LOCAL_PTR_NULL;
++        }
++        work->data = (void *)callRttMsgWorker;
++        int32_t errorCode = uv_queue_work_with_qos(
++            loop, work, [](uv_work_t *work) {
++                TELEPHONY_LOGD("ReportRttMessageInfo uv_queue_work_with_qos");
++            }, ReportRttCallMessageWork, uv_qos_default);
++        if (errorCode != 0) {
++            TELEPHONY_LOGE("failed to uv_queue_work_with_qos, errorCode: %{public}d", errorCode);
++            delete callRttMsgWorker;
++            callRttMsgWorker = nullptr;
++            delete work;
++            work = nullptr;
++            return TELEPHONY_ERROR;
++        }
+     }
+     return TELEPHONY_SUCCESS;
+ }
+
+ void NapiCallAbilityCallback::ReportRttCallMessageWork(uv_work_t *work, int32_t status)
+ {
+-    CallSupplementWorker *dataWorkerData = (CallSupplementWorker *)work->data;
++    RttCallMessageWork *dataWorkerData = (RttCallMessageWork *)work->data;
+     if (dataWorkerData == nullptr) {
+         TELEPHONY_LOGE("dataWorkerData is nullptr!");
+         return;
+     }
+-    int32_t ret = ReportRttCallMessage(dataWorkerData->info, dataWorkerData->callback);
+-    TELEPHONY_LOGI("ReportRttCallMessage result = %{public}d", ret);
++    if (status == 0 && dataWorkerData->registration->active.load()) {
++        int32_t ret = ReportRttCallMessage(dataWorkerData->info, dataWorkerData->registration->callback);
++        TELEPHONY_LOGI("ReportRttCallMessage result = %{public}d", ret);
++    }
+     delete dataWorkerData;
+     dataWorkerData = nullptr;
+     delete work;
+--- a/base/telephony/call_manager/frameworks/js/napi/include/napi_call_ability_callback.h
++++ b/base/telephony/call_manager/frameworks/js/napi/include/napi_call_ability_callback.h
+@@ -16,7 +16,10 @@
+ #ifndef NAPI_CALL_ABILITY_CALLBACK_H
+ #define NAPI_CALL_ABILITY_CALLBACK_H
+
++#include <memory>
++#include <mutex>
+ #include <uv.h>
++#include <vector>
+ #include "ffrt.h"
+
+ #include "pac_map.h"
+@@ -96,11 +99,11 @@
+     void RegisterStopRttCallback(EventCallback callback);
+     void UnRegisterStopRttCallback();
+     void RegisterRttModifyIndCallback(EventCallback eventCallback);
+-    void UnRegisterRttModifyIndCallback();
++    void UnRegisterRttModifyIndCallback(napi_env env, napi_value callback = nullptr);
+     void RegisterRttErrCauseCallback(EventCallback eventCallback);
+-    void UnRegisterRttErrCauseCallback();
++    void UnRegisterRttErrCauseCallback(napi_env env, napi_value callback = nullptr);
+     void RegisterRttCallMessageCallback(EventCallback eventCallback);
+-    void UnRegisterRttCallMessageCallback();
++    void UnRegisterRttCallMessageCallback(napi_env env, napi_value callback = nullptr);
+     int32_t ReportRttCallEventInfo(const RttEvent &info);
+     int32_t ReportRttCallErrorInfo(const RttError &info);
+     int32_t ReportRttCallMessageInfo(AppExecFwk::PacMap &resultInfo);
+@@ -195,9 +198,9 @@
+     EventCallback cameraCapabilitiesCallback_;
+     EventCallback callSessionEventCallback_;
+ #ifdef SUPPORT_RTT_CALL
+-    EventCallback rttModifyIndCallback_;
+-    EventCallback rttErrCauseCallback_;
+-    EventCallback rttCallMessageCallback_;
++    std::vector<std::shared_ptr<RttCallbackRegistration>> rttModifyIndCallbacks_;
++    std::vector<std::shared_ptr<RttCallbackRegistration>> rttErrCauseCallbacks_;
++    std::vector<std::shared_ptr<RttCallbackRegistration>> rttCallMessageCallbacks_;
+ #endif
+     using CallResultReportIdProcessorFunc = std::function<int32_t(AppExecFwk::PacMap &resultInfo)>;
+     std::map<CallResultReportId, CallResultReportIdProcessorFunc> memberFuncMap_;
+@@ -210,9 +213,9 @@
+     std::mutex setWaitingCallbackMutex_;
+     std::mutex getWaitingCallbackMutex_;
+ #ifdef SUPPORT_RTT_CALL
+-    ffrt::mutex rttCallEvtChangeCallbackMutex_;
+-    ffrt::mutex rttCallErrCauseCallbackMutex_;
+-    ffrt::mutex rttCallMessageCallbackMutex_;
++    std::mutex rttCallEvtChangeCallbackMutex_;
++    std::mutex rttCallErrCauseCallbackMutex_;
++    std::mutex rttCallMessageCallbackMutex_;
+     ffrt::mutex startRttCallbackMutex_;
+     ffrt::mutex stopRttCallbackMutex_;
+ #endif
+--- a/base/telephony/call_manager/frameworks/js/napi/include/napi_call_manager_types.h
++++ b/base/telephony/call_manager/frameworks/js/napi/include/napi_call_manager_types.h
+@@ -15,6 +15,10 @@
+
+ #ifndef NATIVE_COMMON_TYPE_H
+ #define NATIVE_COMMON_TYPE_H
++
++#include <atomic>
++#include <memory>
++#include <mutex>
+
+ #include "call_manager_inner_type.h"
+ #include "napi/native_api.h"
+@@ -301,14 +305,27 @@
+     std::string rttMessage = "";
+ };
+
++struct RttCallbackRegistration {
++    EventCallback callback {};
++    std::atomic<bool> active { true };
++    std::mutex callbackMutex;
++    // The cleanup hook owns this independent shared_ptr until removal or env teardown.
++    std::shared_ptr<RttCallbackRegistration>* cleanupData = nullptr;
++};
++
+ struct RttCallEvtWork {
+     RttEvent eventInfo;
+-    EventCallback callback;
++    std::shared_ptr<RttCallbackRegistration> registration;
+ };
+
+ struct RttCallErrorWork {
+     RttError errorInfo;
+-    EventCallback callback;
++    std::shared_ptr<RttCallbackRegistration> registration;
++};
++
++struct RttCallMessageWork {
++    AppExecFwk::PacMap info;
++    std::shared_ptr<RttCallbackRegistration> registration;
+ };
+ #endif
+ } // namespace Telephony

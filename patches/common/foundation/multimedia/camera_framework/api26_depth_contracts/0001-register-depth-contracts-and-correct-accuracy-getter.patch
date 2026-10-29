@@ -1,0 +1,76 @@
+diff --git a/foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp b/foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp
+--- a/foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp
++++ b/foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp
+@@ -27,6 +27,7 @@
+ #include "output/photo_napi.h"
+ #include "output/photo_output_napi.h"
+ #include "output/preview_output_napi.h"
++#include "output/camera_output_capability.h"
+ #include "output/unify_movie_file_output_napi.h"
+ #include "output/video_output_napi.h"
+ 
+@@ -34,9 +35,53 @@
+ namespace OHOS {
+ namespace CameraStandard {
++static napi_status RegisterDepthEnums(napi_env env, napi_value exports)
++{
++    struct Member { const char *name; int32_t value; };
++    static const Member accuracy[] = {
++        {"DEPTH_DATA_ACCURACY_RELATIVE", DEPTH_DATA_ACCURACY_RELATIVE},
++        {"DEPTH_DATA_ACCURACY_ABSOLUTE", DEPTH_DATA_ACCURACY_ABSOLUTE},
++    };
++    // Public quality-level wire values; actual depth metadata remains unchanged.
++    static const Member quality[] = {
++        {"DEPTH_DATA_QUALITY_BAD", 0}, {"DEPTH_DATA_QUALITY_FAIR", 1}, {"DEPTH_DATA_QUALITY_GOOD", 2},
++    };
++    struct Enum { const char *name; const Member *members; size_t count; };
++    static const Enum enums[] = {
++        {"DepthDataAccuracy", accuracy, sizeof(accuracy) / sizeof(accuracy[0])},
++        {"DepthDataQualityLevel", quality, sizeof(quality) / sizeof(quality[0])},
++    };
++    for (const auto &entry : enums) {
++        napi_value object = nullptr;
++        napi_status status = napi_create_object(env, &object);
++        if (status != napi_ok) {
++            return status;
++        }
++        for (size_t index = 0; index < entry.count; ++index) {
++            napi_value value = nullptr;
++            status = napi_create_int32(env, entry.members[index].value, &value);
++            if (status != napi_ok) {
++                return status;
++            }
++            status = napi_set_named_property(env, object, entry.members[index].name, value);
++            if (status != napi_ok) {
++                return status;
++            }
++        }
++        status = napi_set_named_property(env, exports, entry.name, object);
++        if (status != napi_ok) {
++            return status;
++        }
++    }
++    return napi_ok;
++}
++
+ /*
+  * Function registering all props and functions of ohos.camera module
+  */
+ static napi_value Export(napi_env env, napi_value exports)
+ {
++    if (RegisterDepthEnums(env, exports) != napi_ok) {
++        return nullptr;
++    }
+     MEDIA_DEBUG_LOG("Export called()");
+     CameraInputNapi::Init(env, exports);
+diff --git a/foundation/multimedia/camera_framework/frameworks/js/camera_napi_for_sys/src/output/depth_data_napi.cpp b/foundation/multimedia/camera_framework/frameworks/js/camera_napi_for_sys/src/output/depth_data_napi.cpp
+--- a/foundation/multimedia/camera_framework/frameworks/js/camera_napi_for_sys/src/output/depth_data_napi.cpp
++++ b/foundation/multimedia/camera_framework/frameworks/js/camera_napi_for_sys/src/output/depth_data_napi.cpp
+@@ -101,6 +101,6 @@
+         DECLARE_NAPI_GETTER("format", GetFormat),
+         DECLARE_NAPI_GETTER("depthMap", GetDepthMap),
+         DECLARE_NAPI_GETTER("qualityLevel", GetQualityLevel),
+-        DECLARE_NAPI_GETTER("dataAccurary", GetAccuracy),
++        DECLARE_NAPI_GETTER("dataAccuracy", GetAccuracy),
+         DECLARE_NAPI_FUNCTION("release", Release),
+     };

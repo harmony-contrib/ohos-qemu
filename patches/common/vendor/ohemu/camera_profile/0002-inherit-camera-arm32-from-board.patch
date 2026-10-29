@@ -1,0 +1,12 @@
+diff --git a/vendor/ohemu/qemu_armv7a_linux_full/config.json b/vendor/ohemu/qemu_armv7a_linux_full/config.json
+--- a/vendor/ohemu/qemu_armv7a_linux_full/config.json
++++ b/vendor/ohemu/qemu_armv7a_linux_full/config.json
+@@ -114,8 +114,2 @@
+         },
+-        {
+-          "component": "drivers_peripheral_camera",
+-          "features": [
+-            "drivers_peripheral_camera_v4l2_emulator=false"
+-          ]
+-        },
+         {

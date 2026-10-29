@@ -1,0 +1,16 @@
+diff --git a/applications/standard/settings/napi/settings/open_network_settings/napi_open_network_settings.cpp b/applications/standard/settings/napi/settings/open_network_settings/napi_open_network_settings.cpp
+--- a/applications/standard/settings/napi/settings/open_network_settings/napi_open_network_settings.cpp
++++ b/applications/standard/settings/napi/settings/open_network_settings/napi_open_network_settings.cpp
+@@ -26,6 +26,6 @@
+ namespace Settings {
+ static constexpr const char* NFC_SYSTEM_CAPABILITY = "const.SystemCapability.Communication.NFC.Core";
+ static constexpr const char* NFC_NOT_SUPPORT_KEY = "const.nfc.not_support";
+-static constexpr const char* SETTINGS_MAIN_ABILITY_NAME = "com.huawei.hmos.settings.MainAbility";
++static constexpr const char* SETTINGS_MAIN_ABILITY_NAME = "com.ohos.settings.MainAbility";
+ static constexpr const int32_t SETTINGS_START_PAGE_FAILED_CODE = 16900020;
+ static constexpr const int32_t DEFAULT_INVAL_VALUE = -1;
+@@ -36,3 +36,3 @@
+ const std::string UIEXTENSION_TYPE_VALUE = "sys/commonUI";
+-const std::string SETTINGS_PACKAGE_NAME = "com.huawei.hmos.settings";
++const std::string SETTINGS_PACKAGE_NAME = "com.ohos.settings";
+ const std::string SETTINGS_ABILITY_NAME = "OpenNetworkUIExtensionAbility";

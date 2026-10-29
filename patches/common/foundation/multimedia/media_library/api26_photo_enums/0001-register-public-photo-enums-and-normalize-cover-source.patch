@@ -1,0 +1,151 @@
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp b/foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp
+--- a/foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp
++++ b/foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp
+@@ -51,7 +51,9 @@
+ #include "medialibrary_tracer.h"
+ #include "modal_ui_callback.h"
+ #include "napi_common_want.h"
+-#include "photo_album_napi.h"
++#include "photo_album_napi.h"
++#include "userfile_manager_types.h"
++#include "medialibrary_type_const.h"
+ #include "result_set_utils.h"
+ #include "search_column.h"
+ #include "short_term_callback.h"
+@@ -532,4 +534,72 @@
+-napi_value MediaLibraryNapi::PhotoAccessHelperInit(napi_env env, napi_value exports)
++static napi_status RegisterPublicPhotoEnums(napi_env env, napi_value exports)
++{
++    struct Member {
++        const char *name;
++        int32_t value;
++    };
++    struct Contract {
++        const char *name;
++        std::vector<Member> members;
++    };
++    const Contract contracts[] = {
++        {"PhotoRiskStatus", {
++            {"UNIDENTIFIED", static_cast<int32_t>(PhotoRiskStatus::UNIDENTIFIED)},
++            {"APPROVED", static_cast<int32_t>(PhotoRiskStatus::APPROVED)},
++            {"SUSPICIOUS", static_cast<int32_t>(PhotoRiskStatus::SUSPICIOUS)},
++            {"REJECTED", static_cast<int32_t>(PhotoRiskStatus::REJECTED)},
++        }},
++        // The native AppLinkState wire contract is the existing vector's 0-based index.
++        {"AppLinkState", {{appLinkStateEnum[0].c_str(), 0},
++            {appLinkStateEnum[1].c_str(), 1}, {appLinkStateEnum[2].c_str(), 2}}},
++        {"LivePhoto4dStatus", {
++            {"UNIDENTIFIED", static_cast<int32_t>(LivePhoto4dStatusType::TYPE_UNIDENTIFIED)},
++            {"UNSUPPORTED", static_cast<int32_t>(LivePhoto4dStatusType::TYPE_UNSUPPORTED)},
++            {"SUPPORTED", static_cast<int32_t>(LivePhoto4dStatusType::TYPE_SUPPORTED)},
++            {"USED", static_cast<int32_t>(LivePhoto4dStatusType::TYPE_USED)},
++            {"LIVEPHOTO_4D", static_cast<int32_t>(LivePhoto4dStatusType::TYPE_LIVEPHOTO_4D)},
++        }},
++        {"DeepOptimizeState", {
++            {"RUNNING", static_cast<int32_t>(DeepOptimizeSpaceState::RUNNING)},
++            {"COMPLETED", static_cast<int32_t>(DeepOptimizeSpaceState::COMPLETED)},
++            {"FAILED", static_cast<int32_t>(DeepOptimizeSpaceState::FAILED)},
++            {"STOPPED", static_cast<int32_t>(DeepOptimizeSpaceState::STOPPED)},
++            {"INTERRUPTED", static_cast<int32_t>(DeepOptimizeSpaceState::INTERRUPTED)},
++        }},
++        {"CoverUriSource", {
++            {"DEFAULT_COVER", static_cast<int32_t>(CoverUriSource::DEFAULT_COVER)},
++            {"MANUAL_COVER", static_cast<int32_t>(CoverUriSource::MANUAL_CLOUD_COVER)},
++        }},
++        {"ThumbnailVisibility", {
++            {"INVISIBLE", static_cast<int32_t>(ThumbnailVisibility::INVISIBLE)},
++            {"VISIBLE", static_cast<int32_t>(ThumbnailVisibility::VISIBLE)},
++        }},
++    };
++    for (const auto &contract : contracts) {
++        napi_value object = nullptr;
++        napi_status status = napi_create_object(env, &object);
++        if (status != napi_ok) {
++            return status;
++        }
++        for (const auto &member : contract.members) {
++            napi_value value = nullptr;
++            status = napi_create_int32(env, member.value, &value);
++            if (status != napi_ok) {
++                return status;
++            }
++            status = napi_set_named_property(env, object, member.name, value);
++            if (status != napi_ok) {
++                return status;
++            }
++        }
++        status = napi_set_named_property(env, exports, contract.name, object);
++        if (status != napi_ok) {
++            return status;
++        }
++    }
++    return napi_ok;
++}
++
++napi_value MediaLibraryNapi::PhotoAccessHelperInit(napi_env env, napi_value exports)
+ {
+     NapiClassInfo info = { PHOTOACCESSHELPER_NAPI_CLASS_NAME, &photoAccessHelperConstructor_,
+         MediaLibraryNapiConstructor,
+@@ -685,10 +755,13 @@
+         DECLARE_NAPI_PROPERTY("HdrMode", CreateHdrModeEnum(env)),
+         DECLARE_NAPI_PROPERTY("VideoMode", CreateVideoModeEnum(env)),
+         DECLARE_NAPI_PROPERTY("DynamicRangeType", CreateDynamicRangeTypeEnum(env)),
+-        DECLARE_NAPI_PROPERTY("AvailabilityStatus", CreateAvailabilityStatusEnum(env)),
+-    };
+-    MediaLibraryNapiUtils::NapiAddStaticProps(env, exports, staticProps);
+-    return exports;
++        DECLARE_NAPI_PROPERTY("AvailabilityStatus", CreateAvailabilityStatusEnum(env)),
++    };
++    MediaLibraryNapiUtils::NapiAddStaticProps(env, exports, staticProps);
++    if (RegisterPublicPhotoEnums(env, exports) != napi_ok) {
++        return nullptr;
++    }
++    return exports;
+ }
+ 
+ static napi_status CheckWhetherAsync(napi_env env, napi_callback_info info, bool &isAsync)
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/photo_album_napi.cpp b/foundation/multimedia/media_library/frameworks/js/src/photo_album_napi.cpp
+--- a/foundation/multimedia/media_library/frameworks/js/src/photo_album_napi.cpp
++++ b/foundation/multimedia/media_library/frameworks/js/src/photo_album_napi.cpp
+@@ -24,7 +24,8 @@
+ #include "medialibrary_napi_log.h"
+ #include "medialibrary_napi_utils_ext.h"
+ #include "medialibrary_tracer.h"
+-#include "photo_map_column.h"
++#include "photo_map_column.h"
++#include "userfile_manager_types.h"
+ #include "result_set_utils.h"
+ #include "userfile_client.h"
+ #include "album_operation_uri.h"
+@@ -635,7 +636,21 @@
+     return jsResult;
+ }
+ 
+-napi_value PhotoAlbumNapi::JSGetCoverUriSource(napi_env env, napi_callback_info info)
++static int32_t PublicCoverUriSource(int32_t source)
++{
++    // Native storage distinguishes local, cloud and pending manual covers.
++    // API 26 exposes a single MANUAL_COVER value; do not rewrite native storage.
++    switch (source) {
++        case CoverUriSource::MANUAL_CLOUD_COVER:
++        case CoverUriSource::MANUAL_LOCAL_COVER:
++        case CoverUriSource::MANUAL_WAIT_PULL_COVER:
++            return CoverUriSource::MANUAL_CLOUD_COVER;
++        default:
++            return source;
++    }
++}
++
++napi_value PhotoAlbumNapi::JSGetCoverUriSource(napi_env env, napi_callback_info info)
+ {
+     CHECK_COND_LOG_THROW_RETURN_RET(env, MediaLibraryNapiUtils::IsSystemApp(), JS_ERR_PERMISSION_DENIED,
+         "GetCoverUriSource permission denied: not a system app", nullptr, "GetCoverUriSource failed: not a system app");
+@@ -643,7 +658,7 @@
+     CHECK_NULLPTR_RET(UnwrapPhotoAlbumObject(env, info, &obj));
+ 
+     napi_value jsResult = nullptr;
+-    CHECK_ARGS(env, napi_create_int32(env, obj->GetCoverUriSource(), &jsResult),
++    CHECK_ARGS(env, napi_create_int32(env, PublicCoverUriSource(obj->GetCoverUriSource()), &jsResult),
+         JS_INNER_FAIL);
+     return jsResult;
+ }

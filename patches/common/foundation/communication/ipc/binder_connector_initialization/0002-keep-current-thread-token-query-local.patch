@@ -1,0 +1,19 @@
+diff --git a/foundation/communication/ipc/ipc/native/src/core/invoker/source/binder_connector.cpp b/foundation/communication/ipc/ipc/native/src/core/invoker/source/binder_connector.cpp
+--- a/foundation/communication/ipc/ipc/native/src/core/invoker/source/binder_connector.cpp
++++ b/foundation/communication/ipc/ipc/native/src/core/invoker/source/binder_connector.cpp
+@@ -191,11 +191,12 @@
+         (void)fclose(fp);
+         return 0;
+     }
+-    int ret = ioctl(fd, ACCESS_TOKENID_GET_TOKENID, &selfTokenID_);
++    uint64_t token = 0;
++    int ret = ioctl(fd, ACCESS_TOKENID_GET_TOKENID, &token);
+     if (ret != 0) {
+-        selfTokenID_ = 0;
++        token = 0;
+     }
+     (void)fclose(fp);
+-    return selfTokenID_;
++    return token;
+ }
+ // LCOV_EXCL_STOP

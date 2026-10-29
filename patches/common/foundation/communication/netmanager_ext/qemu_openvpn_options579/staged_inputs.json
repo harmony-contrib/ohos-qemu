@@ -1,0 +1,20 @@
+{
+  "schema": "qemu-openvpn-options579-normal-staged-inputs/v1",
+  "payloads": {
+    "foundation/communication/netmanager_ext/qemu_openvpn/BUILD.gn": "b8d9ce81fbb0370ae32a31633cd568173c8ebb94d3670586ad9323b8685d718b",
+    "foundation/communication/netmanager_ext/qemu_openvpn/dns_policy.h": "1adf73b9e695e16146a86d7522a359de8c53285e4fd7c335e4be57068f18d3cf",
+    "foundation/communication/netmanager_ext/qemu_openvpn/dns_transport.h": "1408036e6a1786bb8a33e96882de70df32ccfbf30a596a3ae9d4b9cbc7cdd10e",
+    "foundation/communication/netmanager_ext/qemu_openvpn/negotiated_config.h": "6c16a561d2e309aff324c1fbebfc8ec631711c41c0305ca1918607edaaa9abe9",
+    "foundation/communication/netmanager_ext/qemu_openvpn/profile_policy.h": "5aeb3f6492590ae779a431e545cafdfe0412d5c7b3e991e79478673be2c01192",
+    "foundation/communication/netmanager_ext/qemu_openvpn/qemu_openvpn.cfg": "a689c26654d9b5b4d7f741e6c5ef5413e40fcdd502068845b767a89820c1b4e6",
+    "foundation/communication/netmanager_ext/qemu_openvpn/route_metrics.h": "b188c1527f5b9c30fea07f343efcd511aca89d866197ab7dd7ebcfac013a624b",
+    "foundation/communication/netmanager_ext/qemu_openvpn/session_files.h": "265a4241cf492c9c4d552c350d1497a29b2c60b6e268ff3c030d599dcce918b0",
+    "foundation/communication/netmanager_ext/qemu_openvpn/supervisor.cpp": "72a886f992c714390aa9f8f1da2d25a85790ff5b01c003e93c3c0085538a1bab",
+    "foundation/communication/netmanager_ext/qemu_openvpn/tun_bridge.cpp": "ee7bf60973f01eefedb38c6dc72f025fb7ed7457a5687054604d162dda80b35f"
+  },
+  "recipes": {
+    "foundation/communication/netmanager_ext/qemu_openvpn/recipe/scripts/build_openvpn_ohos.py": "96e0b796c345eae0abfd506dff81ff60fae7bf24d6ce9c7a34617d8f25091140",
+    "foundation/communication/netmanager_ext/qemu_openvpn/recipe/scripts/build_product_openvpn.py": "95848ece8c8f2e62458a56e7f9b76e4692e19f8bd5d99e72d6f4947c779b5ab4",
+    "foundation/communication/netmanager_ext/qemu_openvpn/recipe/patches/common/third_party/openvpn/ohos_backend/0002-export-final-DNS-policy-to-AF_UNIX-tunnel.patch": "95d4284a0060e118b1b4d3f680ef8b57a524cd68f6a305b309c24e2f4010c73a"
+  }
+}

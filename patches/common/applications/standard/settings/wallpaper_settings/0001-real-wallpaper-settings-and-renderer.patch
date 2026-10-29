@@ -1,0 +1,2042 @@
+diff --git a/applications/standard/settings/feature/theme/src/main/ets/ThemeSettings.ets b/applications/standard/settings/feature/theme/src/main/ets/ThemeSettings.ets
+--- a/applications/standard/settings/feature/theme/src/main/ets/ThemeSettings.ets
++++ b/applications/standard/settings/feature/theme/src/main/ets/ThemeSettings.ets
+@@ -69,13 +69,23 @@
+   @State params: PushParam | null = null;
+   @State isFromSearch: boolean = false;
+   @State routerName: string = 'settingsThemePage';
++  @State private wallpaperOpening: boolean = false;
++  private wallpaperEntrySession: number = 0;
++  @State private wallpaperEntryError: string = '';
+   @StorageProp('navDesDynamicPadding') navDesDynamicPadding: number = AppStorage.get<number>('navDesDynamicPadding') as number;
+ 
+   build() {
+     NavDestination() {
+-      if (IS_DEVICE_PC) {
+-        MenuPcPageComponent({ menuPage: this.pageRoot.menuPage })
+-      }
++      Column({ space: 16 }) {
++        Button($r('app.string.wallpaper_title')).id('settings_wallpaper_entry')
++          .enabled(!this.wallpaperOpening).onClick(() => { this.openWallpaperPicker(); })
++        if (this.wallpaperEntryError.length > 0) {
++          Text(this.wallpaperEntryError).id('settings_wallpaper_entry_error')
++        }
++        if (IS_DEVICE_PC) {
++          MenuPcPageComponent({ menuPage: this.pageRoot.menuPage })
++        }
++      }.width('100%').height('100%')
+     }
+     .hideTitleBar(!IS_DEVICE_PC)
+     .title(DeviceUtil.isDevicePc() ? this.title : pageNavTitle(this.title, this.pagePaddingStart))
+@@ -115,6 +125,25 @@
+     }
+   }
+ 
++  private async openWallpaperPicker(): Promise<void> {
++    if (this.wallpaperOpening) { return; }
++    const session = this.wallpaperEntrySession;
++    this.wallpaperOpening = true;
++    this.wallpaperEntryError = '';
++    try {
++      await DynamicLoader.getInstance().fire(NavEntryKey.WALLPAPER_PICKER_ENTRY);
++      if (session === this.wallpaperEntrySession) {
++        this.pathInfos.pushPathByName(NavEntryKey.WALLPAPER_PICKER_ENTRY, null);
++      }
++    } catch (error) {
++      const actual = error as BusinessError;
++      if (session === this.wallpaperEntrySession) { this.wallpaperEntryError = actual.message; }
++      LogUtil.error(`Wallpaper entry load failed ${actual.code}: ${actual.message}`);
++    } finally {
++      if (session === this.wallpaperEntrySession) { this.wallpaperOpening = false; }
++    }
++  }
++
+   private getSearchParams(): void {
+     this.isFromSearch = this.params?.startReason === PageStartReason.FROM_SEARCH;
+     if (!this.params) {
+@@ -184,6 +213,8 @@
+   }
+ 
+   aboutToDisappear(): void {
++    ++this.wallpaperEntrySession;
++    this.wallpaperOpening = false;
+     LogUtil.info(`${TAG} aboutToDisappear`);
+     this.pageRoot.aboutToDisappear();
+     // 销毁平板页面横竖屏监听器
+@@ -193,6 +224,8 @@
+   }
+ 
+   onPageShow(): void {
++    ++this.wallpaperEntrySession;
++    this.wallpaperOpening = false;
+     LogUtil.info(`${TAG} onPageShow`);
+     this.pageRoot.onPageShow();
+     DynamicLoader.getInstance().pageTransitionSuccess(TAG);
+@@ -203,6 +236,8 @@
+   }
+ 
+   onPageHide(): void {
++    ++this.wallpaperEntrySession;
++    this.wallpaperOpening = false;
+     LogUtil.info(`${TAG} onPageHide`);
+     if (!IS_DEVICE_PC) {
+       if (this.pathInfos.getParamByName(NavEntryKey.THEME_ENTRY)?.length !== 0) {
+diff --git a/applications/standard/settings/feature/theme/src/main/ets/WallpaperPicker.ets b/applications/standard/settings/feature/theme/src/main/ets/WallpaperPicker.ets
+--- a/applications/standard/settings/feature/theme/src/main/ets/WallpaperPicker.ets
++++ b/applications/standard/settings/feature/theme/src/main/ets/WallpaperPicker.ets
+@@ -14,147 +14,129 @@
+  */
+ 
+ 
+-/* instrument ignore file */
+-import promptAction from '@ohos.promptAction';
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import image from '@ohos.multimedia.image';
++import wallpaper from '@ohos.wallpaper';
++import { BusinessError } from '@ohos.base';
+ import { SystemParamUtil } from '@ohos/settings.common/src/main/ets/utils/SystemParamUtil';
+-import { ObservedData, UiExtensionViewModel } from '@ohos/settings.common/src/main/ets/viewmodel/UiExtensionViewModel';
+-import { ExitAbnormallyComponent } from '@ohos/settings.common/src/main/ets/viewmodel/ExitAbnormallyComponent';
+-import { ExternalMenuPreloadManager } from '@ohos/settings.common/src/main/ets/externalmenu/ExternalMenuPreloadManager';
++import { LogUtil } from '@ohos/settings.common/src/main/ets/utils/LogUtil';
+ import { DynamicLoader } from '@ohos/settings.common/src/main/ets/utils/DynamicLoader';
+-import { LogUtil } from '@ohos/settings.common/src/main/ets/utils/LogUtil';
+ import { PageLifecycleOwner } from '@ohos/settings.common/src/main/ets/core/lifecycle/Lifecycle';
+ import { PageRoot } from '@ohos/settings.common/src/main/ets/core/viewmodel/PageViewModel';
+ import { Params, PushParam } from '@ohos/settings.common/src/main/ets/core/controller/Controller';
+ import { WallpaperPage } from './model/WallpaperPage';
+-import { PageParams } from '@ohos/settings.common/src/main/ets/framework/common/PageLoader';
+-import { PageStartReason } from '@ohos/settings.common/src/main/ets/data/types';
+-
+-const TAG: string = 'WallpaperPicker : ';
+-const BUNDLE_NAME: string = 'com.ohos.sceneboard';
+-const ABILITY_NAME: string = 'SettingThemeComponentExtAbility';
+-const DEFAULT_NAV: string = 'wallpaperPicker';
+-const PC_NAV: string = 'pcWallpaperPicker';
++import { WallpaperSelectionController, WallpaperSelectionPhase, WallpaperSelectionState } from './utils/WallpaperSelectionController';
+ 
+ @Builder
+-export function WallpaperPickerLoader(_$$: Params): void {
+-  WallpaperPicker({ params: _$$ as Object as PushParam });
++export function WallpaperPickerLoader(params: Params): void {
++  WallpaperPicker({ params: params as Object as PushParam });
+ }
+ 
+ @Component
+ export struct WallpaperPicker {
+   @State params: PushParam | null = null;
+-  @State isFromSearch: boolean = false;
++  @Consume('pathInfos') pathInfos: NavPathStack;
++  @State isEnable: boolean = false;
++  @State policyError: string = '';
++  @State policyLoading: boolean = true;
++  @State view: WallpaperSelectionState = { phase: WallpaperSelectionPhase.IDLE, busy: false,
++    errorCode: 0, errorMessage: '' };
+   pageRoot: PageRoot = new PageRoot(new PageLifecycleOwner());
+-  navDestination: string = DEFAULT_NAV;
+-  @Consume('pathInfos') pathInfos: NavPathStack;
+-  @State observedData: ObservedData = new ObservedData();
+-  @State isEnable: boolean = false;
+-  private viewModel: UiExtensionViewModel = new UiExtensionViewModel(this.observedData);
++  private controller?: WallpaperSelectionController;
++  private appearance: number = 0;
+ 
+-  recoverController: CustomDialogController = new CustomDialogController({
+-    builder: ExitAbnormallyComponent(),
+-  });
++  aboutToAppear(): void {
++    const appearance = ++this.appearance;
++    this.isEnable = false;
++    this.policyLoading = true;
++    this.policyError = '';
++    this.controller = new WallpaperSelectionController((state: WallpaperSelectionState) => { this.view = state; });
++    this.pageRoot.aboutToAppear(new WallpaperPage(this.pathInfos));
++    SystemParamUtil.isModifyWallpaperDisable().then((disabled: boolean) => {
++      if (appearance === this.appearance) { this.isEnable = !disabled; this.policyLoading = false; }
++    }).catch((error: BusinessError) => {
++      if (appearance === this.appearance) { this.policyError = error.message; this.policyLoading = false; }
++      LogUtil.error(`WallpaperPicker policy query failed ${error.code}: ${error.message}`);
++    });
++  }
++
++  aboutToDisappear(): void {
++    ++this.appearance;
++    this.controller?.dispose();
++    this.pageRoot.aboutToDisappear();
++  }
++
++  private statusText(): Resource {
++    switch (this.view.phase) {
++      case WallpaperSelectionPhase.PREVIEW: return $r('app.string.wallpaper_preview_prompt');
++      case WallpaperSelectionPhase.SAVED: return $r('app.string.wallpaper_saved');
++      case WallpaperSelectionPhase.RESTORED: return $r('app.string.wallpaper_default_restored');
++      case WallpaperSelectionPhase.CANCELLED: return $r('app.string.wallpaper_selection_cancelled');
++      case WallpaperSelectionPhase.ERROR: return $r('app.string.wallpaper_operation_failed');
++      case WallpaperSelectionPhase.SELECTING:
++      case WallpaperSelectionPhase.APPLYING:
++      case WallpaperSelectionPhase.RESTORING: return $r('app.string.wallpaper_busy');
++      default: return $r('app.string.wallpaper_choose_prompt');
++    }
++  }
++
++  private async cancelAndBack(): Promise<void> {
++    if (this.controller !== undefined && await this.controller.cancel()) { this.pathInfos.pop(); }
++  }
+ 
+   build() {
+     NavDestination() {
+-      if (this.isEnable) {
+-        UIExtensionComponent({
+-          bundleName: BUNDLE_NAME,
+-          abilityName: ABILITY_NAME,
+-          parameters: {
+-            'ability.want.params.uiExtensionType': 'sys/commonUI',
+-            'nav': PC_NAV,
+-            'isFull': true,
+-            'reconnect': this.observedData.reconnect,
+-            'isFromSearch': this.isFromSearch,
++      Scroll() {
++        Column({ space: 16 }) {
++          if (this.policyLoading) {
++            Text($r('app.string.wallpaper_busy'))
++          } else if (!this.isEnable) {
++            Text(this.policyError || $r('app.string.disable_modify_wallpaper_tips'))
++              .id('wallpaper_policy_status')
++          } else {
++            Text(this.statusText()).id('wallpaper_status')
++            if (this.view.errorMessage.length > 0) {
++              Text(this.view.errorMessage).id('wallpaper_error_detail')
++              if (this.view.errorCode !== 0) { Text(this.view.errorCode.toString()) }
++            }
++            Button($r('app.string.select_from_gallery')).id('wallpaper_choose_image')
++              .enabled(!this.view.busy).onClick(() => { this.controller?.choose(); })
++            if (this.view.preview !== undefined) {
++              Image(this.view.preview as image.PixelMap).objectFit(ImageFit.Contain)
++                .width('100%').height(280).id('wallpaper_preview')
++              Button($r('app.string.wallpaper_apply_home')).id('wallpaper_apply_home')
++                .enabled(!this.view.busy).onClick(() => {
++                  this.controller?.apply(wallpaper.WallpaperType.WALLPAPER_SYSTEM);
++                })
++              Button($r('app.string.wallpaper_apply_lock')).id('wallpaper_apply_lock')
++                .enabled(!this.view.busy).onClick(() => {
++                  this.controller?.apply(wallpaper.WallpaperType.WALLPAPER_LOCKSCREEN);
++                })
++            }
++            Button($r('app.string.wallpaper_restore_home')).id('wallpaper_restore_home')
++              .enabled(!this.view.busy).onClick(() => {
++                this.controller?.restore(wallpaper.WallpaperType.WALLPAPER_SYSTEM);
++              })
++            Button($r('app.string.wallpaper_restore_lock')).id('wallpaper_restore_lock')
++              .enabled(!this.view.busy).onClick(() => {
++                this.controller?.restore(wallpaper.WallpaperType.WALLPAPER_LOCKSCREEN);
++              })
+           }
+-        })
+-          .width('100%')
+-          .height('100%')
+-          .onError((error) => {
+-            LogUtil.info(`${TAG} UIExtensionComponent onError code: ${error?.code} message: ${error?.message}`);
+-            this.viewModel.refreshing(error, this.recoverController, BUNDLE_NAME, ABILITY_NAME);
+-          })
+-          .onTerminated(() => {
+-          })
+-          .onReceive(this.onReceiveSCBData)
+-          .id('wallpaper_picker_extension')
+-          .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM, SafeAreaEdge.TOP])
+-      }
++          Button($r('app.string.dialog_cancel')).id('wallpaper_cancel')
++            .enabled(this.view.phase !== WallpaperSelectionPhase.APPLYING &&
++              this.view.phase !== WallpaperSelectionPhase.RESTORING)
++            .onClick(() => { this.cancelAndBack(); })
++        }.padding(24).width('100%')
++      }.width('100%').height('100%')
+     }
+-    .width('100%')
+-    .height('100%')
+-    .hideTitleBar(true)
++    .title($r('app.string.wallpaper_title'))
++    .hideTitleBar(false)
+     .backgroundColor($r('sys.color.ohos_id_color_titlebar_sub_bg'))
+     .onShown(() => {
+-      this.onPageShow();
++      this.pageRoot.onPageShow();
++      DynamicLoader.getInstance().pageTransitionSuccess('WallpaperPicker');
+     })
+-    .onHidden(() => {
+-      this.onPageHide();
+-    })
+-    .padding({
+-      left: this.observedData.left, right: this.observedData.right
+-    })
++    .onHidden(() => { this.controller?.cancel(); this.pageRoot.onPageHide(); })
++    .onBackPressed(() => { return this.controller?.isCommitting() ?? false; })
+   }
+-
+-  aboutToAppear(): void {
+-    SystemParamUtil.isModifyWallpaperDisable().then((isDisable: boolean) => {
+-      this.isEnable = !isDisable;
+-      LogUtil.info(`${TAG} isEnable ${this.isEnable}`);
+-      if (this.isEnable) {
+-        return;
+-      }
+-      LogUtil.showInfo(TAG, 'modify wallpaper is disabled,show toast');
+-      try {
+-        promptAction.openToast({
+-          message: $r('app.string.disable_modify_wallpaper_tips')
+-        });
+-      } catch (e) {
+-        LogUtil.showError(TAG, `showToast fail, code: ${e?.code}, message: ${e?.message}`);
+-      }
+-    });
+-    this.isFromSearch = this.params?.startReason === PageStartReason.FROM_SEARCH;
+-    if (this.params && !this.isFromSearch) {
+-      try {
+-        let params = this.params as PageParams;
+-        if (params.param && params.param['startReason']) {
+-          this.isFromSearch = params.param['startReason'] as string === PageStartReason.FROM_SEARCH;
+-        }
+-      } catch (e) {
+-        LogUtil.info(`${TAG} get isFromSearch error ${e?.code}`);
+-      }
+-    }
+-    LogUtil.info(`${TAG} aboutToAppear`);
+-    this.viewModel.listening(this.recoverController);
+-    this.pageRoot.aboutToAppear(new WallpaperPage(this.pathInfos));
+-  }
+-
+-  aboutToDisappear(): void {
+-    LogUtil.info(`${TAG} aboutToDisappear`);
+-    try {
+-      ExternalMenuPreloadManager.getInstance().preloadUIExtensionAbility(ABILITY_NAME, getContext());
+-    } catch (err) {
+-      LogUtil.warn(`${TAG} preload themeComponentExtAbilty failed, code: ${err?.code}, message: ${err?.message}`);
+-    }
+-    this.pageRoot.aboutToDisappear();
+-    this.viewModel.destroyListening();
+-  }
+-
+-  onPageShow(): void {
+-    LogUtil.info(`${TAG} onPageShow`);
+-    this.pageRoot.onPageShow();
+-    DynamicLoader.getInstance().pageTransitionSuccess(TAG);
+-  }
+-
+-  onPageHide(): void {
+-    LogUtil.info(`${TAG} onPageHide`);
+-    this.pageRoot.onPageHide();
+-  }
+-
+-  private onReceiveSCBData: (data: object) => void = (data: object) => {
+-    LogUtil.info(`SCB UIExtension onReceive`);
+-    if (data['back'] !== undefined) {
+-      this.pathInfos.pop();
+-    }
+-  };
+ }
+diff --git a/applications/standard/settings/feature/theme/src/main/ets/utils/WallpaperSelectionController.ets b/applications/standard/settings/feature/theme/src/main/ets/utils/WallpaperSelectionController.ets
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/settings/feature/theme/src/main/ets/utils/WallpaperSelectionController.ets
+@@ -0,0 +1,273 @@
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import photoAccessHelper from '@ohos.file.photoAccessHelper';
++import fs from '@ohos.file.fs';
++import image from '@ohos.multimedia.image';
++import wallpaper from '@ohos.wallpaper';
++import { BusinessError } from '@ohos.base';
++import { SystemParamUtil } from '@ohos/settings.common/src/main/ets/utils/SystemParamUtil';
++import { LogUtil } from '@ohos/settings.common/src/main/ets/utils/LogUtil';
++
++export enum WallpaperSelectionPhase {
++  IDLE, SELECTING, PREVIEW, APPLYING, SAVED, RESTORING, RESTORED, CANCELLED, ERROR
++}
++
++export interface WallpaperSelectionState {
++  phase: WallpaperSelectionPhase;
++  busy: boolean;
++  preview?: image.PixelMap;
++  errorCode: number;
++  errorMessage: string;
++}
++
++class WallpaperSettingsError extends Error {
++  code: number;
++  constructor(code: number, message: string) {
++    super(message);
++    this.code = code;
++  }
++}
++
++const TAG: string = 'WallpaperSelection';
++const MAX_FILE_BYTES: number = 32 * 1024 * 1024;
++const MAX_PIXELS: number = 16 * 1024 * 1024;
++const MAX_DIMENSION: number = 8192;
++
++// This controller consumes only the real picker result. It never requests broad
++// media access, grants a permission, accepts an arbitrary caller-supplied path,
++// or treats a service return value as evidence of rendered pixels.
++export class WallpaperSelectionController {
++  private session: number = 0;
++  private active: boolean = false;
++  private closed: boolean = false;
++  private committing: boolean = false;
++  private preview?: image.PixelMap;
++  private phase: WallpaperSelectionPhase = WallpaperSelectionPhase.IDLE;
++  private errorCode: number = 0;
++  private errorMessage: string = '';
++  private readonly observer: (state: WallpaperSelectionState) => void;
++
++  constructor(observer: (state: WallpaperSelectionState) => void) {
++    this.observer = observer;
++  }
++
++  isCommitting(): boolean { return this.committing; }
++
++  private publish(): void {
++    if (!this.closed) {
++      this.observer({ phase: this.phase, busy: this.active, preview: this.preview,
++        errorCode: this.errorCode, errorMessage: this.errorMessage });
++    }
++  }
++
++  private fail(error: BusinessError): void {
++    this.errorCode = typeof error.code === 'number' ? error.code : 0;
++    this.errorMessage = error.message || 'Wallpaper operation failed';
++    this.phase = WallpaperSelectionPhase.ERROR;
++    LogUtil.error(`${TAG}: code=${this.errorCode}, message=${this.errorMessage}`);
++  }
++
++  private current(session: number): boolean { return !this.closed && this.session === session; }
++
++  private async allowed(): Promise<void> {
++    if (await SystemParamUtil.isModifyWallpaperDisable()) {
++      throw new WallpaperSettingsError(0, 'Wallpaper modification is disabled by your organization');
++    }
++  }
++
++  private async releasePreview(): Promise<void> {
++    const pixel = this.preview;
++    this.preview = undefined;
++    this.publish();
++    if (pixel !== undefined) {
++      await pixel.release();
++    }
++  }
++
++  private async decode(uri: string): Promise<image.PixelMap> {
++    let file: fs.File | undefined = undefined;
++    let source: image.ImageSource | undefined = undefined;
++    let pixel: image.PixelMap | undefined = undefined;
++    let failure: BusinessError | undefined = undefined;
++    try {
++      // The Photos picker grants read access to the selected URI. Keep it in
++      // this process: pass decoded pixels, not a private URI, to WallpaperService.
++      file = await fs.open(uri, fs.OpenMode.READ_ONLY);
++      const stat = await fs.stat(file.fd);
++      if (!stat.isFile() || stat.size <= 0 || stat.size > MAX_FILE_BYTES) {
++        throw new WallpaperSettingsError(0, 'Selected image exceeds the supported file limit');
++      }
++      source = image.createImageSource(file.fd);
++      const info = await source.getImageInfo();
++      const width = info.size.width;
++      const height = info.size.height;
++      if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0 ||
++        width > MAX_DIMENSION || height > MAX_DIMENSION || width > MAX_PIXELS / height) {
++        throw new WallpaperSettingsError(0, 'Selected image exceeds the supported pixel limit');
++      }
++      pixel = await source.createPixelMap();
++    } catch (error) {
++      failure = error as BusinessError;
++    }
++    // Try both cleanup actions even if either fails. A failed decoder must not
++    // retain an FD; cleanup failure must not silently publish a usable preview.
++    if (source !== undefined) {
++      try { await source.release(); } catch (error) {
++        if (failure === undefined) { failure = error as BusinessError; }
++        else { LogUtil.error(`${TAG}: image source cleanup failed ${JSON.stringify(error)}`); }
++      }
++    }
++    if (file !== undefined) {
++      try { await fs.close(file); } catch (error) {
++        if (failure === undefined) { failure = error as BusinessError; }
++        else { LogUtil.error(`${TAG}: selected FD cleanup failed ${JSON.stringify(error)}`); }
++      }
++    }
++    if (failure !== undefined || pixel === undefined) {
++      if (pixel !== undefined) {
++        try { await pixel.release(); } catch (error) {
++          LogUtil.error(`${TAG}: failed decode pixel cleanup ${JSON.stringify(error)}`);
++        }
++      }
++      throw new WallpaperSettingsError(failure?.code ?? 0, failure?.message ?? 'Image decoding returned no pixels');
++    }
++    return pixel;
++  }
++
++  async choose(): Promise<void> {
++    if (this.closed || this.active) { return; }
++    const session = ++this.session;
++    this.active = true;
++    this.phase = WallpaperSelectionPhase.SELECTING;
++    this.errorCode = 0;
++    this.errorMessage = '';
++    this.publish();
++    let decoded: image.PixelMap | undefined = undefined;
++    try {
++      await this.releasePreview();
++      await this.allowed();
++      if (!this.current(session)) { return; }
++      const options = new photoAccessHelper.PhotoSelectOptions();
++      options.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
++      options.maxSelectNumber = 1;
++      const picker = new photoAccessHelper.PhotoViewPicker();
++      const result = await picker.select(options);
++      if (!this.current(session)) { return; }
++      if (result.photoUris.length === 0) {
++        this.phase = WallpaperSelectionPhase.CANCELLED;
++        return;
++      }
++      const uri = result.photoUris[0];
++      if (result.photoUris.length !== 1 || uri.length === 0 || uri.length > 4096 || uri.indexOf('\u0000') >= 0) {
++        throw new WallpaperSettingsError(0, 'Picker returned an invalid single-image selection');
++      }
++      decoded = await this.decode(uri);
++      if (!this.current(session)) { return; }
++      this.preview = decoded;
++      decoded = undefined;
++      this.phase = WallpaperSelectionPhase.PREVIEW;
++    } catch (error) {
++      if (this.current(session)) { this.fail(error as BusinessError); }
++      else { LogUtil.error(`${TAG}: cancelled selection failed ${JSON.stringify(error)}`); }
++    } finally {
++      if (decoded !== undefined) {
++        try { await decoded.release(); } catch (error) { this.fail(error as BusinessError); }
++      }
++      this.active = false;
++      this.publish();
++    }
++  }
++
++  async apply(type: wallpaper.WallpaperType): Promise<boolean> {
++    if (this.closed || this.active || this.preview === undefined) { return false; }
++    if (type !== wallpaper.WallpaperType.WALLPAPER_SYSTEM && type !== wallpaper.WallpaperType.WALLPAPER_LOCKSCREEN) {
++      this.fail(new WallpaperSettingsError(401, 'Invalid wallpaper target'));
++      this.publish();
++      return false;
++    }
++    const session = this.session;
++    this.active = true;
++    this.phase = WallpaperSelectionPhase.APPLYING;
++    this.publish();
++    try {
++      await this.allowed();
++      if (!this.current(session) || this.preview === undefined) { return false; }
++      // Once explicitly authorized Apply has entered the real service, the UI
++      // blocks Back/Cancel. On forced destruction, retain pixels until it exits.
++      this.committing = true;
++      await wallpaper.setImage(this.preview, type);
++      LogUtil.info(`${TAG}: service saved type=${type}; renderer pixels require independent verification`);
++      if (!this.current(session)) { return false; }
++      this.errorCode = 0;
++      this.errorMessage = '';
++      this.phase = WallpaperSelectionPhase.SAVED;
++      return true;
++    } catch (error) {
++      this.fail(error as BusinessError);
++      return false;
++    } finally {
++      this.committing = false;
++      this.active = false;
++      if (this.closed) {
++        try { await this.releasePreview(); } catch (error) { this.fail(error as BusinessError); }
++      }
++      this.publish();
++    }
++  }
++
++  async restore(type: wallpaper.WallpaperType): Promise<boolean> {
++    if (this.closed || this.active) { return false; }
++    if (type !== wallpaper.WallpaperType.WALLPAPER_SYSTEM && type !== wallpaper.WallpaperType.WALLPAPER_LOCKSCREEN) {
++      this.fail(new WallpaperSettingsError(401, 'Invalid wallpaper target'));
++      this.publish();
++      return false;
++    }
++    const session = this.session;
++    this.active = true;
++    this.phase = WallpaperSelectionPhase.RESTORING;
++    this.publish();
++    try {
++      await this.allowed();
++      if (!this.current(session)) { return false; }
++      this.committing = true;
++      await wallpaper.restore(type);
++      await this.releasePreview();
++      if (!this.current(session)) { return false; }
++      this.errorCode = 0;
++      this.errorMessage = '';
++      this.phase = WallpaperSelectionPhase.RESTORED;
++      return true;
++    } catch (error) {
++      this.fail(error as BusinessError);
++      return false;
++    } finally {
++      this.committing = false;
++      this.active = false;
++      if (this.closed) {
++        try { await this.releasePreview(); } catch (error) { this.fail(error as BusinessError); }
++      }
++      this.publish();
++    }
++  }
++
++  async cancel(): Promise<boolean> {
++    if (this.closed || this.committing) { return false; }
++    ++this.session;
++    this.phase = WallpaperSelectionPhase.CANCELLED;
++    try { await this.releasePreview(); } catch (error) {
++      this.fail(error as BusinessError);
++      this.publish();
++      return false;
++    }
++    this.publish();
++    return true;
++  }
++
++  async dispose(): Promise<void> {
++    if (this.closed) { return; }
++    this.closed = true;
++    ++this.session;
++    if (!this.committing) {
++      try { await this.releasePreview(); } catch (error) { this.fail(error as BusinessError); }
++    }
++  }
++}
+diff --git a/applications/standard/settings/feature/theme/src/main/resources/base/element/string.json b/applications/standard/settings/feature/theme/src/main/resources/base/element/string.json
+--- a/applications/standard/settings/feature/theme/src/main/resources/base/element/string.json
++++ b/applications/standard/settings/feature/theme/src/main/resources/base/element/string.json
+@@ -1,330 +1,374 @@
+ {
+-    "string":[
+-        {
+-            "name":"theme_settings_title",
+-            "value":"Home screen & style",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"covertheme_settings_title",
+-            "value":"Home screen, cover screen & style",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"keywords_outer_facard",
+-            "value":"Service widgets",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"keywords_outer_theme",
+-            "value":"Cover screen themes",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"aod_ways_display_awake_intelligent",
+-            "value":"Smart",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"aod_ways_display_awake_off",
+-            "value":"Off",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"aod_ways_display_awake_scheduled",
+-            "value":"Scheduled",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"aod_all_day_display",
+-            "value":"All day",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"my_wallpaper",
+-            "value":"My wallpapers",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"universe",
+-            "value":"Universe",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"random_display_of_photos",
+-            "value":"Photo shuffle",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"pinnacle",
+-            "value":"Pinnacle",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"wallpaper_title",
+-            "value":"Wallpapers",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"apply",
+-            "value":"Apply",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"homescreen",
+-            "value":"Home screen",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"lockscreen",
+-            "value":"Lock screen",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"select_from_gallery",
+-            "value":"Select from Gallery",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"more_online_themes",
+-            "value":"More online themes"
+-        },
+-        {
+-            "name":"more_online_wallpapers",
+-            "value":"More wallpapers",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"uncompleted",
+-            "value":"Feature coming soon.",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"monday",
+-            "value":"Monday"
+-        },
+-        {
+-            "name":"wednesday",
+-            "value":"Wednesday"
+-        },
+-        {
+-            "name":"saturday",
+-            "value":"Saturday"
+-        },
+-        {
+-            "name":"friday",
+-            "value":"Friday"
+-        },
+-        {
+-            "name":"sunday",
+-            "value":"Sunday"
+-        },
+-        {
+-            "name":"tuesday",
+-            "value":"Tuesday"
+-        },
+-        {
+-            "name":"thursday",
+-            "value":"Thursday"
+-        },
+-        {
+-            "name":"icon_theme",
+-            "value":"Icons",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"more_theme",
+-            "value":"Settings",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"aod_theme",
+-            "value":"Always On Display",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"font_style_theme",
+-            "value":"Fonts",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"icon_style_theme",
+-            "value":"Icon style",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"table_theme",
+-            "value":"Home screen",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"screen_off_theme",
+-            "value":"Always On Display",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"my_theme_settings_title",
+-            "value":"My themes",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"wall_paper_theme",
+-            "value":"Wallpapers",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"digital_clock",
+-            "value":"Digital clock",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"art_signature",
+-            "value":"Personalized signature",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"lock_card",
+-            "value":"Widgets",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"display_settings_title",
+-            "value":"Display & brightness",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"the_theme",
+-            "value":"Themes",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"screenlock_signature",
+-            "value":"Lock screen signature",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"screenlock_sign_entry",
+-            "value":"How to set lock screen signature",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"switch_desktop_style",
+-            "value":"Change home screen style?",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"switch_desktop_style_dialog_warning_message",
+-            "value":"This will log you out of the current user account. Any unsaved app data will be lost.",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"dialog_cancel",
+-            "value":"Cancel",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"dialog_sure",
+-            "value":"OK",
+-            "attr":{
+-                "priority":"LT"
+-            }
+-        },
+-        {
+-            "name":"central_axis_personalization",
+-            "value":"Virtual bezel",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"screenlock_settings",
+-            "value":"Lock screen",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"screenlock_font_creation_service",
+-            "value":"Lock screen font creation service",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        }
+-    ]
+-}
+\ No newline at end of file
++  "string": [
++    {
++      "name": "theme_settings_title",
++      "value": "Home screen & style",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "covertheme_settings_title",
++      "value": "Home screen, cover screen & style",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "keywords_outer_facard",
++      "value": "Service widgets",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "keywords_outer_theme",
++      "value": "Cover screen themes",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "aod_ways_display_awake_intelligent",
++      "value": "Smart",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "aod_ways_display_awake_off",
++      "value": "Off",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "aod_ways_display_awake_scheduled",
++      "value": "Scheduled",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "aod_all_day_display",
++      "value": "All day",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "my_wallpaper",
++      "value": "My wallpapers",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "universe",
++      "value": "Universe",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "random_display_of_photos",
++      "value": "Photo shuffle",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "pinnacle",
++      "value": "Pinnacle",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "wallpaper_title",
++      "value": "Wallpapers",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "apply",
++      "value": "Apply",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "homescreen",
++      "value": "Home screen",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "lockscreen",
++      "value": "Lock screen",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "select_from_gallery",
++      "value": "Select from Gallery",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "more_online_themes",
++      "value": "More online themes"
++    },
++    {
++      "name": "more_online_wallpapers",
++      "value": "More wallpapers",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "uncompleted",
++      "value": "Feature coming soon.",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "monday",
++      "value": "Monday"
++    },
++    {
++      "name": "wednesday",
++      "value": "Wednesday"
++    },
++    {
++      "name": "saturday",
++      "value": "Saturday"
++    },
++    {
++      "name": "friday",
++      "value": "Friday"
++    },
++    {
++      "name": "sunday",
++      "value": "Sunday"
++    },
++    {
++      "name": "tuesday",
++      "value": "Tuesday"
++    },
++    {
++      "name": "thursday",
++      "value": "Thursday"
++    },
++    {
++      "name": "icon_theme",
++      "value": "Icons",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "more_theme",
++      "value": "Settings",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "aod_theme",
++      "value": "Always On Display",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "font_style_theme",
++      "value": "Fonts",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "icon_style_theme",
++      "value": "Icon style",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "table_theme",
++      "value": "Home screen",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "screen_off_theme",
++      "value": "Always On Display",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "my_theme_settings_title",
++      "value": "My themes",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "wall_paper_theme",
++      "value": "Wallpapers",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "digital_clock",
++      "value": "Digital clock",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "art_signature",
++      "value": "Personalized signature",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "lock_card",
++      "value": "Widgets",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "display_settings_title",
++      "value": "Display & brightness",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "the_theme",
++      "value": "Themes",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "screenlock_signature",
++      "value": "Lock screen signature",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "screenlock_sign_entry",
++      "value": "How to set lock screen signature",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "switch_desktop_style",
++      "value": "Change home screen style?",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "switch_desktop_style_dialog_warning_message",
++      "value": "This will log you out of the current user account. Any unsaved app data will be lost.",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "dialog_cancel",
++      "value": "Cancel",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "dialog_sure",
++      "value": "OK",
++      "attr": {
++        "priority": "LT"
++      }
++    },
++    {
++      "name": "central_axis_personalization",
++      "value": "Virtual bezel",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "screenlock_settings",
++      "value": "Lock screen",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "screenlock_font_creation_service",
++      "value": "Lock screen font creation service",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "wallpaper_choose_prompt",
++      "value": "Choose an image, preview it, then apply it to a screen."
++    },
++    {
++      "name": "wallpaper_preview_prompt",
++      "value": "Apply this image to the home screen or lock screen."
++    },
++    {
++      "name": "wallpaper_saved",
++      "value": "Wallpaper saved."
++    },
++    {
++      "name": "wallpaper_default_restored",
++      "value": "Default wallpaper restored."
++    },
++    {
++      "name": "wallpaper_selection_cancelled",
++      "value": "Image selection cancelled."
++    },
++    {
++      "name": "wallpaper_operation_failed",
++      "value": "Unable to change wallpaper."
++    },
++    {
++      "name": "wallpaper_busy",
++      "value": "Please wait…"
++    },
++    {
++      "name": "wallpaper_apply_home",
++      "value": "Apply to home screen"
++    },
++    {
++      "name": "wallpaper_apply_lock",
++      "value": "Apply to lock screen"
++    },
++    {
++      "name": "wallpaper_restore_home",
++      "value": "Restore default home wallpaper"
++    },
++    {
++      "name": "wallpaper_restore_lock",
++      "value": "Restore default lock wallpaper"
++    }
++  ]
++}
+diff --git a/applications/standard/settings/feature/theme/src/main/resources/zh_CN/element/string.json b/applications/standard/settings/feature/theme/src/main/resources/zh_CN/element/string.json
+--- a/applications/standard/settings/feature/theme/src/main/resources/zh_CN/element/string.json
++++ b/applications/standard/settings/feature/theme/src/main/resources/zh_CN/element/string.json
+@@ -1,330 +1,374 @@
+ {
+-    "string":[
+-        {
+-            "name":"theme_settings_title",
+-            "value":"桌面和个性化",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"covertheme_settings_title",
+-            "value":"桌面、外屏和个性化",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"keywords_outer_facard",
+-            "value":"外屏卡片",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"keywords_outer_theme",
+-            "value":"外屏主题",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"aod_ways_display_awake_intelligent",
+-            "value":"智能显示",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"aod_ways_display_awake_off",
+-            "value":"已关闭",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"aod_ways_display_awake_scheduled",
+-            "value":"定时显示",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"aod_all_day_display",
+-            "value":"全天显示",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"my_wallpaper",
+-            "value":"我的壁纸",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"universe",
+-            "value":"宇宙",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"random_display_of_photos",
+-            "value":"照片随机显示",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"pinnacle",
+-            "value":"巅峰",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"wallpaper_title",
+-            "value":"壁纸",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"apply",
+-            "value":"应用",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"homescreen",
+-            "value":"桌面",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"lockscreen",
+-            "value":"锁屏",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"select_from_gallery",
+-            "value":"从图库中选择",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"more_online_themes",
+-            "value":"更多在线主题"
+-        },
+-        {
+-            "name":"more_online_wallpapers",
+-            "value":"更多在线壁纸",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"uncompleted",
+-            "value":"功能开发中，敬请期待",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"monday",
+-            "value":"星期一"
+-        },
+-        {
+-            "name":"wednesday",
+-            "value":"星期三"
+-        },
+-        {
+-            "name":"saturday",
+-            "value":"星期六"
+-        },
+-        {
+-            "name":"friday",
+-            "value":"星期五"
+-        },
+-        {
+-            "name":"sunday",
+-            "value":"星期天"
+-        },
+-        {
+-            "name":"tuesday",
+-            "value":"星期二"
+-        },
+-        {
+-            "name":"thursday",
+-            "value":"星期四"
+-        },
+-        {
+-            "name":"icon_theme",
+-            "value":"图标",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"more_theme",
+-            "value":"更多设置",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"aod_theme",
+-            "value":"熄屏显示",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"font_style_theme",
+-            "value":"字体样式",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"icon_style_theme",
+-            "value":"图标样式",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"table_theme",
+-            "value":"桌面设置",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"screen_off_theme",
+-            "value":"熄屏设置",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"my_theme_settings_title",
+-            "value":"我的主题",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"wall_paper_theme",
+-            "value":"壁纸",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"digital_clock",
+-            "value":"数字时钟",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"art_signature",
+-            "value":"艺术签名",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"lock_card",
+-            "value":"卡片",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"display_settings_title",
+-            "value":"显示和亮度",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"the_theme",
+-            "value":"主题",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"screenlock_signature",
+-            "value":"锁屏签名",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"screenlock_sign_entry",
+-            "value":"如何设置锁屏签名",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"switch_desktop_style",
+-            "value":"切换桌面风格",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"switch_desktop_style_dialog_warning_message",
+-            "value":"切换桌面风格需退出用户登录，未保存的应用数据会丢失，请您妥善保存后再切换。",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"dialog_cancel",
+-            "value":"取消",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"dialog_sure",
+-            "value":"确定",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"central_axis_personalization",
+-            "value":"中轴个性化",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"screenlock_settings",
+-            "value":"锁屏设置",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        },
+-        {
+-            "name":"screenlock_font_creation_service",
+-            "value":"锁屏字体创作服务",
+-            "attr":{
+-                "priority":"translate"
+-            }
+-        }
+-    ]
+-}
+\ No newline at end of file
++  "string": [
++    {
++      "name": "theme_settings_title",
++      "value": "桌面和个性化",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "covertheme_settings_title",
++      "value": "桌面、外屏和个性化",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "keywords_outer_facard",
++      "value": "外屏卡片",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "keywords_outer_theme",
++      "value": "外屏主题",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "aod_ways_display_awake_intelligent",
++      "value": "智能显示",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "aod_ways_display_awake_off",
++      "value": "已关闭",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "aod_ways_display_awake_scheduled",
++      "value": "定时显示",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "aod_all_day_display",
++      "value": "全天显示",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "my_wallpaper",
++      "value": "我的壁纸",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "universe",
++      "value": "宇宙",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "random_display_of_photos",
++      "value": "照片随机显示",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "pinnacle",
++      "value": "巅峰",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "wallpaper_title",
++      "value": "壁纸",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "apply",
++      "value": "应用",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "homescreen",
++      "value": "桌面",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "lockscreen",
++      "value": "锁屏",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "select_from_gallery",
++      "value": "从图库中选择",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "more_online_themes",
++      "value": "更多在线主题"
++    },
++    {
++      "name": "more_online_wallpapers",
++      "value": "更多在线壁纸",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "uncompleted",
++      "value": "功能开发中，敬请期待",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "monday",
++      "value": "星期一"
++    },
++    {
++      "name": "wednesday",
++      "value": "星期三"
++    },
++    {
++      "name": "saturday",
++      "value": "星期六"
++    },
++    {
++      "name": "friday",
++      "value": "星期五"
++    },
++    {
++      "name": "sunday",
++      "value": "星期天"
++    },
++    {
++      "name": "tuesday",
++      "value": "星期二"
++    },
++    {
++      "name": "thursday",
++      "value": "星期四"
++    },
++    {
++      "name": "icon_theme",
++      "value": "图标",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "more_theme",
++      "value": "更多设置",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "aod_theme",
++      "value": "熄屏显示",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "font_style_theme",
++      "value": "字体样式",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "icon_style_theme",
++      "value": "图标样式",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "table_theme",
++      "value": "桌面设置",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "screen_off_theme",
++      "value": "熄屏设置",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "my_theme_settings_title",
++      "value": "我的主题",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "wall_paper_theme",
++      "value": "壁纸",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "digital_clock",
++      "value": "数字时钟",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "art_signature",
++      "value": "艺术签名",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "lock_card",
++      "value": "卡片",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "display_settings_title",
++      "value": "显示和亮度",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "the_theme",
++      "value": "主题",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "screenlock_signature",
++      "value": "锁屏签名",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "screenlock_sign_entry",
++      "value": "如何设置锁屏签名",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "switch_desktop_style",
++      "value": "切换桌面风格",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "switch_desktop_style_dialog_warning_message",
++      "value": "切换桌面风格需退出用户登录，未保存的应用数据会丢失，请您妥善保存后再切换。",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "dialog_cancel",
++      "value": "取消",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "dialog_sure",
++      "value": "确定",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "central_axis_personalization",
++      "value": "中轴个性化",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "screenlock_settings",
++      "value": "锁屏设置",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "screenlock_font_creation_service",
++      "value": "锁屏字体创作服务",
++      "attr": {
++        "priority": "translate"
++      }
++    },
++    {
++      "name": "wallpaper_choose_prompt",
++      "value": "选择图片，预览后应用到桌面或锁屏。"
++    },
++    {
++      "name": "wallpaper_preview_prompt",
++      "value": "将此图片应用到桌面或锁屏。"
++    },
++    {
++      "name": "wallpaper_saved",
++      "value": "壁纸已保存。"
++    },
++    {
++      "name": "wallpaper_default_restored",
++      "value": "已恢复默认壁纸。"
++    },
++    {
++      "name": "wallpaper_selection_cancelled",
++      "value": "已取消图片选择。"
++    },
++    {
++      "name": "wallpaper_operation_failed",
++      "value": "无法更改壁纸。"
++    },
++    {
++      "name": "wallpaper_busy",
++      "value": "请稍候…"
++    },
++    {
++      "name": "wallpaper_apply_home",
++      "value": "应用到桌面"
++    },
++    {
++      "name": "wallpaper_apply_lock",
++      "value": "应用到锁屏"
++    },
++    {
++      "name": "wallpaper_restore_home",
++      "value": "恢复默认桌面壁纸"
++    },
++    {
++      "name": "wallpaper_restore_lock",
++      "value": "恢复默认锁屏壁纸"
++    }
++  ]
++}
+diff --git a/applications/standard/settings/product/phone/src/main/module.json5 b/applications/standard/settings/product/phone/src/main/module.json5
+--- a/applications/standard/settings/product/phone/src/main/module.json5
++++ b/applications/standard/settings/product/phone/src/main/module.json5
+@@ -727,6 +727,9 @@
+     ],
+     "requestPermissions": [
+       {
++        "name": "ohos.permission.SET_WALLPAPER"
++      },
++      {
+         "name": "ohos.permission.ACCESS_LOWPOWER_MANAGER",
+         "reason": "$string:permission_reason_access_account",
+         "usedScene": {

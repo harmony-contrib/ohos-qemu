@@ -1,0 +1,62 @@
+diff --git a/foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/effect_kit/src/native_module_ohos_effect.cpp b/foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/effect_kit/src/native_module_ohos_effect.cpp
+--- a/foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/effect_kit/src/native_module_ohos_effect.cpp
++++ b/foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/effect_kit/src/native_module_ohos_effect.cpp
+@@ -15,7 +15,8 @@
+ 
+ #include "native_module_ohos_effect.h"
+ #include "hilog/log.h"
+ #include "effect_utils.h"
++#include "color_picker.h"
+ 
+ using OHOS::HiviewDFX::HiLog;
+ namespace OHOS {
+@@ -23,9 +24,46 @@
+ /*
+  * Function registering all props and functions of ohos.effectlibrary module
+  */
+-static napi_value Export(napi_env env, napi_value exports)
+-{
+-    EFFECT_LOG_I("ColorPicker Napi CALL");
++static napi_status RegisterPictureLightDegree(napi_env env, napi_value exports)
++{
++    struct Member {
++        const char *name;
++        int32_t value;
++    };
++    const Member members[] = {
++        {"UNKNOWN_LIGHT_COLOR_DEGREE_PICTURE", static_cast<int32_t>(UNKOWN_LIGHT_COLOR_DEGREE_PICTURE)},
++        {"EXTREMELY_LIGHT_COLOR_PICTURE", static_cast<int32_t>(EXTREMELY_LIGHT_COLOR_PICTURE)},
++        {"LIGHT_COLOR_PICTURE", static_cast<int32_t>(LIGHT_COLOR_PICTURE)},
++        {"DARK_COLOR_PICTURE", static_cast<int32_t>(DARK_COLOR_PICTURE)},
++        {"EXTREMELY_DARK_COLOR_PICTURE", static_cast<int32_t>(EXTREMELY_DARK_COLOR_PICTURE)},
++        {"FLOWERY_PICTURE", static_cast<int32_t>(FLOWERY_PICTURE)},
++        {"EXTREMELY_FLOWERY_PICTURE", static_cast<int32_t>(EXTREMELY_FLOWERY_PICTURE)},
++    };
++    napi_value object = nullptr;
++    napi_status status = napi_create_object(env, &object);
++    if (status != napi_ok) {
++        return status;
++    }
++    for (const auto &member : members) {
++        napi_value value = nullptr;
++        status = napi_create_int32(env, member.value, &value);
++        if (status != napi_ok) {
++            return status;
++        }
++        status = napi_set_named_property(env, object, member.name, value);
++        if (status != napi_ok) {
++            return status;
++        }
++    }
++    return napi_set_named_property(env, exports, "PictureLightDegree", object);
++}
++
++static napi_value Export(napi_env env, napi_value exports)
++{
++    EFFECT_LOG_I("ColorPicker Napi CALL");
++    if (RegisterPictureLightDegree(env, exports) != napi_ok) {
++        return nullptr;
++    }
+     ColorPickerNapi::Init(env, exports);
+     FilterNapi::Init(env, exports);
+     return exports;

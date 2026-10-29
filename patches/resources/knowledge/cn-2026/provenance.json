@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "status": "official_notice_date_facts_in_derived_ICS_NOT_runtime_acceptance",
+  "publisher": "国务院办公厅",
+  "source_document_title": "国务院办公厅关于2026年部分节假日安排的通知",
+  "source_document_number": "国办发明电〔2025〕7号",
+  "source_index_number": "000014349/2025-00087",
+  "document_date": "2025-11-04",
+  "source_url": "https://www.gov.cn/zhengce/zhengceku/202511/content_7047091.htm",
+  "gazette_url": "https://www.gov.cn/gongbao/2025/issue_12406/202511/content_7048922.html",
+  "retrieved_utc": "2026-10-16T19:32:57.771611+00:00",
+  "retrieved_local": "2026-10-17T03:32:57.771611+08:00",
+  "jurisdiction": "CN mainland national arrangements covered by this notice; excludes Hong Kong/Macao/Taiwan and local schedules",
+  "year": 2026,
+  "language": "zh-CN",
+  "meaning": "Seven published holiday/rest-adjustment intervals, including transferred rest/weekend days inside each interval; NOT only statutory festival days",
+  "calendar_scale": "Gregorian civil date, without timezone conversion",
+  "events": [
+    {
+      "notice_section": 1,
+      "uid": "qemu-cn-2026-gbfmd-2025-7-new-year@ohos-qemu.invalid",
+      "holiday_name": "元旦",
+      "arrangement": "放假调休",
+      "start_inclusive": "2026-01-01",
+      "last_day_inclusive": "2026-01-03",
+      "dtend_exclusive": "2026-01-04",
+      "civil_day_count": 3,
+      "summary": "元旦（放假调休）"
+    },
+    {
+      "notice_section": 2,
+      "uid": "qemu-cn-2026-gbfmd-2025-7-spring-festival@ohos-qemu.invalid",
+      "holiday_name": "春节",
+      "arrangement": "放假调休",
+      "start_inclusive": "2026-02-15",
+      "last_day_inclusive": "2026-02-23",
+      "dtend_exclusive": "2026-02-24",
+      "civil_day_count": 9,
+      "summary": "春节（放假调休）"
+    },
+    {
+      "notice_section": 3,
+      "uid": "qemu-cn-2026-gbfmd-2025-7-qingming@ohos-qemu.invalid",
+      "holiday_name": "清明节",
+      "arrangement": "放假",
+      "start_inclusive": "2026-04-04",
+      "last_day_inclusive": "2026-04-06",
+      "dtend_exclusive": "2026-04-07",
+      "civil_day_count": 3,
+      "summary": "清明节（放假）"
+    },
+    {
+      "notice_section": 4,
+      "uid": "qemu-cn-2026-gbfmd-2025-7-labour-day@ohos-qemu.invalid",
+      "holiday_name": "劳动节",
+      "arrangement": "放假调休",
+      "start_inclusive": "2026-05-01",
+      "last_day_inclusive": "2026-05-05",
+      "dtend_exclusive": "2026-05-06",
+      "civil_day_count": 5,
+      "summary": "劳动节（放假调休）"
+    },
+    {
+      "notice_section": 5,
+      "uid": "qemu-cn-2026-gbfmd-2025-7-dragon-boat@ohos-qemu.invalid",
+      "holiday_name": "端午节",
+      "arrangement": "放假",
+      "start_inclusive": "2026-06-19",
+      "last_day_inclusive": "2026-06-21",
+      "dtend_exclusive": "2026-06-22",
+      "civil_day_count": 3,
+      "summary": "端午节（放假）"
+    },
+    {
+      "notice_section": 6,
+      "uid": "qemu-cn-2026-gbfmd-2025-7-mid-autumn@ohos-qemu.invalid",
+      "holiday_name": "中秋节",
+      "arrangement": "放假",
+      "start_inclusive": "2026-09-25",
+      "last_day_inclusive": "2026-09-27",
+      "dtend_exclusive": "2026-09-28",
+      "civil_day_count": 3,
+      "summary": "中秋节（放假）"
+    },
+    {
+      "notice_section": 7,
+      "uid": "qemu-cn-2026-gbfmd-2025-7-national-day@ohos-qemu.invalid",
+      "holiday_name": "国庆节",
+      "arrangement": "放假调休",
+      "start_inclusive": "2026-10-01",
+      "last_day_inclusive": "2026-10-07",
+      "dtend_exclusive": "2026-10-08",
+      "civil_day_count": 7,
+      "summary": "国庆节（放假调休）"
+    }
+  ],
+  "total_expanded_civil_days": 33,
+  "makeup_workdays_not_in_holiday_ics": [
+    "2026-01-04",
+    "2026-02-14",
+    "2026-02-28",
+    "2026-05-09",
+    "2026-09-20",
+    "2026-10-10"
+  ],
+  "exclusions": [
+    "Other years or jurisdictions",
+    "Local, ethnic, employer-specific or other holidays not listed in this notice",
+    "Ordinary weekends outside these intervals",
+    "Statutory-holiday-only legal classification",
+    "Astronomical or lunar-date conversion",
+    "Working-day calculations",
+    "Future corrections not yet reviewed"
+  ],
+  "conversion": {
+    "dtstart": "Published first holiday day, inclusive",
+    "dtend": "Published final holiday day plus exactly one Gregorian day, exclusive",
+    "summary": "Original holiday name plus the original arrangement kind, avoiding a claim that every span day is a statutory holiday",
+    "uid": "Project-owned stable CN/year/document/holiday identifier; no impersonation of a government-issued ICS UID",
+    "recurrence": "None; every interval explicitly present in the notification",
+    "makeup_workdays": "Recorded only in sidecar and excluded from HOLIDAY event list; producer cannot represent working/non-working event types"
+  },
+  "candidate": {
+    "path": "cn-2026-holiday-arrangements.candidate.ics",
+    "sha256": "703f66a62f74fbfb769af52fcf02ada8705507217c023d9641ac4087d4f57b59",
+    "bytes": 1574,
+    "events": 7,
+    "is_government_supplied_ics": false,
+    "line_ending": "LF, explicitly accepted by the bounded producer Lines function; not a claim of full RFC5545 conformance"
+  },
+  "redistribution_basis": {
+    "source_type": "Official State Council administrative notice and published date facts",
+    "law_url": "https://www.ncac.gov.cn/xxfb/flfg/flfg_532/202103/t20210309_50530.html",
+    "law_version": "2020 third amendment; Article 5",
+    "reasoning": "Article 5 excludes administrative-nature official documents, mere facts and calendars from the Copyright Law. Candidate independently encodes only the official date/name facts and attributes the notice. This is an applicability inference, not a claimed CC0/open-data license or a government grant.",
+    "excluded_from_reuse": "Website layout, logos, photographs, editorial interpretation and third-party materials",
+    "website_statement_url": "https://www.gov.cn/home/2014-02/23/content_5046258.htm",
+    "code_license_is_not_dataset_permission": true
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "asset": {
+    "file": "holidays.ics",
+    "sha256": "12798eab4471df83e23359ace64cab99228a256763cda188db5ded01ed32dfc9",
+    "bytes": 1564
+  },
+  "root_recheck": {
+    "url": "https://www.gov.cn/zhengce/zhengceku/202511/content_7047091.htm",
+    "http_status": 200,
+    "retrieved_utc": "2026-10-16T19:43:05.701507+00:00",
+    "response_bytes": 27692,
+    "response_sha256": "0b9d4b2b07360bc0915ff929709a738f1297abf3d11d3a606861faee7e9be535",
+    "document_number_and_date_found": true,
+    "all_seven_interval_texts_found": true
+  }
+}

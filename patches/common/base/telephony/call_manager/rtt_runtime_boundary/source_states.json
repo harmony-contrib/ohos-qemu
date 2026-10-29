@@ -1,0 +1,14 @@
+{
+  "project": "base/telephony/call_manager",
+  "revision": "42f264011d0a44a300e3e8b825863754916cb6a8",
+  "precondition": "actual build578-02 after existing api26_enums/api26_rtt_lifecycle; imported read-only from the root-owned container",
+  "source_record": ".tmp/parallel-capability-20261016/root-communications578-build02-current/SOURCE.json",
+  "files": {
+    "services/call_manager_service/src/call_manager_service.cpp": ["48399035330c9d4bb3e181d19915e76126837ab78f4e59b30fb39f64c152b158", "a1c542de432bedd4e985461c34318a48f30dc144c036630f08aa76b2204fa8dc"],
+    "services/call/src/call_control_manager.cpp": ["03110548adda18c9c1c7ddb3db47c44f176b39ce8c22579f33b4ad8a923e8863", "63e3a2c5b51ad040f1d5505de7ffe17545a03b1d560c79d7c7acc90af870df77"],
+    "services/call/include/call_control_manager.h": ["d56cf7419958109645b9a5d2c9d559754521f4be9ce5547f96d8495040f175a6", "9925c1a2f534caddeb477db2f306baf07c192ca6548e92b1514441dfd6709eb9"],
+    "services/call/call_state_observer/src/rtt_call_listener.cpp": ["17951a51198e50677b1e3fe8949795eee421a47238500b30d9adaf146fa902ce", "860f873aa87a53f4babac44ac5815a88bbb6367073e29ac0880c4bf51f1e619d"],
+    "services/call/call_state_observer/include/rtt_call_listener.h": ["860106f9f73686011ce056d7b7413636ae27ff8ea1fb581249562195f683d788", "58a60e0cf7c26764be96722554a59294d4799422d30acb703596cc1ea0debc0b"],
+    "services/rtt_call/src/ims_rtt_manager.cpp": ["bc656e8ed402d6ce3b36ba67c15654909032054374125f524bd4e94ac2de489a", "0e2d3e2c722f31cd0301e1cab347b16aa9324eda4587dfc4112e50c08aa611f5"]
+  }
+}

@@ -1,0 +1,32 @@
+--- a/foundation/ability/ability_runtime/services/uripermmgr/src/uri_permission_manager_stub_impl.cpp
++++ b/foundation/ability/ability_runtime/services/uripermmgr/src/uri_permission_manager_stub_impl.cpp
+@@ -1727,11 +1727,20 @@
+         tokenId, timeNow);
+     auto ret = SandboxManagerKit::UnSetAllPolicyByToken(tokenId, timeNow);
+     if (ret != ERR_OK) {
+-        TAG_LOGE(AAFwkTag::URIPERMMGR, "UnsetAllPolicyByToken failed, ret: %{public}d", ret);
++        TAG_LOGE(AAFwkTag::URIPERMMGR, "URI579_REVOKE token:%{public}u sandbox:1 unset_result:%{public}d "
++            "erased:0 policy_cutoff_ns:%{public}" PRIu64, tokenId, ret, timeNow);
+         return WrapErrorCode(ret, funcResult);
+     }
+ #endif // ABILITY_RUNTIME_FEATURE_SANDBOXMANAGER
+-    permissionTokenMap_.erase(tokenId);
++    const auto erased = permissionTokenMap_.erase(tokenId);
++#ifdef ABILITY_RUNTIME_FEATURE_SANDBOXMANAGER
++    TAG_LOGI(AAFwkTag::URIPERMMGR, "URI579_REVOKE token:%{public}u sandbox:1 unset_result:%{public}d "
++        "erased:%{public}zu remaining:%{public}zu policy_cutoff_ns:%{public}" PRIu64,
++        tokenId, ret, erased, permissionTokenMap_.count(tokenId), timeNow);
++#else
++    TAG_LOGI(AAFwkTag::URIPERMMGR, "URI579_REVOKE token:%{public}u sandbox:0 unset_result:unavailable "
++        "erased:%{public}zu remaining:%{public}zu", tokenId, erased, permissionTokenMap_.count(tokenId));
++#endif
+     return ERR_OK;
+ }
+ 
+@@ -1876,4 +1885,4 @@
+ }
+ #endif // ABILITY_RUNTIME_FEATURE_SANDBOXMANAGER
+ }  // namespace AAFwk
+-}  // namespace OHOS
+\ No newline at end of file
++}  // namespace OHOS

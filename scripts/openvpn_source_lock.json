@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "upstream": "https://github.com/OpenVPN/openvpn",
+  "version": "2.7.8",
+  "commit": "dc1f569087135894ac2703aeabd7a960ee9452d4",
+  "archive_url": "https://codeload.github.com/OpenVPN/openvpn/tar.gz/dc1f569087135894ac2703aeabd7a960ee9452d4",
+  "archive_sha256": "38ea0dd774a08da28ea07b74f1b2d0e822a66f899fc711838ae422e0538c206d",
+  "archive_bytes": 1399858,
+  "license_file": "COPYING",
+  "license_file_sha256": "2bb17fe225c16734912c86003329ff44981ddae5f3a55bb2fa55b6938a12241b",
+  "license_note": "GPL version 2 with upstream OpenSSL, Apache2 and LZO linking exceptions; preserve full COPYING and source."
+}

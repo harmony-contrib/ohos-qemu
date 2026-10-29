@@ -1,0 +1,62 @@
+diff --git a/device/qemu/common/virt_full/kernel/arm64_virt_defconfig b/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
+--- a/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
++++ b/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
+@@ -93,4 +93,4 @@
+ # BPF subsystem
+ #
+-# CONFIG_BPF_SYSCALL is not set
++CONFIG_BPF_SYSCALL=y
+ CONFIG_BPF_JIT=y
+@@ -190,3 +190,4 @@
+ CONFIG_CGROUP_CPUACCT=y
+ CONFIG_CGROUP_PERF=y
++CONFIG_CGROUP_BPF=y
+ # CONFIG_CGROUP_MISC is not set
+@@ -6965,3 +6966,3 @@
+ # CONFIG_DMABUF_SELFTESTS is not set
+-# CONFIG_DMABUF_PROCESS_INFO is not set
++CONFIG_DMABUF_PROCESS_INFO=y
+ CONFIG_DMABUF_HEAPS=y
+@@ -9805,3 +9806,3 @@
+ CONFIG_TRACING_SUPPORT=y
+-# CONFIG_FTRACE is not set
++CONFIG_FTRACE=y
+ # CONFIG_SAMPLES is not set
+diff --git a/device/qemu/common/virt_full/kernel/arm_virt_defconfig b/device/qemu/common/virt_full/kernel/arm_virt_defconfig
+--- a/device/qemu/common/virt_full/kernel/arm_virt_defconfig
++++ b/device/qemu/common/virt_full/kernel/arm_virt_defconfig
+@@ -97,4 +97,4 @@
+ # BPF subsystem
+ #
+-# CONFIG_BPF_SYSCALL is not set
++CONFIG_BPF_SYSCALL=y
+ # CONFIG_BPF_JIT is not set
+@@ -175,3 +175,4 @@
+ CONFIG_CGROUP_CPUACCT=y
+ CONFIG_CGROUP_PERF=y
++CONFIG_CGROUP_BPF=y
+ # CONFIG_CGROUP_MISC is not set
+@@ -4932,3 +4933,3 @@
+ # CONFIG_DMABUF_SELFTESTS is not set
+-# CONFIG_DMABUF_PROCESS_INFO is not set
++CONFIG_DMABUF_PROCESS_INFO=y
+ CONFIG_DMABUF_HEAPS=y
+diff --git a/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig b/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig
+--- a/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig
++++ b/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig
+@@ -114,4 +114,4 @@
+ # BPF subsystem
+ #
+-# CONFIG_BPF_SYSCALL is not set
++CONFIG_BPF_SYSCALL=y
+ CONFIG_BPF_JIT=y
+@@ -206,3 +206,4 @@
+ CONFIG_CGROUP_CPUACCT=y
+ CONFIG_CGROUP_PERF=y
++CONFIG_CGROUP_BPF=y
+ # CONFIG_CGROUP_MISC is not set
+@@ -5125,3 +5126,3 @@
+ # CONFIG_DMABUF_SELFTESTS is not set
+-# CONFIG_DMABUF_PROCESS_INFO is not set
++CONFIG_DMABUF_PROCESS_INFO=y
+ CONFIG_DMABUF_HEAPS=y

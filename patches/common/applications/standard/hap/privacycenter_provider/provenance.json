@@ -1,0 +1,87 @@
+{
+  "scope": "public fixed inputs and canonical signing provenance ONLY_NOT_install_or_runtime",
+  "canonical_sign_receipt": {
+    "evidence": "r58-PrivacyCenter-canonical-sign-01/receipt.json",
+    "sha256": "a1cffd96a9e63d6b4664f0321890adf94a63934cacea72f14a44da9e55049797",
+    "exit_code": 0
+  },
+  "original_hap": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r57-F09-privacycenter-image-readonly-02/SecurityPrivacyCenter.hap",
+    "sha256": "d150dedbbf732b57ddc376e4a11dc4d873a75281d749bb74873ae0081d35e7e4",
+    "bytes": 417639
+  },
+  "canonical_hap": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-PrivacyCenter-canonical-sign-01/SecurityPrivacyCenter.hap",
+    "sha256": "e955901c2f23c23edb819b92493fb7455873656815e21ac693681fa6af453f6a",
+    "bytes": 419639
+  },
+  "public_fixtures": {
+    "payload-inventory.json": {
+      "source_evidence": "r58-PrivacyCenter-canonical-sign-01/original-and-renewed-payload.json",
+      "sha256": "29432329dbc84c94814452c5b12b8238f8a90f7993d3a7851f7e69da8029b3ed",
+      "bytes": 1618
+    },
+    "original-profile.json": {
+      "source_evidence": "r57-F09-privacycenter-profile-readonly-02/cms-profile.json",
+      "sha256": "afd8c265a7849d23355d2898ff12a382cd7be806757c42bb5452c4a393011719",
+      "bytes": 1786
+    },
+    "original-profile.p7b": {
+      "source_evidence": "r57-F09-privacycenter-signature-readonly-01/embedded-profile.p7b",
+      "sha256": "443934d3823c4dd1b7694b594da52eeaffc31cfbdb059f57e6c548afb0ef16fc",
+      "bytes": 3951
+    },
+    "canonical-profile.json": {
+      "source_evidence": "r58-PrivacyCenter-canonical-sign-01/desired-profile.json",
+      "sha256": "e19b5b8c8b3c6c82b0caad6ca01bfb44f7eb25df886efe595f30ca9818159075",
+      "bytes": 2022
+    },
+    "canonical-profile.p7b": {
+      "source_evidence": "r58-PrivacyCenter-canonical-sign-01/privacycenter.p7b",
+      "sha256": "fae5769fd1b69499ace02473481e83b7f6cdefdf9e867a23e3bb28bf1538671e",
+      "bytes": 3988
+    },
+    "profile-release-leaf.pem": {
+      "source_evidence": "r58-PrivacyCenter-canonical-sign-01/fixed-release-leaf.pem",
+      "sha256": "868977cd0c8a3f9c1474dd9facda0dda2ca1b3cad36fb76f22623a78a0e2643c",
+      "bytes": 834
+    },
+    "OpenHarmonyApplication.pem": {
+      "source_evidence": "r52-normal-signer-inputs-01/OpenHarmonyApplication.pem",
+      "sha256": "b5c1d6254faa91eab645a32fc3ce136128c94d88a739a0e956e6a49b331387e5",
+      "bytes": 2556
+    },
+    "OpenHarmonyProfileRelease.pem": {
+      "source_evidence": "r52-normal-signer-inputs-01/OpenHarmonyProfileRelease.pem",
+      "sha256": "515f0bd8173fabb8bf8f146cd61207baa0e2d6ab8693ae7623df7ee6f16af70e",
+      "bytes": 2568
+    },
+    "canonical-app-chain.cer": {
+      "source_evidence": "r58-PrivacyCenter-canonical-sign-01/app-chain.cer",
+      "sha256": "5358faac7e78e3d89755a0b5da6c0ffe847c66f8dec02cce313e1f4b1b867de4",
+      "bytes": 2782
+    },
+    "canonical-verify-app.stdout": {
+      "source_evidence": "r58-PrivacyCenter-canonical-sign-01/verify-app-stdout.bin",
+      "sha256": "9852bb8a09021fc9a270a41f8bc936deaf145d6d738b965fa2b56319de83c716",
+      "bytes": 2890
+    }
+  },
+  "signing_inputs_sha256": {
+    "hap-sign-tool.jar": "a434b6747e6c5d0b14e73837a46b39f4816ab25b42d1833d6f767bf867cf616d",
+    "OpenHarmony.p12": "7a5efc3ea9245596d157f6ccbbdc5b8ae7cd714e7086c3c1645986c9d495d071",
+    "OpenHarmonyApplication.pem": "b5c1d6254faa91eab645a32fc3ce136128c94d88a739a0e956e6a49b331387e5",
+    "OpenHarmonyProfileRelease.pem": "515f0bd8173fabb8bf8f146cd61207baa0e2d6ab8693ae7623df7ee6f16af70e"
+  },
+  "original_profile_mismatch": {
+    "actual_app_leaf_sha256": "0716E4E8C9B8CEEF6A974CD2289D5C4C668A5B41FA5DF8C0542DCB72602371F5",
+    "profile_authorized_leaf_sha256": "C47D73E889DF1220F5E7B0A88FFCC7BECA6A80A7C3958580D592191EBAD70EB3"
+  },
+  "only_profile_policy_difference": "bundle-info.distribution-certificate",
+  "validity_preserved": {
+    "not-before": 1594865258,
+    "not-after": 1689473258
+  },
+  "private_key_material_copied": false,
+  "first_artifact_behavior_gate_passed": false
+}

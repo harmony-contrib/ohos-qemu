@@ -1,0 +1,31 @@
+--- a/applications/standard/settings/product/phone/src/main/module.json5
++++ b/applications/standard/settings/product/phone/src/main/module.json5
+@@ -262,6 +262,17 @@
+         "label": "$string:add_computer_account",
+         "startWindowIcon": "$media:adaptiveIcon",
+         "startWindowBackground": "$color:color_default_white"
++      },
++      {
++        "name": "PickerDialog",
++        "srcEntry": "./ets/Setting/SharePicker/ChoosePickerAbility.ets",
++        "launchType": "standard",
++        "exported": false,
++        "icon": "$media:adaptiveIcon",
++        "label": "$string:settings_title",
++        "startWindowIcon": "$media:adaptiveIcon",
++        "startWindowBackground": "$color:color_default_white",
++        "removeMissionAfterTerminate": true
+       }
+     ],
+     "extensionAbilities": [
+--- a/applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json
++++ b/applications/standard/settings/product/phone/src/main/resources/base/profile/main_pages.json
+@@ -36,6 +36,7 @@
+     "Setting/Wlan/PcModeWifiWindowSettings",
+     "Setting/MobileNetwork/HotSpot/HotspotWindowPage",
+     "Setting/Volume/SoundModeWindowPage",
+-    "pages/SharePicker"
++    "pages/SharePicker",
++    "pages/ChoosePicker"
+   ]
+ }

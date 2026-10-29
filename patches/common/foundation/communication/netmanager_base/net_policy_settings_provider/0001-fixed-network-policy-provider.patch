@@ -1,0 +1,14 @@
+diff --git a/foundation/communication/netmanager_base/frameworks/js/napi/netpolicy/src/show_app_net_policy_settings.cpp b/foundation/communication/netmanager_base/frameworks/js/napi/netpolicy/src/show_app_net_policy_settings.cpp
+--- a/foundation/communication/netmanager_base/frameworks/js/napi/netpolicy/src/show_app_net_policy_settings.cpp
++++ b/foundation/communication/netmanager_base/frameworks/js/napi/netpolicy/src/show_app_net_policy_settings.cpp
+@@ -23,8 +23,8 @@
+ namespace OHOS {
+ namespace NetManagerStandard {
+  
+-static constexpr const char* SETTINGS_PACKAGE_NAME = "com.huawei.hmos.communicationsetting";
+-static constexpr const char* SETTINGS_ABILITY_NAME = "NetAccessPolicySettingUIExtension";
++static constexpr const char* SETTINGS_PACKAGE_NAME = "com.ohos.communicationsetting";
++static constexpr const char* SETTINGS_ABILITY_NAME = "UIExtensionProvider";
+ static constexpr const char* UIEXTENSION_TYPE_KEY = "ability.want.params.uiExtensionType";
+ static constexpr const char* UIEXTENSION_TYPE_VALUE = "sys/commonUI";
+ static constexpr const char* CONTEXT_TYPE_KEY = "storeKit.ability.contextType";

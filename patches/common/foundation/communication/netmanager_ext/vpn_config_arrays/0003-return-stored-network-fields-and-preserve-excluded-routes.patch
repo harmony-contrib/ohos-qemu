@@ -1,0 +1,82 @@
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp b/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp
+index 748053e..0b38ef0 100644
+--- a/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp
+@@ -401,6 +401,7 @@ bool ParseRoute(napi_env env, napi_value jsRoute, Route &route)
+ 
+     GetBoolFromJsOptionItem(env, jsRoute, NET_HAS_GATEWAY, route.hasGateway_);
+     GetBoolFromJsOptionItem(env, jsRoute, NET_ISDEFAULTROUTE, route.isDefaultRoute_);
++    GetBoolFromJsOptionItem(env, jsRoute, "isExcludedRoute", route.isExcludedRoute_);
+     return true;
+ }
+ 
+@@ -502,6 +503,61 @@ napi_value CreateNapiVpnConfig(napi_env env, sptr<SysVpnConfig> &sysVpnConfig)
+     }
+ }
+ 
++namespace {
++napi_value CreateNetworkAddress(napi_env env, const INetAddr &address)
++{
++    napi_value value = NapiUtils::CreateObject(env);
++    NapiUtils::SetStringPropertyUtf8(env, value, NET_ADDRESS, address.address_);
++    NapiUtils::SetUint32Property(env, value, NET_FAMILY, address.family_);
++    NapiUtils::SetUint32Property(env, value, NET_PORT, address.port_);
++    return value;
++}
++
++void SetOptionalStrings(napi_env env, napi_value config, const char *name,
++    const std::vector<std::string> &strings)
++{
++    if (strings.empty()) {
++        return;
++    }
++    napi_value array = NapiUtils::CreateArray(env, strings.size());
++    for (size_t i = 0; i < strings.size(); ++i) {
++        NapiUtils::SetArrayElement(env, array, i, NapiUtils::CreateStringUtf8(env, strings[i]));
++    }
++    NapiUtils::SetNamedProperty(env, config, name, array);
++}
++
++void SetNetworkConfigFields(napi_env env, napi_value config, const SysVpnConfig &native)
++{
++    NapiUtils::SetInt32Property(env, config, CONFIG_MTU, native.mtu_);
++    NapiUtils::SetBooleanProperty(env, config, CONFIG_ISIPV4ACCEPTED, native.isAcceptIPv4_);
++    NapiUtils::SetBooleanProperty(env, config, CONFIG_ISIPV6ACCEPTED, native.isAcceptIPv6_);
++    NapiUtils::SetBooleanProperty(env, config, CONFIG_ISLEGACY, native.isLegacy_);
++    NapiUtils::SetBooleanProperty(env, config, CONFIG_ISBLOCKING, native.isBlocking_);
++    NapiUtils::SetInt32Property(env, config, "userId", native.userId_);
++    SetOptionalStrings(env, config, CONFIG_TRUSTEDAPPLICATIONS, native.acceptedApplications_);
++    SetOptionalStrings(env, config, CONFIG_BLOCKEDAPPLICATIONS, native.refusedApplications_);
++    if (native.routes_.empty()) {
++        return;
++    }
++    napi_value routes = NapiUtils::CreateArray(env, native.routes_.size());
++    for (size_t i = 0; i < native.routes_.size(); ++i) {
++        const auto &route = native.routes_[i];
++        napi_value destination = NapiUtils::CreateObject(env);
++        NapiUtils::SetNamedProperty(env, destination, NET_ADDRESS, CreateNetworkAddress(env, route.destination_));
++        NapiUtils::SetUint32Property(env, destination, NET_PREFIXLENGTH, route.destination_.prefixlen_);
++        napi_value value = NapiUtils::CreateObject(env);
++        NapiUtils::SetStringPropertyUtf8(env, value, NET_INTERFACE, route.iface_);
++        NapiUtils::SetNamedProperty(env, value, NET_DESTINATION, destination);
++        NapiUtils::SetNamedProperty(env, value, NET_GATEWAY, CreateNetworkAddress(env, route.gateway_));
++        NapiUtils::SetBooleanProperty(env, value, NET_HAS_GATEWAY, route.hasGateway_);
++        NapiUtils::SetBooleanProperty(env, value, NET_ISDEFAULTROUTE, route.isDefaultRoute_);
++        NapiUtils::SetBooleanProperty(env, value, "isExcludedRoute", route.isExcludedRoute_);
++        NapiUtils::SetArrayElement(env, routes, i, value);
++    }
++    NapiUtils::SetNamedProperty(env, config, CONFIG_ROUTES, routes);
++}
++} // namespace
++
+ napi_value CreateNapiSysVpnConfig(napi_env env, sptr<SysVpnConfig> &sysVpnConfig)
+ {
+     if (sysVpnConfig == nullptr) {
+@@ -554,6 +610,7 @@ napi_value CreateNapiSysVpnConfig(napi_env env, sptr<SysVpnConfig> &sysVpnConfig
+     NapiUtils::SetBooleanProperty(env, config, CONFIG_SAVE_LOGIN, sysVpnConfig->saveLogin_ == 0 ? false : true);
+     NapiUtils::SetStringPropertyUtf8(env, config, CONFIG_FORWARDED_ROUTES, sysVpnConfig->forwardingRoutes_);
+     SetLocalAddressesProperty(env, config, sysVpnConfig->localAddresses_);
++    SetNetworkConfigFields(env, config, *sysVpnConfig);
+     return config;
+ }
+ 

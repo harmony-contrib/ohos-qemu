@@ -1,0 +1,23 @@
+diff --git a/src/arkweb/build/hap/build_hap_rk.py b/src/arkweb/build/hap/build_hap_rk.py
+--- a/src/arkweb/build/hap/build_hap_rk.py
++++ b/src/arkweb/build/hap/build_hap_rk.py
+@@ -23,8 +23,8 @@
+     self.abi = abi
+     self.hars = []
+     self.hvigor_wrapper = os.path.join(self.root, 'hvigorw')
+-    self.env = {
+-        "HOME": os.environ['HOME'],
++    self.env = os.environ.copy()
++    self.env.update({
+         "OHOS_BASE_SDK_HOME": self.sdk,
+         "NODE_HOME": self.node,
+         "PATH":
+@@ -32,7 +32,7 @@
+         ":".join([os.path.join(self.node, "bin"),
+                   os.environ.get("PATH")])
+-    }
++    })
+ 
+   def WriteDepfile(self, depfile):
+     action_helpers.write_depfile(depfile,
+                                  os.path.relpath(self.output,

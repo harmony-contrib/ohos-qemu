@@ -1,0 +1,343 @@
+diff --git a/foundation/communication/netmanager_base/frameworks/js/napi/connection/async_context/src/addnetworkroute_context.cpp b/foundation/communication/netmanager_base/frameworks/js/napi/connection/async_context/src/addnetworkroute_context.cpp
+index 6c0908b..6afbc78 100644
+--- a/foundation/communication/netmanager_base/frameworks/js/napi/connection/async_context/src/addnetworkroute_context.cpp
++++ b/foundation/communication/netmanager_base/frameworks/js/napi/connection/async_context/src/addnetworkroute_context.cpp
+@@ -45,33 +45,41 @@ AddNetworkRouteContext::AddNetworkRouteContext(napi_env env, std::shared_ptr<Eve
+ void AddNetworkRouteContext::ParseParams(napi_value *params, size_t paramsCount)
+ {
+     if (!CheckParamsType(GetEnv(), params, paramsCount)) {
+         NETMANAGER_BASE_LOGE("check params type failed");
+         SetNeedThrowException(true);
+         SetErrorCode(NETMANAGER_ERR_PARAMETER_ERROR);
+         return;
+     }
+ 
+     netId_ = NapiUtils::GetInt32FromValue(GetEnv(), params[ARG_INDEX_0]);
+     route_.iface_ = NapiUtils::GetStringPropertyUtf8(GetEnv(), params[1], "interface");
+     napi_value destination = NapiUtils::GetNamedProperty(GetEnv(), params[1], "destination");
+     napi_value destAddress = NapiUtils::GetNamedProperty(GetEnv(), destination, "address");
+     route_.destination_.address_ = NapiUtils::GetStringPropertyUtf8(GetEnv(), destAddress, "address");
+     route_.destination_.family_ = NapiUtils::GetInt32Property(GetEnv(), destAddress, "family");
+-    route_.destination_.port_ = NapiUtils::GetInt32Property(GetEnv(), destAddress, "port");
++    if (!NapiUtils::GetOptionalUint16Property(GetEnv(), destAddress, "port", route_.destination_.port_)) {
++        SetNeedThrowException(true);
++        SetErrorCode(NETMANAGER_ERR_PARAMETER_ERROR);
++        return;
++    }
+     route_.destination_.prefixlen_ = NapiUtils::GetInt32Property(GetEnv(), destination, "prefixLength");
+     napi_value gateway = NapiUtils::GetNamedProperty(GetEnv(), params[1], "gateway");
+     route_.gateway_.address_ = NapiUtils::GetStringPropertyUtf8(GetEnv(), gateway, "address");
+     route_.gateway_.family_ = NapiUtils::GetInt32Property(GetEnv(), gateway, "family");
+-    route_.gateway_.port_ = NapiUtils::GetInt32Property(GetEnv(), gateway, "port");
++    if (!NapiUtils::GetOptionalUint16Property(GetEnv(), gateway, "port", route_.gateway_.port_)) {
++        SetNeedThrowException(true);
++        SetErrorCode(NETMANAGER_ERR_PARAMETER_ERROR);
++        return;
++    }
+     route_.hasGateway_ = NapiUtils::GetBooleanProperty(GetEnv(), params[1], "hasGateway");
+     route_.isDefaultRoute_ = NapiUtils::GetBooleanProperty(GetEnv(), params[1], "isDefaultRoute");
+     
+     if (paramsCount == PARAM_DOUBLE_OPTIONS_AND_CALLBACK) {
+         SetParseOK(SetCallback(params[ARG_INDEX_2]) == napi_ok);
+         return;
+     }
+ 
+     SetParseOK(true);
+ }
+ } // namespace NetManagerStandard
+ } // namespace OHOS
+diff --git a/foundation/communication/netmanager_base/frameworks/js/napi/connection/async_context/src/addvlanip_context.cpp b/foundation/communication/netmanager_base/frameworks/js/napi/connection/async_context/src/addvlanip_context.cpp
+index 9868877..05bb417 100644
+--- a/foundation/communication/netmanager_base/frameworks/js/napi/connection/async_context/src/addvlanip_context.cpp
++++ b/foundation/communication/netmanager_base/frameworks/js/napi/connection/async_context/src/addvlanip_context.cpp
+@@ -26,25 +26,29 @@ AddVlanIpContext::AddVlanIpContext(napi_env env, std::shared_ptr<EventManager>&
+ void AddVlanIpContext::ParseParams(napi_value *params, size_t paramsCount)
+ {
+     if (params == nullptr) {
+         return;
+     }
+     if (paramsCount != PARAM_TRIPLE_OPTIONS ||
+         NapiUtils::GetValueType(GetEnv(), params[ARG_INDEX_0]) != napi_string ||
+         NapiUtils::GetValueType(GetEnv(), params[ARG_INDEX_1]) != napi_number ||
+         NapiUtils::GetValueType(GetEnv(), params[ARG_INDEX_2]) != napi_object) {
+         SetNeedThrowException(true);
+         SetErrorCode(NETMANAGER_ERR_PARAMETER_ERROR);
+         return;
+     }
+     ifName_ = NapiUtils::GetStringFromValueUtf8(GetEnv(), params[ARG_INDEX_0]);
+     vlanId_ = NapiUtils::GetUint32FromValue(GetEnv(), params[ARG_INDEX_1]);
+     napi_value netAddress = NapiUtils::GetNamedProperty(GetEnv(), params[ARG_INDEX_2], "address");
+     address_.address_ = NapiUtils::GetStringPropertyUtf8(GetEnv(), netAddress, "address");
+     address_.family_ = NapiUtils::GetInt32Property(GetEnv(), netAddress, "family");
+-    address_.port_ = NapiUtils::GetInt32Property(GetEnv(), netAddress, "port");
++    if (!NapiUtils::GetOptionalUint16Property(GetEnv(), netAddress, "port", address_.port_)) {
++        SetNeedThrowException(true);
++        SetErrorCode(NETMANAGER_ERR_PARAMETER_ERROR);
++        return;
++    }
+     address_.prefixlen_ = NapiUtils::GetInt32Property(GetEnv(), params[ARG_INDEX_2], "prefixLength");
+ 
+     SetParseOK(true);
+ }
+ } // namespace NetManagerStandard
+-} // namespace OHOS
+\ No newline at end of file
++} // namespace OHOS
+diff --git a/foundation/communication/netmanager_base/frameworks/js/napi/connection/async_context/src/deletevlanip_context.cpp b/foundation/communication/netmanager_base/frameworks/js/napi/connection/async_context/src/deletevlanip_context.cpp
+index 7818fe5..b27fa08 100644
+--- a/foundation/communication/netmanager_base/frameworks/js/napi/connection/async_context/src/deletevlanip_context.cpp
++++ b/foundation/communication/netmanager_base/frameworks/js/napi/connection/async_context/src/deletevlanip_context.cpp
+@@ -26,25 +26,29 @@ DeleteVlanIpContext::DeleteVlanIpContext(napi_env env, std::shared_ptr<EventMana
+ void DeleteVlanIpContext::ParseParams(napi_value *params, size_t paramsCount)
+ {
+     if (params == nullptr) {
+         return;
+     }
+     if (paramsCount != PARAM_TRIPLE_OPTIONS ||
+         NapiUtils::GetValueType(GetEnv(), params[ARG_INDEX_0]) != napi_string ||
+         NapiUtils::GetValueType(GetEnv(), params[ARG_INDEX_1]) != napi_number ||
+         NapiUtils::GetValueType(GetEnv(), params[ARG_INDEX_2]) != napi_object) {
+         SetNeedThrowException(true);
+         SetErrorCode(NETMANAGER_ERR_PARAMETER_ERROR);
+         return;
+     }
+     ifName_ = NapiUtils::GetStringFromValueUtf8(GetEnv(), params[ARG_INDEX_0]);
+     vlanId_ = NapiUtils::GetUint32FromValue(GetEnv(), params[ARG_INDEX_1]);
+     napi_value netAddress = NapiUtils::GetNamedProperty(GetEnv(), params[ARG_INDEX_2], "address");
+     address_.address_ = NapiUtils::GetStringPropertyUtf8(GetEnv(), netAddress, "address");
+     address_.family_ = NapiUtils::GetInt32Property(GetEnv(), netAddress, "family");
+-    address_.port_ = NapiUtils::GetInt32Property(GetEnv(), netAddress, "port");
++    if (!NapiUtils::GetOptionalUint16Property(GetEnv(), netAddress, "port", address_.port_)) {
++        SetNeedThrowException(true);
++        SetErrorCode(NETMANAGER_ERR_PARAMETER_ERROR);
++        return;
++    }
+     address_.prefixlen_ = NapiUtils::GetInt32Property(GetEnv(), params[ARG_INDEX_2], "prefixLength");
+ 
+     SetParseOK(true);
+ }
+ } // namespace NetManagerStandard
+-} // namespace OHOS
+\ No newline at end of file
++} // namespace OHOS
+diff --git a/foundation/communication/netmanager_base/frameworks/native/netconnclient/src/inet_addr.cpp b/foundation/communication/netmanager_base/frameworks/native/netconnclient/src/inet_addr.cpp
+index dd3132b..e6e98bb 100644
+--- a/foundation/communication/netmanager_base/frameworks/native/netconnclient/src/inet_addr.cpp
++++ b/foundation/communication/netmanager_base/frameworks/native/netconnclient/src/inet_addr.cpp
+@@ -65,25 +65,25 @@ bool INetAddr::operator<(const INetAddr &obj) const
+ bool INetAddr::Marshalling(Parcel &parcel) const
+ {
+     if (!parcel.WriteUint8(type_)) {
+         return false;
+     }
+     if (!parcel.WriteUint8(family_)) {
+         return false;
+     }
+     if (!parcel.WriteUint8(prefixlen_)) {
+         return false;
+     }
+     if (!parcel.WriteString(address_)) {
+         return false;
+     }
+     if (!parcel.WriteString(netMask_)) {
+         return false;
+     }
+     if (!parcel.WriteString(hostName_)) {
+         return false;
+     }
+-    if (!parcel.WriteUint8(port_)) {
++    if (!parcel.WriteUint16(port_)) {
+         return false;
+     }
+     return true;
+ }
+@@ -91,66 +91,68 @@ bool INetAddr::Marshalling(Parcel &parcel) const
+ sptr<INetAddr> INetAddr::Unmarshalling(Parcel &parcel)
+ {
+     sptr<INetAddr> ptr = new (std::nothrow) INetAddr();
+     if (ptr == nullptr) {
+         NETMGR_LOG_E("create INetAddr failed");
+         return nullptr;
+     }
+     if (!parcel.ReadUint8(ptr->type_)) {
+         return nullptr;
+     }
+     if (!parcel.ReadUint8(ptr->family_)) {
+         return nullptr;
+     }
+     if (!parcel.ReadUint8(ptr->prefixlen_)) {
+         return nullptr;
+     }
+     if (!parcel.ReadString(ptr->address_)) {
+         return nullptr;
+     }
+     if (!parcel.ReadString(ptr->netMask_)) {
+         return nullptr;
+     }
+     if (!parcel.ReadString(ptr->hostName_)) {
+         return nullptr;
+     }
+-    if (!parcel.ReadUint8(ptr->port_)) {
++    uint32_t port = 0;
++    if (!parcel.ReadUint32(port) || port > UINT16_MAX) {
+         return nullptr;
+     }
++    ptr->port_ = static_cast<uint16_t>(port);
+     return ptr;
+ }
+ 
+ bool INetAddr::Marshalling(Parcel &parcel, const sptr<INetAddr> &object)
+ {
+     if (object == nullptr) {
+         NETMGR_LOG_E("INetAddr object ptr is nullptr");
+         return false;
+     }
+     if (!parcel.WriteUint8(object->type_)) {
+         return false;
+     }
+ 
+     if (!parcel.WriteUint8(object->family_)) {
+         return false;
+     }
+ 
+     if (!parcel.WriteUint8(object->prefixlen_)) {
+         return false;
+     }
+ 
+     if (!parcel.WriteString(object->address_)) {
+         return false;
+     }
+ 
+     if (!parcel.WriteString(object->netMask_)) {
+         return false;
+     }
+ 
+     if (!parcel.WriteString(object->hostName_)) {
+         return false;
+     }
+ 
+-    if (!parcel.WriteUint8(object->port_)) {
++    if (!parcel.WriteUint16(object->port_)) {
+         return false;
+     }
+     return true;
+ }
+diff --git a/foundation/communication/netmanager_base/interfaces/innerkits/include/inet_addr.h b/foundation/communication/netmanager_base/interfaces/innerkits/include/inet_addr.h
+index eea1b48..54556f4 100644
+--- a/foundation/communication/netmanager_base/interfaces/innerkits/include/inet_addr.h
++++ b/foundation/communication/netmanager_base/interfaces/innerkits/include/inet_addr.h
+@@ -25,25 +25,25 @@ namespace NetManagerStandard {
+ struct INetAddr final : public Parcelable {
+     typedef enum {
+         UNKNOWN = 0x00,
+         IPV4 = 0x01,
+         IPV6 = 0x02,
+     } IpType;
+ 
+     uint8_t type_ = UNKNOWN;
+     uint8_t family_ = 0x00;
+     uint8_t prefixlen_ = 0;
+     std::string address_;
+     std::string netMask_;
+     std::string hostName_;
+-    uint8_t port_ = 0;
++    uint16_t port_ = 0;
+ 
+     bool operator==(const INetAddr &obj) const;
+     bool operator<(const INetAddr &obj) const;
+     bool Marshalling(Parcel &parcel) const override;
+     static sptr<INetAddr> Unmarshalling(Parcel &parcel);
+     static bool Marshalling(Parcel &parcel, const sptr<INetAddr> &object);
+     std::string ToString(const std::string &tab) const;
+ };
+ } // namespace NetManagerStandard
+ } // namespace OHOS
+-#endif
+\ No newline at end of file
++#endif
+diff --git a/foundation/communication/netmanager_base/utils/napi_utils/include/napi_utils.h b/foundation/communication/netmanager_base/utils/napi_utils/include/napi_utils.h
+index f2f6df0..55dad48 100644
+--- a/foundation/communication/netmanager_base/utils/napi_utils/include/napi_utils.h
++++ b/foundation/communication/netmanager_base/utils/napi_utils/include/napi_utils.h
+@@ -43,6 +43,9 @@ uint32_t GetUint32FromValue(napi_env env, napi_value value);
+ uint32_t GetUint32Property(napi_env env, napi_value object, const std::string &propertyName);
+ void SetUint32Property(napi_env env, napi_value object, const std::string &name, uint32_t value);
+ 
++/* Optional UINT16: missing/undefined defaults to zero; invalid input is not narrowed. */
++bool GetOptionalUint16Property(napi_env env, napi_value object, const std::string &propertyName, uint16_t &value);
++
+ /* INT32 */
+ napi_value CreateInt32(napi_env env, int32_t code);
+ int32_t GetInt32FromValue(napi_env env, napi_value value);
+diff --git a/foundation/communication/netmanager_base/utils/napi_utils/src/napi_utils.cpp b/foundation/communication/netmanager_base/utils/napi_utils/src/napi_utils.cpp
+index 1bf9106..729c94d 100644
+--- a/foundation/communication/netmanager_base/utils/napi_utils/src/napi_utils.cpp
++++ b/foundation/communication/netmanager_base/utils/napi_utils/src/napi_utils.cpp
+@@ -1,28 +1,30 @@
+ /*
+  * Copyright (c) 2022-2024 Huawei Device Co., Ltd.
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  *     http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+ 
+ #include "napi_utils.h"
+ 
+ #include <atomic>
++#include <cmath>
+ #include <cstring>
+ #include <initializer_list>
++#include <limits>
+ #include <memory>
+ #include <mutex>
+ #include <queue>
+ #include <unordered_set>
+ #include <unordered_map>
+ 
+ #include "netmanager_base_log.h"
+ #include "securec.h"
+@@ -312,6 +314,36 @@ uint32_t GetUint32Property(napi_env env, napi_value object, const std::string &p
+     return GetUint32FromValue(env, value);
+ }
+ 
++bool GetOptionalUint16Property(napi_env env, napi_value object, const std::string &propertyName, uint16_t &value)
++{
++    bool present = false;
++    if (napi_has_named_property(env, object, propertyName.c_str(), &present) != napi_ok) {
++        return false;
++    }
++    if (!present) {
++        value = 0;
++        return true;
++    }
++    napi_value property = nullptr;
++    napi_valuetype type = napi_undefined;
++    if (napi_get_named_property(env, object, propertyName.c_str(), &property) != napi_ok ||
++        napi_typeof(env, property, &type) != napi_ok) {
++        return false;
++    }
++    if (type == napi_undefined) {
++        value = 0;
++        return true;
++    }
++    double requested = 0;
++    if (type != napi_number || napi_get_value_double(env, property, &requested) != napi_ok ||
++        !std::isfinite(requested) || std::trunc(requested) != requested ||
++        requested < 0 || requested > std::numeric_limits<uint16_t>::max()) {
++        return false;
++    }
++    value = static_cast<uint16_t>(requested);
++    return true;
++}
++
+ void SetUint32Property(napi_env env, napi_value object, const std::string &name, uint32_t value)
+ {
+     napi_value jsValue = CreateUint32(env, value);

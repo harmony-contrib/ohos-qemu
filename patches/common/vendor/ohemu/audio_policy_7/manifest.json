@@ -1,0 +1,14 @@
+{
+  "component": "audio-policy-7",
+  "projects": {
+    "vendor/ohemu": "b56c5a95ec590543691278b85afe9fe228744163",
+    "foundation/multimedia/audio_framework": "6932fa64335b8272ca4a59de7808ab0d6c9eae7a"
+  },
+  "files": {
+    "vendor/ohemu/virt/hals/audio/config/audio_policy_config_new.xml": {
+      "before": "fc49bb846bf8a6455a150ebaac08ec8661dba7aa4ee400797e0819bc68aa62c1",
+      "after": "de3498e4246c439d27eb435237dda795ad73c1ff79eb942401e7219af5e35d04",
+      "payload": "audio_policy_config_new.xml"
+    }
+  }
+}

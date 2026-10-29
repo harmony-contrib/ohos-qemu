@@ -1,0 +1,76 @@
+diff --git a/foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn b/foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn
+--- a/foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn
++++ b/foundation/communication/netmanager_base/services/netmanagernative/BUILD.gn
+@@ -50,8 +50,15 @@
+   }
+-
++
+   if (netmanager_base_enable_feature_sysvpn) {
+     defines += [ "SUPPORT_SYSVPN" ]
++  }
++
++  # Only the three QEMU products use the separately packaged native backend.
++  if (netmanager_base_enable_feature_sysvpn &&
++      (product_name == "armv7a_virt" || product_name == "arm64_virt" ||
++       product_name == "x86_64_virt")) {
++    defines += [ "OHOS_QEMU_OPENVPN" ]
+   }
+-
++
+   if (netmanager_base_feature_enterprise_route_custom) {
+     defines += [ "FEATURE_ENTERPRISE_ROUTE_CUSTOM" ]
+diff --git a/foundation/communication/netmanager_base/services/netmanagernative/src/netsys/system_vpn_wrapper.cpp b/foundation/communication/netmanager_base/services/netmanagernative/src/netsys/system_vpn_wrapper.cpp
+--- a/foundation/communication/netmanager_base/services/netmanagernative/src/netsys/system_vpn_wrapper.cpp
++++ b/foundation/communication/netmanager_base/services/netmanagernative/src/netsys/system_vpn_wrapper.cpp
+@@ -13,12 +13,15 @@
+  * limitations under the License.
+  */
+-
++
+ #include "system_vpn_wrapper.h"
+-
++
+ #include <unistd.h>
++#ifdef OHOS_QEMU_OPENVPN
++#include "service_control.h"
++#endif
+ #include "netnative_log_wrapper.h"
+ #include "netmanager_base_common_utils.h"
+ #include "net_manager_constants.h"
+ #include "multi_vpn_manager.h"
+-
++
+ namespace OHOS {
+@@ -107,12 +110,31 @@
+         NETNATIVE_LOGE("run ExecuteUpdate failed");
+     }
+ }
+-
++
+ int32_t SystemVpnWrapper::Update(NetsysNative::SysVpnStageCode stage, const std::string &message)
+ {
++#ifdef OHOS_QEMU_OPENVPN
++    if (stage == SysVpnStageCode::VPN_STAGE_OPENVPN_RESTART ||
++        stage == SysVpnStageCode::VPN_STAGE_OPENVPN_STOP) {
++        // This reports init's acceptance only. The owned child and TUN bridge
++        // must prove their real connection before the VPN service publishes it.
++        if (stage == SysVpnStageCode::VPN_STAGE_OPENVPN_RESTART &&
++            access("/system/bin/qemu_openvpn_service", X_OK) != 0) {
++            NETNATIVE_LOGE("QEMU OpenVPN supervisor is not installed");
++            return NETMANAGER_ERROR;
++        }
++        const int action = stage == SysVpnStageCode::VPN_STAGE_OPENVPN_RESTART ? RESTART : STOP;
++        if (ServiceControl("qemu_openvpn", action) != 0) {
++            NETNATIVE_LOGE("QEMU OpenVPN service control failed");
++            return NETMANAGER_ERROR;
++        }
++        return NetManagerStandard::NETMANAGER_SUCCESS;
++    }
++#endif
++
+     if (PrepareUpdate(stage, message)) {
+         return NetManagerStandard::NETMANAGER_SUCCESS;
+     }
+     if (!vpnFfrtQueue_) {
+         NETNATIVE_LOGE("FFRT Init Fail");
+         return NETMANAGER_ERROR;

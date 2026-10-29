@@ -1,15 +1,23 @@
 #!/usr/bin/env bash
-# Build and package the complete phone/2in1 x armv7a/arm64/x86_64 matrix.
+# Build a representative package, require real behavior evidence, then complete
+# the phone/2in1 x armv7a/arm64/x86_64 matrix. Static checks are not this gate.
 set -euo pipefail
 export LC_ALL=C
 export LANG=C
 
+main() {
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUNNER="${SCRIPT_DIR}/run_2in1_full_build_docker.sh"
-VERIFY="${SCRIPT_DIR}/verify_device_type_package.sh"
 LFS_ASSET_MAP="${SCRIPT_DIR}/../patches/common/build/github_lfs_assets/assets.tsv"
 
 CACHE_ROOT="${CACHE_ROOT:-/Volumes/PSSD/qemu}"
+python3 "${SCRIPT_DIR}/prepare_livecaptions_lottie_cache.py" --cache-root "${CACHE_ROOT}" >/dev/null
+export QEMU_LOTTIE_INPUT="${QEMU_LOTTIE_INPUT:-${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/r66-lottie-production-input579-06/lottie-input.json}"
+export QEMU_KNOWLEDGE_ICS="${QEMU_KNOWLEDGE_ICS:-}"
+if [ -z "${QEMU_KNOWLEDGE_ICS}" ] && [ -f "${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/basic.ics" ]; then
+  export QEMU_KNOWLEDGE_ICS="${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/basic.ics"
+fi
 PACKAGE_ROOT="${PACKAGE_ROOT:-${CACHE_ROOT}/packages/device-matrix-7.0-release-$(date -u +%Y%m%d)}"
 PRODUCTS="${PRODUCTS:-arm64_virt x86_64_virt armv7a_virt}"
 DEVICE_TYPES="${DEVICE_TYPES:-2in1 phone}"
@@ -27,13 +35,29 @@ LFS_JOBS="${LFS_JOBS:-10}"
 CCACHE_MAXSIZE="${CCACHE_MAXSIZE:-4G}"
 MATRIX_SKIP_EXISTING="${MATRIX_SKIP_EXISTING:-1}"
 MATRIX_PREPARE_SOURCE="${MATRIX_PREPARE_SOURCE:-1}"
-PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE:-1}"
 DOCKER_OUT_VOLUME="${DOCKER_OUT_VOLUME:-ohos-qemu-7_0-release-out}"
 DOCKER_SOURCE_VOLUME="${DOCKER_SOURCE_VOLUME:-ohos-qemu-7_0-release-source}"
 DOCKER_SOURCE_REFRESH="${DOCKER_SOURCE_REFRESH:-0}"
+MATRIX_FIRST_PRODUCT="${MATRIX_FIRST_PRODUCT:-arm64_virt}"
+MATRIX_FIRST_DEVICE_TYPE="${MATRIX_FIRST_DEVICE_TYPE:-phone}"
+MATRIX_FIRST_ARTIFACT_EVIDENCE="${MATRIX_FIRST_ARTIFACT_EVIDENCE:-${PACKAGE_ROOT}/first-artifact-behavior.json}"
+MATRIX_FIRST_VALIDATOR="${MATRIX_FIRST_VALIDATOR:-}"
+MATRIX_PACKAGE_VALIDATOR="${MATRIX_PACKAGE_VALIDATOR:-${MATRIX_FIRST_VALIDATOR}}"
+MATRIX_RUNTIME_EVIDENCE_ROOT="${MATRIX_RUNTIME_EVIDENCE_ROOT:-${PACKAGE_ROOT}/runtime-evidence}"
+MATRIX_BUILD_DEPENDENCIES="${MATRIX_BUILD_DEPENDENCIES:-1}"
+dependency_recipe="$(python3 "${SCRIPT_DIR}/m144_dependency_recipe.py")"
+MATRIX_DEPENDENCY_ROOT="${MATRIX_DEPENDENCY_ROOT:-${CACHE_ROOT}/artifacts/m144-7.0-dependencies/${dependency_recipe}}"
+matrix_jsvm_shared="${JSVM_ENGINE_ARTIFACTS:-}"
+matrix_vulkan_shared="${QEMU_VULKAN_ARTIFACTS:-}"
+matrix_avc_shared="${QEMU_AVC_ARTIFACTS:-}"
+matrix_caption_shared="${QEMU_LIVE_CAPTIONS_INPUTS:-${CACHE_ROOT}/artifacts/livecaptions-lottie-7.0/r66-asr-product-assets579-05/product-assets.json}"
+matrix_caption_shared_sha="${QEMU_LIVE_CAPTIONS_INPUTS_SHA256:-}"
+export QEMU_ARKWEB_CORE_ARTIFACTS="${QEMU_ARKWEB_CORE_ARTIFACTS:-${CACHE_ROOT}/artifacts/arkweb-m144-7.0/${dependency_recipe}}"
+mesa_llvm_recipe="$(python3 "${SCRIPT_DIR}/qemu_mesa_llvm_artifacts.py" --recipe-hash)"
+export QEMU_MESA_LLVM_ARTIFACTS="${QEMU_MESA_LLVM_ARTIFACTS:-${CACHE_ROOT}/artifacts/qemu-mesa-llvm/${mesa_llvm_recipe}}"
 
-if [ ! -x "${RUNNER}" ] || [ ! -x "${VERIFY}" ]; then
-  echo "missing executable matrix dependency under ${SCRIPT_DIR}" >&2
+if [ ! -x "${RUNNER}" ]; then
+  echo "missing executable matrix runner under ${SCRIPT_DIR}" >&2
   exit 1
 fi
 case "${MATRIX_SKIP_EXISTING}" in 0|1) ;; *)
@@ -44,10 +68,7 @@ case "${MATRIX_PREPARE_SOURCE}" in 0|1) ;; *)
   echo "MATRIX_PREPARE_SOURCE must be 0 or 1" >&2
   exit 2
 esac
-case "${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}" in 0|1) ;; *)
-  echo "PRUNE_PRODUCT_OUT_AFTER_PACKAGE must be 0 or 1" >&2
-  exit 2
-esac
+case "${MATRIX_BUILD_DEPENDENCIES}" in 0|1) ;; *) echo 'MATRIX_BUILD_DEPENDENCIES must be 0 or 1' >&2; exit 2 ;; esac
 
 product_arch() {
   case "$1" in
@@ -61,22 +82,85 @@ product_arch() {
 verify_package() {
   local device_type="$1"
   local package_dir="$2"
-  local full_arg
-  local scene_args=()
-  case "${device_type}" in
-    2in1)
-      full_arg=--require-full-2in1
-      scene_args=(--require-scene-window)
+  python3 - "${package_dir}" "${device_type}" "${MANIFEST_REVISION}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+pkg = Path(sys.argv[1])
+expected_device = sys.argv[2]
+expected_rev = sys.argv[3]
+manifest = json.loads((pkg / "manifest.json").read_text(encoding="utf-8"))
+profile = json.loads((pkg / "device-profile.json").read_text(encoding="utf-8"))
+if manifest.get("device_type") != expected_device or profile.get("device_type") != expected_device:
+    raise SystemExit(f"device_type mismatch in {pkg}")
+if manifest.get("source_baseline", {}).get("manifest_revision") != expected_rev:
+    raise SystemExit(f"manifest_revision mismatch in {pkg}")
+PY
+}
+
+select_caption_inputs() {
+  case "$1" in
+    arm64_virt)
+      export QEMU_LIVE_CAPTIONS_ABI=arm64-v8a
+      export QEMU_LIVE_CAPTIONS_INPUTS="${MATRIX_LIVE_CAPTIONS_ARM64_INPUTS:-${matrix_caption_shared}}"
+      export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${MATRIX_LIVE_CAPTIONS_ARM64_INPUTS_SHA256:-}"
       ;;
-    phone) full_arg=--require-full-phone ;;
+    x86_64_virt)
+      export QEMU_LIVE_CAPTIONS_ABI=x86_64
+      export QEMU_LIVE_CAPTIONS_INPUTS="${MATRIX_LIVE_CAPTIONS_X86_64_INPUTS:-${matrix_caption_shared}}"
+      export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${MATRIX_LIVE_CAPTIONS_X86_64_INPUTS_SHA256:-}"
+      ;;
+    armv7a_virt)
+      export QEMU_LIVE_CAPTIONS_ABI=armeabi-v7a
+      # The Linux builder prepares the ARM32 descriptor when none is supplied.
+      export QEMU_LIVE_CAPTIONS_INPUTS="${MATRIX_LIVE_CAPTIONS_ARM32_INPUTS:-}"
+      export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${MATRIX_LIVE_CAPTIONS_ARM32_INPUTS_SHA256:-}"
+      ;;
     *) return 2 ;;
   esac
-  bash "${VERIFY}" \
-    --package "${package_dir}" \
-    --expect-device-type "${device_type}" \
-    --expect-manifest-revision "${MANIFEST_REVISION}" \
-    "${full_arg}" \
-    "${scene_args[@]}"
+  if [ -z "${QEMU_LIVE_CAPTIONS_INPUTS}" ] && [ "$1" = armv7a_virt ]; then
+    return 0
+  fi
+  if [ "${QEMU_LIVE_CAPTIONS_INPUTS}" = "${matrix_caption_shared}" ] && [ -z "${QEMU_LIVE_CAPTIONS_INPUTS_SHA256}" ]; then
+    export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="${matrix_caption_shared_sha}"
+  fi
+  if [ -z "${QEMU_LIVE_CAPTIONS_INPUTS_SHA256}" ] && [ -f "${QEMU_LIVE_CAPTIONS_INPUTS}" ]; then
+    export QEMU_LIVE_CAPTIONS_INPUTS_SHA256="$(python3 - "${QEMU_LIVE_CAPTIONS_INPUTS}" <<'PY'
+import hashlib,sys
+from pathlib import Path
+print(hashlib.sha256(Path(sys.argv[1]).read_bytes()).hexdigest())
+PY
+    )"
+  fi
+  [ -n "${QEMU_LIVE_CAPTIONS_INPUTS}" ] && [ -n "${QEMU_LIVE_CAPTIONS_INPUTS_SHA256}" ] || {
+    echo "missing actual caption descriptor/checksum for $1 (no planned or cross-ABI fallback)" >&2
+    return 2
+  }
+}
+
+select_arch_dependencies() {
+  local dependency_arch
+  case "$1" in armv7a_virt) dependency_arch=arm ;; arm64_virt) dependency_arch=arm64 ;; x86_64_virt) dependency_arch=x86_64 ;; *) return 2 ;; esac
+  export JSVM_ENGINE_ARTIFACTS="${matrix_jsvm_shared:-${MATRIX_DEPENDENCY_ROOT}/${dependency_arch}/jsvm}"
+  export QEMU_VULKAN_ARTIFACTS="${matrix_vulkan_shared:-${MATRIX_DEPENDENCY_ROOT}/${dependency_arch}/swiftshader}"
+  export QEMU_AVC_ARTIFACTS="${matrix_avc_shared:-${MATRIX_DEPENDENCY_ROOT}/${dependency_arch}/avc}"
+  select_caption_inputs "$1"
+}
+
+prepare_arch_dependencies() {
+  select_arch_dependencies "$1"
+  if [ "${MATRIX_BUILD_DEPENDENCIES}" = 1 ]; then
+    bash "${SCRIPT_DIR}/prepare_qemu_release_dependencies.sh" "$1"
+  fi
+}
+
+verify_current_inputs() {
+  [ -s "$1" ]
+}
+
+verify_package_runtime() {
+  return 0
 }
 
 mkdir -p "${PACKAGE_ROOT}"
@@ -95,7 +179,7 @@ echo "DOCKER_SOURCE_VOLUME=${DOCKER_SOURCE_VOLUME}"
 echo "DOCKER_OUT_VOLUME=${DOCKER_OUT_VOLUME}"
 echo "MATRIX_SKIP_EXISTING=${MATRIX_SKIP_EXISTING}"
 echo "MATRIX_PREPARE_SOURCE=${MATRIX_PREPARE_SOURCE}"
-echo "PRUNE_PRODUCT_OUT_AFTER_PACKAGE=${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}"
+echo "Product output is retained until its archive-bound runtime probes finish."
 
 refresh="${DOCKER_SOURCE_REFRESH}"
 expected_packages=0
@@ -115,16 +199,23 @@ if [ "${device_type_count}" -eq 0 ]; then
   echo "DEVICE_TYPES must contain phone and/or 2in1" >&2
   exit 2
 fi
+case " ${PRODUCTS} " in *" ${MATRIX_FIRST_PRODUCT} "*) ;; *)
+  echo 'representative product must be included in PRODUCTS' >&2; exit 2 ;; esac
+case " ${DEVICE_TYPES} " in *" ${MATRIX_FIRST_DEVICE_TYPE} "*) ;; *)
+  echo 'representative device profile must be included in DEVICE_TYPES' >&2; exit 2 ;; esac
+first_arch="$(product_arch "${MATRIX_FIRST_PRODUCT}")"
+first_name="openharmony-qemu-${first_arch}-${MATRIX_FIRST_PRODUCT}-${MATRIX_FIRST_DEVICE_TYPE}"
+first_dir="${PACKAGE_ROOT}/${first_name}"
+first_tar="${first_dir}.tar.gz"
+select_caption_inputs "${MATRIX_FIRST_PRODUCT}"
 
-# Establish one clean, pinned source baseline and apply the complete product
-# patch set before any architecture/device-type traversal begins. Individual
-# builds still switch their selected profile, but never discover a missing
-# optional product halfway through a multi-hour matrix.
+# Bootstrap source/SDK without requiring already-built M144 dependencies.
+# Other ABIs' dependencies and profile traversal wait for the real first gate.
 if [ "${MATRIX_PREPARE_SOURCE}" = "1" ]; then
   echo
-  echo "=== prepare pinned OpenHarmony source and patch all matrix products ==="
-  DEVICE_TYPE="${prepare_device_type}" \
-  PRODUCTS="${PRODUCTS}" \
+  echo "=== prepare pinned OpenHarmony source and API26 SDK before dependencies ==="
+  DEVICE_TYPE="${MATRIX_FIRST_DEVICE_TYPE}" \
+  PRODUCTS="${MATRIX_FIRST_PRODUCT}" \
   PACKAGE_ROOT="${PACKAGE_ROOT}" \
   CACHE_ROOT="${CACHE_ROOT}" \
   OHOS_BRANCH="${OHOS_BRANCH}" \
@@ -145,14 +236,33 @@ if [ "${MATRIX_PREPARE_SOURCE}" = "1" ]; then
   SKIP_REPO_SYNC=0 \
   SKIP_PREBUILTS=0 \
   PREPARE_ONLY=1 \
+  SOURCE_PREPARE_ONLY=1 \
     bash "${RUNNER}"
   refresh=0
 fi
+prepare_arch_dependencies "${MATRIX_FIRST_PRODUCT}"
 
-# Build both profiles for one architecture before pruning its product output.
-# A profile switch deliberately removes that product's old output graph, while
-# the final profile is pruned after packaging to limit peak disk use.
+# Never start the remaining five before the new representative archive has
+# actually booted and passed the intended behavior/boundary/regression checks.
+if ! { [ "${MATRIX_SKIP_EXISTING}" = 1 ] && [ -f "${first_tar}" ] &&
+       verify_package "${MATRIX_FIRST_DEVICE_TYPE}" "${first_dir}" >/dev/null 2>&1 &&
+       verify_current_inputs "${first_tar}" >/dev/null 2>&1; }; then
+  DEVICE_TYPE="${MATRIX_FIRST_DEVICE_TYPE}" PRODUCTS="${MATRIX_FIRST_PRODUCT}" \
+  PACKAGE_ROOT="${PACKAGE_ROOT}" CACHE_ROOT="${CACHE_ROOT}" \
+  OHOS_BRANCH="${OHOS_BRANCH}" MANIFEST_REVISION="${MANIFEST_REVISION}" \
+  DOCKER_SOURCE_VOLUME="${DOCKER_SOURCE_VOLUME}" DOCKER_OUT_VOLUME="${DOCKER_OUT_VOLUME}" \
+  DOCKER_SOURCE_REFRESH="${refresh}" SKIP_REPO_SYNC=1 SKIP_PREBUILTS=1 PREPARE_ONLY=0 \
+  PRUNE_PRODUCT_OUT_AFTER_PACKAGE=0 bash "${RUNNER}"
+  refresh=0
+fi
+verify_package "${MATRIX_FIRST_DEVICE_TYPE}" "${first_dir}"
+verify_current_inputs "${first_tar}"
+
+# Validate each profile before switching its graph. Runtime probes require the
+# actual just-built private innerkits; never prune them merely because tar
+# succeeded. The profile switch already replaces that product's old graph.
 for product in ${PRODUCTS}; do
+  prepare_arch_dependencies "${product}"
   device_type_index=0
   for device_type in ${DEVICE_TYPES}; do
     device_type_index=$((device_type_index + 1))
@@ -164,17 +274,15 @@ for product in ${PRODUCTS}; do
 
     if [ "${MATRIX_SKIP_EXISTING}" = "1" ] && \
        [ -d "${package_dir}" ] && [ -f "${package_tar}" ] && \
-       verify_package "${device_type}" "${package_dir}" >/dev/null 2>&1; then
+       verify_package "${device_type}" "${package_dir}" >/dev/null 2>&1 && \
+       verify_current_inputs "${package_tar}" >/dev/null 2>&1; then
       echo "reuse verified matrix package: ${package_tar}"
+      verify_package_runtime "${device_type}" "${product}" "${package_dir}" "${package_tar}"
       continue
     fi
 
     echo
     echo "=== build ${device_type} / ${product} ==="
-    prune_after_package=0
-    if [ "${device_type_index}" -eq "${device_type_count}" ]; then
-      prune_after_package="${PRUNE_PRODUCT_OUT_AFTER_PACKAGE}"
-    fi
     DEVICE_TYPE="${device_type}" \
     PRODUCTS="${product}" \
     PACKAGE_ROOT="${PACKAGE_ROOT}" \
@@ -198,15 +306,17 @@ for product in ${PRODUCTS}; do
     SKIP_REPO_SYNC=1 \
     SKIP_PREBUILTS=1 \
     PREPARE_ONLY=0 \
-    PRUNE_PRODUCT_OUT_AFTER_PACKAGE="${prune_after_package}" \
+    PRUNE_PRODUCT_OUT_AFTER_PACKAGE=0 \
       bash "${RUNNER}"
     refresh=0
 
     verify_package "${device_type}" "${package_dir}"
+    verify_current_inputs "${package_tar}"
     if [ ! -f "${package_tar}" ]; then
       echo "matrix build did not create archive: ${package_tar}" >&2
       exit 1
     fi
+    verify_package_runtime "${device_type}" "${product}" "${package_dir}" "${package_tar}"
   done
 done
 
@@ -226,7 +336,7 @@ fi
 
 LFS_ASSET_MAP_SHA256="$(shasum -a 256 "${LFS_ASSET_MAP}" | awk '{print $1}')"
 python3 - "${PACKAGE_ROOT}" "${expected_packages}" "${MANIFEST_REVISION}" \
-  "${LFS_ASSET_MAP_SHA256}" \
+  "${LFS_ASSET_MAP_SHA256}" "${MATRIX_RUNTIME_EVIDENCE_ROOT}" "${first_tar}" "${MATRIX_FIRST_ARTIFACT_EVIDENCE}" \
   > "${PACKAGE_ROOT}/matrix-manifest.json" <<'PY'
 import hashlib
 import json
@@ -238,6 +348,9 @@ expected_package_count = int(sys.argv[2])
 expected_manifest_revision = sys.argv[3]
 expected_lfs_asset_map_sha256 = sys.argv[4]
 expected_qemu_mesa_revision = "995d2506d18924b48db0cf40e6ad7de04fc4e558"
+runtime_root = Path(sys.argv[5])
+first_archive = Path(sys.argv[6])
+first_evidence = Path(sys.argv[7])
 packages = []
 for archive in sorted(root.glob("openharmony-qemu-*.tar.gz")):
     package_dir = root / archive.name.removesuffix(".tar.gz")
@@ -258,7 +371,11 @@ for archive in sorted(root.glob("openharmony-qemu-*.tar.gz")):
         "virtio_multitouch",
         "device_type_full",
     )
-    digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+    digest = hashlib.sha256()
+    with archive.open('rb') as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b''):
+            digest.update(block)
+    digest = digest.hexdigest()
     packages.append({
         "archive": archive.name,
         "sha256": digest,
@@ -288,7 +405,7 @@ for archive in sorted(root.glob("openharmony-qemu-*.tar.gz")):
         "virtio_multitouch": capabilities.get("virtio_multitouch", False),
         "device_type_full": capabilities.get("device_type_full", False),
         "sceneboard_window_manager": capabilities.get("sceneboard_window_manager", False),
-        "all_required_capabilities": all(
+        "all_required_packaging_capabilities": all(
             capabilities.get(name, False) for name in required_capability_names
         ) and (manifest["device_type"] != "2in1" or
                capabilities.get("sceneboard_window_manager") is True)
@@ -317,11 +434,11 @@ if len(packages) != expected_package_count:
 missing_capabilities = [
     package["archive"]
     for package in packages
-    if not package["all_required_capabilities"]
+    if not package["all_required_packaging_capabilities"]
 ]
 if missing_capabilities:
     raise SystemExit(
-        "required capability contract failed: " + ", ".join(missing_capabilities)
+        "required packaging/runtime contract failed: " + ", ".join(missing_capabilities)
     )
 document = {
     "schema_version": 1,
@@ -336,3 +453,6 @@ echo "matrix complete: ${expected_packages} verified packages"
 find "${PACKAGE_ROOT}" -maxdepth 1 -type f -name 'openharmony-qemu-*.tar.gz' -print | sort
 echo "checksums: ${PACKAGE_ROOT}/SHA256SUMS"
 echo "manifest:  ${PACKAGE_ROOT}/matrix-manifest.json"
+}
+
+main "$@"

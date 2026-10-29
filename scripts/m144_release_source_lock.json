@@ -1,0 +1,1433 @@
+{
+  "chromium_milestone": 144,
+  "manifest_files_sha256": {
+    "chromium.xml": "8a26781d36dbe7a5adce99ce692e07e5bcc87759e7c7fd8b37b63a4009660286",
+    "developer.xml": "2f3a058e9dea1a734282875aa3b9fb6d7c83d7c54c74daef3b30c8662bede188",
+    "openharmony.xml": "e72c6734743b47ce8325861dfb1d834721112d48f5255d6ce742d4795a8a5277"
+  },
+  "manifest_revision": "79739ee5ae8ee71c8ef90b63e7a658ef639c5980",
+  "manifest_url": "https://gitcode.com/openharmony-tpc/manifest.git",
+  "note": "Build only exact commits; GitHub mirror first, official upstream fallback when the mirror lacks the commit.",
+  "projects": [
+    {
+      "links": [],
+      "mirror_url": "https://github.com/openharmony/web_webview.git",
+      "name": "web_webview",
+      "path": "deps_code/webview",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "4237e061441ea9392e83a353c0d52cb1c44404b3",
+      "upstream_url": "https://gitcode.com/openharmony/web_webview.git"
+    },
+    {
+      "links": [
+        {
+          "dest": "build_arkweb.sh",
+          "src": "arkweb/build/build_tpc.sh"
+        },
+        {
+          "dest": "build",
+          "src": "arkweb/build/build"
+        },
+        {
+          "dest": "AGENTS.md",
+          "src": "arkweb/AGENTS.md"
+        }
+      ],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_src.git",
+      "name": "chromium_src",
+      "path": "src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "a8168622b056f25c2e68d5f12fe2759bad2d9a44",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_src.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_arkweb.git",
+      "name": "chromium_arkweb",
+      "path": "src/arkweb",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "f3d904432cc1c57468f2b7fe01979d25e0157581",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_arkweb.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_cef.git",
+      "name": "chromium_cef",
+      "path": "src/cef",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "6153d21e9a5d6f0a6718757dcf9c5cadf60fe595",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_cef.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_chrome_test_canvas_bench.git",
+      "name": "chromium_chrome_test_canvas_bench",
+      "path": "src/chrome/test/data/perf/canvas_bench",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "a7b40ea5ae0239517d78845a5fc9b12976bfc732",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_chrome_test_canvas_bench.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_chrome_test_frame_rate.git",
+      "name": "chromium_chrome_test_frame_rate",
+      "path": "src/chrome/test/data/perf/frame_rate/content",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "c10272c88463efeef6bb19c9ec07c42bc8fe22b9",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_chrome_test_frame_rate.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_chrome_test_xr.git",
+      "name": "chromium_chrome_test_xr",
+      "path": "src/chrome/test/data/xr/webvr_info",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "c58ae99b9ff9e2aa4c524633519570bf33536248",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_chrome_test_xr.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_docs_website.git",
+      "name": "chromium_docs_website",
+      "path": "src/docs/website",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "3c47b51f67014f243237e0f73c4572944030b4e5",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_docs_website.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_cdm.git",
+      "name": "chromium_cdm",
+      "path": "src/media/cdm/api",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "a4cbc4325e6de42ead733f2af43c08292d0e65a8",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_cdm.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_quiche.git",
+      "name": "chromium_quiche",
+      "path": "src/net/third_party/quiche/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "dd5f831424b2b60023028f7081634022e0cc7535",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_quiche.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_fuzzer_wasm_corpus.git",
+      "name": "chromium_fuzzer_wasm_corpus",
+      "path": "src/testing/libfuzzer/fuzzers/wasm_corpus",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "1df5e50a45db9518a56ebb42cb020a94a090258b",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_fuzzer_wasm_corpus.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_angle.git",
+      "name": "chromium_third_party_angle",
+      "path": "src/third_party/angle",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "34514f8d32961f69378a25957b5fb380ddf42a1f",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_angle.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_angle_vk_gl_cts.git",
+      "name": "chromium_third_party_angle_vk_gl_cts",
+      "path": "src/third_party/angle/third_party/VK-GL-CTS/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "74b1c1d8ea3f30af1b9a76fadcdf9d469afc2a57",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_angle_vk_gl_cts.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_angle_glmark2.git",
+      "name": "chromium_third_party_angle_glmark2",
+      "path": "src/third_party/angle/third_party/glmark2/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "6edcf02205fd1e8979dc3f3964257a81959b80c8",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_angle_glmark2.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_angle_rapidjson.git",
+      "name": "chromium_third_party_angle_rapidjson",
+      "path": "src/third_party/angle/third_party/rapidjson/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "781a4e667d84aeedbeb8184b7b62425ea66ec59f",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_angle_rapidjson.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_anonymous-tokens.git",
+      "name": "chromium_anonymous-tokens",
+      "path": "src/third_party/anonymous_tokens/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "50e04fb27eacd49a5e2bfde5977ac689e13ebeeb",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_anonymous-tokens.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_boringssl.git",
+      "name": "chromium_third_party_boringssl",
+      "path": "src/third_party/boringssl/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "b94d71f87ff943a617d77f3ff029f9a01a1ec6bc",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_boringssl.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/openharmony/third_party_bounds_checking_function.git",
+      "name": "third_party_bounds_checking_function",
+      "path": "src/third_party/bounds_checking_function",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "2ae82839ecaaa7d031e66ccbd2076d671acfd615",
+      "upstream_url": "https://gitcode.com/openharmony/third_party_bounds_checking_function.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_breakpad.git",
+      "name": "chromium_third_party_breakpad",
+      "path": "src/third_party/breakpad/breakpad",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "d0b41ca2a38c7b14c4b7853254eb5bf3b4039691",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_breakpad.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_cast_core.git",
+      "name": "chromium_third_party_cast_core",
+      "path": "src/third_party/cast_core/public/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "f5ee589bdaea60418f670fa176be15ccb9a34942",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_cast_core.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_catapult.git",
+      "name": "chromium_third_party_catapult",
+      "path": "src/third_party/catapult",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "a202c86635d505fa893d73bad1e220a66bb644e6",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_catapult.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_ced.git",
+      "name": "chromium_third_party_ced",
+      "path": "src/third_party/ced/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "ba412eaaacd3186085babcd901679a48863c7dd5",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_ced.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_clang-format.git",
+      "name": "chromium_clang-format",
+      "path": "src/third_party/clang-format/script",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "c2725e0622e1a86d55f14514f2177a39efea4a0e",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_clang-format.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_cld_3.git",
+      "name": "chromium_third_party_cld_3",
+      "path": "src/third_party/cld_3/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "b48dc46512566f5a2d41118c8c1116c4f96dc661",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_cld_3.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_colorama.git",
+      "name": "chromium_third_party_colorama",
+      "path": "src/third_party/colorama/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "3de9f013df4b470069d03d250224062e8cf15c49",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_colorama.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_compiler-rt.git",
+      "name": "chromium_compiler-rt",
+      "path": "src/third_party/compiler-rt/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "cb2de163a470f2e9d56ec8a4f912f644378b7191",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_compiler-rt.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_content_analysis_sdk.git",
+      "name": "chromium_content_analysis_sdk",
+      "path": "src/third_party/content_analysis_sdk/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "9a408736204513e0e95dd2ab3c08de0d95963efc",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_content_analysis_sdk.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_cpu_features.git",
+      "name": "chromium_cpu_features",
+      "path": "src/third_party/cpu_features/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "936b9ab5515dead115606559502e3864958f7f6e",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_cpu_features.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_cpuinfo.git",
+      "name": "chromium_cpuinfo",
+      "path": "src/third_party/cpuinfo/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "161a9ec374884f4b3e85725cb22e05f9458fdc93",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_cpuinfo.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_crabbyavif.git",
+      "name": "chromium_crabbyavif",
+      "path": "src/third_party/crabbyavif/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "640d2758f8d2e59d1a55ae0933673f0f65de68c4",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_crabbyavif.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_crc32c.git",
+      "name": "chromium_third_party_crc32c",
+      "path": "src/third_party/crc32c/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "d3d60ac6e0f16780bcfcc825385e1d338801a558",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_crc32c.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_cros_components.git",
+      "name": "chromium_cros_components",
+      "path": "src/third_party/cros-components/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "7ccdbf60606671c2c057628125908fbfef9bd0c8",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_cros_components.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_cros_system_api.git",
+      "name": "chromium_third_party_cros_system_api",
+      "path": "src/third_party/cros_system_api",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "5f1ffac5e855229e27c6e4356ffb189f3010283f",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_cros_system_api.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_crossbench.git",
+      "name": "chromium_crossbench",
+      "path": "src/third_party/crossbench",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "77240be1ccd1dc99b73be332223a8856641a2073",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_crossbench.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_web-tests.git",
+      "name": "chromium_web-tests",
+      "path": "src/third_party/crossbench-web-tests",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "3c76c8201f0732fe9781742229ab8ac43bf90cbf",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_web-tests.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_dav1d.git",
+      "name": "chromium_third_party_dav1d",
+      "path": "src/third_party/dav1d/libdav1d",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "fcbc3d1b93f91c709293ed9faea8b7cbcac9030b",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_dav1d.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_dawn.git",
+      "name": "chromium_third_party_dawn",
+      "path": "src/third_party/dawn",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "ea00c9ce6368b685ee0009e479425977e28b2689",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_dawn.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_directxshadercompiler.git",
+      "name": "chromium_directxshadercompiler",
+      "path": "src/third_party/dawn/third_party/dxc",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "3f85295cfc982e5447f9faaa36f345366faca11d",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_directxshadercompiler.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_directx-headers.git",
+      "name": "chromium_directx-headers",
+      "path": "src/third_party/dawn/third_party/dxheaders",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "980971e835876dc0cde415e8f9bc646e64667bf7",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_directx-headers.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_glfw.git",
+      "name": "chromium_third_party_glfw",
+      "path": "src/third_party/dawn/third_party/glfw",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "b35641f4a3c62aa86a0b3c983d163bc0fe36026d",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_glfw.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_egl-registry.git",
+      "name": "chromium_egl-registry",
+      "path": "src/third_party/dawn/third_party/khronos/EGL-Registry",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "7dea2ed79187cd13f76183c4b9100159b9e3e071",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_egl-registry.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_opengl-registry.git",
+      "name": "chromium_opengl-registry",
+      "path": "src/third_party/dawn/third_party/khronos/OpenGL-Registry",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "5bae8738b23d06968e7c3a41308568120943ae77",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_opengl-registry.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_webgpu_cts.git",
+      "name": "chromium_third_party_webgpu_cts",
+      "path": "src/third_party/dawn/third_party/webgpu-cts",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "ecd2f1963e1c4c31beb579e99d6ba144ae1e01b2",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_webgpu_cts.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_webgpu-headers.git",
+      "name": "chromium_webgpu-headers",
+      "path": "src/third_party/dawn/third_party/webgpu-headers/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "079d4e5153eaabc4033584cc399c27f1acbb2548",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_webgpu-headers.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_depot_tools.git",
+      "name": "chromium_third_party_depot_tools",
+      "path": "src/third_party/depot_tools",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "6182daef96f6bcf4a61afcba676e87f871d0423f",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_depot_tools.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_devtools_frontend.git",
+      "name": "chromium_third_party_devtools_frontend",
+      "path": "src/third_party/devtools-frontend/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "31bb4e203f0bf83335578f43e00cccaac9ff0f28",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_devtools_frontend.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_dom_distiller_js.git",
+      "name": "chromium_third_party_dom_distiller_js",
+      "path": "src/third_party/dom_distiller_js/dist",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "b619b54601ad02e4ba396f40ad5cbd8a57b20ef7",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_dom_distiller_js.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_domato.git",
+      "name": "chromium_domato",
+      "path": "src/third_party/domato/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "053714bccbda79cf76dac3fee48ab2b27f21925e",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_domato.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_dragonbox.git",
+      "name": "chromium_dragonbox",
+      "path": "src/third_party/dragonbox/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "6c7c925b571d54486b9ffae8d9d18a822801cbda",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_dragonbox.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_eigen3.git",
+      "name": "chromium_third_party_eigen3",
+      "path": "src/third_party/eigen3/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "49623d0c4e1af3c680845191948d10f6d3e92f8a",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_eigen3.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_emoji_segmenter.git",
+      "name": "chromium_third_party_emoji_segmenter",
+      "path": "src/third_party/emoji-segmenter/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "955936be8b391e00835257059607d7c5b72ce744",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_emoji_segmenter.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_expat.git",
+      "name": "chromium_third_party_expat",
+      "path": "src/third_party/expat/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "69d6c054c1bd5258c2a13405a7f5628c72c177c2",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_expat.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_farmhash.git",
+      "name": "chromium_third_party_farmhash",
+      "path": "src/third_party/farmhash/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "816a4ae622e964763ca0862d9dbd19324a1eaf45",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_farmhash.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_fast_float.git",
+      "name": "chromium_fast_float",
+      "path": "src/third_party/fast_float/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "cb1d42aaa1e14b09e1452cfdef373d051b8c02a4",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_fast_float.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_federated-compute.git",
+      "name": "chromium_federated-compute",
+      "path": "src/third_party/federated_compute/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "e51058dfe7888094ecc09cda38bfceffd4d4664b",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_federated-compute.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_ffmpeg.git",
+      "name": "chromium_third_party_ffmpeg",
+      "path": "src/third_party/ffmpeg",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "089b28673a1a01aafe0d2b8d47da04d2589bf7d0",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_ffmpeg.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_flac.git",
+      "name": "chromium_third_party_flac",
+      "path": "src/third_party/flac",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "807e251d9f8c5dd6059e547931e9c6a4251967af",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_flac.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_flatbuffers.git",
+      "name": "chromium_third_party_flatbuffers",
+      "path": "src/third_party/flatbuffers/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "187240970746d00bbd26b0f5873ed54d2477f9f3",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_flatbuffers.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_fontconfig.git",
+      "name": "chromium_third_party_fontconfig",
+      "path": "src/third_party/fontconfig/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "23b3fc6e58a13d126b9c30fafc9a16f8bd7143e9",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_fontconfig.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_fp16.git",
+      "name": "chromium_third_party_fp16",
+      "path": "src/third_party/fp16/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "0a603df2a49756f65284625ca58a4db2e789b8bb",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_fp16.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_freetype.git",
+      "name": "chromium_third_party_freetype",
+      "path": "src/third_party/freetype/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "4a3f908f4ef3870837023e1bcaaef90e369192c7",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_freetype.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_fuzztest.git",
+      "name": "chromium_fuzztest",
+      "path": "src/third_party/fuzztest/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "7406afb783ff5e7f3a1a66aebb81090622716412",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_fuzztest.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_fxdiv.git",
+      "name": "chromium_fxdiv",
+      "path": "src/third_party/fxdiv/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "63058eff77e11aa15bf531df5dd34395ec3017c8",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_fxdiv.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_gemmlowp.git",
+      "name": "chromium_third_party_gemmlowp",
+      "path": "src/third_party/gemmlowp/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "16e8662c34917be0065110bfcd9cc27d30f52fdf",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_gemmlowp.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_vulkan_deps_glslang.git",
+      "name": "chromium_third_party_vulkan_deps_glslang",
+      "path": "src/third_party/glslang/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "7a47e2531cb334982b2a2dd8513dca0a3de4373d",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_vulkan_deps_glslang.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_benchmark.git",
+      "name": "chromium_benchmark",
+      "path": "src/third_party/google_benchmark/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "188e8278990a9069ffc84441cb5a024fd0bede37",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_benchmark.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_googletest.git",
+      "name": "chromium_third_party_googletest",
+      "path": "src/third_party/googletest/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "4fe3307fb2d9f86d19777c7eb0e4809e9694dde7",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_googletest.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_harfbuzz_ng.git",
+      "name": "chromium_third_party_harfbuzz_ng",
+      "path": "src/third_party/harfbuzz-ng/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "20b8ca9acc661990280bc2c87c27831c7482aa32",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_harfbuzz_ng.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_highway.git",
+      "name": "chromium_third_party_highway",
+      "path": "src/third_party/highway/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "84379d1c73de9681b54fbe1c035a23c7bd5d272d",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_highway.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_hunspell_dictionaries.git",
+      "name": "chromium_third_party_hunspell_dictionaries",
+      "path": "src/third_party/hunspell_dictionaries",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "cccf64a8acc951afe3f47fee023908e55699bc58",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_hunspell_dictionaries.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_icu.git",
+      "name": "chromium_third_party_icu",
+      "path": "src/third_party/icu",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "4652914326450b9674a8f61883c961fecdd611f3",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_icu.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_ink.git",
+      "name": "chromium_ink",
+      "path": "src/third_party/ink/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "11ca89062782d7e5a57741a303a925f510b91015",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_ink.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_ink-stroke-modeler.git",
+      "name": "chromium_ink-stroke-modeler",
+      "path": "src/third_party/ink_stroke_modeler/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "2cd45e8683025c28fa2efcf672ad46607e8af869",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_ink-stroke-modeler.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_instrumented_libraries.git",
+      "name": "chromium_instrumented_libraries",
+      "path": "src/third_party/instrumented_libs",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "69015643b3f68dbd438c010439c59adc52cac808",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_instrumented_libraries.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_jetstream.git",
+      "name": "chromium_jetstream",
+      "path": "src/third_party/jetstream/main",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "f88580ef6265b59295f37eb0c6666466b11a0e74",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_jetstream.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_jsoncpp.git",
+      "name": "chromium_third_party_jsoncpp",
+      "path": "src/third_party/jsoncpp/source",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "42e892d96e47b1f6e29844cc705e148ec4856448",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_jsoncpp.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_leveldatabase.git",
+      "name": "chromium_third_party_leveldatabase",
+      "path": "src/third_party/leveldatabase/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "4ee78d7ea98330f7d7599c42576ca99e3c6ff9c5",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_leveldatabase.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_libFuzzer.git",
+      "name": "chromium_third_party_libFuzzer",
+      "path": "src/third_party/libFuzzer/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "bea408a6e01f0f7e6c82a43121fe3af4506c932e",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_libFuzzer.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_libaddressinput.git",
+      "name": "chromium_third_party_libaddressinput",
+      "path": "src/third_party/libaddressinput/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "0c7e9434dc08d2f3ee0a912567340b6f207e5488",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_libaddressinput.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_libaom.git",
+      "name": "chromium_third_party_libaom",
+      "path": "src/third_party/libaom/source/libaom",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "5afceb5c874e7aa278ee524f2fc7f08bbacad1df",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_libaom.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_buildtools_libcpp.git",
+      "name": "chromium_buildtools_libcpp",
+      "path": "src/third_party/libc++/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "07572e7b169225ef3a999584cba9d9004631ae66",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_buildtools_libcpp.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_buildtools_libcppapi.git",
+      "name": "chromium_buildtools_libcppapi",
+      "path": "src/third_party/libc++abi/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "83a852080747b9a362e8f9e361366b7a601f302c",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_buildtools_libcppapi.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_libdrm.git",
+      "name": "chromium_third_party_libdrm",
+      "path": "src/third_party/libdrm/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "ad78bb591d02162d3b90890aa4d0a238b2a37cde",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_libdrm.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_libgav1.git",
+      "name": "chromium_third_party_libgav1",
+      "path": "src/third_party/libgav1/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "c05bf9be660cf170d7c26bd06bb42b3322180e58",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_libgav1.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_libipp.git",
+      "name": "chromium_libipp",
+      "path": "src/third_party/libipp/libipp",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "4be5f77f672a3a9f1bbf3c935fb0ea8b3f86ce61",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_libipp.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_libjpeg_turbo.git",
+      "name": "chromium_third_party_libjpeg_turbo",
+      "path": "src/third_party/libjpeg_turbo",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "4a25a308a1f30767de80386cfb77a6267be97302",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_libjpeg_turbo.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_liblouis.git",
+      "name": "chromium_third_party_liblouis",
+      "path": "src/third_party/liblouis/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "9700847afb92cb35969bdfcbbfbbb74b9c7b3376",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_liblouis.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_libphonenumber.git",
+      "name": "chromium_third_party_libphonenumber",
+      "path": "src/third_party/libphonenumber/dist",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "9d46308f313f2bf8dbce1dfd4f364633ca869ca7",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_libphonenumber.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_libprotobuf_mutator.git",
+      "name": "chromium_third_party_libprotobuf_mutator",
+      "path": "src/third_party/libprotobuf-mutator/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "7bf98f78a30b067e22420ff699348f084f802e12",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_libprotobuf_mutator.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_libsrtp.git",
+      "name": "chromium_third_party_libsrtp",
+      "path": "src/third_party/libsrtp",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "a52756acb1c5e133089c798736dd171567df11f5",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_libsrtp.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_libsync.git",
+      "name": "chromium_third_party_libsync",
+      "path": "src/third_party/libsync/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "fcb40c9ae8ea5738b3a9d5e8df696ef729e17fde",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_libsync.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_buildtools_libunwind.git",
+      "name": "chromium_buildtools_libunwind",
+      "path": "src/third_party/libunwind/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "c65639bf792928e0d38aed822dc34d3e72066a6c",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_buildtools_libunwind.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_libva-fake-driver.git",
+      "name": "chromium_libva-fake-driver",
+      "path": "src/third_party/libva-fake-driver/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "a9bcab9cd6b15d4e3634ca44d5e5f7652c612194",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_libva-fake-driver.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_libvpx.git",
+      "name": "chromium_third_party_libvpx",
+      "path": "src/third_party/libvpx/source/libvpx",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "01c36277c0d0e6fbb54ce1f0dde08266cddce748",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_libvpx.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_libwebm.git",
+      "name": "chromium_third_party_libwebm",
+      "path": "src/third_party/libwebm/source",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "8c75fdb5a93e9449272904b68f7baa15e7a4180b",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_libwebm.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_libwebp.git",
+      "name": "chromium_libwebp",
+      "path": "src/third_party/libwebp/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "c00d83f6642e7838a12bb03bca94237f03cc2e00",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_libwebp.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_libyuv.git",
+      "name": "chromium_third_party_libyuv",
+      "path": "src/third_party/libyuv",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "8c791052ce648e45e73ee4467440946bf1d08caa",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_libyuv.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_libc.git",
+      "name": "chromium_libc",
+      "path": "src/third_party/llvm-libc/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "fe97633934c21742a74962d52c17b3bcba7ad824",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_libc.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_lss.git",
+      "name": "chromium_third_party_lss",
+      "path": "src/third_party/lss",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "639c8b9a1dbf3aab5030ae04eb2e243f98d3ce8d",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_lss.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_material-color-utilities.git",
+      "name": "chromium_material-color-utilities",
+      "path": "src/third_party/material_color_utilities/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "13434b50dcb64a482cc91191f8cf6151d90f5465",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_material-color-utilities.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_minigbm.git",
+      "name": "chromium_third_party_minigbm",
+      "path": "src/third_party/minigbm/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "3018207f4d89395cc271278fb9a6558b660885f5",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_minigbm.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_nasm.git",
+      "name": "chromium_third_party_nasm",
+      "path": "src/third_party/nasm",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "af5eeeb054bebadfbb79c7bcd100a95e2ad4525f",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_nasm.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_nearby-connections.git",
+      "name": "chromium_nearby-connections",
+      "path": "src/third_party/nearby/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "0bad8b0c9877f92eeeb550654f1ea51a71a085e4",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_nearby-connections.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_neon_2_sse.git",
+      "name": "chromium_third_party_neon_2_sse",
+      "path": "src/third_party/neon_2_sse/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "eb8b80b28f956275e291ea04a7beb5ed8289e872",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_neon_2_sse.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_oak.git",
+      "name": "chromium_oak",
+      "path": "src/third_party/oak/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "96c00a6c99ac382f3f3a8f376bc7a70890d1adaa",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_oak.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_openh264.git",
+      "name": "chromium_third_party_openh264",
+      "path": "src/third_party/openh264/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "652bdb7719f30b52b08e506645a7322ff1b2cc6f",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_openh264.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_openscreen.git",
+      "name": "chromium_third_party_openscreen",
+      "path": "src/third_party/openscreen/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "c5f78b119a5c68153a41ca0fff8ebf98a87f23be",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_openscreen.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_buildtools.git",
+      "name": "chromium_buildtools",
+      "path": "src/third_party/openscreen/src/buildtools",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "fba2905150c974240f14aa5334c3e5c93f873032",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_buildtools.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_openscreen_tinycbor.git",
+      "name": "chromium_third_party_openscreen_tinycbor",
+      "path": "src/third_party/openscreen/src/third_party/tinycbor/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "fc42a049853b802e45f49588f8148fc29d7b4d9c",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_openscreen_tinycbor.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_ots.git",
+      "name": "chromium_ots",
+      "path": "src/third_party/ots/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "46bea9879127d0ff1c6601b078e2ce98e83fcd33",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_ots.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_pdfium.git",
+      "name": "chromium_third_party_pdfium",
+      "path": "src/third_party/pdfium",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "f467ad7b6de4e6026a8c70f9a4f840fc9a3de4dd",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_pdfium.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_perfetto.git",
+      "name": "chromium_third_party_perfetto",
+      "path": "src/third_party/perfetto",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "bf7c3ad9e9698ded537c2f068c2b1132ac77a22c",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_perfetto.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_protobuf-javascript.git",
+      "name": "chromium_protobuf-javascript",
+      "path": "src/third_party/protobuf-javascript/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "e6d763860001ba1a76a63adcff5efb12b1c96024",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_protobuf-javascript.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_pthreadpool.git",
+      "name": "chromium_pthreadpool",
+      "path": "src/third_party/pthreadpool/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "d90cd6f1493e09d12c407243f7f331a8cda55efb",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_pthreadpool.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_pyelftools.git",
+      "name": "chromium_third_party_pyelftools",
+      "path": "src/third_party/pyelftools",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "19b3e610c86fcadb837d252c794cb5e8008826ae",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_pyelftools.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_pywebsocket3.git",
+      "name": "chromium_third_party_pywebsocket3",
+      "path": "src/third_party/pywebsocket3/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "50602a14f1b6da17e0b619833a13addc6ea78bc2",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_pywebsocket3.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_quic_trace.git",
+      "name": "chromium_third_party_quic_trace",
+      "path": "src/third_party/quic_trace/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "352288a06d2c83ae68b5a402b2219f4678be9f39",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_quic_trace.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_re2.git",
+      "name": "chromium_third_party_re2",
+      "path": "src/third_party/re2/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "e7aec5985072c1dbe735add802653ef4b36c231a",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_re2.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_readability.git",
+      "name": "chromium_readability",
+      "path": "src/third_party/readability/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "d7949dc47dd9ed9ee1d3b34ffdcf3bce28cde435",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_readability.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_ruy.git",
+      "name": "chromium_third_party_ruy",
+      "path": "src/third_party/ruy/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "1e6e50872655a73b5250f954d7b9da9a87292fd3",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_ruy.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_search_engines_data.git",
+      "name": "chromium_search_engines_data",
+      "path": "src/third_party/search_engines_data/resources",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "97355b69daee73d74ac38f2227788458bd95d372",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_search_engines_data.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_securemessage.git",
+      "name": "chromium_third_party_securemessage",
+      "path": "src/third_party/securemessage/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "fa07beb12babc3b25e0c5b1f38c16aa8cb6b8f84",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_securemessage.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_skia.git",
+      "name": "chromium_third_party_skia",
+      "path": "src/third_party/skia",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "e742cbf7a397b11aef80c664999b758fb8d01a58",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_skia.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_smhasher.git",
+      "name": "chromium_third_party_smhasher",
+      "path": "src/third_party/smhasher/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "0ff96f7835817a27d0487325b6c16033e2992eb5",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_smhasher.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_snappy.git",
+      "name": "chromium_third_party_snappy",
+      "path": "src/third_party/snappy/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "32ded457c0b1fe78ceb8397632c416568d6714a0",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_snappy.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_speedometer.git",
+      "name": "chromium_speedometer",
+      "path": "src/third_party/speedometer/main",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "e2e2538900938c5d6819e9456bf33d48f806c96c",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_speedometer.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_vulkan_deps_spirv_cross.git",
+      "name": "chromium_third_party_vulkan_deps_spirv_cross",
+      "path": "src/third_party/spirv-cross/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "b8fcf307f1f347089e3c46eb4451d27f32ebc8d3",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_vulkan_deps_spirv_cross.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_vulkan_deps_spirv_headers.git",
+      "name": "chromium_third_party_vulkan_deps_spirv_headers",
+      "path": "src/third_party/spirv-headers/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "b824a462d4256d720bebb40e78b9eb8f78bbb305",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_vulkan_deps_spirv_headers.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_vulkan_deps_spirv_tools.git",
+      "name": "chromium_third_party_vulkan_deps_spirv_tools",
+      "path": "src/third_party/spirv-tools/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "f410b3c178740f9f5bd28d5b22a71d4bc10acd49",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_vulkan_deps_spirv_tools.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_sqlite.git",
+      "name": "chromium_third_party_sqlite",
+      "path": "src/third_party/sqlite/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "7d348fc79216a09b864ff881d8561a6222301666",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_sqlite.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_swiftshader.git",
+      "name": "chromium_third_party_swiftshader",
+      "path": "src/third_party/swiftshader",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "7de929845e8d30e83be6416a15e76c235bb4784d",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_swiftshader.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_text-fragments-polyfill.git",
+      "name": "chromium_text-fragments-polyfill",
+      "path": "src/third_party/text-fragments-polyfill/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "c036420683f672d685e27415de0a5f5e85bdc23f",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_text-fragments-polyfill.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_tflite.git",
+      "name": "chromium_third_party_tflite",
+      "path": "src/third_party/tflite/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "621ffb9c2120c8d1d54a604bfc260a2f83fbec64",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_tflite.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_ukey2.git",
+      "name": "chromium_third_party_ukey2",
+      "path": "src/third_party/ukey2/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "0275885d8e6038c39b8a8ca55e75d1d4d1727f47",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_ukey2.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_vulkan_deps.git",
+      "name": "chromium_third_party_vulkan_deps",
+      "path": "src/third_party/vulkan-deps",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "327bc9dec2a42806ad78c284829363657bb728dc",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_vulkan_deps.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_vulkan_deps_vulkan_headers.git",
+      "name": "chromium_third_party_vulkan_deps_vulkan_headers",
+      "path": "src/third_party/vulkan-headers/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "234f716cb893a145c6c8d0ca6508954f2aa9f5bc",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_vulkan_deps_vulkan_headers.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_vulkan_deps_vulkan_loader.git",
+      "name": "chromium_third_party_vulkan_deps_vulkan_loader",
+      "path": "src/third_party/vulkan-loader/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "000ea70d499339da68178b47d0ce2a797844fef2",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_vulkan_deps_vulkan_loader.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_vulkan_deps_vulkan_tools.git",
+      "name": "chromium_third_party_vulkan_deps_vulkan_tools",
+      "path": "src/third_party/vulkan-tools/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "48b5d246b2d0b1a41ee7ea1b69525ae7bb38a2ae",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_vulkan_deps_vulkan_tools.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_vulkan-utility-libraries.git",
+      "name": "chromium_vulkan-utility-libraries",
+      "path": "src/third_party/vulkan-utility-libraries/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "c010c19e796035e92fb3b0462cb887518a41a7c1",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_vulkan-utility-libraries.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_vulkan_deps_vulkan_validation_layers.git",
+      "name": "chromium_third_party_vulkan_deps_vulkan_validation_layers",
+      "path": "src/third_party/vulkan-validation-layers/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "5e175a92548d1a507bd81fdc5db6fa1d2572a6ea",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_vulkan_deps_vulkan_validation_layers.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_vulkan_memory_allocator.git",
+      "name": "chromium_third_party_vulkan_memory_allocator",
+      "path": "src/third_party/vulkan_memory_allocator",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "cb0597213b0fcb999caa9ed08c2f88dc45eb7d50",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_vulkan_memory_allocator.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_wayland_protocols_gtk.git",
+      "name": "chromium_third_party_wayland_protocols_gtk",
+      "path": "src/third_party/wayland-protocols/gtk",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "40ebed3a03aef096addc0af09fec4ec529d882a0",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_wayland_protocols_gtk.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_wayland_protocols_kde.git",
+      "name": "chromium_third_party_wayland_protocols_kde",
+      "path": "src/third_party/wayland-protocols/kde",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "0b07950714b3a36c9b9f71fc025fc7783e82926e",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_wayland_protocols_kde.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_wayland_protocols_src.git",
+      "name": "chromium_third_party_wayland_protocols_src",
+      "path": "src/third_party/wayland-protocols/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "efbc060534be948b63e1f395d69b583eebba3235",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_wayland_protocols_src.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_wayland.git",
+      "name": "chromium_third_party_wayland",
+      "path": "src/third_party/wayland/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "b317806f93aba691cb94e5075e6dc72345dffc34",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_wayland.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_webdriver.git",
+      "name": "chromium_third_party_webdriver",
+      "path": "src/third_party/webdriver/pylib",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "1e954903022e9386b9acf452c24f4458dd4c4fc1",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_webdriver.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_webgl.git",
+      "name": "chromium_third_party_webgl",
+      "path": "src/third_party/webgl/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "c01b768bce4a143e152c1870b6ba99ea6267d2b0",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_webgl.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_webgpu_cts.git",
+      "name": "chromium_third_party_webgpu_cts",
+      "path": "src/third_party/webgpu-cts/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "ecd2f1963e1c4c31beb579e99d6ba144ae1e01b2",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_webgpu_cts.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_webpagereplay.git",
+      "name": "chromium_webpagereplay",
+      "path": "src/third_party/webpagereplay",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "052833a44dd2f538b85936092bad545b6062e193",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_webpagereplay.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_webrtc.git",
+      "name": "chromium_third_party_webrtc",
+      "path": "src/third_party/webrtc",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "0159a7bffb0a54551e9fa5dd25ff81f448419b05",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_webrtc.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_weston.git",
+      "name": "chromium_third_party_weston",
+      "path": "src/third_party/weston/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "bdba2f9adaca673fd58339d8140bc04727ee279d",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_weston.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_wuffs.git",
+      "name": "chromium_third_party_wuffs",
+      "path": "src/third_party/wuffs/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "e3f919ccfe3ef542cfc983a82146070258fb57f8",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_wuffs.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_third_party_xdg_utils.git",
+      "name": "chromium_third_party_xdg_utils",
+      "path": "src/third_party/xdg-utils",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "cb54d9db2e535ee4ef13cc91b65a1e2741a94a44",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_third_party_xdg_utils.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_xnnpack.git",
+      "name": "chromium_xnnpack",
+      "path": "src/third_party/xnnpack/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "d3efd0a2fcd944931416811da6d24222c91ddd9d",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_xnnpack.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_zstd.git",
+      "name": "chromium_zstd",
+      "path": "src/third_party/zstd/src",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "a25c1fc96f431e69abea38f52cb31e6bc074e9f1",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_zstd.git"
+    },
+    {
+      "links": [],
+      "mirror_url": "https://github.com/OpenHarmony-TPC/chromium_v8.git",
+      "name": "chromium_v8",
+      "path": "src/v8",
+      "release_ref": "refs/heads/OpenHarmony-7.0-Release",
+      "revision": "bb352490a41083cfb4fba0fadcb0c5099f4aafa7",
+      "upstream_url": "https://gitcode.com/openharmony-tpc/chromium_v8.git"
+    }
+  ],
+  "release": "OpenHarmony-7.0-Release",
+  "resolved_at_utc": "2026-10-06T04:46:40.230294+00:00",
+  "schema_version": 1
+}

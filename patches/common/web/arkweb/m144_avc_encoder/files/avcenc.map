@@ -1,0 +1,7 @@
+{
+  global:
+    InitEncoder;
+    EncodeProcess;
+    ReleaseEncoder;
+  local: *;
+};

@@ -1,0 +1,315 @@
+{
+    "name": "@ohos/media_library",
+    "description": "provides a set of easy-to-use APIs for getting media file metadata information",
+    "version": "4.0",
+    "license": "Apache License 2.0",
+    "publishAs": "code-segment",
+    "segment": {
+        "destPath": "foundation/multimedia/media_library"
+    },
+    "component": {
+      "name": "media_library",
+      "subsystem": "multimedia",
+      "syscap": [
+        "SystemCapability.FileManagement.UserFileManager.Core",
+        "SystemCapability.FileManagement.UserFileManager.DistributedCore",
+        "SystemCapability.FileManagement.PhotoAccessHelper.Core",
+        "SystemCapability.FileManagement.UserFileManager.DistributedCore",
+        "SystemCapability.FileManagement.UserFileManager.Core"
+      ],
+      "features": [
+        "media_library_link_opt",
+        "media_library_feature_mtp",
+        "media_library_feature_back_up",
+        "media_library_feature_cloud_enhancement",
+        "media_library_feature_cloud_download",
+        "media_library_cloud_sync_enable",
+        "media_library_facard_enable",
+        "media_library_analysis_data_enable",
+        "media_library_feature_custom_restore",
+        "media_library_feature_secure_album",
+        "media_library_lake_enable",
+        "media_library_file_manager_enable"
+      ],
+      "adapted_system_type": [ "small", "standard" ],
+      "rom": "10444KB",
+      "ram": "35093KB",
+      "hisysevent_config": [
+        "//foundation/multimedia/media_library/hisysevent.yaml"
+      ],
+      "deps": {
+        "components": [
+          "ability_base",
+          "ability_runtime",
+          "access_token",
+          "ace_engine",
+          "app_file_service",
+          "battery_manager",
+          "bundle_framework",
+          "c_utils",
+          "cellular_data",
+          "camera_framework",
+          "core_service",
+          "common_event_service",
+          "data_share",
+          "device_manager",
+          "dfs_service",
+          "drivers_interface_display",
+          "drivers_interface_usb",
+          "e2fsprogs",
+          "eventhandler",
+          "file_api",
+          "graphic_2d",
+          "graphic_surface",
+          "hicollie",
+          "hilog",
+          "hisysevent",
+          "hitrace",
+          "huks",
+          "i18n",
+          "icu",
+          "image_effect",
+          "init",
+          "ipc",
+          "kv_store",
+          "libexif",
+          "memory_utils",
+          "memmgr",
+          "image_framework",
+          "napi",
+          "resource_management",
+          "resource_schedule_service",
+          "runtime_core",
+          "os_account",
+          "player_framework",
+          "power_manager",
+          "relational_store",
+          "safwk",
+          "samgr",
+          "security_component_manager",
+          "storage_service",
+          "thermal_manager",
+          "usb_manager",
+          "window_manager",
+          "background_task_mgr",
+          "ffrt",
+          "preferences",
+          "wifi",
+          "libxml2",
+          "zlib",
+          "device_standby",
+          "libfuse",
+          "netmanager_base",
+          "openssl",
+          "jsoncpp",
+          "image_framework",
+          "media_foundation",
+          "qos_manager",
+          "hiappevent",
+          "ets_frontend",
+          "json",
+          "drivekit_native",
+          "bounds_checking_function",
+          "form_fwk"
+        ]
+      },
+      "build": {
+        "group_type": {
+          "base_group": [
+            "//foundation/multimedia/media_library/etc/param:media_library_para",
+            "//foundation/multimedia/media_library/etc/param:media_library_para_dac"
+          ],
+          "fwk_group": [
+            "//foundation/multimedia/media_library/interfaces/kits/js:medialibrary",
+            "//foundation/multimedia/media_library/interfaces/kits/js:medialibrary_js",
+            "//foundation/multimedia/media_library/interfaces/kits/js:userfilemanager",
+            "//foundation/multimedia/media_library/interfaces/kits/js:photoaccesshelper",
+            "//foundation/multimedia/media_library/interfaces/kits/js:photoaccesshelpernative",
+            "//foundation/multimedia/media_library/interfaces/kits/js:photopickercomponent",
+            "//foundation/multimedia/media_library/interfaces/kits/js:photopickercomponent_js",
+            "//foundation/multimedia/media_library/interfaces/kits/c:native_media_asset_manager",
+            "//foundation/multimedia/media_library/interfaces/kits/cj:cj_photoaccesshelper_ffi",
+            "//foundation/multimedia/media_library/interfaces/kits/js:albumpickercomponent",
+            "//foundation/multimedia/media_library/interfaces/kits/js:albumpickercomponent_js",
+            "//foundation/multimedia/media_library/interfaces/kits/js:sendablephotoaccesshelper",
+            "//foundation/multimedia/media_library/interfaces/kits/js:recentphotocomponent",
+            "//foundation/multimedia/media_library/interfaces/kits/js:recentphotocomponent_js",
+            "//foundation/multimedia/media_library/frameworks/ani:media_library_ani",
+            "//foundation/multimedia/media_library/frameworks/ani/ets/photo_picker_static:photo_picker_static"
+
+          ],
+          "service_group": [
+            "//foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper:media_library_packages",
+            "//foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_manager:media_library_manager",
+            "//foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_handler:media_library_handler",
+            "//foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension:medialibrary_data_extension",
+            "//foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension:userfilemanager_mimetypes.json",
+            "//foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension:heif_transcoding_checklist.json",
+            "//foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension:medialibrary_kit_whitelist.json",
+            "//foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension:version.txt",
+            "//foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension:medialibrary_kit_version.txt",
+            "//foundation/multimedia/media_library/tools/medialibrary_scanner:scanner",
+            "//foundation/multimedia/media_library/tools/medialibrary_tool:mediatool",
+            "//foundation/multimedia/media_library/MediaLibraryExt:medialibrary_ext_hap",
+            "//foundation/multimedia/media_library/services/media_backup_extension:media_backup_package",
+            "//foundation/multimedia/media_library/services/media_mtp:media_mtp_package",
+            "//foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_cloud_sync:media_library_cloud_sync",
+            "//foundation/multimedia/media_library/common:media_library_common",
+            "//foundation/multimedia/media_library/frameworks/client:media_library_client",
+            "//foundation/multimedia/media_library/frameworks/innerkitsimpl/analysis_data_kits:analysis_data_kits",
+            "//foundation/multimedia/media_library/common/media_cloud_sync_data:media_cloud_sync_data",
+            "//foundation/multimedia/media_library/common/media_ipc_common:media_ipc_common"
+          ]
+        },
+        "inner_kits": [
+            {
+                "header": {
+                  "header_base": "//foundation/multimedia/media_library/interfaces/inner_api/media_library_helper/include",
+                  "header_files": [
+                    "media_library_manager.h",
+                    "medialibrary_db_const.h"
+                  ]
+                },
+                "name": "//foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_manager:media_library_manager"
+            },
+            {
+              "header": {
+                "header_base": "//foundation/multimedia/media_library/interfaces/inner_api/analysis_data_kits/include",
+                "header_files": [
+                  "analysis_data_manager.h",
+                  "active_analysis/active_analysis_callback.h"
+                ]
+              },
+              "name": "//foundation/multimedia/media_library/frameworks/innerkitsimpl/analysis_data_kits:analysis_data_kits"
+            },
+            {
+              "header": {
+                "header_base": "//foundation/multimedia/media_library/interfaces/inner_api/native/cloud_sync",
+                "header_files": [
+                  "cloud_check_data.h",
+                  "cloud_file_data.h",
+                  "cloud_media_data_client.h",
+                  "i_cloud_media_data_client.h",
+                  "cloud_meta_data.h",
+                  "media_operate_result.h",
+                  "mdk_asset.h",
+                  "mdk_database.h",
+                  "mdk_error.h",
+                  "mdk_record_field.h",
+                  "mdk_record.h",
+                  "mdk_reference.h",
+                  "dk_record_parser.h",
+                  "cloud_media_factory.h",
+                  "i_cloud_media_data_handler.h",
+                  "cloud_media_data_handler.h",
+                  "cloud_media_path_utils.h"
+                ]
+              },
+              "name": "//foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_cloud_sync:media_library_cloud_sync"
+            },
+            {
+              "header": {
+                "header_base": "//foundation/multimedia/media_library/interfaces/inner_api/media_library_helper/include",
+                "header_files": [
+                  "media_library_extend_manager.h"
+                ]
+              },
+              "name": "//foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_manager:media_library_extend_manager"
+            },
+            {
+              "header": {
+                "header_base": "//foundation/multimedia/media_library/interfaces/inner_api/media_library_helper/include",
+                "header_files": [
+                  "media_library_custom_restore.h"
+                ]
+              },
+              "name": "//foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_manager:media_library_custom_restore"
+            },
+            {
+              "header": {
+                "header_base": "//foundation/multimedia/media_library/interfaces/inner_api/media_library_helper/include",
+                "header_files": [
+                  "media_file_uri.h",
+                  "media_volume.h"
+                ]
+              },
+              "name": "//foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper:media_library"
+            },
+            {
+              "header": {
+                "header_base": "//foundation/multimedia/media_library/interfaces/kits/c",
+                "header_files": [
+                  "media_asset_base_capi.h",
+                  "media_access_helper_capi.h",
+                  "media_asset_capi.h",
+                  "media_asset_change_request_capi.h",
+                  "media_asset_manager_capi.h",
+                  "moving_photo_capi.h"
+                ]
+              },
+              "name": "//foundation/multimedia/media_library/interfaces/kits/c:native_media_asset_manager"
+            },
+            {
+              "header": {
+                "header_base": "//foundation/multimedia/media_library/interfaces/inner_api/media_library_helper/include",
+                  "header_files": [
+                    "media_asset_manager_impl.h"
+                  ]
+                },
+                "name": "//foundation/multimedia/media_library/frameworks/native/media_library_asset_manager:media_library_asset_manager"
+            },
+            {
+              "header": {
+                "header_base": "//foundation/multimedia/media_library/interfaces/kits/js/include",
+                "header_files": [
+                  "media_library_comm_napi.h",
+                  "photo_proxy_napi.h"
+                ]
+              },
+              "name": "//foundation/multimedia/media_library/interfaces/kits/js:medialibrary_nutils"
+            },
+            {
+              "header": {
+                "header_base": "//foundation/multimedia/media_library/interfaces/kits/cj/include",
+                "header_files": [
+                  "photo_asset_helper.h"
+                ]
+              },
+              "name": "//foundation/multimedia/media_library/interfaces/kits/cj:cj_photoaccesshelper_ffi"
+            },
+            {
+              "header": {
+                "header_base": "//foundation/multimedia/media_library/frameworks/ani/src/include",
+                "header_files": [
+                  "media_library_comm_ani.h"
+                ]
+              },
+              "name": "//foundation/multimedia/media_library/frameworks/ani:medialibrary_ani_utils"
+            },
+            {
+              "header": {
+                "header_base": "//foundation/multimedia/media_library/interfaces/inner_api/media_permission_helper/include",
+                "header_files": [
+                  "media_permission_helper.h"
+                ]
+              },
+              "name": "//foundation/multimedia/media_library/frameworks/innerkitsimpl/media_permission_helper:media_permission_helper"
+            },
+            {
+              "header": {
+                "header_base": "//foundation/multimedia/media_library/interfaces/inner_api/media_library_camera_helper/include",
+                "header_files": [
+                  "media_library_camera_manager.h",
+                  "media_photo_asset_proxy.h"
+                ]
+              },
+              "name": "//foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_camera_helper:media_library_camera_helper"
+            }
+        ],
+        "test": [
+          "//foundation/multimedia/media_library/frameworks/innerkitsimpl/test:test",
+          "//foundation/multimedia/media_library/frameworks/innerkitsimpl/test/fuzztest:media_library_fuzztest"
+        ]
+      }
+    }
+  }

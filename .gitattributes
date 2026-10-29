@@ -1,0 +1,46 @@
+# Exact upstream CRLF bytes are part of this component's SHA-256 contract.
+ci/capability-audit/fixtures/settings_tts_namespace/napi_settings_init.cpp -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# A blank unified-diff context line contains one intentional space.
+patches/common/applications/standard/settings/tts_namespace/0001-export-sdk-TTS-namespace.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/wifi/wpa_scan/0001-route-non-chip-scans-through-wpa.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/wifi/wpa_scan_lifecycle/0001-retire-scan-monitor-on-every-destruction-path.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/wifi/wpa_software_pno/0001-use-software-pno-without-chip-offload.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/device/qemu/wlan_regulatory/0001-package-signed-regulatory-database.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/wifi/wpa_scan/0002-query-real-wpa-frequency-capabilities.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/wifi/wpa_channels/0001-use-real-WPA-scan-channel-table.patch -text whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+# The captured WPA document ends with the protocol's empty mode separator.
+ci/capability-audit/fixtures/wpa_frequency_capabilities.txt -text whitespace=-blank-at-eof
+# These exact native diffs intentionally contain blank context lines, including
+# the final native context line in the network-field patch. Preserve their bytes.
+patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0002-parse-the-requested-network-prefix-before-narrowing.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0003-return-stored-network-fields-and-preserve-excluded-routes.patch -text whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0004-validate-route-prefix-before-narrowing.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/netmanager_ext/ethernet_control/0001-commit-real-interface-and-settings-state-before-success.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0005-validate-requested-address-family-before-narrowing.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0006-preserve-and-validate-full-sdk-port-at-every-vpn-input.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/netmanager_ext/vpn_config_arrays/0007-validate-remaining-setup-and-extension-prefixes.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/communication/netmanager_base/inet_addr_port/0001-preserve-full-sdk-port-and-validate-before-narrowing.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Exact upstream CRLF payloads and review diff for the capture-only PCM route.
+patches/common/drivers/peripheral/audio/capture_loopback/files/alsa_soundcard.c -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/drivers/peripheral/audio/capture_loopback/files/alsa_soundcard.h -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/drivers/peripheral/audio/capture_loopback/files/alsa_snd_capture.c -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/drivers/peripheral/audio/capture_loopback/files/vendor_capture.c -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/drivers/peripheral/audio/capture_loopback/0001-select-real-capture-pcm-and-report-controls.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/foundation/multimedia/media_library/knowledge_holiday_index/0001-index-real-system-holidays-and-bound-knowledge-responses.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+ci/capability-audit/fixtures/ril_communication/IRilCallback.idl -text whitespace=cr-at-eol
+# Preserve the exact UBSan diagnostic bytes from the first fresh-PCM host attempt.
+docs/capability-audit/parallel/media/round8-host-01.log -text whitespace=-blank-at-eol
+# Preserve upstream blank context and the captured pre-repair unittest output.
+patches/common/applications/standard/settings/accessibility_service_completion/0002-ignore-queued-actions-after-service-destruction.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/applications/standard/settings/share_picker/0002-isolate-async-share-session-lifetimes.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+docs/capability-audit/parallel/apps/round21-coordinated/baseline-regression.log -text whitespace=-blank-at-eol
+patches/common/foundation/multimedia/player_framework/audio_haptic_lifecycle/0001-reset-real-prepare-and-reap-failed-first-frame-waiters.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/applications/standard/calendardata/main_ui/0001-route-real-calendar-reminders-to-source-provider.patch -text whitespace=-blank-at-eol,-blank-at-eof,space-before-tab,cr-at-eol
+patches/common/base/notification/distributed_notification_service/calendar_owner/0001-bind-reminder-owner-to-installed-calendar-provider.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+patches/common/base/location/location/api26_runtime/0007-validate-measured-GNSS-and-ordered-WLAN-evidence.patch -text whitespace=-blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Preserve the final newline sequence in the raw compatibility recheck output.
+docs/capability-audit/parallel/location/round21-coordinated/core-review-correction-host.log -text whitespace=-blank-at-eof
+# The fixed upstream context checker is a byte-pinned compatibility witness.
+ci/capability-audit/fixtures/selinux_contexts_compatibility/build_contexts.py -text -whitespace
+# Decoder/JSON/QEMU reference inputs retain their exact upstream SHA-256 bytes.
+ci/capability-audit/fixtures/batch_media/audio_haptic_runtime/upstream/** -text -whitespace

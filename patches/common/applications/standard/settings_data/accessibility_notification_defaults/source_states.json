@@ -1,0 +1,17 @@
+{
+  "schema": "settingsdata579-notification-defaults-source-vector/v1",
+  "scope": "real product first-boot preference initialization; actual QEMU producer/UI/restore still required",
+  "projects": {
+    "applications/standard/settings_data": "5dd2a29fd5f7284f843bfc9e46e4867427947a5f"
+  },
+  "files": {
+    "applications/standard/settings_data/entry/src/main/ets/Utils/SettingsDBHelper.ets": [
+      "3825ce3f3fff5d8eb45c59b08c4d8c0c1a667ec923cc242d260841d95d02e75c",
+      "29e05f86e558d5c5be8737e27ebf1910da5c966ce1714f4f235fec7d50a28992"
+    ],
+    "applications/standard/settings_data/entry/src/main/resources/rawfile/default_settings.json": [
+      "b6ed3f8ad70bced20008b85ed206acf0725cec975d06c99e660c10ba4143610b",
+      "64a523d36c1d89dea1c176900f322c6ed606e37a37b46370f890b2416b01d4cd"
+    ]
+  }
+}

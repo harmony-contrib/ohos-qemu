@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "build_revision": "5c0623072ed9c2ee93ab909a7a01f428fee95082",
+  "archive_url": "https://repo.huaweicloud.com/harmonyos/compiler/hvigor/6.0.0-release-patch-rc.2/command-line-tools.tar",
+  "archive_sha256": "83e45209c65662bbeab81d36d691807bf8db56d94d7d15c959600dcc348814c3",
+  "hvigor_version": "6.0.0-release-patch-rc.2",
+  "sdkmanager_version": "2.26.2",
+  "node_version": "v18.20.1",
+  "npm_version": "10.5.0",
+  "project_model_version": "6.0.0"
+}

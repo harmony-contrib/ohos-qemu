@@ -1,0 +1,80 @@
+{
+  "schema": 2,
+  "project": "applications/standard/calendardata",
+  "revision": "f922427ca0dc20895a0e254ae41382e5b03299a4",
+  "installed_predecessor": [
+    "source_provider",
+    "event_editor",
+    "editor_callback_dispatch"
+  ],
+  "files": {
+    "calendarmanager/napi/src/calendar_napi.cpp": {
+      "before_sha256": "c221a9d84da1e727fb0c1f74c1dfbe97202eacb81aaaeacf5dbdb60cc237a612",
+      "after_sha256": "845238618114fad82dd02ad7574178af9bf6cb9ded45e5941d5f8f13509cb0e0",
+      "payload_path": "calendarmanager/napi/src/calendar_napi.cpp.gz.b64",
+      "payload_encoding": "gzip_base64"
+    },
+    "calendarmanager/napi/src/napi_queue.cpp": {
+      "before_sha256": "ebe49fef63a257561072c52890130e28be5bebf2d4d09aa670ef6c518f2cc8a5",
+      "after_sha256": "0343cb316b01c22687ff7d6a7d19562bf66b4854a52263fa97ebbc177da1abe8"
+    }
+  },
+  "dependencies": {
+    "calendarmanager/napi/include/calendar_manager_napi.h": "578ce09c60602e04cd46c55f8a4a6b56d1f81ea47333d4be75ff4d19dfce8c3e",
+    "calendarmanager/napi/include/calendar_napi.h": "feb38d325f6a2b77daea6bfa2ea6765dd49d803602f09cdef1b232b301b9e5ed",
+    "calendarmanager/napi/include/event_filter_napi.h": "22da7c0bf1fe38bad6242564504f2a94fbbf5debef6c3c87921e0241e7cf00b8",
+    "calendarmanager/napi/include/napi_queue.h": "cb89b7fc8a4840d2f4a7cce8f466ac4d87cb12ee73486e8c944506bcff53c48e",
+    "calendarmanager/napi/include/napi_util.h": "afe872d7f744ee19c6a5189b8c2b928b28d70be8accaf310f0b381d97b6971b6",
+    "calendarmanager/napi/src/calendar_manager_napi.cpp": "49f933bc39c943f6aee6beecb1a24a89d5d9933048dfe7b73117393746934b2b",
+    "calendarmanager/napi/src/event_filter_napi.cpp": "62a7ca655952bad77f722329f8f19d19e903f12750d4b4b5323718faf73b1d9d",
+    "calendarmanager/napi/src/napi_util.cpp": "476452c69c4b447265961c1ded3b937fd795f49cdef4218b1c51614cbd8e9e2b"
+  },
+  "fixture": {
+    "calendarmanager/napi/include/calendar_manager_napi.h": {
+      "file": "00-calendar_manager_napi.h.gz.b64",
+      "sha256": "578ce09c60602e04cd46c55f8a4a6b56d1f81ea47333d4be75ff4d19dfce8c3e"
+    },
+    "calendarmanager/napi/include/calendar_napi.h": {
+      "file": "01-calendar_napi.h.gz.b64",
+      "sha256": "feb38d325f6a2b77daea6bfa2ea6765dd49d803602f09cdef1b232b301b9e5ed"
+    },
+    "calendarmanager/napi/include/event_filter_napi.h": {
+      "file": "02-event_filter_napi.h.gz.b64",
+      "sha256": "22da7c0bf1fe38bad6242564504f2a94fbbf5debef6c3c87921e0241e7cf00b8"
+    },
+    "calendarmanager/napi/include/napi_queue.h": {
+      "file": "03-napi_queue.h.gz.b64",
+      "sha256": "cb89b7fc8a4840d2f4a7cce8f466ac4d87cb12ee73486e8c944506bcff53c48e"
+    },
+    "calendarmanager/napi/include/napi_util.h": {
+      "file": "04-napi_util.h.gz.b64",
+      "sha256": "afe872d7f744ee19c6a5189b8c2b928b28d70be8accaf310f0b381d97b6971b6"
+    },
+    "calendarmanager/napi/src/calendar_manager_napi.cpp": {
+      "file": "05-calendar_manager_napi.cpp.gz.b64",
+      "sha256": "49f933bc39c943f6aee6beecb1a24a89d5d9933048dfe7b73117393746934b2b"
+    },
+    "calendarmanager/napi/src/calendar_napi.cpp": {
+      "file": "06-calendar_napi.cpp.gz.b64",
+      "sha256": "c221a9d84da1e727fb0c1f74c1dfbe97202eacb81aaaeacf5dbdb60cc237a612"
+    },
+    "calendarmanager/napi/src/event_filter_napi.cpp": {
+      "file": "07-event_filter_napi.cpp.gz.b64",
+      "sha256": "62a7ca655952bad77f722329f8f19d19e903f12750d4b4b5323718faf73b1d9d"
+    },
+    "calendarmanager/napi/src/napi_queue.cpp": {
+      "file": "08-napi_queue.cpp.gz.b64",
+      "sha256": "ebe49fef63a257561072c52890130e28be5bebf2d4d09aa670ef6c518f2cc8a5"
+    },
+    "calendarmanager/napi/src/napi_util.cpp": {
+      "file": "09-napi_util.cpp.gz.b64",
+      "sha256": "476452c69c4b447265961c1ded3b937fd795f49cdef4218b1c51614cbd8e9e2b"
+    }
+  },
+  "previous_complete_candidate": {
+    "calendarmanager/napi/src/calendar_napi.cpp": "ac7988d8392eb0a4b28857e89e4e2735ed48421639fa5c8c51b40fb48e029258",
+    "calendarmanager/napi/src/napi_queue.cpp": "0a08657a0f8b8d021a9725d73d14f7b6ac7f2c8f3ecfb59ee127ef85e78837a1"
+  },
+  "state_policy": "Only complete original, exact previous source-only candidate, or complete final states; no per-file alternatives.",
+  "native_revision_review": "real queue header and 13 callers inspected; native compilation/runtime still required"
+}

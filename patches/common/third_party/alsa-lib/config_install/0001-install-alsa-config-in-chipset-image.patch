@@ -1,0 +1,399 @@
+diff --git a/third_party/alsa-lib/src/conf/BUILD.gn b/third_party/alsa-lib/src/conf/BUILD.gn
+--- a/third_party/alsa-lib/src/conf/BUILD.gn
++++ b/third_party/alsa-lib/src/conf/BUILD.gn
+@@ -12,3 +12,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -21,3 +22,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -30,3 +32,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -39,3 +42,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -48,3 +52,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -57,3 +62,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -66,3 +72,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -75,3 +82,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -84,3 +92,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -93,3 +102,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -102,3 +112,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -111,3 +122,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -120,3 +132,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -129,3 +142,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -138,3 +152,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -147,3 +162,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -156,3 +172,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -165,3 +182,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -174,3 +192,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -183,3 +202,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -192,3 +212,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -201,3 +222,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -210,3 +232,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -219,3 +242,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -228,3 +252,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -237,3 +262,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -246,3 +272,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -255,3 +282,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -264,3 +292,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -273,3 +302,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -282,3 +312,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -291,3 +322,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -300,3 +332,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -309,3 +342,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -318,3 +352,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -327,3 +362,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -336,3 +372,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -345,3 +382,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -354,3 +392,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -363,3 +402,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -372,3 +412,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -381,3 +422,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -390,3 +432,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -399,3 +442,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -408,3 +452,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -417,3 +462,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -426,3 +472,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -435,3 +482,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -444,3 +492,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -453,3 +502,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -462,3 +512,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -471,3 +522,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -480,3 +532,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -489,3 +542,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -498,3 +552,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -507,3 +562,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -516,3 +572,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -525,3 +582,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -534,3 +592,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -543,3 +602,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -552,3 +612,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -561,3 +622,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -570,3 +632,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -579,3 +642,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -588,3 +652,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -597,3 +662,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -606,3 +672,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -615,3 +682,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -624,3 +692,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -633,3 +702,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -642,3 +712,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -651,3 +722,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -660,3 +732,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -669,3 +742,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -678,3 +752,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -687,3 +762,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -696,3 +772,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -705,3 +782,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+@@ -714,3 +792,4 @@
+   subsystem_name = "thirdparty"
++  install_images = [ chipset_base_dir ]
+   part_name = "alsa-lib"
+ }
+

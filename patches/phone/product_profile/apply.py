@@ -8,6 +8,11 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "lib"))
+from device_contract import apply_contract_overrides, contract_overlay
+from sceneboard_profile import (any_sceneboard_enabled, configure_sceneboard_runtime,
+                                sceneboard_metadata)
+
 
 UPSTREAM_PROFILE = "productdefine/common/inherit/phone.json"
 RICH_PROFILE = "productdefine/common/inherit/rich.json"
@@ -16,6 +21,8 @@ PROFILE_METADATA = "vendor/ohemu/virt/virt_phone_full.meta.json"
 PRODUCT_PARAM_FILE = "vendor/ohemu/virt/etc/param/product_virt.para"
 APP_COMPAT_COMMENT = "# QEMU full device-profile compatibility for current system HAPs."
 APP_COMPAT_PARAM = "const.bms.supportAppTypes=2in1,phone,default,tablet"
+PHONE_WINDOW_PARAM = "const.window.multiWindowUIType=HandsetSmartWindow"
+PHONE_MODE_PARAM = "persist.sceneboard.ispcmode=false"
 MANAGED_APP_COMPAT_LINES = {
     APP_COMPAT_COMMENT,
     APP_COMPAT_PARAM,
@@ -56,10 +63,16 @@ REQUIRED_PHONE_PARTS = {
     "applications:prebuilt_hap",
     "arkui:ui_appearance",
     "bundlemanager:bundle_framework",
+    "communication:netmanager_base",
+    "communication:netmanager_ext",
     "contacts_data:contacts_data",
     "hdf:drivers_peripheral_display",
+    "msdp:device_status",
     "multimodalinput:input",
+    "multimedia:audio_framework",
+    "multimedia:av_session",
     "telephony:core_service",
+    "telephony:number_identity",
     "window:window_manager",
 }
 
@@ -168,6 +181,32 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
     # QEMU ships Launcher/SystemUI through this rich-profile part. Keep it
     # explicit so a later phone profile cannot drop the first-user desktop.
     add_component(effective, "applications", "prebuilt_hap")
+    # Public source provider owns real local mark CRUD and finite lookup data.
+    # Cloud/SpamShield/HSDR remain outside this local capability.
+    add_component(effective, "telephony", "number_identity")
+    # It may be present only as a transitive HDI dependency upstream. Product
+    # selection is needed for its feature/default config dependency closure.
+    add_component(effective, "thirdparty", "alsa-lib")
+    # Select the real CPU voice HDI/service and spatial effect owners.
+    # Their flags belong to this final device contract, not local board parts.
+    add_component(effective, "hdf", "drivers_peripheral_intelligent_voice")
+    add_component(effective, "ai", "intelligent_voice_framework")
+    # Selecting only the HDI leaves no dynamically loaded VDI/config closure.
+    add_component(effective, "hdf", "drivers_peripheral_camera")
+    # The public device-status service owns the real sensor algorithm selected
+    # below. It is absent from the generic phone inheritance on this release.
+    add_component(effective, "msdp", "device_status")
+
+    # These parts are already selected by the QEMU rich base, not newly
+    # introduced phone capabilities. Carry their exact rich settings so the
+    # later phone/board contract overlay can remove only false declarations.
+    for owner in (("systemabilitymgr", "selectionfwk"), ("print", "print_fwk")):
+        if owner not in component_map(effective):
+            inherited = component_map(rich).get(owner)
+            if inherited is None:
+                die("rich contract owner missing: " + ":".join(owner))
+            add_component(effective, *owner)
+            component_map(effective)[owner].update(json.loads(json.dumps(inherited)))
 
     # The generic phone profile clears the display-interface features. QEMU's
     # community VDI is a board requirement, so retain the rich values.
@@ -187,6 +226,109 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
     if missing:
         die("effective phone profile lost required parts: " + ", ".join(missing))
 
+    contract_metadata = apply_contract_overrides(
+        root, effective, "phone",
+        {
+            "SystemCapability.Communication.NetManager.NetFirewall": (
+                "communication", "netmanager_ext",
+                "Not in the official phone contract; QEMU has no validated phone firewall stack.",
+            ),
+            "SystemCapability.Multimedia.VideoProcessingEngine": (
+                "multimedia", "media_foundation",
+                "Not in the official phone contract; public processing libraries are not packaged.",
+            ),
+            "SystemCapability.SelectionInput.Selection": (
+                "systemabilitymgr", "selectionfwk",
+                "Officially 2in1-only; do not advertise the PC selection framework on phone.",
+            ),
+            "SystemCapability.FileManagement.File.Environment.FolderObtain": (
+                "filemanagement", "file_api",
+                "Outside the official phone contract; the phone API correctly returns unsupported.",
+            ),
+            "SystemCapability.USB.USBManager.Serial": (
+                "usb", "usb_manager",
+                "Outside the official phone contract; keep the required 2in1 serial implementation unchanged.",
+            ),
+            "SystemCapability.Print.PrintFramework": (
+                "print", "print_fwk",
+                "Outside the official phone contract; no phone printer extension is provided.",
+            ),
+        },
+        {
+            ("hdf", "drivers_peripheral_sensor"): {
+                "drivers_peripheral_sensor_feature_community": True,
+                "drivers_peripheral_sensor_feature_qemu_external": True,
+            },
+            ("msdp", "device_status"): {
+                "device_status_sensor_enable": True,
+                "device_status_interaction_coordination": True,
+                "device_status_allow_mock_fallback": False,
+            },
+            # Both ends of the native IPC ABI must use the same switches.
+            # Enabling only ext builds callers whose implementations are absent
+            # from NetsysController / NetsysNativeService.
+            ("communication", "netmanager_base"): {
+                "netmanager_base_enable_feature_net_firewall": False,
+                "netmanager_base_enable_feature_sysvpn": True,
+            },
+            ("communication", "netmanager_ext"): {
+                "netmanager_ext_feature_net_firewall": False,
+                "netmanager_ext_feature_sysvpn": True,
+            },
+            # A false flag still produces an empty ohaudiosuite.so. Enable
+            # upstream implementation/SA rather than adding ABI stubs.
+            ("multimedia", "audio_framework"): {
+                "audio_framework_feature_audiosuite_support": True,
+                "audio_framework_feature_audiosuite_format_convert_support": True,
+                "audio_framework_qemu_cpu_spatial": True,
+            },
+            ("multimedia", "av_session"): {"av_session_enable_input_redistribute": True},
+            # Enable the existing RTT implementation on both IPC endpoints.
+            # This does not fabricate a modem/IMS network or success callback.
+            ("telephony", "call_manager"): {"call_manager_feature_support_rtt": True},
+            ("telephony", "cellular_call"): {"cellular_call_support_rtt": True},
+            ("window", "window_manager"): {"window_manager_use_sceneboard": True},
+            # SceneBoard publishes logical displays/shadow surfaces. The
+            # legacy non-unified renderer leaves that tree unprepared and
+            # submits no composer layers, even while Web/Vulkan readback works.
+            ("graphic", "graphic_2d"): {"graphic_2d_feature_rs_enable_uni_render": True},
+            # The HDI uses named ALSA hw devices, not the MIDI-only empty
+            # configuration. Package/enable upstream definitions for ES1370.
+            ("thirdparty", "alsa-lib"): {"alsa_lib_feature_config_enable": True},
+            ("hdf", "drivers_peripheral_intelligent_voice"): {
+                "drivers_peripheral_intelligent_voice_qemu_cpu_provider": True,
+                "drivers_peripheral_intelligent_voice_engine_enable": True,
+            },
+            ("ai", "intelligent_voice_framework"): {
+                "intelligent_voice_framework_qemu_cpu_provider": True,
+                "intelligent_voice_framework_engine_enable": True,
+                "intelligent_voice_framework_only_first_stage": False,
+                "intelligent_voice_framework_only_second_stage": False,
+            },
+            ("hdf", "drivers_peripheral_camera"): {
+                "drivers_peripheral_camera_feature_usb": True,
+                "drivers_peripheral_camera_use_commom_usb_camera_host_config": True,
+                "drivers_peripheral_camera_qemu_vivid_capture": True,
+                # Express-camera is a different emulator protocol, not V4L2.
+                "drivers_peripheral_camera_v4l2_emulator": False,
+            },
+        },
+        {
+            "SystemCapability.Multimedia.Audio.SuiteEngine": (
+                "multimedia", "audio_framework",
+                "Official phone capability; enable upstream AudioSuite implementation and matching declaration.",
+            ),
+            "SystemCapability.Multimedia.AVSession.AVInputCast": (
+                "multimedia", "av_session",
+                "Enable upstream input redistribution in both AVSession NAPI and service.",
+            ),
+            "SystemCapability.Window.SessionManager": (
+                "window", "window_manager",
+                "Enable actual SceneBoard service, runtime switch, signed HAPs and handset layout.",
+            ),
+        },
+    )
+
     metadata = {
         "profile": "qemu_phone_full_source",
         "upstream_profile": UPSTREAM_PROFILE,
@@ -197,7 +339,11 @@ def make_effective_profile(root: Path) -> tuple[dict, dict]:
         "omitted_unavailable_legacy_components": sorted(omitted),
         "mapped_components": sorted(mapped),
         "app_compatibility_parameter": APP_COMPAT_PARAM,
+        **sceneboard_metadata(),
+        "window_layout_parameter": PHONE_WINDOW_PARAM,
+        "sceneboard_mode_parameter": PHONE_MODE_PARAM,
         "required_parts": sorted(REQUIRED_PHONE_PARTS),
+        **contract_metadata,
     }
     return effective, metadata
 
@@ -208,7 +354,8 @@ def configure_product(root: Path, product: str, enable: bool) -> None:
     inherit = document.get("inherit")
     if not isinstance(inherit, list):
         die(f"expected inherit array in {path}")
-    inherit = [item for item in inherit if item != EFFECTIVE_PROFILE]
+    overlay_path = f"vendor/ohemu/virt/virt_phone_contract_{product}.json"
+    inherit = [item for item in inherit if item not in (EFFECTIVE_PROFILE, overlay_path)]
     if enable:
         try:
             rich_index = inherit.index(RICH_PROFILE)
@@ -216,10 +363,14 @@ def configure_product(root: Path, product: str, enable: bool) -> None:
             die(f"{path} does not inherit {RICH_PROFILE}")
         inherit.insert(rich_index + 1, EFFECTIVE_PROFILE)
     document["inherit"] = inherit
+    if enable:
+        metadata = load_json(root / PROFILE_METADATA)
+        write_json(root / overlay_path, contract_overlay(root, document, metadata))
+        document["inherit"].append(overlay_path)
     write_json(path, document)
 
 
-def configure_app_compatibility(root: Path, enable: bool) -> None:
+def configure_app_compatibility(root: Path, enable: bool, phone_window: bool) -> None:
     path = root / PRODUCT_PARAM_FILE
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -237,7 +388,14 @@ def configure_app_compatibility(root: Path, enable: bool) -> None:
             f"{path} already defines {key[:-1]} with a different value: "
             + ", ".join(conflicting)
         )
-    filtered = [line for line in lines if line not in MANAGED_APP_COMPAT_LINES]
+    filtered = [line for line in lines if line not in MANAGED_APP_COMPAT_LINES | {PHONE_WINDOW_PARAM, PHONE_MODE_PARAM}]
+    if phone_window:
+        # QEMU product parameters are shared across architectures. Refuse to
+        # silently turn a phone into PC mode when profiles were mixed manually.
+        keys = {parameter.split("=", 1)[0] for parameter in (PHONE_WINDOW_PARAM, PHONE_MODE_PARAM)}
+        if any(line.split("=", 1)[0] in keys for line in filtered):
+            die("conflicting phone SceneBoard layout parameters; disable the other device profile first")
+        filtered.extend([PHONE_WINDOW_PARAM, PHONE_MODE_PARAM])
     if enable:
         if filtered and filtered[-1] != "":
             filtered.append("")
@@ -266,6 +424,11 @@ def any_product_enabled(root: Path) -> bool:
     return False
 
 
+def any_phone_enabled(root: Path) -> bool:
+    return any(EFFECTIVE_PROFILE in load_json(root / relative).get("inherit", [])
+               for relative in PRODUCT_CONFIGS.values() if (root / relative).is_file())
+
+
 def main() -> None:
     if len(sys.argv) < 3:
         die("usage: apply.py OHOS_ROOT enable|disable [PRODUCT ...]")
@@ -286,7 +449,8 @@ def main() -> None:
 
     for product in products:
         configure_product(root, product, action == "enable")
-    configure_app_compatibility(root, any_product_enabled(root))
+    configure_app_compatibility(root, any_product_enabled(root), any_phone_enabled(root))
+    configure_sceneboard_runtime(root, any_sceneboard_enabled(root, PRODUCT_CONFIGS))
 
     state = "configured" if action == "enable" else "disabled"
     print(f"full phone QEMU source profile {state} for: {' '.join(products)}")

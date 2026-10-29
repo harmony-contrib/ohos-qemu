@@ -1,0 +1,12 @@
+diff --git a/base/notification/distributed_notification_service/services/reminder/include/reminder_calendar_share_table.h b/base/notification/distributed_notification_service/services/reminder/include/reminder_calendar_share_table.h
+--- a/base/notification/distributed_notification_service/services/reminder/include/reminder_calendar_share_table.h
++++ b/base/notification/distributed_notification_service/services/reminder/include/reminder_calendar_share_table.h
+@@ -44,7 +44,7 @@
+     static constexpr const char* NEED_AGENT = "needAgent";
+ 
+     static constexpr const char* PROXY = "datashareproxy://com.ohos.calendardata/CalendarAlerts";
+-    static constexpr const char* NAME = "com.ohos.calendar";
++    static constexpr const char* NAME = "com.ohos.calendardata";
+     static constexpr const char* DATA_NAME = "com.ohos.calendardata";
+     static constexpr const char* ENTRY = "ReminderCallbackExtAbility";
+     static constexpr const char* MAIN_ABILITY = "MainAbility";

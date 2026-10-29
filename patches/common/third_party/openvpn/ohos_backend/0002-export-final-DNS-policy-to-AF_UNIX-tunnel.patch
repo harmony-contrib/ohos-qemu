@@ -1,0 +1,44 @@
+--- a/src/openvpn/dns.c
++++ b/src/openvpn/dns.c
+@@ -500,7 +500,7 @@
+     setenv_str(es, name, value);
+ }
+ 
+-static void
++void
+ setenv_dns_options(const struct dns_options *o, struct env_set *es)
+ {
+     struct gc_arena gc = gc_new();
+--- a/src/openvpn/dns.h
++++ b/src/openvpn/dns.h
+@@ -231,4 +231,8 @@
+     return o->updown_flags == DNS_UPDOWN_FORCED;
+ }
+ 
++#ifndef _WIN32
++void setenv_dns_options(const struct dns_options *o, struct env_set *es);
++#endif
++
+ #endif /* ifndef DNS_H */
+--- a/src/openvpn/init.c
++++ b/src/openvpn/init.c
+@@ -53,6 +53,7 @@
+ #include "mudp.h"
+ #include "dco.h"
+ #include "tun_afunix.h"
++#include "dns.h"
+ 
+ #include "memdbg.h"
+ 
+@@ -1830,6 +1831,11 @@
+     }
+     else if (tt->backend_driver == DRIVER_AFUNIX)
+     {
++#ifndef _WIN32
++        /* Export the final merged policy for the real AF_UNIX bridge. The
++         * ordinary DNS-updown runner and all other backends keep their APIs. */
++        setenv_dns_options(&c->options.dns_options, c->c2.es);
++#endif
+         open_tun_afunix(&c->options, c->c2.frame.tun_mtu, tt, c->c2.es);
+     }
+     else

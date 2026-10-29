@@ -1,0 +1,12 @@
+--- a/device/qemu/common/virt_full/cfg/init.virt.cfg
++++ b/device/qemu/common/virt_full/cfg/init.virt.cfg
+@@ -66,8 +66,7 @@
+                 "insmod /vendor/modules/libarc4.ko",
+                 "insmod /vendor/modules/cfg80211.ko",
+                 "insmod /vendor/modules/mac80211.ko",
+-                "insmod /vendor/modules/iwlwifi.ko",
+-                "insmod /vendor/modules/iwlmvm.ko"
++                "insmod /vendor/modules/mac80211_hwsim.ko radios=2"
+             ]
+         }, {
+             "name" : "post-fs-data",

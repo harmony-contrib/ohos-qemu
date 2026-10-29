@@ -1,0 +1,27 @@
+# The existing netsysnative identity owns the client, bridge and private files.
+allow init qemu_openvpn_exec:file { execute getattr map open read };
+allow init netsysnative:process { transition };
+allow netsysnative qemu_openvpn_exec:file { entrypoint execute execute_no_trans getattr map open read };
+neverallow { domain -init -netsysnative } qemu_openvpn_exec:file execute;
+
+allow init qemu_openvpn_data_file:dir { getattr relabelto search setattr };
+allow netsysnative qemu_openvpn_data_file:dir { add_name create getattr open read remove_name rmdir search setattr write };
+# Private regular config/lock files need no device ioctl permission.
+allow netsysnative qemu_openvpn_data_file:file { create getattr lock open read setattr unlink write };
+allow netsysnative qemu_openvpn_data_file:sock_file { create getattr open read setattr unlink write };
+allowxperm netsysnative dev_tun_file:chr_file ioctl { 0x54d2 };
+
+# Only the two service-specific keys are assigned this parameter type.
+allow qemu_openvpn_control_param tmpfs:filesystem associate;
+allow init qemu_openvpn_control_param:file { map open read relabelfrom relabelto };
+allow netsysnative qemu_openvpn_control_param:file { map open read };
+allow netsysnative qemu_openvpn_control_param:parameter_service set;
+
+# init creates named endpoints using each service's real setsockcreatecon.
+# The passed socket objects retain netsysnative as their socket domain; only
+# these two filesystem endpoints receive the dedicated file labels.
+type_transition init dev_unix_socket:sock_file qemu_openvpn_control_socket "qemu_openvpn";
+type_transition init dev_unix_socket:sock_file qemu_openvpn_tunfd_socket "qemu_openvpn_tunfd";
+allow init { qemu_openvpn_control_socket qemu_openvpn_tunfd_socket }:sock_file { create getattr setattr relabelto unlink write };
+allow netsysnative { qemu_openvpn_control_socket qemu_openvpn_tunfd_socket }:sock_file { getattr write };
+allow netsysnative self:unix_stream_socket { accept connect connectto create getattr getopt listen read setopt shutdown write };

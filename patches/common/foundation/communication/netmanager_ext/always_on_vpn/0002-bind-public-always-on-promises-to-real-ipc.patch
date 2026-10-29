@@ -1,0 +1,200 @@
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/include/vpn_always_on_napi.h b/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/include/vpn_always_on_napi.h
+new file mode 100644
+--- /dev/null
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/include/vpn_always_on_napi.h
+@@ -0,0 +1,181 @@
++// SPDX-License-Identifier: Apache-2.0
++#ifndef OHOS_QEMU_VPN_ALWAYS_ON_NAPI_H
++#define OHOS_QEMU_VPN_ALWAYS_ON_NAPI_H
++
++#include <memory>
++#include <new>
++#include <string>
++#include "napi/native_api.h"
++#include "napi/native_node_api.h"
++#include "errorcode_convertor.h"
++#include "net_manager_constants.h"
++#include "networkvpn_client.h"
++
++namespace OHOS {
++namespace NetManagerStandard {
++namespace AlwaysOnVpnNapi {
++struct Request {
++    napi_async_work work = nullptr;
++    napi_deferred deferred = nullptr;
++    napi_ref fallbackError = nullptr;
++    std::string bundle;
++    bool write = false;
++    bool enabled = false;
++    int32_t result = NETMANAGER_ERR_INTERNAL;
++};
++
++inline napi_value Error(napi_env env, int32_t code)
++{
++    const std::string message = NetBaseErrorCodeConvertor().ConvertErrorCode(code);
++    napi_value text = nullptr;
++    napi_value error = nullptr;
++    napi_value number = nullptr;
++    if (napi_create_string_utf8(env, message.c_str(), message.size(), &text) != napi_ok ||
++        napi_create_error(env, nullptr, text, &error) != napi_ok ||
++        napi_create_int32(env, code, &number) != napi_ok ||
++        napi_set_named_property(env, error, "code", number) != napi_ok) {
++        return nullptr;
++    }
++    return error;
++}
++
++inline void Execute(napi_env, void *data)
++{
++    auto request = static_cast<Request *>(data);
++    auto &client = NetworkVpnClient::GetInstance();
++    request->result = request->write ?
++        client.SetAlwaysOnVpnEnabled(request->enabled, request->bundle) :
++        client.IsAlwaysOnVpnEnabled(request->bundle, request->enabled);
++}
++
++inline void Reject(napi_env env, Request *request, int32_t code)
++{
++    napi_value error = nullptr;
++    bool pending = false;
++    if (napi_is_exception_pending(env, &pending) == napi_ok && pending) {
++        napi_get_and_clear_last_exception(env, &error);
++    }
++    if (error == nullptr) {
++        error = Error(env, code);
++    }
++    // Error construction itself may fail, with or without a pending exception.
++    // Reserve an internal BusinessError before exposing the Promise so this
++    // path does not need another allocation in order to settle the request.
++    if (error == nullptr) {
++        pending = false;
++        if (napi_is_exception_pending(env, &pending) == napi_ok && pending) {
++            napi_get_and_clear_last_exception(env, &error);
++        }
++        if (error == nullptr) {
++            napi_get_reference_value(env, request->fallbackError, &error);
++        }
++    }
++    if (error != nullptr) {
++        napi_reject_deferred(env, request->deferred, error);
++    }
++}
++
++inline void Complete(napi_env env, napi_status status, void *data)
++{
++    std::unique_ptr<Request> request(static_cast<Request *>(data));
++    if (status != napi_ok) {
++        request->result = NETMANAGER_ERR_INTERNAL;
++    }
++    napi_value value = nullptr;
++    if (request->result == NETMANAGER_SUCCESS) {
++        const napi_status created = request->write ? napi_get_undefined(env, &value) :
++            napi_get_boolean(env, request->enabled, &value);
++        if (created == napi_ok) {
++            napi_resolve_deferred(env, request->deferred, value);
++        } else {
++            Reject(env, request.get(), NETMANAGER_ERR_INTERNAL);
++        }
++    } else {
++        Reject(env, request.get(), request->result);
++    }
++    napi_delete_reference(env, request->fallbackError);
++    napi_delete_async_work(env, request->work);
++}
++
++template<bool Write>
++inline napi_value Call(napi_env env, napi_callback_info info)
++{
++    size_t count = 3;
++    napi_value args[3] = {nullptr, nullptr, nullptr};
++    if (napi_get_cb_info(env, info, &count, args, nullptr, nullptr) != napi_ok) {
++        return nullptr;
++    }
++    constexpr size_t bundleIndex = Write ? 1 : 0;
++    napi_valuetype type = napi_undefined;
++    bool enabled = false;
++    size_t length = 0;
++    if (count != (Write ? 2 : 1) ||
++        (Write && (napi_typeof(env, args[0], &type) != napi_ok || type != napi_boolean ||
++                   napi_get_value_bool(env, args[0], &enabled) != napi_ok)) ||
++        napi_typeof(env, args[bundleIndex], &type) != napi_ok || type != napi_string ||
++        napi_get_value_string_utf8(env, args[bundleIndex], nullptr, 0, &length) != napi_ok || length == 0) {
++        napi_throw_business_error(env, NETMANAGER_EXT_ERR_PARAMETER_ERROR, "Invalid always-on VPN parameters");
++        return nullptr;
++    }
++    std::string bundle(length + 1, '\0');
++    size_t copied = 0;
++    if (napi_get_value_string_utf8(env, args[bundleIndex], bundle.data(), bundle.size(), &copied) != napi_ok ||
++        copied != length) {
++        napi_throw_business_error(env, NETMANAGER_EXT_ERR_PARAMETER_ERROR, "Invalid VPN bundle string");
++        return nullptr;
++    }
++    bundle.resize(length);
++    if (bundle.find('\0') != std::string::npos) {
++        napi_throw_business_error(env, NETMANAGER_EXT_ERR_PARAMETER_ERROR, "Invalid VPN bundle name");
++        return nullptr;
++    }
++    std::unique_ptr<Request> request(new (std::nothrow) Request);
++    if (!request) {
++        napi_throw_business_error(env, NETMANAGER_ERR_INTERNAL, "Unable to allocate VPN request");
++        return nullptr;
++    }
++    request->bundle = std::move(bundle);
++    request->write = Write;
++    request->enabled = enabled;
++    napi_value fallback = Error(env, NETMANAGER_ERR_INTERNAL);
++    if (fallback == nullptr ||
++        napi_create_reference(env, fallback, 1, &request->fallbackError) != napi_ok) {
++        bool pending = false;
++        if (napi_is_exception_pending(env, &pending) == napi_ok && !pending) {
++            napi_throw_business_error(env, NETMANAGER_ERR_INTERNAL, "Unable to prepare VPN request");
++        }
++        return nullptr;
++    }
++    napi_value promise = nullptr;
++    if (napi_create_promise(env, &request->deferred, &promise) != napi_ok) {
++        napi_delete_reference(env, request->fallbackError);
++        return nullptr;
++    }
++    napi_value name = nullptr;
++    if (napi_create_string_utf8(env, Write ? "setAlwaysOnVpnEnabled" : "isAlwaysOnVpnEnabled",
++            NAPI_AUTO_LENGTH, &name) != napi_ok ||
++        napi_create_async_work(env, nullptr, name, Execute, Complete, request.get(), &request->work) != napi_ok ||
++        napi_queue_async_work(env, request->work) != napi_ok) {
++        Reject(env, request.get(), NETMANAGER_ERR_INTERNAL);
++        napi_delete_reference(env, request->fallbackError);
++        if (request->work != nullptr) {
++            napi_delete_async_work(env, request->work);
++        }
++        return promise;
++    }
++    request.release(); // Owned by the completion callback, including cancellation.
++    return promise;
++}
++} // namespace AlwaysOnVpnNapi
++
++inline napi_value SetAlwaysOnVpnEnabled(napi_env env, napi_callback_info info)
++{
++    return AlwaysOnVpnNapi::Call<true>(env, info);
++}
++inline napi_value IsAlwaysOnVpnEnabled(napi_env env, napi_callback_info info)
++{
++    return AlwaysOnVpnNapi::Call<false>(env, info);
++}
++} // namespace NetManagerStandard
++} // namespace OHOS
++#endif
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/vpn_module_ext.cpp b/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/vpn_module_ext.cpp
+--- a/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/vpn_module_ext.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/vpnext/src/vpn_module_ext.cpp
+@@ -31,3 +31,4 @@
+ #include "vpn_connection_ext.h"
++#include "vpn_always_on_napi.h"
+ #include "vpn_extension_context.h"
+ #include "vpn_monitor_ext.h"
+@@ -543,3 +544,5 @@
+                                     DECLARE_NAPI_FUNCTION(START_VPN_EXTENSION, StartVpnExtensionAbility),
+                                     DECLARE_NAPI_FUNCTION(STOP_VPN_EXTENSION, StopVpnExtensionAbility),
++                                    DECLARE_NAPI_FUNCTION("setAlwaysOnVpnEnabled", SetAlwaysOnVpnEnabled),
++                                    DECLARE_NAPI_FUNCTION("isAlwaysOnVpnEnabled", IsAlwaysOnVpnEnabled),
+                                     DECLARE_NAPI_FUNCTION(UPDATE_VPN_AUTHORIZE, UpdateVpnAuthorize),

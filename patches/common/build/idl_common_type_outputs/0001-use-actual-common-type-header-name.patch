@@ -1,0 +1,28 @@
+diff --git a/build/config/components/idl_tool/idl.gni b/build/config/components/idl_tool/idl.gni
+--- a/build/config/components/idl_tool/idl.gni
++++ b/build/config/components/idl_tool/idl.gni
+@@ -216,9 +216,7 @@
+     # first letter 'i'
+     name_split = []
+     name_split = string_split(name, "_i_")
+-    init_with_i = false
+     if (name_split[0] == "") {
+-      init_with_i = true
+       name = string_replace(name, "_i_", "i", 1)
+     }
+     name_split = []
+@@ -236,12 +234,8 @@
+ 
+     out_full_name = string_replace(idl_full_name, idl_name, name)
+ 
+-    if (init_with_i) {
+-      out_full_name_i = string_replace(idl_full_name, idl_name, "i" + name)
+-      sources_all += [ "${target_gen_dir}/" + out_full_name_i + ".h" ]
+-    } else {
+-      sources_all += [ "${target_gen_dir}/" + out_full_name + ".h" ]
+-    }
++    # Common types already retain the initial I in their normalized name.
++    sources_all += [ "${target_gen_dir}/" + out_full_name + ".h" ]
+     sources_all += [ "${target_gen_dir}/" + out_full_name + ".cpp" ]
+     sources_proxy += [ "${target_gen_dir}/" + out_full_name + ".cpp" ]
+     sources_stub += [ "${target_gen_dir}/" + out_full_name + ".cpp" ]

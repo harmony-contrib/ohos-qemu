@@ -1,0 +1,85 @@
+diff --git a/kernel/linux/linux-6.6/drivers/virtio/virtio_pci_common.h b/kernel/linux/linux-6.6/drivers/virtio/virtio_pci_common.h
+--- a/kernel/linux/linux-6.6/drivers/virtio/virtio_pci_common.h
++++ b/kernel/linux/linux-6.6/drivers/virtio/virtio_pci_common.h
+@@ -52,5 +52,6 @@ struct virtio_pci_device {
+ 	};
+ 	bool is_legacy;
++	bool qemu_gpu_s2idle;
+ 
+ 	/* Where to read and clear interrupt */
+ 	u8 __iomem *isr;
+diff --git a/kernel/linux/linux-6.6/drivers/virtio/virtio_pci_common.c b/kernel/linux/linux-6.6/drivers/virtio/virtio_pci_common.c
+--- a/kernel/linux/linux-6.6/drivers/virtio/virtio_pci_common.c
++++ b/kernel/linux/linux-6.6/drivers/virtio/virtio_pci_common.c
+@@ -16,5 +16,9 @@
+ 
+ #include "virtio_pci_common.h"
++#include <linux/dmi.h>
++#include <linux/of.h>
++#include <linux/suspend.h>
++#include <uapi/linux/virtio_ids.h>
+ 
+ static bool force_legacy = false;
+ 
+@@ -488,8 +492,60 @@ static int virtio_pci_restore(struct device *dev)
+ 	return virtio_device_restore(&vp_dev->vdev);
+ }
+ 
++static bool qemu_virtio_gpu_retains_s2idle_state(struct virtio_device *vdev)
++{
++	struct virtio_driver *drv;
++	const char *vendor = dmi_get_system_info(DMI_SYS_VENDOR);
++
++	if (pm_suspend_target_state != PM_SUSPEND_TO_IDLE ||
++	    vdev->id.device != VIRTIO_ID_GPU || !vdev->dev.driver ||
++	    (!of_machine_is_compatible("linux,dummy-virt") &&
++	     (!vendor || strcmp(vendor, "QEMU"))))
++		return false;
++
++	drv = drv_to_virtio(vdev->dev.driver);
++	return !drv->freeze && !drv->restore;
++}
++
++static int virtio_pci_suspend(struct device *dev)
++{
++	struct virtio_pci_device *vp_dev = pci_get_drvdata(to_pci_dev(dev));
++
++	/* QEMU remains running during guest s2idle. Its GPU rings, resources,
++	 * scanouts and IRQ routing retain their state. The 6.6 GPU driver has
++	 * no freeze/restore callbacks: resetting it on resume loses the host
++	 * rings without rebuilding them and hangs the compositor. Preserve
++	 * this virtual device instead. Other devices, physical boards, S3
++	 * and hibernation continue through the existing reset path.
++	 */
++	vp_dev->qemu_gpu_s2idle =
++		qemu_virtio_gpu_retains_s2idle_state(&vp_dev->vdev);
++	if (vp_dev->qemu_gpu_s2idle) {
++		vp_synchronize_vectors(&vp_dev->vdev);
++		return 0;
++	}
++	return virtio_pci_freeze(dev);
++}
++
++static int virtio_pci_resume(struct device *dev)
++{
++	struct virtio_pci_device *vp_dev = pci_get_drvdata(to_pci_dev(dev));
++
++	if (vp_dev->qemu_gpu_s2idle) {
++		vp_dev->qemu_gpu_s2idle = false;
++		pci_set_master(vp_dev->pci_dev);
++		return 0;
++	}
++	return virtio_pci_restore(dev);
++}
++
+ static const struct dev_pm_ops virtio_pci_pm_ops = {
+-	SET_SYSTEM_SLEEP_PM_OPS(virtio_pci_freeze, virtio_pci_restore)
++	.suspend = virtio_pci_suspend,
++	.resume = virtio_pci_resume,
++	.freeze = virtio_pci_freeze,
++	.thaw = virtio_pci_restore,
++	.poweroff = virtio_pci_freeze,
++	.restore = virtio_pci_restore,
+ };
+ #endif
+ 

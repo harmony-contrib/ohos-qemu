@@ -1,0 +1,94 @@
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp b/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp
+--- a/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp
+@@ -503,46 +503,54 @@
+ napi_value CreateNapiSysVpnConfig(napi_env env, sptr<SysVpnConfig> &sysVpnConfig)
+ {
+     if (sysVpnConfig == nullptr) {
+         NETMGR_EXT_LOG_E("CreateNapiSysVpnConfig failed, param is null");
+         return NapiUtils::GetUndefined(env);
+     }
+     napi_value config = NapiUtils::CreateObject(env);
+-    std::vector<INetAddr> addresses = sysVpnConfig->addresses_;
+-    if (!addresses.empty()) {
+-        napi_value linkAddresses = NapiUtils::CreateArray(env, 1);
++    const auto &addresses = sysVpnConfig->addresses_;
++    napi_value linkAddresses = NapiUtils::CreateArray(env, addresses.size());
++    for (size_t i = 0; i < addresses.size(); ++i) {
+         napi_value netAddr = NapiUtils::CreateObject(env);
+-        NapiUtils::SetStringPropertyUtf8(env, netAddr, NET_ADDRESS, addresses[0].address_);
++        NapiUtils::SetStringPropertyUtf8(env, netAddr, NET_ADDRESS, addresses[i].address_);
++        NapiUtils::SetUint32Property(env, netAddr, NET_FAMILY, addresses[i].family_);
++        NapiUtils::SetUint32Property(env, netAddr, NET_PORT, addresses[i].port_);
+         napi_value linkAddr = NapiUtils::CreateObject(env);
+         NapiUtils::SetNamedProperty(env, linkAddr, NET_ADDRESS, netAddr);
+-        NapiUtils::SetUint32Property(env, linkAddr, NET_PREFIXLENGTH, 1);
+-        NapiUtils::SetArrayElement(env, linkAddresses, 0, linkAddr);
+-        NapiUtils::SetNamedProperty(env, config, CONFIG_ADDRESSES, linkAddresses);
++        NapiUtils::SetUint32Property(env, linkAddr, NET_PREFIXLENGTH, addresses[i].prefixlen_);
++        NapiUtils::SetArrayElement(env, linkAddresses, i, linkAddr);
+     }
+-    std::vector<std::string> remoteAddrs = sysVpnConfig->remoteAddresses_;
++    NapiUtils::SetNamedProperty(env, config, CONFIG_ADDRESSES, linkAddresses);
++    const auto &remoteAddrs = sysVpnConfig->remoteAddresses_;
+     if (!remoteAddrs.empty()) {
+-        napi_value remoteArray = NapiUtils::CreateArray(env, 1);
+-        NapiUtils::SetArrayElement(env, remoteArray, 0, NapiUtils::CreateStringUtf8(env, remoteAddrs[0]));
++        napi_value remoteArray = NapiUtils::CreateArray(env, remoteAddrs.size());
++        for (size_t i = 0; i < remoteAddrs.size(); ++i) {
++            NapiUtils::SetArrayElement(env, remoteArray, i, NapiUtils::CreateStringUtf8(env, remoteAddrs[i]));
++        }
+         NapiUtils::SetNamedProperty(env, config, CONFIG_REMOTE_ADDRS, remoteArray);
+     }
+-    std::vector<std::string> dnsAddresses = sysVpnConfig->dnsAddresses_;
++    const auto &dnsAddresses = sysVpnConfig->dnsAddresses_;
+     if (!dnsAddresses.empty()) {
+-        napi_value dnsArray = NapiUtils::CreateArray(env, 1);
+-        NapiUtils::SetArrayElement(env, dnsArray, 0, NapiUtils::CreateStringUtf8(env, dnsAddresses[0]));
++        napi_value dnsArray = NapiUtils::CreateArray(env, dnsAddresses.size());
++        for (size_t i = 0; i < dnsAddresses.size(); ++i) {
++            NapiUtils::SetArrayElement(env, dnsArray, i, NapiUtils::CreateStringUtf8(env, dnsAddresses[i]));
++        }
+         NapiUtils::SetNamedProperty(env, config, CONFIG_DNSADDRESSES, dnsArray);
+     }
+-    std::vector<std::string> searchDomains = sysVpnConfig->searchDomains_;
++    const auto &searchDomains = sysVpnConfig->searchDomains_;
+     if (!searchDomains.empty()) {
+-        napi_value domainsArray = NapiUtils::CreateArray(env, 1);
+-        NapiUtils::SetArrayElement(env, domainsArray, 0, NapiUtils::CreateStringUtf8(env, searchDomains[0]));
++        napi_value domainsArray = NapiUtils::CreateArray(env, searchDomains.size());
++        for (size_t i = 0; i < searchDomains.size(); ++i) {
++            NapiUtils::SetArrayElement(env, domainsArray, i, NapiUtils::CreateStringUtf8(env, searchDomains[i]));
++        }
+         NapiUtils::SetNamedProperty(env, config, CONFIG_SEARCHDOMAINS, domainsArray);
+     }
+     NapiUtils::SetStringPropertyUtf8(env, config, CONFIG_VPN_ID, sysVpnConfig->vpnId_);
+     NapiUtils::SetStringPropertyUtf8(env, config, CONFIG_VPN_NAME, sysVpnConfig->vpnName_);
+     NapiUtils::SetInt32Property(env, config, CONFIG_VPN_TYPE, sysVpnConfig->vpnType_);
+     NapiUtils::SetStringPropertyUtf8(env, config, CONFIG_USER_NAME, sysVpnConfig->userName_);
+     NapiUtils::SetStringPropertyUtf8(env, config, CONFIG_PASSWORD, sysVpnConfig->password_);
+     NapiUtils::SetBooleanProperty(env, config, CONFIG_SAVE_LOGIN, sysVpnConfig->saveLogin_ == 0 ? false : true);
+     NapiUtils::SetStringPropertyUtf8(env, config, CONFIG_FORWARDED_ROUTES, sysVpnConfig->forwardingRoutes_);
+     SetLocalAddressesProperty(env, config, sysVpnConfig->localAddresses_);
+     return config;
+ }
+@@ -550,17 +558,19 @@
+ void SetLocalAddressesProperty(napi_env env, napi_value config, const std::vector<INetAddr> &localAddresses)
+ {
+     if (localAddresses.empty()) {
+         return;
+     }
+     
+     napi_value localAddrArray = NapiUtils::CreateArray(env, localAddresses.size());
+     for (size_t i = 0; i < localAddresses.size(); i++) {
+         napi_value netAddr = NapiUtils::CreateObject(env);
+         NapiUtils::SetStringPropertyUtf8(env, netAddr, NET_ADDRESS, localAddresses[i].address_);
++        NapiUtils::SetUint32Property(env, netAddr, NET_FAMILY, localAddresses[i].family_);
++        NapiUtils::SetUint32Property(env, netAddr, NET_PORT, localAddresses[i].port_);
+         napi_value linkAddr = NapiUtils::CreateObject(env);
+         NapiUtils::SetNamedProperty(env, linkAddr, NET_ADDRESS, netAddr);
+         NapiUtils::SetUint32Property(env, linkAddr, NET_PREFIXLENGTH, localAddresses[i].prefixlen_);
+         NapiUtils::SetArrayElement(env, localAddrArray, i, linkAddr);
+     }
+     NapiUtils::SetNamedProperty(env, config, CONFIG_LOCAL_ADDRESSES, localAddrArray);
+ }

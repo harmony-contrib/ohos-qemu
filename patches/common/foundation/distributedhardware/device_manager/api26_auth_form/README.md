@@ -1,0 +1,1 @@
+Export the four existing DmAuthForm constants in the real distributedHardware.deviceManager module, including its unsupported backend build. No device authentication, discovery, credentials or capability state is manufactured. This is a candidate, not guest validation.
