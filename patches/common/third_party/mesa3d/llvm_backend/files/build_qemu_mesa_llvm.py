@@ -108,6 +108,18 @@ def build(out_dir: Path) -> None:
     stamp.write_text(json.dumps(cache_identity, indent=2) + "\n")
     base.prepare_qemu_mesa_source(mesa_repo, source)
     base.backport_ohos_logger_fixes(source)
+    lp_misc = source / "src/gallium/auxiliary/gallivm/lp_bld_misc.cpp"
+    lp_misc_text = lp_misc.read_text()
+    disasm_call = "   llvm::InitializeNativeTargetDisassembler();\n"
+    guarded_disasm_call = (
+        "#if defined(__aarch64__)\n"
+        "   llvm::InitializeNativeTargetDisassembler();\n"
+        "#endif\n"
+    )
+    if guarded_disasm_call not in lp_misc_text:
+        if lp_misc_text.count(disasm_call) != 1:
+            raise ValueError("unexpected Mesa gallivm native disassembler initialization")
+        lp_misc.write_text(lp_misc_text.replace(disasm_call, guarded_disasm_call, 1))
     subprocess.run([sys.executable, str(mapping), "--source-root", str(source)], check=True)
     subprocess.run([sys.executable, str(build_id / "apply_mesa_build_id.py"),
                     "--source-root", str(source)], check=True)
@@ -171,6 +183,26 @@ def build(out_dir: Path) -> None:
     check_cached_objects(output, PRODUCTS[product][1])
     subprocess.run(["ninja", "-C", str(output), "install"], check=True, env=env)
     if product == "armv7a_virt":
+        def arm_plt_got_slot_with_ror(call_target: int, plt_disassembly: str) -> int | None:
+            import re
+            immediates = []
+            for pattern in (
+                r"\badd\s+r12,\s*pc,\s*#(0x[0-9a-f]+|[0-9]+)(?:,\s*#(0x[0-9a-f]+|[0-9]+))?",
+                r"\badd\s+r12,\s*r12,\s*#(0x[0-9a-f]+|[0-9]+)(?:,\s*#(0x[0-9a-f]+|[0-9]+))?",
+                r"\bldr\s+pc,\s*\[r12,\s*#(0x[0-9a-f]+|[0-9]+)\]!",
+            ):
+                match = re.search(pattern, plt_disassembly, re.IGNORECASE)
+                if match is None:
+                    return None
+                imm = int(match.group(1), 0)
+                if match.lastindex and match.lastindex >= 2 and match.group(2) is not None:
+                    rot = int(match.group(2), 0) % 32
+                    if rot:
+                        imm = ((imm >> rot) | (imm << (32 - rot))) & 0xFFFFFFFF
+                immediates.append(imm)
+            return (call_target + 8 + sum(immediates)) & 0xFFFFFFFF
+
+        base.arm_plt_got_slot = arm_plt_got_slot_with_ror
         base.copy_outputs(install, package, root)
     else:
         base.copy_outputs(install, package, root, base.TARGETS[product])

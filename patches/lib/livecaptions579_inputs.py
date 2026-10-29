@@ -34,12 +34,12 @@ def _resolve_artifact_path(raw_path: str) -> Path:
         return path
     cache_root = Path(os.environ.get('CACHE_ROOT', '/Volumes/PSSD/qemu'))
     lottie_root = cache_root / 'artifacts/livecaptions-lottie-7.0'
-    marker = 'issue-20-20261006/'
-    if marker in raw_path:
-        rel = raw_path.split(marker, 1)[1]
-        candidate = lottie_root / rel
-        if candidate.is_file() and not candidate.is_symlink():
-            return candidate
+    for marker in ('issue-20-20261006/', 'artifacts/livecaptions-lottie-7.0/'):
+        if marker in raw_path:
+            rel = raw_path.split(marker, 1)[1]
+            candidate = lottie_root / rel
+            if candidate.is_file() and not candidate.is_symlink():
+                return candidate
     if not path.is_absolute():
         candidate = (lottie_root / path).resolve()
         if candidate.is_file() and not candidate.is_symlink():

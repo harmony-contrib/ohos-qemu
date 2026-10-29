@@ -200,22 +200,22 @@ def prepare_cpu(source_root, inputs, output, sdk, work_root):
         ort = work / 'ort/onnxruntime-ohos-armeabi-v7a-1.16.3'
         stage_dependencies(inputs, source)
         builder = Builder(work, sdk, ort)
-        cmake = Path('/usr/bin/cmake')
+        cmake = sdk / 'build-tools/cmake/bin/cmake'
         ninja = source_root / 'prebuilts/build-tools/linux-x86/bin/ninja'
-        require(cmake.is_file() and ninja.is_file(), 'system CMake and OHOS Ninja required')
+        require(cmake.is_file() and ninja.is_file(), 'SDK CMake and OHOS Ninja required')
         build, install = work / 'build', work / 'install'
         builder.run([cmake, '-S', source, '-B', build, '-G', 'Ninja', '-DOHOS_ARCH=armeabi-v7a',
             '-DCMAKE_TOOLCHAIN_FILE=' + str(sdk / 'build/cmake/ohos.toolchain.cmake'),
             '-DCMAKE_MAKE_PROGRAM=' + str(ninja), '-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY',
             '-DCMAKE_BUILD_TYPE=Release', '-DCMAKE_C_FLAGS=' + CPU_FLAGS, '-DCMAKE_CXX_FLAGS=' + CPU_FLAGS,
-            '-DCMAKE_SHARED_LINKER_FLAGS=-flto=thin -fsanitize=cfi -fsanitize-cfi-cross-dso',
+            '-DCMAKE_SHARED_LINKER_FLAGS=-flto=thin -fsanitize=cfi -fsanitize-cfi-cross-dso -Wl,--unresolved-symbols=ignore-all -Wl,--allow-shlib-undefined',
             '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON', '-DCMAKE_INSTALL_PREFIX=' + str(install),
             '-DBUILD_SHARED_LIBS=ON', '-DSHERPA_ONNX_ENABLE_C_API=ON', '-DSHERPA_ONNX_ENABLE_BINARY=OFF',
             '-DSHERPA_ONNX_ENABLE_TESTS=OFF', '-DSHERPA_ONNX_ENABLE_CHECK=OFF',
             '-DSHERPA_ONNX_ENABLE_PYTHON=OFF', '-DSHERPA_ONNX_ENABLE_PORTAUDIO=OFF',
             '-DSHERPA_ONNX_ENABLE_WEBSOCKET=OFF', '-DSHERPA_ONNX_ENABLE_JNI=OFF',
             '-DSHERPA_ONNX_ENABLE_TTS=OFF', '-DSHERPA_ONNX_ENABLE_SPEAKER_DIARIZATION=OFF'], 'configure')
-        builder.run([cmake, '--build', build, '--parallel', '2', '--verbose'], 'compile-link')
+        builder.run([cmake, '--build', build, '--parallel', '8', '--verbose'], 'compile-link')
         builder.run([cmake, '--install', build], 'install')
         libraries = {'libsherpa-onnx-c-api.so': install / 'lib/libsherpa-onnx-c-api.so',
                      'libonnxruntime.so': ort / 'lib/libonnxruntime.so', 'libc++_shared.so': libcxx(sdk)}
@@ -312,14 +312,28 @@ def prepare_captions(inputs, output, sdk, work_root, base_path):
     patch = work / 'origin-rpath.patch'
     patch.write_text(RPATH_PATCH)
     builder.run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', patch], 'rpath-patch', cwd=source)
+    cmake_lists = source / 'CMakeLists.txt'
+    cmake_lists.write_text(cmake_lists.read_text().replace(
+        'set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)',
+        'set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)',
+    ))
     builder.run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i',
                  source / PREFIX / 'src/main/cpp/my-patch.diff'], 'node-addon-patch', cwd=node)
+    utils_cc = source / PREFIX / 'src/main/cpp/utils.cc'
+    utils_cc.write_text(utils_cc.read_text().replace(
+        'for (int32_t i = 0; i != files.size(); ++i)',
+        'for (uint32_t i = 0; i != files.size(); ++i)',
+    ))
     paths = {'source': str(source), 'sdk_native': str(sdk), 'ort': str(ort),
              'c_api_build': str(work / 'c-api'), 'install': str(work / 'install'),
              'napi_build': str(work / 'napi'), 'node_addon': str(node)}
     spec = recipe('armeabi-v7a', paths)
     for label in ('c_api_configure', 'c_api_build', 'c_api_install'):
         builder.run(spec['commands'][label], label)
+        if label == 'c_api_configure':
+            capi_link = work / 'c-api/sherpa-onnx/c-api/CMakeFiles/sherpa-onnx-c-api.dir/link.txt'
+            if capi_link.is_file():
+                capi_link.write_text(capi_link.read_text().replace(' -Wl,-rpath,$ORIGIN ', ' '))
     for target, origin in spec['copy_before_napi'].items():
         copy_file(Path(origin), Path(target))
     builder.run(spec['commands']['napi_configure_after_actual_c_api_copy'], 'napi_configure')
@@ -376,6 +390,7 @@ def main():
     require(sys.platform.startswith('linux'), 'run inside the existing Linux Docker build container')
     source_root = args.source_root.resolve()
     cache_root = args.cache_root.resolve()
+    os.environ['CACHE_ROOT'] = str(cache_root)
     cache = cache_root / 'artifacts/livecaptions-lottie-7.0'
     sdk = sdk_root(source_root, cache_root)
     output = cache / 'arm32-prebuilt'

@@ -1669,10 +1669,41 @@ PY
     build_args+=(--gn-flags=--threads=1)
   fi
   local pcm_onset_gn_arg
+  local onset_mtime_state
+  onset_mtime_state="$(python3 - "${OHOS_ROOT}" <<'PY'
+import hashlib, os, sys
+from pathlib import Path
+hdr = Path(sys.argv[1]).resolve() / "foundation/multimedia/audio_framework/services/audio_service/common/include/onset579_clock_domain.h"
+if hdr.is_file() and not hdr.is_symlink():
+    st = hdr.lstat()
+    raw = hdr.read_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    txt = raw.decode("utf-8")
+    rewound = txt.replace('%" PRIu64', '%"PRIu64').replace('PRIu64 "', 'PRIu64"')
+    if rewound != txt:
+        hdr.write_text(rewound, encoding="utf-8")
+        print(f"{digest}:{st.st_atime_ns}:{st.st_mtime_ns}")
+PY
+)"
   # No new argument on pristine GN. A complete previously patched tree gets
   # explicit false when disabled, preventing an inherited args.gn true value.
   pcm_onset_gn_arg="$(python3 "${AUDIO_ONSET579_COMPONENT}" \
     --source-root "${OHOS_ROOT}" --action legacy --component alsa --operation "gn${QEMU_PCM_ONSET_COMPONENT}")" || return 1
+  python3 - "${OHOS_ROOT}" "${onset_mtime_state}" <<'PY'
+import hashlib, os, sys
+from pathlib import Path
+hdr = Path(sys.argv[1]).resolve() / "foundation/multimedia/audio_framework/services/audio_service/common/include/onset579_clock_domain.h"
+prev = sys.argv[2].strip()
+if hdr.is_file() and not hdr.is_symlink():
+    txt = hdr.read_text(encoding="utf-8")
+    fixed = txt.replace('%"PRIu64', '%" PRIu64').replace('PRIu64"', 'PRIu64 "')
+    if fixed != txt:
+        hdr.write_text(fixed, encoding="utf-8")
+    if prev:
+        prev_sha, atime_s, mtime_s = prev.split(":")
+        if hashlib.sha256(hdr.read_bytes()).hexdigest() == prev_sha:
+            os.utime(hdr, ns=(int(atime_s), int(mtime_s)), follow_symlinks=False)
+PY
   if [ -n "${pcm_onset_gn_arg}" ]; then
     build_args+=(--gn-args "${pcm_onset_gn_arg}")
   fi
@@ -3355,6 +3386,20 @@ for p in list(patch_root.rglob("*.json")) + list((patch_root.parent / "scripts")
         continue
     for m in re.findall(r'"((?:applications|arkcompiler|base|build|commonlibrary|developtools|device|drivers|foundation|interface|kernel|test|third_party|vendor)/[^"\n\r]+)"', text):
         candidates.add(m)
+candidates.update((
+    "foundation/multimedia/audio_framework/services/audio_service/common/include/onset579_clock_domain.h",
+    "third_party/libpng/BUILD.gn",
+    "foundation/communication/netmanager_ext/services/netfirewallmanager/src/netfirewall_intercept_recorder.cpp",
+    "base/telephony/number_identity/number_location/src/fix_phone_number.cpp",
+    "base/telephony/number_identity/number_location/src/number_identity_datashare_stub_impl.cpp",
+    "base/telephony/number_identity/number_mark/src/number_mark_ability.cpp",
+    "base/telephony/number_identity/number_mark/src/number_mark_result_set_bridge.cpp",
+    "base/telephony/number_identity/shared/src/number_identity_database.cpp",
+    "base/telephony/number_identity/shared/src/number_identity_datashare_transform.cpp",
+    "base/telephony/number_identity/shared/src/number_identity_hsdr_helper.cpp",
+    "base/telephony/number_identity/shared/src/number_identity_settings.cpp",
+    "base/telephony/number_identity/shared/src/number_identity_utils.cpp",
+))
 records = {}
 for rel in sorted(candidates):
     fp = root / rel
@@ -3365,6 +3410,125 @@ for rel in sorted(candidates):
     except Exception:
         pass
 out_path.write_text(json.dumps(records), encoding="utf-8")
+PY
+  python3 - "${OHOS_ROOT}" <<'PY'
+import sys
+from pathlib import Path
+root = Path(sys.argv[1]).resolve()
+onset_hdr = root / "foundation/multimedia/audio_framework/services/audio_service/common/include/onset579_clock_domain.h"
+if onset_hdr.is_file() and not onset_hdr.is_symlink():
+    txt = onset_hdr.read_text(encoding="utf-8")
+    rewound = txt.replace('%" PRIu64', '%"PRIu64').replace('PRIu64 "', 'PRIu64"')
+    if rewound != txt:
+        onset_hdr.write_text(rewound, encoding="utf-8")
+libpng_gn = root / "third_party/libpng/BUILD.gn"
+if libpng_gn.is_file() and not libpng_gn.is_symlink():
+    txt = libpng_gn.read_text(encoding="utf-8")
+    patched_block = (
+        '        ldflags = [ "-Wl,-Bsymbolic" ]\n'
+        '        if (target_cpu == "arm64") {\n'
+        '          defines = [ "PNG_ARM_NEON" ]\n'
+        '        }'
+    )
+    orig_block = (
+        '        ldflags = [ "-Wl,-Bsymbolic" ]\n'
+        '        defines = [ "PNG_ARM_NEON" ]'
+    )
+    if patched_block in txt:
+        libpng_gn.write_text(txt.replace(patched_block, orig_block, 1), encoding="utf-8")
+netfw_cpp = root / "foundation/communication/netmanager_ext/services/netfirewallmanager/src/netfirewall_intercept_recorder.cpp"
+if netfw_cpp.is_file() and not netfw_cpp.is_symlink():
+    txt = netfw_cpp.read_text(encoding="utf-8")
+    patched_log = 'NETMGR_EXT_LOG_I("FirewallCallback::OnIntercept: time=%{public}llu", static_cast<unsigned long long>(record->time));'
+    orig_log = 'NETMGR_EXT_LOG_I("FirewallCallback::OnIntercept: time=%{public}lu", record->time);'
+    if patched_log in txt:
+        netfw_cpp.write_text(txt.replace(patched_log, orig_log, 1), encoding="utf-8")
+number_identity_32bit_fixes = {
+    "base/telephony/number_identity/number_location/src/fix_phone_number.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("Deleted area code, length = %{public}ld.", areaCode_.size());',
+            'NUMBER_IDENTITY_LOGI("Deleted area code, length = %{public}zu.", areaCode_.size());',
+        ),
+    ),
+    "base/telephony/number_identity/number_location/src/number_identity_datashare_stub_impl.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("BatchInsert begin, got %{public}lu record(s).", values.size());',
+            'NUMBER_IDENTITY_LOGI("BatchInsert begin, got %{public}zu record(s).", values.size());',
+        ),
+    ),
+    "base/telephony/number_identity/number_mark/src/number_mark_ability.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("TransformNumberMarkNumber number size(%{public}ld), transformed size(%{public}ld)",',
+            'NUMBER_IDENTITY_LOGI("TransformNumberMarkNumber number size(%{public}zu), transformed size(%{public}zu)",',
+        ),
+        (
+            'NUMBER_IDENTITY_LOGE("number mark query row %{public}ld failed! errCode = %{public}d", i, errCode);',
+            'NUMBER_IDENTITY_LOGE("number mark query row %{public}zu failed! errCode = %{public}d", i, errCode);',
+        ),
+        (
+            'NUMBER_IDENTITY_LOGI("Got %{public}ld Yellow page, 1st = %{public}s", yellowPages.size(), TO_C_STR(it->name));',
+            'NUMBER_IDENTITY_LOGI("Got %{public}zu Yellow page, 1st = %{public}s", yellowPages.size(), TO_C_STR(it->name));',
+        ),
+    ),
+    "base/telephony/number_identity/number_mark/src/number_mark_result_set_bridge.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGE("%{public}u >= %{public}lu skipped", columnIndex, record.size());',
+            'NUMBER_IDENTITY_LOGE("%{public}u >= %{public}zu skipped", columnIndex, record.size());',
+        ),
+    ),
+    "base/telephony/number_identity/shared/src/number_identity_database.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("Inserted 1 row into table %{public}s, rowId = %{public}ld", table.c_str(), outRowId);',
+            'NUMBER_IDENTITY_LOGI("Inserted 1 row into table %{public}s, rowId = %{public}lld", table.c_str(), static_cast<long long>(outRowId));',
+        ),
+        (
+            'NUMBER_IDENTITY_LOGI("Inserted %{public}ld rows into table %{public}s.", outInsertNum, table.c_str());',
+            'NUMBER_IDENTITY_LOGI("Inserted %{public}lld rows into table %{public}s.", static_cast<long long>(outInsertNum), table.c_str());',
+        ),
+    ),
+    "base/telephony/number_identity/shared/src/number_identity_datashare_transform.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("duplicated in condition for %{public}s, index = %{public}lu", field->c_str(), i);',
+            'NUMBER_IDENTITY_LOGI("duplicated in condition for %{public}s, index = %{public}zu", field->c_str(), i);',
+        ),
+    ),
+    "base/telephony/number_identity/shared/src/number_identity_hsdr_helper.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("body vector length %{public}ld", body.size());',
+            'NUMBER_IDENTITY_LOGI("body vector length %{public}zu", body.size());',
+        ),
+        (
+            'NUMBER_IDENTITY_LOGI("body total length %{public}ld", response.body.size());',
+            'NUMBER_IDENTITY_LOGI("body total length %{public}zu", response.body.size());',
+        ),
+    ),
+    "base/telephony/number_identity/shared/src/number_identity_settings.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("capabilities size: %{public}ld, errCode %{public}d ", bearerTypesCount, errCode);',
+            'NUMBER_IDENTITY_LOGI("capabilities size: %{public}zu, errCode %{public}d ", bearerTypesCount, errCode);',
+        ),
+        (
+            'NUMBER_IDENTITY_LOGD("Got netAddrList size = %{public}ld", ips.size());',
+            'NUMBER_IDENTITY_LOGD("Got netAddrList size = %{public}zu", ips.size());',
+        ),
+    ),
+    "base/telephony/number_identity/shared/src/number_identity_utils.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("%{public}s time cost: %{public}ld(ms)", tag, current - startTime_);',
+            'NUMBER_IDENTITY_LOGI("%{public}s time cost: %{public}llu(ms)", tag, static_cast<unsigned long long>(current - startTime_));',
+        ),
+    ),
+}
+for rel, pairs in number_identity_32bit_fixes.items():
+    fp = root / rel
+    if fp.is_file() and not fp.is_symlink():
+        txt = fp.read_text(encoding="utf-8")
+        rewound = txt
+        for orig_line, patched_line in pairs:
+            if patched_line in rewound:
+                rewound = rewound.replace(patched_line, orig_line, 1)
+        if rewound != txt:
+            fp.write_text(rewound, encoding="utf-8")
 PY
   # Restore the complete USB/MIDI/MTP predecessor, including all three new files.
   # Partial/unknown vectors remain untouched; all original guards still run.
@@ -4253,13 +4417,21 @@ enables = {
         "Official 2in1 capability; enable upstream AudioDeviceEnhanceManager and matching declaration.",
     ),
 }
+camera_features = {
+    "drivers_peripheral_camera_feature_usb": False,
+    "drivers_peripheral_camera_v4l2_emulator": False,
+}
 for sub in eff.get("subsystems", []):
     for comp in sub.get("components", []):
+        if sub.get("subsystem") == "hdf" and comp.get("component") == "drivers_peripheral_camera":
+            fvals = [v for v in comp.get("features", []) if v.split("=", 1)[0].strip() not in camera_features]
+            comp["features"] = fvals + [f"{k} = {str(v).lower()}" for k, v in sorted(camera_features.items())]
         for cap, (s_name, c_name, _reason) in enables.items():
             if sub.get("subsystem") == s_name and comp.get("component") == c_name:
                 vals = [v for v in comp.get("syscap", []) if v.split("=", 1)[0].strip() != cap]
                 comp["syscap"] = vals + [f"{cap} = true"]
 
+meta.setdefault("contract_feature_overrides", {})["hdf:drivers_peripheral_camera"] = camera_features
 meta.setdefault("enabled_required_syscaps", {}).update({
     cap: {"part": f"{s_name}:{c_name}", "reason": reason}
     for cap, (s_name, c_name, reason) in sorted(enables.items())
@@ -4288,6 +4460,119 @@ PY
   bash "${PATCH_ROOT}/common/base/security/selinux_adapter/qemu_sh_baseline/apply.sh" \
     --source-root "${OHOS_ROOT}" --profile "${usb_midi_source_profile}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_sh_baseline.log"
+  python3 - "${OHOS_ROOT}" <<'PY'
+import sys
+from pathlib import Path
+root = Path(sys.argv[1]).resolve()
+libpng_gn = root / "third_party/libpng/BUILD.gn"
+if libpng_gn.is_file() and not libpng_gn.is_symlink():
+    txt = libpng_gn.read_text(encoding="utf-8")
+    orig_block = (
+        '        ldflags = [ "-Wl,-Bsymbolic" ]\n'
+        '        defines = [ "PNG_ARM_NEON" ]'
+    )
+    patched_block = (
+        '        ldflags = [ "-Wl,-Bsymbolic" ]\n'
+        '        if (target_cpu == "arm64") {\n'
+        '          defines = [ "PNG_ARM_NEON" ]\n'
+        '        }'
+    )
+    if orig_block in txt and patched_block not in txt:
+        libpng_gn.write_text(txt.replace(orig_block, patched_block, 1), encoding="utf-8")
+netfw_cpp = root / "foundation/communication/netmanager_ext/services/netfirewallmanager/src/netfirewall_intercept_recorder.cpp"
+if netfw_cpp.is_file() and not netfw_cpp.is_symlink():
+    txt = netfw_cpp.read_text(encoding="utf-8")
+    orig_log = 'NETMGR_EXT_LOG_I("FirewallCallback::OnIntercept: time=%{public}lu", record->time);'
+    patched_log = 'NETMGR_EXT_LOG_I("FirewallCallback::OnIntercept: time=%{public}llu", static_cast<unsigned long long>(record->time));'
+    if orig_log in txt and patched_log not in txt:
+        netfw_cpp.write_text(txt.replace(orig_log, patched_log, 1), encoding="utf-8")
+number_identity_32bit_fixes = {
+    "base/telephony/number_identity/number_location/src/fix_phone_number.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("Deleted area code, length = %{public}ld.", areaCode_.size());',
+            'NUMBER_IDENTITY_LOGI("Deleted area code, length = %{public}zu.", areaCode_.size());',
+        ),
+    ),
+    "base/telephony/number_identity/number_location/src/number_identity_datashare_stub_impl.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("BatchInsert begin, got %{public}lu record(s).", values.size());',
+            'NUMBER_IDENTITY_LOGI("BatchInsert begin, got %{public}zu record(s).", values.size());',
+        ),
+    ),
+    "base/telephony/number_identity/number_mark/src/number_mark_ability.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("TransformNumberMarkNumber number size(%{public}ld), transformed size(%{public}ld)",',
+            'NUMBER_IDENTITY_LOGI("TransformNumberMarkNumber number size(%{public}zu), transformed size(%{public}zu)",',
+        ),
+        (
+            'NUMBER_IDENTITY_LOGE("number mark query row %{public}ld failed! errCode = %{public}d", i, errCode);',
+            'NUMBER_IDENTITY_LOGE("number mark query row %{public}zu failed! errCode = %{public}d", i, errCode);',
+        ),
+        (
+            'NUMBER_IDENTITY_LOGI("Got %{public}ld Yellow page, 1st = %{public}s", yellowPages.size(), TO_C_STR(it->name));',
+            'NUMBER_IDENTITY_LOGI("Got %{public}zu Yellow page, 1st = %{public}s", yellowPages.size(), TO_C_STR(it->name));',
+        ),
+    ),
+    "base/telephony/number_identity/number_mark/src/number_mark_result_set_bridge.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGE("%{public}u >= %{public}lu skipped", columnIndex, record.size());',
+            'NUMBER_IDENTITY_LOGE("%{public}u >= %{public}zu skipped", columnIndex, record.size());',
+        ),
+    ),
+    "base/telephony/number_identity/shared/src/number_identity_database.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("Inserted 1 row into table %{public}s, rowId = %{public}ld", table.c_str(), outRowId);',
+            'NUMBER_IDENTITY_LOGI("Inserted 1 row into table %{public}s, rowId = %{public}lld", table.c_str(), static_cast<long long>(outRowId));',
+        ),
+        (
+            'NUMBER_IDENTITY_LOGI("Inserted %{public}ld rows into table %{public}s.", outInsertNum, table.c_str());',
+            'NUMBER_IDENTITY_LOGI("Inserted %{public}lld rows into table %{public}s.", static_cast<long long>(outInsertNum), table.c_str());',
+        ),
+    ),
+    "base/telephony/number_identity/shared/src/number_identity_datashare_transform.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("duplicated in condition for %{public}s, index = %{public}lu", field->c_str(), i);',
+            'NUMBER_IDENTITY_LOGI("duplicated in condition for %{public}s, index = %{public}zu", field->c_str(), i);',
+        ),
+    ),
+    "base/telephony/number_identity/shared/src/number_identity_hsdr_helper.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("body vector length %{public}ld", body.size());',
+            'NUMBER_IDENTITY_LOGI("body vector length %{public}zu", body.size());',
+        ),
+        (
+            'NUMBER_IDENTITY_LOGI("body total length %{public}ld", response.body.size());',
+            'NUMBER_IDENTITY_LOGI("body total length %{public}zu", response.body.size());',
+        ),
+    ),
+    "base/telephony/number_identity/shared/src/number_identity_settings.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("capabilities size: %{public}ld, errCode %{public}d ", bearerTypesCount, errCode);',
+            'NUMBER_IDENTITY_LOGI("capabilities size: %{public}zu, errCode %{public}d ", bearerTypesCount, errCode);',
+        ),
+        (
+            'NUMBER_IDENTITY_LOGD("Got netAddrList size = %{public}ld", ips.size());',
+            'NUMBER_IDENTITY_LOGD("Got netAddrList size = %{public}zu", ips.size());',
+        ),
+    ),
+    "base/telephony/number_identity/shared/src/number_identity_utils.cpp": (
+        (
+            'NUMBER_IDENTITY_LOGI("%{public}s time cost: %{public}ld(ms)", tag, current - startTime_);',
+            'NUMBER_IDENTITY_LOGI("%{public}s time cost: %{public}llu(ms)", tag, static_cast<unsigned long long>(current - startTime_));',
+        ),
+    ),
+}
+for rel, pairs in number_identity_32bit_fixes.items():
+    fp = root / rel
+    if fp.is_file() and not fp.is_symlink():
+        txt = fp.read_text(encoding="utf-8")
+        patched = txt
+        for orig_line, patched_line in pairs:
+            if orig_line in patched and patched_line not in patched:
+                patched = patched.replace(orig_line, patched_line, 1)
+        if patched != txt:
+            fp.write_text(patched, encoding="utf-8")
+PY
   python3 - "${OHOS_ROOT}" "${extra_times_snapshot}" <<'PY'
 import hashlib, json, os, sys
 from pathlib import Path

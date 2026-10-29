@@ -23,3 +23,4 @@ This directory archives the architecture, source baselines, build/packaging work
    - Ability Runtime Native Child Process (`OH_Ability_CreateNativeChildProcess`), ArkUI CFI cross-DSO closures, and TCG timeout scaling.
    - Multimedia (Audio loopback/ALSA/AudioSuite/Spatial/AudioHaptic, Camera V4L2/JPEG, MediaLibrary RDB schema & `PhotoAlbum` compatibility, AVSession, and clean process exit for AVPlayer/UDMF/Pasteboard).
    - Standard VPN (`VpnExtension`, F2FS `fs-verity`), OpenVPN, Wi-Fi/Bluetooth/Telephony, and virtualized peripherals (GNSS, Sensor, Vibrator, USB MIDI, Serial, Intelligent Voice, and Live Captions).
+   - Multi-architecture (`x86_64` and 32-bit `armv7a`) build compatibility (ARM32 PLT immediate rotation verification, `armeabi-v7a` Sherpa-ONNX ELF/NAPI compatibility, ARMv7 NEON guards, and 32-bit `HiLog` format portability).
