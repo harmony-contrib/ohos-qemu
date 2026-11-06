@@ -255,7 +255,7 @@ launcher_defaults_for_product() {
     armv7a_virt)
       LAUNCHER_DEFAULT_SMP=4
       LAUNCHER_DEFAULT_MEMORY=3072
-      LAUNCHER_DEFAULT_DISPLAY=none
+      LAUNCHER_DEFAULT_DISPLAY=sdl
       LAUNCHER_DEFAULT_CPU=cortex-a7
       LAUNCHER_QEMU_UNIX=qemu-system-arm
       LAUNCHER_QEMU_WIN=qemu-system-arm.exe
@@ -704,6 +704,9 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
   # Auto headless when no host display is available (Linux SSH, CI).
   ensure_auto_headless_support "${file}"
 
+  # Probe host QEMU display backends (Cocoa on macOS, SDL/GTK on Linux, VNC fallback).
+  ensure_qemu_display_backend_support "${file}"
+
   # Append optional extra QEMU arguments at the invocation site.
   # Do not treat the QEMU_EXTRA_ARGS= assignment line as already wired.
   if ! grep -Eq 'eval "\$QEMU_CMD \$\{QEMU_EXTRA_ARGS\}"|eval "\$\{QEMU_CMD\} \$\{QEMU_EXTRA_ARGS\}"|\\$\{QEMU_EXTRA_ARGS\}[[:space:]]*$' "${file}" && \
@@ -967,6 +970,191 @@ ensure_auto_headless_support() {
     }
   ' "${file}" >"${tmp}"
   mv "${tmp}" "${file}"
+}
+
+ensure_qemu_display_backend_support() {
+  local file="$1"
+  python3 - "${file}" <<'DISPLAY_PY'
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+
+# Normalize default DISPLAY_TYPE assignment when QEMU_DISPLAY is unset.
+text = re.sub(
+    r'^DISPLAY_TYPE="\$\{QEMU_DISPLAY:-[^}]+\}"$',
+    'DISPLAY_TYPE="${QEMU_DISPLAY:-sdl}"',
+    text,
+    count=1,
+    flags=re.M,
+)
+
+detect_block = """# Detect supported display types
+DETECT_DISPLAYS=$(${QEMU_BIN} -display help 2>&1 | grep -A 10 "Available display" || true)
+HAS_COCOA=$(echo "$DETECT_DISPLAYS" | grep -qw cocoa && echo yes || echo no)
+HAS_SDL=$(echo "$DETECT_DISPLAYS" | grep -qw sdl && echo yes || echo no)
+HAS_GTK=$(echo "$DETECT_DISPLAYS" | grep -qw gtk && echo yes || echo no)
+
+# Auto-detect best display for macOS/Linux when 'sdl', 'gtk', or 'auto' is requested
+if [ "${DISPLAY_TYPE}" = "sdl" ] || [ "${DISPLAY_TYPE}" = "gtk" ] || [ "${DISPLAY_TYPE}" = "auto" ]; then
+    if [ "$(uname)" = "Darwin" ] && [ "${HAS_COCOA}" = "yes" ]; then
+        DISPLAY_TYPE="cocoa"
+        echo "Auto-selected: Cocoa (macOS preferred)" >&2
+    elif [ "${DISPLAY_TYPE}" = "gtk" ] && [ "${HAS_GTK}" = "yes" ]; then
+        DISPLAY_TYPE="gtk"
+        echo "Auto-selected: GTK" >&2
+    elif [ "${HAS_SDL}" = "yes" ]; then
+        DISPLAY_TYPE="sdl"
+        echo "Auto-selected: SDL" >&2
+    elif [ "${HAS_GTK}" = "yes" ]; then
+        DISPLAY_TYPE="gtk"
+        echo "Auto-selected: GTK" >&2
+    elif [ "${HAS_COCOA}" = "yes" ]; then
+        DISPLAY_TYPE="cocoa"
+        echo "Auto-selected: Cocoa" >&2
+    else
+        echo "Warning: Neither SDL, GTK, nor Cocoa available, falling back to VNC" >&2
+        DISPLAY_TYPE="vnc"
+    fi
+fi
+"""
+
+pattern = re.compile(
+    r'(?:# Detect supported display types\n.*?\n)?'
+    r'(?:# Set display arguments based on DISPLAY_TYPE\n)?'
+    r'case "\$\{DISPLAY_TYPE\}" in\n.*?^esac$',
+    re.M | re.S,
+)
+match = pattern.search(text)
+if not match:
+    raise SystemExit(f"unable to locate DISPLAY_TYPE case block in {path}")
+
+old_case = match.group(0)
+if "DISPLAY_ARGS=(" in old_case:
+    new_case = detect_block + """
+case "${DISPLAY_TYPE}" in
+    none)
+        DISPLAY_ARGS=(
+            -device virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}
+            -display none
+            -serial mon:stdio
+        )
+        ;;
+    vnc)
+        DISPLAY_ARGS=(
+            -device virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}
+            -vnc :${QEMU_VNC_DISPLAY}
+            -serial stdio
+        )
+        echo "Display: VNC on port $((5900 + QEMU_VNC_DISPLAY))" >&2
+        ;;
+    cocoa)
+        if [ "${HAS_COCOA}" = "no" ]; then
+            echo "Warning: Cocoa not supported, falling back to VNC" >&2
+            DISPLAY_ARGS=(
+                -device virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}
+                -vnc :${QEMU_VNC_DISPLAY}
+                -serial stdio
+            )
+        else
+            DISPLAY_ARGS=(
+                -device virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}
+                -display cocoa
+                -serial stdio
+            )
+            echo "Display: Cocoa (macOS native)" >&2
+        fi
+        ;;
+    gtk)
+        if [ "${HAS_GTK}" = "no" ]; then
+            echo "Warning: GTK not supported, falling back to VNC" >&2
+            DISPLAY_ARGS=(
+                -device virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}
+                -vnc :${QEMU_VNC_DISPLAY}
+                -serial stdio
+            )
+        else
+            DISPLAY_ARGS=(
+                -device virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}
+                -display gtk,gl=off
+                -serial stdio
+            )
+            echo "Display: GTK" >&2
+        fi
+        ;;
+    sdl|*)
+        if [ "${HAS_SDL}" = "no" ]; then
+            echo "Warning: SDL not supported, falling back to VNC" >&2
+            DISPLAY_ARGS=(
+                -device virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}
+                -vnc :${QEMU_VNC_DISPLAY}
+                -serial stdio
+            )
+        else
+            DISPLAY_ARGS=(
+                -device virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}
+                -display sdl,gl=off
+                -serial stdio
+            )
+            echo "Display: SDL" >&2
+        fi
+        ;;
+esac"""
+else:
+    none_match = re.search(
+        r'none\)\s*\n\s*(DISPLAY_ARGS="[^"]+")',
+        old_case,
+    )
+    none_display_args = (
+        none_match.group(1)
+        if none_match
+        else 'DISPLAY_ARGS="-device virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES} -display none -monitor none -chardev stdio,id=serial0,signal=off -serial chardev:serial0"'
+    )
+    new_case = detect_block + f"""
+# Set display arguments based on DISPLAY_TYPE
+case "${{DISPLAY_TYPE}}" in
+    none)
+        {none_display_args}
+        echo "Display: none (no graphics)"
+        ;;
+    vnc)
+        DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -vnc :${{QEMU_VNC_DISPLAY}}"
+        echo "Display: VNC on port $((5900 + QEMU_VNC_DISPLAY))"
+        ;;
+    cocoa)
+        if [ "${{HAS_COCOA}}" = "no" ]; then
+            echo "Warning: Cocoa not supported, falling back to VNC" >&2
+            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -vnc :${{QEMU_VNC_DISPLAY}}"
+        else
+            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -display cocoa"
+            echo "Display: Cocoa (macOS native)"
+        fi
+        ;;
+    gtk)
+        if [ "${{HAS_GTK}}" = "no" ]; then
+            echo "Warning: GTK not supported, falling back to VNC" >&2
+            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -vnc :${{QEMU_VNC_DISPLAY}}"
+        else
+            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -display gtk,gl=off"
+            echo "Display: GTK"
+        fi
+        ;;
+    sdl|*)
+        if [ "${{HAS_SDL}}" = "no" ]; then
+            echo "Warning: SDL not supported, falling back to VNC" >&2
+            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -vnc :${{QEMU_VNC_DISPLAY}}"
+        else
+            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -display sdl,gl=off"
+            echo "Display: SDL"
+        fi
+        ;;
+esac"""
+
+text = text[:match.start()] + new_case + text[match.end():]
+path.write_text(text, encoding="utf-8")
+DISPLAY_PY
 }
 
 write_unix_cli_wrapper() {
@@ -3047,7 +3235,7 @@ case "${PRODUCT}" in
   armv7a_virt)
     IMAGE_DIR="${SOURCE_ROOT}/out/armv7a_virt/packages/phone/images"
     GUEST_ARCH="armv7a"
-    DISPLAY_DEFAULT="none"
+    DISPLAY_DEFAULT="sdl"
     KERNEL_FILE="zImage"
     QEMU_BIN_UNIX="qemu-system-arm"
     QEMU_BIN_WIN="qemu-system-arm.exe"
