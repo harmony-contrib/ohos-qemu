@@ -1,0 +1,35 @@
+diff --git a/foundation/ability/ability_runtime/services/abilitymgr/src/screen_lock/unlock_screen_manager.cpp b/foundation/ability/ability_runtime/services/abilitymgr/src/screen_lock/unlock_screen_manager.cpp
+--- a/foundation/ability/ability_runtime/services/abilitymgr/src/screen_lock/unlock_screen_manager.cpp
++++ b/foundation/ability/ability_runtime/services/abilitymgr/src/screen_lock/unlock_screen_manager.cpp
+@@ -15,6 +15,8 @@
+ 
+ #include "unlock_screen_manager.h"
+ 
++#include <algorithm>
++
+ #include "hilog_tag_wrapper.h"
+ #include "in_process_call_wrapper.h"
+ #include "parameters.h"
+@@ -37,6 +39,10 @@ namespace OHOS {
+ namespace AbilityRuntime {
+ namespace {
+ constexpr char DEVELOPER_MODE_STATE[] = "const.security.developermode.state";
++constexpr char TIMEOUT_UNIT_TIME_RATIO[] = "persist.sys.abilityms.timeout_unit_time_ratio";
++constexpr int32_t DEFAULT_UNLOCK_TIMEOUT_MS = 500;
++constexpr int32_t SCALED_UNLOCK_UNIT_MS = 2500;
++constexpr int32_t MAX_TIMEOUT_UNIT_RATIO = 20;
+ }
+ 
+ UnlockScreenManager::~UnlockScreenManager() {}
+@@ -88,7 +94,10 @@ bool UnlockScreenManager::UnlockScreen()
+         IN_PROCESS_CALL(OHOS::ScreenLock::ScreenLockManager::GetInstance()->Unlock(
+             OHOS::ScreenLock::Action::UNLOCKSCREEN, listener));
+         auto future = promise->get_future();
+-        std::future_status status = future.wait_for(std::chrono::milliseconds(500));
++        int32_t ratio = std::clamp(
++            system::GetIntParameter<int32_t>(TIMEOUT_UNIT_TIME_RATIO, 1), 1, MAX_TIMEOUT_UNIT_RATIO);
++        int32_t timeoutMs = (ratio > 1) ? (SCALED_UNLOCK_UNIT_MS * ratio) : DEFAULT_UNLOCK_TIMEOUT_MS;
++        std::future_status status = future.wait_for(std::chrono::milliseconds(timeoutMs));
+         if (status == std::future_status::timeout) {
+             TAG_LOGE(AAFwkTag::ABILITYMGR, "UnlockScreen timeout");
+             return false;
