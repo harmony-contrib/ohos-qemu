@@ -130,16 +130,42 @@ def configure_sceneboard_preinstall(root: Path, enabled: bool) -> None:
 
 def boot_unlock_configuration() -> dict:
     return {
-        "jobs": [{
-            "name": f"param:{BOOT_UNLOCK_TRIGGER}",
-            "condition": BOOT_UNLOCK_TRIGGER,
-            "cmds": ["start qemu_sceneboard_user_unlock", "start qemu_sceneboard_unlock"],
-        }],
+        "jobs": [
+            {
+                "name": "param:bootevent.lockscreen.ready=true",
+                "condition": "bootevent.lockscreen.ready=true",
+                "cmds": [
+                    "start qemu_sceneboard_user_unlock",
+                    "start qemu_sceneboard_unlock",
+                ],
+            },
+            {
+                "name": "param:bootevent.launcher.ready=true",
+                "condition": "bootevent.launcher.ready=true",
+                "cmds": [
+                    "start qemu_sceneboard_user_unlock",
+                    "start qemu_sceneboard_unlock",
+                ],
+            },
+            {
+                "name": f"param:{BOOT_UNLOCK_TRIGGER}",
+                "condition": BOOT_UNLOCK_TRIGGER,
+                "cmds": [
+                    "start qemu_sceneboard_user_unlock",
+                    "sleep 2",
+                    "start qemu_sceneboard_unlock",
+                    "sleep 5",
+                    "start qemu_sceneboard_user_unlock",
+                    "sleep 1",
+                    "start qemu_sceneboard_unlock",
+                ],
+            },
+        ],
         "services": [
             {
                 "name": "qemu_sceneboard_user_unlock",
                 "path": [
-                    "/system/bin/cem", "publish", "-e", BOOT_UNLOCK_EVENTS[0],
+                    "/system/bin/cem", "publish", "-s", "-e", BOOT_UNLOCK_EVENTS[0],
                     "-c", str(BOOT_UNLOCK_USER_ID),
                 ],
                 "uid": "system",
@@ -147,6 +173,7 @@ def boot_unlock_configuration() -> dict:
                 "apl": "system_core",
                 "permission": [
                     "ohos.permission.PUBLISH_SYSTEM_COMMON_EVENT",
+                    "ohos.permission.COMMONEVENT_STICKY",
                     "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS",
                 ],
                 "once": 1,
@@ -156,7 +183,7 @@ def boot_unlock_configuration() -> dict:
             {
                 "name": "qemu_sceneboard_unlock",
                 "path": [
-                    "/system/bin/cem", "publish", "-e", BOOT_UNLOCK_EVENTS[1],
+                    "/system/bin/cem", "publish", "-s", "-e", BOOT_UNLOCK_EVENTS[1],
                     "-u", str(BOOT_UNLOCK_USER_ID),
                 ],
                 "uid": "system",
@@ -164,6 +191,7 @@ def boot_unlock_configuration() -> dict:
                 "apl": "system_core",
                 "permission": [
                     "ohos.permission.PUBLISH_SYSTEM_COMMON_EVENT",
+                    "ohos.permission.COMMONEVENT_STICKY",
                     "ohos.permission.INTERACT_ACROSS_LOCAL_ACCOUNTS",
                 ],
                 "once": 1,
