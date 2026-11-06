@@ -757,6 +757,37 @@ ensure_armv7a_sceneboard_headless_scanout() {
   fi
 }
 
+ensure_x86_64_disable_acpi_suspend() {
+  local file="$1"
+  local product="$2"
+
+  if [ "${product}" != "x86_64_virt" ]; then
+    return 0
+  fi
+  if grep -q 'ICH9-LPC.disable_s3=1' "${file}"; then
+    return 0
+  fi
+
+  local tmp
+  tmp="$(mktemp)"
+  awk '
+    BEGIN { injected = 0 }
+    {
+      print
+      if (!injected && $0 ~ /-machine "\$\{MACHINE\}" \\$/) {
+        print "    -global ICH9-LPC.disable_s3=1 -global ICH9-LPC.disable_s4=1 \\"
+        injected = 1
+      }
+    }
+    END { if (!injected) exit 42 }
+  ' "${file}" >"${tmp}" || {
+    rm -f "${tmp}"
+    echo "unable to disable x86_64 ICH9-LPC ACPI S3/S4 in ${file}" >&2
+    exit 1
+  }
+  mv "${tmp}" "${file}"
+}
+
 ensure_qemu_accel_env_support() {
   local file="$1"
   local default_qemu_bin="${2:-qemu-system-x86_64}"
@@ -1345,6 +1376,8 @@ if (\$AccessibilityEnabled -notin @("0", "1")) {
 
 \$ArgsList = @(
   "-machine", "q35",
+  "-global", "ICH9-LPC.disable_s3=1",
+  "-global", "ICH9-LPC.disable_s4=1",
   \$AccelArgs,
   "-cpu", "\$CpuValue",
   "-smp", "\$SmpValue",
@@ -1609,6 +1642,8 @@ write_full_product_launchers() {
       "${pointer_device}"
     ensure_armv7a_sceneboard_headless_scanout \
       "${launch_out}/qemu_run.sh" "${product}" "${device_type_profile}"
+    ensure_x86_64_disable_acpi_suspend \
+      "${launch_out}/qemu_run.sh" "${product}"
     if [ "${pointer_device}" = "virtio-tablet-pci" ] && \
        { ! grep -q 'virtio-tablet-pci' "${launch_out}/qemu_run.sh" || \
          grep -q 'virtio-mouse-pci' "${launch_out}/qemu_run.sh"; }; then

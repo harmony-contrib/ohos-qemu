@@ -1,0 +1,86 @@
+diff --git a/drivers/peripheral/power/interfaces/hdi_service/src/power_interface_impl.cpp b/drivers/peripheral/power/interfaces/hdi_service/src/power_interface_impl.cpp
+--- a/drivers/peripheral/power/interfaces/hdi_service/src/power_interface_impl.cpp
++++ b/drivers/peripheral/power/interfaces/hdi_service/src/power_interface_impl.cpp
+@@ -88,6 +88,17 @@ static void LoadStringFd(int32_t fd, std::string &content);
+ static std::string ReadWakeCount();
+ static bool WriteWakeCount(const std::string &count);
+ static void NotifyCallback(int code);
++static bool IsVirtGuest()
++{
++    static const bool isVirt = []() {
++        std::string cmdline;
++        if (!LoadStringFromFile("/proc/cmdline", cmdline)) {
++            return false;
++        }
++        return cmdline.find("ohos.boot.hardware=virt") != std::string::npos;
++    }();
++    return isVirt;
++}
+ // IPowerHdiCallback
+ static sptr<IPowerHdiCallback> g_callback = nullptr;
+ sptr<PowerInterfaceImpl::PowerDeathRecipient> g_deathRecipient = nullptr;
+@@ -186,13 +197,16 @@ int32_t PowerInterfaceImpl::StartSuspend()
+ {
+     std::lock_guard<std::mutex> lock(g_mutex);
+     HDF_LOGI("staS3");
+-    g_suspendRetry = true;
+-    if (g_suspending) {
+-        g_powerState = PowerHdfState::INACTIVE;
+-        g_suspendCv.notify_one();
+-        return HDF_SUCCESS;
++    {
++        std::lock_guard<std::mutex> suspendLock(g_suspendMutex);
++        g_suspendRetry = true;
++        if (g_suspending) {
++            g_powerState = PowerHdfState::INACTIVE;
++            g_suspendCv.notify_all();
++            return HDF_SUCCESS;
++        }
++        g_suspending = true;
+     }
+-    g_suspending = true;
+     g_daemon = std::make_unique<std::thread>(&AutoSuspendLoop);
+     g_daemon->detach();
+     return HDF_SUCCESS;
+@@ -210,6 +224,16 @@ void AutoSuspendLoop()
+     }
+ #endif
+     while (true) {
++        if (IsVirtGuest()) {
++            g_suspendCv.wait(suspendLock, [] { return g_suspendRetry.load(); });
++            NotifyCallback(CMD_ON_SUSPEND);
++            g_powerState = PowerHdfState::SLEEP;
++            HDF_LOGI("virt guest userspace suspend: skipping /sys/power/state write");
++            g_suspendCv.wait(suspendLock, [] { return !g_suspendRetry.load(); });
++            g_powerState = PowerHdfState::AWAKE;
++            NotifyCallback(CMD_ON_WAKEUP);
++            continue;
++        }
+         std::this_thread::sleep_for(waitTime_);
+         const std::string wakeupCount = ReadWakeCount();
+         if (wakeupCount.empty()) {
+@@ -352,6 +376,9 @@ void PowerInterfaceImpl::PowerDeathRecipientExt::OnRemoteDied(const wptr<IRemote
+ 
+ int32_t DoSuspend()
+ {
++    if (IsVirtGuest()) {
++        return HDF_SUCCESS;
++    }
+ #ifdef DRIVER_PERIPHERAL_POWER_SUSPEND_WITH_TAG
+     if (!g_suspendTag.empty()) {
+         return DoSuspendWithTag();
+@@ -410,8 +437,12 @@ void NotifyCallback(int code)
+ int32_t PowerInterfaceImpl::StopSuspend()
+ {
+     HDF_LOGI("stpS3");
+-    g_suspendRetry = false;
+-    g_powerState = PowerHdfState::AWAKE;
++    {
++        std::lock_guard<std::mutex> suspendLock(g_suspendMutex);
++        g_suspendRetry = false;
++        g_powerState = PowerHdfState::AWAKE;
++    }
++    g_suspendCv.notify_all();
+     return HDF_SUCCESS;
+ }
+ 

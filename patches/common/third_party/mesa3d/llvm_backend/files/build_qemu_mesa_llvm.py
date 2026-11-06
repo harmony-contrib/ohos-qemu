@@ -60,6 +60,211 @@ def check_cached_objects(output: Path, machine: int) -> int:
     return count
 
 
+def patch_qemu_mesa_runtime_fixes(source: Path) -> None:
+    """Unblock OpenHarmony DFX signals, bound x86 TCG JIT cost, and drop primary DRM master."""
+    u_thread = source / "src/util/u_thread.h"
+    u_thread_text = u_thread.read_text()
+    old_sigmask = (
+        "#ifdef HAVE_PTHREAD\n"
+        "   sigset_t saved_set, new_set;\n"
+        "   int ret;\n\n"
+        "   sigfillset(&new_set);\n"
+        "   sigdelset(&new_set, SIGSYS);\n"
+        "   pthread_sigmask(SIG_BLOCK, &new_set, &saved_set);\n"
+    )
+    new_sigmask = (
+        "#ifdef HAVE_PTHREAD\n"
+        "   sigset_t saved_set, new_set;\n"
+        "   int ret, sig;\n\n"
+        "   sigfillset(&new_set);\n"
+        "   sigdelset(&new_set, SIGSYS);\n"
+        "   sigdelset(&new_set, SIGABRT);\n"
+        "   sigdelset(&new_set, SIGBUS);\n"
+        "   sigdelset(&new_set, SIGFPE);\n"
+        "   sigdelset(&new_set, SIGILL);\n"
+        "   sigdelset(&new_set, SIGSEGV);\n"
+        "   sigdelset(&new_set, SIGTRAP);\n"
+        "#ifdef SIGRTMAX\n"
+        "   for (sig = 35; sig <= SIGRTMAX; ++sig)\n"
+        "      sigdelset(&new_set, sig);\n"
+        "#endif\n"
+        "   pthread_sigmask(SIG_BLOCK, &new_set, &saved_set);\n"
+    )
+    if new_sigmask not in u_thread_text:
+        if u_thread_text.count(old_sigmask) != 1:
+            raise ValueError("unexpected Mesa u_thread_create signal mask block")
+        u_thread.write_text(u_thread_text.replace(old_sigmask, new_sigmask, 1))
+
+    lp_init = source / "src/gallium/auxiliary/gallivm/lp_bld_init.c"
+    lp_init_text = lp_init.read_text()
+    opt_decl = (
+        "#include <pthread.h>\n"
+        "#define GALLIVM_JIT_THREAD_STACK_SIZE (8u * 1024u * 1024u)\n\n"
+        'DEBUG_GET_ONCE_BOOL_OPTION(lp_full_jit_opt, "LP_FULL_JIT_OPT", false)\n\n'
+        "static boolean gallivm_initialized = FALSE;\n"
+    )
+    old_decl = "static boolean gallivm_initialized = FALSE;\n"
+    if opt_decl not in lp_init_text:
+        if lp_init_text.count(old_decl) != 1:
+            raise ValueError("unexpected Mesa gallivm_initialized declaration")
+        lp_init_text = lp_init_text.replace(old_decl, opt_decl, 1)
+
+    old_passes = (
+        "      LLVMAddInstructionCombiningPass(gallivm->passmgr);\n"
+        "      LLVMAddGVNPass(gallivm->passmgr);\n"
+    )
+    new_passes = (
+        "      if (debug_get_option_lp_full_jit_opt()) {\n"
+        "         LLVMAddInstructionCombiningPass(gallivm->passmgr);\n"
+        "         LLVMAddGVNPass(gallivm->passmgr);\n"
+        "      }\n"
+    )
+    if new_passes not in lp_init_text:
+        if lp_init_text.count(old_passes) != 1:
+            raise ValueError("unexpected Mesa gallivm InstCombine/GVN pass setup")
+        lp_init_text = lp_init_text.replace(old_passes, new_passes, 1)
+
+    old_optlevel = (
+        "      else {\n"
+        "         optlevel = Default;\n"
+        "      }\n"
+    )
+    new_optlevel = (
+        "      else {\n"
+        "         optlevel = debug_get_option_lp_full_jit_opt() ? Default : None;\n"
+        "      }\n"
+    )
+    if new_optlevel not in lp_init_text:
+        if lp_init_text.count(old_optlevel) != 1:
+            raise ValueError("unexpected Mesa gallivm optlevel block")
+        lp_init_text = lp_init_text.replace(old_optlevel, new_optlevel, 1)
+
+    old_perf = '   gallivm_perf = debug_get_flags_option("GALLIVM_PERF", lp_bld_perf_flags, 0 );\n'
+    new_perf = (
+        '   gallivm_perf = debug_get_flags_option("GALLIVM_PERF", lp_bld_perf_flags,\n'
+        "                                         debug_get_option_lp_full_jit_opt() ? 0 : GALLIVM_PERF_NO_OPT);\n"
+    )
+    if new_perf not in lp_init_text:
+        if lp_init_text.count(old_perf) != 1:
+            raise ValueError("unexpected Mesa gallivm_perf initialization")
+        lp_init_text = lp_init_text.replace(old_perf, new_perf, 1)
+
+    old_compile_sig = "void\ngallivm_compile_module(struct gallivm_state *gallivm)\n"
+    new_compile_sig = "static void\ngallivm_compile_module_impl(struct gallivm_state *gallivm)\n"
+    if new_compile_sig not in lp_init_text:
+        if lp_init_text.count(old_compile_sig) != 1:
+            raise ValueError("unexpected Mesa gallivm_compile_module signature")
+        lp_init_text = lp_init_text.replace(old_compile_sig, new_compile_sig, 1)
+
+    old_jit_sig = (
+        "func_pointer\n"
+        "gallivm_jit_function(struct gallivm_state *gallivm,\n"
+        "                     LLVMValueRef func)\n"
+    )
+    new_jit_sig = (
+        "static void *\n"
+        "gallivm_compile_module_thread(void *arg)\n"
+        "{\n"
+        "   gallivm_compile_module_impl((struct gallivm_state *)arg);\n"
+        "   return NULL;\n"
+        "}\n\n"
+        "void\n"
+        "gallivm_compile_module(struct gallivm_state *gallivm)\n"
+        "{\n"
+        "   pthread_attr_t attr;\n"
+        "   pthread_t thread;\n"
+        "   if (pthread_attr_init(&attr) == 0) {\n"
+        "      if (pthread_attr_setstacksize(&attr, GALLIVM_JIT_THREAD_STACK_SIZE) == 0 &&\n"
+        "          pthread_create(&thread, &attr, gallivm_compile_module_thread, gallivm) == 0) {\n"
+        "         pthread_attr_destroy(&attr);\n"
+        "         pthread_join(thread, NULL);\n"
+        "         return;\n"
+        "      }\n"
+        "      pthread_attr_destroy(&attr);\n"
+        "   }\n"
+        "   gallivm_compile_module_impl(gallivm);\n"
+        "}\n\n"
+        "static func_pointer\n"
+        "gallivm_jit_function_impl(struct gallivm_state *gallivm,\n"
+        "                          LLVMValueRef func)\n"
+    )
+    if new_jit_sig not in lp_init_text:
+        if lp_init_text.count(old_jit_sig) != 1:
+            raise ValueError("unexpected Mesa gallivm_jit_function signature")
+        lp_init_text = lp_init_text.replace(old_jit_sig, new_jit_sig, 1)
+
+    old_perf_flags_sig = "unsigned gallivm_get_perf_flags(void)\n"
+    new_perf_flags_sig = (
+        "struct gallivm_jit_function_call {\n"
+        "   struct gallivm_state *gallivm;\n"
+        "   LLVMValueRef func;\n"
+        "   func_pointer result;\n"
+        "};\n\n"
+        "static void *\n"
+        "gallivm_jit_function_thread(void *arg)\n"
+        "{\n"
+        "   struct gallivm_jit_function_call *call =\n"
+        "      (struct gallivm_jit_function_call *)arg;\n"
+        "   call->result = gallivm_jit_function_impl(call->gallivm, call->func);\n"
+        "   return NULL;\n"
+        "}\n\n"
+        "func_pointer\n"
+        "gallivm_jit_function(struct gallivm_state *gallivm,\n"
+        "                     LLVMValueRef func)\n"
+        "{\n"
+        "   struct gallivm_jit_function_call call = { gallivm, func, NULL };\n"
+        "   pthread_attr_t attr;\n"
+        "   pthread_t thread;\n"
+        "   if (pthread_attr_init(&attr) == 0) {\n"
+        "      if (pthread_attr_setstacksize(&attr, GALLIVM_JIT_THREAD_STACK_SIZE) == 0 &&\n"
+        "          pthread_create(&thread, &attr, gallivm_jit_function_thread, &call) == 0) {\n"
+        "         pthread_attr_destroy(&attr);\n"
+        "         pthread_join(thread, NULL);\n"
+        "         return call.result;\n"
+        "      }\n"
+        "      pthread_attr_destroy(&attr);\n"
+        "   }\n"
+        "   return gallivm_jit_function_impl(gallivm, func);\n"
+        "}\n\n"
+        "unsigned gallivm_get_perf_flags(void)\n"
+    )
+    if new_perf_flags_sig not in lp_init_text:
+        if lp_init_text.count(old_perf_flags_sig) != 1:
+            raise ValueError("unexpected Mesa gallivm_get_perf_flags signature")
+        lp_init_text = lp_init_text.replace(old_perf_flags_sig, new_perf_flags_sig, 1)
+    lp_init.write_text(lp_init_text)
+
+    platform_ohos = source / "src/egl/drivers/dri2/platform_ohos.c"
+    platform_ohos_text = platform_ohos.read_text()
+    old_open_primary = (
+        "        dri2_dpy->fd = loader_open_device(device->nodes[node_type]);\n"
+        "        if (dri2_dpy->fd < 0) {\n"
+        "            DISPLAY_LOGI();\n"
+        '            _eglLog(_EGL_WARNING, "%s() Failed to open DRM device %s",\n'
+        "                    __func__, device->nodes[node_type]);\n"
+        "            continue;\n"
+        "        }\n"
+    )
+    new_open_primary = (
+        "        dri2_dpy->fd = loader_open_device(device->nodes[node_type]);\n"
+        "        if (dri2_dpy->fd < 0) {\n"
+        "            DISPLAY_LOGI();\n"
+        '            _eglLog(_EGL_WARNING, "%s() Failed to open DRM device %s",\n'
+        "                    __func__, device->nodes[node_type]);\n"
+        "            continue;\n"
+        "        }\n"
+        "        if (node_type == DRM_NODE_PRIMARY) {\n"
+        "            drmDropMaster(dri2_dpy->fd);\n"
+        "        }\n"
+    )
+    if new_open_primary not in platform_ohos_text:
+        if platform_ohos_text.count(old_open_primary) != 1:
+            raise ValueError("unexpected Mesa platform_ohos primary DRM open block")
+        platform_ohos.write_text(
+            platform_ohos_text.replace(old_open_primary, new_open_primary, 1)
+        )
+
+
 def build(out_dir: Path) -> None:
     out_dir = out_dir.resolve()
     product = out_dir.name
@@ -120,6 +325,7 @@ def build(out_dir: Path) -> None:
         if lp_misc_text.count(disasm_call) != 1:
             raise ValueError("unexpected Mesa gallivm native disassembler initialization")
         lp_misc.write_text(lp_misc_text.replace(disasm_call, guarded_disasm_call, 1))
+    patch_qemu_mesa_runtime_fixes(source)
     subprocess.run([sys.executable, str(mapping), "--source-root", str(source)], check=True)
     subprocess.run([sys.executable, str(build_id / "apply_mesa_build_id.py"),
                     "--source-root", str(source)], check=True)

@@ -4060,6 +4060,26 @@ PY
     2>&1 | tee "${CACHE_ROOT}/logs/apply_completion_handler_component.log"
   bash "${QEMU_DISPLAY_MODES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_display_modes_component.log"
+  bash "${PATCH_ROOT}/common/device/qemu/display_gralloc_and_dpms/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_display_gralloc_and_dpms.log"
+  bash "${PATCH_ROOT}/common/drivers/peripheral/display/allocator_xcollie_noop/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_allocator_xcollie_noop.log"
+  bash "${PATCH_ROOT}/common/drivers/peripheral/power/virt_userspace_suspend/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_power_virt_userspace_suspend.log"
+  bash "${PATCH_ROOT}/common/base/theme/screenlock_mgr/virt_boot_unlock/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_screenlock_virt_boot_unlock.log"
+  bash "${PATCH_ROOT}/common/foundation/ability/ability_runtime/unlock_screen_timeout_scale/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_ams_unlock_screen_timeout_scale.log"
+  bash "${PATCH_ROOT}/common/base/hiviewdfx/hicollie/watchdog_timeout_scale/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_hicollie_watchdog_timeout_scale.log"
+  bash "${PATCH_ROOT}/common/base/theme/wallpaper_mgr/extension_context_cfi/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_wallpaper_extension_context_cfi.log"
+  bash "${PATCH_ROOT}/common/foundation/systemabilitymgr/samgr/load_callback_cfi/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_samgr_load_callback_cfi.log"
+  bash "${PATCH_ROOT}/common/foundation/graphic/graphic_2d/gles_wrapper_hook_table/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_gles_wrapper_hook_table.log"
+  bash "${PATCH_ROOT}/common/foundation/barrierfree/accessibility/refresh_installed_abilities/apply.sh" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_accessibility_refresh_installed_abilities.log"
   bash "${SETTINGS_REFRESH_RATE_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_settings_refresh_rate_component.log"
   bash "${PATCH_ROOT}/common/applications/standard/settings/share_picker/apply.sh" --source-root "${OHOS_ROOT}" \

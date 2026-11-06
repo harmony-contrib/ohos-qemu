@@ -36,7 +36,7 @@ public:
         if (!input_.IsRunning() || !rotation_.IsRunning() || !head_.IsRunning()) return SENSOR_FAILURE;
         HdfSensorInformationVdi sensor{};
         sensor.sensorName = "QEMU external accelerometer";
-        sensor.vendorName = "OpenHarmony QEMU";
+        sensor.vendorName = "OHOS QEMU";
         sensor.firmwareVersion = "qemu-ext-v1";
         sensor.hardwareVersion = "virtual-v1";
         sensor.sensorTypeId = ACCELEROMETER;
@@ -53,7 +53,7 @@ public:
         sensor.fifoMaxEventCount = 0;
         info.push_back(sensor);
         sensor.sensorName = "QEMU external rotation vector";
-        sensor.firmwareVersion = "qemu-rotation-v1";
+        sensor.firmwareVersion = "qemu-rot-v1";
         sensor.sensorTypeId = ROTATION_VECTOR;
         sensor.sensorId = ROTATION_VECTOR;
         sensor.sensorHandle.sensorType = ROTATION_VECTOR;
@@ -61,7 +61,7 @@ public:
         sensor.accuracy = 0.0001F;
         info.push_back(sensor);
         sensor.sensorName = "QEMU external head posture";
-        sensor.firmwareVersion = "qemu-headposture-v1";
+        sensor.firmwareVersion = "qemu-head-v1";
         sensor.sensorTypeId = HEADPOSTURE;
         sensor.sensorId = HEADPOSTURE;
         sensor.sensorHandle.sensorType = HEADPOSTURE;

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scale SceneBoard lifecycle timeouts for phone/2in1 QEMU TCG guests."""
+"""Scale SceneBoard lifecycle and AppFreeze/ANR watchdog timeouts for QEMU TCG guests."""
 
 import argparse
 import re
@@ -9,8 +9,14 @@ import tempfile
 from pathlib import Path
 
 
-PARAMETER = "persist.sys.abilityms.timeout_unit_time_ratio"
-VALUE = "10"
+PARAMETERS = (
+    ("persist.sys.abilityms.timeout_unit_time_ratio", "10"),
+    # AppExecFwk::Watchdog and MMI::ANRManager divide this <=4-digit integer by 1000.
+    ("const.sys.dfx.appfreeze.timeout_unit_time_ratio", "9999"),
+)
+DAC_PARAMETERS = (
+    ("const.sys.dfx.appfreeze.timeout_unit_time_ratio", "foundation:foundation:0755"),
+)
 IMAGE_PATHS = ("/etc/param/appfwk.para", "/system/etc/param/appfwk.para")
 
 
@@ -53,6 +59,58 @@ def file_metadata(tool: str, image: Path, path: str) -> tuple[str, str, str]:
     return mode.group(1), owner.group(1), owner.group(2)
 
 
+def upsert_parameters(text: str, entries: tuple[tuple[str, str], ...]) -> str:
+    updated = text
+    for name, value in entries:
+        updated, count = re.subn(
+            rf"(?m)^\s*{re.escape(name)}\s*=.*$",
+            f"{name} = {value}",
+            updated,
+        )
+        if count > 1:
+            raise RuntimeError(f"found {count} conflicting {name} entries")
+        if count == 0:
+            updated = updated.rstrip("\n") + f"\n{name} = {value}\n"
+    return updated
+
+
+def update_image_file(
+    debugfs: str,
+    image: Path,
+    work: Path,
+    path: str,
+    entries: tuple[tuple[str, str], ...],
+    stem: str,
+) -> None:
+    original = work / f"{stem}.original"
+    replacement = work / f"{stem}.replacement"
+    actual = work / f"{stem}.actual"
+    label = work / f"{stem}.selinux"
+    run_debugfs(debugfs, image, f"dump {path} {original}")
+    updated = upsert_parameters(original.read_text(), entries)
+
+    metadata = file_metadata(debugfs, image, path)
+    replacement.write_text(updated)
+    replacement.chmod(int(metadata[0], 8))
+    run_debugfs(debugfs, image, f"ea_get -f {label} {path} security.selinux")
+    if not label.is_file() or not label.stat().st_size:
+        raise RuntimeError(f"missing SELinux label on {path}")
+
+    run_debugfs(debugfs, image, f"rm {path}", writable=True)
+    run_debugfs(debugfs, image, f"write {replacement} {path}", writable=True)
+    run_debugfs(
+        debugfs,
+        image,
+        f"ea_set -f {label} {path} security.selinux",
+        writable=True,
+    )
+    if file_metadata(debugfs, image, path) != metadata:
+        raise RuntimeError(f"metadata changed while updating {path}")
+    run_debugfs(debugfs, image, f"dump {path} {actual}")
+    if actual.read_text() != updated:
+        raise RuntimeError(f"failed to persist updates to {path}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("system_image", type=Path)
@@ -65,45 +123,19 @@ def main() -> None:
     if not Path(debugfs).is_file():
         parser.error("debugfs was not found")
     path = find_parameter_file(debugfs, image)
+    dac_path = f"{path}.dac"
+    dac_stat = subprocess.run(
+        [debugfs, "-R", f"stat {dac_path}", str(image)],
+        capture_output=True,
+        text=True,
+    )
+    has_dac = dac_stat.returncode == 0 and "Inode:" in dac_stat.stdout
 
     with tempfile.TemporaryDirectory(prefix="qemu-2in1-runtime-") as directory:
         work = Path(directory)
-        original = work / "appfwk.original.para"
-        replacement = work / "appfwk.replacement.para"
-        actual = work / "appfwk.actual.para"
-        label = work / "appfwk.selinux"
-        run_debugfs(debugfs, image, f"dump {path} {original}")
-        text = original.read_text()
-        updated, count = re.subn(
-            rf"(?m)^\s*{re.escape(PARAMETER)}\s*=.*$",
-            f"{PARAMETER} = {VALUE}",
-            text,
-        )
-        if count > 1:
-            raise RuntimeError(f"found {count} conflicting {PARAMETER} entries")
-        if count == 0:
-            updated = text.rstrip("\n") + f"\n{PARAMETER} = {VALUE}\n"
-
-        metadata = file_metadata(debugfs, image, path)
-        replacement.write_text(updated)
-        replacement.chmod(int(metadata[0], 8))
-        run_debugfs(debugfs, image, f"ea_get -f {label} {path} security.selinux")
-        if not label.is_file() or not label.stat().st_size:
-            raise RuntimeError(f"missing SELinux label on {path}")
-
-        run_debugfs(debugfs, image, f"rm {path}", writable=True)
-        run_debugfs(debugfs, image, f"write {replacement} {path}", writable=True)
-        run_debugfs(
-            debugfs,
-            image,
-            f"ea_set -f {label} {path} security.selinux",
-            writable=True,
-        )
-        if file_metadata(debugfs, image, path) != metadata:
-            raise RuntimeError(f"metadata changed while updating {path}")
-        run_debugfs(debugfs, image, f"dump {path} {actual}")
-        if actual.read_text() != updated:
-            raise RuntimeError(f"failed to persist {PARAMETER}")
+        update_image_file(debugfs, image, work, path, PARAMETERS, "appfwk.para")
+        if has_dac:
+            update_image_file(debugfs, image, work, dac_path, DAC_PARAMETERS, "appfwk.para.dac")
 
     print(f"SceneBoard lifecycle timeout configured in {image}")
 

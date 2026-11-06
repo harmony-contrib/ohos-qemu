@@ -42,7 +42,7 @@ def load_manifest():
 
 
 def legacy_complete(root, manifest):
-    for key in ('legacy', 'rotation_legacy'):
+    for key in ('legacy', 'rotation_legacy', 'headposture_legacy'):
         old = manifest[key]
         values = {**old['originals'], **old['files']}
         if all(safe_path(root, n).is_file() and sha(safe_path(root, n).read_bytes()) == expected
@@ -116,11 +116,13 @@ def apply(root):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(original[relative][0])
         if legacy:
-            edit = legacy.get('edit', manifest['legacy_edit']); target = candidate / edit['path']
-            data = target.read_text()
-            if data.count(edit['before']) != 1:
-                raise ValueError('legacy GN unique source-list edit changed')
-            target.write_text(data.replace(edit['before'], edit['after']))
+            edit = legacy['edit'] if 'edit' in legacy else manifest['legacy_edit']
+            if edit is not None:
+                target = candidate / edit['path']
+                data = target.read_text()
+                if data.count(edit['before']) != 1:
+                    raise ValueError('legacy GN unique source-list edit changed')
+                target.write_text(data.replace(edit['before'], edit['after']))
         else:
             subprocess.run(['git', '-C', str(candidate), 'apply', str(patch)], check=True)
         for relative, row in manifest['files'].items():
