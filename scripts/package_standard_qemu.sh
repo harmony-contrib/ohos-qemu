@@ -1059,6 +1059,12 @@ case "${DISPLAY_TYPE}" in
                 -serial stdio
             )
         else
+            if [ "$(uname)" = "Darwin" ]; then
+                defaults write "$(basename "${QEMU_BIN}")" NSAppSleepDisabled -bool YES 2>/dev/null || true
+                if command -v taskpolicy >/dev/null 2>&1; then
+                    ( while kill -0 $$ 2>/dev/null; do taskpolicy -B -p $$ 2>/dev/null || true; sleep 1; done ) </dev/null >/dev/null 2>&1 &
+                fi
+            fi
             DISPLAY_ARGS=(
                 -device virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES}
                 -display cocoa
@@ -1112,6 +1118,8 @@ else:
         if none_match
         else 'DISPLAY_ARGS="-device virtio-gpu-pci,xres=${QEMU_XRES},yres=${QEMU_YRES} -display none -monitor none -chardev stdio,id=serial0,signal=off -serial chardev:serial0"'
     )
+    serial_tail_match = re.search(r'(-monitor none\b.*)"$', none_display_args)
+    serial_tail = " " + serial_tail_match.group(1) if serial_tail_match else " -monitor none -serial file:/dev/fd/1"
     new_case = detect_block + f"""
 # Set display arguments based on DISPLAY_TYPE
 case "${{DISPLAY_TYPE}}" in
@@ -1120,33 +1128,39 @@ case "${{DISPLAY_TYPE}}" in
         echo "Display: none (no graphics)"
         ;;
     vnc)
-        DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -vnc :${{QEMU_VNC_DISPLAY}}"
+        DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -vnc :${{QEMU_VNC_DISPLAY}}{serial_tail}"
         echo "Display: VNC on port $((5900 + QEMU_VNC_DISPLAY))"
         ;;
     cocoa)
         if [ "${{HAS_COCOA}}" = "no" ]; then
             echo "Warning: Cocoa not supported, falling back to VNC" >&2
-            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -vnc :${{QEMU_VNC_DISPLAY}}"
+            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -vnc :${{QEMU_VNC_DISPLAY}}{serial_tail}"
         else
-            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -display cocoa"
+            if [ "$(uname)" = "Darwin" ]; then
+                defaults write "$(basename "${{QEMU_BIN}}")" NSAppSleepDisabled -bool YES 2>/dev/null || true
+                if command -v taskpolicy >/dev/null 2>&1; then
+                    ( while kill -0 $$ 2>/dev/null; do taskpolicy -B -p $$ 2>/dev/null || true; sleep 1; done ) </dev/null >/dev/null 2>&1 &
+                fi
+            fi
+            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -display cocoa{serial_tail}"
             echo "Display: Cocoa (macOS native)"
         fi
         ;;
     gtk)
         if [ "${{HAS_GTK}}" = "no" ]; then
             echo "Warning: GTK not supported, falling back to VNC" >&2
-            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -vnc :${{QEMU_VNC_DISPLAY}}"
+            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -vnc :${{QEMU_VNC_DISPLAY}}{serial_tail}"
         else
-            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -display gtk,gl=off"
+            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -display gtk,gl=off{serial_tail}"
             echo "Display: GTK"
         fi
         ;;
     sdl|*)
         if [ "${{HAS_SDL}}" = "no" ]; then
             echo "Warning: SDL not supported, falling back to VNC" >&2
-            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -vnc :${{QEMU_VNC_DISPLAY}}"
+            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -vnc :${{QEMU_VNC_DISPLAY}}{serial_tail}"
         else
-            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -display sdl,gl=off"
+            DISPLAY_ARGS="-device virtio-gpu-pci,xres=${{QEMU_XRES}},yres=${{QEMU_YRES}} -display sdl,gl=off{serial_tail}"
             echo "Display: SDL"
         fi
         ;;

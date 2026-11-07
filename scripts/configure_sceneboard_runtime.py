@@ -2,11 +2,16 @@
 """Scale SceneBoard lifecycle and AppFreeze/ANR watchdog timeouts for QEMU TCG guests."""
 
 import argparse
+import json
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "patches" / "lib"))
+from sceneboard_profile import boot_unlock_configuration
 
 
 PARAMETERS = (
@@ -18,6 +23,7 @@ DAC_PARAMETERS = (
     ("const.sys.dfx.appfreeze.timeout_unit_time_ratio", "foundation:foundation:0755"),
 )
 IMAGE_PATHS = ("/etc/param/appfwk.para", "/system/etc/param/appfwk.para")
+UNLOCK_CFG_PATHS = ("/etc/init/qemu_sceneboard_unlock.cfg", "/system/etc/init/qemu_sceneboard_unlock.cfg")
 
 
 def run_debugfs(tool: str, image: Path, operation: str, *, writable: bool = False) -> str:
@@ -111,6 +117,46 @@ def update_image_file(
         raise RuntimeError(f"failed to persist updates to {path}")
 
 
+def update_unlock_cfg(debugfs: str, image: Path, work: Path) -> None:
+    unlock_path = None
+    for candidate in UNLOCK_CFG_PATHS:
+        output = subprocess.run(
+            [debugfs, "-R", f"stat {candidate}", str(image)],
+            capture_output=True,
+            text=True,
+        )
+        if output.returncode == 0 and "Inode:" in output.stdout:
+            unlock_path = candidate
+            break
+    if not unlock_path:
+        return
+
+    updated = json.dumps(boot_unlock_configuration(), indent=2, ensure_ascii=False) + "\n"
+    replacement = work / "qemu_sceneboard_unlock.cfg.replacement"
+    actual = work / "qemu_sceneboard_unlock.cfg.actual"
+    label = work / "qemu_sceneboard_unlock.cfg.selinux"
+    metadata = file_metadata(debugfs, image, unlock_path)
+    replacement.write_text(updated)
+    replacement.chmod(int(metadata[0], 8))
+    run_debugfs(debugfs, image, f"ea_get -f {label} {unlock_path} security.selinux")
+    if not label.is_file() or not label.stat().st_size:
+        raise RuntimeError(f"missing SELinux label on {unlock_path}")
+
+    run_debugfs(debugfs, image, f"rm {unlock_path}", writable=True)
+    run_debugfs(debugfs, image, f"write {replacement} {unlock_path}", writable=True)
+    run_debugfs(
+        debugfs,
+        image,
+        f"ea_set -f {label} {unlock_path} security.selinux",
+        writable=True,
+    )
+    if file_metadata(debugfs, image, unlock_path) != metadata:
+        raise RuntimeError(f"metadata changed while updating {unlock_path}")
+    run_debugfs(debugfs, image, f"dump {unlock_path} {actual}")
+    if actual.read_text() != updated:
+        raise RuntimeError(f"failed to persist updates to {unlock_path}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("system_image", type=Path)
@@ -136,6 +182,7 @@ def main() -> None:
         update_image_file(debugfs, image, work, path, PARAMETERS, "appfwk.para")
         if has_dac:
             update_image_file(debugfs, image, work, dac_path, DAC_PARAMETERS, "appfwk.para.dac")
+        update_unlock_cfg(debugfs, image, work)
 
     print(f"SceneBoard lifecycle timeout configured in {image}")
 
