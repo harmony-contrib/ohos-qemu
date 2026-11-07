@@ -4506,6 +4506,25 @@ if netfw_cpp.is_file() and not netfw_cpp.is_symlink():
     patched_log = 'NETMGR_EXT_LOG_I("FirewallCallback::OnIntercept: time=%{public}llu", static_cast<unsigned long long>(record->time));'
     if orig_log in txt and patched_log not in txt:
         netfw_cpp.write_text(txt.replace(orig_log, patched_log, 1), encoding="utf-8")
+f2fs_log_c = root / "third_party/f2fs-tools/lib/libf2fs_log.c"
+if f2fs_log_c.is_file() and not f2fs_log_c.is_symlink():
+    txt = f2fs_log_c.read_text(encoding="utf-8")
+    patched = txt.replace(
+        "#define LOG_BUF_INITIAL_SIZE                64",
+        "#define LOG_BUF_INITIAL_SIZE                2048",
+        1,
+    )
+    orig_vsnprintf = "        ret = vsnprintf_s(buf, size, size - 1, fmt, args);"
+    patched_vsnprintf = (
+        "        va_list copy_args;\n"
+        "        va_copy(copy_args, args);\n"
+        "        ret = vsnprintf_s(buf, size, size - 1, fmt, copy_args);\n"
+        "        va_end(copy_args);"
+    )
+    if orig_vsnprintf in patched and "va_copy(copy_args, args);" not in patched:
+        patched = patched.replace(orig_vsnprintf, patched_vsnprintf, 1)
+    if patched != txt:
+        f2fs_log_c.write_text(patched, encoding="utf-8")
 number_identity_32bit_fixes = {
     "base/telephony/number_identity/number_location/src/fix_phone_number.cpp": (
         (
