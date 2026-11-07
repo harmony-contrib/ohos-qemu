@@ -701,6 +701,9 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
   # Optional telnet serial when QEMU_SERIAL_PORT is set.
   ensure_qemu_serial_port_support "${file}"
 
+  # Optional userdata.img sparse expansion when QEMU_USERDATA_SIZE is set.
+  ensure_qemu_userdata_size_support "${file}"
+
   # Auto headless when no host display is available (Linux SSH, CI).
   ensure_auto_headless_support "${file}"
 
@@ -935,6 +938,58 @@ ensure_qemu_serial_port_support() {
         print "if [ -n \"${QEMU_SERIAL_PORT:-}\" ]; then"
         print "  QEMU_EXTRA_ARGS=\"-serial telnet:127.0.0.1:${QEMU_SERIAL_PORT},server,nowait ${QEMU_EXTRA_ARGS}\""
         print "  echo \"Serial telnet console: 127.0.0.1:${QEMU_SERIAL_PORT} (QEMU_SERIAL_PORT applied)\" >&2"
+        print "fi"
+        done = 1
+      }
+    }
+  ' "${file}" >"${tmp}"
+  mv "${tmp}" "${file}"
+}
+
+ensure_qemu_userdata_size_support() {
+  local file="$1"
+  if grep -q 'QEMU_USERDATA_SIZE_V1' "${file}"; then
+    return 0
+  fi
+  local tmp
+  tmp="$(mktemp)"
+  awk '
+    BEGIN { done = 0 }
+    {
+      print
+      if (!done && /^QEMU_EXTRA_ARGS=/) {
+        print "# QEMU_USERDATA_SIZE_V1: optional sparse expansion of userdata.img before boot."
+        print "QEMU_USERDATA_SIZE=\"${QEMU_USERDATA_SIZE:-}\""
+        print "if [ -n \"${QEMU_USERDATA_SIZE}\" ]; then"
+        print "  userdata_img=\"${OHOS_IMG}/userdata.img\""
+        print "  if [ ! -f \"${userdata_img}\" ]; then"
+        print "    echo \"userdata.img not found at ${userdata_img}\" >&2"
+        print "    exit 2"
+        print "  fi"
+        print "  if [[ \"${QEMU_USERDATA_SIZE}\" =~ ^([1-9][0-9]*)([MmGg]([Ii]?[Bb])?)?$ ]]; then"
+        print "    userdata_num=\"${BASH_REMATCH[1]}\""
+        print "    userdata_unit=\"${BASH_REMATCH[2]:-M}\""
+        print "    case \"${userdata_unit}\" in"
+        print "      [Gg]*) userdata_target_bytes=$((userdata_num * 1024 * 1024 * 1024)) ;;"
+        print "      *) userdata_target_bytes=$((userdata_num * 1024 * 1024)) ;;"
+        print "    esac"
+        print "  else"
+        print "    echo \"invalid userdata size: ${QEMU_USERDATA_SIZE} (expected e.g. 4096, 4096M, 4G, 8G)\" >&2"
+        print "    exit 2"
+        print "  fi"
+        print "  userdata_current_bytes=$(stat -f \"%z\" \"${userdata_img}\" 2>/dev/null || stat -c \"%s\" \"${userdata_img}\" 2>/dev/null || wc -c < \"${userdata_img}\" | tr -d \"[:space:]\")"
+        print "  if [ \"${userdata_target_bytes}\" -lt \"${userdata_current_bytes}\" ]; then"
+        print "    echo \"cannot shrink userdata.img from ${userdata_current_bytes} bytes to ${userdata_target_bytes} bytes (${QEMU_USERDATA_SIZE}); restore a smaller userdata.img first\" >&2"
+        print "    exit 2"
+        print "  elif [ \"${userdata_target_bytes}\" -gt \"${userdata_current_bytes}\" ]; then"
+        print "    if command -v truncate >/dev/null 2>&1; then"
+        print "      truncate -s \"${userdata_target_bytes}\" \"${userdata_img}\""
+        print "    else"
+        print "      dd if=/dev/null of=\"${userdata_img}\" bs=1 count=0 seek=\"${userdata_target_bytes}\" status=none 2>/dev/null || \\"
+        print "        dd if=/dev/null of=\"${userdata_img}\" bs=1 count=0 seek=\"${userdata_target_bytes}\" 2>/dev/null"
+        print "    fi"
+        print "    echo \"Expanded ${userdata_img} from ${userdata_current_bytes} to ${userdata_target_bytes} bytes (${QEMU_USERDATA_SIZE}); guest init will resize F2FS /data on boot.\" >&2"
+        print "  fi"
         print "fi"
         done = 1
       }
@@ -1207,6 +1262,8 @@ Options:
       --width N          Guest GPU width (alternative to --resolution)
       --height N         Guest GPU height (alternative to --resolution)
   -m, --memory SIZE      RAM size for QEMU -m (default: \${DEFAULT_MEMORY}; accepts 4096, 4096M, 4G)
+      --userdata-size SIZE  Expand images/userdata.img before boot (e.g. 4096, 4096M, 4G, 8G;
+                         guest init automatically resizes F2FS /data on boot)
   -s, --smp N            Virtual CPUs (default: \${DEFAULT_SMP})
       --cpu MODEL        QEMU CPU model (default: \${DEFAULT_CPU})
   -d, --display TYPE     none|vnc|sdl|gtk|cocoa|auto (default: \${DEFAULT_DISPLAY})
@@ -1226,6 +1283,7 @@ Options:
 CLI flags override environment variables, which override the defaults above.
 Supported environment variables:
   QEMU_DISPLAY QEMU_XRES QEMU_YRES QEMU_SMP QEMU_MEMORY QEMU_CPU
+  QEMU_USERDATA_SIZE
   QEMU_HDC_HOST_PORT QEMU_VNC_DISPLAY QEMU_SERIAL_PORT
   QEMU_KERNEL_LOG_LEVEL
   QEMU_ACCESSIBILITY QEMU_QMP_SOCKET
@@ -1263,6 +1321,10 @@ while [ "\$#" -gt 0 ]; do
       ;;
     -m|--memory)
       export QEMU_MEMORY="\${2:?missing memory value}"
+      shift 2
+      ;;
+    --userdata-size|--data-size)
+      export QEMU_USERDATA_SIZE="\${2:?missing userdata size}"
       shift 2
       ;;
     -s|--smp)
@@ -1365,7 +1427,40 @@ export QEMU_ACCESSIBILITY="\${QEMU_ACCESSIBILITY:-0}"
 export QEMU_QMP_SOCKET="\${QEMU_QMP_SOCKET:-}"
 export QEMU_ACCEL="\${QEMU_ACCEL:-auto}"
 export QEMU_BIN="\${QEMU_BIN:-\${DEFAULT_QEMU_BIN}}"
+export QEMU_USERDATA_SIZE="\${QEMU_USERDATA_SIZE:-}"
 export QEMU_EXTRA_ARGS="\${QEMU_EXTRA_ARGS:-}"
+
+if [ -n "\${QEMU_USERDATA_SIZE}" ]; then
+  userdata_img="\${OHOS_IMG}/userdata.img"
+  if [ ! -f "\${userdata_img}" ]; then
+    echo "userdata.img not found at \${userdata_img}" >&2
+    exit 2
+  fi
+  if [[ "\${QEMU_USERDATA_SIZE}" =~ ^([1-9][0-9]*)([MmGg]([Ii]?[Bb])?)?\$ ]]; then
+    userdata_num="\${BASH_REMATCH[1]}"
+    userdata_unit="\${BASH_REMATCH[2]:-M}"
+    case "\${userdata_unit}" in
+      [Gg]*) userdata_target_bytes=\$((userdata_num * 1024 * 1024 * 1024)) ;;
+      *) userdata_target_bytes=\$((userdata_num * 1024 * 1024)) ;;
+    esac
+  else
+    echo "invalid userdata size: \${QEMU_USERDATA_SIZE} (expected e.g. 4096, 4096M, 4G, 8G)" >&2
+    exit 2
+  fi
+  userdata_current_bytes=\$(stat -f "%z" "\${userdata_img}" 2>/dev/null || stat -c "%s" "\${userdata_img}" 2>/dev/null || wc -c < "\${userdata_img}" | tr -d "[:space:]")
+  if [ "\${userdata_target_bytes}" -lt "\${userdata_current_bytes}" ]; then
+    echo "cannot shrink userdata.img from \${userdata_current_bytes} bytes to \${userdata_target_bytes} bytes (\${QEMU_USERDATA_SIZE}); restore a smaller userdata.img first" >&2
+    exit 2
+  elif [ "\${userdata_target_bytes}" -gt "\${userdata_current_bytes}" ]; then
+    if command -v truncate >/dev/null 2>&1; then
+      truncate -s "\${userdata_target_bytes}" "\${userdata_img}"
+    else
+      dd if=/dev/null of="\${userdata_img}" bs=1 count=0 seek="\${userdata_target_bytes}" status=none 2>/dev/null || \\
+        dd if=/dev/null of="\${userdata_img}" bs=1 count=0 seek="\${userdata_target_bytes}" 2>/dev/null
+    fi
+    echo "Expanded \${userdata_img} from \${userdata_current_bytes} to \${userdata_target_bytes} bytes (\${QEMU_USERDATA_SIZE}); guest init will resize F2FS /data on boot." >&2
+  fi
+fi
 
 case "\${QEMU_XRES}" in
   ''|*[!0-9]*) echo "invalid width: \${QEMU_XRES}" >&2; exit 2 ;;
@@ -1441,6 +1536,7 @@ param(
   [int]\$Width,
   [int]\$Height,
   [Alias("m")][string]\$Memory,
+  [Alias("DataSize")][string]\$UserdataSize,
   [Alias("s")][int]\$Smp,
   [string]\$Cpu,
   [Alias("d")][string]\$Display,
@@ -1486,6 +1582,7 @@ if (\$PSBoundParameters.ContainsKey("Width")) { \$env:QEMU_XRES = "\$Width" }
 if (\$PSBoundParameters.ContainsKey("Height")) { \$env:QEMU_YRES = "\$Height" }
 
 if (\$Memory) { \$env:QEMU_MEMORY = \$Memory }
+if (\$UserdataSize) { \$env:QEMU_USERDATA_SIZE = \$UserdataSize }
 if (\$PSBoundParameters.ContainsKey("Smp")) { \$env:QEMU_SMP = "\$Smp" }
 if (\$Cpu) { \$env:QEMU_CPU = \$Cpu }
 if (\$Display) { \$env:QEMU_DISPLAY = \$Display }
@@ -1514,6 +1611,33 @@ if (\$QemuPath) { \$env:QEMU_BIN = \$QemuPath }
 if (\$KernelLogLevelValue -notmatch '^[0-8]\$') { throw "kernel log level must be 0..8" }
 \$VncDisplayValue = if (\$env:QEMU_VNC_DISPLAY) { \$env:QEMU_VNC_DISPLAY } else { "\$DefaultVncDisplay" }
 \$GpuDevice = "virtio-gpu-pci,xres=\$Xres,yres=\$Yres"
+
+if (\$env:QEMU_USERDATA_SIZE) {
+  \$UserdataSpec = \$env:QEMU_USERDATA_SIZE.Trim()
+  if (\$UserdataSpec -match '^([1-9]\\d*)(?:([MmGg])(?:i?[Bb])?)?\$') {
+    \$SizeNum = [int64]\$Matches[1]
+    \$Unit = if (\$Matches[2]) { \$Matches[2].ToUpperInvariant() } else { "M" }
+    \$TargetBytes = if (\$Unit -eq "G") { \$SizeNum * 1024L * 1024L * 1024L } else { \$SizeNum * 1024L * 1024L }
+  } else {
+    throw "Invalid userdata size: \$UserdataSpec (expected e.g. 4096, 4096M, 4G, 8G)"
+  }
+  \$UserdataImg = Join-Path \$Img "userdata.img"
+  if (-not (Test-Path \$UserdataImg)) {
+    throw "userdata.img not found at \$UserdataImg"
+  }
+  \$CurrentBytes = (Get-Item \$UserdataImg).Length
+  if (\$TargetBytes -lt \$CurrentBytes) {
+    throw "Cannot shrink userdata.img from \$CurrentBytes bytes to \$TargetBytes bytes (\$UserdataSpec); restore a smaller userdata.img first."
+  } elseif (\$TargetBytes -gt \$CurrentBytes) {
+    \$fs = [System.IO.File]::Open(\$UserdataImg, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Write)
+    try {
+      \$fs.SetLength(\$TargetBytes)
+    } finally {
+      \$fs.Close()
+    }
+    Write-Host "Expanded \$UserdataImg from \$CurrentBytes to \$TargetBytes bytes (\$UserdataSpec); guest init will resize F2FS /data on boot."
+  }
+}
 
 function Resolve-Qemu {
   if (\$env:QEMU_BIN) { return \$env:QEMU_BIN }
@@ -1672,6 +1796,7 @@ CLI flags override environment variables, which override package defaults.
 | \`-r, --resolution WxH\` | \`QEMU_XRES\` / \`QEMU_YRES\` | \`800x500\` |
 | \`--width\` / \`--height\` | \`QEMU_XRES\` / \`QEMU_YRES\` | same as above |
 | \`-m, --memory SIZE\` | \`QEMU_MEMORY\` | \`${default_mem}\` |
+| \`--userdata-size SIZE\` / Windows \`-UserdataSize SIZE\` | \`QEMU_USERDATA_SIZE\` | current \`userdata.img\` size (\`2G\`) |
 | \`-s, --smp N\` | \`QEMU_SMP\` | \`${default_smp}\` |
 | \`--cpu MODEL\` | \`QEMU_CPU\` | \`${default_cpu}\` |
 | \`-d, --display TYPE\` / \`--headless\` | \`QEMU_DISPLAY\` | \`${default_display}\` |
@@ -1690,12 +1815,17 @@ Examples:
 
 \`\`\`bash
 ./launch/linux.sh -r 1280x720 -m 8G -s 8
+./launch/linux.sh --userdata-size 8G
 ./launch/linux.sh --cpu ${cpu_example}
 ./launch/linux.sh --width 1080 --height 1920 --display cocoa
 ./launch/linux.sh --headless --vnc-display 21 --serial-port 4444
 ./launch/linux.sh --headless --a11y --qmp-socket /tmp/ohos-a11y.sock
 QEMU_DISPLAY=none QEMU_HDC_HOST_PORT=5556 ./launch/linux.sh
 \`\`\`
+
+\`--userdata-size SIZE\` (or \`QEMU_USERDATA_SIZE\`) sparsely expands \`images/userdata.img\`
+before starting QEMU (accepts MiB or \`M\`/\`G\` suffixes such as \`4096\`, \`4G\`, \`8G\`),
+and guest \`init\` automatically runs \`fsck.f2fs\` and \`resize.f2fs\` on \`/data\` during boot.
 
 \`QEMU_DISPLAY=vnc\` exposes VNC on \`127.0.0.1:\$((5900 + QEMU_VNC_DISPLAY))\`.
 \`QEMU_DISPLAY=none\` is recommended for CI/headless hosts. On Linux hosts without
@@ -1879,9 +2009,11 @@ write_full_product_launchers() {
     chmod +x "${launch_out}/macos.command"
 
     if ! grep -q -- '--a11y' "${launch_out}/linux.sh" || \
+       ! grep -q -- '--userdata-size' "${launch_out}/linux.sh" || \
+       ! grep -q 'QEMU_USERDATA_SIZE_V1' "${launch_out}/qemu_run.sh" || \
        ! grep -q 'virtio-multitouch-pci' "${launch_out}/linux.sh" || \
        ! grep -q 'server=on,wait=off' "${launch_out}/linux.sh"; then
-      echo "packaged POSIX launcher is missing accessibility/QMP support" >&2
+      echo "packaged POSIX launcher is missing accessibility/QMP/userdata-size support" >&2
       exit 1
     fi
 
