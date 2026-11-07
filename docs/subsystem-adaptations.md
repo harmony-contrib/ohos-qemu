@@ -151,11 +151,20 @@ This document archives the key engineering adaptations and root-cause fixes requ
 
 All 6 packages in `/Volumes/PSSD/qemu/packages/issue20-23-matrix/` were built from `OpenHarmony-7.0-Release` (`f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549`) on branch `codex/ohos7-integrated-development` and passed the 5-phase runtime gate (`EXIT_CODE=0`, 0 failures: untouched `>95s` `AWAKE` & `screenLocked=false`, `ScreenOffTime=9000000ms`, `llvmpipe-*` `SigBlk` clean, `power-shell suspend`/`wakeup` round-trip with `QMP running: true` and `awake_14s=true`, 4 rounds of 4-thread GLESv3/GLESv2 + GBM + `OH_NativeBuffer` + `OH_Sensor_GetInfos` stress, zero `cppcrash`/`jscrash`/`appfreeze`/`sysfreeze`, zero defunct zombies, identical system service PIDs, and live `snapshot_display` JPEG output):
 
-| Target Architecture | Device Profile | Package Filename | SHA-256 Checksum | Runtime Gate Status (`--headless` & `cocoa`) |
+| Target Architecture | Device Profile | Package Filename | SHA-256 Checksum | Runtime Gate Status (`--headless`, `cocoa` & `--userdata-size 8G`) |
 | :--- | :--- | :--- | :--- | :--- |
-| `arm64_virt` | `phone` | `openharmony-qemu-arm64-arm64_virt-phone.tar.gz` | `e27e46bb94b4ae0a302fe81fe13888b523d95bd26574fea72be2d047c8da8353` | **PASS (`EXIT_CODE=0`, Headless + Cocoa)** |
-| `arm64_virt` | `2in1` | `openharmony-qemu-arm64-arm64_virt-2in1.tar.gz` | `e77ddbcddbfbe5ee7f60371fd46f0b94c6f13a26a3b77c1e0aaf3b77c5fb588f` | **PASS (`EXIT_CODE=0`, Headless + Cocoa)** |
-| `x86_64_virt` | `phone` | `openharmony-qemu-x86_64-x86_64_virt-phone.tar.gz` | `dc793987ebd0c389d07b61eda13969a841ee09a608ec8f51e5078996e74b2316` | **PASS (`EXIT_CODE=0`, Headless + Cocoa)** |
-| `x86_64_virt` | `2in1` | `openharmony-qemu-x86_64-x86_64_virt-2in1.tar.gz` | `f4079b6c1943b6c5724b53e2a542f6af09a62484076f642665fc83435ae8b0bf` | **PASS (`EXIT_CODE=0`, Headless + Cocoa)** |
-| `armv7a_virt` | `phone` | `openharmony-qemu-armv7a-armv7a_virt-phone.tar.gz` | `e70613b946ff398d24e1490f9204c92df990459bd4eb9e1592563c74c07ede15` | **PASS (`EXIT_CODE=0`, Headless + Cocoa)** |
-| `armv7a_virt` | `2in1` | `openharmony-qemu-armv7a-armv7a_virt-2in1.tar.gz` | `9437024860035ee5ab50f55e05799f71bd73dfeffd8cf9a59aa1a7b866ef1af5` | **PASS (`EXIT_CODE=0`, Headless + Cocoa)** |
+| `arm64_virt` | `phone` | `openharmony-qemu-arm64-arm64_virt-phone.tar.gz` | `c803985974ef5c67e0bfb3d1175e03430a0961ed5acdae16415b5978fd54134c` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + 8G `/data`)** |
+| `arm64_virt` | `2in1` | `openharmony-qemu-arm64-arm64_virt-2in1.tar.gz` | `437c720e913cb690c1e25253d00ebbda0ee58c9e5de9b21802d0dfea8863b2d5` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + 8G `/data`)** |
+| `x86_64_virt` | `phone` | `openharmony-qemu-x86_64-x86_64_virt-phone.tar.gz` | `0777c40c8dc5377b3d99f4c9b3c415a0729d8bc7f82a1d25be387cdb7efd5255` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + 8G `/data`)** |
+| `x86_64_virt` | `2in1` | `openharmony-qemu-x86_64-x86_64_virt-2in1.tar.gz` | `af429f833fb2a7fdfcade3424ba03c6438f36e9be111c3a63d4f9573c666ae91` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + 8G `/data`)** |
+| `armv7a_virt` | `phone` | `openharmony-qemu-armv7a-armv7a_virt-phone.tar.gz` | `2a6eb165ba47c0cfd792a60d900d9cc1ad7eb02ab9df91abcf360c52b6aa02c8` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + 8G `/data`)** |
+| `armv7a_virt` | `2in1` | `openharmony-qemu-armv7a-armv7a_virt-2in1.tar.gz` | `a8a211bf7c5121f27ff07c3c156dd8b1aff6d05a541066e68f1a4aea1373530c` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + 8G `/data`)** |
+
+### 8.6 Dynamic `userdata.img` Sparse Expansion on Launch (`--userdata-size` / `QEMU_USERDATA_SIZE`) & `x86_64` `libf2fs` `va_list` Fix
+- **Problem** ([Issue #27](https://github.com/harmony-contrib/ohos-qemu/issues/27)):
+  - The packaged `images/userdata.img` defaults to `2 GiB`, which can be insufficient when installing large applications or test datasets on `/data`.
+  - On `x86_64_virt`, `/system/bin/fsck.f2fs` and `/system/bin/resize.f2fs` crashed with `SIGSEGV` inside `libf2fs.z.so` (`SlogInitBuffer` in `third_party/f2fs-tools/lib/libf2fs_log.c`) whenever a formatted log message exceeded 63 bytes (such as `mount.c:1113` `Info: FSCK version`), because `SlogInitBuffer` started with `LOG_BUF_INITIAL_SIZE = 64` and called `vsnprintf_s(buf, size, size - 1, fmt, args)` a second time on buffer growth without `va_copy`, reusing a mutated `va_list` under the `x86_64` SysV ABI.
+- **Adaptation** ([`scripts/package_standard_qemu.sh`](../scripts/package_standard_qemu.sh), [`scripts/build_standard_qemu_in_docker.sh`](../scripts/build_standard_qemu_in_docker.sh)):
+  - Adds `--userdata-size SIZE` (and `--data-size SIZE`, Windows PowerShell `-UserdataSize SIZE`, and environment variable `QEMU_USERDATA_SIZE`) across `launch/linux.sh`, `launch/macos.command`, `launch/windows.ps1`, and `launch/qemu_run.sh`.
+  - Accepts MiB values or `M`/`G` suffixes (e.g., `4096`, `4096M`, `4G`, `8G`), refuses unsafe downward truncation below the current `userdata.img` byte size, and sparsely expands `images/userdata.img` before QEMU starts.
+  - Fixes `SlogInitBuffer` in `third_party/f2fs-tools/lib/libf2fs_log.c` to copy `va_list` with `va_copy` on each formatting pass and sets `LOG_BUF_INITIAL_SIZE` to `2048` (`LOG_BUF_SIZE_PROTECT_THRESHOLD`), ensuring `/system/bin/fsck.f2fs` and `/system/bin/resize.f2fs` succeed during `init` (`MountOneItem` in `fstab_mount.c`) and online-expand F2FS `/data` (with `usrquota,grpquota,prjquota` intact) on boot across `arm64_virt`, `x86_64_virt`, and `armv7a_virt`.
