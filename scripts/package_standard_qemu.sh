@@ -3,6 +3,18 @@ set -euo pipefail
 export LC_ALL=C
 export LANG=C
 
+for e2fs_dir in \
+  /opt/homebrew/opt/e2fsprogs/sbin \
+  /opt/homebrew/opt/e2fsprogs/bin \
+  /usr/local/opt/e2fsprogs/sbin \
+  /usr/local/opt/e2fsprogs/bin
+do
+  if [ -d "${e2fs_dir}" ]; then
+    PATH="${e2fs_dir}:${PATH}"
+  fi
+done
+export PATH
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 usage() {
@@ -710,6 +722,11 @@ HDC_HOST_PORT="${QEMU_HDC_HOST_PORT:-5555}"|' "${file}"
   # Probe host QEMU display backends (Cocoa on macOS, SDL/GTK on Linux, VNC fallback).
   ensure_qemu_display_backend_support "${file}"
 
+  # Wire Category 1 (audio backend, VirtFS 9p shared folder, USB xHCI/storage/host,
+  # virtio-balloon) and Category 2 (virtual AT modem RIL over virtio-serial, Wi-Fi
+  # mode, Bluetooth USB passthrough) capabilities.
+  ensure_qemu_extended_capabilities_support "${file}"
+
   # Append optional extra QEMU arguments at the invocation site.
   # Do not treat the QEMU_EXTRA_ARGS= assignment line as already wired.
   if ! grep -Eq 'eval "\$QEMU_CMD \$\{QEMU_EXTRA_ARGS\}"|eval "\$\{QEMU_CMD\} \$\{QEMU_EXTRA_ARGS\}"|\\$\{QEMU_EXTRA_ARGS\}[[:space:]]*$' "${file}" && \
@@ -1226,6 +1243,228 @@ path.write_text(text, encoding="utf-8")
 DISPLAY_PY
 }
 
+ensure_qemu_extended_capabilities_support() {
+  local file="$1"
+  python3 - "${file}" <<'EXT_CAP_PY'
+import re
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+
+# Remove any previous QEMU_CAPABILITIES_V1 block if rewriting an already-normalized launcher.
+text = re.sub(
+    r'\n?# QEMU_CAPABILITIES_V1_BEGIN\n.*?# QEMU_CAPABILITIES_V1_END\n?',
+    '\n',
+    text,
+    flags=re.S,
+)
+
+cap_block = r'''# QEMU_CAPABILITIES_V1_BEGIN
+QEMU_AUDIO_BACKEND="${QEMU_AUDIO_BACKEND:-auto}"
+QEMU_SHARED_DIR="${QEMU_SHARED_DIR:-}"
+QEMU_USB="${QEMU_USB:-0}"
+QEMU_USB_DISK="${QEMU_USB_DISK:-}"
+QEMU_USB_HOST="${QEMU_USB_HOST:-}"
+QEMU_BT_USB="${QEMU_BT_USB:-}"
+QEMU_BALLOON="${QEMU_BALLOON:-0}"
+QEMU_RIL_MODEM="${QEMU_RIL_MODEM:-auto}"
+QEMU_WIFI_MODE="${QEMU_WIFI_MODE:-auto}"
+QEMU_BOOT_EXTRAS="${QEMU_BOOT_EXTRAS:-}"
+
+# 1. Host Audio Backend (Category 1: ES1370 + host audiodev)
+DETECT_AUDIODEVS="$(${QEMU_BIN} -audiodev help 2>&1 || true)"
+case "${QEMU_AUDIO_BACKEND}" in
+  auto)
+    if [ "${DISPLAY_TYPE}" = "none" ] || [ "${DISPLAY_TYPE}" = "vnc" ]; then
+      QEMU_RESOLVED_AUDIO="none"
+    elif [ "$(uname -s)" = "Darwin" ] && echo "${DETECT_AUDIODEVS}" | grep -qw coreaudio; then
+      QEMU_RESOLVED_AUDIO="coreaudio"
+    elif echo "${DETECT_AUDIODEVS}" | grep -qw pipewire; then
+      QEMU_RESOLVED_AUDIO="pipewire"
+    elif echo "${DETECT_AUDIODEVS}" | grep -qw pa; then
+      QEMU_RESOLVED_AUDIO="pa"
+    elif echo "${DETECT_AUDIODEVS}" | grep -qw alsa; then
+      QEMU_RESOLVED_AUDIO="alsa"
+    elif echo "${DETECT_AUDIODEVS}" | grep -qw sdl; then
+      QEMU_RESOLVED_AUDIO="sdl"
+    else
+      QEMU_RESOLVED_AUDIO="none"
+    fi
+    QEMU_AUDIO_DEV_ARG="-audiodev ${QEMU_RESOLVED_AUDIO},id=ohos_audio"
+    echo "Audio backend: ${QEMU_RESOLVED_AUDIO} (auto)" >&2
+    ;;
+  none|coreaudio|pa|pipewire|alsa|sdl|dsound|oss|jack)
+    QEMU_AUDIO_DEV_ARG="-audiodev ${QEMU_AUDIO_BACKEND},id=ohos_audio"
+    echo "Audio backend: ${QEMU_AUDIO_BACKEND}" >&2
+    ;;
+  wav|wav:*)
+    qemu_wav_path="${QEMU_AUDIO_BACKEND#wav}"
+    qemu_wav_path="${qemu_wav_path#:}"
+    if [ -z "${qemu_wav_path}" ]; then
+      qemu_wav_path="/tmp/openharmony-qemu-audio-${HDC_HOST_PORT}.wav"
+    fi
+    QEMU_AUDIO_DEV_ARG="-audiodev wav,id=ohos_audio,path=${qemu_wav_path}"
+    echo "Audio backend: wav (${qemu_wav_path})" >&2
+    ;;
+  *)
+    echo "invalid QEMU_AUDIO_BACKEND: ${QEMU_AUDIO_BACKEND} (expected auto|none|coreaudio|pa|pipewire|alsa|sdl|dsound|wav[:PATH])" >&2
+    exit 2
+    ;;
+esac
+
+# 2. Host-Guest Shared Directory via VirtFS 9p (Category 1: virtio-9p-pci)
+if [ -n "${QEMU_SHARED_DIR}" ]; then
+  qemu_share_host_dir="${QEMU_SHARED_DIR}"
+  qemu_share_tag="hostshare"
+  if [[ "${QEMU_SHARED_DIR}" =~ ^(.+):([A-Za-z0-9_.-]+)$ ]] && [ -d "${BASH_REMATCH[1]}" ]; then
+    qemu_share_host_dir="${BASH_REMATCH[1]}"
+    qemu_share_tag="${BASH_REMATCH[2]}"
+  fi
+  if [ ! -d "${qemu_share_host_dir}" ]; then
+    echo "shared directory not found: ${qemu_share_host_dir}" >&2
+    exit 2
+  fi
+  qemu_share_host_dir="$(cd "${qemu_share_host_dir}" && pwd)"
+  QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -fsdev local,id=fsdev_hostshare,path=${qemu_share_host_dir},security_model=mapped-xattr -device virtio-9p-pci,fsdev=fsdev_hostshare,mount_tag=${qemu_share_tag}"
+  QEMU_BOOT_EXTRAS="${QEMU_BOOT_EXTRAS:+${QEMU_BOOT_EXTRAS} }ohos.boot.qemu.share_tag=${qemu_share_tag}"
+  echo "VirtFS 9p shared directory: ${qemu_share_host_dir} (tag=${qemu_share_tag} -> /mnt/share, /data/share)" >&2
+fi
+
+# 3. USB xHCI Controller, Virtual USB Storage & USB Host Passthrough (Category 1 & 2)
+case "${QEMU_USB}" in
+  0|1) ;;
+  *) echo "QEMU_USB must be 0 or 1, got: ${QEMU_USB}" >&2; exit 2 ;;
+esac
+if [ "${QEMU_USB}" = "1" ] || [ -n "${QEMU_USB_DISK}" ] || [ -n "${QEMU_USB_HOST}" ] || [ -n "${QEMU_BT_USB}" ]; then
+  QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -device qemu-xhci,id=xhci0"
+  echo "USB xHCI controller enabled (xhci0)." >&2
+fi
+if [ -n "${QEMU_USB_DISK}" ]; then
+  if [ ! -f "${QEMU_USB_DISK}" ]; then
+    echo "USB disk image not found: ${QEMU_USB_DISK}" >&2
+    exit 2
+  fi
+  QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -drive if=none,id=usb_disk0,file=${QEMU_USB_DISK},format=raw -device usb-storage,bus=xhci0.0,drive=usb_disk0"
+  echo "USB mass storage attached: ${QEMU_USB_DISK}" >&2
+fi
+if [ -n "${QEMU_USB_HOST}" ]; then
+  if [[ "${QEMU_USB_HOST}" =~ ^(0x)?([0-9a-fA-F]{1,4}):(0x)?([0-9a-fA-F]{1,4})$ ]]; then
+    QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -device usb-host,bus=xhci0.0,vendorid=0x${BASH_REMATCH[2]},productid=0x${BASH_REMATCH[4]}"
+    echo "USB host passthrough attached: 0x${BASH_REMATCH[2]}:0x${BASH_REMATCH[4]}" >&2
+  else
+    echo "invalid QEMU_USB_HOST=${QEMU_USB_HOST} (expected VID:PID hex, e.g. 1234:5678)" >&2
+    exit 2
+  fi
+fi
+if [ -n "${QEMU_BT_USB}" ]; then
+  if [[ "${QEMU_BT_USB}" =~ ^(0x)?([0-9a-fA-F]{1,4}):(0x)?([0-9a-fA-F]{1,4})$ ]]; then
+    QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -device usb-host,bus=xhci0.0,vendorid=0x${BASH_REMATCH[2]},productid=0x${BASH_REMATCH[4]}"
+    echo "Bluetooth USB adapter passthrough attached: 0x${BASH_REMATCH[2]}:0x${BASH_REMATCH[4]}" >&2
+  else
+    echo "invalid QEMU_BT_USB=${QEMU_BT_USB} (expected VID:PID hex, e.g. 0a12:0001)" >&2
+    exit 2
+  fi
+fi
+
+# 4. VirtIO Memory Balloon (Category 1: virtio-balloon-pci)
+case "${QEMU_BALLOON}" in
+  0) ;;
+  1)
+    QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -device virtio-balloon-pci,id=balloon0"
+    echo "VirtIO memory balloon enabled (balloon0)." >&2
+    ;;
+  *) echo "QEMU_BALLOON must be 0 or 1, got: ${QEMU_BALLOON}" >&2; exit 2 ;;
+esac
+
+# 5. Virtual Wi-Fi Mode (Category 2: mac80211_hwsim / virt_wifi)
+case "${QEMU_WIFI_MODE}" in
+  auto|hwsim|virt_wifi|off)
+    QEMU_BOOT_EXTRAS="${QEMU_BOOT_EXTRAS:+${QEMU_BOOT_EXTRAS} }ohos.boot.qemu.wifi=${QEMU_WIFI_MODE}"
+    ;;
+  *)
+    echo "invalid QEMU_WIFI_MODE=${QEMU_WIFI_MODE} (expected auto|hwsim|virt_wifi|off)" >&2
+    exit 2
+    ;;
+esac
+
+# 6. Cellular RIL Virtual AT Modem over VirtIO Serial (Category 2: virtio-serial-pci + qemu_at_modem.py)
+case "${QEMU_RIL_MODEM}" in
+  auto|on)
+    qemu_pkg_root="$(cd "$(dirname "$0")/.." && pwd)"
+    qemu_at_modem_py="${qemu_pkg_root}/tools/qemu_at_modem.py"
+    if [ -f "${qemu_at_modem_py}" ] && command -v python3 >/dev/null 2>&1; then
+      qemu_ril_socket="/tmp/openharmony-qemu-ril-${HDC_HOST_PORT}.sock"
+      qemu_ril_pidfile="/tmp/openharmony-qemu-ril-${HDC_HOST_PORT}.pid"
+      qemu_ril_logfile="/tmp/openharmony-qemu-ril-${HDC_HOST_PORT}.log"
+      if [ -f "${qemu_ril_pidfile}" ]; then
+        old_ril_pid="$(cat "${qemu_ril_pidfile}" 2>/dev/null || true)"
+        if [ -n "${old_ril_pid}" ]; then
+          kill "${old_ril_pid}" 2>/dev/null || true
+        fi
+        rm -f "${qemu_ril_pidfile}"
+      fi
+      rm -f "${qemu_ril_socket}"
+      python3 "${qemu_at_modem_py}" --socket "${qemu_ril_socket}" --pidfile "${qemu_ril_pidfile}" --log "${qemu_ril_logfile}" </dev/null >/dev/null 2>&1 &
+      for _ in $(seq 1 25); do
+        [ -S "${qemu_ril_socket}" ] && break
+        sleep 0.05
+      done
+      if [ -S "${qemu_ril_socket}" ]; then
+        (
+          while kill -0 $$ 2>/dev/null; do
+            sleep 1
+          done
+          if [ -f "${qemu_ril_pidfile}" ]; then
+            kill "$(cat "${qemu_ril_pidfile}" 2>/dev/null)" 2>/dev/null || true
+            rm -f "${qemu_ril_pidfile}"
+          fi
+          rm -f "${qemu_ril_socket}"
+        ) </dev/null >/dev/null 2>&1 &
+        QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -chardev socket,id=ril_chardev,path=${qemu_ril_socket} -device virtio-serial-pci,id=virtio_serial0 -device virtserialport,bus=virtio_serial0.0,nr=1,chardev=ril_chardev,name=ohos.ril.at0"
+        echo "Cellular RIL virtual AT modem attached: ${qemu_ril_socket} (ohos.ril.at0 -> /dev/ttyUSB0)" >&2
+      elif [ "${QEMU_RIL_MODEM}" = "on" ]; then
+        echo "failed to start RIL virtual AT modem socket at ${qemu_ril_socket}" >&2
+        exit 2
+      fi
+    elif [ "${QEMU_RIL_MODEM}" = "on" ]; then
+      echo "QEMU_RIL_MODEM=on requires python3 and ${qemu_at_modem_py}" >&2
+      exit 2
+    fi
+    ;;
+  off) ;;
+  *)
+    echo "invalid QEMU_RIL_MODEM=${QEMU_RIL_MODEM} (expected auto|on|off)" >&2
+    exit 2
+    ;;
+esac
+# QEMU_CAPABILITIES_V1_END'''
+
+# Replace hardcoded -audiodev none,id=ohos_audio with ${QEMU_AUDIO_DEV_ARG}.
+if "-audiodev none,id=ohos_audio" in text or "-audiodev ${QEMU_AUDIO_DEV_ARG}" in text:
+    text = text.replace("-audiodev none,id=ohos_audio", "${QEMU_AUDIO_DEV_ARG}")
+elif "ES1370" not in text and "es1370" not in text:
+    cap_block += '\nQEMU_EXTRA_ARGS="${QEMU_AUDIO_DEV_ARG} -device ES1370,audiodev=ohos_audio ${QEMU_EXTRA_ARGS}"'
+
+# Ensure kernel -append includes ${QEMU_BOOT_EXTRAS} right after oemmode=rd.
+if "${QEMU_BOOT_EXTRAS}" not in text:
+    text = text.replace("oemmode=rd ", "oemmode=rd ${QEMU_BOOT_EXTRAS} ", 1)
+
+# Insert cap_block right after the DISPLAY_TYPE case ... esac block.
+display_case_pattern = re.compile(
+    r'(case "\$\{DISPLAY_TYPE\}" in\n.*?^esac$)',
+    re.M | re.S,
+)
+match = display_case_pattern.search(text)
+if not match:
+    raise SystemExit(f"unable to locate DISPLAY_TYPE case block for capabilities in {path}")
+
+text = text[:match.end()] + "\n\n" + cap_block + text[match.end():]
+path.write_text(text, encoding="utf-8")
+EXT_CAP_PY
+}
+
 write_unix_cli_wrapper() {
   local dest="$1"
   local default_smp="$2"
@@ -1276,6 +1515,15 @@ Options:
       --a11y            Enable virtio multitouch and a QMP control socket
       --qmp-socket PATH QMP Unix socket (implies QMP; default with --a11y:
                         /tmp/openharmony-qemu-a11y-<HDC_PORT>.sock)
+      --audio MODE       Host audio backend: auto|none|coreaudio|pa|pipewire|alsa|sdl|dsound|wav[:PATH] (default: auto)
+      --shared-dir DIR[:TAG]  Share host directory into guest via VirtFS 9p (mounted at /mnt/share and /data/share)
+      --usb              Enable USB xHCI controller (qemu-xhci)
+      --usb-disk FILE    Attach raw disk image as USB mass storage on xHCI
+      --usb-host VID:PID Passthrough host USB device by hex VID:PID (e.g. 1234:5678)
+      --bt-usb VID:PID   Passthrough host USB Bluetooth adapter by hex VID:PID (e.g. 0a12:0001)
+      --balloon          Enable VirtIO memory balloon device (virtio-balloon-pci)
+      --ril-modem MODE   Virtual AT cellular modem over virtio-serial: auto|on|off (default: auto)
+      --wifi MODE        Virtual Wi-Fi mode: auto|hwsim|virt_wifi|off (default: auto)
   -a, --accel MODE       auto|hvf|kvm|tcg|whpx (default: auto)
   -q, --qemu PATH        Path to the qemu-system-* binary (default: \${DEFAULT_QEMU_BIN})
   -h, --help             Show this help
@@ -1284,6 +1532,9 @@ CLI flags override environment variables, which override the defaults above.
 Supported environment variables:
   QEMU_DISPLAY QEMU_XRES QEMU_YRES QEMU_SMP QEMU_MEMORY QEMU_CPU
   QEMU_USERDATA_SIZE
+  QEMU_AUDIO_BACKEND QEMU_SHARED_DIR
+  QEMU_USB QEMU_USB_DISK QEMU_USB_HOST QEMU_BT_USB QEMU_BALLOON
+  QEMU_RIL_MODEM QEMU_WIFI_MODE
   QEMU_HDC_HOST_PORT QEMU_VNC_DISPLAY QEMU_SERIAL_PORT
   QEMU_KERNEL_LOG_LEVEL
   QEMU_ACCESSIBILITY QEMU_QMP_SOCKET
@@ -1295,6 +1546,11 @@ USAGE
 }
 
 while [ "\$#" -gt 0 ]; do
+  case "\$1" in
+    --*=*)
+      set -- "\${1%%=*}" "\${1#*=}" "\${@:2}"
+      ;;
+  esac
   case "\$1" in
     -r|--resolution)
       res="\${2:-}"
@@ -1380,6 +1636,42 @@ while [ "\$#" -gt 0 ]; do
       export QEMU_QMP_SOCKET="\${2:?missing QMP socket path}"
       shift 2
       ;;
+    --audio)
+      export QEMU_AUDIO_BACKEND="\${2:?missing audio backend mode}"
+      shift 2
+      ;;
+    --shared-dir)
+      export QEMU_SHARED_DIR="\${2:?missing shared directory path}"
+      shift 2
+      ;;
+    --usb)
+      export QEMU_USB=1
+      shift
+      ;;
+    --usb-disk)
+      export QEMU_USB_DISK="\${2:?missing USB disk path}"
+      shift 2
+      ;;
+    --usb-host)
+      export QEMU_USB_HOST="\${2:?missing USB host VID:PID}"
+      shift 2
+      ;;
+    --bt-usb)
+      export QEMU_BT_USB="\${2:?missing Bluetooth USB VID:PID}"
+      shift 2
+      ;;
+    --balloon)
+      export QEMU_BALLOON=1
+      shift
+      ;;
+    --ril-modem)
+      export QEMU_RIL_MODEM="\${2:?missing RIL modem mode}"
+      shift 2
+      ;;
+    --wifi)
+      export QEMU_WIFI_MODE="\${2:?missing Wi-Fi mode}"
+      shift 2
+      ;;
     -a|--accel)
       export QEMU_ACCEL="\${2:?missing accel mode}"
       shift 2
@@ -1425,6 +1717,15 @@ export QEMU_SERIAL_PORT="\${QEMU_SERIAL_PORT:-}"
 export QEMU_KERNEL_LOG_LEVEL="\${QEMU_KERNEL_LOG_LEVEL:-4}"
 export QEMU_ACCESSIBILITY="\${QEMU_ACCESSIBILITY:-0}"
 export QEMU_QMP_SOCKET="\${QEMU_QMP_SOCKET:-}"
+export QEMU_AUDIO_BACKEND="\${QEMU_AUDIO_BACKEND:-auto}"
+export QEMU_SHARED_DIR="\${QEMU_SHARED_DIR:-}"
+export QEMU_USB="\${QEMU_USB:-0}"
+export QEMU_USB_DISK="\${QEMU_USB_DISK:-}"
+export QEMU_USB_HOST="\${QEMU_USB_HOST:-}"
+export QEMU_BT_USB="\${QEMU_BT_USB:-}"
+export QEMU_BALLOON="\${QEMU_BALLOON:-0}"
+export QEMU_RIL_MODEM="\${QEMU_RIL_MODEM:-auto}"
+export QEMU_WIFI_MODE="\${QEMU_WIFI_MODE:-auto}"
 export QEMU_ACCEL="\${QEMU_ACCEL:-auto}"
 export QEMU_BIN="\${QEMU_BIN:-\${DEFAULT_QEMU_BIN}}"
 export QEMU_USERDATA_SIZE="\${QEMU_USERDATA_SIZE:-}"
@@ -1548,6 +1849,15 @@ param(
   [ValidateRange(0, 8)][int]\$KernelLogLevel,
   [switch]\$A11y,
   [int]\$QmpPort,
+  [string]\$Audio,
+  [string]\$SharedDir,
+  [switch]\$Usb,
+  [string]\$UsbDisk,
+  [string]\$UsbHost,
+  [string]\$BtUsb,
+  [switch]\$Balloon,
+  [string]\$RilModem,
+  [string]\$Wifi,
   [Alias("a")][string]\$Accel,
   [Alias("q")][string]\$QemuPath,
   [Parameter(ValueFromRemainingArguments = \$true)][string[]]\$ExtraArgs
@@ -1598,6 +1908,15 @@ if (\$PSBoundParameters.ContainsKey("SerialPort")) { \$env:QEMU_SERIAL_PORT = "\
 if (\$PSBoundParameters.ContainsKey("KernelLogLevel")) { \$env:QEMU_KERNEL_LOG_LEVEL = "\$KernelLogLevel" }
 if (\$A11y) { \$env:QEMU_ACCESSIBILITY = "1" }
 if (\$PSBoundParameters.ContainsKey("QmpPort")) { \$env:QEMU_QMP_PORT = "\$QmpPort" }
+if (\$Audio) { \$env:QEMU_AUDIO_BACKEND = \$Audio }
+if (\$SharedDir) { \$env:QEMU_SHARED_DIR = \$SharedDir }
+if (\$Usb) { \$env:QEMU_USB_XHCI = "1" }
+if (\$UsbDisk) { \$env:QEMU_USB_STORAGE = \$UsbDisk }
+if (\$UsbHost) { \$env:QEMU_USB_HOST = \$UsbHost }
+if (\$BtUsb) { \$env:QEMU_BT_USB = \$BtUsb }
+if (\$Balloon) { \$env:QEMU_BALLOON = "1" }
+if (\$RilModem) { \$env:QEMU_RIL_MODEM = \$RilModem }
+if (\$Wifi) { \$env:QEMU_WIFI_MODE = \$Wifi }
 if (\$Accel) { \$env:QEMU_ACCEL = \$Accel }
 if (\$QemuPath) { \$env:QEMU_BIN = \$QemuPath }
 
@@ -1694,11 +2013,79 @@ switch (\$DisplayType) {
 
 \$KernelBootArgs = "oemmode=rd snd-ens1370.index=0 snd-aloop.index=1 snd-aloop.id=QemuCapture snd-aloop.pcm_substreams=1 loglevel=\$KernelLogLevelValue buildvariant=eng developer_mode=1 console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@f2fs@nosuid,nodev,noatime,usrquota,grpquota,prjquota@wait,required,reservedsize=104857600"
 
+\$WifiModeValue = if (\$env:QEMU_WIFI_MODE) { \$env:QEMU_WIFI_MODE.ToLowerInvariant() } else { "auto" }
+if (\$WifiModeValue -notin @("auto", "hwsim", "virt_wifi", "off")) {
+  throw "Invalid QEMU_WIFI_MODE: \$WifiModeValue (expected auto|hwsim|virt_wifi|off)"
+}
+\$KernelBootArgs = "\$KernelBootArgs ohos.boot.qemu.wifi=\$WifiModeValue"
+
 \$AccessibilityEnabled = if (\$env:QEMU_ACCESSIBILITY) { \$env:QEMU_ACCESSIBILITY } else { "0" }
 if (\$AccessibilityEnabled -notin @("0", "1")) {
   throw "QEMU_ACCESSIBILITY must be 0 or 1, got: \$AccessibilityEnabled"
 }
 \$A11yInputArgs = if (\$AccessibilityEnabled -eq "1") { @("-device", "virtio-multitouch-pci") } else { @() }
+
+\$AudioModeValue = if (\$env:QEMU_AUDIO_BACKEND) { \$env:QEMU_AUDIO_BACKEND } else { "auto" }
+\$AudioArgs = @("-audiodev", "none,id=ohos_audio", "-device", "ES1370,audiodev=ohos_audio")
+if (\$AudioModeValue -eq "auto") {
+  if (\$DisplayType -notin @("none", "vnc")) {
+    try {
+      \$AudioHelp = & \$Qemu -audiodev help 2>&1 | Out-String
+      if (\$AudioHelp -match "\\bdsound\\b") {
+        \$AudioArgs = @("-audiodev", "dsound,id=ohos_audio", "-device", "ES1370,audiodev=ohos_audio")
+      } elseif (\$AudioHelp -match "\\bsdl\\b") {
+        \$AudioArgs = @("-audiodev", "sdl,id=ohos_audio", "-device", "ES1370,audiodev=ohos_audio")
+      }
+    } catch {}
+  }
+} elseif (\$AudioModeValue -match '^wav(?::(.+))?\$') {
+  \$WavPath = if (\$Matches[1]) { \$Matches[1] } else { Join-Path \$env:TEMP "openharmony-qemu-audio.wav" }
+  \$AudioArgs = @("-audiodev", "wav,id=ohos_audio,path=\$WavPath", "-device", "ES1370,audiodev=ohos_audio")
+} elseif (\$AudioModeValue -in @("coreaudio", "pa", "pipewire", "alsa", "sdl", "dsound", "oss", "jack")) {
+  \$AudioArgs = @("-audiodev", "\$AudioModeValue,id=ohos_audio", "-device", "ES1370,audiodev=ohos_audio")
+} elseif (\$AudioModeValue -ne "none") {
+  throw "Invalid QEMU_AUDIO_BACKEND: \$AudioModeValue"
+}
+
+\$CapabilityArgs = @()
+if (\$env:QEMU_SHARED_DIR) {
+  \$SharePath = \$env:QEMU_SHARED_DIR
+  \$ShareTag = "hostshare"
+  if (\$SharePath -match '^(.+):([A-Za-z0-9_.-]+)\$' -and (Test-Path \$Matches[1] -PathType Container)) {
+    \$SharePath = \$Matches[1]
+    \$ShareTag = \$Matches[2]
+  }
+  if (-not (Test-Path \$SharePath -PathType Container)) {
+    throw "QEMU_SHARED_DIR directory does not exist: \$SharePath"
+  }
+  \$CapabilityArgs += @(
+    "-fsdev", "local,id=fsdev_hostshare,path=\$SharePath,security_model=mapped-xattr",
+    "-device", "virtio-9p-pci,fsdev=fsdev_hostshare,mount_tag=\$ShareTag"
+  )
+}
+if (\$env:QEMU_USB_XHCI -eq "1" -or \$env:QEMU_USB_STORAGE -or \$env:QEMU_USB_HOST -or \$env:QEMU_BT_USB) {
+  \$CapabilityArgs += @("-device", "qemu-xhci,id=xhci0")
+}
+if (\$env:QEMU_USB_STORAGE) {
+  if (-not (Test-Path \$env:QEMU_USB_STORAGE -PathType Leaf)) {
+    throw "QEMU_USB_STORAGE file does not exist: \$(\$env:QEMU_USB_STORAGE)"
+  }
+  \$CapabilityArgs += @(
+    "-drive", "if=none,id=usb_disk0,file=\$(\$env:QEMU_USB_STORAGE),format=raw",
+    "-device", "usb-storage,bus=xhci0.0,drive=usb_disk0"
+  )
+}
+foreach (\$UsbSpec in @(\$env:QEMU_USB_HOST, \$env:QEMU_BT_USB)) {
+  if (\$UsbSpec) {
+    if (\$UsbSpec -notmatch '^(?:0x)?([0-9A-Fa-f]{1,4}):(?:0x)?([0-9A-Fa-f]{1,4})\$') {
+      throw "Invalid USB VID:PID specification: \$UsbSpec"
+    }
+    \$CapabilityArgs += @("-device", ("usb-host,bus=xhci0.0,vendorid=0x{0},productid=0x{1}" -f \$Matches[1], \$Matches[2]))
+  }
+}
+if (\$env:QEMU_BALLOON -eq "1") {
+  \$CapabilityArgs += @("-device", "virtio-balloon-pci,id=balloon0")
+}
 
 \$ArgsList = @(
   "-machine", "q35",
@@ -1711,6 +2098,8 @@ if (\$AccessibilityEnabled -notin @("0", "1")) {
   "-kernel", (Join-Path \$Img "bzImage"),
   "-initrd", (Join-Path \$Img "ramdisk.img"),
   \$DisplayArgs,
+  \$AudioArgs,
+  \$CapabilityArgs,
   \$A11yInputArgs,
   "-device", "${pointer_device}",
   "-device", "virtio-keyboard-pci",
@@ -1807,6 +2196,15 @@ CLI flags override environment variables, which override package defaults.
 | \`--a11y\` | \`QEMU_ACCESSIBILITY\` | \`0\` |
 | \`--qmp-socket PATH\` | \`QEMU_QMP_SOCKET\` | \`/tmp/openharmony-qemu-a11y-<HDC_PORT>.sock\` with \`--a11y\` |
 | Windows \`-QmpPort PORT\` | \`QEMU_QMP_PORT\` | \`4445\` with \`-A11y\` |
+| \`--audio MODE\` / Windows \`-Audio MODE\` | \`QEMU_AUDIO_BACKEND\` | \`auto\` (\`none\` headless, host audio windowed) |
+| \`--shared-dir DIR[:TAG]\` / Windows \`-SharedDir\` | \`QEMU_SHARED_DIR\` | unset (mounts at \`/mnt/share\` and \`/data/share\`) |
+| \`--usb\` / Windows \`-Usb\` | \`QEMU_USB_XHCI\` | \`0\` (auto-enabled by \`--usb-disk\`/\`--usb-host\`/\`--bt-usb\`) |
+| \`--usb-disk FILE\` / Windows \`-UsbDisk FILE\` | \`QEMU_USB_STORAGE\` | unset |
+| \`--usb-host VID:PID\` / Windows \`-UsbHost VID:PID\` | \`QEMU_USB_HOST\` | unset |
+| \`--bt-usb VID:PID\` / Windows \`-BtUsb VID:PID\` | \`QEMU_BT_USB\` | unset (uses virtual HCI \`libbt_vendor.z.so\` by default) |
+| \`--balloon\` / Windows \`-Balloon\` | \`QEMU_BALLOON\` | \`0\` |
+| \`--ril-modem MODE\` / Windows \`-RilModem MODE\` | \`QEMU_RIL_MODEM\` | \`auto\` (\`auto\`/\`on\`/\`off\`) |
+| \`--wifi MODE\` / Windows \`-Wifi MODE\` | \`QEMU_WIFI_MODE\` | \`auto\` (\`auto\`/\`hwsim\`/\`virt_wifi\`/\`off\`) |
 | \`-a, --accel MODE\` | \`QEMU_ACCEL\` | \`auto\` |
 | \`-q, --qemu PATH\` | \`QEMU_BIN\` | product QEMU binary |
 | \`-- ...\` | \`QEMU_EXTRA_ARGS\` | empty |
@@ -1816,6 +2214,7 @@ Examples:
 \`\`\`bash
 ./launch/linux.sh -r 1280x720 -m 8G -s 8
 ./launch/linux.sh --userdata-size 8G
+./launch/linux.sh --shared-dir /tmp/ohos-share --balloon --audio auto
 ./launch/linux.sh --cpu ${cpu_example}
 ./launch/linux.sh --width 1080 --height 1920 --display cocoa
 ./launch/linux.sh --headless --vnc-display 21 --serial-port 4444
@@ -2010,10 +2409,13 @@ write_full_product_launchers() {
 
     if ! grep -q -- '--a11y' "${launch_out}/linux.sh" || \
        ! grep -q -- '--userdata-size' "${launch_out}/linux.sh" || \
+       ! grep -q -- '--shared-dir' "${launch_out}/linux.sh" || \
+       ! grep -q -- '--ril-modem' "${launch_out}/linux.sh" || \
        ! grep -q 'QEMU_USERDATA_SIZE_V1' "${launch_out}/qemu_run.sh" || \
+       ! grep -q 'QEMU_CAPABILITIES_V1' "${launch_out}/qemu_run.sh" || \
        ! grep -q 'virtio-multitouch-pci' "${launch_out}/linux.sh" || \
        ! grep -q 'server=on,wait=off' "${launch_out}/linux.sh"; then
-      echo "packaged POSIX launcher is missing accessibility/QMP/userdata-size support" >&2
+      echo "packaged POSIX launcher is missing accessibility/QMP/userdata-size/capabilities support" >&2
       exit 1
     fi
 
@@ -2151,6 +2553,296 @@ else:
   fi
 }
 
+install_qemu_virt_device_support() {
+  local package_dir="$1"
+  local product="$2"
+  local source_root="${3:-}"
+  local tools_dir="${package_dir}/tools"
+  local images_dir="${package_dir}/images"
+  local system_img="${images_dir}/system.img"
+  local vendor_img="${images_dir}/vendor.img"
+
+  mkdir -p "${tools_dir}"
+  if [ -f "${SCRIPT_DIR}/qemu_at_modem.py" ]; then
+    cp "${SCRIPT_DIR}/qemu_at_modem.py" "${tools_dir}/qemu_at_modem.py"
+    chmod +x "${tools_dir}/qemu_at_modem.py"
+  fi
+
+  if [ "${product}" != "arm64_virt" ] && [ "${product}" != "x86_64_virt" ] && \
+     [ "${product}" != "armv7a_virt" ]; then
+    return
+  fi
+
+  if ! command -v debugfs >/dev/null 2>&1; then
+    echo "debugfs not found; cannot install QEMU virt device support" >&2
+    exit 1
+  fi
+
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+
+  if [ -f "${system_img}" ]; then
+    debugfs -w -R "mkdir /mnt/share" "${system_img}" >/dev/null 2>&1 || true
+    if [ "${product}" = "x86_64_virt" ] && command -v python3 >/dev/null 2>&1; then
+      local libuv_tmp="${tmpdir}/libuv.so"
+      if debugfs -R "dump /system/lib64/platformsdk/libuv.so ${libuv_tmp}" "${system_img}" >/dev/null 2>&1 && \
+         [ -s "${libuv_tmp}" ]; then
+        if python3 - "${libuv_tmp}" <<'PY'
+import sys
+path = sys.argv[1]
+data = bytearray(open(path, "rb").read())
+# In third_party/libuv/BUILD.gn, USE_OHOS_DFX is omitted when is_emulator=true
+# (x86_64), leaving uv__use_io_uring(0) enabled in uv__iou_init(). When appspawn
+# forks child processes without uv_loop_fork(), the inherited MAP_SHARED io_uring
+# epoll-batching ring races across children and aborts in uv__epoll_ctl_flush().
+# Patch uv__iou_init() to jump directly to its epilogue, matching arm64/armv7a.
+pat = bytes.fromhex("f6c3027454e8c0fbffff3dba0a05000f82f6010000")
+repl = bytes.fromhex("e906020000e8c0fbffff3dba0a05000f82f6010000")
+idx = data.find(pat)
+if idx != -1:
+    data[idx:idx + len(pat)] = repl
+    open(path, "wb").write(data)
+    sys.exit(0)
+sys.exit(1)
+PY
+        then
+          chmod 0644 "${libuv_tmp}"
+          debugfs -w -R "rm /system/lib64/platformsdk/libuv.so" "${system_img}" >/dev/null 2>&1 || true
+          debugfs -w -R "write ${libuv_tmp} /system/lib64/platformsdk/libuv.so" "${system_img}" >/dev/null
+        fi
+      fi
+    fi
+  fi
+
+  if [ ! -f "${vendor_img}" ]; then
+    rm -rf "${tmpdir}"
+    return
+  fi
+
+  local setup_sh="${tmpdir}/qemu-init-setup.sh"
+  cat >"${setup_sh}" <<'EOF'
+#!/system/bin/sh
+stage="${1:-boot}"
+
+setup_ril_port() {
+  for port_dir in /sys/class/virtio-ports/vport*; do
+    [ -e "${port_dir}" ] || continue
+    if [ -f "${port_dir}/name" ] && ! grep -q "ohos.ril.at" "${port_dir}/name" 2>/dev/null; then
+      continue
+    fi
+    dev_name="${port_dir##*/}"
+    dev_node="/dev/${dev_name}"
+    if [ ! -e "${dev_node}" ] && [ -f "${port_dir}/dev" ]; then
+      dev_nums=""
+      read -r dev_nums < "${port_dir}/dev" 2>/dev/null || true
+      major="${dev_nums%:*}"
+      minor="${dev_nums#*:}"
+      if [ -n "${major}" ] && [ -n "${minor}" ] && [ "${major}" != "${dev_nums}" ]; then
+        mknod "${dev_node}" c "${major}" "${minor}" 2>/dev/null || true
+      fi
+    fi
+    if [ -e "${dev_node}" ]; then
+      chown radio:radio "${dev_node}" 2>/dev/null || chown 1001:1001 "${dev_node}" 2>/dev/null || true
+      chmod 0666 "${dev_node}" 2>/dev/null || true
+      ln -sf "${dev_node}" /dev/ttyUSB0 2>/dev/null || true
+    fi
+  done
+}
+
+setup_shared_dir() {
+  for tag_file in /sys/bus/virtio/drivers/9pnet_virtio/virtio*/mount_tag; do
+    [ -f "${tag_file}" ] || continue
+    tag="hostshare"
+    for tok in $(cat /proc/cmdline 2>/dev/null); do
+      case "${tok}" in
+        ohos.boot.qemu.share_tag=*)
+          tag="${tok#ohos.boot.qemu.share_tag=}"
+          ;;
+      esac
+    done
+    [ -n "${tag}" ] || tag="hostshare"
+    if [ -d /mnt/share ] && ! grep -q " /mnt/share " /proc/mounts 2>/dev/null; then
+      mount -t 9p -o trans=virtio,version=9p2000.L,msize=524288 "${tag}" /mnt/share 2>/dev/null || true
+    fi
+    if [ -d /data ]; then
+      mkdir -p /data/share 2>/dev/null || true
+      chmod 0777 /data/share 2>/dev/null || true
+      if [ -d /data/share ] && ! grep -q " /data/share " /proc/mounts 2>/dev/null; then
+        if grep -q " /mnt/share " /proc/mounts 2>/dev/null; then
+          mount -o bind /mnt/share /data/share 2>/dev/null || true
+        else
+          mount -t 9p -o trans=virtio,version=9p2000.L,msize=524288 "${tag}" /data/share 2>/dev/null || true
+        fi
+      fi
+    fi
+    break
+  done
+}
+
+case "${stage}" in
+  pre-init)
+    if [ -w /proc/sys/kernel/io_uring_disabled ]; then
+      echo 2 > /proc/sys/kernel/io_uring_disabled 2>/dev/null || true
+    fi
+    mkdir -p /mnt/share 2>/dev/null || true
+    chmod 0777 /mnt/share 2>/dev/null || true
+    setup_ril_port
+    ;;
+  post-fs-data)
+    setup_ril_port
+    setup_shared_dir
+    ;;
+  boot)
+    setup_ril_port
+    (
+      for _ in 1 2 3 4 5; do
+        setup_ril_port
+        sleep 1
+      done
+    ) </dev/null >/dev/null 2>&1 &
+    setup_shared_dir
+    if [ -w /sys/module/cfg80211/parameters/ieee80211_regdom ]; then
+      echo CN > /sys/module/cfg80211/parameters/ieee80211_regdom 2>/dev/null || true
+    fi
+    wifi_mode="auto"
+    for tok in $(cat /proc/cmdline 2>/dev/null); do
+      case "${tok}" in
+        ohos.boot.qemu.wifi=*)
+          wifi_mode="${tok#ohos.boot.qemu.wifi=}"
+          ;;
+      esac
+    done
+    case "${wifi_mode}" in
+      off)
+        rmmod mac80211_hwsim 2>/dev/null || true
+        ;;
+      virt_wifi)
+        rmmod mac80211_hwsim 2>/dev/null || true
+        insmod /vendor/modules/virt_wifi.ko 2>/dev/null || true
+        ip link set wlan0 up 2>/dev/null || ifconfig wlan0 up 2>/dev/null || true
+        ;;
+      *)
+        ip link set wlan0 up 2>/dev/null || ifconfig wlan0 up 2>/dev/null || true
+        ;;
+    esac
+    ;;
+esac
+exit 0
+EOF
+  chmod 0755 "${setup_sh}"
+  debugfs -w -R "rm /bin/qemu-init-setup.sh" "${vendor_img}" >/dev/null 2>&1 || true
+  debugfs -w -R "write ${setup_sh} /bin/qemu-init-setup.sh" "${vendor_img}" >/dev/null
+
+  local reg_cfg="${tmpdir}/qemu-regulatory.cfg"
+  cat >"${reg_cfg}" <<'EOF'
+{
+    "jobs" : [{
+            "name" : "pre-init",
+            "cmds" : [
+                "syncexec /system/bin/sh /vendor/bin/qemu-init-setup.sh pre-init"
+            ]
+        }, {
+            "name" : "post-fs-data",
+            "cmds" : [
+                "syncexec /system/bin/sh /vendor/bin/qemu-init-setup.sh post-fs-data"
+            ]
+        }, {
+            "name" : "boot",
+            "cmds" : [
+                "write /sys/module/cfg80211/parameters/ieee80211_regdom CN",
+                "syncexec /system/bin/sh /vendor/bin/qemu-init-setup.sh boot",
+                "ifup wlan0"
+            ]
+        }
+    ]
+}
+EOF
+  chmod 0644 "${reg_cfg}"
+  debugfs -w -R "rm /etc/init/qemu-regulatory.cfg" "${vendor_img}" >/dev/null 2>&1 || true
+  debugfs -w -R "write ${reg_cfg} /etc/init/qemu-regulatory.cfg" "${vendor_img}" >/dev/null
+
+  local bt_target=""
+  local bt_lib_dest=""
+  case "${product}" in
+    arm64_virt)
+      bt_target="aarch64-linux-ohos"
+      bt_lib_dest="/lib64/libbt_vendor.z.so"
+      ;;
+    x86_64_virt)
+      bt_target="x86_64-linux-ohos"
+      bt_lib_dest="/lib64/libbt_vendor.z.so"
+      ;;
+    armv7a_virt)
+      bt_target="arm-linux-ohos"
+      bt_lib_dest="/lib/libbt_vendor.z.so"
+      ;;
+  esac
+
+  if [ -n "${bt_lib_dest}" ] && [ -f "${SCRIPT_DIR}/qemu_bt_vendor.c" ]; then
+    local clang_bin=""
+    local candidate_root
+    for candidate_root in "${source_root}" "/Volumes/PSSD/qemu/openharmony" "/Volumes/PSSD/ohos/ohos-main"; do
+      if [ -z "${candidate_root}" ] || [ ! -d "${candidate_root}" ]; then
+        continue
+      fi
+      local host_dir
+      for host_dir in darwin-arm64 darwin-x86_64 linux-x86_64 linux-aarch64; do
+        if [ -x "${candidate_root}/prebuilts/clang/ohos/${host_dir}/llvm/bin/clang" ]; then
+          clang_bin="${candidate_root}/prebuilts/clang/ohos/${host_dir}/llvm/bin/clang"
+          break
+        fi
+      done
+      if [ -n "${clang_bin}" ]; then
+        break
+      fi
+    done
+
+    local bt_so="${tmpdir}/libbt_vendor.z.so"
+    if [ -n "${clang_bin}" ]; then
+      local libc_stub_c="${tmpdir}/libc_stub.c"
+      local libc_stub_so="${tmpdir}/libc.so"
+      cat >"${libc_stub_c}" <<'STUB_EOF'
+int *__errno_location(void) { return 0; }
+void *memcpy(void *d, const void *s, __SIZE_TYPE__ n) { return d; }
+void *memset(void *s, int c, __SIZE_TYPE__ n) { return s; }
+__PTRDIFF_TYPE__ read(int fd, void *b, __SIZE_TYPE__ c) { return 0; }
+__PTRDIFF_TYPE__ write(int fd, const void *b, __SIZE_TYPE__ c) { return 0; }
+int close(int fd) { return 0; }
+int socketpair(int d, int t, int p, int sv[2]) { return 0; }
+int shutdown(int s, int h) { return 0; }
+int pthread_create(void *t, const void *a, void *(*f)(void *), void *g) { return 0; }
+int pthread_join(void *t, void **r) { return 0; }
+int select(int n, void *r, void *w, void *e, void *t) { return 0; }
+STUB_EOF
+      if [ "${bt_target}" = "arm-linux-ohos" ]; then
+        "${clang_bin}" --target="${bt_target}" -march=armv7-a -mfloat-abi=softfp \
+          -fPIC -ffreestanding -nostdlib -shared -Wl,-soname,libc.so \
+          "${libc_stub_c}" -o "${libc_stub_so}"
+        "${clang_bin}" --target="${bt_target}" -march=armv7-a -mfloat-abi=softfp \
+          -O2 -fPIC -ffreestanding -nostdlib -shared -Wl,-soname,libbt_vendor.z.so \
+          "${SCRIPT_DIR}/qemu_bt_vendor.c" "${libc_stub_so}" -o "${bt_so}"
+      else
+        "${clang_bin}" --target="${bt_target}" \
+          -fPIC -ffreestanding -nostdlib -shared -Wl,-soname,libc.so \
+          "${libc_stub_c}" -o "${libc_stub_so}"
+        "${clang_bin}" --target="${bt_target}" \
+          -O2 -fPIC -ffreestanding -nostdlib -shared -Wl,-soname,libbt_vendor.z.so \
+          "${SCRIPT_DIR}/qemu_bt_vendor.c" "${libc_stub_so}" -o "${bt_so}"
+      fi
+      chmod 0644 "${bt_so}"
+      debugfs -w -R "rm ${bt_lib_dest}" "${vendor_img}" >/dev/null 2>&1 || true
+      debugfs -w -R "write ${bt_so} ${bt_lib_dest}" "${vendor_img}" >/dev/null
+    elif ! debugfs -R "stat ${bt_lib_dest}" "${vendor_img}" 2>&1 \
+           | grep -qE '(^|[[:space:]])Inode:[[:space:]]*[0-9]+'; then
+      rm -rf "${tmpdir}"
+      echo "OHOS clang not found and ${bt_lib_dest} is missing from ${vendor_img}" >&2
+      exit 1
+    fi
+  fi
+
+  rm -rf "${tmpdir}"
+}
+
 rewrite_package_launchers() {
   local package_dir="$1"
   local manifest="${package_dir}/manifest.json"
@@ -2187,6 +2879,12 @@ rewrite_package_launchers() {
   pointer_device=virtio-mouse-pci
   if [ "${absolute_pointer_sync}" = "true" ]; then
     pointer_device=virtio-tablet-pci
+  fi
+
+  install_qemu_virt_device_support "${package_dir}" "${product}" "${SOURCE_ROOT:-}"
+  if [ -f "${package_dir}/images/system.img" ] && command -v python3 >/dev/null 2>&1 && command -v debugfs >/dev/null 2>&1; then
+    python3 "${SCRIPT_DIR}/configure_sceneboard_runtime.py" \
+      "${package_dir}/images/system.img" >/dev/null
   fi
 
   write_full_product_launchers \
@@ -3563,6 +4261,7 @@ if [ "${PRODUCT}" = "x86_64_virt" ] || [ "${PRODUCT}" = "arm64_virt" ] || [ "${P
   ensure_standard_system_root "${IMAGES_OUT}/system.img"
   seed_standard_userdata_dirs "${IMAGES_OUT}/userdata.img"
   install_standard_tun_compat "${IMAGES_OUT}/system.img"
+  install_qemu_virt_device_support "${PACKAGE_DIR}" "${PRODUCT}" "${SOURCE_ROOT}"
   verify_standard_vpn_capability \
     "${SOURCE_ROOT}" \
     "${PRODUCT}" \

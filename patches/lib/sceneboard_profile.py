@@ -132,28 +132,9 @@ def boot_unlock_configuration() -> dict:
     return {
         "jobs": [
             {
-                "name": "param:bootevent.lockscreen.ready=true",
-                "condition": "bootevent.lockscreen.ready=true",
+                "name": "param:init.sceneboard.finish=true",
+                "condition": f"{BOOT_UNLOCK_TRIGGER} && init.sceneboard.finish=true",
                 "cmds": [
-                    "start qemu_sceneboard_user_unlock",
-                    "start qemu_sceneboard_unlock",
-                ],
-            },
-            {
-                "name": "param:bootevent.launcher.ready=true",
-                "condition": "bootevent.launcher.ready=true",
-                "cmds": [
-                    "start qemu_sceneboard_user_unlock",
-                    "start qemu_sceneboard_unlock",
-                ],
-            },
-            {
-                "name": f"param:{BOOT_UNLOCK_TRIGGER}",
-                "condition": BOOT_UNLOCK_TRIGGER,
-                "cmds": [
-                    "start qemu_sceneboard_user_unlock",
-                    "sleep 2",
-                    "start qemu_sceneboard_unlock",
                     "sleep 5",
                     "start qemu_sceneboard_user_unlock",
                     "sleep 1",

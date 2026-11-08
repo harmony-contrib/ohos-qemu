@@ -91,15 +91,25 @@ powershell.exe -ExecutionPolicy Bypass -File ./launch/windows.ps1 -Cpu EPYC-v5 -
 | `-r, --resolution WxH` | `QEMU_XRES` / `QEMU_YRES` | `800x500` |
 | `--width` / `--height` | `QEMU_XRES` / `QEMU_YRES` | same |
 | `-m, --memory SIZE` | `QEMU_MEMORY` | `4096` (armv7a: `3072`) |
+| `--userdata-size SIZE` | `QEMU_USERDATA_SIZE` | `2G` (`images/userdata.img`, online-resized on boot) |
 | `-s, --smp N` | `QEMU_SMP` | `4` |
 | `--cpu MODEL` | `QEMU_CPU` | `max` (arm64: `cortex-a57`, armv7a: `cortex-a7`) |
-| `-d, --display` / `--headless` | `QEMU_DISPLAY` | product default (`sdl` / `none`) |
+| `-d, --display` / `--headless` | `QEMU_DISPLAY` | product default (`sdl` / `cocoa` / `none`) |
 | `-c, --connect` / `--hdc-port` | `QEMU_HDC_HOST_PORT` | `5555` |
 | `--vnc-display N` | `QEMU_VNC_DISPLAY` | `21` (TCP 5921) |
 | `--serial-port PORT` | `QEMU_SERIAL_PORT` | unset |
 | `--a11y` | `QEMU_ACCESSIBILITY` | `0` |
 | `--qmp-socket PATH` | `QEMU_QMP_SOCKET` | `/tmp/openharmony-qemu-a11y-<HDC_PORT>.sock` with `--a11y` |
 | Windows `-QmpPort PORT` | `QEMU_QMP_PORT` | `4445` with `-A11y` |
+| `--audio MODE` | `QEMU_AUDIO_BACKEND` | `auto` (`auto\|none\|coreaudio\|pa\|pipewire\|alsa\|sdl\|dsound\|wav[:PATH]`) |
+| `--shared-dir DIR[:TAG]` | `QEMU_SHARED_DIR` | unset (mounts VirtFS 9p at `/mnt/share` and `/data/share`) |
+| `--usb` | `QEMU_USB` | `0` (attaches `qemu-xhci`) |
+| `--usb-disk FILE` | `QEMU_USB_DISK` | unset (attaches raw USB mass storage on `xhci0.0`) |
+| `--usb-host VID:PID` | `QEMU_USB_HOST` | unset (USB host device passthrough by hex `VID:PID`) |
+| `--bt-usb VID:PID` | `QEMU_BT_USB` | unset (USB Bluetooth adapter passthrough by hex `VID:PID`) |
+| `--balloon` | `QEMU_BALLOON` | `0` (attaches `virtio-balloon-pci`) |
+| `--ril-modem MODE` | `QEMU_RIL_MODEM` | `auto` (`auto\|on\|off`, virtual AT modem over `virtio-serial` `/dev/ttyUSB0`) |
+| `--wifi MODE` | `QEMU_WIFI_MODE` | `auto` (`auto\|hwsim\|virt_wifi\|off`) |
 | `-a, --accel` | `QEMU_ACCEL` | `auto` (`hvf`/`kvm`/`tcg`/`whpx`) |
 | `-q, --qemu PATH` | `QEMU_BIN` | product `qemu-system-*` |
 | `-- ...` | `QEMU_EXTRA_ARGS` | empty |
