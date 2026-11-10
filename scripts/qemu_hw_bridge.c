@@ -16,13 +16,16 @@
  */
 
 #define _GNU_SOURCE
+#include <arpa/inet.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <linux/input.h>
 #include <linux/videodev2.h>
 #include <math.h>
+#include <netinet/in.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdint.h>
@@ -32,9 +35,11 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/wait.h>
+#include <termios.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -212,6 +217,12 @@ typedef struct {
     uint32_t head_order;
     float hw, hx, hy, hz;
 
+    float gx, gy, gz;
+    float light_lux;
+    float proximity_cm;
+    float barometer_hpa;
+    float mx, my, mz;
+
     int battery_level;
     char battery_status[32];
     int battery_custom;
@@ -223,6 +234,16 @@ typedef struct {
 
     char camera_pattern[64];
     int camera_custom;
+
+    char last_key[32];
+    int last_linux_keycode;
+    int last_ohos_keycode;
+    uint64_t key_seq;
+
+    char net_mode[32];
+    char net_wlan0[16];
+    int net_latency_ms;
+    uint64_t net_seq;
 
     int vport_fd;
     int ctrl_listen_fd;
@@ -291,7 +312,7 @@ static void save_gnss_state(const bridge_state_t *st) {
 static void save_sensor_state(const bridge_state_t *st) {
     mkdir_p_one("/data/service/el1/public", 0775);
     mkdir_p_one("/data/vendor", 0771);
-    char buf[512];
+    char buf[1024];
     snprintf(buf, sizeof(buf),
              "{\n"
              "  \"accelConnected\": %s,\n"
@@ -302,7 +323,12 @@ static void save_sensor_state(const bridge_state_t *st) {
              "  \"rotation\": [%.4f, %.4f, %.4f, %.4f],\n"
              "  \"headPostureConnected\": %s,\n"
              "  \"headPostureSeq\": %llu,\n"
-             "  \"headPosture\": [%.4f, %.4f, %.4f, %.4f]\n"
+             "  \"headPosture\": [%.4f, %.4f, %.4f, %.4f],\n"
+             "  \"gyro\": [%.4f, %.4f, %.4f],\n"
+             "  \"ambientLightLux\": %.2f,\n"
+             "  \"proximityCm\": %.2f,\n"
+             "  \"barometerHpa\": %.2f,\n"
+             "  \"magnetic\": [%.4f, %.4f, %.4f]\n"
              "}\n",
              st->accel_ready ? "true" : "false",
              (unsigned long long)st->accel_seq,
@@ -312,7 +338,10 @@ static void save_sensor_state(const bridge_state_t *st) {
              st->rx, st->ry, st->rz, st->rw,
              st->head_ready ? "true" : "false",
              (unsigned long long)st->head_seq,
-             st->hw, st->hx, st->hy, st->hz);
+             st->hw, st->hx, st->hy, st->hz,
+             st->gx, st->gy, st->gz,
+             st->light_lux, st->proximity_cm, st->barometer_hpa,
+             st->mx, st->my, st->mz);
     write_file_inplace(SENSOR_STATE_FILE, buf);
     write_file_inplace("/data/vendor/sensor_state.json", buf);
 }
@@ -883,6 +912,233 @@ static size_t get_guest_clipboard(char *out, size_t out_cap) {
     return 0;
 }
 
+static void save_input_state(const bridge_state_t *st) {
+    mkdir_p_one("/data/service/el1/public", 0775);
+    mkdir_p_one("/data/vendor", 0771);
+    char buf[512];
+    snprintf(buf, sizeof(buf),
+             "{\n"
+             "  \"lastKey\": \"%s\",\n"
+             "  \"linuxKeycode\": %d,\n"
+             "  \"ohosKeycode\": %d,\n"
+             "  \"sequence\": %llu\n"
+             "}\n",
+             st->last_key[0] ? st->last_key : "none",
+             st->last_linux_keycode,
+             st->last_ohos_keycode,
+             (unsigned long long)st->key_seq);
+    write_file_inplace("/data/service/el1/public/qemu_input_state.json", buf);
+    write_file_inplace("/data/vendor/input_state.json", buf);
+}
+
+static int inject_guest_key(bridge_state_t *st, const char *key_spec) {
+    int linux_code = -1;
+    int ohos_code = -1;
+    char norm_name[32] = {0};
+
+    if (strcasecmp(key_spec, "power") == 0) {
+        linux_code = 116; ohos_code = 18; strcpy(norm_name, "power");
+    } else if (strcasecmp(key_spec, "volup") == 0 || strcasecmp(key_spec, "volume_up") == 0 || strcasecmp(key_spec, "volumeup") == 0) {
+        linux_code = 115; ohos_code = 16; strcpy(norm_name, "volume_up");
+    } else if (strcasecmp(key_spec, "voldown") == 0 || strcasecmp(key_spec, "volume_down") == 0 || strcasecmp(key_spec, "volumedown") == 0) {
+        linux_code = 114; ohos_code = 17; strcpy(norm_name, "volume_down");
+    } else if (strcasecmp(key_spec, "mute") == 0 || strcasecmp(key_spec, "volume_mute") == 0) {
+        linux_code = 113; ohos_code = 22; strcpy(norm_name, "volume_mute");
+    } else if (strcasecmp(key_spec, "home") == 0 || strcasecmp(key_spec, "homepage") == 0) {
+        linux_code = 172; ohos_code = 1; strcpy(norm_name, "home");
+    } else if (strcasecmp(key_spec, "back") == 0) {
+        linux_code = 158; ohos_code = 2; strcpy(norm_name, "back");
+    } else if (strcasecmp(key_spec, "enter") == 0 || strcasecmp(key_spec, "return") == 0) {
+        linux_code = 28; ohos_code = 2054; strcpy(norm_name, "enter");
+    } else if (strcasecmp(key_spec, "esc") == 0 || strcasecmp(key_spec, "escape") == 0) {
+        linux_code = 1; ohos_code = 2070; strcpy(norm_name, "escape");
+    } else if (strcasecmp(key_spec, "space") == 0) {
+        linux_code = 57; ohos_code = 2050; strcpy(norm_name, "space");
+    } else if (strcasecmp(key_spec, "tab") == 0) {
+        linux_code = 15; ohos_code = 2049; strcpy(norm_name, "tab");
+    } else if (strcasecmp(key_spec, "up") == 0 || strcasecmp(key_spec, "dpad_up") == 0) {
+        linux_code = 103; ohos_code = 2012; strcpy(norm_name, "dpad_up");
+    } else if (strcasecmp(key_spec, "down") == 0 || strcasecmp(key_spec, "dpad_down") == 0) {
+        linux_code = 108; ohos_code = 2013; strcpy(norm_name, "dpad_down");
+    } else if (strcasecmp(key_spec, "left") == 0 || strcasecmp(key_spec, "dpad_left") == 0) {
+        linux_code = 105; ohos_code = 2014; strcpy(norm_name, "dpad_left");
+    } else if (strcasecmp(key_spec, "right") == 0 || strcasecmp(key_spec, "dpad_right") == 0) {
+        linux_code = 106; ohos_code = 2015; strcpy(norm_name, "dpad_right");
+    } else if (strcasecmp(key_spec, "del") == 0 || strcasecmp(key_spec, "backspace") == 0) {
+        linux_code = 14; ohos_code = 2055; strcpy(norm_name, "backspace");
+    } else if (strcasecmp(key_spec, "menu") == 0) {
+        linux_code = 139; ohos_code = 2067; strcpy(norm_name, "menu");
+    } else if (isdigit((unsigned char)key_spec[0])) {
+        int val = atoi(key_spec);
+        if (val > 0 && val < 1000) {
+            linux_code = val;
+            ohos_code = val;
+        } else if (val >= 1000) {
+            ohos_code = val;
+            linux_code = 28;
+        }
+        snprintf(norm_name, sizeof(norm_name), "key_%d", val);
+    } else {
+        return -1;
+    }
+
+    mkdir_p_one("/dev/input", 0755);
+    DIR *dir = opendir("/sys/class/input");
+    int injected_evdev = 0;
+    if (dir) {
+        struct dirent *ent;
+        while ((ent = readdir(dir)) != NULL) {
+            if (strncmp(ent->d_name, "event", 5) != 0) continue;
+            char name_path[256];
+            snprintf(name_path, sizeof(name_path), "/sys/class/input/%s/device/name", ent->d_name);
+            int nfd = open(name_path, O_RDONLY | O_CLOEXEC);
+            char dev_title[128] = {0};
+            if (nfd >= 0) {
+                ssize_t rn = read(nfd, dev_title, sizeof(dev_title) - 1);
+                close(nfd);
+                if (rn > 0) dev_title[rn] = '\0';
+            }
+            if (dev_title[0] && !strcasestr(dev_title, "keyboard") && !strcasestr(dev_title, "kbd")) {
+                continue;
+            }
+            char dev_node[128];
+            snprintf(dev_node, sizeof(dev_node), "/dev/input/%s", ent->d_name);
+            if (access(dev_node, F_OK) != 0) {
+                char dev_num_path[256];
+                snprintf(dev_num_path, sizeof(dev_num_path), "/sys/class/input/%s/dev", ent->d_name);
+                int dfd = open(dev_num_path, O_RDONLY | O_CLOEXEC);
+                if (dfd >= 0) {
+                    char dbuf[64] = {0};
+                    if (read(dfd, dbuf, sizeof(dbuf) - 1) > 0) {
+                        unsigned int maj = 0, min = 0;
+                        if (sscanf(dbuf, "%u:%u", &maj, &min) == 2) {
+                            mknod(dev_node, S_IFCHR | 0660, makedev(maj, min));
+                        }
+                    }
+                    close(dfd);
+                }
+            }
+            int efd = open(dev_node, O_WRONLY | O_NONBLOCK | O_CLOEXEC);
+            if (efd >= 0) {
+                struct input_event ev[4];
+                memset(ev, 0, sizeof(ev));
+                ev[0].type = EV_KEY;
+                ev[0].code = (uint16_t)linux_code;
+                ev[0].value = 1;
+                ev[1].type = EV_SYN;
+                ev[1].code = SYN_REPORT;
+                ev[1].value = 0;
+                ev[2].type = EV_KEY;
+                ev[2].code = (uint16_t)linux_code;
+                ev[2].value = 0;
+                ev[3].type = EV_SYN;
+                ev[3].code = SYN_REPORT;
+                ev[3].value = 0;
+                if (write(efd, ev, sizeof(ev)) == (ssize_t)sizeof(ev)) {
+                    injected_evdev = 1;
+                }
+                close(efd);
+                if (injected_evdev) break;
+            }
+        }
+        closedir(dir);
+    }
+
+    if (ohos_code > 0 && access("/system/bin/uinput", X_OK) == 0) {
+        pid_t pid = fork();
+        if (pid == 0) {
+            alarm(3);
+            int null_fd = open("/dev/null", O_RDWR);
+            if (null_fd >= 0) {
+                dup2(null_fd, STDOUT_FILENO);
+                dup2(null_fd, STDERR_FILENO);
+                if (null_fd > 2) close(null_fd);
+            }
+            char kstr[32];
+            snprintf(kstr, sizeof(kstr), "%d", ohos_code);
+            execl("/system/bin/uinput", "uinput", "-K", "-d", kstr, "-u", kstr, (char *)NULL);
+            _exit(0);
+        }
+    }
+
+    strncpy(st->last_key, norm_name, sizeof(st->last_key) - 1);
+    st->last_linux_keycode = linux_code;
+    st->last_ohos_keycode = ohos_code;
+    st->key_seq++;
+    save_input_state(st);
+    return 0;
+}
+
+static void save_network_state(const bridge_state_t *st) {
+    mkdir_p_one("/data/service/el1/public", 0775);
+    mkdir_p_one("/data/vendor", 0771);
+    char buf[512];
+    snprintf(buf, sizeof(buf),
+             "{\n"
+             "  \"mode\": \"%s\",\n"
+             "  \"wlan0\": \"%s\",\n"
+             "  \"latencyMs\": %d,\n"
+             "  \"sequence\": %llu\n"
+             "}\n",
+             st->net_mode[0] ? st->net_mode : "online",
+             st->net_wlan0[0] ? st->net_wlan0 : "up",
+             st->net_latency_ms,
+             (unsigned long long)st->net_seq);
+    write_file_inplace("/data/service/el1/public/qemu_network_state.json", buf);
+    write_file_inplace("/data/vendor/network_state.json", buf);
+}
+
+static int apply_network_state(bridge_state_t *st, const char *net_spec) {
+    char buf[64];
+    strncpy(buf, net_spec, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
+    int latency = st->net_latency_ms;
+    char *colon = strchr(buf, ':');
+    if (colon) {
+        *colon = '\0';
+        latency = atoi(colon + 1);
+        if (latency < 0) latency = 0;
+    }
+
+    int wlan_up = 1;
+    if (strcasecmp(buf, "online") == 0 || strcasecmp(buf, "wifi_on") == 0 || strcasecmp(buf, "on") == 0) {
+        strcpy(st->net_mode, "online");
+        strcpy(st->net_wlan0, "up");
+        wlan_up = 1;
+    } else if (strcasecmp(buf, "offline") == 0 || strcasecmp(buf, "wifi_off") == 0 || strcasecmp(buf, "off") == 0) {
+        strcpy(st->net_mode, "offline");
+        strcpy(st->net_wlan0, "down");
+        wlan_up = 0;
+    } else if (strcasecmp(buf, "latency") == 0) {
+        if (!st->net_mode[0]) strcpy(st->net_mode, "online");
+        if (!st->net_wlan0[0]) strcpy(st->net_wlan0, "up");
+        wlan_up = (strcasecmp(st->net_wlan0, "up") == 0);
+    } else {
+        return -1;
+    }
+
+    st->net_latency_ms = latency;
+    st->net_seq++;
+    save_network_state(st);
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        alarm(3);
+        int null_fd = open("/dev/null", O_RDWR);
+        if (null_fd >= 0) {
+            dup2(null_fd, STDOUT_FILENO);
+            dup2(null_fd, STDERR_FILENO);
+            if (null_fd > 2) close(null_fd);
+        }
+        /* Only toggle wlan0 so management NIC eth0 (HDC port 5555) is never disrupted */
+        if (access("/sys/class/net/wlan0", F_OK) == 0) {
+            execl("/system/bin/ifconfig", "ifconfig", "wlan0", wlan_up ? "up" : "down", (char *)NULL);
+        }
+        _exit(0);
+    }
+    return 0;
+}
+
 static int find_virtserial_port(const char *port_name) {
     DIR *dir = opendir("/sys/class/virtio-ports");
     if (!dir) {
@@ -1061,6 +1317,69 @@ static void handle_command_line(bridge_state_t *st, const char *line_in, int rep
         } else {
             snprintf(reply, sizeof(reply), "ERR HEADPOSTURE invalid format\n");
         }
+    } else if (strncasecmp(line, "GYRO ", 5) == 0) {
+        const char *val = line + 5;
+        while (*val == ' ') ++val;
+        float gx = st->gx, gy = st->gy, gz = st->gz;
+        if (sscanf(val, "%f,%f,%f", &gx, &gy, &gz) == 3) {
+            st->gx = gx;
+            st->gy = gy;
+            st->gz = gz;
+            st->sensor_enabled = 1;
+            save_sensor_state(st);
+            snprintf(reply, sizeof(reply), "OK GYRO %.4f,%.4f,%.4f\n", st->gx, st->gy, st->gz);
+        } else {
+            snprintf(reply, sizeof(reply), "ERR GYRO invalid format\n");
+        }
+    } else if (strncasecmp(line, "LIGHT ", 6) == 0) {
+        const char *val = line + 6;
+        while (*val == ' ') ++val;
+        st->light_lux = (float)atof(val);
+        save_sensor_state(st);
+        snprintf(reply, sizeof(reply), "OK LIGHT %.2f\n", st->light_lux);
+    } else if (strncasecmp(line, "PROXIMITY ", 10) == 0) {
+        const char *val = line + 10;
+        while (*val == ' ') ++val;
+        st->proximity_cm = (float)atof(val);
+        save_sensor_state(st);
+        snprintf(reply, sizeof(reply), "OK PROXIMITY %.2f\n", st->proximity_cm);
+    } else if (strncasecmp(line, "BAROMETER ", 10) == 0) {
+        const char *val = line + 10;
+        while (*val == ' ') ++val;
+        st->barometer_hpa = (float)atof(val);
+        save_sensor_state(st);
+        snprintf(reply, sizeof(reply), "OK BAROMETER %.2f\n", st->barometer_hpa);
+    } else if (strncasecmp(line, "MAGNETIC ", 9) == 0) {
+        const char *val = line + 9;
+        while (*val == ' ') ++val;
+        float mx = st->mx, my = st->my, mz = st->mz;
+        if (sscanf(val, "%f,%f,%f", &mx, &my, &mz) == 3) {
+            st->mx = mx;
+            st->my = my;
+            st->mz = mz;
+            save_sensor_state(st);
+            snprintf(reply, sizeof(reply), "OK MAGNETIC %.4f,%.4f,%.4f\n", st->mx, st->my, st->mz);
+        } else {
+            snprintf(reply, sizeof(reply), "ERR MAGNETIC invalid format\n");
+        }
+    } else if (strncasecmp(line, "KEY ", 4) == 0) {
+        const char *val = line + 4;
+        while (*val == ' ') ++val;
+        if (inject_guest_key(st, val) == 0) {
+            snprintf(reply, sizeof(reply), "OK KEY %s linux=%d ohos=%d seq=%llu\n",
+                     st->last_key, st->last_linux_keycode, st->last_ohos_keycode, (unsigned long long)st->key_seq);
+        } else {
+            snprintf(reply, sizeof(reply), "ERR KEY unsupported key: %s\n", val);
+        }
+    } else if (strncasecmp(line, "NETWORK ", 8) == 0) {
+        const char *val = line + 8;
+        while (*val == ' ') ++val;
+        if (apply_network_state(st, val) == 0) {
+            snprintf(reply, sizeof(reply), "OK NETWORK mode=%s wlan0=%s latency=%dms seq=%llu\n",
+                     st->net_mode, st->net_wlan0, st->net_latency_ms, (unsigned long long)st->net_seq);
+        } else {
+            snprintf(reply, sizeof(reply), "ERR NETWORK invalid format: %s\n", val);
+        }
     } else if (strncasecmp(line, "BATTERY ", 8) == 0) {
         const char *val = line + 8;
         while (*val == ' ') ++val;
@@ -1112,11 +1431,17 @@ static void handle_command_line(bridge_state_t *st, const char *line_in, int rep
     } else if (strcasecmp(line, "STATUS") == 0 || strcasecmp(line, "PING") == 0) {
         snprintf(reply, sizeof(reply),
                  "OK STATUS gnss=%d(ready=%d,seq=%llu,lat=%.4f,lon=%.4f) "
-                 "sensor=%d(accel_ready=%d,seq=%llu,rot_ready=%d,head_ready=%d) "
-                 "battery=%d:%s thermal=%.1fC camera=%s\n",
+                 "sensor=%d(accel_ready=%d,seq=%llu,rot_ready=%d,head_ready=%d,light=%.1f,prox=%.1f,baro=%.1f) "
+                 "battery=%d:%s thermal=%.1fC camera=%s net=%s(wlan0=%s,lat=%dms) key=%s(seq=%llu)\n",
                  st->gnss_enabled, st->gnss_ready, (unsigned long long)st->gnss_seq, st->lat, st->lon,
                  st->sensor_enabled, st->accel_ready, (unsigned long long)st->accel_seq, st->rot_ready, st->head_ready,
-                 st->battery_level, st->battery_status, st->thermal_c, st->camera_pattern);
+                 st->light_lux, st->proximity_cm, st->barometer_hpa,
+                 st->battery_level, st->battery_status, st->thermal_c, st->camera_pattern,
+                 st->net_mode[0] ? st->net_mode : "online",
+                 st->net_wlan0[0] ? st->net_wlan0 : "up",
+                 st->net_latency_ms,
+                 st->last_key[0] ? st->last_key : "none",
+                 (unsigned long long)st->key_seq);
     } else {
         snprintf(reply, sizeof(reply), "ERR unknown command: %s\n", line);
     }
@@ -1161,7 +1486,190 @@ static int run_client_command(int argc, char **argv) {
     return 1;
 }
 
+static void configure_raw_tty_fd(int fd) {
+    if (fd < 0) return;
+    struct termios tio;
+    if (tcgetattr(fd, &tio) == 0) {
+        cfmakeraw(&tio);
+        tio.c_cflag |= (CLOCAL | CREAD);
+        tio.c_cflag &= ~CRTSCTS;
+        tio.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL | ICANON | ISIG | IEXTEN);
+        tio.c_oflag &= ~OPOST;
+        tio.c_iflag &= ~(IXON | IXOFF | IXANY | ICRNL | INLCR | IGNCR);
+        cfsetispeed(&tio, B115200);
+        cfsetospeed(&tio, B115200);
+        tcsetattr(fd, TCSANOW, &tio);
+    }
+}
+
+static void configure_raw_tty_path(const char *path) {
+    int fd = open(path, O_RDWR | O_NOCTTY | O_NONBLOCK | O_CLOEXEC);
+    if (fd >= 0) {
+        configure_raw_tty_fd(fd);
+        close(fd);
+    }
+}
+
+static void detach_background_helper(void) {
+    pid_t pid = fork();
+    if (pid < 0) _exit(1);
+    if (pid > 0) _exit(0);
+    setsid();
+    int null_fd = open("/dev/null", O_RDWR);
+    if (null_fd >= 0) {
+        dup2(null_fd, STDIN_FILENO);
+        dup2(null_fd, STDOUT_FILENO);
+        dup2(null_fd, STDERR_FILENO);
+        if (null_fd > 2) close(null_fd);
+    }
+    for (int fd = 3; fd < 64; ++fd) {
+        close(fd);
+    }
+}
+
+static int run_tcp_echo_once(int port, const char *response) {
+    if (port <= 0 || port > 65535) return 1;
+    int sfd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
+    if (sfd < 0) return 1;
+    int opt = 1;
+    setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    addr.sin_port = htons((uint16_t)port);
+    if (bind(sfd, (struct sockaddr *)&addr, sizeof(addr)) != 0 || listen(sfd, 2) != 0) {
+        close(sfd);
+        return 1;
+    }
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(sfd);
+        return 1;
+    }
+    if (pid > 0) {
+        close(sfd);
+        return 0;
+    }
+    setsid();
+    int null_fd = open("/dev/null", O_RDWR);
+    if (null_fd >= 0) {
+        dup2(null_fd, STDIN_FILENO);
+        dup2(null_fd, STDOUT_FILENO);
+        dup2(null_fd, STDERR_FILENO);
+        if (null_fd > 2 && null_fd != sfd) close(null_fd);
+    }
+    for (int fd = 3; fd < 64; ++fd) {
+        if (fd != sfd) close(fd);
+    }
+    struct pollfd pfd = {.fd = sfd, .events = POLLIN, .revents = 0};
+    if (poll(&pfd, 1, 10000) > 0) {
+        int cfd = accept(sfd, NULL, NULL);
+        if (cfd >= 0) {
+            struct pollfd cpfd = {.fd = cfd, .events = POLLIN, .revents = 0};
+            if (poll(&cpfd, 1, 2000) > 0) {
+                char rbuf[256];
+                (void)read(cfd, rbuf, sizeof(rbuf));
+            }
+            char out[512];
+            int len = snprintf(out, sizeof(out), "%s\n", response ? response : "OK");
+            if (len > 0) {
+                (void)write(cfd, out, (size_t)len);
+            }
+            shutdown(cfd, SHUT_WR);
+            usleep(100000);
+            close(cfd);
+        }
+    }
+    close(sfd);
+    _exit(0);
+}
+
+static int run_serial_once(const char *dev_path, const char *out_file, const char *write_after) {
+    int fd = open(dev_path, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    if (fd < 0) return 1;
+    configure_raw_tty_fd(fd);
+    /* Flush any stale bytes before waiting */
+    tcflush(fd, TCIFLUSH);
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(fd);
+        return 1;
+    }
+    if (pid > 0) {
+        close(fd);
+        return 0;
+    }
+    setsid();
+    int null_fd = open("/dev/null", O_RDWR);
+    if (null_fd >= 0) {
+        dup2(null_fd, STDIN_FILENO);
+        dup2(null_fd, STDOUT_FILENO);
+        dup2(null_fd, STDERR_FILENO);
+        if (null_fd > 2 && null_fd != fd) close(null_fd);
+    }
+    for (int cfd = 3; cfd < 64; ++cfd) {
+        if (cfd != fd) close(cfd);
+    }
+    char rx_buf[512] = {0};
+    size_t rx_len = 0;
+    uint64_t start_ms = now_monotonic_ms();
+    while (now_monotonic_ms() - start_ms < 5000 && rx_len < sizeof(rx_buf) - 1) {
+        struct pollfd pfd = {.fd = fd, .events = POLLIN, .revents = 0};
+        if (poll(&pfd, 1, 200) > 0) {
+            ssize_t n = read(fd, rx_buf + rx_len, sizeof(rx_buf) - 1 - rx_len);
+            if (n > 0) {
+                rx_len += (size_t)n;
+                rx_buf[rx_len] = '\0';
+                if (strchr(rx_buf, '\n') != NULL) {
+                    break;
+                }
+            }
+        }
+    }
+    if (out_file && out_file[0]) {
+        write_file_inplace(out_file, rx_buf);
+    }
+    if (write_after && write_after[0]) {
+        char tx_buf[512];
+        int tlen = snprintf(tx_buf, sizeof(tx_buf), "%s\n", write_after);
+        if (tlen > 0) {
+            (void)write(fd, tx_buf, (size_t)tlen);
+        }
+    }
+    close(fd);
+    _exit(0);
+}
+
+static int is_hw_bridge_process(int pid) {
+    if (pid <= 1 || pid == (int)getpid()) {
+        return 0;
+    }
+    if (kill(pid, 0) != 0) {
+        return 0;
+    }
+    char comm_path[64];
+    snprintf(comm_path, sizeof(comm_path), "/proc/%d/comm", pid);
+    int fd = open(comm_path, O_RDONLY | O_CLOEXEC);
+    if (fd < 0) {
+        return 0;
+    }
+    char buf[64] = {0};
+    ssize_t n = read(fd, buf, sizeof(buf) - 1);
+    close(fd);
+    if (n <= 0) {
+        return 0;
+    }
+    return strstr(buf, "qemu-hw-bridge") != NULL;
+}
+
 int main(int argc, char **argv) {
+    if (argc >= 3 && strcmp(argv[1], "--tcp-echo-once") == 0) {
+        return run_tcp_echo_once(atoi(argv[2]), argc >= 4 ? argv[3] : "OK");
+    }
+    if (argc >= 4 && strcmp(argv[1], "--serial-once") == 0) {
+        return run_serial_once(argv[2], argv[3], argc >= 5 ? argv[4] : NULL);
+    }
     if (argc > 1 && strcmp(argv[1], "--daemon") != 0) {
         return run_client_command(argc, argv);
     }
@@ -1169,21 +1677,30 @@ int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
     signal(SIGCHLD, SIG_IGN);
     signal(SIGHUP, SIG_IGN);
-    setsid();
 
     mkdir_p_one("/data/vendor", 0771);
-    const char *pid_path = "/data/vendor/qemu_hw_bridge.pid";
+    unlink("/data/vendor/qemu_hw_bridge.pid");
+    const char *pid_path = "/dev/qemu_hw_bridge.pid";
     FILE *pf = fopen(pid_path, "r");
     if (pf) {
         int old_pid = 0;
-        if (fscanf(pf, "%d", &old_pid) == 1 && old_pid > 1 && old_pid != (int)getpid()) {
-            if (kill(old_pid, 0) == 0) {
-                fclose(pf);
-                return 0;
-            }
+        if (fscanf(pf, "%d", &old_pid) == 1 && is_hw_bridge_process(old_pid)) {
+            fclose(pf);
+            return 0;
         }
         fclose(pf);
     }
+
+    if (argc > 1 && strcmp(argv[1], "--daemon") == 0) {
+        detach_background_helper();
+    } else {
+        setsid();
+    }
+
+    configure_raw_tty_path("/dev/ttyUSB0");
+    configure_raw_tty_path("/dev/ttyRIL0");
+    configure_raw_tty_path("/dev/qemu_usb_serial");
+
     pf = fopen(pid_path, "w");
     if (pf) {
         fprintf(pf, "%d\n", (int)getpid());
@@ -1220,11 +1737,24 @@ int main(int argc, char **argv) {
     st.hx = 0.0f;
     st.hy = 0.0f;
     st.hz = 0.0f;
+    st.gx = 0.0f;
+    st.gy = 0.0f;
+    st.gz = 0.0f;
+    st.light_lux = 300.0f;
+    st.proximity_cm = 5.0f;
+    st.barometer_hpa = 1013.25f;
+    st.mx = 25.0f;
+    st.my = 0.0f;
+    st.mz = -40.0f;
 
     st.battery_level = 100;
     strcpy(st.battery_status, "Charging");
     st.thermal_c = 25.0;
     strcpy(st.camera_pattern, "bars");
+    strcpy(st.last_key, "none");
+    strcpy(st.net_mode, "online");
+    strcpy(st.net_wlan0, "up");
+    st.net_latency_ms = 0;
 
     parse_cmdline(&st);
 
@@ -1235,6 +1765,8 @@ int main(int argc, char **argv) {
     }
     save_gnss_state(&st);
     save_sensor_state(&st);
+    save_input_state(&st);
+    save_network_state(&st);
 
     /* Create local UNIX control socket /data/vendor/qemu_hw_bridge.sock */
     mkdir_p_one("/data/vendor", 0771);

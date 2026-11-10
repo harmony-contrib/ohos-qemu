@@ -1310,8 +1310,11 @@ QEMU_SHARED_DIR="${QEMU_SHARED_DIR:-}"
 QEMU_USB="${QEMU_USB:-0}"
 QEMU_USB_DISK="${QEMU_USB_DISK:-}"
 QEMU_USB_HOST="${QEMU_USB_HOST:-}"
+QEMU_USB_SERIAL="${QEMU_USB_SERIAL:-off}"
 QEMU_BT_USB="${QEMU_BT_USB:-}"
 QEMU_BALLOON="${QEMU_BALLOON:-0}"
+QEMU_RNG="${QEMU_RNG:-on}"
+QEMU_PORT_FORWARD="${QEMU_PORT_FORWARD:-}"
 QEMU_RIL_MODEM="${QEMU_RIL_MODEM:-auto}"
 QEMU_WIFI_MODE="${QEMU_WIFI_MODE:-auto}"
 QEMU_GPS="${QEMU_GPS:-}"
@@ -1327,6 +1330,31 @@ QEMU_CLIPBOARD="${QEMU_CLIPBOARD:-auto}"
 QEMU_CAMERA_FEED="${QEMU_CAMERA_FEED:-}"
 QEMU_HW_BRIDGE="${QEMU_HW_BRIDGE:-auto}"
 QEMU_BOOT_EXTRAS="${QEMU_BOOT_EXTRAS:-}"
+QEMU_HOSTFWD_EXTRAS=""
+if [ -n "${QEMU_PORT_FORWARD}" ]; then
+  for pf_rule in $(echo "${QEMU_PORT_FORWARD}" | tr ',' ' '); do
+    [ -n "${pf_rule}" ] || continue
+    if [[ "${pf_rule}" =~ ^((tcp|udp):)?([1-9][0-9]{0,4}):([1-9][0-9]{0,4})$ ]]; then
+      pf_proto="${BASH_REMATCH[2]:-tcp}"
+      pf_hport="${BASH_REMATCH[3]}"
+      pf_gport="${BASH_REMATCH[4]}"
+      if [ "${pf_hport}" -gt 65535 ] || [ "${pf_gport}" -gt 65535 ]; then
+        echo "port-forward ports must be 1..65535, got: ${pf_rule}" >&2
+        exit 2
+      fi
+      QEMU_HOSTFWD_EXTRAS="${QEMU_HOSTFWD_EXTRAS},hostfwd=${pf_proto}::${pf_hport}-:${pf_gport}"
+    else
+      echo "invalid QEMU_PORT_FORWARD rule: ${pf_rule} (expected [tcp|udp:]HOST_PORT:GUEST_PORT)" >&2
+      exit 2
+    fi
+  done
+  if declare -p NET_ARGS >/dev/null 2>&1; then
+    case "${NET_ARGS[1]:-}" in
+      user,*hostfwd=*) NET_ARGS[1]="${NET_ARGS[1]}${QEMU_HOSTFWD_EXTRAS}" ;;
+    esac
+  fi
+  echo "Custom host port forwarding enabled: ${QEMU_PORT_FORWARD}" >&2
+fi
 
 # 0. Multi-Instance Disk Isolation (--instance ID / --userdata-file PATH)
 QEMU_USERDATA_FILE="${QEMU_USERDATA_FILE:-}"
@@ -1478,7 +1506,8 @@ case "${QEMU_USB}" in
   0|1) ;;
   *) echo "QEMU_USB must be 0 or 1, got: ${QEMU_USB}" >&2; exit 2 ;;
 esac
-if [ "${QEMU_USB}" = "1" ] || [ -n "${QEMU_USB_DISK}" ] || [ -n "${QEMU_USB_HOST}" ] || [ -n "${QEMU_BT_USB}" ]; then
+if [ "${QEMU_USB}" = "1" ] || [ -n "${QEMU_USB_DISK}" ] || [ -n "${QEMU_USB_HOST}" ] || [ -n "${QEMU_BT_USB}" ] || \
+   { [ -n "${QEMU_USB_SERIAL}" ] && [ "${QEMU_USB_SERIAL}" != "off" ] && [ "${QEMU_USB_SERIAL}" != "0" ]; }; then
   QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -device qemu-xhci,id=xhci0"
   echo "USB xHCI controller enabled (xhci0)." >&2
 fi
@@ -1515,7 +1544,7 @@ if [ -n "${QEMU_BT_USB}" ]; then
   fi
 fi
 
-# 4. VirtIO Memory Balloon (Category 1: virtio-balloon-pci)
+# 4. VirtIO Memory Balloon (virtio-balloon-pci) & VirtIO Hardware RNG (virtio-rng-pci)
 case "${QEMU_BALLOON}" in
   0) ;;
   1)
@@ -1523,6 +1552,16 @@ case "${QEMU_BALLOON}" in
     echo "VirtIO memory balloon enabled (balloon0)." >&2
     ;;
   *) echo "QEMU_BALLOON must be 0 or 1, got: ${QEMU_BALLOON}" >&2; exit 2 ;;
+esac
+case "${QEMU_RNG}" in
+  auto|on|1)
+    QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -device virtio-rng-pci,id=rng0"
+    ;;
+  off|0|none) ;;
+  *)
+    echo "invalid QEMU_RNG=${QEMU_RNG} (expected auto|on|off)" >&2
+    exit 2
+    ;;
 esac
 
 # 5. Virtual Wi-Fi Mode (Category 2: mac80211_hwsim / virt_wifi)
@@ -1716,7 +1755,7 @@ case "${QEMU_RIL_MODEM}" in
         ) </dev/null >/dev/null 2>&1 &
         ensure_virtio_serial_bus
         QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -chardev socket,id=ril_chardev,path=${qemu_ril_socket} -device virtserialport,bus=virtio_serial0.0,nr=1,chardev=ril_chardev,name=ohos.ril.at0"
-        echo "Cellular RIL virtual AT modem attached: ${qemu_ril_socket} (ohos.ril.at0 -> /dev/ttyUSB0)" >&2
+        echo "Cellular RIL virtual AT modem attached: ${qemu_ril_socket} (ohos.ril.at0 -> /dev/ttyRIL0)" >&2
       elif [ "${QEMU_RIL_MODEM}" = "on" ]; then
         echo "failed to start RIL virtual AT modem socket at ${qemu_ril_socket}" >&2
         exit 2
@@ -1729,6 +1768,20 @@ case "${QEMU_RIL_MODEM}" in
   off) ;;
   *)
     echo "invalid QEMU_RIL_MODEM=${QEMU_RIL_MODEM} (expected auto|on|off)" >&2
+    exit 2
+    ;;
+esac
+
+qemu_usb_serial_socket=""
+case "${QEMU_USB_SERIAL}" in
+  off|0|"") ;;
+  auto|on|1|loopback)
+    qemu_usb_serial_socket="/tmp/openharmony-qemu-usb-serial-${HDC_HOST_PORT}.sock"
+    rm -f "${qemu_usb_serial_socket}"
+    ;;
+  pty|unix:*|tcp:*) ;;
+  *)
+    echo "invalid QEMU_USB_SERIAL=${QEMU_USB_SERIAL} (expected off|auto|on|loopback|pty|unix:PATH|tcp:HOST:PORT)" >&2
     exit 2
     ;;
 esac
@@ -1756,6 +1809,7 @@ case "${QEMU_HW_BRIDGE}" in
         --pidfile "${qemu_hw_pidfile}"
         --log "${qemu_hw_logfile}"
       )
+      [ -n "${qemu_usb_serial_socket}" ] && hw_ctrl_args+=(--usb-serial-socket "${qemu_usb_serial_socket}" --usb-serial-mode loopback)
       [ -n "${QEMU_GPS}" ] && hw_ctrl_args+=(--gps "${QEMU_GPS}")
       [ -n "${QEMU_SENSOR}" ] && hw_ctrl_args+=(--sensor "${QEMU_SENSOR}")
       [ -n "${QEMU_BATTERY}" ] && hw_ctrl_args+=(--battery "${QEMU_BATTERY}")
@@ -1781,7 +1835,7 @@ case "${QEMU_HW_BRIDGE}" in
             kill "$(cat "${qemu_hw_pidfile}" 2>/dev/null)" 2>/dev/null || true
             rm -f "${qemu_hw_pidfile}"
           fi
-          rm -f "${qemu_hw_socket}" "${qemu_hw_ctrl_socket}"
+          rm -f "${qemu_hw_socket}" "${qemu_hw_ctrl_socket}" "${qemu_usb_serial_socket}"
         ) </dev/null >/dev/null 2>&1 &
         ensure_virtio_serial_bus
         QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -chardev socket,id=hw_bridge_chardev,path=${qemu_hw_socket} -device virtserialport,bus=virtio_serial0.0,nr=2,chardev=hw_bridge_chardev,name=ohos.hw.bridge0"
@@ -1801,6 +1855,41 @@ case "${QEMU_HW_BRIDGE}" in
     exit 2
     ;;
 esac
+
+if [ -n "${QEMU_USB_SERIAL}" ] && [ "${QEMU_USB_SERIAL}" != "off" ] && [ "${QEMU_USB_SERIAL}" != "0" ]; then
+  usb_serial_chr_spec=""
+  case "${QEMU_USB_SERIAL}" in
+    auto|on|1|loopback)
+      if [ -n "${qemu_usb_serial_socket}" ] && [ -S "${qemu_usb_serial_socket}" ]; then
+        usb_serial_chr_spec="socket,id=usb_serial_chr0,path=${qemu_usb_serial_socket}"
+      else
+        usb_serial_chr_spec="pty,id=usb_serial_chr0"
+      fi
+      ;;
+    pty)
+      usb_serial_chr_spec="pty,id=usb_serial_chr0"
+      ;;
+    unix:*)
+      usb_serial_chr_spec="socket,id=usb_serial_chr0,path=${QEMU_USB_SERIAL#unix:},server=on,wait=off"
+      ;;
+    tcp:*)
+      usb_tcp_spec="${QEMU_USB_SERIAL#tcp:}"
+      usb_tcp_host="${usb_tcp_spec%:*}"
+      usb_tcp_port="${usb_tcp_spec##*:}"
+      [ "${usb_tcp_host}" = "${usb_tcp_port}" ] && usb_tcp_host="127.0.0.1"
+      usb_serial_chr_spec="socket,id=usb_serial_chr0,host=${usb_tcp_host},port=${usb_tcp_port},server=on,wait=off"
+      ;;
+  esac
+  if grep -q '^CONFIG_USB_SERIAL_FTDI_SIO=y' "${qemu_pkg_root}/kernel.config" 2>/dev/null && \
+     grep -q '^CONFIG_USB_XHCI_HCD=y' "${qemu_pkg_root}/kernel.config" 2>/dev/null; then
+    QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -chardev ${usb_serial_chr_spec} -device usb-serial,bus=xhci0.0,chardev=usb_serial_chr0,id=usb_serial0"
+    echo "USB FTDI serial adapter attached: ${QEMU_USB_SERIAL} (usb-serial 0403:6001 -> /dev/ttyUSB0)" >&2
+  else
+    ensure_virtio_serial_bus
+    QEMU_EXTRA_ARGS="${QEMU_EXTRA_ARGS} -chardev null,id=usb_serial_bus_chr0 -device usb-serial,bus=xhci0.0,chardev=usb_serial_bus_chr0,id=usb_serial0 -chardev ${usb_serial_chr_spec} -device virtserialport,bus=virtio_serial0.0,nr=3,chardev=usb_serial_chr0,name=ohos.usb.serial0"
+    echo "USB FTDI serial adapter attached: ${QEMU_USB_SERIAL} (usb-serial 0403:6001 + ohos.usb.serial0 -> /dev/ttyUSB0)" >&2
+  fi
+fi
 # QEMU_CAPABILITIES_V1_END'''
 
 # Replace hardcoded -audiodev none,id=ohos_audio with ${QEMU_AUDIO_DEV_ARG}.
@@ -1814,6 +1903,14 @@ if "-rtc base=utc,clock=host" in text or "-rtc base=${QEMU_RTC_BASE},clock=host"
     text = text.replace("-rtc base=utc,clock=host", "-rtc base=${QEMU_RTC_BASE},clock=host")
 else:
     cap_block += '\nQEMU_EXTRA_ARGS="-rtc base=${QEMU_RTC_BASE},clock=host ${QEMU_EXTRA_ARGS}"'
+
+# Parameterize direct -netdev user hostfwd with ${QEMU_HOSTFWD_EXTRAS} when NET_ARGS array is not used.
+if "NET_ARGS=(" not in text:
+    text = re.sub(
+        r'hostfwd=tcp::\$\{HDC_HOST_PORT\}-:5555(?:\$\{QEMU_HOSTFWD_EXTRAS\})?',
+        'hostfwd=tcp::${HDC_HOST_PORT}-:5555${QEMU_HOSTFWD_EXTRAS}',
+        text,
+    )
 
 # Wire per-instance writable disk variables and disable write locking on read-only base images.
 for img_name, var_name in [
@@ -1917,8 +2014,11 @@ Options:
       --usb              Enable USB xHCI controller (qemu-xhci)
       --usb-disk FILE[:SIZE]  Attach raw disk image as USB mass storage on xHCI
       --usb-host VID:PID Passthrough host USB device by hex VID:PID (e.g. 1234:5678)
+      --usb-serial MODE  Attach USB FTDI serial adapter: off|auto|on|loopback|pty|unix:PATH|tcp:HOST:PORT (default: off)
       --bt-usb VID:PID   Passthrough host USB Bluetooth adapter by hex VID:PID (e.g. 0a12:0001)
       --balloon          Enable VirtIO memory balloon device (virtio-balloon-pci)
+      --rng MODE         VirtIO hardware RNG device (virtio-rng-pci): auto|on|off (default: on)
+      --port-forward SPEC  Custom host-to-guest port forward: [tcp|udp:]HOST_PORT:GUEST_PORT (comma-separated or repeated)
       --ril-modem MODE   Virtual AT cellular modem over virtio-serial: auto|on|off (default: auto)
       --wifi MODE        Virtual Wi-Fi mode: auto|hwsim|virt_wifi|off (default: auto)
       --gps COORDS       Initial GPS location: LAT,LON[,ALT[,SPEED[,BEARING[,HACC[,VACC]]]]]
@@ -1944,8 +2044,8 @@ Supported environment variables:
   QEMU_DISPLAY QEMU_XRES QEMU_YRES QEMU_SMP QEMU_MEMORY QEMU_CPU
   QEMU_USERDATA_SIZE QEMU_USERDATA_FILE QEMU_INSTANCE_ID
   QEMU_AUDIO_BACKEND QEMU_SHARED_DIR
-  QEMU_USB QEMU_USB_DISK QEMU_USB_HOST QEMU_BT_USB QEMU_BALLOON
-  QEMU_RIL_MODEM QEMU_WIFI_MODE
+  QEMU_USB QEMU_USB_DISK QEMU_USB_HOST QEMU_USB_SERIAL QEMU_BT_USB QEMU_BALLOON QEMU_RNG
+  QEMU_PORT_FORWARD QEMU_RIL_MODEM QEMU_WIFI_MODE
   QEMU_GPS QEMU_SENSOR QEMU_BATTERY QEMU_THERMAL
   QEMU_SDCARD QEMU_NVME_DISK QEMU_RTC QEMU_WATCHDOG QEMU_TPM
   QEMU_CLIPBOARD QEMU_CAMERA_FEED QEMU_HW_BRIDGE
@@ -2070,6 +2170,10 @@ while [ "\$#" -gt 0 ]; do
       export QEMU_USB_HOST="\${2:?missing USB host VID:PID}"
       shift 2
       ;;
+    --usb-serial)
+      export QEMU_USB_SERIAL="\${2:?missing USB serial mode}"
+      shift 2
+      ;;
     --bt-usb)
       export QEMU_BT_USB="\${2:?missing Bluetooth USB VID:PID}"
       shift 2
@@ -2077,6 +2181,18 @@ while [ "\$#" -gt 0 ]; do
     --balloon)
       export QEMU_BALLOON=1
       shift
+      ;;
+    --rng)
+      export QEMU_RNG="\${2:?missing RNG mode}"
+      shift 2
+      ;;
+    --port-forward|--hostfwd)
+      if [ -n "\${QEMU_PORT_FORWARD:-}" ]; then
+        export QEMU_PORT_FORWARD="\${QEMU_PORT_FORWARD},\${2:?missing port-forward spec}"
+      else
+        export QEMU_PORT_FORWARD="\${2:?missing port-forward spec}"
+      fi
+      shift 2
       ;;
     --ril-modem)
       export QEMU_RIL_MODEM="\${2:?missing RIL modem mode}"
@@ -2198,8 +2314,11 @@ export QEMU_SHARED_DIR="\${QEMU_SHARED_DIR:-}"
 export QEMU_USB="\${QEMU_USB:-0}"
 export QEMU_USB_DISK="\${QEMU_USB_DISK:-}"
 export QEMU_USB_HOST="\${QEMU_USB_HOST:-}"
+export QEMU_USB_SERIAL="\${QEMU_USB_SERIAL:-off}"
 export QEMU_BT_USB="\${QEMU_BT_USB:-}"
 export QEMU_BALLOON="\${QEMU_BALLOON:-0}"
+export QEMU_RNG="\${QEMU_RNG:-on}"
+export QEMU_PORT_FORWARD="\${QEMU_PORT_FORWARD:-}"
 export QEMU_RIL_MODEM="\${QEMU_RIL_MODEM:-auto}"
 export QEMU_WIFI_MODE="\${QEMU_WIFI_MODE:-auto}"
 export QEMU_GPS="\${QEMU_GPS:-}"
@@ -2312,13 +2431,38 @@ write_windows_ps1() {
   local default_cpu="${6:-max}"
   local pointer_device="${7:-virtio-mouse-pci}"
 
-  if [ "${product}" != "x86_64_virt" ]; then
-    cat >"${dest}" <<EOF
-Write-Error "Windows launcher is not enabled for ${product} yet. Use x86_64_virt for Windows x86_64."
-exit 1
-EOF
-    return
-  fi
+  local win_qemu_exe="qemu-system-x86_64.exe"
+  local win_qemu_env="QEMU_SYSTEM_X86_64"
+  local win_kernel_file="bzImage"
+  local win_blk_dev="virtio-blk-pci"
+  local win_net_dev="virtio-net-pci"
+  local win_machine="q35"
+  case "${product}" in
+    x86_64_virt)
+      win_qemu_exe="qemu-system-x86_64.exe"
+      win_qemu_env="QEMU_SYSTEM_X86_64"
+      win_kernel_file="bzImage"
+      win_blk_dev="virtio-blk-pci"
+      win_net_dev="virtio-net-pci"
+      win_machine="q35"
+      ;;
+    arm64_virt|qemu-arm64-linux-min)
+      win_qemu_exe="qemu-system-aarch64.exe"
+      win_qemu_env="QEMU_SYSTEM_AARCH64"
+      win_kernel_file="Image"
+      win_blk_dev="virtio-blk-device"
+      win_net_dev="virtio-net-device"
+      win_machine="virt"
+      ;;
+    armv7a_virt)
+      win_qemu_exe="qemu-system-arm.exe"
+      win_qemu_env="QEMU_SYSTEM_ARM"
+      win_kernel_file="zImage"
+      win_blk_dev="virtio-blk-device"
+      win_net_dev="virtio-net-device"
+      win_machine="virt,highmem=off"
+      ;;
+  esac
 
   cat >"${dest}" <<EOF
 param(
@@ -2343,8 +2487,11 @@ param(
   [switch]\$Usb,
   [string]\$UsbDisk,
   [string]\$UsbHost,
+  [string]\$UsbSerial,
   [string]\$BtUsb,
   [switch]\$Balloon,
+  [string]\$Rng,
+  [string]\$PortForward,
   [string]\$RilModem,
   [string]\$Wifi,
   [string]\$Gps,
@@ -2370,6 +2517,7 @@ param(
 
 \$Root = Split-Path -Parent (Split-Path -Parent \$MyInvocation.MyCommand.Path)
 \$Img = Join-Path \$Root "images"
+\$Product = "${product}"
 
 \$DefaultSmp = ${default_smp}
 \$DefaultMemory = "${default_mem}"
@@ -2416,8 +2564,11 @@ if (\$SharedDir) { \$env:QEMU_SHARED_DIR = \$SharedDir }
 if (\$Usb) { \$env:QEMU_USB_XHCI = "1" }
 if (\$UsbDisk) { \$env:QEMU_USB_STORAGE = \$UsbDisk }
 if (\$UsbHost) { \$env:QEMU_USB_HOST = \$UsbHost }
+if (\$UsbSerial) { \$env:QEMU_USB_SERIAL = \$UsbSerial }
 if (\$BtUsb) { \$env:QEMU_BT_USB = \$BtUsb }
 if (\$Balloon) { \$env:QEMU_BALLOON = "1" }
+if (\$Rng) { \$env:QEMU_RNG = \$Rng }
+if (\$PortForward) { \$env:QEMU_PORT_FORWARD = \$PortForward }
 if (\$RilModem) { \$env:QEMU_RIL_MODEM = \$RilModem }
 if (\$Wifi) { \$env:QEMU_WIFI_MODE = \$Wifi }
 if (\$Gps) { \$env:QEMU_GPS = \$Gps }
@@ -2437,6 +2588,39 @@ if (\$CameraFeed) { \$env:QEMU_CAMERA_FEED = \$CameraFeed }
 if (\$Accel) { \$env:QEMU_ACCEL = \$Accel }
 if (\$QemuPath) { \$env:QEMU_BIN = \$QemuPath }
 
+\$MgmtMac = if (\$env:QEMU_MGMT_MAC) { \$env:QEMU_MGMT_MAC } else { "52:54:00:12:34:56" }
+\$PeerMac = if (\$env:QEMU_PEER_MAC) { \$env:QEMU_PEER_MAC } else { "52:54:00:12:35:56" }
+\$GuestSerial = if (\$env:QEMU_GUEST_SERIAL) { \$env:QEMU_GUEST_SERIAL } else { "0023456789" }
+\$InstanceUuid = \$env:QEMU_INSTANCE_UUID
+\$SysProdImgPath = Join-Path \$Img "sys_prod.img"
+\$ChipProdImgPath = Join-Path \$Img "chip_prod.img"
+
+if (\$env:QEMU_INSTANCE_ID) {
+  \$InstId = [int]\$env:QEMU_INSTANCE_ID
+  if (\$InstId -lt 1 -or \$InstId -gt 999) { throw "QEMU_INSTANCE_ID must be 1..999" }
+  if (-not \$env:QEMU_HDC_HOST_PORT) { \$env:QEMU_HDC_HOST_PORT = "\$(\$DefaultHdcPort + \$InstId - 1)" }
+  if (-not \$env:QEMU_VNC_DISPLAY) { \$env:QEMU_VNC_DISPLAY = "\$(\$DefaultVncDisplay + \$InstId - 1)" }
+  \$InstHex = "{0:x2}" -f ((\$InstId + 85) -band 0xff)
+  if (-not \$env:QEMU_MGMT_MAC) { \$MgmtMac = "52:54:00:12:34:\$InstHex" }
+  if (-not \$env:QEMU_PEER_MAC) { \$PeerMac = "52:54:00:12:35:\$InstHex" }
+  if (-not \$InstanceUuid) { \$InstanceUuid = ("00000000-0000-4000-8000-{0:x12}" -f \$InstId) }
+  if (-not \$env:QEMU_GUEST_SERIAL) { \$GuestSerial = ("00234567{0:d2}" -f (\$InstId % 100)) }
+  if (\$InstId -ne 1) {
+    \$InstDir = Join-Path (Join-Path \$Img "instances") "instance-\$InstId"
+    New-Item -ItemType Directory -Force -Path \$InstDir | Out-Null
+    foreach (\$DiskName in @("userdata.img", "sys_prod.img", "chip_prod.img")) {
+      \$SrcDisk = Join-Path \$Img \$DiskName
+      \$DstDisk = Join-Path \$InstDir \$DiskName
+      if (-not (Test-Path \$DstDisk) -and (Test-Path \$SrcDisk)) {
+        Copy-Item -Path \$SrcDisk -Destination \$DstDisk
+      }
+    }
+    if (-not \$env:QEMU_USERDATA_FILE) { \$env:QEMU_USERDATA_FILE = Join-Path \$InstDir "userdata.img" }
+    \$SysProdImgPath = Join-Path \$InstDir "sys_prod.img"
+    \$ChipProdImgPath = Join-Path \$InstDir "chip_prod.img"
+  }
+}
+
 \$Xres = if (\$env:QEMU_XRES) { \$env:QEMU_XRES } else { "\$DefaultXres" }
 \$Yres = if (\$env:QEMU_YRES) { \$env:QEMU_YRES } else { "\$DefaultYres" }
 \$SmpValue = if (\$env:QEMU_SMP) { \$env:QEMU_SMP } else { "\$DefaultSmp" }
@@ -2448,6 +2632,34 @@ if (\$KernelLogLevelValue -notmatch '^[0-8]\$') { throw "kernel log level must b
 \$VncDisplayValue = if (\$env:QEMU_VNC_DISPLAY) { \$env:QEMU_VNC_DISPLAY } else { "\$DefaultVncDisplay" }
 \$GpuDevice = "virtio-gpu-pci,xres=\$Xres,yres=\$Yres"
 
+function Prepare-QemuDiskImage([string]\$Spec, [string]\$Label) {
+  \$ImgPath = \$Spec
+  \$SizeSpec = ""
+  if (\$Spec -match '^(.+):([1-9]\\d*[MmGg](?:i?[Bb])?)\$') {
+    \$ImgPath = \$Matches[1]
+    \$SizeSpec = \$Matches[2]
+  }
+  if (\$SizeSpec -match '^([1-9]\\d*)(?:([MmGg])(?:i?[Bb])?)?\$') {
+    \$SNum = [int64]\$Matches[1]
+    \$SUnit = if (\$Matches[2]) { \$Matches[2].ToUpperInvariant() } else { "M" }
+    \$TargetBytes = if (\$SUnit -eq "G") { \$SNum * 1024L * 1024L * 1024L } else { \$SNum * 1024L * 1024L }
+    \$ParentDir = Split-Path -Parent \$ImgPath
+    if (\$ParentDir -and -not (Test-Path \$ParentDir)) {
+      New-Item -ItemType Directory -Force -Path \$ParentDir | Out-Null
+    }
+    \$fs = [System.IO.File]::Open(\$ImgPath, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::Write)
+    try {
+      if (\$TargetBytes -gt \$fs.Length) { \$fs.SetLength(\$TargetBytes) }
+    } finally {
+      \$fs.Close()
+    }
+  }
+  if (-not (Test-Path \$ImgPath -PathType Leaf)) {
+    throw "\$Label image does not exist: \$ImgPath"
+  }
+  return \$ImgPath
+}
+
 if (\$env:QEMU_USERDATA_SIZE) {
   \$UserdataSpec = \$env:QEMU_USERDATA_SIZE.Trim()
   if (\$UserdataSpec -match '^([1-9]\\d*)(?:([MmGg])(?:i?[Bb])?)?\$') {
@@ -2457,7 +2669,7 @@ if (\$env:QEMU_USERDATA_SIZE) {
   } else {
     throw "Invalid userdata size: \$UserdataSpec (expected e.g. 4096, 4096M, 4G, 8G)"
   }
-  \$UserdataImg = Join-Path \$Img "userdata.img"
+  \$UserdataImg = if (\$env:QEMU_USERDATA_FILE) { \$env:QEMU_USERDATA_FILE } else { Join-Path \$Img "userdata.img" }
   if (-not (Test-Path \$UserdataImg)) {
     throw "userdata.img not found at \$UserdataImg"
   }
@@ -2477,12 +2689,13 @@ if (\$env:QEMU_USERDATA_SIZE) {
 
 function Resolve-Qemu {
   if (\$env:QEMU_BIN) { return \$env:QEMU_BIN }
-  if (\$env:QEMU_SYSTEM_X86_64) { return \$env:QEMU_SYSTEM_X86_64 }
-  \$cmd = Get-Command "qemu-system-x86_64.exe" -ErrorAction SilentlyContinue
+  \$archEnv = [Environment]::GetEnvironmentVariable("${win_qemu_env}")
+  if (\$archEnv) { return \$archEnv }
+  \$cmd = Get-Command "${win_qemu_exe}" -ErrorAction SilentlyContinue
   if (\$cmd) { return \$cmd.Source }
-  \$defaultPath = "C:\\Program Files\\qemu\\qemu-system-x86_64.exe"
+  \$defaultPath = "C:\\Program Files\\qemu\\${win_qemu_exe}"
   if (Test-Path \$defaultPath) { return \$defaultPath }
-  throw "qemu-system-x86_64.exe not found. Install QEMU for Windows or set QEMU_BIN / QEMU_SYSTEM_X86_64."
+  throw "${win_qemu_exe} not found. Install QEMU for Windows or set QEMU_BIN / ${win_qemu_env}."
 }
 
 \$Qemu = Resolve-Qemu
@@ -2496,16 +2709,20 @@ switch (\$RequestedAccel) {
     Write-Host "WHPX acceleration forced by QEMU_ACCEL."
   }
   default {
-    try {
-      \$AccelHelp = & \$Qemu -accel help 2>&1 | Out-String
-      if (\$AccelHelp -match "whpx") {
-        \$AccelArgs = @("-accel", "whpx,kernel-irqchip=off")
-        Write-Host "WHPX acceleration enabled."
-      } else {
-        Write-Host "WHPX not available, using TCG software emulation."
+    if (\$Product -eq "x86_64_virt") {
+      try {
+        \$AccelHelp = & \$Qemu -accel help 2>&1 | Out-String
+        if (\$AccelHelp -match "whpx") {
+          \$AccelArgs = @("-accel", "whpx,kernel-irqchip=off")
+          Write-Host "WHPX acceleration enabled."
+        } else {
+          Write-Host "WHPX not available, using TCG software emulation."
+        }
+      } catch {
+        Write-Host "Cannot query QEMU accelerators, using TCG software emulation."
       }
-    } catch {
-      Write-Host "Cannot query QEMU accelerators, using TCG software emulation."
+    } else {
+      Write-Host "Using TCG software emulation for \$Product on Windows."
     }
   }
 }
@@ -2528,7 +2745,11 @@ switch (\$DisplayType) {
   }
 }
 
-\$KernelBootArgs = "oemmode=rd snd-ens1370.index=0 snd-aloop.index=1 snd-aloop.id=QemuCapture snd-aloop.pcm_substreams=1 loglevel=\$KernelLogLevelValue buildvariant=eng developer_mode=1 console=ttyS0,115200 sn=0023456789 init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@f2fs@nosuid,nodev,noatime,usrquota,grpquota,prjquota@wait,required,reservedsize=104857600"
+if (\$Product -eq "x86_64_virt") {
+  \$KernelBootArgs = "oemmode=rd snd-ens1370.index=0 snd-aloop.index=1 snd-aloop.id=QemuCapture snd-aloop.pcm_substreams=1 loglevel=\$KernelLogLevelValue buildvariant=eng developer_mode=1 console=ttyS0,115200 sn=\$GuestSerial init=/bin/init hardware=virt root=/dev/ram0 rw ip=dhcp ohos.boot.hardware=virt ohos.required_mount.system=/dev/block/vdb@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdc@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdd@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vde@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vdf@/data@f2fs@nosuid,nodev,noatime,usrquota,grpquota,prjquota@wait,required,reservedsize=104857600"
+} else {
+  \$KernelBootArgs = "oemmode=rd snd-ens1370.index=0 snd-aloop.index=1 snd-aloop.id=QemuCapture snd-aloop.pcm_substreams=1 buildvariant=eng developer_mode=1 default_boot_device=a003e00.virtio_mmio sn=\$GuestSerial ip=dhcp loglevel=\$KernelLogLevelValue console=ttyAMA0,115200 init=/bin/init ohos.boot.hardware=virt root=/dev/ram0 rw ohos.required_mount.system=/dev/block/vde@/usr@ext4@ro,barrier=1@wait,required ohos.required_mount.vendor=/dev/block/vdd@/vendor@ext4@ro,barrier=1@wait,required ohos.required_mount.sys_prod=/dev/block/vdc@/sys_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.chip_prod=/dev/block/vdb@/chip_prod@ext4@rw,barrier=1@wait,required ohos.required_mount.data=/dev/block/vda@/data@f2fs@nosuid,nodev,noatime,usrquota,grpquota,prjquota@wait,required,reservedsize=104857600"
+}
 
 \$WifiModeValue = if (\$env:QEMU_WIFI_MODE) { \$env:QEMU_WIFI_MODE.ToLowerInvariant() } else { "auto" }
 if (\$WifiModeValue -notin @("auto", "hwsim", "virt_wifi", "off")) {
@@ -2565,6 +2786,9 @@ if (\$AudioModeValue -eq "auto") {
 }
 
 \$CapabilityArgs = @()
+if (\$InstanceUuid) {
+  \$CapabilityArgs += @("-uuid", \$InstanceUuid)
+}
 if (\$env:QEMU_SHARED_DIR) {
   \$SharePath = \$env:QEMU_SHARED_DIR
   \$ShareTag = "hostshare"
@@ -2579,16 +2803,16 @@ if (\$env:QEMU_SHARED_DIR) {
     "-fsdev", "local,id=fsdev_hostshare,path=\$SharePath,security_model=mapped-xattr",
     "-device", "virtio-9p-pci,fsdev=fsdev_hostshare,mount_tag=\$ShareTag"
   )
+  \$KernelBootArgs = "\$KernelBootArgs ohos.boot.qemu.share_tag=\$ShareTag"
 }
-if (\$env:QEMU_USB_XHCI -eq "1" -or \$env:QEMU_USB_STORAGE -or \$env:QEMU_USB_HOST -or \$env:QEMU_BT_USB) {
+\$UsbSerialMode = if (\$env:QEMU_USB_SERIAL) { \$env:QEMU_USB_SERIAL } else { "off" }
+if (\$env:QEMU_USB_XHCI -eq "1" -or \$env:QEMU_USB_STORAGE -or \$env:QEMU_USB_HOST -or \$env:QEMU_BT_USB -or (\$UsbSerialMode -notin @("off", "0", ""))) {
   \$CapabilityArgs += @("-device", "qemu-xhci,id=xhci0")
 }
 if (\$env:QEMU_USB_STORAGE) {
-  if (-not (Test-Path \$env:QEMU_USB_STORAGE -PathType Leaf)) {
-    throw "QEMU_USB_STORAGE file does not exist: \$(\$env:QEMU_USB_STORAGE)"
-  }
+  \$UsbDiskPath = Prepare-QemuDiskImage \$env:QEMU_USB_STORAGE "USB disk"
   \$CapabilityArgs += @(
-    "-drive", "if=none,id=usb_disk0,file=\$(\$env:QEMU_USB_STORAGE),format=raw",
+    "-drive", "if=none,id=usb_disk0,file=\$UsbDiskPath,format=raw",
     "-device", "usb-storage,bus=xhci0.0,drive=usb_disk0"
   )
 }
@@ -2600,25 +2824,44 @@ foreach (\$UsbSpec in @(\$env:QEMU_USB_HOST, \$env:QEMU_BT_USB)) {
     \$CapabilityArgs += @("-device", ("usb-host,bus=xhci0.0,vendorid=0x{0},productid=0x{1}" -f \$Matches[1], \$Matches[2]))
   }
 }
+if (\$UsbSerialMode -notin @("off", "0", "")) {
+  if (\$UsbSerialMode -match '^tcp:(?:([^:]+):)?(\\d+)\$') {
+    \$UsbTcpHost = if (\$Matches[1]) { \$Matches[1] } else { "127.0.0.1" }
+    \$UsbTcpPort = \$Matches[2]
+    \$CapabilityArgs += @(
+      "-chardev", "socket,id=usb_serial_chr0,host=\$UsbTcpHost,port=\$UsbTcpPort,server=on,wait=off",
+      "-device", "usb-serial,bus=xhci0.0,chardev=usb_serial_chr0,id=usb_serial0"
+    )
+  } else {
+    \$CapabilityArgs += @(
+      "-chardev", "null,id=usb_serial_chr0",
+      "-device", "usb-serial,bus=xhci0.0,chardev=usb_serial_chr0,id=usb_serial0"
+    )
+  }
+}
 if (\$env:QEMU_BALLOON -eq "1") {
   \$CapabilityArgs += @("-device", "virtio-balloon-pci,id=balloon0")
 }
+\$RngMode = if (\$env:QEMU_RNG) { \$env:QEMU_RNG.ToLowerInvariant() } else { "on" }
+if (\$RngMode -in @("auto", "on", "1")) {
+  \$CapabilityArgs += @("-device", "virtio-rng-pci,id=rng0")
+} elseif (\$RngMode -notin @("off", "0", "none")) {
+  throw "Invalid QEMU_RNG: \$RngMode (expected auto|on|off)"
+}
 if (\$env:QEMU_SDCARD) {
-  \$SdcardPath = (\$env:QEMU_SDCARD -split ':')[0]
+  \$SdcardPath = Prepare-QemuDiskImage \$env:QEMU_SDCARD "SD card"
   \$CapabilityArgs += @(
     "-device", "sdhci-pci,id=sdhci0",
     "-drive", "if=none,id=sdcard_drive0,file=\$SdcardPath,format=raw",
     "-device", "sd-card,drive=sdcard_drive0"
   )
-  \$KernelBootArgs = "\$KernelBootArgs ohos.boot.qemu.sdcard=1"
 }
 if (\$env:QEMU_NVME_DISK) {
-  \$NvmePath = (\$env:QEMU_NVME_DISK -split ':')[0]
+  \$NvmePath = Prepare-QemuDiskImage \$env:QEMU_NVME_DISK "NVMe disk"
   \$CapabilityArgs += @(
     "-drive", "if=none,id=nvme_drive0,file=\$NvmePath,format=raw",
     "-device", "nvme,drive=nvme_drive0,serial=ohos-nvme0"
   )
-  \$KernelBootArgs = "\$KernelBootArgs ohos.boot.qemu.nvme=1"
 }
 if (\$env:QEMU_GPS) { \$KernelBootArgs = "\$KernelBootArgs ohos.boot.qemu.gps=\$(\$env:QEMU_GPS)" }
 if (\$env:QEMU_SENSOR) { \$KernelBootArgs = "\$KernelBootArgs ohos.boot.qemu.sensor=\$(\$env:QEMU_SENSOR)" }
@@ -2632,17 +2875,48 @@ if (\$env:QEMU_WATCHDOG -and \$env:QEMU_WATCHDOG -notin @("none", "off", "0")) {
   \$WdtAct = if (\$WdtParts.Length -gt 1) { \$WdtParts[1] } else { "reset" }
   \$CapabilityArgs += @("-device", "i6300esb", "-watchdog-action", \$WdtAct)
 }
+\$HostfwdExtras = ""
+if (\$env:QEMU_PORT_FORWARD) {
+  foreach (\$PfRule in (\$env:QEMU_PORT_FORWARD -split '[,\\s]+' | Where-Object { \$_ })) {
+    if (\$PfRule -match '^(?:(tcp|udp):)?([1-9]\\d{0,4}):([1-9]\\d{0,4})\$') {
+      \$PfProto = if (\$Matches[1]) { \$Matches[1].ToLowerInvariant() } else { "tcp" }
+      \$PfHost = [int]\$Matches[2]
+      \$PfGuest = [int]\$Matches[3]
+      if (\$PfHost -gt 65535 -or \$PfGuest -gt 65535) { throw "Invalid port-forward port in \$PfRule" }
+      \$HostfwdExtras += ",hostfwd=\${PfProto}::\${PfHost}-:\${PfGuest}"
+    } else {
+      throw "Invalid QEMU_PORT_FORWARD rule: \$PfRule (expected [tcp|udp:]HOST_PORT:GUEST_PORT)"
+    }
+  }
+}
+\$PeerNetArgs = @()
+if (\$env:QEMU_PEER_MODE -and \$env:QEMU_PEER_MODE -ne "off") {
+  if (\$env:QEMU_PEER_MODE -match '^(listen|connect)(?::(\\d+))?\$') {
+    \$PeerRole = \$Matches[1]
+    \$PeerPort = if (\$Matches[2]) { \$Matches[2] } elseif (\$env:QEMU_PEER_PORT) { \$env:QEMU_PEER_PORT } else { "6666" }
+    \$PeerEndpoint = if (\$PeerRole -eq "listen") { "server=on" } else { "server=off,reconnect-ms=250" }
+    \$PeerNetArgs = @(
+      "-netdev", "stream,id=peer_lan,\$PeerEndpoint,addr.type=inet,addr.host=127.0.0.1,addr.port=\$PeerPort",
+      "-device", "virtio-net-pci,id=peer_lan_nic,netdev=peer_lan,mac=\$PeerMac"
+    )
+  } else {
+    throw "Invalid QEMU_PEER_MODE: \$(\$env:QEMU_PEER_MODE) (expected off|listen[:PORT]|connect[:PORT])"
+  }
+}
 \$UserdataImgPath = if (\$env:QEMU_USERDATA_FILE) { \$env:QEMU_USERDATA_FILE } else { Join-Path \$Img "userdata.img" }
 
+\$MachineArgs = @("-machine", "${win_machine}")
+if (\$Product -eq "x86_64_virt") {
+  \$MachineArgs += @("-global", "ICH9-LPC.disable_s3=1", "-global", "ICH9-LPC.disable_s4=1")
+}
+
 \$ArgsList = @(
-  "-machine", "q35",
-  "-global", "ICH9-LPC.disable_s3=1",
-  "-global", "ICH9-LPC.disable_s4=1",
+  \$MachineArgs,
   \$AccelArgs,
   "-cpu", "\$CpuValue",
   "-smp", "\$SmpValue",
   "-m", "\$MemoryValue",
-  "-kernel", (Join-Path \$Img "bzImage"),
+  "-kernel", (Join-Path \$Img "${win_kernel_file}"),
   "-initrd", (Join-Path \$Img "ramdisk.img"),
   \$DisplayArgs,
   \$AudioArgs,
@@ -2650,20 +2924,21 @@ if (\$env:QEMU_WATCHDOG -and \$env:QEMU_WATCHDOG -notin @("none", "off", "0")) {
   \$A11yInputArgs,
   "-device", "${pointer_device}",
   "-device", "virtio-keyboard-pci",
-  "-netdev", "user,id=net0,hostfwd=tcp::\${HdcHostPort}-:5555",
-  "-device", "virtio-net-pci,netdev=net0",
-  "-drive", ("if=none,file={0},format=raw,id=updater" -f (Join-Path \$Img "updater.img")),
-  "-device", "virtio-blk-pci,drive=updater,serial=updater",
-  "-drive", ("if=none,file={0},format=raw,id=system" -f (Join-Path \$Img "system.img")),
-  "-device", "virtio-blk-pci,drive=system,serial=system",
-  "-drive", ("if=none,file={0},format=raw,id=vendor" -f (Join-Path \$Img "vendor.img")),
-  "-device", "virtio-blk-pci,drive=vendor,serial=vendor",
-  "-drive", ("if=none,file={0},format=raw,id=sys_prod" -f (Join-Path \$Img "sys_prod.img")),
-  "-device", "virtio-blk-pci,drive=sys_prod,serial=sys_prod",
-  "-drive", ("if=none,file={0},format=raw,id=chip_prod" -f (Join-Path \$Img "chip_prod.img")),
-  "-device", "virtio-blk-pci,drive=chip_prod,serial=chip_prod",
+  \$PeerNetArgs,
+  "-netdev", "user,id=net0,hostfwd=tcp::\${HdcHostPort}-:5555\${HostfwdExtras}",
+  "-device", "${win_net_dev},netdev=net0,mac=\$MgmtMac",
+  "-drive", ("if=none,file={0},format=raw,id=updater,file.locking=off" -f (Join-Path \$Img "updater.img")),
+  "-device", "${win_blk_dev},drive=updater,serial=updater",
+  "-drive", ("if=none,file={0},format=raw,id=system,file.locking=off" -f (Join-Path \$Img "system.img")),
+  "-device", "${win_blk_dev},drive=system,serial=system",
+  "-drive", ("if=none,file={0},format=raw,id=vendor,file.locking=off" -f (Join-Path \$Img "vendor.img")),
+  "-device", "${win_blk_dev},drive=vendor,serial=vendor",
+  "-drive", ("if=none,file={0},format=raw,id=sys_prod" -f \$SysProdImgPath),
+  "-device", "${win_blk_dev},drive=sys_prod,serial=sys_prod",
+  "-drive", ("if=none,file={0},format=raw,id=chip_prod" -f \$ChipProdImgPath),
+  "-device", "${win_blk_dev},drive=chip_prod,serial=chip_prod",
   "-drive", ("if=none,file={0},format=raw,id=userdata" -f \$UserdataImgPath),
-  "-device", "virtio-blk-pci,drive=userdata,serial=userdata",
+  "-device", "${win_blk_dev},drive=userdata,serial=userdata",
   "-append", \$KernelBootArgs
 )
 
@@ -2745,11 +3020,14 @@ CLI flags override environment variables, which override package defaults.
 | Windows \`-QmpPort PORT\` | \`QEMU_QMP_PORT\` | \`4445\` with \`-A11y\` |
 | \`--audio MODE\` / Windows \`-Audio MODE\` | \`QEMU_AUDIO_BACKEND\` | \`auto\` (\`none\` headless, host audio windowed) |
 | \`--shared-dir DIR[:TAG]\` / Windows \`-SharedDir\` | \`QEMU_SHARED_DIR\` | unset (mounts at \`/mnt/share\` and \`/data/share\`) |
-| \`--usb\` / Windows \`-Usb\` | \`QEMU_USB_XHCI\` | \`0\` (auto-enabled by \`--usb-disk\`/\`--usb-host\`/\`--bt-usb\`) |
-| \`--usb-disk FILE[:SIZE]\` / Windows \`-UsbDisk FILE\` | \`QEMU_USB_STORAGE\` | unset (mounts at \`/mnt/data/external/usb\` and \`/data/usb\`) |
+| \`--usb\` / Windows \`-Usb\` | \`QEMU_USB_XHCI\` | \`0\` (auto-enabled by \`--usb-disk\`/\`--usb-host\`/\`--bt-usb\`/\`--usb-serial\`) |
+| \`--usb-disk FILE[:SIZE]\` / Windows \`-UsbDisk FILE[:SIZE]\` | \`QEMU_USB_STORAGE\` | unset (mounts at \`/mnt/data/external/usb\` and \`/data/usb\`) |
 | \`--usb-host VID:PID\` / Windows \`-UsbHost VID:PID\` | \`QEMU_USB_HOST\` | unset |
+| \`--usb-serial MODE\` / Windows \`-UsbSerial MODE\` | \`QEMU_USB_SERIAL\` | \`off\` (\`off\`/\`auto\`/\`on\`/\`loopback\`/\`pty\`/\`unix:PATH\`/\`tcp:HOST:PORT\`) |
 | \`--bt-usb VID:PID\` / Windows \`-BtUsb VID:PID\` | \`QEMU_BT_USB\` | unset (uses virtual HCI \`libbt_vendor.z.so\` by default) |
 | \`--balloon\` / Windows \`-Balloon\` | \`QEMU_BALLOON\` | \`0\` |
+| \`--rng MODE\` / Windows \`-Rng MODE\` | \`QEMU_RNG\` | \`on\` (\`auto\`/\`on\`/\`off\`, attaches \`virtio-rng-pci\`) |
+| \`--port-forward SPEC\` / Windows \`-PortForward SPEC\` | \`QEMU_PORT_FORWARD\` | unset (\`[tcp\|udp:]HOST_PORT:GUEST_PORT\`, comma-separated or repeated) |
 | \`--ril-modem MODE\` / Windows \`-RilModem MODE\` | \`QEMU_RIL_MODEM\` | \`auto\` (\`auto\`/\`on\`/\`off\`) |
 | \`--wifi MODE\` / Windows \`-Wifi MODE\` | \`QEMU_WIFI_MODE\` | \`auto\` (\`auto\`/\`hwsim\`/\`virt_wifi\`/\`off\`) |
 | \`--gps COORDS\` / Windows \`-Gps\` | \`QEMU_GPS\` | \`39.9042,116.4074,50\` |
@@ -2776,10 +3054,15 @@ Examples:
 ./launch/linux.sh -r 1280x720 -m 8G -s 8
 ./launch/linux.sh --userdata-size 8G
 ./launch/linux.sh --shared-dir /tmp/ohos-share --balloon --audio auto
+./launch/linux.sh --usb-serial loopback --port-forward 18080:8080 --rng on
 ./launch/linux.sh --gps 31.2304,121.4737,15 --battery 85:discharging --thermal 36.5 --camera-feed smpte
 ./launch/linux.sh --sdcard /tmp/ohos-sd.img:64M --nvme-disk /tmp/ohos-nvme.img:128M
 ./launch/linux.sh --instance 2 --peer connect:6666
 python3 ./tools/qemu_hw_controller.py --socket /tmp/openharmony-qemu-hw-5555.ctrl.sock status
+python3 ./tools/qemu_hw_controller.py --socket /tmp/openharmony-qemu-hw-5555.ctrl.sock key volup
+python3 ./tools/qemu_hw_controller.py --socket /tmp/openharmony-qemu-hw-5555.ctrl.sock network offline
+python3 ./tools/qemu_hw_controller.py --socket /tmp/openharmony-qemu-hw-5555.ctrl.sock light 800
+python3 ./tools/qemu_hw_controller.py --socket /tmp/openharmony-qemu-hw-5555.ctrl.sock usb-serial-send "AT\r\n"
 ./launch/linux.sh --cpu ${cpu_example}
 ./launch/linux.sh --width 1080 --height 1920 --display cocoa
 ./launch/linux.sh --headless --vnc-display 21 --serial-port 4444
@@ -2976,6 +3259,9 @@ write_full_product_launchers() {
        ! grep -q -- '--userdata-size' "${launch_out}/linux.sh" || \
        ! grep -q -- '--shared-dir' "${launch_out}/linux.sh" || \
        ! grep -q -- '--ril-modem' "${launch_out}/linux.sh" || \
+       ! grep -q -- '--usb-serial' "${launch_out}/linux.sh" || \
+       ! grep -q -- '--port-forward' "${launch_out}/linux.sh" || \
+       ! grep -q -- '--rng' "${launch_out}/linux.sh" || \
        ! grep -q 'QEMU_USERDATA_SIZE_V1' "${launch_out}/qemu_run.sh" || \
        ! grep -q 'QEMU_CAPABILITIES_V1' "${launch_out}/qemu_run.sh" || \
        ! grep -q 'virtio-multitouch-pci' "${launch_out}/linux.sh" || \
@@ -3118,6 +3404,18 @@ else:
   fi
 }
 
+replace_or_append_param() {
+  local file="$1"
+  local key="$2"
+  local line="$3"
+
+  if grep -q -E "^[[:space:]]*${key}[[:space:]]*=" "${file}"; then
+    sed_in_place_extended "s|^[[:space:]]*${key}[[:space:]]*=.*$|${line}|" "${file}"
+  else
+    printf '%s\n' "${line}" >> "${file}"
+  fi
+}
+
 install_qemu_virt_device_support() {
   local package_dir="$1"
   local product="$2"
@@ -3157,6 +3455,24 @@ install_qemu_virt_device_support() {
     debugfs -w -R "mkdir /mnt/data/external/sdcard" "${system_img}" >/dev/null 2>&1 || true
     debugfs -w -R "mkdir /mnt/data/external/nvme" "${system_img}" >/dev/null 2>&1 || true
     debugfs -w -R "mkdir /mnt/data/external/usb" "${system_img}" >/dev/null 2>&1 || true
+    local ohos_para_tmp="${tmpdir}/ohos.para"
+    if debugfs -R "cat /etc/param/ohos.para" "${system_img}" > "${ohos_para_tmp}" 2>/dev/null && \
+       [ -s "${ohos_para_tmp}" ]; then
+      replace_or_append_param "${ohos_para_tmp}" \
+        "const.telephony.ril.attty.path" "const.telephony.ril.attty.path=/dev/ttyRIL0"
+      chmod 0644 "${ohos_para_tmp}"
+      debugfs -w -R "rm /etc/param/ohos.para" "${system_img}" >/dev/null 2>&1 || true
+      debugfs -w -R "write ${ohos_para_tmp} /etc/param/ohos.para" "${system_img}" >/dev/null
+    fi
+    local tel_para_tmp="${tmpdir}/telephony.para"
+    if debugfs -R "cat /etc/param/telephony.para" "${system_img}" > "${tel_para_tmp}" 2>/dev/null && \
+       [ -s "${tel_para_tmp}" ]; then
+      replace_or_append_param "${tel_para_tmp}" \
+        "const.telephony.ril.attty.path" "const.telephony.ril.attty.path=/dev/ttyRIL0"
+      chmod 0644 "${tel_para_tmp}"
+      debugfs -w -R "rm /etc/param/telephony.para" "${system_img}" >/dev/null 2>&1 || true
+      debugfs -w -R "write ${tel_para_tmp} /etc/param/telephony.para" "${system_img}" >/dev/null
+    fi
     if [ "${product}" = "x86_64_virt" ] && command -v python3 >/dev/null 2>&1; then
       local libuv_tmp="${tmpdir}/libuv.so"
       if debugfs -R "dump /system/lib64/platformsdk/libuv.so ${libuv_tmp}" "${system_img}" >/dev/null 2>&1 && \
@@ -3214,6 +3530,47 @@ ensure_char_or_block_node() {
 }
 
 setup_virtio_ports() {
+  if [ -d /sys/class/misc/hw_random ] && [ -f /sys/class/misc/hw_random/dev ]; then
+    ensure_char_or_block_node /sys/class/misc/hw_random /dev/hwrng c
+    chmod 0666 /dev/hwrng 2>/dev/null || true
+  fi
+
+  if [ "${stage}" = "boot" ] && [ -d /sys/bus/usb/devices ]; then
+    for udir in /sys/bus/usb/devices/*; do
+      [ -f "${udir}/busnum" ] && [ -f "${udir}/devnum" ] && [ -f "${udir}/dev" ] || continue
+      read -r ubus < "${udir}/busnum" 2>/dev/null || continue
+      read -r udev < "${udir}/devnum" 2>/dev/null || continue
+      ubus_pad="$(printf '%03d' "${ubus}" 2>/dev/null)" || continue
+      udev_pad="$(printf '%03d' "${udev}" 2>/dev/null)" || continue
+      mkdir -p "/dev/bus/usb/${ubus_pad}" 2>/dev/null || true
+      chmod 0755 /dev/bus /dev/bus/usb "/dev/bus/usb/${ubus_pad}" 2>/dev/null || true
+      ensure_char_or_block_node "${udir}" "/dev/bus/usb/${ubus_pad}/${udev_pad}" c
+      chmod 0666 "/dev/bus/usb/${ubus_pad}/${udev_pad}" 2>/dev/null || true
+    done
+  fi
+
+  has_real_usb_tty=0
+  if [ -d /sys/class/tty/ttyUSB0 ] && [ -f /sys/class/tty/ttyUSB0/dev ]; then
+    has_real_usb_tty=1
+    if [ -L /dev/ttyUSB0 ]; then
+      rm -f /dev/ttyUSB0 2>/dev/null || true
+    fi
+    ensure_char_or_block_node /sys/class/tty/ttyUSB0 /dev/ttyUSB0 c
+    chmod 0666 /dev/ttyUSB0 2>/dev/null || true
+    stty -F /dev/ttyUSB0 raw -echo -echoe -echok clocal -crtscts 115200 2>/dev/null || \
+      stty raw -echo -echoe -echok clocal -crtscts 115200 < /dev/ttyUSB0 2>/dev/null || true
+  fi
+
+  has_virt_usb_serial=0
+  for port_dir in /sys/class/virtio-ports/vport*; do
+    [ -e "${port_dir}" ] || continue
+    port_name=""
+    [ -f "${port_dir}/name" ] && read -r port_name < "${port_dir}/name" 2>/dev/null || true
+    case "${port_name}" in
+      *ohos.usb.serial*) has_virt_usb_serial=1 ;;
+    esac
+  done
+
   for port_dir in /sys/class/virtio-ports/vport*; do
     [ -e "${port_dir}" ] || continue
     port_name=""
@@ -3226,12 +3583,30 @@ setup_virtio_ports() {
         if [ -e "${dev_node}" ]; then
           chown radio:radio "${dev_node}" 2>/dev/null || chown 1001:1001 "${dev_node}" 2>/dev/null || true
           chmod 0666 "${dev_node}" 2>/dev/null || true
-          ln -sf "${dev_node}" /dev/ttyUSB0 2>/dev/null || true
+          stty -F "${dev_node}" raw -echo -echoe -echok 2>/dev/null || \
+            stty raw -echo -echoe -echok < "${dev_node}" 2>/dev/null || true
+          ln -sf "${dev_node}" /dev/ttyRIL0 2>/dev/null || true
+          if [ "${has_real_usb_tty}" = "0" ] && [ "${has_virt_usb_serial}" = "0" ]; then
+            ln -sf "${dev_node}" /dev/ttyUSB0 2>/dev/null || true
+          fi
+        fi
+        ;;
+      *ohos.usb.serial*)
+        if [ -e "${dev_node}" ]; then
+          chmod 0666 "${dev_node}" 2>/dev/null || true
+          stty -F "${dev_node}" raw -echo -echoe -echok 2>/dev/null || \
+            stty raw -echo -echoe -echok < "${dev_node}" 2>/dev/null || true
+          ln -sf "${dev_node}" /dev/qemu_usb_serial 2>/dev/null || true
+          if [ "${has_real_usb_tty}" = "0" ]; then
+            ln -sf "${dev_node}" /dev/ttyUSB0 2>/dev/null || true
+          fi
         fi
         ;;
       *ohos.hw.bridge*)
         if [ -e "${dev_node}" ]; then
           chmod 0666 "${dev_node}" 2>/dev/null || true
+          stty -F "${dev_node}" raw -echo -echoe -echok 2>/dev/null || \
+            stty raw -echo -echoe -echok < "${dev_node}" 2>/dev/null || true
           ln -sf "${dev_node}" /dev/qemu_hw_bridge 2>/dev/null || true
         fi
         ;;
@@ -3568,8 +3943,9 @@ EOF
       fi
       local host_dir
       for host_dir in darwin-arm64 darwin-x86_64 linux-x86_64 linux-aarch64; do
-        if [ -x "${candidate_root}/prebuilts/clang/ohos/${host_dir}/llvm/bin/clang" ]; then
-          clang_bin="${candidate_root}/prebuilts/clang/ohos/${host_dir}/llvm/bin/clang"
+        local candidate_clang="${candidate_root}/prebuilts/clang/ohos/${host_dir}/llvm/bin/clang"
+        if [ -x "${candidate_clang}" ] && "${candidate_clang}" --version >/dev/null 2>&1; then
+          clang_bin="${candidate_clang}"
           break
         fi
       done
@@ -3908,18 +4284,6 @@ EOF
   trap - RETURN
 }
 
-replace_or_append_param() {
-  local file="$1"
-  local key="$2"
-  local line="$3"
-
-  if grep -q -E "^[[:space:]]*${key}[[:space:]]*=" "${file}"; then
-    sed_in_place_extended "s|^[[:space:]]*${key}[[:space:]]*=.*$|${line}|" "${file}"
-  else
-    printf '%s\n' "${line}" >> "${file}"
-  fi
-}
-
 inject_standard_qemu_params() {
   local image="$1"
   local product="$2"
@@ -3936,14 +4300,22 @@ inject_standard_qemu_params() {
   trap 'rm -rf "${tmpdir}"' RETURN
 
   local ohos_para="${tmpdir}/ohos.para"
+  local tel_para="${tmpdir}/telephony.para"
   local hdc_para="${tmpdir}/hdc.para"
   debugfs -R "cat /etc/param/ohos.para" "${image}" > "${ohos_para}" 2>/dev/null || : > "${ohos_para}"
+  debugfs -R "cat /etc/param/telephony.para" "${image}" > "${tel_para}" 2>/dev/null || : > "${tel_para}"
   debugfs -R "cat /etc/param/hdc.para" "${image}" > "${hdc_para}" 2>/dev/null || : > "${hdc_para}"
 
   if [ "${INJECT_DEVELOPER_MODE_PARAM:-1}" = "1" ]; then
     replace_or_append_param "${ohos_para}" "const.security.developermode.state" "const.security.developermode.state=true"
   fi
   replace_or_append_param "${ohos_para}" "persist.sys.abilityms.maxProcessCacheNum" "persist.sys.abilityms.maxProcessCacheNum=2"
+  replace_or_append_param "${ohos_para}" "const.telephony.ril.attty.path" "const.telephony.ril.attty.path=/dev/ttyRIL0"
+  if [ -s "${tel_para}" ]; then
+    replace_or_append_param "${tel_para}" "const.telephony.ril.attty.path" "const.telephony.ril.attty.path=/dev/ttyRIL0"
+    debugfs -w -R "rm /etc/param/telephony.para" "${image}" >/dev/null 2>&1 || true
+    debugfs -w -R "write ${tel_para} /etc/param/telephony.para" "${image}" >/dev/null
+  fi
   if [ -n "${DEVICE_TYPE:-}" ]; then
     replace_or_append_param "${ohos_para}" \
       "const.product.devicetype" "const.product.devicetype=${DEVICE_TYPE}"

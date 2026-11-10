@@ -21,6 +21,15 @@ Provides:
    - `python3 tools/qemu_hw_controller.py [--port 5555] camera smpte`
    - `python3 tools/qemu_hw_controller.py [--port 5555] clipboard-set "Hello OHOS"`
    - `python3 tools/qemu_hw_controller.py [--port 5555] clipboard-get`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] key power`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] network offline`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] gyro 0.1 0.2 0.3`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] light 450`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] proximity 2.0`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] barometer 1015.5`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] magnetic 25.0 1.0 -42.0`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] usb-serial-send "PING_FTDI"`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] usb-serial-read`
 """
 
 import argparse
@@ -53,7 +62,7 @@ def run_daemon(args: argparse.Namespace) -> int:
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
     )
-    for sock_path in (args.virtserial_socket, args.control_socket):
+    for sock_path in (args.virtserial_socket, args.control_socket, args.usb_serial_socket):
         if sock_path and os.path.exists(sock_path):
             try:
                 os.unlink(sock_path)
@@ -70,6 +79,13 @@ def run_daemon(args: argparse.Namespace) -> int:
     ctrl_srv.listen(8)
     ctrl_srv.setblocking(False)
 
+    usb_serial_srv: Optional[socket.socket] = None
+    if args.usb_serial_socket:
+        usb_serial_srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        usb_serial_srv.bind(args.usb_serial_socket)
+        usb_serial_srv.listen(2)
+        usb_serial_srv.setblocking(False)
+
     if args.pidfile:
         with open(args.pidfile, "w", encoding="utf-8") as f:
             f.write(f"{os.getpid()}\n")
@@ -85,6 +101,11 @@ def run_daemon(args: argparse.Namespace) -> int:
 
     guest_conn: Optional[socket.socket] = None
     guest_rx_buf = b""
+    usb_serial_conn: Optional[socket.socket] = None
+    usb_serial_rx_buf = b""
+    usb_serial_loopback = args.usb_serial_mode.lower() in ("loopback", "auto", "on", "")
+    last_usb_tx_payload = b""
+    last_usb_tx_time = 0.0
     pending_ctrl_client: Optional[socket.socket] = None
     pending_ctrl_deadline: float = 0.0
     internal_pending_replies: int = 0
@@ -96,9 +117,10 @@ def run_daemon(args: argparse.Namespace) -> int:
     last_host_clip: Optional[str] = get_host_clipboard() if clip_sync else None
 
     logging.info(
-        "QEMU HW controller started: virtserial=%s control=%s clip_sync=%s",
+        "QEMU HW controller started: virtserial=%s control=%s usb_serial=%s clip_sync=%s",
         args.virtserial_socket,
         args.control_socket,
+        args.usb_serial_socket or "none",
         clip_sync,
     )
 
@@ -145,8 +167,12 @@ def run_daemon(args: argparse.Namespace) -> int:
     try:
         while running:
             rlist = [vport_srv, ctrl_srv]
+            if usb_serial_srv is not None:
+                rlist.append(usb_serial_srv)
             if guest_conn is not None:
                 rlist.append(guest_conn)
+            if usb_serial_conn is not None:
+                rlist.append(usb_serial_conn)
             readable, _, _ = select.select(rlist, [], [], 0.25)
 
             for s in readable:
@@ -163,6 +189,44 @@ def run_daemon(args: argparse.Namespace) -> int:
                     internal_pending_replies = 0
                     logging.info("QEMU virtserial socket connected")
 
+                elif usb_serial_srv is not None and s is usb_serial_srv:
+                    conn, _ = usb_serial_srv.accept()
+                    if usb_serial_conn is not None:
+                        try:
+                            usb_serial_conn.close()
+                        except OSError:
+                            pass
+                    usb_serial_conn = conn
+                    usb_serial_conn.setblocking(False)
+                    logging.info("QEMU usb-serial socket connected (loopback=%s)", usb_serial_loopback)
+
+                elif usb_serial_conn is not None and s is usb_serial_conn:
+                    try:
+                        chunk = usb_serial_conn.recv(4096)
+                    except BlockingIOError:
+                        continue
+                    except OSError:
+                        chunk = b""
+                    if not chunk:
+                        try:
+                            usb_serial_conn.close()
+                        except OSError:
+                            pass
+                        usb_serial_conn = None
+                        continue
+                    now_ts = time.time()
+                    if last_usb_tx_payload and chunk == last_usb_tx_payload and (now_ts - last_usb_tx_time) < 0.5:
+                        # Suppress tty line-discipline echo bounce from guest
+                        continue
+                    usb_serial_rx_buf = (usb_serial_rx_buf + chunk)[-65536:]
+                    if usb_serial_loopback:
+                        try:
+                            last_usb_tx_payload = chunk
+                            last_usb_tx_time = now_ts
+                            usb_serial_conn.sendall(chunk)
+                        except OSError:
+                            pass
+
                 elif s is ctrl_srv:
                     c_conn, _ = ctrl_srv.accept()
                     c_conn.settimeout(1.0)
@@ -173,6 +237,37 @@ def run_daemon(args: argparse.Namespace) -> int:
                         continue
                     cmd = raw.decode("utf-8", errors="replace").strip()
                     if not cmd:
+                        c_conn.close()
+                        continue
+                    if cmd.upper().startswith("USB_SERIAL_SEND_B64 "):
+                        b64_str = cmd.split(" ", 1)[1].strip()
+                        if usb_serial_conn is None:
+                            try:
+                                c_conn.sendall(b"ERR usb-serial socket not connected\n")
+                            except OSError:
+                                pass
+                            c_conn.close()
+                            continue
+                        try:
+                            payload = base64.b64decode(b64_str)
+                            last_usb_tx_payload = payload
+                            last_usb_tx_time = time.time()
+                            usb_serial_conn.sendall(payload)
+                            c_conn.sendall(f"OK USB_SERIAL_SEND {len(payload)}\n".encode("utf-8"))
+                        except Exception as exc:
+                            try:
+                                c_conn.sendall(f"ERR usb-serial send: {exc}\n".encode("utf-8"))
+                            except OSError:
+                                pass
+                        c_conn.close()
+                        continue
+                    if cmd.upper() == "USB_SERIAL_READ":
+                        b64_out = base64.b64encode(usb_serial_rx_buf).decode("ascii")
+                        usb_serial_rx_buf = b""
+                        try:
+                            c_conn.sendall(f"USB_SERIAL_B64 {b64_out}\n".encode("utf-8"))
+                        except OSError:
+                            pass
                         c_conn.close()
                         continue
                     if guest_conn is None:
@@ -256,9 +351,16 @@ def run_daemon(args: argparse.Namespace) -> int:
                 guest_conn.close()
             except OSError:
                 pass
+        if usb_serial_conn is not None:
+            try:
+                usb_serial_conn.close()
+            except OSError:
+                pass
         vport_srv.close()
         ctrl_srv.close()
-        for p in (args.virtserial_socket, args.control_socket, args.pidfile):
+        if usb_serial_srv is not None:
+            usb_serial_srv.close()
+        for p in (args.virtserial_socket, args.control_socket, args.usb_serial_socket, args.pidfile):
             if p and os.path.exists(p):
                 try:
                     os.unlink(p)
@@ -291,6 +393,20 @@ def run_client(args: argparse.Namespace) -> int:
         wire = f"ROTATION {csv_rest}"
     elif sub == "headposture":
         wire = f"HEADPOSTURE {csv_rest}"
+    elif sub == "gyro":
+        wire = f"GYRO {csv_rest}"
+    elif sub == "light":
+        wire = f"LIGHT {rest}"
+    elif sub == "proximity":
+        wire = f"PROXIMITY {rest}"
+    elif sub == "barometer":
+        wire = f"BAROMETER {rest}"
+    elif sub == "magnetic":
+        wire = f"MAGNETIC {csv_rest}"
+    elif sub == "key":
+        wire = f"KEY {rest}"
+    elif sub in ("network", "net"):
+        wire = f"NETWORK {colon_rest}"
     elif sub == "battery":
         wire = f"BATTERY {colon_rest}"
     elif sub == "thermal":
@@ -302,6 +418,11 @@ def run_client(args: argparse.Namespace) -> int:
         wire = f"CLIPBOARD_SET_B64 {b64}"
     elif sub == "clipboard-get":
         wire = "CLIPBOARD_GET"
+    elif sub == "usb-serial-send":
+        b64 = base64.b64encode((rest + "\n").encode("utf-8")).decode("ascii")
+        wire = f"USB_SERIAL_SEND_B64 {b64}"
+    elif sub == "usb-serial-read":
+        wire = "USB_SERIAL_READ"
     elif sub == "time":
         ms = int(rest) if rest else int(time.time() * 1000)
         wire = f"TIME {ms}"
@@ -312,7 +433,7 @@ def run_client(args: argparse.Namespace) -> int:
     s.settimeout(5.0)
     s.connect(ctrl_sock)
     s.sendall((wire + "\n").encode("utf-8"))
-    resp = s.recv(4096).decode("utf-8", errors="replace").strip()
+    resp = s.recv(8192).decode("utf-8", errors="replace").strip()
     s.close()
 
     if sub == "clipboard-get" and resp.startswith("CLIPBOARD_B64"):
@@ -326,6 +447,17 @@ def run_client(args: argparse.Namespace) -> int:
             print(f"ERR decode clipboard: {exc}", file=sys.stderr)
             return 1
 
+    if sub == "usb-serial-read" and resp.startswith("USB_SERIAL_B64"):
+        parts = resp.split(" ", 1)
+        b64_payload = parts[1] if len(parts) > 1 else ""
+        try:
+            decoded = base64.b64decode(b64_payload).decode("utf-8", errors="replace")
+            print(decoded, end="" if decoded.endswith("\n") else "\n")
+            return 0
+        except Exception as exc:
+            print(f"ERR decode usb-serial: {exc}", file=sys.stderr)
+            return 1
+
     print(resp)
     return 1 if resp.startswith("ERR") else 0
 
@@ -336,6 +468,8 @@ def main() -> int:
     parser.add_argument("--port", type=int, default=5555, help="HDC host port (default: 5555)")
     parser.add_argument("--socket", "--virtserial-socket", dest="virtserial_socket", default="", help="VirtIO serial UNIX socket path (or control socket in client mode)")
     parser.add_argument("--ctrl-socket", "--control-socket", dest="control_socket", default="", help="Host control UNIX socket path")
+    parser.add_argument("--usb-serial-socket", dest="usb_serial_socket", default="", help="USB serial UNIX socket path")
+    parser.add_argument("--usb-serial-mode", dest="usb_serial_mode", default="loopback", help="USB serial host mode (loopback|on)")
     parser.add_argument("--pidfile", default="", help="PID file path")
     parser.add_argument("--log", default="/tmp/openharmony-qemu-hw.log", help="Log file path")
     parser.add_argument("--gps", default="", help="Initial GPS coordinates")
