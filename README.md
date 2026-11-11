@@ -106,9 +106,12 @@ powershell.exe -ExecutionPolicy Bypass -File ./launch/windows.ps1 -Cpu EPYC-v5 -
 | `--usb` | `QEMU_USB` | `0` (attaches `qemu-xhci`) |
 | `--usb-disk FILE[:SIZE]` | `QEMU_USB_DISK` | unset (attaches USB mass storage on `xhci0.0` -> `/mnt/data/external/usb`, `/data/usb`; auto-creates/formats if `:SIZE` is given) |
 | `--usb-host VID:PID` | `QEMU_USB_HOST` | unset (USB host device passthrough by hex `VID:PID`) |
+| `--usb-serial MODE` | `QEMU_USB_SERIAL` | `off` (`off\|auto\|on\|loopback\|pty\|unix:PATH\|tcp:HOST:PORT`, attaches FTDI USB serial -> `/dev/ttyUSB0` without colliding with RIL `/dev/ttyRIL0`) |
 | `--bt-usb VID:PID` | `QEMU_BT_USB` | unset (USB Bluetooth adapter passthrough by hex `VID:PID`) |
 | `--balloon` | `QEMU_BALLOON` | `0` (attaches `virtio-balloon-pci`) |
-| `--ril-modem MODE` | `QEMU_RIL_MODEM` | `auto` (`auto\|on\|off`, virtual AT modem over `virtio-serial` `/dev/ttyUSB0`) |
+| `--rng MODE` | `QEMU_RNG` | `on` (`auto\|on\|off`, attaches `virtio-rng-pci` hardware entropy source) |
+| `--port-forward SPEC` | `QEMU_PORT_FORWARD` | unset (`[tcp\|udp:]HOST_PORT:GUEST_PORT`, comma-separated or repeated SLIRP `hostfwd` rules) |
+| `--ril-modem MODE` | `QEMU_RIL_MODEM` | `auto` (`auto\|on\|off`, virtual AT modem over `virtio-serial` `/dev/ttyRIL0`) |
 | `--wifi MODE` | `QEMU_WIFI_MODE` | `auto` (`auto\|hwsim\|virt_wifi\|off`) |
 | `--gps COORDS` | `QEMU_GPS` | unset (`LAT,LON[,ALT[,SPEED[,BEARING[,HACC[,VACC]]]]]`, streams to `/dev/unix/socket/qemu_gnss/input`) |
 | `--sensor VALUES` | `QEMU_SENSOR` | unset (`AX,AY,AZ[:RX,RY,RZ,RW]`, streams to `/dev/unix/socket/qemu_sensor/{input,rotation,headposture}`) |
@@ -129,20 +132,24 @@ powershell.exe -ExecutionPolicy Bypass -File ./launch/windows.ps1 -Cpu EPYC-v5 -
 | `-q, --qemu PATH` | `QEMU_BIN` | product `qemu-system-*` |
 | `-- ...` | `QEMU_EXTRA_ARGS` | empty |
 
-On Windows PowerShell the same knobs are available as parameters
-(`-Resolution`, `-Memory`, `-Smp`, `-Cpu`, `-Display`, `-Headless`, `-Sdcard`,
-`-NvmeDisk`, `-Gps`, `-Sensor`, `-Battery`, `-Thermal`, `-Instance`, `-Rtc`,
-`-Watchdog`, `-CameraFeed`, `-Clipboard`, …) or via the environment variables
-above.
+On Windows PowerShell (`launch/windows.ps1`, included across `x86_64_virt`,
+`arm64_virt`, and `armv7a_virt` packages) the same knobs are available as
+parameters (`-Resolution`, `-Memory`, `-Smp`, `-Cpu`, `-Display`, `-Headless`,
+`-UsbSerial`, `-PortForward`, `-Rng`, `-Sdcard`, `-NvmeDisk`, `-Gps`, `-Sensor`,
+`-Battery`, `-Thermal`, `-Instance`, `-Peer`, `-Rtc`, `-Watchdog`,
+`-CameraFeed`, `-Clipboard`, …) or via the environment variables above.
 
 ### Live runtime hardware control (`tools/qemu_hw_controller.py`)
 
 While QEMU is running, `tools/qemu_hw_controller.py` exposes a host UNIX control
 socket (`/tmp/openharmony-qemu-hw-<HDC_PORT>.ctrl.sock`) connected to
 `/vendor/bin/qemu-hw-bridge` inside the guest over `virtio-serial`
-(`ohos.hw.bridge0`) so GPS fixes, 3-axis accelerometer/rotation/head-posture
-vectors, battery level/charging state, thermal zones, camera test pattern, and
-clipboard text can be updated dynamically at runtime without rebooting:
+(`ohos.hw.bridge0`) so GPS fixes, 3-axis accelerometer/rotation/head-posture and
+extended environmental sensors (`gyro`, `light`, `proximity`, `barometer`,
+`magnetic`), battery level/charging state, thermal zones, hardware key events
+(`power`, `volup`, `voldown`, `back`, `home`, …), network state (`online`,
+`offline`, `latency:MS`), camera test pattern, clipboard text, and USB serial
+data can be updated dynamically at runtime without rebooting:
 
 ```bash
 python3 ./tools/qemu_hw_controller.py --port 5555 status
@@ -150,11 +157,21 @@ python3 ./tools/qemu_hw_controller.py --port 5555 gps 31.2304,121.4737,15.0,3.5,
 python3 ./tools/qemu_hw_controller.py --port 5555 accel 0.0,9.81,0.0
 python3 ./tools/qemu_hw_controller.py --port 5555 rotation 0.0,0.0,0.7071,0.7071
 python3 ./tools/qemu_hw_controller.py --port 5555 headposture 1.0,0.0,0.0,0.0
+python3 ./tools/qemu_hw_controller.py --port 5555 gyro 0.05,-0.02,0.12
+python3 ./tools/qemu_hw_controller.py --port 5555 light 650.0
+python3 ./tools/qemu_hw_controller.py --port 5555 proximity 0.0
+python3 ./tools/qemu_hw_controller.py --port 5555 barometer 1013.25
+python3 ./tools/qemu_hw_controller.py --port 5555 magnetic 25.0,-10.0,42.0
 python3 ./tools/qemu_hw_controller.py --port 5555 battery 75:discharging
 python3 ./tools/qemu_hw_controller.py --port 5555 thermal 38.5
+python3 ./tools/qemu_hw_controller.py --port 5555 key volup
+python3 ./tools/qemu_hw_controller.py --port 5555 network offline
+python3 ./tools/qemu_hw_controller.py --port 5555 network online
 python3 ./tools/qemu_hw_controller.py --port 5555 camera smpte
 python3 ./tools/qemu_hw_controller.py --port 5555 clipboard-set "Hello OpenHarmony"
 python3 ./tools/qemu_hw_controller.py --port 5555 clipboard-get
+python3 ./tools/qemu_hw_controller.py --port 5555 usb-serial-send "AT+TEST"
+python3 ./tools/qemu_hw_controller.py --port 5555 usb-serial-read
 ```
 
 Current full packages pair `virtio-tablet` with a guest MMI absolute-coordinate

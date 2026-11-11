@@ -151,14 +151,14 @@ This document archives the key engineering adaptations and root-cause fixes requ
 
 All 6 packages in `/Volumes/PSSD/qemu/packages/issue20-23-matrix/` were built from `OpenHarmony-7.0-Release` (`f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549`) on branch `codex/ohos7-integrated-development` and passed the 5-phase runtime gate (`EXIT_CODE=0`, 0 failures: untouched `>95s` `AWAKE` & `screenLocked=false`, `ScreenOffTime=9000000ms`, `llvmpipe-*` `SigBlk` clean, `power-shell suspend`/`wakeup` round-trip with `QMP running: true` and `awake_14s=true`, 4 rounds of 4-thread GLESv3/GLESv2 + GBM + `OH_NativeBuffer` + `OH_Sensor_GetInfos` stress, zero `cppcrash`/`jscrash`/`appfreeze`/`sysfreeze`, zero defunct zombies, identical system service PIDs, and live `snapshot_display` JPEG output):
 
-| Target Architecture | Device Profile | Package Filename | SHA-256 Checksum | Runtime Gate Status (`--headless`, `cocoa`, `--userdata-size 8G` & Full 15-Capability Suite) |
+| Target Architecture | Device Profile | Package Filename | SHA-256 Checksum | Runtime Gate Status (`--headless`, `cocoa`, `--userdata-size 8G` & Full 23-Capability Suite) |
 | :--- | :--- | :--- | :--- | :--- |
-| `arm64_virt` | `phone` | `openharmony-qemu-arm64-arm64_virt-phone.tar.gz` | `6676d2a4c26c3c4ff8adf29a4168a7b00fdde8e339868cce5cc3a61c8e65e6d8` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + Full 15-Capability Suite, 0 Crashes)** |
-| `arm64_virt` | `2in1` | `openharmony-qemu-arm64-arm64_virt-2in1.tar.gz` | `aaab1713c9b45b02691d641fd112068c5e4d0a9adbaab7ba15ff2bff016565f2` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + Full 15-Capability Suite, 0 Crashes)** |
-| `x86_64_virt` | `phone` | `openharmony-qemu-x86_64-x86_64_virt-phone.tar.gz` | `2a2bbc0bc3c8b9491f8b206cf8e8437a12e24135395f93cd8e9fba1772549ef1` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + Full 15-Capability Suite, 0 Crashes)** |
-| `x86_64_virt` | `2in1` | `openharmony-qemu-x86_64-x86_64_virt-2in1.tar.gz` | `da4bcaa3424fb228535e3e823f2b142ac35191701db5388235d57e413b4ce63b` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + Full 15-Capability Suite, 0 Crashes)** |
-| `armv7a_virt` | `phone` | `openharmony-qemu-armv7a-armv7a_virt-phone.tar.gz` | `8a63388f545740ef8d5e72993752822f7259d973eb65c14c94d8e1f6fe05993e` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + Full 15-Capability Suite, 0 Crashes)** |
-| `armv7a_virt` | `2in1` | `openharmony-qemu-armv7a-armv7a_virt-2in1.tar.gz` | `219c6c11c2d90f54f0b389efce60092d1280b1557c6306d399547abeae66f959` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + Full 15-Capability Suite, 0 Crashes)** |
+| `arm64_virt` | `phone` | `openharmony-qemu-arm64-arm64_virt-phone.tar.gz` | `06840589cb7bbf88dbc1d281db96d047a5ce5b6f4e2e13bbf3b54a94bcad57a7` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + Full 23-Capability Suite, 0 Crashes)** |
+| `arm64_virt` | `2in1` | `openharmony-qemu-arm64-arm64_virt-2in1.tar.gz` | `c3472dcb1d8bf7f738cd31bb499cf1cc9416e76a29b3b0b639dddcb85d9074ea` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + Full 23-Capability Suite, 0 Crashes)** |
+| `x86_64_virt` | `phone` | `openharmony-qemu-x86_64-x86_64_virt-phone.tar.gz` | `98e3849a006384e7cc8837f8c13c81bb0fbd6a60ef66e56269756051c0002fe1` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + Full 23-Capability Suite, 0 Crashes)** |
+| `x86_64_virt` | `2in1` | `openharmony-qemu-x86_64-x86_64_virt-2in1.tar.gz` | `4a26a041f0904f44ba38da94b076c966e3d7b9809bb17cf8b567b3c3a4b7c014` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + Full 23-Capability Suite, 0 Crashes)** |
+| `armv7a_virt` | `phone` | `openharmony-qemu-armv7a-armv7a_virt-phone.tar.gz` | `32c2dad098e8e343a3380fdc88a29d6884c765023420ef8210a2d99098409f6b` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + Full 23-Capability Suite, 0 Crashes)** |
+| `armv7a_virt` | `2in1` | `openharmony-qemu-armv7a-armv7a_virt-2in1.tar.gz` | `15693fd5127db3d84fc110cfa39ed7ee14f2878e7ff1231d1b3e8f7a7f72a1e3` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + Full 23-Capability Suite, 0 Crashes)** |
 
 ### 8.6 Dynamic `userdata.img` Sparse Expansion on Launch (`--userdata-size` / `QEMU_USERDATA_SIZE`) & `x86_64` `libf2fs` `va_list` Fix
 - **Problem** ([Issue #27](https://github.com/harmony-contrib/ohos-qemu/issues/27)):
@@ -213,3 +213,30 @@ All 6 packages in `/Volumes/PSSD/qemu/packages/issue20-23-matrix/` were built fr
   - **Multi-Instance Isolation (`--instance ID`) & Peer LAN (`--peer off|listen[:PORT]|connect[:PORT]`)**:
     1. Fixes `ensure_qemu_peer_lan_support` to recognize both `virtio-net-pci` and `virtio-net-device`, and adds `--instance ID` (`1..999`) to clone per-instance writable images under `images/instances/instance-<ID>/` while adding `file.locking=off` to read-only drives (`updater.img`, `system.img`, `vendor.img`).
     2. Places `${QEMU_BOOT_EXTRAS}` after `ohos.required_mount.data` on the kernel `-append` command line so 32-bit `armv7a` (`COMMAND_LINE_SIZE = 1024`) never truncates `ohos.required_mount.*` parameters.
+
+### 8.9 USB FTDI Serial (`--usb-serial`) & RIL `/dev/ttyRIL0` Non-Collision, Custom Port Forwarding (`--port-forward`), VirtIO RNG (`--rng`), Live Key/Network/Extended Sensor Injection & Windows PowerShell Parity
+- **Problem**:
+  - **USB Serial (`/dev/ttyUSB0`) vs RIL AT Modem Collision**:
+    1. Previously, `/etc/param/telephony.para` set `const.telephony.ril.attty.path=/dev/ttyUSB0` and `/vendor/bin/qemu-init-setup.sh` symlinked `/dev/ttyUSB0` to the RIL AT virtio-serial port (`ohos.ril.at0`). When a real or virtual USB serial adapter (`-device usb-serial`) was attached on `xhci0.0` (which creates `/dev/ttyUSB0` via `ftdi_sio` on `2in1` for `@ohos.usbManager.serial`), `/dev/ttyUSB0` collided with the RIL AT modem path.
+    2. Launch scripts did not expose a `--usb-serial` flag to attach QEMU's `usb-serial` (`0403:6001` FTDI) device or bridge bidirectional host-guest serial I/O across both `2in1` (`CONFIG_USB_SERIAL_FTDI_SIO=y`) and `phone` (where `CONFIG_USB_SERIAL_FTDI_SIO` is not compiled into the kernel).
+  - **Custom Host-to-Guest Port Forwarding & Hardware RNG**:
+    1. Launch scripts hardcoded SLIRP port forwarding to `hostfwd=tcp::${HDC_HOST_PORT}-:5555` without a CLI flag (`--port-forward` / `--hostfwd`) to forward additional TCP/UDP ports to guest services.
+    2. QEMU guests lacked a `virtio-rng-pci` hardware entropy device (`--rng`) to feed `/dev/hw_random` (`virtio_rng.0`).
+  - **Live Hardware Key Injection, Network State Simulation & Extended Environmental Sensors**:
+    1. `qemu-hw-bridge` and `qemu_hw_controller.py` lacked runtime commands to inject hardware keys (`power`, `volup`, `voldown`, `back`, `home`, …), simulate network connectivity transitions (`online`, `offline`, `wifi_on`, `wifi_off`, `latency:MS`) without dropping the management `eth0` HDC link, or update extended environmental sensor states (`gyro`, `light`, `proximity`, `barometer`, `magnetic`).
+    2. Storing `qemu_hw_bridge.pid` on persistent `/data/vendor` caused PID collisions across reboots when a low PID (`~340–380`) was reused by another boot process, causing `kill(old_pid, 0) == 0` to succeed and `qemu-hw-bridge --daemon` to exit early on subsequent boots.
+  - **Windows PowerShell (`launch/windows.ps1`) Cross-Architecture & Feature Parity**:
+    1. `write_windows_ps1` in [`scripts/package_standard_qemu.sh`](../scripts/package_standard_qemu.sh) previously generated `launch/windows.ps1` only for `x86_64_virt` (omitting `arm64_virt` and `armv7a_virt`) and lacked `-UsbSerial`, `-PortForward`, `-Rng`, `-Peer`, and `:SIZE` disk image auto-creation.
+- **Adaptation** ([`scripts/package_standard_qemu.sh`](../scripts/package_standard_qemu.sh), [`scripts/qemu_hw_bridge.c`](../scripts/qemu_hw_bridge.c), [`scripts/qemu_hw_controller.py`](../scripts/qemu_hw_controller.py)):
+  - **USB FTDI Serial (`--usb-serial MODE` / `QEMU_USB_SERIAL` / `-UsbSerial`) & `/dev/ttyRIL0` Separation**:
+    1. Updates `const.telephony.ril.attty.path=/dev/ttyRIL0` in both `/etc/param/telephony.para` and `/etc/param/ohos.para` inside `system.img`, and symlinks `/dev/ttyRIL0` to the `ohos.ril.at0` virtio-serial port (`/dev/vport<N>p1`), keeping `/dev/ttyUSB0 -> /dev/ttyRIL0` as a fallback only when no USB serial device (`/sys/class/tty/ttyUSB0` or `ohos.usb.serial0`) is present.
+    2. Adds `--usb-serial off|auto|on|loopback|pty|unix:PATH|tcp:HOST:PORT`. On `2in1` (`CONFIG_USB_SERIAL_FTDI_SIO=y`), attaches `-device usb-serial,bus=xhci0.0,chardev=usb_serial_chr0,id=usb_serial0` so kernel `ftdi_sio` creates a real `/dev/ttyUSB0` (`188:0`) and sysfs USB tree for `@ohos.usbManager.serial` (`serial_manager`). On `phone`, attaches `-device usb-serial,bus=xhci0.0` (for USB bus enumeration `0403:6001`) plus `virtserialport` `ohos.usb.serial0` (`nr=3`) exposed at `/dev/ttyUSB0` and `/dev/qemu_usb_serial`.
+    3. Configures `/dev/ttyUSB0` into raw mode (`cfmakeraw`, `!ECHO`, `CLOCAL`) in `/vendor/bin/qemu-hw-bridge` and adds `--usb-serial-socket`, `usb-serial-send`, and `usb-serial-read` to [`scripts/qemu_hw_controller.py`](../scripts/qemu_hw_controller.py).
+  - **Custom Port Forwarding (`--port-forward SPEC`) & VirtIO RNG (`--rng auto|on|off`)**:
+    1. Parses comma-separated or repeated `[tcp|udp:]HOST_PORT:GUEST_PORT` specifications and appends `,hostfwd=${proto}::${host_port}-:${guest_port}` to `-netdev user`.
+    2. Attaches `-device virtio-rng-pci,id=rng0` by default (`--rng on`), populating `/sys/class/misc/hw_random/rng_current` (`virtio_rng.0`).
+  - **Runtime Key Injection, Network Simulation, Extended Sensors &Tmpfs PID Guard**:
+    1. Extends `/vendor/bin/qemu-hw-bridge` and `tools/qemu_hw_controller.py` with `key <KEY>` (emitting both `EV_KEY` on `Virtio Keyboard` `/dev/input/event*` and `uinput -K -d <code> -u <code>`), `network <online|offline|wifi_on|wifi_off|latency:MS>` (toggling `wlan0` while preserving `eth0` HDC connectivity), and `gyro` / `light` / `proximity` / `barometer` / `magnetic` state updates.
+    2. Moves the daemon pidfile to `/dev/qemu_hw_bridge.pid` (`tmpfs`) and verifies `/proc/<pid>/comm` matches `qemu-hw-bridge`, preventing stale-PID false positives across reboots.
+  - **Windows PowerShell (`launch/windows.ps1`) Parity**:
+    1. Emits `launch/windows.ps1` for all 6 packages (`x86_64_virt`, `arm64_virt`, `armv7a_virt` across `phone` and `2in1`) with full parameter parity (`-UsbSerial`, `-PortForward`, `-Rng`, `-Peer`, `-Instance`, `:SIZE` disk auto-creation, and architecture-specific machine/CPU/GPU/drive flags).
