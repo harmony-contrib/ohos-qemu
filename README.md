@@ -297,29 +297,49 @@ hdc list targets
 
 ## Sign and install development HAPs
 
-The `v20260809` image requires a HAP signing block. A truly unsigned package is
-rejected with bundle-manager error `9568320` (`no signature file`). The default
-installer also installs the Java-free `hap-sign` CLI under
-`~/.ohos-qemu/bin`; use `--without-hap-signer` when only the image is wanted.
+Development HAPs require a signing block. A truly unsigned package is rejected
+with bundle-manager error `9568320` (`no signature file`). The default installer
+also installs the Java-free `hap-sign` CLI under `~/.ohos-qemu/bin`; use
+`--without-hap-signer` when only the image is wanted.
+
+Read the target guest's UDID before signing. The `v20261107` ARM64 2in1 image
+rejects the signer's default `--device-id '*'` with error `9568423` (device
+unauthorized), even when developer mode and `oemmode=rd` are enabled:
 
 ```bash
 export PATH="$HOME/.ohos-qemu/bin:$PATH"
 
+hdc tconn 127.0.0.1:5555
+hdc -t 127.0.0.1:5555 shell bm get --udid
+
+# Replace QEMU_UDID with the 64-character value printed above.
 hap-sign sign entry-default-unsigned.hap \
   --bundle-name com.example.application \
+  --device-id QEMU_UDID \
   --output entry-default-signed.hap
 
-hdc install entry-default-signed.hap
+hdc -t 127.0.0.1:5555 install entry-default-signed.hap
 ```
 
-VPN applications commonly need an ACL in the debug profile:
+The bundle name must match `app.bundleName` inside the HAP. Keep code signing
+enabled. For permissions requiring a profile ACL, add `--acl`; it may be
+repeated for multiple permissions:
 
 ```bash
 hap-sign sign entry-default-unsigned.hap \
-  --bundle-name com.example.vpn \
-  --acl ohos.permission.FILE_ACCESS_PERSIST \
+  --bundle-name com.example.application \
+  --device-id QEMU_UDID \
+  --acl ohos.permission.READ_PASTEBOARD \
+  --acl ohos.permission.MANAGE_VPN \
   --output entry-default-signed.hap
 ```
+
+Include only the ACLs needed by the application's declared permissions. On
+`v20261107` ARM64 2in1, a normal-APL app declaring `READ_PASTEBOARD` failed with
+`9568289` until its signed profile included that ACL. Runtime permission grants
+remain a separate step. See [Development HAP signing](docs/development-hap-signing.md)
+for the verified commands, error reference, and why the older image accepted
+the default device ID.
 
 From a source checkout, `scripts/sign-hap.sh` is the equivalent wrapper and
 `scripts/install-hap-signer.sh` installs the signer. Release packages carry the
@@ -347,8 +367,9 @@ OpenHarmony's standard VpnExtension stack:
 - VPN manager System Ability and VpnExtension runtime;
 - SettingsData and the system `VpnDialog`, signed with a currently valid
   OpenHarmony system profile containing the dialog's required ACLs.
-- QEMU RD/developer-device boot mode, so normal DevEco debug HAPs can be
-  installed without manually changing guest authorization state.
+- QEMU RD/developer-device boot mode. Include the actual guest UDID in debug
+  signing profiles; RD boot settings alone do not guarantee a UDID exemption
+  in every release's verifier path.
 
 No application is pre-authorized. The first VPN request must show the system
 authorization dialog, and the user's decision is stored in the guest
