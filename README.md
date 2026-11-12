@@ -92,6 +92,7 @@ powershell.exe -ExecutionPolicy Bypass -File ./launch/windows.ps1 -Cpu EPYC-v5 -
 | `--width` / `--height` | `QEMU_XRES` / `QEMU_YRES` | same |
 | `-m, --memory SIZE` | `QEMU_MEMORY` | `4096` (armv7a: `3072`) |
 | `--userdata-size SIZE` | `QEMU_USERDATA_SIZE` | `2G` (`images/userdata.img`, online-resized on boot) |
+| `--reset` | `QEMU_RESET` | `0` (`1` resets active `userdata.img` to a clean factory F2FS image before boot, preserving any custom `userdata.img` size unless `--userdata-size` is also set) |
 | `-s, --smp N` | `QEMU_SMP` | `4` |
 | `--cpu MODEL` | `QEMU_CPU` | `max` (arm64: `cortex-a57`, armv7a: `cortex-a7`) |
 | `-d, --display` / `--headless` | `QEMU_DISPLAY` | product default (`sdl` / `cocoa` / `none`) |
@@ -134,10 +135,11 @@ powershell.exe -ExecutionPolicy Bypass -File ./launch/windows.ps1 -Cpu EPYC-v5 -
 
 On Windows PowerShell (`launch/windows.ps1`, included across `x86_64_virt`,
 `arm64_virt`, and `armv7a_virt` packages) the same knobs are available as
-parameters (`-Resolution`, `-Memory`, `-Smp`, `-Cpu`, `-Display`, `-Headless`,
-`-UsbSerial`, `-PortForward`, `-Rng`, `-Sdcard`, `-NvmeDisk`, `-Gps`, `-Sensor`,
-`-Battery`, `-Thermal`, `-Instance`, `-Peer`, `-Rtc`, `-Watchdog`,
-`-CameraFeed`, `-Clipboard`, …) or via the environment variables above.
+parameters (`-Resolution`, `-Memory`, `-UserdataSize`, `-Reset`, `-Smp`, `-Cpu`,
+`-Display`, `-Headless`, `-UsbSerial`, `-PortForward`, `-Rng`, `-Sdcard`,
+`-NvmeDisk`, `-Gps`, `-Sensor`, `-Battery`, `-Thermal`, `-Instance`, `-Peer`,
+`-Rtc`, `-Watchdog`, `-CameraFeed`, `-Clipboard`, …) or via the environment
+variables above.
 
 ### Live runtime hardware control (`tools/qemu_hw_controller.py`)
 

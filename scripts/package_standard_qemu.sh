@@ -1008,54 +1008,10 @@ ensure_qemu_serial_port_support() {
 
 ensure_qemu_userdata_size_support() {
   local file="$1"
-  if grep -q 'QEMU_USERDATA_SIZE_V1' "${file}"; then
-    return 0
-  fi
-  local tmp
-  tmp="$(mktemp)"
-  awk '
-    BEGIN { done = 0 }
-    {
-      print
-      if (!done && /^QEMU_EXTRA_ARGS=/) {
-        print "# QEMU_USERDATA_SIZE_V1: optional sparse expansion of userdata.img before boot."
-        print "QEMU_USERDATA_SIZE=\"${QEMU_USERDATA_SIZE:-}\""
-        print "if [ -n \"${QEMU_USERDATA_SIZE}\" ]; then"
-        print "  userdata_img=\"${OHOS_IMG}/userdata.img\""
-        print "  if [ ! -f \"${userdata_img}\" ]; then"
-        print "    echo \"userdata.img not found at ${userdata_img}\" >&2"
-        print "    exit 2"
-        print "  fi"
-        print "  if [[ \"${QEMU_USERDATA_SIZE}\" =~ ^([1-9][0-9]*)([MmGg]([Ii]?[Bb])?)?$ ]]; then"
-        print "    userdata_num=\"${BASH_REMATCH[1]}\""
-        print "    userdata_unit=\"${BASH_REMATCH[2]:-M}\""
-        print "    case \"${userdata_unit}\" in"
-        print "      [Gg]*) userdata_target_bytes=$((userdata_num * 1024 * 1024 * 1024)) ;;"
-        print "      *) userdata_target_bytes=$((userdata_num * 1024 * 1024)) ;;"
-        print "    esac"
-        print "  else"
-        print "    echo \"invalid userdata size: ${QEMU_USERDATA_SIZE} (expected e.g. 4096, 4096M, 4G, 8G)\" >&2"
-        print "    exit 2"
-        print "  fi"
-        print "  userdata_current_bytes=$(stat -f \"%z\" \"${userdata_img}\" 2>/dev/null || stat -c \"%s\" \"${userdata_img}\" 2>/dev/null || wc -c < \"${userdata_img}\" | tr -d \"[:space:]\")"
-        print "  if [ \"${userdata_target_bytes}\" -lt \"${userdata_current_bytes}\" ]; then"
-        print "    echo \"cannot shrink userdata.img from ${userdata_current_bytes} bytes to ${userdata_target_bytes} bytes (${QEMU_USERDATA_SIZE}); restore a smaller userdata.img first\" >&2"
-        print "    exit 2"
-        print "  elif [ \"${userdata_target_bytes}\" -gt \"${userdata_current_bytes}\" ]; then"
-        print "    if command -v truncate >/dev/null 2>&1; then"
-        print "      truncate -s \"${userdata_target_bytes}\" \"${userdata_img}\""
-        print "    else"
-        print "      dd if=/dev/null of=\"${userdata_img}\" bs=1 count=0 seek=\"${userdata_target_bytes}\" status=none 2>/dev/null || \\"
-        print "        dd if=/dev/null of=\"${userdata_img}\" bs=1 count=0 seek=\"${userdata_target_bytes}\" 2>/dev/null"
-        print "    fi"
-        print "    echo \"Expanded ${userdata_img} from ${userdata_current_bytes} to ${userdata_target_bytes} bytes (${QEMU_USERDATA_SIZE}); guest init will resize F2FS /data on boot.\" >&2"
-        print "  fi"
-        print "fi"
-        done = 1
-      }
-    }
-  ' "${file}" >"${tmp}"
-  mv "${tmp}" "${file}"
+  # QEMU_USERDATA_SIZE_V1 and QEMU_RESET_V1 are wired inside ensure_qemu_extended_capabilities_support
+  # after QEMU_INSTANCE_ID and QEMU_USERDATA_FILE are resolved so custom userdata paths, per-instance
+  # userdata images, and custom userdata sizes are all handled consistently.
+  return 0
 }
 
 ensure_auto_headless_support() {
@@ -1303,8 +1259,18 @@ text = re.sub(
     text,
     flags=re.S,
 )
+# Remove any legacy pre-capabilities QEMU_USERDATA_SIZE_V1 block so userdata reset/resize
+# runs after QEMU_INSTANCE_ID and QEMU_USERDATA_FILE are resolved.
+text = re.sub(
+    r'\n?# QEMU_USERDATA_SIZE_V1: optional sparse expansion of userdata\.img before boot\.\nQEMU_USERDATA_SIZE=.*?guest init will resize F2FS /data on boot\." >&2\n  fi\nfi\n?',
+    '\n',
+    text,
+    flags=re.S,
+)
 
 cap_block = r'''# QEMU_CAPABILITIES_V1_BEGIN
+QEMU_RESET="${QEMU_RESET:-0}"
+QEMU_USERDATA_SIZE="${QEMU_USERDATA_SIZE:-}"
 QEMU_AUDIO_BACKEND="${QEMU_AUDIO_BACKEND:-auto}"
 QEMU_SHARED_DIR="${QEMU_SHARED_DIR:-}"
 QEMU_USB="${QEMU_USB:-0}"
@@ -1356,15 +1322,78 @@ if [ -n "${QEMU_PORT_FORWARD}" ]; then
   echo "Custom host port forwarding enabled: ${QEMU_PORT_FORWARD}" >&2
 fi
 
-# 0. Multi-Instance Disk Isolation (--instance ID / --userdata-file PATH)
+# 0. Multi-Instance Disk Isolation (--instance ID / --userdata-file PATH / --reset / --userdata-size)
+case "${QEMU_RESET}" in
+  0|1) ;;
+  *)
+    echo "QEMU_RESET must be 0 or 1, got: ${QEMU_RESET}" >&2
+    exit 2
+    ;;
+esac
+if [ -n "${QEMU_USERDATA_SIZE}" ]; then
+  if [[ "${QEMU_USERDATA_SIZE}" =~ ^([1-9][0-9]*)([MmGg]([Ii]?[Bb])?)?$ ]]; then
+    userdata_num="${BASH_REMATCH[1]}"
+    userdata_unit="${BASH_REMATCH[2]:-M}"
+    case "${userdata_unit}" in
+      [Gg]*) userdata_target_bytes=$((userdata_num * 1024 * 1024 * 1024)) ;;
+      *) userdata_target_bytes=$((userdata_num * 1024 * 1024)) ;;
+    esac
+  else
+    echo "invalid userdata size: ${QEMU_USERDATA_SIZE} (expected e.g. 4096, 4096M, 4G, 8G)" >&2
+    exit 2
+  fi
+  if [ "${QEMU_RESET}" = "1" ] && [ "${userdata_target_bytes}" -lt 2147483648 ]; then
+    echo "cannot reset userdata.img below minimum F2FS image size 2147483648 bytes (2G), got: ${QEMU_USERDATA_SIZE}" >&2
+    exit 2
+  fi
+fi
+
+QEMU_PRISTINE_F2FS_B64="7d3NbhvHAQfwXX5JdoRWDYwg1aW82SlqWqJkRw4KNG1yKvwCvRSgSEqWLYmqSMtuTmmBoocecs4hD9FD7z71HVrAT2AECPoBBHXhdGd3KMmGncrGOra4vx8wO/xYDsVZSeD8OZy9mESLCVBhi+1//yNNvpecyy7Xs7KQlXA5jeW/b4W95vN9/5nt8E1WaklRWrEOtz9x4/msvJOVpaLNNN71+/+sdc9/9vH5P/30z4NfffTF21eSQdJLJlkBquZiVnb3i8t3d4t6tFXUt+LtvcPtvN5dO4x1ccfu7Xh9VNR3hxt5C3d70/2K/yqrW8X+o/0741Bv7vT6od7a3sxv398rnnB8uDVtJ39AbzzJ97vVO8hvHww38np7PMrrrU+Kn+9erD8ZT4r2BrHd3+YPTyaTaV3cPrw3LF7X/u287u9N4u1Fu6PB8F6oD2Mdny652Stex81xUQ+KHyc53B3cLvYv+uk3/dHd7hn7PbixvXfnXvtweDDeHu213+8sd1bWLo8ONsaTXv/25eXl1fXly1u994fLve6gf/3q6tX2pem9H27c2d4ZDA/ea1/6aKe3t/WL7OqkaK8frh+12u12Vjqr7Us3J5P98QdXrmxtT27e2ej0R7tXdnYOi83l/YPRrWF/0snubA+vr69du7a2vjm4trK+OhxeG6z3NwYba1eXu92V1c3+5vXlbq+7svLeT9pPP/ONGx+f+vm8/iT5fMH/Ql5QIyvN+H6zoTtextt/33yYygFADiAHAOQAcgA5gBxADoAcoDI5QP7GfDFJHibLv8xv/PFcXr0V91nLyq+z8jB7Iz8XRwLh/fw3z/Bth+g0+6fpcfuNWMJzfpiV+2Es8v2T+waOIQAAAJzWgwd//EsacwAAAACqon60WYqfrIdNulR8lptvakvFh7r5pr6kz2bo6MsBAAAAKqix8FVJLZX7ffMwSE0ulDbmTcI888cltfb1dPp6KR6FzfxrOPJyAAAAAKiCPLJpygEAAACgMjlASw4AAAAAlckB5pwvAAAAACohnC8gH2yfIgf4sn4cHtSeM65/erGE8JCwisKj5+w/99T+zbTIDE6TAwAAAAAv5q//6jxOYw7QcN6IqsqPqKVCX8KZXyo0hnuNE1Va/LnHv/o0/nYUlfk3AAAwE2oxB3hyRNA8OUIEAAAAzr780716zAEAAACA2c8BGnIAAAAAqEwO0LROIAAAAFRCWCcwH3gvlrlMXHmLupXXUnlLw5WotAXmSlxcbqG0lswxAQAAeCM1WsZsAEClzOsCAKrsnByAN1tDFwAAAJTo/NM5QBpLvgxAcU6BsFmKI7I0XAjnFayFCyFFqC/pRQAAADgb3ilygLgMYPzstVlULd0DAAAAMyL/rD+NOQAAAAAw+zlATQ4AAAAAlckB6s/8XkCjuD9+PaBZXIvfEmgdPRYAAICzqH60WYoDwOlycM3pIDAsCdeajgEtCzdLGuYDAAAAyAHkAJXRkgMAAABUUGPhq5JayieMlzauDKeuSy6U1VoIO+aSxyW19nV4qaWd2/xR2Mx/90d+Tg4AAAAAVZBHNvNyAAAAAKhMDvBIDgAAAFBBvhfw4mbjewFhUYhwvL78edJ+otcXT1zO/OH+g1vPqp95/Hmuo0Pc1hcAAAC8OvXk6NyAR2P1sBZkGnOAT393PDLN73/3+HEvkgNMmWLw7TlAmvV2TRYAAADAK9JIjicvTHOAcBqImhzgteQA9ay3G3IAAAAAXpFmLCdzgHAGyLoc4LXkAM2st1tyAAAAAF6RViwnc4BGyADaxaC9/n9bqOePrE0v1o6WDgAAINOZ1h19AcCbK405wA9+dP9vIR/49INzeUlO5AZN3QQzTagH1VXXBVBZDV0A1X3/H3MAY30gfdn7fREIAADOjHrMAS7+0HwAqCrzAaDC7wN0AVSW+QBQ4b//mAMY6wPmAwAAwOxrxhzgws/MB4CqMh8Aqst8AKgu8wGguloxBzDWB8wHAACA2fc/"
+
+reset_userdata_image_file() {
+  local target_img="$1"
+  local desired_bytes="${2:-2147483648}"
+  if [ "${desired_bytes}" -lt 2147483648 ]; then
+    desired_bytes=2147483648
+  fi
+  mkdir -p "$(dirname "${target_img}")"
+  python3 - "${target_img}" "${desired_bytes}" "${QEMU_PRISTINE_F2FS_B64}" <<'RESET_PY'
+import base64
+import os
+import struct
+import sys
+import zlib
+
+target_path = sys.argv[1]
+desired_bytes = max(2147483648, int(sys.argv[2]))
+payload = zlib.decompress(base64.b64decode(sys.argv[3]), -15)
+pos = 0
+count = struct.unpack_from("<I", payload, pos)[0]
+pos += 4
+tmp_path = f"{target_path}.reset.{os.getpid()}"
+with open(tmp_path, "wb") as f:
+    f.truncate(desired_bytes)
+    for _ in range(count):
+        blk_idx, blk_len = struct.unpack_from("<II", payload, pos)
+        pos += 8
+        f.seek(blk_idx * 4096)
+        f.write(payload[pos : pos + blk_len])
+        pos += blk_len
+os.replace(tmp_path, target_path)
+RESET_PY
+}
+
 QEMU_USERDATA_FILE="${QEMU_USERDATA_FILE:-}"
 QEMU_SYS_PROD_FILE="${QEMU_SYS_PROD_FILE:-${OHOS_IMG}/sys_prod.img}"
 QEMU_CHIP_PROD_FILE="${QEMU_CHIP_PROD_FILE:-${OHOS_IMG}/chip_prod.img}"
 if [ -n "${QEMU_INSTANCE_ID:-}" ] && [ "${QEMU_INSTANCE_ID}" != "1" ]; then
   qemu_inst_dir="${OHOS_IMG}/instances/instance-${QEMU_INSTANCE_ID}"
   mkdir -p "${qemu_inst_dir}"
-  for inst_img in userdata.img sys_prod.img chip_prod.img; do
-    if [ ! -f "${qemu_inst_dir}/${inst_img}" ] && [ -f "${OHOS_IMG}/${inst_img}" ]; then
+  if [ ! -f "${qemu_inst_dir}/userdata.img" ]; then
+    reset_userdata_image_file "${qemu_inst_dir}/userdata.img" 2147483648
+  fi
+  for inst_img in sys_prod.img chip_prod.img; do
+    if { [ ! -f "${qemu_inst_dir}/${inst_img}" ] || [ "${QEMU_RESET}" = "1" ]; } && [ -f "${OHOS_IMG}/${inst_img}" ]; then
       cp -c "${OHOS_IMG}/${inst_img}" "${qemu_inst_dir}/${inst_img}" 2>/dev/null || \
         cp --reflink=auto "${OHOS_IMG}/${inst_img}" "${qemu_inst_dir}/${inst_img}" 2>/dev/null || \
         cp "${OHOS_IMG}/${inst_img}" "${qemu_inst_dir}/${inst_img}"
@@ -1376,6 +1405,46 @@ if [ -n "${QEMU_INSTANCE_ID:-}" ] && [ "${QEMU_INSTANCE_ID}" != "1" ]; then
   echo "Multi-instance disk isolation active (instance=${QEMU_INSTANCE_ID}): ${qemu_inst_dir}" >&2
 fi
 QEMU_USERDATA_FILE="${QEMU_USERDATA_FILE:-${OHOS_IMG}/userdata.img}"
+
+# QEMU_RESET_V1: optional factory reset of active userdata.img before boot.
+if [ "${QEMU_RESET}" = "1" ]; then
+  userdata_pre_reset_bytes=2147483648
+  if [ -f "${QEMU_USERDATA_FILE}" ]; then
+    userdata_pre_reset_bytes=$(stat -f "%z" "${QEMU_USERDATA_FILE}" 2>/dev/null || stat -c "%s" "${QEMU_USERDATA_FILE}" 2>/dev/null || wc -c < "${QEMU_USERDATA_FILE}" | tr -d "[:space:]")
+  fi
+  if [ -n "${QEMU_USERDATA_SIZE}" ]; then
+    reset_userdata_image_file "${QEMU_USERDATA_FILE}" 2147483648
+    echo "Reset ${QEMU_USERDATA_FILE} to clean factory F2FS image (2147483648 bytes)." >&2
+  elif [ "${userdata_pre_reset_bytes}" -gt 2147483648 ]; then
+    reset_userdata_image_file "${QEMU_USERDATA_FILE}" "${userdata_pre_reset_bytes}"
+    echo "Reset ${QEMU_USERDATA_FILE} to clean factory F2FS image (preserved custom size: ${userdata_pre_reset_bytes} bytes; guest init will resize F2FS /data on boot)." >&2
+  else
+    reset_userdata_image_file "${QEMU_USERDATA_FILE}" 2147483648
+    echo "Reset ${QEMU_USERDATA_FILE} to clean factory F2FS image (2147483648 bytes)." >&2
+  fi
+fi
+
+# QEMU_USERDATA_SIZE_V1: optional sparse expansion of userdata.img before boot.
+if [ -n "${QEMU_USERDATA_SIZE}" ]; then
+  userdata_img="${QEMU_USERDATA_FILE}"
+  if [ ! -f "${userdata_img}" ]; then
+    echo "userdata.img not found at ${userdata_img}" >&2
+    exit 2
+  fi
+  userdata_current_bytes=$(stat -f "%z" "${userdata_img}" 2>/dev/null || stat -c "%s" "${userdata_img}" 2>/dev/null || wc -c < "${userdata_img}" | tr -d "[:space:]")
+  if [ "${userdata_target_bytes}" -lt "${userdata_current_bytes}" ]; then
+    echo "cannot shrink userdata.img from ${userdata_current_bytes} bytes to ${userdata_target_bytes} bytes (${QEMU_USERDATA_SIZE}); pass --reset --userdata-size ${QEMU_USERDATA_SIZE} or restore a smaller userdata.img first" >&2
+    exit 2
+  elif [ "${userdata_target_bytes}" -gt "${userdata_current_bytes}" ]; then
+    if command -v truncate >/dev/null 2>&1; then
+      truncate -s "${userdata_target_bytes}" "${userdata_img}"
+    else
+      dd if=/dev/null of="${userdata_img}" bs=1 count=0 seek="${userdata_target_bytes}" status=none 2>/dev/null || \
+        dd if=/dev/null of="${userdata_img}" bs=1 count=0 seek="${userdata_target_bytes}" 2>/dev/null
+    fi
+    echo "Expanded ${userdata_img} from ${userdata_current_bytes} to ${userdata_target_bytes} bytes (${QEMU_USERDATA_SIZE}); guest init will resize F2FS /data on boot." >&2
+  fi
+fi
 
 # 1. Host Audio Backend (Category 1: ES1370 + host audiodev)
 DETECT_AUDIODEVS="$(${QEMU_BIN} -audiodev help 2>&1 || true)"
@@ -1997,6 +2066,8 @@ Options:
   -m, --memory SIZE      RAM size for QEMU -m (default: \${DEFAULT_MEMORY}; accepts 4096, 4096M, 4G)
       --userdata-size SIZE  Expand images/userdata.img before boot (e.g. 4096, 4096M, 4G, 8G;
                          guest init automatically resizes F2FS /data on boot)
+      --reset            Reset the active userdata.img to a clean factory F2FS image before boot
+                         (preserves any custom userdata size unless --userdata-size is also set)
   -s, --smp N            Virtual CPUs (default: \${DEFAULT_SMP})
       --cpu MODEL        QEMU CPU model (default: \${DEFAULT_CPU})
   -d, --display TYPE     none|vnc|sdl|gtk|cocoa|auto (default: \${DEFAULT_DISPLAY})
@@ -2042,7 +2113,7 @@ Options:
 CLI flags override environment variables, which override the defaults above.
 Supported environment variables:
   QEMU_DISPLAY QEMU_XRES QEMU_YRES QEMU_SMP QEMU_MEMORY QEMU_CPU
-  QEMU_USERDATA_SIZE QEMU_USERDATA_FILE QEMU_INSTANCE_ID
+  QEMU_RESET QEMU_USERDATA_SIZE QEMU_USERDATA_FILE QEMU_INSTANCE_ID
   QEMU_AUDIO_BACKEND QEMU_SHARED_DIR
   QEMU_USB QEMU_USB_DISK QEMU_USB_HOST QEMU_USB_SERIAL QEMU_BT_USB QEMU_BALLOON QEMU_RNG
   QEMU_PORT_FORWARD QEMU_RIL_MODEM QEMU_WIFI_MODE
@@ -2096,6 +2167,10 @@ while [ "\$#" -gt 0 ]; do
     --userdata-size|--data-size)
       export QEMU_USERDATA_SIZE="\${2:?missing userdata size}"
       shift 2
+      ;;
+    --reset|--reset-userdata)
+      export QEMU_RESET=1
+      shift
       ;;
     -s|--smp)
       export QEMU_SMP="\${2:?missing smp value}"
@@ -2336,15 +2411,16 @@ export QEMU_CLIPBOARD="\${QEMU_CLIPBOARD:-auto}"
 export QEMU_CAMERA_FEED="\${QEMU_CAMERA_FEED:-}"
 export QEMU_ACCEL="\${QEMU_ACCEL:-auto}"
 export QEMU_BIN="\${QEMU_BIN:-\${DEFAULT_QEMU_BIN}}"
+export QEMU_RESET="\${QEMU_RESET:-0}"
 export QEMU_USERDATA_SIZE="\${QEMU_USERDATA_SIZE:-}"
 export QEMU_EXTRA_ARGS="\${QEMU_EXTRA_ARGS:-}"
 
+case "\${QEMU_RESET}" in
+  0|1) ;;
+  *) echo "QEMU_RESET must be 0 or 1, got: \${QEMU_RESET}" >&2; exit 2 ;;
+esac
+
 if [ -n "\${QEMU_USERDATA_SIZE}" ]; then
-  userdata_img="\${OHOS_IMG}/userdata.img"
-  if [ ! -f "\${userdata_img}" ]; then
-    echo "userdata.img not found at \${userdata_img}" >&2
-    exit 2
-  fi
   if [[ "\${QEMU_USERDATA_SIZE}" =~ ^([1-9][0-9]*)([MmGg]([Ii]?[Bb])?)?\$ ]]; then
     userdata_num="\${BASH_REMATCH[1]}"
     userdata_unit="\${BASH_REMATCH[2]:-M}"
@@ -2356,18 +2432,29 @@ if [ -n "\${QEMU_USERDATA_SIZE}" ]; then
     echo "invalid userdata size: \${QEMU_USERDATA_SIZE} (expected e.g. 4096, 4096M, 4G, 8G)" >&2
     exit 2
   fi
-  userdata_current_bytes=\$(stat -f "%z" "\${userdata_img}" 2>/dev/null || stat -c "%s" "\${userdata_img}" 2>/dev/null || wc -c < "\${userdata_img}" | tr -d "[:space:]")
-  if [ "\${userdata_target_bytes}" -lt "\${userdata_current_bytes}" ]; then
-    echo "cannot shrink userdata.img from \${userdata_current_bytes} bytes to \${userdata_target_bytes} bytes (\${QEMU_USERDATA_SIZE}); restore a smaller userdata.img first" >&2
+  if [ "\${QEMU_RESET}" = "1" ] && [ "\${userdata_target_bytes}" -lt 2147483648 ]; then
+    echo "cannot reset userdata.img below minimum F2FS image size 2147483648 bytes (2G), got: \${QEMU_USERDATA_SIZE}" >&2
     exit 2
-  elif [ "\${userdata_target_bytes}" -gt "\${userdata_current_bytes}" ]; then
-    if command -v truncate >/dev/null 2>&1; then
-      truncate -s "\${userdata_target_bytes}" "\${userdata_img}"
-    else
-      dd if=/dev/null of="\${userdata_img}" bs=1 count=0 seek="\${userdata_target_bytes}" status=none 2>/dev/null || \\
-        dd if=/dev/null of="\${userdata_img}" bs=1 count=0 seek="\${userdata_target_bytes}" 2>/dev/null
+  fi
+  if ! grep -q 'QEMU_CAPABILITIES_V1' "\${HERE}/launch/qemu_run.sh" 2>/dev/null; then
+    userdata_img="\${QEMU_USERDATA_FILE:-\${OHOS_IMG}/userdata.img}"
+    if [ ! -f "\${userdata_img}" ]; then
+      echo "userdata.img not found at \${userdata_img}" >&2
+      exit 2
     fi
-    echo "Expanded \${userdata_img} from \${userdata_current_bytes} to \${userdata_target_bytes} bytes (\${QEMU_USERDATA_SIZE}); guest init will resize F2FS /data on boot." >&2
+    userdata_current_bytes=\$(stat -f "%z" "\${userdata_img}" 2>/dev/null || stat -c "%s" "\${userdata_img}" 2>/dev/null || wc -c < "\${userdata_img}" | tr -d "[:space:]")
+    if [ "\${userdata_target_bytes}" -lt "\${userdata_current_bytes}" ]; then
+      echo "cannot shrink userdata.img from \${userdata_current_bytes} bytes to \${userdata_target_bytes} bytes (\${QEMU_USERDATA_SIZE}); pass --reset --userdata-size \${QEMU_USERDATA_SIZE} or restore a smaller userdata.img first" >&2
+      exit 2
+    elif [ "\${userdata_target_bytes}" -gt "\${userdata_current_bytes}" ]; then
+      if command -v truncate >/dev/null 2>&1; then
+        truncate -s "\${userdata_target_bytes}" "\${userdata_img}"
+      else
+        dd if=/dev/null of="\${userdata_img}" bs=1 count=0 seek="\${userdata_target_bytes}" status=none 2>/dev/null || \\
+          dd if=/dev/null of="\${userdata_img}" bs=1 count=0 seek="\${userdata_target_bytes}" 2>/dev/null
+      fi
+      echo "Expanded \${userdata_img} from \${userdata_current_bytes} to \${userdata_target_bytes} bytes (\${QEMU_USERDATA_SIZE}); guest init will resize F2FS /data on boot." >&2
+    fi
   fi
 fi
 
@@ -2471,6 +2558,7 @@ param(
   [int]\$Height,
   [Alias("m")][string]\$Memory,
   [Alias("DataSize")][string]\$UserdataSize,
+  [Alias("ResetUserdata")][switch]\$Reset,
   [Alias("s")][int]\$Smp,
   [string]\$Cpu,
   [Alias("d")][string]\$Display,
@@ -2544,6 +2632,7 @@ if (\$PSBoundParameters.ContainsKey("Height")) { \$env:QEMU_YRES = "\$Height" }
 
 if (\$Memory) { \$env:QEMU_MEMORY = \$Memory }
 if (\$UserdataSize) { \$env:QEMU_USERDATA_SIZE = \$UserdataSize }
+if (\$Reset) { \$env:QEMU_RESET = "1" }
 if (\$PSBoundParameters.ContainsKey("Smp")) { \$env:QEMU_SMP = "\$Smp" }
 if (\$Cpu) { \$env:QEMU_CPU = \$Cpu }
 if (\$Display) { \$env:QEMU_DISPLAY = \$Display }
@@ -2594,6 +2683,52 @@ if (\$QemuPath) { \$env:QEMU_BIN = \$QemuPath }
 \$InstanceUuid = \$env:QEMU_INSTANCE_UUID
 \$SysProdImgPath = Join-Path \$Img "sys_prod.img"
 \$ChipProdImgPath = Join-Path \$Img "chip_prod.img"
+\$ResetRequested = (\$env:QEMU_RESET -eq "1")
+if (\$env:QEMU_RESET -and \$env:QEMU_RESET -notin @("0", "1")) {
+  throw "QEMU_RESET must be 0 or 1, got: \$(\$env:QEMU_RESET)"
+}
+
+\$PristineF2fsB64 = "7d3NbhvHAQfwXX5JdoRWDYwg1aW82SlqWqJkRw4KNG1yKvwCvRSgSEqWLYmqSMtuTmmBoocecs4hD9FD7z71HVrAT2AECPoBBHXhdGd3KMmGncrGOra4vx8wO/xYDsVZSeD8OZy9mESLCVBhi+1//yNNvpecyy7Xs7KQlXA5jeW/b4W95vN9/5nt8E1WaklRWrEOtz9x4/msvJOVpaLNNN71+/+sdc9/9vH5P/30z4NfffTF21eSQdJLJlkBquZiVnb3i8t3d4t6tFXUt+LtvcPtvN5dO4x1ccfu7Xh9VNR3hxt5C3d70/2K/yqrW8X+o/0741Bv7vT6od7a3sxv398rnnB8uDVtJ39AbzzJ97vVO8hvHww38np7PMrrrU+Kn+9erD8ZT4r2BrHd3+YPTyaTaV3cPrw3LF7X/u287u9N4u1Fu6PB8F6oD2Mdny652Stex81xUQ+KHyc53B3cLvYv+uk3/dHd7hn7PbixvXfnXvtweDDeHu213+8sd1bWLo8ONsaTXv/25eXl1fXly1u994fLve6gf/3q6tX2pem9H27c2d4ZDA/ea1/6aKe3t/WL7OqkaK8frh+12u12Vjqr7Us3J5P98QdXrmxtT27e2ej0R7tXdnYOi83l/YPRrWF/0snubA+vr69du7a2vjm4trK+OhxeG6z3NwYba1eXu92V1c3+5vXlbq+7svLeT9pPP/ONGx+f+vm8/iT5fMH/Ql5QIyvN+H6zoTtextt/33yYygFADiAHAOQAcgA5gBxADoAcoDI5QP7GfDFJHibLv8xv/PFcXr0V91nLyq+z8jB7Iz8XRwLh/fw3z/Bth+g0+6fpcfuNWMJzfpiV+2Es8v2T+waOIQAAAJzWgwd//EsacwAAAACqon60WYqfrIdNulR8lptvakvFh7r5pr6kz2bo6MsBAAAAKqix8FVJLZX7ffMwSE0ulDbmTcI888cltfb1dPp6KR6FzfxrOPJyAAAAAKiCPLJpygEAAACgMjlASw4AAAAAlckB5pwvAAAAACohnC8gH2yfIgf4sn4cHtSeM65/erGE8JCwisKj5+w/99T+zbTIDE6TAwAAAAAv5q//6jxOYw7QcN6IqsqPqKVCX8KZXyo0hnuNE1Va/LnHv/o0/nYUlfk3AAAwE2oxB3hyRNA8OUIEAAAAzr780716zAEAAACA2c8BGnIAAAAAqEwO0LROIAAAAFRCWCcwH3gvlrlMXHmLupXXUnlLw5WotAXmSlxcbqG0lswxAQAAeCM1WsZsAEClzOsCAKrsnByAN1tDFwAAAJTo/NM5QBpLvgxAcU6BsFmKI7I0XAjnFayFCyFFqC/pRQAAADgb3ilygLgMYPzstVlULd0DAAAAMyL/rD+NOQAAAAAw+zlATQ4AAAAAlckB6s/8XkCjuD9+PaBZXIvfEmgdPRYAAICzqH60WYoDwOlycM3pIDAsCdeajgEtCzdLGuYDAAAAyAHkAJXRkgMAAABUUGPhq5JayieMlzauDKeuSy6U1VoIO+aSxyW19nV4qaWd2/xR2Mx/90d+Tg4AAAAAVZBHNvNyAAAAAKhMDvBIDgAAAFBBvhfw4mbjewFhUYhwvL78edJ+otcXT1zO/OH+g1vPqp95/Hmuo0Pc1hcAAAC8OvXk6NyAR2P1sBZkGnOAT393PDLN73/3+HEvkgNMmWLw7TlAmvV2TRYAAADAK9JIjicvTHOAcBqImhzgteQA9ay3G3IAAAAAXpFmLCdzgHAGyLoc4LXkAM2st1tyAAAAAF6RViwnc4BGyADaxaC9/n9bqOePrE0v1o6WDgAAINOZ1h19AcCbK405wA9+dP9vIR/49INzeUlO5AZN3QQzTagH1VXXBVBZDV0A1X3/H3MAY30gfdn7fREIAADOjHrMAS7+0HwAqCrzAaDC7wN0AVSW+QBQ4b//mAMY6wPmAwAAwOxrxhzgws/MB4CqMh8Aqst8AKgu8wGguloxBzDWB8wHAACA2fc/"
+
+function Reset-QemuUserdataImage([string]\$TargetImg, [int64]\$DesiredBytes = 2147483648L) {
+  if (\$DesiredBytes -lt 2147483648L) {
+    \$DesiredBytes = 2147483648L
+  }
+  \$ParentDir = Split-Path -Parent \$TargetImg
+  if (\$ParentDir -and -not (Test-Path \$ParentDir)) {
+    New-Item -ItemType Directory -Force -Path \$ParentDir | Out-Null
+  }
+  \$Compressed = [Convert]::FromBase64String(\$PristineF2fsB64)
+  \$InputMs = New-Object System.IO.MemoryStream(,\$Compressed)
+  \$Deflate = New-Object System.IO.Compression.DeflateStream(\$InputMs, [System.IO.Compression.CompressionMode]::Decompress)
+  \$OutputMs = New-Object System.IO.MemoryStream
+  \$Deflate.CopyTo(\$OutputMs)
+  \$Deflate.Close()
+  \$Payload = \$OutputMs.ToArray()
+  \$Pos = 0
+  \$Count = [BitConverter]::ToUInt32(\$Payload, \$Pos)
+  \$Pos += 4
+  if (Test-Path \$TargetImg) {
+    Remove-Item -Force \$TargetImg
+  }
+  \$fs = [System.IO.File]::Open(\$TargetImg, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+  try {
+    try {
+      & fsutil sparse setflag \$TargetImg 1 *> \$null
+    } catch {}
+    \$fs.SetLength(\$DesiredBytes)
+    for (\$i = 0; \$i -lt \$Count; \$i++) {
+      \$BlkIdx = [int64][BitConverter]::ToUInt32(\$Payload, \$Pos)
+      \$BlkLen = [int][BitConverter]::ToUInt32(\$Payload, \$Pos + 4)
+      \$Pos += 8
+      [void]\$fs.Seek(\$BlkIdx * 4096L, [System.IO.SeekOrigin]::Begin)
+      \$fs.Write(\$Payload, \$Pos, \$BlkLen)
+      \$Pos += \$BlkLen
+    }
+  } finally {
+    \$fs.Close()
+  }
+}
 
 if (\$env:QEMU_INSTANCE_ID) {
   \$InstId = [int]\$env:QEMU_INSTANCE_ID
@@ -2608,14 +2743,18 @@ if (\$env:QEMU_INSTANCE_ID) {
   if (\$InstId -ne 1) {
     \$InstDir = Join-Path (Join-Path \$Img "instances") "instance-\$InstId"
     New-Item -ItemType Directory -Force -Path \$InstDir | Out-Null
-    foreach (\$DiskName in @("userdata.img", "sys_prod.img", "chip_prod.img")) {
+    \$InstUserdata = Join-Path \$InstDir "userdata.img"
+    if (-not (Test-Path \$InstUserdata)) {
+      Reset-QemuUserdataImage -TargetImg \$InstUserdata -DesiredBytes 2147483648L
+    }
+    foreach (\$DiskName in @("sys_prod.img", "chip_prod.img")) {
       \$SrcDisk = Join-Path \$Img \$DiskName
       \$DstDisk = Join-Path \$InstDir \$DiskName
-      if (-not (Test-Path \$DstDisk) -and (Test-Path \$SrcDisk)) {
-        Copy-Item -Path \$SrcDisk -Destination \$DstDisk
+      if ((-not (Test-Path \$DstDisk) -or \$ResetRequested) -and (Test-Path \$SrcDisk)) {
+        Copy-Item -Force -Path \$SrcDisk -Destination \$DstDisk
       }
     }
-    if (-not \$env:QEMU_USERDATA_FILE) { \$env:QEMU_USERDATA_FILE = Join-Path \$InstDir "userdata.img" }
+    if (-not \$env:QEMU_USERDATA_FILE) { \$env:QEMU_USERDATA_FILE = \$InstUserdata }
     \$SysProdImgPath = Join-Path \$InstDir "sys_prod.img"
     \$ChipProdImgPath = Join-Path \$InstDir "chip_prod.img"
   }
@@ -2660,6 +2799,9 @@ function Prepare-QemuDiskImage([string]\$Spec, [string]\$Label) {
   return \$ImgPath
 }
 
+\$UserdataImg = if (\$env:QEMU_USERDATA_FILE) { \$env:QEMU_USERDATA_FILE } else { Join-Path \$Img "userdata.img" }
+\$TargetBytes = 0L
+\$UserdataSpec = ""
 if (\$env:QEMU_USERDATA_SIZE) {
   \$UserdataSpec = \$env:QEMU_USERDATA_SIZE.Trim()
   if (\$UserdataSpec -match '^([1-9]\\d*)(?:([MmGg])(?:i?[Bb])?)?\$') {
@@ -2669,13 +2811,32 @@ if (\$env:QEMU_USERDATA_SIZE) {
   } else {
     throw "Invalid userdata size: \$UserdataSpec (expected e.g. 4096, 4096M, 4G, 8G)"
   }
-  \$UserdataImg = if (\$env:QEMU_USERDATA_FILE) { \$env:QEMU_USERDATA_FILE } else { Join-Path \$Img "userdata.img" }
+  if (\$ResetRequested -and \$TargetBytes -lt 2147483648L) {
+    throw "Cannot reset userdata.img below minimum F2FS image size 2147483648 bytes (2G), got: \$UserdataSpec"
+  }
+}
+
+if (\$ResetRequested) {
+  \$PreResetBytes = if (Test-Path \$UserdataImg) { (Get-Item \$UserdataImg).Length } else { 2147483648L }
+  if (\$TargetBytes -gt 0L) {
+    Reset-QemuUserdataImage -TargetImg \$UserdataImg -DesiredBytes 2147483648L
+    Write-Host "Reset \$UserdataImg to clean factory F2FS image (2147483648 bytes)."
+  } elseif (\$PreResetBytes -gt 2147483648L) {
+    Reset-QemuUserdataImage -TargetImg \$UserdataImg -DesiredBytes \$PreResetBytes
+    Write-Host "Reset \$UserdataImg to clean factory F2FS image (preserved custom size: \$PreResetBytes bytes; guest init will resize F2FS /data on boot)."
+  } else {
+    Reset-QemuUserdataImage -TargetImg \$UserdataImg -DesiredBytes 2147483648L
+    Write-Host "Reset \$UserdataImg to clean factory F2FS image (2147483648 bytes)."
+  }
+}
+
+if (\$TargetBytes -gt 0L) {
   if (-not (Test-Path \$UserdataImg)) {
     throw "userdata.img not found at \$UserdataImg"
   }
   \$CurrentBytes = (Get-Item \$UserdataImg).Length
   if (\$TargetBytes -lt \$CurrentBytes) {
-    throw "Cannot shrink userdata.img from \$CurrentBytes bytes to \$TargetBytes bytes (\$UserdataSpec); restore a smaller userdata.img first."
+    throw "Cannot shrink userdata.img from \$CurrentBytes bytes to \$TargetBytes bytes (\$UserdataSpec); pass -Reset -UserdataSize \$UserdataSpec or restore a smaller userdata.img first."
   } elseif (\$TargetBytes -gt \$CurrentBytes) {
     \$fs = [System.IO.File]::Open(\$UserdataImg, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Write)
     try {
@@ -3008,6 +3169,7 @@ CLI flags override environment variables, which override package defaults.
 | \`--width\` / \`--height\` | \`QEMU_XRES\` / \`QEMU_YRES\` | same as above |
 | \`-m, --memory SIZE\` | \`QEMU_MEMORY\` | \`${default_mem}\` |
 | \`--userdata-size SIZE\` / Windows \`-UserdataSize SIZE\` | \`QEMU_USERDATA_SIZE\` | current \`userdata.img\` size (\`2G\`) |
+| \`--reset\` / Windows \`-Reset\` | \`QEMU_RESET\` | \`0\` (\`1\` resets active \`userdata.img\` to clean factory F2FS image, preserving custom size) |
 | \`-s, --smp N\` | \`QEMU_SMP\` | \`${default_smp}\` |
 | \`--cpu MODEL\` | \`QEMU_CPU\` | \`${default_cpu}\` |
 | \`-d, --display TYPE\` / \`--headless\` | \`QEMU_DISPLAY\` | \`${default_display}\` |
@@ -3053,6 +3215,8 @@ Examples:
 \`\`\`bash
 ./launch/linux.sh -r 1280x720 -m 8G -s 8
 ./launch/linux.sh --userdata-size 8G
+./launch/linux.sh --reset
+./launch/linux.sh --reset --userdata-size 4G
 ./launch/linux.sh --shared-dir /tmp/ohos-share --balloon --audio auto
 ./launch/linux.sh --usb-serial loopback --port-forward 18080:8080 --rng on
 ./launch/linux.sh --gps 31.2304,121.4737,15 --battery 85:discharging --thermal 36.5 --camera-feed smpte
@@ -3073,6 +3237,11 @@ QEMU_DISPLAY=none QEMU_HDC_HOST_PORT=5556 ./launch/linux.sh
 \`--userdata-size SIZE\` (or \`QEMU_USERDATA_SIZE\`) sparsely expands \`images/userdata.img\`
 before starting QEMU (accepts MiB or \`M\`/\`G\` suffixes such as \`4096\`, \`4G\`, \`8G\`),
 and guest \`init\` automatically runs \`fsck.f2fs\` and \`resize.f2fs\` on \`/data\` during boot.
+\`--reset\` (or \`QEMU_RESET=1\`, Windows \`-Reset\`) resets the active \`userdata.img\`
+(default \`images/userdata.img\`, per-instance \`images/instances/instance-<ID>/userdata.img\`,
+or custom \`--userdata-file PATH\`) to a clean factory F2FS image before boot, automatically
+preserving any previously customized \`userdata.img\` size unless \`--userdata-size SIZE\` is
+explicitly specified alongside \`--reset\`.
 
 \`QEMU_DISPLAY=vnc\` exposes VNC on \`127.0.0.1:\$((5900 + QEMU_VNC_DISPLAY))\`.
 \`QEMU_DISPLAY=none\` is recommended for CI/headless hosts. On Linux hosts without
@@ -3257,11 +3426,13 @@ write_full_product_launchers() {
 
     if ! grep -q -- '--a11y' "${launch_out}/linux.sh" || \
        ! grep -q -- '--userdata-size' "${launch_out}/linux.sh" || \
+       ! grep -q -- '--reset' "${launch_out}/linux.sh" || \
        ! grep -q -- '--shared-dir' "${launch_out}/linux.sh" || \
        ! grep -q -- '--ril-modem' "${launch_out}/linux.sh" || \
        ! grep -q -- '--usb-serial' "${launch_out}/linux.sh" || \
        ! grep -q -- '--port-forward' "${launch_out}/linux.sh" || \
        ! grep -q -- '--rng' "${launch_out}/linux.sh" || \
+       ! grep -q 'QEMU_RESET_V1' "${launch_out}/qemu_run.sh" || \
        ! grep -q 'QEMU_USERDATA_SIZE_V1' "${launch_out}/qemu_run.sh" || \
        ! grep -q 'QEMU_CAPABILITIES_V1' "${launch_out}/qemu_run.sh" || \
        ! grep -q 'virtio-multitouch-pci' "${launch_out}/linux.sh" || \
@@ -4107,6 +4278,36 @@ with open(path, "w", encoding="utf-8") as fh:
     json.dump(data, fh, indent=2)
     fh.write("\n")
 PY
+  fi
+
+  if [ "${QEMU_RESET_ON_REWRITE:-0}" = "1" ] || [ "${QEMU_RESET:-0}" = "1" ]; then
+    rm -rf "${package_dir}/images/instances"
+    if [ -f "${package_dir}/images/userdata.img" ] && command -v python3 >/dev/null 2>&1; then
+      python3 - "${package_dir}/images/userdata.img" <<'RESET_PKG_PY'
+import base64
+import os
+import struct
+import sys
+import zlib
+
+b64 = "7d3NbhvHAQfwXX5JdoRWDYwg1aW82SlqWqJkRw4KNG1yKvwCvRSgSEqWLYmqSMtuTmmBoocecs4hD9FD7z71HVrAT2AECPoBBHXhdGd3KMmGncrGOra4vx8wO/xYDsVZSeD8OZy9mESLCVBhi+1//yNNvpecyy7Xs7KQlXA5jeW/b4W95vN9/5nt8E1WaklRWrEOtz9x4/msvJOVpaLNNN71+/+sdc9/9vH5P/30z4NfffTF21eSQdJLJlkBquZiVnb3i8t3d4t6tFXUt+LtvcPtvN5dO4x1ccfu7Xh9VNR3hxt5C3d70/2K/yqrW8X+o/0741Bv7vT6od7a3sxv398rnnB8uDVtJ39AbzzJ97vVO8hvHww38np7PMrrrU+Kn+9erD8ZT4r2BrHd3+YPTyaTaV3cPrw3LF7X/u287u9N4u1Fu6PB8F6oD2Mdny652Stex81xUQ+KHyc53B3cLvYv+uk3/dHd7hn7PbixvXfnXvtweDDeHu213+8sd1bWLo8ONsaTXv/25eXl1fXly1u994fLve6gf/3q6tX2pem9H27c2d4ZDA/ea1/6aKe3t/WL7OqkaK8frh+12u12Vjqr7Us3J5P98QdXrmxtT27e2ej0R7tXdnYOi83l/YPRrWF/0snubA+vr69du7a2vjm4trK+OhxeG6z3NwYba1eXu92V1c3+5vXlbq+7svLeT9pPP/ONGx+f+vm8/iT5fMH/Ql5QIyvN+H6zoTtextt/33yYygFADiAHAOQAcgA5gBxADoAcoDI5QP7GfDFJHibLv8xv/PFcXr0V91nLyq+z8jB7Iz8XRwLh/fw3z/Bth+g0+6fpcfuNWMJzfpiV+2Es8v2T+waOIQAAAJzWgwd//EsacwAAAACqon60WYqfrIdNulR8lptvakvFh7r5pr6kz2bo6MsBAAAAKqix8FVJLZX7ffMwSE0ulDbmTcI888cltfb1dPp6KR6FzfxrOPJyAAAAAKiCPLJpygEAAACgMjlASw4AAAAAlckB5pwvAAAAACohnC8gH2yfIgf4sn4cHtSeM65/erGE8JCwisKj5+w/99T+zbTIDE6TAwAAAAAv5q//6jxOYw7QcN6IqsqPqKVCX8KZXyo0hnuNE1Va/LnHv/o0/nYUlfk3AAAwE2oxB3hyRNA8OUIEAAAAzr780716zAEAAACA2c8BGnIAAAAAqEwO0LROIAAAAFRCWCcwH3gvlrlMXHmLupXXUnlLw5WotAXmSlxcbqG0lswxAQAAeCM1WsZsAEClzOsCAKrsnByAN1tDFwAAAJTo/NM5QBpLvgxAcU6BsFmKI7I0XAjnFayFCyFFqC/pRQAAADgb3ilygLgMYPzstVlULd0DAAAAMyL/rD+NOQAAAAAw+zlATQ4AAAAAlckB6s/8XkCjuD9+PaBZXIvfEmgdPRYAAICzqH60WYoDwOlycM3pIDAsCdeajgEtCzdLGuYDAAAAyAHkAJXRkgMAAABUUGPhq5JayieMlzauDKeuSy6U1VoIO+aSxyW19nV4qaWd2/xR2Mx/90d+Tg4AAAAAVZBHNvNyAAAAAKhMDvBIDgAAAFBBvhfw4mbjewFhUYhwvL78edJ+otcXT1zO/OH+g1vPqp95/Hmuo0Pc1hcAAAC8OvXk6NyAR2P1sBZkGnOAT393PDLN73/3+HEvkgNMmWLw7TlAmvV2TRYAAADAK9JIjicvTHOAcBqImhzgteQA9ay3G3IAAAAAXpFmLCdzgHAGyLoc4LXkAM2st1tyAAAAAF6RViwnc4BGyADaxaC9/n9bqOePrE0v1o6WDgAAINOZ1h19AcCbK405wA9+dP9vIR/49INzeUlO5AZN3QQzTagH1VXXBVBZDV0A1X3/H3MAY30gfdn7fREIAADOjHrMAS7+0HwAqCrzAaDC7wN0AVSW+QBQ4b//mAMY6wPmAwAAwOxrxhzgws/MB4CqMh8Aqst8AKgu8wGguloxBzDWB8wHAACA2fc/"
+target_path = sys.argv[1]
+payload = zlib.decompress(base64.b64decode(b64), -15)
+pos = 0
+count = struct.unpack_from("<I", payload, pos)[0]
+pos += 4
+tmp_path = f"{target_path}.reset.{os.getpid()}"
+with open(tmp_path, "wb") as f:
+    f.truncate(2147483648)
+    for _ in range(count):
+        blk_idx, blk_len = struct.unpack_from("<II", payload, pos)
+        pos += 8
+        f.seek(blk_idx * 4096)
+        f.write(payload[pos : pos + blk_len])
+        pos += blk_len
+os.replace(tmp_path, target_path)
+RESET_PKG_PY
+    fi
   fi
 
   refresh_package_checksums "${package_dir}"
