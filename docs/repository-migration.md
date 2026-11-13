@@ -33,6 +33,11 @@ Synchronization scripts, upstream configuration and conflict issues belong to
 entries awaiting repository creation and authorization are disabled. GitHub forks
 that lack a required locked commit are also synchronized from official GitCode.
 
+Component repositories have GitHub Actions disabled. Imported upstream workflow
+files remain part of the source history, but do not launch upstream build matrices
+when mirrored branches are published. Central synchronization remains enabled in
+`mirror-sync`; future package CI belongs to the separate build repository.
+
 The scheduled job runs daily at 19:23 UTC / 03:23 Asia/Shanghai. It fetches every
 upstream branch, preserves full ancestry, updates the same branch names with
 normal fast-forward pushes, and never deletes destination refs. Non-fast-forward
@@ -74,6 +79,8 @@ These scripts are administrative tools, not build-time dependencies:
 - `import_mirror_baseline.py`: create a missing QEMU branch from a centrally
   synchronized baseline, without adding automation to the source tree.
 - `retire_component_sync.py`: remove the three reviewed legacy installations.
+- `configure_source_automation.py`: disable component Actions and cancel automatic
+  CI triggered by this migration, preserving unrelated manual workflow runs.
 - `inventory_sources.py`, `export_source_changes.py`, `publish_source_changes.py`:
   inventory, review and publish component changes separately from build artifacts.
 - `generate_manifest.py`: reproduce manifest selection and the six-product contract.

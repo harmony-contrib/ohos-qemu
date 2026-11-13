@@ -28,6 +28,16 @@ def matches(metadata, project):
             'QEMU OpenHarmony 7.0 source mirror; upstream: ' + project['upstream_url'])
 
 
+def disable_component_actions(name):
+    endpoint = 'repos/openharmony-qemu/' + name + '/actions/permissions'
+    changed = run(['gh', 'api', '--method', 'PUT', endpoint, '-F', 'enabled=false'])
+    if changed.returncode:
+        raise SystemExit('Cannot disable inherited component workflows: ' + changed.stdout)
+    checked = run(['gh', 'api', endpoint])
+    if checked.returncode or json.loads(checked.stdout).get('enabled') is not False:
+        raise SystemExit('Component Actions policy was not verified: ' + name)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--catalog', type=Path, required=True)
@@ -70,9 +80,10 @@ def main():
             expected = project.get('github_upstream')
             if not matches(metadata, project):
                 raise SystemExit('Existing repository requires ownership review: ' + name)
+            disable_component_actions(name)
             with args.journal.open('a') as stream:
                 stream.write(json.dumps(dict(name=name, status='created',
-                    observation='verified_existing_fork', parent=expected)) + '\n')
+                    observation='verified_existing_fork', parent=expected, actions_disabled=True)) + '\n')
             print(f'{index}/{len(projects)} {name}: verified existing fork', flush=True)
             continue
         if project.get('github_upstream'):
@@ -102,8 +113,11 @@ def main():
                 break
             print(f'{name}: transient network error, retry {attempt + 1}/5', flush=True)
             time.sleep(10 * (attempt + 1))
+        if result.returncode == 0:
+            disable_component_actions(name)
         record = dict(name=name, command=argv, exit_code=result.returncode,
                       status='created' if result.returncode == 0 else 'failed',
+                      actions_disabled=result.returncode == 0,
                       timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                       output=result.stdout.strip())
         with args.journal.open('a') as stream:

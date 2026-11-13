@@ -24,6 +24,8 @@ class SnapshotTest(unittest.TestCase):
         catalog = write(directory / 'catalog.json', dict(repositories=[dict(name='build',
             auto_sync=True, inputs=[dict(revision=upstream)])]))
         write(workspace / 'repository-creation.jsonl', dict(name='build', status='created'))
+        write(workspace / 'component-automation.jsonl', dict(name='build', status='disabled',
+                                                          verified_actions_enabled=False))
         write(workspace / 'baseline-publication.jsonl',
               dict(name='build', status='published', remote_revision=upstream))
         export = workspace / 'exports/build'

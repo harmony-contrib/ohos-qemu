@@ -39,7 +39,8 @@ def snapshot(workspace, catalog_path, root, complete=False, cutover=None):
     descriptions = []
     latest = {}
     for path in [workspace / 'repository-creation.jsonl',
-                 workspace / 'baseline-publication.jsonl', *journals]:
+                 workspace / 'baseline-publication.jsonl',
+                 workspace / 'component-automation.jsonl', *journals]:
         raw = path.read_bytes() if path.exists() else b''
         if raw and not raw.endswith(b'\n'):
             raise ValueError('Journal append is incomplete; retry snapshot: ' + path.name)
@@ -113,6 +114,10 @@ def snapshot(workspace, catalog_path, root, complete=False, cutover=None):
                 cutover_complete = False
                 break
     gates = dict(repository_creation=created == names,
+        component_actions_disabled=all(
+            latest['component-automation.jsonl'].get(name, {}).get('status') == 'disabled'
+            and latest['component-automation.jsonl'][name].get('verified_actions_enabled') is False
+            for name in names),
         remote_branches_and_defaults=remote_complete,
         reviewed_publications=all(not phase['pending'] for phase in phases),
         component_payloads=bool(payload_complete),
