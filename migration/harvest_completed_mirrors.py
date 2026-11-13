@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Verify completed sync jobs and initialize independent mirrors' QEMU branches."""
 import argparse
+import concurrent.futures
 import json
 from pathlib import Path
 import re
@@ -13,6 +14,7 @@ def main():
     parser.add_argument('--workspace', type=Path, required=True)
     parser.add_argument('--catalog', type=Path, required=True)
     parser.add_argument('--runs', nargs='+', required=True)
+    parser.add_argument('--evidence-workers', type=int, choices=range(1, 5), default=4)
     args = parser.parse_args()
     workspace = args.workspace.resolve()
     catalog = {row['name']: row for row in json.loads(args.catalog.read_text())['repositories']}
@@ -30,17 +32,27 @@ def main():
                 complete.append(match[1])
             elif match and job['conclusion'] in ('failure', 'timed_out'):
                 print('REVIEW FAILED JOB ' + run + ' ' + match[1] + ' ' + str(job['id']), flush=True)
+        complete = list(dict.fromkeys(complete))
         missing = [name for name in complete if not (archive / (name + '-sync-' + run + '.json')).exists()]
-        if missing:
+
+        def collect(names):
             command = [sys.executable, str(scripts / 'collect_sync_evidence.py'), '--run-id', run,
                 '--archive', str(archive), '--downloads', str(workspace / 'sync-artifacts'),
-                '--imports', str(workspace / 'imported'), '--only', *missing]
+                '--imports', str(workspace / 'imported'), '--only', *names]
             for journal in journals:
                 if journal.exists():
                     command += ['--source-journal', str(journal)]
             result = subprocess.run(command)
             if result.returncode:
                 print('Evidence collection needs retry for run ' + run, flush=True)
+
+        # Each reader owns distinct repository reports and artifact IDs. Remote
+        # ref checks can run concurrently; branch initialization stays serialized.
+        if missing:
+            groups = [missing[i::args.evidence_workers] for i in range(args.evidence_workers)]
+            with concurrent.futures.ThreadPoolExecutor(max_workers=args.evidence_workers) as pool:
+                for _ in pool.map(collect, (group for group in groups if group)):
+                    pass
         for name in complete:
             if name not in catalog:
                 raise ValueError('Unknown completed mirror: ' + name)
