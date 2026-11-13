@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import time
 
 BRANCH = 'OpenHarmony-7.0-Release-qemu'
 
@@ -29,8 +30,21 @@ def main():
         raise ValueError('Reconcile multiple source baselines before selecting a QEMU branch')
     args.directory.mkdir(parents=True, exist_ok=True)
     def git(*argv):
-        return subprocess.check_output(['git', '-C', str(args.directory), *argv],
-            env=dict(os.environ, GIT_LFS_SKIP_SMUDGE='1', GIT_TERMINAL_PROMPT='0')).decode().strip()
+        for attempt in range(3):
+            try:
+                result = subprocess.run(['git', '-C', str(args.directory), *argv],
+                    capture_output=True, text=True, timeout=240,
+                    env=dict(os.environ, GIT_LFS_SKIP_SMUDGE='1', GIT_TERMINAL_PROMPT='0'))
+            except subprocess.TimeoutExpired:
+                result = subprocess.CompletedProcess(argv, 1, '', 'Git transport timed out')
+            if result.returncode == 0:
+                return result.stdout.strip()
+            transient = any(word in result.stderr.lower() for word in
+                            ('timed out', 'timeout', 'connection closed', 'connection reset'))
+            if not transient or attempt == 2:
+                raise RuntimeError(result.stderr[-2000:])
+            print('Transient git ' + argv[0] + ' transport error; retrying', flush=True)
+            time.sleep(2 * (attempt + 1))
     if not (args.directory / '.git').exists():
         git('init', '-b', BRANCH)
     remote = 'git@github.com:' + args.repository + '.git'
