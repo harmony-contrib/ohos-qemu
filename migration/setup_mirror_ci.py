@@ -26,7 +26,7 @@ def main():
             large_files='git-lfs', enabled=project['name'] in created))
     target = args.mirror_sync / 'repositories.json'
     target.write_text(json.dumps(dict(schema_version=1, organization='openharmony-qemu',
-        qemu_branch='OpenHarmony-7.0-Release-qemu', repositories=entries), indent=2) + '\n')
+        repositories=entries), indent=2) + '\n')
     print(f'{target}: {len(entries)} mirrors, {sum(x["enabled"] for x in entries)} enabled')
 
 

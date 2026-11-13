@@ -20,21 +20,29 @@ def main():
     parser.add_argument('--objects', type=Path, required=True)
     parser.add_argument('--imports', type=Path, required=True)
     parser.add_argument('--journal', type=Path, required=True)
+    parser.add_argument('--parent-journal', type=Path)
     parser.add_argument('--only', nargs='+', required=True)
     args = parser.parse_args()
     for name in ('exports', 'objects', 'imports', 'journal'):
         setattr(args, name, getattr(args, name).resolve())
     previous = {}
+    parents = {}
+    if args.parent_journal and args.parent_journal.exists():
+        for entry in map(json.loads, args.parent_journal.read_text().splitlines()):
+            if entry.get('status') == 'published':
+                parents[entry['name']] = entry['qemu_commit']
     if args.journal.exists():
         previous = {x['name']: x for x in map(json.loads, args.journal.read_text().splitlines())}
     args.objects.mkdir(parents=True, exist_ok=True)
     for name in args.only:
-        if previous.get(name, {}).get('status') == 'published':
-            continue
         export = args.exports / name
         metadata = json.loads((export / 'export.json').read_text())
         fingerprint = hashlib.sha256(((export / 'export.json').read_bytes() +
                                       (export / 'tracked.patch').read_bytes())).hexdigest()
+        if previous.get(name, {}).get('status') == 'published':
+            if previous[name]['export_sha256'] != fingerprint:
+                raise ValueError('Published source export changed; explicit update review required: ' + name)
+            continue
         objects = args.objects / (name + '.git')
         record = dict(name=name, export_sha256=fingerprint, upstream_revision=metadata['upstream_revision'],
                       scope='source_commit_only_NOT_build_or_runtime_validation')
@@ -54,19 +62,28 @@ def main():
             git('fetch', '--no-tags', '--filter=blob:none', '--depth=1', 'origin',
                 'refs/heads/' + BRANCH + ':refs/remotes/origin/' + BRANCH)
             parent = git('rev-parse', 'refs/remotes/origin/' + BRANCH).decode().strip()
-            receipt_path = '.qemu/source-migration.json'
-            existing = subprocess.run(['git', '-C', str(objects), 'show', parent + ':' + receipt_path],
-                                      stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-            if existing.returncode == 0 and json.loads(existing.stdout).get('export_sha256') == fingerprint:
+            message = git('show', '-s', '--format=%B', parent).decode()
+            if 'Source export SHA-256: ' + fingerprint in message.splitlines():
                 record.update(status='published', qemu_commit=parent, observation='verified_existing_source_commit')
             else:
                 allowed = {metadata['upstream_revision']}
+                if name in parents:
+                    allowed.add(parents[name])
                 imported = args.imports / (name + '.json')
                 if imported.exists():
                     allowed.add(json.loads(imported.read_text())['qemu_commit'])
                 if parent not in allowed:
                     raise ValueError('Remote QEMU branch has other changes; preserve for merge review')
                 git('read-tree', parent)
+                if metadata['tracked']:
+                    # Fetch changed source blobs together instead of triggering
+                    # one network round trip per file through the promisor remote.
+                    entries = git('ls-tree', '-r', parent, '--', *metadata['tracked']).decode().splitlines()
+                    blobs = sorted({line.split()[2] for line in entries if line.split()[1] == 'blob'})
+                    if blobs:
+                        git('-c', 'fetch.negotiationAlgorithm=noop', 'fetch', 'origin', '--no-tags',
+                            '--no-write-fetch-head', '--recurse-submodules=no', '--filter=blob:none',
+                            '--stdin', data=('\n'.join(blobs) + '\n').encode())
                 patch = export / 'tracked.patch'
                 if patch.stat().st_size:
                     git('apply', '--cached', '--binary', '--whitespace=nowarn', str(patch))
@@ -80,19 +97,20 @@ def main():
                             raise ValueError('Exported source bytes changed: ' + entry['path'])
                         data = source.read_bytes()
                         if data.startswith((b'\x7fELF', b'\xcf\xfa\xed\xfe')):
-                            raise ValueError('Compiled output was not admitted as source: ' + entry['path'])
+                            admitted = entry.get('existing_tracked_asset')
+                            original = (subprocess.check_output(['git', 'cat-file', 'blob',
+                                admitted['original_git_blob']]) if admitted else None)
+                            if original != data:
+                                raise ValueError('Compiled output was not admitted as source: ' + entry['path'])
                         mode = '100755' if int(entry['mode'], 8) & 0o111 else '100644'
                     blob = git('hash-object', '-w', '--stdin', data=data).decode().strip()
                     git('update-index', '--add', '--cacheinfo', mode + ',' + blob + ',' + entry['path'])
-                receipt = dict(record, migration_state='selected_source_changes_imported',
+                record.update(migration_state='selected_source_changes_imported',
                     tracked_files=metadata['tracked'], added_files=[x['path'] for x in metadata['added']],
                     omitted=metadata['omitted'],
                     validation=['git apply --cached', 'reverse application check', 'added file SHA-256'],
                     build_validated=False, runtime_validated=False)
-                blob = git('hash-object', '-w', '--stdin',
-                           data=(json.dumps(receipt, indent=2) + '\n').encode()).decode().strip()
-                git('update-index', '--add', '--cacheinfo', '100644,' + blob + ',' + receipt_path)
-                tree = git('write-tree').decode().strip()
+                tree = git('write-tree', '--missing-ok').decode().strip()
                 message = ('qemu: integrate OpenHarmony 7.0 component source adaptations\n\n'
                     'Move the reviewed source changes into their owning component.\n'
                     'Upstream: ' + metadata['upstream_revision'] + '\n'

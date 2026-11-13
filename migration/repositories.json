@@ -2159,11 +2159,6 @@
           "tree": "ohos",
           "path": "base/web/webview",
           "revision": "d421b6b549fa3038ad01cf34589b959286137be9"
-        },
-        {
-          "tree": "arkweb",
-          "path": "deps_code/webview",
-          "revision": "4237e061441ea9392e83a353c0d52cb1c44404b3"
         }
       ]
     },
@@ -2408,16 +2403,19 @@
     {
       "name": "developtools_profiler",
       "upstream_url": "https://gitcode.com/openharmony/developtools_profiler.git",
-      "github_upstream": "openharmony/developtools_profiler",
       "baseline_branch": "OpenHarmony-7.0-Release-qemu",
-      "auto_sync": false,
+      "auto_sync": true,
       "inputs": [
         {
           "tree": "ohos",
           "path": "developtools/profiler",
           "revision": "d296fc944663c80e1c8f0b0d56bbf5065ad15b58"
         }
-      ]
+      ],
+      "mirror_reason": "The upstream GitHub fork is stale and its LFS network quota blocks current code; independently mirror the official GitCode upstream.",
+      "original_github_upstream": "openharmony/developtools_profiler",
+      "github_upstream": null,
+      "retained_upstream_fork": "openharmony-qemu/developtools_profiler-upstream-fork-backup"
     },
     {
       "name": "developtools_smartperf_host",
@@ -3784,16 +3782,19 @@
     {
       "name": "multimedia_audio_framework",
       "upstream_url": "https://gitcode.com/openharmony/multimedia_audio_framework.git",
-      "github_upstream": "openharmony/multimedia_audio_framework",
+      "github_upstream": null,
       "baseline_branch": "OpenHarmony-7.0-Release-qemu",
-      "auto_sync": false,
+      "auto_sync": true,
       "inputs": [
         {
           "tree": "ohos",
           "path": "foundation/multimedia/audio_framework",
           "revision": "6932fa64335b8272ca4a59de7808ab0d6c9eae7a"
         }
-      ]
+      ],
+      "mirror_reason": "Upstream fork network LFS quota blocks current source synchronization",
+      "original_github_upstream": "openharmony/multimedia_audio_framework",
+      "retained_upstream_fork": "openharmony-qemu/multimedia_audio_framework-upstream-fork-backup"
     },
     {
       "name": "multimedia_audio_lite",
@@ -4602,14 +4603,15 @@
       "upstream_url": "https://gitcode.com/openharmony/xts_acts.git",
       "github_upstream": "openharmony/xts_acts",
       "baseline_branch": "OpenHarmony-7.0-Release-qemu",
-      "auto_sync": false,
+      "auto_sync": true,
       "inputs": [
         {
           "tree": "ohos",
           "path": "test/xts/acts",
           "revision": "12ed38d7aec9c680ed1510a77a96efcc7b101489"
         }
-      ]
+      ],
+      "mirror_reason": "The GitHub upstream lacks the pinned OpenHarmony 7.0 commit; synchronize official GitCode branches into the existing fork without force updates."
     },
     {
       "name": "xts_dcts",
@@ -4846,11 +4848,6 @@
           "tree": "ohos",
           "path": "third_party/bounds_checking_function",
           "revision": "61baa7a3eb9347efca58397d1d0504faa96d79f0"
-        },
-        {
-          "tree": "arkweb",
-          "path": "src/third_party/bounds_checking_function",
-          "revision": "2ae82839ecaaa7d031e66ccbd2076d671acfd615"
         }
       ]
     },
@@ -9754,6 +9751,388 @@
           "revision": "3f002d04ba6b3a7659c601207c89d3a896b82546"
         }
       ]
+    },
+    {
+      "name": "qemu_dep_sherpa_onnx",
+      "upstream_url": "https://github.com/k2-fsa/sherpa-onnx.git",
+      "github_upstream": "k2-fsa/sherpa-onnx",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/sherpa_onnx",
+          "revision": "419f7fea0a9a3f7b047dee53ad7da266767a425f"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "refs/tags/v1.11.2"
+    },
+    {
+      "name": "qemu_dep_node_addon_api",
+      "upstream_url": "https://github.com/nodejs/node-addon-api.git",
+      "github_upstream": "nodejs/node-addon-api",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/node_addon_api",
+          "revision": "c679f6f4c9dc6bf9fc0d99cbe5982bd24a5e2c7b"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "c679f6f4c9dc6bf9fc0d99cbe5982bd24a5e2c7b"
+    },
+    {
+      "name": "qemu_dep_kaldi_native_fbank",
+      "upstream_url": "https://github.com/csukuangfj/kaldi-native-fbank.git",
+      "github_upstream": "csukuangfj/kaldi-native-fbank",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/kaldi_native_fbank",
+          "revision": "84c24202dc56e5e25c912983f8a6ad5baed55b2c"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "refs/tags/v1.21.1",
+      "locked_archive": {
+        "url": "https://github.com/csukuangfj/kaldi-native-fbank/archive/refs/tags/v1.21.1.tar.gz",
+        "sha256": "37c1aa230b00fe062791d800d8fc50aa3de215918d3dce6440699e67275d859e"
+      }
+    },
+    {
+      "name": "qemu_dep_kaldi_decoder",
+      "upstream_url": "https://github.com/k2-fsa/kaldi-decoder.git",
+      "github_upstream": "k2-fsa/kaldi-decoder",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/kaldi_decoder",
+          "revision": "503eacc12af7d7835c523a6aecb474279b906170"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "refs/tags/v0.2.6",
+      "locked_archive": {
+        "url": "https://github.com/k2-fsa/kaldi-decoder/archive/refs/tags/v0.2.6.tar.gz",
+        "sha256": "b13c78b37495cafc6ef3f8a7b661b349c55a51abbd7f7f42f389408dcf86a463"
+      }
+    },
+    {
+      "name": "qemu_dep_simple_sentencepiece",
+      "upstream_url": "https://github.com/pkufool/simple-sentencepiece.git",
+      "github_upstream": "pkufool/simple-sentencepiece",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/simple_sentencepiece",
+          "revision": "62dd423df1d51da5ea06f1c3a046fc04f01b4f39"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "refs/tags/v0.7",
+      "locked_archive": {
+        "url": "https://github.com/pkufool/simple-sentencepiece/archive/refs/tags/v0.7.tar.gz",
+        "sha256": "1748a822060a35baa9f6609f84efc8eb54dc0e74b9ece3d82367b7119fdc75af"
+      }
+    },
+    {
+      "name": "qemu_dep_websocketpp",
+      "upstream_url": "https://github.com/zaphoyd/websocketpp.git",
+      "github_upstream": "zaphoyd/websocketpp",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/websocketpp",
+          "revision": "b9aeec6eaf3d5610503439b4fae3581d9aff08e8"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "b9aeec6eaf3d5610503439b4fae3581d9aff08e8",
+      "locked_archive": {
+        "url": "https://github.com/zaphoyd/websocketpp/archive/b9aeec6eaf3d5610503439b4fae3581d9aff08e8.zip",
+        "sha256": "1385135ede8191a7fbef9ec8099e3c5a673d48df0c143958216cd1690567f583"
+      }
+    },
+    {
+      "name": "qemu_dep_asio",
+      "upstream_url": "https://github.com/chriskohlhoff/asio.git",
+      "github_upstream": "chriskohlhoff/asio",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/asio",
+          "revision": "147f7225a96d45a2807a64e443177f621844e51c"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "refs/tags/asio-1-24-0",
+      "locked_archive": {
+        "url": "https://github.com/chriskohlhoff/asio/archive/refs/tags/asio-1-24-0.tar.gz",
+        "sha256": "cbcaaba0f66722787b1a7c33afe1befb3a012b5af3ad7da7ff0f6b8c9b7a8a5b"
+      }
+    },
+    {
+      "name": "qemu_dep_espeak_ng",
+      "upstream_url": "https://github.com/csukuangfj/espeak-ng.git",
+      "github_upstream": "csukuangfj/espeak-ng",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/espeak_ng",
+          "revision": "f6fed6c58b5e0998b8e68c6610125e2d07d595a7"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "f6fed6c58b5e0998b8e68c6610125e2d07d595a7",
+      "locked_archive": {
+        "url": "https://github.com/csukuangfj/espeak-ng/archive/f6fed6c58b5e0998b8e68c6610125e2d07d595a7.zip",
+        "sha256": "70cbf4050e7a014aae19140b05e57249da4720f56128459fbe3a93beaf971ae6"
+      }
+    },
+    {
+      "name": "qemu_dep_piper_phonemize",
+      "upstream_url": "https://github.com/csukuangfj/piper-phonemize.git",
+      "github_upstream": "csukuangfj/piper-phonemize",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/piper_phonemize",
+          "revision": "78a788e0b719013401572d70fef372e77bff8e43"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "78a788e0b719013401572d70fef372e77bff8e43",
+      "locked_archive": {
+        "url": "https://github.com/csukuangfj/piper-phonemize/archive/78a788e0b719013401572d70fef372e77bff8e43.zip",
+        "sha256": "89641a46489a4898754643ce57bda9c9b54b4ca46485fdc02bf0dc84b866645d"
+      }
+    },
+    {
+      "name": "qemu_dep_cppjieba",
+      "upstream_url": "https://github.com/csukuangfj/cppjieba.git",
+      "github_upstream": "csukuangfj/cppjieba",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/cppjieba",
+          "revision": "f03dd931a00330c279c8590275850fd1f6749a18"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "refs/tags/sherpa-onnx-2024-04-19",
+      "locked_archive": {
+        "url": "https://github.com/csukuangfj/cppjieba/archive/refs/tags/sherpa-onnx-2024-04-19.tar.gz",
+        "sha256": "03e5264687f0efaef05487a07d49c3f4c0f743347bfbf825df4b30cc75ac5288"
+      }
+    },
+    {
+      "name": "qemu_dep_hclust_cpp",
+      "upstream_url": "https://github.com/csukuangfj/hclust-cpp.git",
+      "github_upstream": "csukuangfj/hclust-cpp",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/hclust_cpp",
+          "revision": "aa12a4671cd3c93427da32157b9c55635e5289ff"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "refs/tags/2024-09-29",
+      "locked_archive": {
+        "url": "https://github.com/csukuangfj/hclust-cpp/archive/refs/tags/2024-09-29.tar.gz",
+        "sha256": "abab51448a3cb54272aae07522970306e0b2cc6479d59d7b19e7aee4d6cedd33"
+      }
+    },
+    {
+      "name": "qemu_dep_kaldifst",
+      "upstream_url": "https://github.com/k2-fsa/kaldifst.git",
+      "github_upstream": "k2-fsa/kaldifst",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/kaldifst",
+          "revision": "4e226e21cc9343d4e9ecf388390cb6eb39a2406f"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "refs/tags/v1.7.11",
+      "locked_archive": {
+        "url": "https://github.com/k2-fsa/kaldifst/archive/refs/tags/v1.7.11.tar.gz",
+        "sha256": "b43b3332faa2961edc730e47995a58cd4e22ead21905d55b0c4a41375b4a525f"
+      }
+    },
+    {
+      "name": "qemu_dep_openfst",
+      "upstream_url": "https://github.com/csukuangfj/openfst.git",
+      "github_upstream": "csukuangfj/openfst",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/openfst",
+          "revision": "a1cdead2da17e15ef46a5b9fde0a07da394e3a72"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "refs/tags/sherpa-onnx-2024-06-19",
+      "locked_archive": {
+        "url": "https://github.com/csukuangfj/openfst/archive/refs/tags/sherpa-onnx-2024-06-19.tar.gz",
+        "sha256": "5c98e82cc509c5618502dde4860b8ea04d843850ed57e6d6b590b644b268853d"
+      }
+    },
+    {
+      "name": "qemu_dep_eigen",
+      "upstream_url": "https://gitlab.com/libeigen/eigen.git",
+      "github_upstream": null,
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/eigen",
+          "revision": "3147391d946bb4b6c68edd901f2add6ac1f31f8c"
+        }
+      ],
+      "consumers": [
+        "drivers_peripheral",
+        "applications_hap"
+      ],
+      "source_reference": "refs/tags/3.4.0",
+      "locked_archive": {
+        "url": "https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz",
+        "sha256": "8586084f71f9bde545ee7fa6d00288b264a2b7ac3607b974e54d13e7162c1c72"
+      }
+    },
+    {
+      "name": "qemu_dep_openal_soft",
+      "upstream_url": "https://github.com/kcat/openal-soft.git",
+      "github_upstream": "kcat/openal-soft",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/openal_soft",
+          "revision": "dc7d7054a5b4f3bec1dc23a42fd616a0847af948"
+        }
+      ],
+      "consumers": [
+        "multimedia_audio_framework"
+      ],
+      "source_reference": "refs/tags/1.24.3"
+    },
+    {
+      "name": "qemu_dep_jsoncpp",
+      "upstream_url": "https://github.com/open-source-parsers/jsoncpp.git",
+      "github_upstream": "open-source-parsers/jsoncpp",
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/jsoncpp",
+          "revision": "5defb4ed1a4293b8e2bf641e16b156fb9de498cc"
+        }
+      ],
+      "consumers": [
+        "applications_photos"
+      ],
+      "source_reference": "5defb4ed1a4293b8e2bf641e16b156fb9de498cc"
+    },
+    {
+      "name": "arkweb_web_webview",
+      "upstream_url": "https://gitcode.com/openharmony/web_webview.git",
+      "github_upstream": null,
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "arkweb",
+          "path": "deps_code/webview",
+          "revision": "4237e061441ea9392e83a353c0d52cb1c44404b3"
+        }
+      ],
+      "upstream_project": "web_webview",
+      "mirror_reason": "The system and ArkWeb source locks select different commits. A separate mirror preserves the validated source selection while both checkouts use the same QEMU release branch name."
+    },
+    {
+      "name": "arkweb_bounds_checking_function",
+      "upstream_url": "https://gitcode.com/openharmony/third_party_bounds_checking_function.git",
+      "github_upstream": null,
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "inputs": [
+        {
+          "tree": "arkweb",
+          "path": "src/third_party/bounds_checking_function",
+          "revision": "2ae82839ecaaa7d031e66ccbd2076d671acfd615"
+        }
+      ],
+      "upstream_project": "third_party_bounds_checking_function",
+      "mirror_reason": "The system and ArkWeb source locks select different commits. A separate mirror preserves the validated source selection while both checkouts use the same QEMU release branch name."
     }
   ],
   "checkouts": {
@@ -12875,7 +13254,7 @@
     ],
     "arkweb": [
       {
-        "name": "web_webview",
+        "name": "arkweb_web_webview",
         "path": "deps_code/webview",
         "upstream_revision": "4237e061441ea9392e83a353c0d52cb1c44404b3",
         "links": []
@@ -12990,7 +13369,7 @@
         "links": []
       },
       {
-        "name": "third_party_bounds_checking_function",
+        "name": "arkweb_bounds_checking_function",
         "path": "src/third_party/bounds_checking_function",
         "upstream_revision": "2ae82839ecaaa7d031e66ccbd2076d671acfd615",
         "links": []
@@ -13825,44 +14204,57 @@
       }
     ]
   },
-  "shared_revision_conflicts": [
+  "shared_revision_conflicts": [],
+  "resolved_checkout_variants": [
     {
-      "name": "web_webview",
-      "upstream_url": "https://gitcode.com/openharmony/web_webview.git",
-      "github_upstream": "openharmony/web_webview",
-      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
-      "auto_sync": false,
-      "inputs": [
-        {
-          "tree": "ohos",
-          "path": "base/web/webview",
-          "revision": "d421b6b549fa3038ad01cf34589b959286137be9"
-        },
-        {
-          "tree": "arkweb",
-          "path": "deps_code/webview",
-          "revision": "4237e061441ea9392e83a353c0d52cb1c44404b3"
-        }
-      ]
+      "upstream_project": "web_webview",
+      "system_repository": "web_webview",
+      "arkweb_repository": "arkweb_web_webview",
+      "resolution": "separate mirrors preserve original locked source versions",
+      "original_conflict": {
+        "name": "web_webview",
+        "upstream_url": "https://gitcode.com/openharmony/web_webview.git",
+        "github_upstream": "openharmony/web_webview",
+        "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+        "auto_sync": false,
+        "inputs": [
+          {
+            "tree": "ohos",
+            "path": "base/web/webview",
+            "revision": "d421b6b549fa3038ad01cf34589b959286137be9"
+          },
+          {
+            "tree": "arkweb",
+            "path": "deps_code/webview",
+            "revision": "4237e061441ea9392e83a353c0d52cb1c44404b3"
+          }
+        ]
+      }
     },
     {
-      "name": "third_party_bounds_checking_function",
-      "upstream_url": "https://gitcode.com/openharmony/third_party_bounds_checking_function.git",
-      "github_upstream": "openharmony/third_party_bounds_checking_function",
-      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
-      "auto_sync": false,
-      "inputs": [
-        {
-          "tree": "ohos",
-          "path": "third_party/bounds_checking_function",
-          "revision": "61baa7a3eb9347efca58397d1d0504faa96d79f0"
-        },
-        {
-          "tree": "arkweb",
-          "path": "src/third_party/bounds_checking_function",
-          "revision": "2ae82839ecaaa7d031e66ccbd2076d671acfd615"
-        }
-      ]
+      "upstream_project": "third_party_bounds_checking_function",
+      "system_repository": "third_party_bounds_checking_function",
+      "arkweb_repository": "arkweb_bounds_checking_function",
+      "resolution": "separate mirrors preserve original locked source versions",
+      "original_conflict": {
+        "name": "third_party_bounds_checking_function",
+        "upstream_url": "https://gitcode.com/openharmony/third_party_bounds_checking_function.git",
+        "github_upstream": "openharmony/third_party_bounds_checking_function",
+        "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+        "auto_sync": false,
+        "inputs": [
+          {
+            "tree": "ohos",
+            "path": "third_party/bounds_checking_function",
+            "revision": "61baa7a3eb9347efca58397d1d0504faa96d79f0"
+          },
+          {
+            "tree": "arkweb",
+            "path": "src/third_party/bounds_checking_function",
+            "revision": "2ae82839ecaaa7d031e66ccbd2076d671acfd615"
+          }
+        ]
+      }
     }
   ]
 }

@@ -33,11 +33,17 @@ def main():
     parser.add_argument('--catalog', type=Path, required=True)
     parser.add_argument('--journal', type=Path, required=True)
     parser.add_argument('--apply', action='store_true')
+    parser.add_argument('--priority', nargs='*', default=[])
     args = parser.parse_args()
     args.catalog = args.catalog.resolve()
     args.journal = args.journal.resolve()
     catalog = json.loads(args.catalog.read_text())
     projects = catalog['repositories']
+    priorities = {name: index for index, name in enumerate(args.priority)}
+    unknown = set(priorities) - {p['name'] for p in projects}
+    if unknown:
+        raise ValueError('Unknown priority repositories: ' + ', '.join(sorted(unknown)))
+    projects = sorted(projects, key=lambda p: priorities.get(p['name'], len(priorities)))
     if not args.apply:
         print(json.dumps(projects, indent=2))
         return
@@ -86,7 +92,7 @@ def main():
             # A timed-out POST may already have succeeded. Read back ownership
             # before retrying, so retries cannot create a second repository.
             transient = any(term in result.stdout.lower() for term in
-                            ('timeout', 'connection reset', 'unexpected eof', 'connection refused'))
+                            ('timeout', 'timed out', 'connection reset', 'eof', 'connection refused'))
             if transient or 'Name already exists' in result.stdout:
                 checked = run(['gh', 'api', 'repos/openharmony-qemu/' + name])
                 if checked.returncode == 0 and matches(json.loads(checked.stdout), project):

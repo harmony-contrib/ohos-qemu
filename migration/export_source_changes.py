@@ -64,7 +64,7 @@ def main():
                 # suffixes. Keep their binary/data provenance separate.
                 original = subprocess.check_output(['git', '-c', 'safe.directory=*',
                     '-C', str(root), 'show', 'HEAD:' + name])
-                if original.startswith(b'version https://git-lfs.github.com/spec/v1'):
+                if b'version https://git-lfs.github.com/spec/v1' in original[:200]:
                     excluded = 'restored upstream LFS asset; not a source patch'
             if excluded:
                 omitted.append(dict(path=name, reason=excluded))
