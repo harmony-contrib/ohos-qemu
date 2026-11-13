@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import subprocess
 import time
+from component_heads import published_heads
 
 BRANCH = 'OpenHarmony-7.0-Release-qemu'
 
@@ -33,13 +34,9 @@ def main():
     parser.add_argument('--created', type=Path, required=True)
     parser.add_argument('--imported', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--source-journal', type=Path)
+    parser.add_argument('--source-journal', type=Path, action='append')
     args = parser.parse_args()
-    published = {}
-    if args.source_journal and args.source_journal.exists():
-        for record in map(json.loads, args.source_journal.read_text().splitlines()):
-            if record.get('status') == 'published':
-                published[record['name']] = record['qemu_commit']
+    published = published_heads(args.source_journal)
     created = {r['name'] for r in map(json.loads, args.created.read_text().splitlines())
                if r['status'] == 'created'}
     projects = json.loads(args.catalog.read_text())['repositories']

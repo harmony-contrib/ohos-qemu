@@ -11,6 +11,7 @@ import re
 import subprocess
 import time
 import zipfile
+from component_heads import published_heads
 
 CONTROL = 'openharmony-qemu/mirror-sync'
 BRANCH = 'refs/heads/OpenHarmony-7.0-Release-qemu'
@@ -36,13 +37,9 @@ def main():
     parser.add_argument('--downloads', type=Path, required=True)
     parser.add_argument('--imports', type=Path, required=True)
     parser.add_argument('--only', nargs='+', required=True)
-    parser.add_argument('--source-journal', type=Path)
+    parser.add_argument('--source-journal', type=Path, action='append')
     args = parser.parse_args()
-    published = {}
-    if args.source_journal and args.source_journal.exists():
-        for record in map(json.loads, args.source_journal.read_text().splitlines()):
-            if record.get('status') == 'published':
-                published[record['name']] = record['qemu_commit']
+    published = published_heads(args.source_journal)
     artifacts = json.loads(run(['gh', 'api', f'repos/{CONTROL}/actions/runs/{args.run_id}/artifacts?per_page=100']))['artifacts']
     args.archive.mkdir(parents=True, exist_ok=True)
     args.downloads.mkdir(parents=True, exist_ok=True)

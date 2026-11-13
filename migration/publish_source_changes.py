@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+from component_heads import published_heads
 
 BRANCH = 'OpenHarmony-7.0-Release-qemu'
 
@@ -20,17 +21,13 @@ def main():
     parser.add_argument('--objects', type=Path, required=True)
     parser.add_argument('--imports', type=Path, required=True)
     parser.add_argument('--journal', type=Path, required=True)
-    parser.add_argument('--parent-journal', type=Path)
+    parser.add_argument('--parent-journal', type=Path, action='append')
     parser.add_argument('--only', nargs='+', required=True)
     args = parser.parse_args()
     for name in ('exports', 'objects', 'imports', 'journal'):
         setattr(args, name, getattr(args, name).resolve())
     previous = {}
-    parents = {}
-    if args.parent_journal and args.parent_journal.exists():
-        for entry in map(json.loads, args.parent_journal.read_text().splitlines()):
-            if entry.get('status') == 'published':
-                parents[entry['name']] = entry['qemu_commit']
+    parents = published_heads(args.parent_journal)
     if args.journal.exists():
         previous = {x['name']: x for x in map(json.loads, args.journal.read_text().splitlines())}
     args.objects.mkdir(parents=True, exist_ok=True)
@@ -67,11 +64,11 @@ def main():
                 record.update(status='published', qemu_commit=parent, observation='verified_existing_source_commit')
             else:
                 allowed = {metadata['upstream_revision']}
-                if name in parents:
-                    allowed.add(parents[name])
                 imported = args.imports / (name + '.json')
                 if imported.exists():
                     allowed.add(json.loads(imported.read_text())['qemu_commit'])
+                if name in parents:
+                    allowed = {parents[name]}
                 if parent not in allowed:
                     raise ValueError('Remote QEMU branch has other changes; preserve for merge review')
                 git('read-tree', parent)

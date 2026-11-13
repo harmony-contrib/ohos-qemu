@@ -99,7 +99,7 @@ def fallback_owner(name, projects):
     arm = 'device/qemu/armv7a_product/components/'
     if relative.startswith(arm):
         return {'appspawn_cleanup':'startup_appspawn', 'build_whitelist':'build',
-            'compact_child_args':'arkui_ace_engine', 'device_qemu':'device_qemu',
+            'compact_child_args':'ability_ability_runtime', 'device_qemu':'device_qemu',
             'kernel':'device_qemu', 'libvpx':'third_party_libvpx',
             'mesa3d':'third_party_mesa3d', 'vendor_ohemu':'vendor_ohemu',
             'README.md':'device_qemu'}.get(relative[len(arm):].split('/')[0])
@@ -157,6 +157,8 @@ def main():
             tree=catalog['checkouts']['arkweb'] if '/web/arkweb/' in name else projects
             for target,part in patch_parts(data):
                 owner=source_owner(target,tree) or fallback
+                if name.startswith('patches/common/third_party/mesa3d/') and target.startswith('src/'):
+                    owner='qemu_dep_mesa3d_21_3'
                 if pieces and pieces[-1][0]==owner: pieces[-1]=(owner,pieces[-1][1]+part)
                 else: pieces.append((owner,part))
         else: pieces=[(fallback,data)]

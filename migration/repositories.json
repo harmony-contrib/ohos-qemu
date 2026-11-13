@@ -10133,6 +10133,26 @@
       ],
       "upstream_project": "third_party_bounds_checking_function",
       "mirror_reason": "The system and ArkWeb source locks select different commits. A separate mirror preserves the validated source selection while both checkouts use the same QEMU release branch name."
+    },
+    {
+      "name": "qemu_dep_mesa3d_21_3",
+      "upstream_url": "https://gitcode.com/openharmony/third_party_mesa3d.git",
+      "github_upstream": null,
+      "baseline_branch": "OpenHarmony-7.0-Release-qemu",
+      "auto_sync": true,
+      "upstream_project": "third_party_mesa3d",
+      "inputs": [
+        {
+          "tree": "external",
+          "path": "dependencies/mesa3d_21_3",
+          "revision": "995d2506d18924b48db0cf40e6ad7de04fc4e558"
+        }
+      ],
+      "consumers": [
+        "device_qemu",
+        "third_party_mesa3d"
+      ],
+      "mirror_reason": "QEMU uses the locked Mesa 21.3 source in addition to the system release Mesa project; preserve both identities on uniformly named QEMU branches."
     }
   ],
   "checkouts": {

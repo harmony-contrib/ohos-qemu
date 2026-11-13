@@ -42,7 +42,9 @@ def main():
     projects = json.loads(args.catalog.read_text())['repositories']
     for project in projects:
         name = project['name']
-        if name not in created or previous.get(name, {}).get('status') in ('published', 'preserved_existing'):
+        old = previous.get(name, {})
+        if name not in created or (old.get('status') in ('published', 'preserved_existing')
+                                   and old.get('default_branch_configured')):
             continue
         # Shared system/ArkWeb revision differences need an explicit resolution,
         # not an accidental choice of the first manifest entry.
