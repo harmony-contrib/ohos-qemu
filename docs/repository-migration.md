@@ -1,8 +1,10 @@
 # QEMU source repository migration
 
-This is a source migration in progress. Package builds and runtime validation
-are deferred by user instruction. Existing build scripts and patch application
-remain the active build input until component source migration is complete.
+Component source changes and adaptation inputs have been published and verified.
+Final upstream mirror verification is still in progress; the manifest lock remains
+incomplete until it passes. Package builds and runtime validation are deferred by
+user instruction. The historical patch tree and 77 source helpers in this checkout
+now link to generated component inputs, with the original files preserved locally.
 
 ## Ownership and branches
 
@@ -119,10 +121,30 @@ Operation journals and source candidates remain under the ignored
 changes. The manifest's `migration-status.json` remains `in_progress` until all
 repositories, baselines and source changes have been verified remotely.
 
-All 695 catalog repositories have been created. Remaining prerequisites are
-publication and verification of the remaining branches, complete production
-synchronization, and the final component input cutover. The system and ArkWeb
+All 695 catalog repositories have been created. All 105 reviewed component source
+changes are published, and all 2,160 original adaptation inputs have been verified
+against 104 owning repositories. Remaining prerequisites are the last baseline
+branches, complete production synchronization, and the final manifest lock. The system and ArkWeb
 locks require different
 `web_webview` and bounds-checking revisions. Separate ArkWeb mirror repositories
 preserve both locked source identities under the same QEMU branch convention.
 No package/runtime acceptance is claimed.
+
+## Retrieve historical component inputs
+
+After `components.lock.json` is complete, a fresh checkout can retrieve the
+component-owned compatibility inputs with:
+
+```sh
+git clone --single-branch --branch OpenHarmony-7.0-Release-qemu \
+  https://github.com/openharmony-qemu/manifest.git .qemu/manifest
+python3 scripts/prepare_component_inputs.py --manifest .qemu/manifest
+```
+
+The retriever requires committed manifest documents and the exact locked component
+SHAs. It verifies the component-owned materializer and all reconstructed hashes
+and file modes. Generated files live under ignored `.qemu/component-inputs/`;
+`patches` and the transferred helper paths are compatibility links. Keep changes
+in the owning component repositories instead of editing this generated tree.
+The manifest records the six-product contract in `products.json`. The independent
+build entry point and package/runtime acceptance remain deferred.
