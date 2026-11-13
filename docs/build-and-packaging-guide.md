@@ -1,5 +1,10 @@
 # From-Zero Build and Packaging Guide
 
+This document records the historical source and build workflow. See
+[repository migration status](./repository-migration.md) for the maintained
+component repositories and generated compatibility inputs. The migrated branch
+graph has not been built, packaged or validated in a guest in this migration.
+
 This guide explains how to build all six OpenHarmony 7.0 Release QEMU packages (`phone` and `2in1` × `arm64_virt`, `x86_64_virt`, `armv7a_virt`) from scratch on a new machine.
 
 ## 1. Host Prerequisites

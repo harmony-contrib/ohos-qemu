@@ -2,6 +2,11 @@
 
 Prebuilt OpenHarmony standard-system QEMU images for Linux, macOS, and Windows.
 
+Source repositories are migrating to [openharmony-qemu](https://github.com/openharmony-qemu).
+See [repository migration status](docs/repository-migration.md) for the manifest,
+component ownership and verification evidence. Package builds and runtime
+validation for the migrated source graph are deferred.
+
 ## Requirements
 
 - QEMU installed and available in `PATH` (`8.1+` for accessibility QMP
@@ -226,9 +231,12 @@ executing `ACCESSIBILITY_E2E_ENABLE_COMMAND` after installation.
 
 ## Source capability components
 
-Source builds use a component-owned patch tree under [`patches`](./patches).
-Phone and 2in1 are independent top-level entries; the removed `overlays/`
-commands are not retained as compatibility wrappers:
+The following commands document the historical source-preparation interface.
+The migration transfers these recipes and helpers into their owning component
+repositories; the final compatibility tree is generated from the manifest lock.
+Follow [repository migration status](docs/repository-migration.md) before using
+these commands. Their transfer does not validate the legacy builder against the
+new QEMU branches. Phone and 2in1 remain separate historical entry points:
 
 ```bash
 bash patches/phone/apply.sh \
