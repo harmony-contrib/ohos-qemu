@@ -134,6 +134,11 @@ locks require different
 preserve both locked source identities under the same QEMU branch convention.
 No package/runtime acceptance is claimed.
 
+The manifest's `dependencies.json` records cross-tree prerequisites and the actual
+checkout locations of source dependencies, including Serial SIG in the system
+tree. Per-component build dependencies remain in `bundle.json`, GN targets and
+the product profiles. `products.json` preserves the six artifact contracts.
+
 ## Retrieve historical component inputs
 
 After `components.lock.json` is complete, a fresh checkout can retrieve the

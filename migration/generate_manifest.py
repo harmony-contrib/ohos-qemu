@@ -82,6 +82,26 @@ def main():
         matrix_evidence=['SHA256SUMS', 'matrix-manifest.json'],
         validation='Build and runtime validation are deferred by user instruction; no acceptance claimed.')
     (output / 'products.json').write_text(json.dumps(contract, indent=2) + '\n')
+    locations = {}
+    for tree, manifest in (('ohos', ohos), ('arkweb', arkweb), ('external', tools)):
+        for node in manifest.findall('project'):
+            locations.setdefault((node.get('name'), node.get('path')), set()).add(tree)
+
+    def dependency_checkouts(project):
+        result = []
+        for entry in project['inputs']:
+            available = locations.get((project['name'], entry['path']), set())
+            tree = entry['tree']
+            if tree not in available:
+                if len(available) != 1:
+                    raise ValueError('Missing or ambiguous dependency checkout: ' + project['name'])
+                tree = next(iter(available))
+            # The catalog retains original provenance. Serial SIG is selected
+            # into the system tree by this manifest, so dependency paths must
+            # describe the actual checkout location.
+            result.append(dict(entry, tree=tree))
+        return result
+
     dependencies = dict(schema_version=1, scope='repository_selection_and_cross_tree_prerequisites',
         component_dependency_authority=['bundle.json', 'BUILD.gn', 'vendor/ohemu product profiles'],
         stages=[
@@ -96,7 +116,7 @@ def main():
             dict(name='system_images', requires=['ohos_sources', 'external_sources', 'arkweb_m144', 'mesa_llvm']),
             dict(name='qemu_packages', requires=['system_images'], contract='products.json')],
         source_dependencies=[dict(repository=project['name'], consumers=project['consumers'],
-                                  checkouts=project['inputs'])
+                                  checkouts=dependency_checkouts(project))
                              for project in catalog['repositories'] if project.get('consumers')])
     (output / 'dependencies.json').write_text(json.dumps(dependencies, indent=2) + '\n')
     print(f'Wrote {len(original)} system projects, Serial SIG, ArkWeb and external manifests to {output}')
