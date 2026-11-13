@@ -82,6 +82,23 @@ def main():
         matrix_evidence=['SHA256SUMS', 'matrix-manifest.json'],
         validation='Build and runtime validation are deferred by user instruction; no acceptance claimed.')
     (output / 'products.json').write_text(json.dumps(contract, indent=2) + '\n')
+    dependencies = dict(schema_version=1, scope='repository_selection_and_cross_tree_prerequisites',
+        component_dependency_authority=['bundle.json', 'BUILD.gn', 'vendor/ohemu product profiles'],
+        stages=[
+            dict(name='ohos_sources', manifest='default.xml', requires=[]),
+            dict(name='external_sources', manifest='external.xml', requires=[]),
+            dict(name='arkweb_sources', manifest='arkweb.xml', requires=[]),
+            dict(name='ohos_sdk', requires=['ohos_sources']),
+            dict(name='arkweb_m144', requires=['arkweb_sources', 'ohos_sdk', 'external_sources'],
+                 outputs=['ArkWebCore.hap', 'libv8_shared.so', 'libvk_swiftshader.so', 'libopenh264.so']),
+            dict(name='mesa_llvm', requires=['arkweb_sources', 'ohos_sdk', 'external_sources'],
+                 outputs=['libllvm.a']),
+            dict(name='system_images', requires=['ohos_sources', 'external_sources', 'arkweb_m144', 'mesa_llvm']),
+            dict(name='qemu_packages', requires=['system_images'], contract='products.json')],
+        source_dependencies=[dict(repository=project['name'], consumers=project['consumers'],
+                                  checkouts=project['inputs'])
+                             for project in catalog['repositories'] if project.get('consumers')])
+    (output / 'dependencies.json').write_text(json.dumps(dependencies, indent=2) + '\n')
     print(f'Wrote {len(original)} system projects, Serial SIG, ArkWeb and external manifests to {output}')
 
 

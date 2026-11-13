@@ -176,6 +176,12 @@ def main():
             item['parts'].append(dict(repository=owner,path=target,sha256=sha(part)))
         entries.append(item)
     if errors: raise ValueError('Unassigned recipes: '+json.dumps(errors))
+    materializer = Path(__file__).with_name('materialize_component_recipes.py').read_bytes()
+    materializer_path = '.qemu/materialize_adaptations.py'
+    target = args.output/'build'/'files'/materializer_path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(materializer)
+    staged['build'].append(dict(path=materializer_path, sha256=sha(materializer), mode='0o755'))
     for owner,files in staged.items():
         revisions={i['revision'] for i in repos[owner]['inputs']}
         if len(revisions)!=1: raise ValueError('Unresolved baseline '+owner)
@@ -186,6 +192,8 @@ def main():
             scope='component_owned_adaptation_recipes_NOT_build_or_runtime_validation'),indent=2)+'\n')
     index=dict(schema_version=1,baseline_branch='OpenHarmony-7.0-Release-qemu',
         repositories={n:repos[n]['inputs'] for n in sorted(staged)},files=entries,
+        materializer=dict(repository='build', path=materializer_path,
+                          sha256=sha(materializer), mode='100755'),
         validation='Original tracked recipe bytes and executable modes preserved; runtime deferred.')
     args.index.parent.mkdir(parents=True,exist_ok=True)
     args.index.write_text(json.dumps(index,indent=2)+'\n')

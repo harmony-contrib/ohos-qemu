@@ -16,7 +16,8 @@ remain the active build input until component source migration is complete.
 
 The catalog in `migration/repositories.json` tracks distinct
 repositories across the OHOS 7.0 source lock, ArkWeb M144 source lock, Serial SIG,
-OpenVPN and tool sources. The catalog also includes 16 source dependencies found in component recipes;
+OpenVPN and tool sources. The catalog also includes source dependencies found in component recipes,
+including the separate historical Mesa 21.3 and SDK LLVM 15 inputs;
 progress is recorded with the manifest.
 
 The GitHub OpenHarmony-TPC organization was checked against the required M144
@@ -53,6 +54,10 @@ sync of all 326 `global_i18n` upstream branches was verified against remote SHAs
 Production verification records are archived with the manifest. A `prepare_only`
 diagnostic run never publishes branches.
 
+Long uploads use repository-scoped App tokens renewed before expiry. Git LFS
+credential caching is disabled so a long-running transfer can obtain a fresh
+token. The current token is revoked when the job finishes.
+
 GitHub's large-blob limit requires LFS history conversion in some independent
 mirrors. Original upstream SHA and hosted SHA are distinct identities and must
 be retained in source provenance; do not silently substitute one for the other.
@@ -74,6 +79,21 @@ These scripts are administrative tools, not build-time dependencies:
 - `generate_manifest.py`: reproduce manifest selection and the six-product contract.
 - `verify_remote_state.py`: audit repository defaults and QEMU branch SHAs through
   read-only API queries without altering source history.
+- `stage_component_recipes.py`, `stage_source_helpers.py`: assign tracked patches
+  and source preparation helpers to their owning repositories. Cross-component
+  patches are split at file boundaries and retain exact reconstruction hashes.
+- `verify_component_payloads.py`: verify published component bytes and modes
+  against the manifest ownership index and publication lineage.
+- `scripts/prepare_component_inputs.py`: retrieve locked component inputs and
+  invoke the component-owned materializer. It performs no patch application,
+  compilation, packaging or guest validation.
+
+The manifest's `adaptations.json` contains ownership and checksums only. Editable
+recipes live under `.qemu/adaptations/` in their component repositories; the
+generic materializer belongs to `openharmony-qemu/build`. A generated compatibility
+tree preserves existing relative imports. It is not another editable patch stack.
+Historical recipes retain their original source checks; transferring them does
+not establish that the deferred build entry point accepts the new branch graph.
 
 Operation journals and source candidates remain under the ignored
 `.tmp/organization-migration/` directory. Candidates are not published source

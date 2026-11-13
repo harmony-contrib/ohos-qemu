@@ -4601,7 +4601,7 @@
     {
       "name": "xts_acts",
       "upstream_url": "https://gitcode.com/openharmony/xts_acts.git",
-      "github_upstream": "openharmony/xts_acts",
+      "github_upstream": null,
       "baseline_branch": "OpenHarmony-7.0-Release-qemu",
       "auto_sync": true,
       "inputs": [
@@ -4611,7 +4611,9 @@
           "revision": "12ed38d7aec9c680ed1510a77a96efcc7b101489"
         }
       ],
-      "mirror_reason": "The GitHub upstream lacks the pinned OpenHarmony 7.0 commit; synchronize official GitCode branches into the existing fork without force updates."
+      "mirror_reason": "Upstream fork network LFS quota blocks current source synchronization",
+      "original_github_upstream": "openharmony/xts_acts",
+      "retained_upstream_fork": "openharmony-qemu/xts_acts-upstream-fork-backup"
     },
     {
       "name": "xts_dcts",
@@ -9708,6 +9710,9 @@
           "path": "base/busmanager/serial_manager",
           "revision": "c05fbbf156230982aa576373da6ee04378b09ca0"
         }
+      ],
+      "consumers": [
+        "vendor_ohemu"
       ]
     },
     {
@@ -9722,6 +9727,9 @@
           "path": "third_party/openvpn",
           "revision": "dc1f569087135894ac2703aeabd7a960ee9452d4"
         }
+      ],
+      "consumers": [
+        "communication_netmanager_ext"
       ]
     },
     {
@@ -9736,6 +9744,9 @@
           "path": "tools/gn",
           "revision": "6e0b557db44b3c164094e57687d20ba036a80667"
         }
+      ],
+      "consumers": [
+        "build"
       ]
     },
     {
@@ -9743,13 +9754,20 @@
       "upstream_url": "https://github.com/openharmony/third_party_llvm-project.git",
       "github_upstream": null,
       "baseline_branch": "OpenHarmony-7.0-Release-qemu",
-      "auto_sync": false,
+      "auto_sync": true,
       "inputs": [
         {
           "tree": "external",
           "path": "tools/sdk-llvm15",
           "revision": "3f002d04ba6b3a7659c601207c89d3a896b82546"
         }
+      ],
+      "mirror_reason": "The SDK LLVM 15 source has a different locked revision from the system LLVM project; keep a separate mirror with all upstream branches and the uniform QEMU baseline branch.",
+      "consumers": [
+        "chromium_arkweb",
+        "chromium_src",
+        "chromium_v8",
+        "chromium_third_party_swiftshader"
       ]
     },
     {

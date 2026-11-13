@@ -35,13 +35,16 @@ def main():
         git('init', '-b', BRANCH)
     remote = 'git@github.com:' + args.repository + '.git'
     observed = git('ls-remote', remote, 'refs/heads/' + BRANCH)
-    if observed:
+    if observed and args.evidence.exists():
         print(args.repository + ': preserve existing QEMU branch ' + observed.split()[0])
         return
     baseline = 'refs/heads/upstream/baseline-7.0'
     git('fetch', '--no-tags', '--filter=blob:none', '--depth=1', remote, baseline)
     source = git('rev-parse', 'FETCH_HEAD')
-    git('push', remote, source + ':refs/heads/' + BRANCH)
+    if observed and observed.split()[0] != source:
+        raise ValueError('Existing QEMU branch differs from the hosted baseline; no import receipt created')
+    if not observed:
+        git('push', remote, source + ':refs/heads/' + BRANCH)
     if git('ls-remote', remote, 'refs/heads/' + BRANCH).split()[0] != source:
         raise ValueError('Remote branch verification failed')
     subprocess.run(['gh', 'repo', 'edit', args.repository, '--default-branch', BRANCH], check=True)

@@ -61,7 +61,15 @@ def main():
             parent = git('rev-parse', 'refs/remotes/origin/' + BRANCH).decode().strip()
             message = git('show', '-s', '--format=%B', parent).decode()
             if 'Source export SHA-256: ' + fingerprint in message.splitlines():
-                record.update(status='published', qemu_commit=parent, observation='verified_existing_source_commit')
+                # Read raw commit headers: a depth-one fetch hides parents from
+                # revision-walking formatters even though the commit retains them.
+                headers = git('cat-file', 'commit', parent).split(b'\n\n', 1)[0]
+                predecessors = [line[7:].decode() for line in headers.splitlines()
+                                if line.startswith(b'parent ')]
+                if len(predecessors) != 1:
+                    raise ValueError('Expected one parent for the recovered source commit')
+                record.update(status='published', qemu_commit=parent, parent=predecessors[0],
+                              observation='verified_existing_source_commit')
             else:
                 allowed = {metadata['upstream_revision']}
                 imported = args.imports / (name + '.json')
@@ -93,6 +101,15 @@ def main():
                         if digest(source) != entry['sha256']:
                             raise ValueError('Exported source bytes changed: ' + entry['path'])
                         data = source.read_bytes()
+                        restored = entry.get('restored_upstream_asset')
+                        if restored:
+                            original = git('show', parent + ':' + entry['path'])
+                            pointer = ('oid sha256:' + restored['oid']).encode()
+                            if (restored['oid'] != entry['sha256'] or restored['size'] != len(data) or
+                                    (original != data and not (
+                                        b'version https://git-lfs.github.com/spec/v1' in original[:200]
+                                        and pointer in original))):
+                                raise ValueError('Original upstream LFS identity differs: ' + entry['path'])
                         if data.startswith((b'\x7fELF', b'\xcf\xfa\xed\xfe')):
                             admitted = entry.get('existing_tracked_asset')
                             original = (subprocess.check_output(['git', 'cat-file', 'blob',
@@ -105,6 +122,7 @@ def main():
                 record.update(migration_state='selected_source_changes_imported',
                     tracked_files=metadata['tracked'], added_files=[x['path'] for x in metadata['added']],
                     omitted=metadata['omitted'],
+                    source_scope=metadata.get('scope'),
                     validation=['git apply --cached', 'reverse application check', 'added file SHA-256'],
                     build_validated=False, runtime_validated=False)
                 tree = git('write-tree', '--missing-ok').decode().strip()
