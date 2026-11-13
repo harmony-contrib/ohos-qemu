@@ -30,8 +30,8 @@ system, ArkWeb and external tool trees.
 
 Synchronization scripts, upstream configuration and conflict issues belong to
 `openharmony-qemu/mirror-sync`. Its registry is generated from the source catalog;
-entries awaiting repository creation and authorization are disabled. GitHub forks
-that lack a required locked commit are also synchronized from official GitCode.
+all 186 required daily mirrors are enabled. GitHub forks that lack a required
+locked commit are also synchronized from official GitCode.
 
 Component repositories have GitHub Actions disabled. Imported upstream workflow
 files remain part of the source history, but do not launch upstream build matrices
@@ -112,9 +112,10 @@ Operation journals and source candidates remain under the ignored
 changes. The manifest's `migration-status.json` remains `in_progress` until all
 repositories, baselines and source changes have been verified remotely.
 
-Outstanding prerequisites include remaining repository creation and branch
-publication, production synchronization of remaining mirrors, additional vendored
-source dependencies, component patch review/publication. The system and ArkWeb locks require different
+All 695 catalog repositories have been created. Remaining prerequisites are
+publication and verification of the remaining branches, complete production
+synchronization, and the final component input cutover. The system and ArkWeb
+locks require different
 `web_webview` and bounds-checking revisions. Separate ArkWeb mirror repositories
 preserve both locked source identities under the same QEMU branch convention.
 No package/runtime acceptance is claimed.
