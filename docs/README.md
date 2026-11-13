@@ -4,6 +4,10 @@ This directory archives the architecture, source baselines, build/packaging work
 
 ## Documentation Index
 
+0. [**Repository Migration Status**](./repository-migration.md)
+   - Organization mirrors, the QEMU manifest, centralized daily synchronization,
+     component branch ownership and outstanding migration prerequisites.
+
 1. [**Architecture and Source Baseline**](./architecture-and-baseline.md)
    - Immutable source locks for OpenHarmony 7.0 Release (`f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549`) and Chromium/ArkWeb M144.
    - GitHub mirror rewriting, 35-project fallback cache, and 77-object former-LFS asset restoration.
