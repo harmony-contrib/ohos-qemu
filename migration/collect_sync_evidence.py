@@ -40,7 +40,9 @@ def main():
     parser.add_argument('--source-journal', type=Path, action='append')
     args = parser.parse_args()
     published = published_heads(args.source_journal)
-    artifacts = json.loads(run(['gh', 'api', f'repos/{CONTROL}/actions/runs/{args.run_id}/artifacts?per_page=100']))['artifacts']
+    pages = json.loads(run(['gh', 'api', '--paginate', '--slurp',
+        f'repos/{CONTROL}/actions/runs/{args.run_id}/artifacts?per_page=100']))
+    artifacts = [artifact for page in pages for artifact in page['artifacts']]
     args.archive.mkdir(parents=True, exist_ok=True)
     args.downloads.mkdir(parents=True, exist_ok=True)
     for name in args.only:
@@ -91,7 +93,9 @@ def main():
             if maps:
                 chunks = []
                 digest = hashlib.sha256()
-                directory = args.archive / 'commit-maps' / name
+                # Different runs may contain different upstream histories. Keep
+                # every conversion map under its immutable artifact identity.
+                directory = args.archive / 'commit-maps' / name / str(artifact['id'])
                 directory.mkdir(parents=True, exist_ok=True)
                 with archive.open(maps[0]) as mapping:
                     lines = []
@@ -103,7 +107,8 @@ def main():
                             lines = []
                     if lines:
                         chunks.append(write_chunk(directory, lines, len(chunks)))
-                identity['commit_map'] = dict(sha256=digest.hexdigest(), chunks=chunks)
+                identity['commit_map'] = dict(sha256=digest.hexdigest(), chunks=chunks,
+                    directory=str(directory.relative_to(args.archive)))
             (args.archive / (name + '-sync-' + args.run_id + '.json')).write_text(json.dumps(identity, indent=2) + '\n')
             (args.downloads / (name + '-result.json')).write_text(json.dumps(report, indent=2) + '\n')
             print(name + ': verified ' + json.dumps(identity['results']), flush=True)
@@ -115,7 +120,11 @@ def write_chunk(directory, lines, index):
     with gzip.GzipFile(fileobj=compressed, mode='wb', mtime=0) as stream:
         stream.write(data)
     name = f'{index:05d}.csv.gz'
-    (directory / name).write_bytes(compressed.getvalue())
+    target = directory / name
+    encoded = compressed.getvalue()
+    if target.exists() and target.read_bytes() != encoded:
+        raise ValueError('Archived conversion map changed; preserving existing evidence: ' + str(target))
+    target.write_bytes(encoded)
     return dict(file=name, rows=len(lines), sha256=hashlib.sha256(data).hexdigest())
 
 
