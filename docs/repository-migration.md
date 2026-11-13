@@ -105,6 +105,10 @@ These scripts are administrative tools, not build-time dependencies:
 - `snapshot_publication.py`: archive full journals and derive the manifest lock.
   Its completion checks require matching remote refs/defaults, current export
   fingerprints, component payloads, production mirror evidence and input cutover.
+  When later local edits exist, `--verified-inputs` checks an independent exact
+  reconstruction and the preserved original files. It also verifies the active
+  compatibility links, backs up changed local inputs, and records them as
+  unpublished work. It never replaces those edits or includes them in the lock.
 - `scripts/prepare_component_inputs.py`: retrieve locked component inputs and
   invoke the component-owned materializer. It performs no patch application,
   compilation, packaging or guest validation.
@@ -146,5 +150,8 @@ SHAs. It verifies the component-owned materializer and all reconstructed hashes
 and file modes. Generated files live under ignored `.qemu/component-inputs/`;
 `patches` and the transferred helper paths are compatibility links. Keep changes
 in the owning component repositories instead of editing this generated tree.
+If that directory already contains local work, select a fresh `--output` directory
+for verification and preserve the active directory until those changes are moved
+to their owning components. Migration status lists any preserved unpublished inputs.
 The manifest records the six-product contract in `products.json`. The independent
 build entry point and package/runtime acceptance remain deferred.

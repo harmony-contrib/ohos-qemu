@@ -112,6 +112,45 @@ class SnapshotTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'production_mirror_verification'):
                     snapshot(workspace, catalog, root, True, cutover)
 
+    def test_isolated_reconstruction_preserves_later_edits_and_requires_original_backup(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root, workspace, manifest, catalog, cutover = self.fixture(Path(temporary))
+            relative = 'patches/example.patch'
+            active = root / '.qemu/component-inputs' / relative
+            baseline = active.read_bytes()
+            reconstruction = workspace / 'reconstruction'
+            for directory in (workspace / 'backup', reconstruction):
+                target = directory / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(baseline)
+                target.chmod(0o644)
+            receipt = dict(generated=True, files=1,
+                index_sha256=hashlib.sha256((manifest / 'adaptations.json').read_bytes()).hexdigest())
+            (reconstruction / '.component-recipes.json').write_text(json.dumps(receipt))
+            active.write_bytes(b'unpublished concurrent work\n')
+            active.chmod(0o755)
+            with self.assertRaisesRegex(ValueError, 'legacy_input_cutover'):
+                snapshot(workspace, catalog, root, True, cutover)
+            status = snapshot(workspace, catalog, root, True, cutover, reconstruction)
+            self.assertTrue(status['completion_gates']['legacy_input_cutover'])
+            change, = status['unpublished_local_input_changes']
+            self.assertFalse(change['published'])
+            preserved = workspace / change['backup_name'] / relative
+            self.assertEqual(active.read_bytes(), b'unpublished concurrent work\n')
+            self.assertEqual(preserved.read_bytes(), active.read_bytes())
+            self.assertEqual(preserved.stat().st_mode & 0o777, 0o755)
+            self.assertEqual((reconstruction / relative).read_bytes(), baseline)
+            for invalid in (workspace / 'backup' / relative, reconstruction / relative):
+                invalid.write_bytes(b'wrong baseline\n')
+                with self.assertRaisesRegex(ValueError, 'legacy_input_cutover'):
+                    snapshot(workspace, catalog, root, True, cutover, reconstruction)
+                invalid.write_bytes(baseline)
+            (root / 'patches').unlink()
+            (root / 'patches').mkdir()
+            (root / relative).write_bytes(baseline)
+            with self.assertRaisesRegex(ValueError, 'legacy_input_cutover'):
+                snapshot(workspace, catalog, root, True, cutover, reconstruction)
+
 
 if __name__ == '__main__':
     unittest.main()

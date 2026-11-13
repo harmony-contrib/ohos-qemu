@@ -13,6 +13,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import tempfile
 
 from component_heads import published_heads
 
@@ -42,7 +43,60 @@ def mirror_verified(report):
         for row in conflicts)
 
 
-def snapshot(workspace, catalog_path, root, complete=False, cutover=None):
+def verify_cutover(workspace, root, index, index_hash, record, verified_inputs=None):
+    """Verify the migrated baseline without replacing subsequent local work."""
+    if (record.get('index_sha256') != index_hash
+            or record.get('original_files_preserved') is not True):
+        return False, []
+    active = root / '.qemu/component-inputs'
+    if verified_inputs is not None:
+        receipt = read_json(verified_inputs / '.component-recipes.json', {})
+        if (verified_inputs.resolve() == active.resolve()
+                or receipt.get('index_sha256') != index_hash
+                or receipt.get('files') != len(index['files'])
+                or receipt.get('generated') is not True):
+            return False, []
+    changes = []
+    for entry in index['files']:
+        original = root / entry['path']
+        generated = active / entry['path']
+        expected_mode = int(entry['mode'], 8) & 0o777
+        if (not original.exists() or not generated.is_file() or generated.is_symlink()
+                or original.resolve() != generated.resolve()):
+            return False, []
+        canonical = (verified_inputs / entry['path']) if verified_inputs else generated
+        if (not canonical.is_file() or canonical.is_symlink()
+                or sha(canonical.read_bytes()) != entry['sha256']
+                or canonical.stat().st_mode & 0o777 != expected_mode):
+            return False, []
+        if verified_inputs is not None:
+            saved = Path(record['original_backup']) / entry['path']
+            if (not saved.is_file() or saved.is_symlink()
+                    or sha(saved.read_bytes()) != entry['sha256']
+                    or saved.stat().st_mode & 0o777 != expected_mode):
+                return False, []
+        content, mode = generated.read_bytes(), generated.stat().st_mode & 0o777
+        if sha(content) != entry['sha256'] or mode != expected_mode:
+            if verified_inputs is None:
+                return False, []
+            changes.append((entry['path'], content, mode))
+    preserved = []
+    if changes:
+        backup = Path(tempfile.mkdtemp(prefix='preserved-local-inputs-', dir=workspace))
+        for relative, content, mode in changes:
+            saved = backup / relative
+            saved.parent.mkdir(parents=True, exist_ok=True)
+            saved.write_bytes(content)
+            saved.chmod(mode)
+            live = active / relative
+            if live.read_bytes() != content or live.stat().st_mode & 0o777 != mode:
+                raise ValueError('Local input changed during preservation; retry: ' + relative)
+            preserved.append(dict(path=relative, sha256=sha(content), mode=oct(mode),
+                backup_name=backup.name, published=False))
+    return True, preserved
+
+
+def snapshot(workspace, catalog_path, root, complete=False, cutover=None, verified_inputs=None):
     manifest = workspace / 'manifest'
     catalog = read_json(catalog_path)
     selection = read_json(workspace / 'reviewed-publication-selection.json')
@@ -123,18 +177,8 @@ def snapshot(workspace, catalog_path, root, complete=False, cutover=None):
             and row.get('verified_files') == row.get('expected_files')
             for name, row in payload_rows.items()))
     cutover_record = read_json(cutover, {}) if cutover else {}
-    cutover_complete = (cutover_record.get('index_sha256') == index_hash
-                        and cutover_record.get('original_files_preserved') is True)
-    if cutover_complete:
-        for entry in index['files']:
-            original = root / entry['path']
-            generated = root / '.qemu/component-inputs' / entry['path']
-            if (not original.exists() or not generated.is_file()
-                    or original.resolve() != generated.resolve()
-                    or sha(original.read_bytes()) != entry['sha256']
-                    or (original.stat().st_mode & 0o777) != (int(entry['mode'], 8) & 0o777)):
-                cutover_complete = False
-                break
+    cutover_complete, local_changes = verify_cutover(
+        workspace, root, index, index_hash, cutover_record, verified_inputs)
     gates = dict(repository_creation=created == names,
         component_actions_disabled=all(
             latest['component-automation.jsonl'].get(name, {}).get('status') == 'disabled'
@@ -164,6 +208,7 @@ def snapshot(workspace, catalog_path, root, complete=False, cutover=None):
         mirrors_requiring_daily_sync=len(required_mirrors),
         mirrors_with_verified_production_sync=len(verified_mirrors),
         upstream_conflicts=conflicts,
+        unpublished_local_input_changes=local_changes,
         mirrors_awaiting_verification=sorted(required_mirrors - verified_mirrors),
         note='Source repository migration only; package builds and runtime validation remain deferred.')
     lock = dict(schema_version=1, complete=complete, baseline_branch=BRANCH,
@@ -192,6 +237,9 @@ def snapshot(workspace, catalog_path, root, complete=False, cutover=None):
         write_json(evidence / 'legacy-input-cutover.json', dict(index_sha256=index_hash,
             files=len(index['files']), original_files_preserved=True,
             original_backup_name=Path(cutover_record['original_backup']).name,
+            verification_mode=('isolated_reconstruction_preserving_local_work'
+                               if verified_inputs else 'active_generated_inputs'),
+            unpublished_local_input_changes=local_changes,
             build_validated=False, runtime_validated=False))
     write_json(manifest / 'components.lock.json', lock)
     write_json(manifest / 'migration-status.json', status)
@@ -204,9 +252,12 @@ def main():
     parser.add_argument('--catalog', type=Path, required=True)
     parser.add_argument('--root', type=Path, required=True)
     parser.add_argument('--cutover', type=Path)
+    parser.add_argument('--verified-inputs', type=Path,
+                        help='Fresh reconstruction for baseline verification; preserve and record later local edits')
     parser.add_argument('--complete', action='store_true')
     args = parser.parse_args()
-    status = snapshot(args.workspace, args.catalog, args.root, args.complete, args.cutover)
+    status = snapshot(args.workspace, args.catalog, args.root, args.complete, args.cutover,
+                      args.verified_inputs)
     print(json.dumps({k: status[k] for k in ('status', 'repositories_created',
         'qemu_branches_recorded', 'source_components_published',
         'mirrors_with_verified_production_sync', 'completion_gates')}, indent=2))
