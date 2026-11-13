@@ -84,6 +84,11 @@ These scripts are administrative tools, not build-time dependencies:
   patches are split at file boundaries and retain exact reconstruction hashes.
 - `verify_component_payloads.py`: verify published component bytes and modes
   against the manifest ownership index and publication lineage.
+- `harvest_completed_mirrors.py`, `publish_ready_components.py`: collect completed
+  synchronization evidence and resume explicitly reviewed source publications.
+- `snapshot_publication.py`: archive full journals and derive the manifest lock.
+  Its completion checks require matching remote refs/defaults, current export
+  fingerprints, component payloads, production mirror evidence and input cutover.
 - `scripts/prepare_component_inputs.py`: retrieve locked component inputs and
   invoke the component-owned materializer. It performs no patch application,
   compilation, packaging or guest validation.
