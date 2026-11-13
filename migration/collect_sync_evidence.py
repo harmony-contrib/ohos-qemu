@@ -2,6 +2,7 @@
 """Verify completed mirror artifacts against remote refs and archive their evidence."""
 import argparse
 import collections
+import datetime
 import gzip
 import hashlib
 import io
@@ -15,6 +16,32 @@ from component_heads import published_heads
 
 CONTROL = 'openharmony-qemu/mirror-sync'
 BRANCH = 'refs/heads/OpenHarmony-7.0-Release-qemu'
+
+
+def verify_conflict_issues(report, fetch):
+    conflicts = []
+    for row in report['results']:
+        if row['status'] != 'conflict':
+            continue
+        number = row.get('issue')
+        if not isinstance(number, int) or number < 1:
+            raise ValueError('Conflict has no central issue')
+        issue = fetch(number)
+        url = f'https://github.com/{CONTROL}/issues/{number}'
+        marker = '<!-- mirror-conflict:' + hashlib.sha256(
+            (report['repository'] + '\n' + row['ref']).encode()).hexdigest() + ' -->'
+        body = issue.get('body') or ''
+        expected = [marker, 'Repository: https://github.com/' + report['repository'],
+                    'Ref: `' + row['ref'] + '`',
+                    'Destination: `' + (row['old'] or 'missing') + '`',
+                    'Incoming: `' + row['new'] + '`']
+        if (issue.get('html_url') != url or issue.get('state') != 'open'
+                or not all(value in body for value in expected)):
+            raise ValueError('Central issue does not describe the preserved conflict')
+        conflicts.append(dict(ref=row['ref'], old=row['old'], incoming=row['new'],
+            issue_url=url, issue_verified=True,
+            issue_body_sha256=hashlib.sha256(body.encode()).hexdigest()))
+    return conflicts
 
 
 def run(argv):
@@ -79,6 +106,7 @@ def main():
                 if observed.get(BRANCH) != expected:
                     raise ValueError('QEMU development branch changed during sync: ' + name)
             identity = dict(repository=report['repository'],
+                checked_at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 workflow_url=f'https://github.com/{CONTROL}/actions/runs/{args.run_id}',
                 artifact_id=artifact['id'], artifact_created_at=artifact['created_at'],
                 upstream_branches=len(report['original_refs']),
@@ -87,6 +115,8 @@ def main():
                 baseline_original_refs=report['baseline_original_refs'],
                 baseline_hosted_refs={ref: report['hosted_refs'][ref] for ref in report['baseline_original_refs']},
                 build_validated=False, runtime_validated=False)
+            identity['conflicts'] = verify_conflict_issues(report, lambda number: json.loads(
+                run(['gh', 'api', f'repos/{CONTROL}/issues/{number}'])))
             # Split compressed maps into bounded chunks so even very large source
             # histories can retain complete SHA conversion evidence in Git.
             maps = [p for p in archive.namelist() if p.endswith('commit-map.csv')]

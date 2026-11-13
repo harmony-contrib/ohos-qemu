@@ -12,6 +12,7 @@ import gzip
 import hashlib
 import json
 from pathlib import Path
+import re
 
 from component_heads import published_heads
 
@@ -24,6 +25,21 @@ def sha(data):
 
 def read_json(path, default=None):
     return json.loads(path.read_text()) if path.exists() else default
+
+
+def mirror_verified(report):
+    if not report.get('remote_refs_verified'):
+        return False
+    count = report.get('results', {}).get('conflict', 0)
+    conflicts = report.get('conflicts', [])
+    return len(conflicts) == count and all(
+        row.get('issue_verified') is True
+        and re.fullmatch(r'https://github.com/openharmony-qemu/mirror-sync/issues/[1-9][0-9]*',
+                         row.get('issue_url', ''))
+        and row.get('ref', '').startswith('refs/heads/')
+        and row['ref'] != 'refs/heads/upstream/baseline-7.0'
+        and not re.fullmatch(r'refs/heads/OpenHarmony-.+-Release-qemu', row['ref'])
+        for row in conflicts)
 
 
 def snapshot(workspace, catalog_path, root, complete=False, cutover=None):
@@ -78,12 +94,18 @@ def snapshot(workspace, catalog_path, root, complete=False, cutover=None):
     created = {name for name, row in latest['repository-creation.jsonl'].items()
                if row['status'] == 'created'} & names
     required_mirrors = {project['name'] for project in projects if project.get('auto_sync')}
-    verified_mirrors = set()
+    latest_mirrors = {}
     for path in (manifest / 'migration-evidence/mirror-sync').glob('*-sync-*.json'):
         report = read_json(path)
-        if report.get('remote_refs_verified') and not report.get('results', {}).get('conflict'):
-            verified_mirrors.add(report['repository'].split('/')[-1])
-    verified_mirrors &= required_mirrors
+        name = report['repository'].split('/')[-1]
+        order = lambda value: (value.get('artifact_created_at', ''), value.get('artifact_id', 0))
+        if name not in latest_mirrors or order(report) > order(latest_mirrors[name]):
+            latest_mirrors[name] = report
+    verified_mirrors = {name for name, report in latest_mirrors.items()
+                        if name in required_mirrors and mirror_verified(report)}
+    conflicts = [dict(repository=report['repository'], **row)
+                 for name, report in sorted(latest_mirrors.items()) if name in required_mirrors
+                 for row in report.get('conflicts', [])]
     registry = read_json(workspace / 'mirror-sync/repositories.json', {'repositories': []})
     enabled_mirrors = {row['name'] for row in registry['repositories'] if row['enabled']}
     remote = read_json(workspace / 'remote-state-latest.json', {})
@@ -129,7 +151,8 @@ def snapshot(workspace, catalog_path, root, complete=False, cutover=None):
     timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
     status = read_json(manifest / 'migration-status.json', {})
     status.update(schema_version=1, snapshot_at=timestamp,
-        status='source_migration_complete' if complete else 'in_progress',
+        status=('source_migration_complete_with_reported_conflicts' if conflicts else
+                'source_migration_complete') if complete else 'in_progress',
         repository_creation_complete=gates['repository_creation'],
         source_baselines_complete=remote_complete,
         patch_migration_complete=bool(gates['reviewed_publications'] and payload_complete and cutover_complete),
@@ -140,6 +163,7 @@ def snapshot(workspace, catalog_path, root, complete=False, cutover=None):
             if phase['journal'] in ('source-publication.jsonl', 'arkweb-source-publication.jsonl')),
         mirrors_requiring_daily_sync=len(required_mirrors),
         mirrors_with_verified_production_sync=len(verified_mirrors),
+        upstream_conflicts=conflicts,
         mirrors_awaiting_verification=sorted(required_mirrors - verified_mirrors),
         note='Source repository migration only; package builds and runtime validation remain deferred.')
     lock = dict(schema_version=1, complete=complete, baseline_branch=BRANCH,

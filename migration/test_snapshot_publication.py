@@ -90,6 +90,28 @@ class SnapshotTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'reviewed_publications'):
                 snapshot(workspace, catalog, root, True, cutover)
 
+    def test_newer_conflicts_require_verified_issues_and_cannot_affect_the_baseline(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root, workspace, manifest, catalog, cutover = self.fixture(Path(temporary))
+            path = manifest / 'migration-evidence/mirror-sync/build-sync-456.json'
+            report = dict(repository='openharmony-qemu/build', remote_refs_verified=True,
+                          artifact_created_at='2026-11-13T00:00:00Z', artifact_id=456,
+                          results={'unchanged': 1, 'conflict': 1})
+            path.write_text(json.dumps(report))
+            with self.assertRaisesRegex(ValueError, 'production_mirror_verification'):
+                snapshot(workspace, catalog, root, True, cutover)
+            report['conflicts'] = [dict(ref='refs/heads/renovate/dependency', old='old', incoming='new',
+                issue_url='https://github.com/openharmony-qemu/mirror-sync/issues/2', issue_verified=True)]
+            path.write_text(json.dumps(report))
+            status = snapshot(workspace, catalog, root, True, cutover)
+            self.assertEqual(status['status'], 'source_migration_complete_with_reported_conflicts')
+            self.assertEqual(len(status['upstream_conflicts']), 1)
+            for ref in ('refs/heads/upstream/baseline-7.0', 'refs/heads/OpenHarmony-7.0-Release-qemu'):
+                report['conflicts'][0]['ref'] = ref
+                path.write_text(json.dumps(report))
+                with self.assertRaisesRegex(ValueError, 'production_mirror_verification'):
+                    snapshot(workspace, catalog, root, True, cutover)
+
 
 if __name__ == '__main__':
     unittest.main()

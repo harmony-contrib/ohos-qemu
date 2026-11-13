@@ -44,6 +44,13 @@ normal fast-forward pushes, and never deletes destination refs. Non-fast-forward
 updates or concurrent changes create a deduplicated issue in `mirror-sync`, while
 preserving the conflicting destination ref. QEMU development branches are excluded.
 
+An upstream branch rewrite is recorded separately from the fixed QEMU baseline.
+Migration evidence verifies the preserved destination SHA and the matching open
+issue in `mirror-sync`. Such a reported upstream conflict can coexist with a
+complete QEMU source migration; conflicts on the fixed baseline or QEMU branch
+still prevent completion. Outstanding upstream conflicts remain explicit in
+`migration-status.json`.
+
 The former sync installations in `global_i18n`, `developtools_smartperf_host` and
 `device_soc_rockchip` are retired through signed deletion commits affecting only
 the four migration-owned sync/configuration files. Source tree contents are

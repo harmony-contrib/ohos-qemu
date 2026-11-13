@@ -28,9 +28,9 @@ def main():
         complete = []
         for job in (job for page in pages for job in page['jobs']):
             match = re.fullmatch(r'synchronize \(([A-Za-z0-9_.-]+)\)', job['name'])
-            if match and job['conclusion'] == 'success':
+            if match and job['conclusion'] in ('success', 'failure', 'timed_out'):
                 complete.append(match[1])
-            elif match and job['conclusion'] in ('failure', 'timed_out'):
+            if match and job['conclusion'] in ('failure', 'timed_out'):
                 print('REVIEW FAILED JOB ' + run + ' ' + match[1] + ' ' + str(job['id']), flush=True)
         complete = list(dict.fromkeys(complete))
         missing = [name for name in complete if not (archive / (name + '-sync-' + run + '.json')).exists()]
