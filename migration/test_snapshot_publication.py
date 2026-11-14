@@ -1,0 +1,156 @@
+import hashlib
+import json
+from pathlib import Path
+import tempfile
+import unittest
+
+from snapshot_publication import snapshot
+
+
+class SnapshotTest(unittest.TestCase):
+    def fixture(self, directory):
+        root = directory / 'root'
+        workspace = directory / 'workspace'
+        manifest = workspace / 'manifest'
+
+        def write(path, value):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(value) + '\n')
+            return path
+
+        branch = 'OpenHarmony-7.0-Release-qemu'
+        revision = 'a' * 40
+        upstream = 'b' * 40
+        catalog = write(directory / 'catalog.json', dict(repositories=[dict(name='build',
+            auto_sync=True, inputs=[dict(revision=upstream)])]))
+        write(workspace / 'repository-creation.jsonl', dict(name='build', status='created'))
+        write(workspace / 'component-automation.jsonl', dict(name='build', status='disabled',
+                                                          verified_actions_enabled=False))
+        write(workspace / 'baseline-publication.jsonl',
+              dict(name='build', status='published', remote_revision=upstream))
+        export = workspace / 'exports/build'
+        write(export / 'export.json', dict(name='build'))
+        (export / 'tracked.patch').write_bytes(b'fixture patch\n')
+        fingerprint = hashlib.sha256((export / 'export.json').read_bytes() +
+                                     (export / 'tracked.patch').read_bytes()).hexdigest()
+        write(workspace / 'source-publication.jsonl', dict(name='build', status='published',
+            qemu_commit=revision, parent=upstream, export_sha256=fingerprint))
+        write(workspace / 'reviewed-publication-selection.json', dict(phases=[dict(
+            exports='exports', journal='source-publication.jsonl', repositories=['build'])]))
+        payload = root / '.qemu/component-inputs/patches/example.patch'
+        payload.parent.mkdir(parents=True)
+        payload.write_bytes(b'component input\n')
+        payload.chmod(0o644)
+        root.joinpath('patches').symlink_to('.qemu/component-inputs/patches')
+        index = write(manifest / 'adaptations.json', dict(repositories={'build': []},
+            materializer=dict(repository='build'), files=[dict(path='patches/example.patch',
+            mode='100644', sha256=hashlib.sha256(payload.read_bytes()).hexdigest())]))
+        index_hash = hashlib.sha256(index.read_bytes()).hexdigest()
+        write(workspace / 'remote-state-latest.json', dict(repositories=[dict(name='build',
+            qemu_revision=revision, default_branch=branch, matches_expected=True)]))
+        write(workspace / 'component-payload-verification.json', dict(complete=True,
+            index_sha256=index_hash, repositories=[dict(repository='build', status='verified',
+            qemu_commit=revision, expected_files=1, verified_files=1)]))
+        write(workspace / 'mirror-sync/repositories.json', dict(repositories=[
+            dict(name='build', enabled=True)]))
+        write(manifest / 'migration-evidence/mirror-sync/build-sync-123.json',
+            dict(repository='openharmony-qemu/build', remote_refs_verified=True,
+                 results={'created': 1}))
+        cutover = write(workspace / 'backup/cutover.json', dict(index_sha256=index_hash,
+            original_files_preserved=True, original_backup=str(workspace / 'backup')))
+        return root, workspace, manifest, catalog, cutover
+
+    def test_complete_requires_current_remote_and_payload_heads(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root, workspace, manifest, catalog, cutover = self.fixture(Path(temporary))
+            status = snapshot(workspace, catalog, root, True, cutover)
+            self.assertTrue(all(status['completion_gates'].values()))
+            self.assertFalse(status['build_validated'])
+            self.assertFalse(status['runtime_validated'])
+            previous = (manifest / 'components.lock.json').read_bytes()
+            journal = workspace / 'source-publication.jsonl'
+            row = json.loads(journal.read_text())
+            row.update(parent=row['qemu_commit'], qemu_commit='c' * 40)
+            with journal.open('a') as stream:
+                stream.write(json.dumps(row) + '\n')
+            with self.assertRaisesRegex(ValueError, 'remote_branches_and_defaults, component_payloads'):
+                snapshot(workspace, catalog, root, True, cutover)
+            self.assertEqual((manifest / 'components.lock.json').read_bytes(), previous)
+
+    def test_changed_export_or_missing_mirror_cannot_be_complete(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root, workspace, manifest, catalog, cutover = self.fixture(Path(temporary))
+            (workspace / 'exports/build/tracked.patch').write_bytes(b'changed after publication\n')
+            mirror = manifest / 'migration-evidence/mirror-sync/build-sync-123.json'
+            mirror.unlink()
+            status = snapshot(workspace, catalog, root)
+            self.assertEqual(status['publication_phases'][0]['pending'], ['build'])
+            self.assertEqual(status['mirrors_awaiting_verification'], ['build'])
+            self.assertFalse(json.loads((manifest / 'components.lock.json').read_text())['complete'])
+            with self.assertRaisesRegex(ValueError, 'reviewed_publications'):
+                snapshot(workspace, catalog, root, True, cutover)
+
+    def test_newer_conflicts_require_verified_issues_and_cannot_affect_the_baseline(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root, workspace, manifest, catalog, cutover = self.fixture(Path(temporary))
+            path = manifest / 'migration-evidence/mirror-sync/build-sync-456.json'
+            report = dict(repository='openharmony-qemu/build', remote_refs_verified=True,
+                          artifact_created_at='2026-11-13T00:00:00Z', artifact_id=456,
+                          results={'unchanged': 1, 'conflict': 1})
+            path.write_text(json.dumps(report))
+            with self.assertRaisesRegex(ValueError, 'production_mirror_verification'):
+                snapshot(workspace, catalog, root, True, cutover)
+            report['conflicts'] = [dict(ref='refs/heads/renovate/dependency', old='old', incoming='new',
+                issue_url='https://github.com/openharmony-qemu/mirror-sync/issues/2', issue_verified=True)]
+            path.write_text(json.dumps(report))
+            status = snapshot(workspace, catalog, root, True, cutover)
+            self.assertEqual(status['status'], 'source_migration_complete_with_reported_conflicts')
+            self.assertEqual(len(status['upstream_conflicts']), 1)
+            for ref in ('refs/heads/upstream/baseline-7.0', 'refs/heads/OpenHarmony-7.0-Release-qemu'):
+                report['conflicts'][0]['ref'] = ref
+                path.write_text(json.dumps(report))
+                with self.assertRaisesRegex(ValueError, 'production_mirror_verification'):
+                    snapshot(workspace, catalog, root, True, cutover)
+
+    def test_isolated_reconstruction_preserves_later_edits_and_requires_original_backup(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root, workspace, manifest, catalog, cutover = self.fixture(Path(temporary))
+            relative = 'patches/example.patch'
+            active = root / '.qemu/component-inputs' / relative
+            baseline = active.read_bytes()
+            reconstruction = workspace / 'reconstruction'
+            for directory in (workspace / 'backup', reconstruction):
+                target = directory / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(baseline)
+                target.chmod(0o644)
+            receipt = dict(generated=True, files=1,
+                index_sha256=hashlib.sha256((manifest / 'adaptations.json').read_bytes()).hexdigest())
+            (reconstruction / '.component-recipes.json').write_text(json.dumps(receipt))
+            active.write_bytes(b'unpublished concurrent work\n')
+            active.chmod(0o755)
+            with self.assertRaisesRegex(ValueError, 'legacy_input_cutover'):
+                snapshot(workspace, catalog, root, True, cutover)
+            status = snapshot(workspace, catalog, root, True, cutover, reconstruction)
+            self.assertTrue(status['completion_gates']['legacy_input_cutover'])
+            change, = status['unpublished_local_input_changes']
+            self.assertFalse(change['published'])
+            preserved = workspace / change['backup_name'] / relative
+            self.assertEqual(active.read_bytes(), b'unpublished concurrent work\n')
+            self.assertEqual(preserved.read_bytes(), active.read_bytes())
+            self.assertEqual(preserved.stat().st_mode & 0o777, 0o755)
+            self.assertEqual((reconstruction / relative).read_bytes(), baseline)
+            for invalid in (workspace / 'backup' / relative, reconstruction / relative):
+                invalid.write_bytes(b'wrong baseline\n')
+                with self.assertRaisesRegex(ValueError, 'legacy_input_cutover'):
+                    snapshot(workspace, catalog, root, True, cutover, reconstruction)
+                invalid.write_bytes(baseline)
+            (root / 'patches').unlink()
+            (root / 'patches').mkdir()
+            (root / relative).write_bytes(baseline)
+            with self.assertRaisesRegex(ValueError, 'legacy_input_cutover'):
+                snapshot(workspace, catalog, root, True, cutover, reconstruction)
+
+
+if __name__ == '__main__':
+    unittest.main()

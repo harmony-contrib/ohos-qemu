@@ -1,13 +1,22 @@
 # OpenHarmony 7.0 Release QEMU Adaptation Documentation
 
+See [repository migration status](./repository-migration.md) for the current
+component repositories and ownership. The build and packaging instructions below
+record the historical workflow; the migrated source graph has no new package or
+runtime acceptance yet.
+
 This directory archives the architecture, source baselines, build/packaging workflow, and subsystem adaptations for building complete OpenHarmony 7.0 Release (`OpenHarmony-7.0-Release`, API 26) standard-system QEMU images across all six target combinations (`phone` and `2in1` × `arm64_virt`, `x86_64_virt`, and `armv7a_virt`).
 
 ## Documentation Index
 
+0. [**Repository Migration Status**](./repository-migration.md)
+   - Organization mirrors, the QEMU manifest, centralized daily synchronization,
+     component branch ownership and outstanding migration prerequisites.
+
 1. [**Architecture and Source Baseline**](./architecture-and-baseline.md)
    - Immutable source locks for OpenHarmony 7.0 Release (`f079c4ad9848f9cc4a9a4b3a3613ad8fbb142549`) and Chromium/ArkWeb M144.
    - GitHub mirror rewriting, 35-project fallback cache, and 77-object former-LFS asset restoration.
-   - Ordered component patch stack (`patches/phone`, `patches/2in1`, `patches/common`, `patches/lib`).
+   - Historical component recipe layout (`patches/phone`, `patches/2in1`, `patches/common`, `patches/lib`); source ownership is transferred to component repositories.
    - Self-contained asset reconstruction (`prepare_sceneboard_runtime_assets.py` and `prepare_livecaptions_lottie_cache.py`) for from-zero builds on new machines.
 
 2. [**From-Zero Build and Packaging Guide**](./build-and-packaging-guide.md)

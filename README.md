@@ -2,6 +2,11 @@
 
 Prebuilt OpenHarmony standard-system QEMU images for Linux, macOS, and Windows.
 
+Source repository migration to [openharmony-qemu](https://github.com/openharmony-qemu) is complete.
+See [repository migration status](docs/repository-migration.md) for the manifest,
+component ownership and verification evidence. Package builds and runtime
+validation for the migrated source graph are deferred.
+
 ## Requirements
 
 - QEMU installed and available in `PATH` (`8.1+` for accessibility QMP
@@ -92,6 +97,7 @@ powershell.exe -ExecutionPolicy Bypass -File ./launch/windows.ps1 -Cpu EPYC-v5 -
 | `--width` / `--height` | `QEMU_XRES` / `QEMU_YRES` | same |
 | `-m, --memory SIZE` | `QEMU_MEMORY` | `4096` (armv7a: `3072`) |
 | `--userdata-size SIZE` | `QEMU_USERDATA_SIZE` | `2G` (`images/userdata.img`, online-resized on boot) |
+| `--reset` | `QEMU_RESET` | `0` (`1` resets active `userdata.img` to a clean factory F2FS image before boot, preserving any custom `userdata.img` size unless `--userdata-size` is also set) |
 | `-s, --smp N` | `QEMU_SMP` | `4` |
 | `--cpu MODEL` | `QEMU_CPU` | `max` (arm64: `cortex-a57`, armv7a: `cortex-a7`) |
 | `-d, --display` / `--headless` | `QEMU_DISPLAY` | product default (`sdl` / `cocoa` / `none`) |
@@ -134,10 +140,11 @@ powershell.exe -ExecutionPolicy Bypass -File ./launch/windows.ps1 -Cpu EPYC-v5 -
 
 On Windows PowerShell (`launch/windows.ps1`, included across `x86_64_virt`,
 `arm64_virt`, and `armv7a_virt` packages) the same knobs are available as
-parameters (`-Resolution`, `-Memory`, `-Smp`, `-Cpu`, `-Display`, `-Headless`,
-`-UsbSerial`, `-PortForward`, `-Rng`, `-Sdcard`, `-NvmeDisk`, `-Gps`, `-Sensor`,
-`-Battery`, `-Thermal`, `-Instance`, `-Peer`, `-Rtc`, `-Watchdog`,
-`-CameraFeed`, `-Clipboard`, …) or via the environment variables above.
+parameters (`-Resolution`, `-Memory`, `-UserdataSize`, `-Reset`, `-Smp`, `-Cpu`,
+`-Display`, `-Headless`, `-UsbSerial`, `-PortForward`, `-Rng`, `-Sdcard`,
+`-NvmeDisk`, `-Gps`, `-Sensor`, `-Battery`, `-Thermal`, `-Instance`, `-Peer`,
+`-Rtc`, `-Watchdog`, `-CameraFeed`, `-Clipboard`, …) or via the environment
+variables above.
 
 ### Live runtime hardware control (`tools/qemu_hw_controller.py`)
 
@@ -224,9 +231,12 @@ executing `ACCESSIBILITY_E2E_ENABLE_COMMAND` after installation.
 
 ## Source capability components
 
-Source builds use a component-owned patch tree under [`patches`](./patches).
-Phone and 2in1 are independent top-level entries; the removed `overlays/`
-commands are not retained as compatibility wrappers:
+The following commands document the historical source-preparation interface.
+These recipes and helpers now belong to their component repositories; the
+compatibility tree is generated from the complete manifest lock.
+Follow [repository migration status](docs/repository-migration.md) before using
+these commands. Their transfer does not validate the legacy builder against the
+new QEMU branches. Phone and 2in1 remain separate historical entry points:
 
 ```bash
 bash patches/phone/apply.sh \
