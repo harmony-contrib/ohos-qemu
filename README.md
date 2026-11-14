@@ -19,7 +19,7 @@ validation for the migrated source graph are deferred.
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20260809
+curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20261107
 ```
 
 The installer downloads the selected Release and installs the package under
@@ -444,10 +444,15 @@ keeps its existing `rich.json` base (applications, SDK, code signing, and VPN)
 and then inherits a current-tree-compatible profile derived from
 `productdefine/common/inherit/2in1.json`. Shared parts use the 2in1 feature
 selection, while QEMU-specific board/display requirements remain enabled.
-The 2in1 profile enables SceneBoard and the PC window layout, installs
+The 2in1 profile enables SceneBoard and the PC freeform window layout, installs
 `/etc/sceneboard.config` as `ENABLED`, and sets
-`const.window.multiWindowUIType=FreeFormMultiWindow` plus
-`persist.sceneboard.ispcmode=true`. It automatically reconstructs and stages the
+`const.window.multiWindowUIType=FreeFormMultiWindow`,
+`const.window.support_window_pcmode_switch=true`,
+`persist.sceneboard.ispcmode=false`, and
+`const.window.device.default_screen_rotation=0` alongside a `6x3` landscape
+desktop grid (`/system/etc/desktop/grid_layout_config.json` and
+`/system/etc/hw_launcher_default_workspace.json`) and floating window support in
+`/system/etc/window/resources/window_manager_config.xml`. It automatically reconstructs and stages the
 five signed SceneBoard runtime HAPs (`SceneBoard.hap`, `NotificationManagement.hap`,
 `ThemeService.hap`, `ThemeComponent.hap`, `SecurityPrivacyCenter.hap`) via
 [`scripts/prepare_sceneboard_runtime_assets.py`](scripts/prepare_sceneboard_runtime_assets.py)
