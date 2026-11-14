@@ -2,7 +2,7 @@
 set -euo pipefail
 
 REPO_URL="${OHOS_QEMU_REPO_URL:-https://github.com/harmony-contrib/ohos-qemu}"
-RELEASE_TAG="${OHOS_QEMU_RELEASE_TAG:-${OHOS_QEMU_REF:-v20260809}}"
+RELEASE_TAG="${OHOS_QEMU_RELEASE_TAG:-${OHOS_QEMU_REF:-v20261107}}"
 DOWNLOAD_BASE_URL="${OHOS_QEMU_DOWNLOAD_BASE_URL:-}"
 GITHUB_TOKEN="${OHOS_QEMU_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}"
 PREFIX="${OHOS_QEMU_PREFIX:-${HOME}/.ohos-qemu}"
@@ -30,7 +30,7 @@ Options:
   --arch ARCH        Guest/package architecture: auto, arm64, aarch64, armv7a, x86_64
   --device-type TYPE Device type package: phone or 2in1. Default: phone
   --repo URL         GitHub repository URL. Default: https://github.com/harmony-contrib/ohos-qemu
-  --release TAG      Release tag to download. Default: v20260809
+  --release TAG      Release tag to download. Default: v20261107
   --download-base-url URL
                      Direct artifact base URL. Downloads URL/<package>.
                      Useful for GitHub Releases, private mirrors, or CDNs.
@@ -46,7 +46,7 @@ Options:
   -h, --help         Show this help
 
 Examples:
-  curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20260809
+  curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20261107
   bash scripts/install.sh --prefix "$HOME/opt/ohos-qemu" --arch arm64 --device-type phone
   bash scripts/install.sh --release RELEASE_TAG --arch x86_64 --device-type 2in1
 USAGE

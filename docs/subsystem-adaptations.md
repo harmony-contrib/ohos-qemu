@@ -51,10 +51,10 @@ This document archives the key engineering adaptations and root-cause fixes requ
   - [`patches/2in1/sceneboard_runtime`](../patches/2in1/sceneboard_runtime) installs a `2in1` boot-unlock service triggered on `bootevent.boot.completed=true` that publishes both `USER_UNLOCKED` and `SCREEN_UNLOCKED` (with `userId=100`) so headless QEMU boots unlock deterministically without manual swipe input.
   - Registers `SceneBoard`, `NotificationManagement`, `ThemeService`, `ThemeComponent`, and `SecurityPrivacyCenter` in `install_list.json` and `install_list_capability.json`.
 
-### 3.2 FreeForm Multi-Window & TCG Timeout Scaling
+### 3.2 FreeForm Multi-Window, Landscape Desktop Grid & TCG Timeout Scaling
 - **Adaptation**:
-  - Enables `/etc/sceneboard.config` (`ENABLED`), `const.window.multiWindowUIType=FreeFormMultiWindow`, `persist.sceneboard.ispcmode=true`, and `const.bms.supportAppTypes=2in1,phone,default,tablet`.
-  - [`scripts/configure_sceneboard_runtime.py`](../scripts/configure_sceneboard_runtime.py) sets `persist.sys.abilityms.timeout_unit_time_ratio = 10` in `/system/etc/param/appfwk.para` so UIAbility and UIExtension startup does not time out under software TCG emulation (`x86_64_virt` and `armv7a_virt` on Apple Silicon).
+  - Enables `/etc/sceneboard.config` (`ENABLED`), `const.window.multiWindowUIType=FreeFormMultiWindow`, `const.window.support_window_pcmode_switch=true`, `persist.sceneboard.ispcmode=false`, `const.window.device.default_screen_rotation=0`, and `const.bms.supportAppTypes=2in1,phone,default,tablet`.
+  - [`scripts/configure_sceneboard_runtime.py`](../scripts/configure_sceneboard_runtime.py) configures `<supportedMode>floating</supportedMode>` in `/system/etc/window/resources/window_manager_config.xml`, installs the `6x3` landscape desktop grid (`/system/etc/desktop/grid_layout_config.json`) and default `2in1` workspace (`/system/etc/hw_launcher_default_workspace.json`), hides the background `com.ohos.locationdialog` desktop icon, disables `keepAlive` on `com.ohos.systemui` on `2in1` so `pc_statusbar` does not cover `SCBStatusBar`, and sets `persist.sys.abilityms.timeout_unit_time_ratio = 10` in `/system/etc/param/appfwk.para` so UIAbility and UIExtension startup does not time out under software TCG emulation (`x86_64_virt` and `armv7a_virt` on Apple Silicon).
 
 ---
 
@@ -153,12 +153,12 @@ All 6 packages in `/Volumes/PSSD/qemu/packages/issue20-23-matrix/` were built fr
 
 | Target Architecture | Device Profile | Package Filename | SHA-256 Checksum | Runtime Gate Status (`--headless`, `cocoa`, `--reset`, `--userdata-size 8G` & Full Capability Suite) |
 | :--- | :--- | :--- | :--- | :--- |
-| `arm64_virt` | `phone` | `openharmony-qemu-arm64-arm64_virt-phone.tar.gz` | `cb4bea69d4a24a05ffeb38ee40d06d714f0324bf81d5178b2e1eaa1f70e2ed75` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + `--reset` + Full Capability Suite, 0 Crashes)** |
-| `arm64_virt` | `2in1` | `openharmony-qemu-arm64-arm64_virt-2in1.tar.gz` | `a5359cff2f542584c5c63f76be933153d6480bf24ffb33679b225013646dd940` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + `--reset` + Full Capability Suite, 0 Crashes)** |
-| `x86_64_virt` | `phone` | `openharmony-qemu-x86_64-x86_64_virt-phone.tar.gz` | `73c9b6282ac51a0e1b1853c6a6a4bcff48c0341c27748db35de4bab72ec44655` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + `--reset` + Full Capability Suite, 0 Crashes)** |
-| `x86_64_virt` | `2in1` | `openharmony-qemu-x86_64-x86_64_virt-2in1.tar.gz` | `0adacebafabeef69ced20d3f48380d621d0ceb92dbea5ee5a098546bd846b41e` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + `--reset` + Full Capability Suite, 0 Crashes)** |
-| `armv7a_virt` | `phone` | `openharmony-qemu-armv7a-armv7a_virt-phone.tar.gz` | `bb55a7d13a2a9706dd1ca79a3f2be9d8953e6c1f925e9056fdb0e7992920af6d` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + `--reset` + Full Capability Suite, 0 Crashes)** |
-| `armv7a_virt` | `2in1` | `openharmony-qemu-armv7a-armv7a_virt-2in1.tar.gz` | `f17fbe9f99335adaefe6411caed8624045cdc09b862e9f054349e257d7d54800` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + `--reset` + Full Capability Suite, 0 Crashes)** |
+| `arm64_virt` | `phone` | `openharmony-qemu-arm64-arm64_virt-phone.tar.gz` | `5af7384040ae090f01e559d09564caeb4db2c292fcc286f256293ec9994ddab7` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + `--reset` + Full Capability Suite, 0 Crashes)** |
+| `arm64_virt` | `2in1` | `openharmony-qemu-arm64-arm64_virt-2in1.tar.gz` | `c95826aebb1a498364da5c2b5d394fb061de38574b904a3453133e1d43dbef23` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + `--reset` + Full Capability Suite, 0 Crashes)** |
+| `x86_64_virt` | `phone` | `openharmony-qemu-x86_64-x86_64_virt-phone.tar.gz` | `d004dc4f01a508050ea7675f51879f487e7be931d7b3fcc1f22154a44a585333` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + `--reset` + Full Capability Suite, 0 Crashes)** |
+| `x86_64_virt` | `2in1` | `openharmony-qemu-x86_64-x86_64_virt-2in1.tar.gz` | `0fe35660c0a5d4fd4ca94ac5f4dd7242c2e7ac49095dc973726301f06e970da8` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + `--reset` + Full Capability Suite, 0 Crashes)** |
+| `armv7a_virt` | `phone` | `openharmony-qemu-armv7a-armv7a_virt-phone.tar.gz` | `41eaa12be42d32eb10dd0ce17b3f7bf404adcc5e3da7209acfb404726f027c9f` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + `--reset` + Full Capability Suite, 0 Crashes)** |
+| `armv7a_virt` | `2in1` | `openharmony-qemu-armv7a-armv7a_virt-2in1.tar.gz` | `0be9b1fd20ba62b5f253ffa333a90b2ad29a5c7b8cb325cbffa5b9e712fa39e6` | **PASS (`EXIT_CODE=0`, Headless + Cocoa + `--reset` + Full Capability Suite, 0 Crashes)** |
 
 ### 8.6 Dynamic `userdata.img` Sparse Expansion on Launch (`--userdata-size` / `QEMU_USERDATA_SIZE`) & `x86_64` `libf2fs` `va_list` Fix
 - **Problem** ([Issue #27](https://github.com/harmony-contrib/ohos-qemu/issues/27)):

@@ -4193,6 +4193,203 @@ STUB_EOF
   rm -rf "${tmpdir}"
 }
 
+configure_qemu_sceneboard_desktop_layout() {
+  local system_image="$1"
+  local device_type_profile="${2:-}"
+  local sys_prod_image="${3:-}"
+  if [ ! -f "${system_image}" ] || ! command -v python3 >/dev/null 2>&1 || ! command -v debugfs >/dev/null 2>&1; then
+    return 0
+  fi
+  if [ -f "${SCRIPT_DIR}/configure_sceneboard_runtime.py" ]; then
+    DEVICE_TYPE_PROFILE="${device_type_profile}" python3 "${SCRIPT_DIR}/configure_sceneboard_runtime.py" "${system_image}" >/dev/null
+  fi
+  python3 - "${system_image}" "${device_type_profile}" "${sys_prod_image}" <<'SCENEBOARD_LAYOUT_PY'
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+system_image = Path(sys.argv[1]).resolve()
+device_type_profile = sys.argv[2] or os.environ.get("DEVICE_TYPE_PROFILE", "")
+sys_prod_arg = sys.argv[3] if len(sys.argv) > 3 else ""
+sys_prod_image = Path(sys_prod_arg).resolve() if sys_prod_arg else (system_image.parent / "sys_prod.img")
+
+if not device_type_profile:
+    manifest_path = system_image.parent.parent / "manifest.json"
+    if manifest_path.is_file():
+        try:
+            device_type_profile = json.loads(manifest_path.read_text(encoding="utf-8")).get("device_type_profile", "")
+        except Exception:
+            device_type_profile = ""
+
+if device_type_profile not in ("qemu_2in1_full_source", "qemu_phone_full_source"):
+    sys.exit(0)
+
+debugfs = shutil.which("debugfs") or "/opt/homebrew/opt/e2fsprogs/sbin/debugfs"
+if not Path(debugfs).is_file():
+    sys.exit(0)
+
+PC_2IN1_PRODUCT_PARAMETERS = (
+    ("const.window.multiWindowUIType", "FreeFormMultiWindow"),
+    ("const.window.support_window_pcmode_switch", "true"),
+    ("persist.sceneboard.ispcmode", "false"),
+    ("const.window.device.default_screen_rotation", "0"),
+)
+GRID_LAYOUT_CONFIG_2IN1 = {
+    "iconSize": 56,
+    "column": 3,
+    "row": 6,
+    "space": 36,
+    "spaceOfColumn": 48,
+    "spaceOfRow": 28,
+    "verticalSpace": 28,
+    "dockIconSize": 54,
+    "portraitLayout": {
+        "spaceOfRow": 28,
+        "spaceOfColumn": 48,
+    },
+}
+DEFAULT_WORKSPACE_2IN1 = {
+    "layoutDescription": {"pageCount": 1, "row": 3, "column": 6, "maxPage": 18, "maxForm": 80},
+    "layoutInfo": [
+        {"bundleName": "com.ohos.contacts", "abilityName": "com.ohos.contacts.MainAbility", "moduleName": "entry", "container": -101, "typeId": 0, "page": 0, "column": 0, "row": 0},
+        {"bundleName": "com.ohos.mms", "abilityName": "com.ohos.mms.MainAbility", "moduleName": "entry", "container": -101, "typeId": 0, "page": 0, "column": 1, "row": 0},
+        {"bundleName": "com.ohos.camera", "abilityName": "com.ohos.camera.MainAbility", "moduleName": "phone", "container": -101, "typeId": 0, "page": 0, "column": 2, "row": 0},
+        {"bundleName": "com.ohos.settings", "abilityName": "com.ohos.settings.MainAbility", "moduleName": "phone", "container": -100, "typeId": 0, "area": [1, 1], "page": 0, "column": 0, "row": 0},
+        {"bundleName": "com.ohos.photos", "abilityName": "com.ohos.photos.MainAbility", "moduleName": "phone_photos", "container": -100, "typeId": 0, "area": [1, 1], "page": 0, "column": 1, "row": 0},
+        {"bundleName": "com.ohos.calendar", "abilityName": "MainAbility", "moduleName": "entry", "container": -100, "typeId": 0, "area": [1, 1], "page": 0, "column": 2, "row": 0},
+        {"bundleName": "com.ohos.clock", "abilityName": "com.ohos.clock.phone", "moduleName": "phone", "container": -100, "typeId": 0, "area": [1, 1], "page": 0, "column": 3, "row": 0},
+        {"bundleName": "com.ohos.filemanager", "abilityName": "MainAbility", "moduleName": "phone", "container": -100, "typeId": 0, "area": [1, 1], "page": 0, "column": 4, "row": 0},
+        {"bundleName": "com.ohos.calculator", "abilityName": "CalculatorAbility", "moduleName": "phone", "container": -100, "typeId": 0, "area": [1, 1], "page": 0, "column": 5, "row": 0},
+        {"bundleName": "com.ohos.intelligentscene", "abilityName": "EntryAbility", "moduleName": "phone", "container": -100, "typeId": 0, "area": [1, 1], "page": 0, "column": 0, "row": 1},
+        {"bundleName": "com.ohos.note", "abilityName": "MainAbility", "moduleName": "default", "container": -100, "typeId": 0, "area": [1, 1], "page": 0, "column": 1, "row": 1},
+        {"bundleName": "com.ohos.soundrecorder", "abilityName": "MainAbility", "moduleName": "phone", "container": -100, "typeId": 0, "area": [1, 1], "page": 0, "column": 2, "row": 1},
+        {"bundleName": "com.ohos.updateapp", "abilityName": "com.ohos.updateapp.MainAbility", "moduleName": "updateapp", "container": -100, "typeId": 0, "area": [1, 1], "page": 0, "column": 3, "row": 1},
+        {"bundleName": "ohos.samples.distributedmusicplayer", "abilityName": "ohos.samples.distributedmusicplayer.MainAbility", "moduleName": "entry", "container": -100, "typeId": 0, "area": [1, 1], "page": 0, "column": 4, "row": 1},
+    ],
+}
+
+def run_debugfs(image: Path, operation: str, *, writable: bool = False) -> str:
+    cmd = [debugfs] + (["-w"] if writable else []) + ["-R", operation, str(image)]
+    res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    if re.search(r"(?:error|not found|no such file|file exists)", res.stderr, re.I):
+        raise RuntimeError(f"debugfs {operation}: {res.stderr.strip()}")
+    return res.stdout
+
+def find_existing(image: Path, candidates: tuple[str, ...]) -> str | None:
+    for path in candidates:
+        out = subprocess.run([debugfs, "-R", f"stat {path}", str(image)], capture_output=True, text=True)
+        if out.returncode == 0 and "Inode:" in out.stdout:
+            return path
+    return None
+
+def replace_file(image: Path, work: Path, path: str, updated: str, stem: str) -> None:
+    stat = run_debugfs(image, f"stat {path}")
+    mode_m = re.search(r"Mode:\s+(\d+)", stat)
+    mode = int(mode_m.group(1), 8) if mode_m else 0o644
+    rep = work / f"{stem}.rep"
+    lbl = work / f"{stem}.selinux"
+    rep.write_text(updated, encoding="utf-8")
+    rep.chmod(mode)
+    run_debugfs(image, f"ea_get -f {lbl} {path} security.selinux")
+    run_debugfs(image, f"rm {path}", writable=True)
+    run_debugfs(image, f"write {rep} {path}", writable=True)
+    run_debugfs(image, f"ea_set -f {lbl} {path} security.selinux", writable=True)
+
+def write_new_or_replace(image: Path, work: Path, path: str, updated: str, label_src: str, stem: str) -> None:
+    rep = work / f"{stem}.rep"
+    lbl = work / f"{stem}.selinux"
+    rep.write_text(updated, encoding="utf-8")
+    rep.chmod(0o644)
+    run_debugfs(image, f"ea_get -f {lbl} {label_src} security.selinux")
+    if find_existing(image, (path,)):
+        run_debugfs(image, f"rm {path}", writable=True)
+    run_debugfs(image, f"write {rep} {path}", writable=True)
+    run_debugfs(image, f"ea_set -f {lbl} {path} security.selinux", writable=True)
+
+label_src = find_existing(system_image, ("/system/etc/param/appfwk.para", "/etc/param/appfwk.para"))
+if not label_src:
+    sys.exit(0)
+
+with tempfile.TemporaryDirectory(prefix="qemu-scb-layout-") as td:
+    work = Path(td)
+    cap_path = find_existing(system_image, ("/system/etc/app/install_list_capability.json", "/etc/app/install_list_capability.json"))
+    if cap_path:
+        orig_cap = work / "cap.orig"
+        run_debugfs(system_image, f"dump {cap_path} {orig_cap}")
+        doc = json.loads(orig_cap.read_text(encoding="utf-8"))
+        for entry in doc.get("install_list", []):
+            bname = entry.get("bundleName")
+            if bname == "com.ohos.locationdialog":
+                entry["allowAppDesktopIconHide"] = True
+            elif bname == "com.ohos.systemui":
+                entry["keepAlive"] = device_type_profile != "qemu_2in1_full_source"
+        replace_file(system_image, work, cap_path, json.dumps(doc, indent=2, ensure_ascii=False) + "\n", "cap")
+
+    if device_type_profile == "qemu_2in1_full_source":
+        wm_path = find_existing(system_image, ("/system/etc/window/resources/window_manager_config.xml", "/etc/window/resources/window_manager_config.xml"))
+        if wm_path:
+            orig_wm = work / "wm.orig"
+            run_debugfs(system_image, f"dump {wm_path} {orig_wm}")
+            wm_txt = orig_wm.read_text(encoding="utf-8").replace(
+                "<supportedMode>floating fullscreen</supportedMode>",
+                "<supportedMode>floating</supportedMode>",
+            )
+            replace_file(system_image, work, wm_path, wm_txt, "wm")
+
+        etc_prefix = "/system/etc" if find_existing(system_image, ("/system/etc",)) else "/etc"
+        desktop_dir = f"{etc_prefix}/desktop"
+        if not find_existing(system_image, (desktop_dir,)):
+            run_debugfs(system_image, f"mkdir {desktop_dir}", writable=True)
+        lbl_dir = work / "dir.selinux"
+        run_debugfs(system_image, f"ea_get -f {lbl_dir} {label_src} security.selinux")
+        run_debugfs(system_image, f"ea_set -f {lbl_dir} {desktop_dir} security.selinux", writable=True)
+
+        write_new_or_replace(
+            system_image, work, f"{desktop_dir}/grid_layout_config.json",
+            json.dumps(GRID_LAYOUT_CONFIG_2IN1, indent=2, ensure_ascii=False) + "\n",
+            label_src, "grid"
+        )
+        write_new_or_replace(
+            system_image, work, f"{etc_prefix}/hw_launcher_default_workspace.json",
+            json.dumps(DEFAULT_WORKSPACE_2IN1, indent=2, ensure_ascii=False) + "\n",
+            label_src, "workspace"
+        )
+
+        if sys_prod_image and sys_prod_image.is_file():
+            para_path = find_existing(sys_prod_image, ("/etc/param/product_virt.para", "/sys_prod/etc/param/product_virt.para"))
+            if para_path:
+                orig_para = work / "para.orig"
+                run_debugfs(sys_prod_image, f"dump {para_path} {orig_para}")
+                para_txt = orig_para.read_text(encoding="utf-8")
+                for k, v in PC_2IN1_PRODUCT_PARAMETERS:
+                    para_txt, cnt = re.subn(rf"(?m)^\s*{re.escape(k)}\s*=.*$", f"{k}={v}", para_txt)
+                    if cnt == 0:
+                        para_txt = para_txt.rstrip("\n") + f"\n{k}={v}\n"
+                replace_file(sys_prod_image, work, para_path, para_txt, "para")
+
+        dev_prof = system_image.parent.parent / "device-profile.json"
+        if dev_prof.is_file():
+            try:
+                ev = json.loads(dev_prof.read_text(encoding="utf-8"))
+            except Exception:
+                ev = None
+            if isinstance(ev, dict) and ev.get("profile") == "qemu_2in1_full_source":
+                ad = ev.setdefault("qemu_adaptations", {})
+                ad["pc_window_parameter"] = "const.window.multiWindowUIType=FreeFormMultiWindow"
+                ad["pc_mode_switch_parameter"] = "const.window.support_window_pcmode_switch=true"
+                ad["pc_mode_parameter"] = "persist.sceneboard.ispcmode=false"
+                ad["default_screen_rotation_parameter"] = "const.window.device.default_screen_rotation=0"
+                ad["window_layout_parameter"] = "const.window.multiWindowUIType=FreeFormMultiWindow"
+                ad["sceneboard_mode_parameter"] = "persist.sceneboard.ispcmode=false"
+                dev_prof.write_text(json.dumps(ev, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+SCENEBOARD_LAYOUT_PY
+}
+
 rewrite_package_launchers() {
   local package_dir="$1"
   local manifest="${package_dir}/manifest.json"
@@ -4232,10 +4429,10 @@ rewrite_package_launchers() {
   fi
 
   install_qemu_virt_device_support "${package_dir}" "${product}" "${SOURCE_ROOT:-}"
-  if [ -f "${package_dir}/images/system.img" ] && command -v python3 >/dev/null 2>&1 && command -v debugfs >/dev/null 2>&1; then
-    python3 "${SCRIPT_DIR}/configure_sceneboard_runtime.py" \
-      "${package_dir}/images/system.img" >/dev/null
-  fi
+  configure_qemu_sceneboard_desktop_layout \
+    "${package_dir}/images/system.img" \
+    "${device_type_profile}" \
+    "${package_dir}/images/sys_prod.img"
 
   write_full_product_launchers \
     "${launch_out}" \
@@ -4535,7 +4732,10 @@ inject_standard_qemu_params() {
   debugfs -w -R "write ${hdc_para} /etc/param/hdc.para" "${image}" >/dev/null
   if [ "${DEVICE_TYPE_PROFILE}" = "qemu_2in1_full_source" ] || \
      [ "${DEVICE_TYPE_PROFILE}" = "qemu_phone_full_source" ]; then
-    python3 "${SCRIPT_DIR}/configure_sceneboard_runtime.py" "${image}"
+    configure_qemu_sceneboard_desktop_layout \
+      "${image}" \
+      "${DEVICE_TYPE_PROFILE}" \
+      "$(dirname "${image}")/sys_prod.img"
   fi
   rm -rf "${tmpdir}"
   trap - RETURN
@@ -5357,7 +5557,9 @@ evidence = {
         "jsvm_engine": metadata.get("qemu_adaptations", {}).get("jsvm_engine"),
         "window_architecture_feature": metadata.get("window_architecture_feature"),
         "pc_window_parameter": metadata.get("pc_window_parameter"),
+        "pc_mode_switch_parameter": metadata.get("pc_mode_switch_parameter"),
         "pc_mode_parameter": metadata.get("pc_mode_parameter"),
+        "default_screen_rotation_parameter": metadata.get("default_screen_rotation_parameter"),
         "window_layout_parameter": metadata.get("window_layout_parameter"),
         "sceneboard_mode_parameter": metadata.get("sceneboard_mode_parameter"),
         "boot_unlock_config": metadata.get("boot_unlock_config"),
@@ -5421,9 +5623,21 @@ PY
     require_image_file_contains "${sys_prod_image}" "PC window layout" \
       "const.window.multiWindowUIType=FreeFormMultiWindow" \
       /etc/param/product_virt.para /sys_prod/etc/param/product_virt.para
-    require_image_file_contains "${sys_prod_image}" "SceneBoard PC mode" \
-      "persist.sceneboard.ispcmode=true" \
+    require_image_file_contains "${sys_prod_image}" "SceneBoard 2in1 PC-mode switch support" \
+      "const.window.support_window_pcmode_switch=true" \
       /etc/param/product_virt.para /sys_prod/etc/param/product_virt.para
+    require_image_file_contains "${sys_prod_image}" "SceneBoard 2in1 Pad desktop mode" \
+      "persist.sceneboard.ispcmode=false" \
+      /etc/param/product_virt.para /sys_prod/etc/param/product_virt.para
+    require_image_file_contains "${sys_prod_image}" "2in1 default landscape screen rotation" \
+      "const.window.device.default_screen_rotation=0" \
+      /etc/param/product_virt.para /sys_prod/etc/param/product_virt.para
+    require_image_path "${system_image}" "2in1 landscape desktop grid config" \
+      /system/etc/desktop/grid_layout_config.json \
+      /etc/desktop/grid_layout_config.json
+    require_image_path "${system_image}" "2in1 default launcher workspace config" \
+      /system/etc/hw_launcher_default_workspace.json \
+      /etc/hw_launcher_default_workspace.json
     require_image_path "${system_image}" "2in1 DLP manager application" \
       /system/app/com.ohos.dlpmanager \
       /app/com.ohos.dlpmanager
