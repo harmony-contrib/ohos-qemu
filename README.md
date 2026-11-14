@@ -2,7 +2,7 @@
 
 Prebuilt OpenHarmony standard-system QEMU images for Linux, macOS, and Windows.
 
-Source repositories are migrating to [openharmony-qemu](https://github.com/openharmony-qemu).
+Source repository migration to [openharmony-qemu](https://github.com/openharmony-qemu) is complete.
 See [repository migration status](docs/repository-migration.md) for the manifest,
 component ownership and verification evidence. Package builds and runtime
 validation for the migrated source graph are deferred.
@@ -232,8 +232,8 @@ executing `ACCESSIBILITY_E2E_ENABLE_COMMAND` after installation.
 ## Source capability components
 
 The following commands document the historical source-preparation interface.
-The migration transfers these recipes and helpers into their owning component
-repositories; the final compatibility tree is generated from the manifest lock.
+These recipes and helpers now belong to their component repositories; the
+compatibility tree is generated from the complete manifest lock.
 Follow [repository migration status](docs/repository-migration.md) before using
 these commands. Their transfer does not validate the legacy builder against the
 new QEMU branches. Phone and 2in1 remain separate historical entry points:

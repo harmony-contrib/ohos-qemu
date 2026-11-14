@@ -1,10 +1,12 @@
 # QEMU source repository migration
 
-Component source changes and adaptation inputs have been published and verified.
-Final upstream mirror verification is still in progress; the manifest lock remains
-incomplete until it passes. Package builds and runtime validation are deferred by
-user instruction. The historical patch tree and 77 source helpers in this checkout
-now link to generated component inputs, with the original files preserved locally.
+Source migration is complete for all 695 catalog repositories. Their QEMU branch
+commits and default branches have been read back from GitHub, and all 186 daily
+mirrors have completed production verification records. Component source changes
+and adaptation inputs are published and verified; the manifest lock is complete.
+Package builds and runtime validation remain deferred by user instruction. The
+historical patch tree and 77 source helpers in this checkout link to generated
+component inputs, with the original files preserved locally.
 
 ## Ownership and branches
 
@@ -68,6 +70,11 @@ sync of all 326 `global_i18n` upstream branches was verified against remote SHAs
 Production verification records are archived with the manifest. A `prepare_only`
 diagnostic run never publishes branches.
 
+An actual scheduled run has also been observed and its completed results archived.
+The latest verified OpenVPN `renovate/vcpkg-digest` rewrite is tracked in
+[mirror-sync issue 2](https://github.com/openharmony-qemu/mirror-sync/issues/2).
+The destination history was preserved; the fixed QEMU baseline is unaffected.
+
 Long uploads use repository-scoped App tokens renewed before expiry. Git LFS
 credential caching is disabled so a long-running transfer can obtain a fresh
 token. The current token is revoked when the job finishes.
@@ -122,15 +129,16 @@ not establish that the deferred build entry point accepts the new branch graph.
 
 Operation journals and source candidates remain under the ignored
 `.tmp/organization-migration/` directory. Candidates are not published source
-changes. The manifest's `migration-status.json` remains `in_progress` until all
-repositories, baselines and source changes have been verified remotely.
+changes. Published journals, full-history mappings and verification evidence are
+archived with the manifest. Its status is
+`source_migration_complete_with_reported_conflicts`; every completion gate passes.
 
-All 695 catalog repositories have been created. All 105 reviewed component source
-changes are published, and all 2,160 original adaptation inputs have been verified
-against 104 owning repositories. Remaining prerequisites are the last baseline
-branches, complete production synchronization, and the final manifest lock. The system and ArkWeb
-locks require different
-`web_webview` and bounds-checking revisions. Separate ArkWeb mirror repositories
+All 695 catalog repositories have been created and their uniform QEMU branches
+and defaults verified. All 105 reviewed component source changes are published,
+and all 2,160 original adaptation inputs have been verified against 104 owning
+repositories. All 186 mirrors have complete production verification records,
+including the reported upstream conflict above. The system and ArkWeb locks
+require different `web_webview` and bounds-checking revisions. Separate ArkWeb mirror repositories
 preserve both locked source identities under the same QEMU branch convention.
 No package/runtime acceptance is claimed.
 
@@ -141,8 +149,8 @@ the product profiles. `products.json` preserves the six artifact contracts.
 
 ## Retrieve historical component inputs
 
-After `components.lock.json` is complete, a fresh checkout can retrieve the
-component-owned compatibility inputs with:
+The committed `components.lock.json` is complete. A fresh checkout can retrieve
+the component-owned compatibility inputs with:
 
 ```sh
 git clone --single-branch --branch OpenHarmony-7.0-Release-qemu \
@@ -155,6 +163,13 @@ SHAs. It verifies the component-owned materializer and all reconstructed hashes
 and file modes. Generated files live under ignored `.qemu/component-inputs/`;
 `patches` and the transferred helper paths are compatibility links. Keep changes
 in the owning component repositories instead of editing this generated tree.
+
+The retrieval command has been validated against the committed complete lock in
+an independent output directory. Its
+[verification record](https://github.com/openharmony-qemu/manifest/blob/OpenHarmony-7.0-Release-qemu/migration-evidence/locked-input-retrieval.json)
+binds the manifest commit, 104 component checkouts and all 2,160 reconstructed file
+hashes and modes. This verification did not replace the active input directory.
+
 If that directory already contains local work, select a fresh `--output` directory
 for verification and preserve the active directory until those changes are moved
 to their owning components. Migration status lists any preserved unpublished inputs.
