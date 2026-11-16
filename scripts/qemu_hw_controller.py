@@ -30,6 +30,11 @@ Provides:
    - `python3 tools/qemu_hw_controller.py [--port 5555] magnetic 25.0 1.0 -42.0`
    - `python3 tools/qemu_hw_controller.py [--port 5555] usb-serial-send "PING_FTDI"`
    - `python3 tools/qemu_hw_controller.py [--port 5555] usb-serial-read`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] locale en`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] locale zh-Hans`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] locale status`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] locale list`
+   - `python3 tools/qemu_hw_controller.py [--port 5555] region US`
 """
 
 import argparse
@@ -37,12 +42,46 @@ import base64
 import logging
 import os
 import select
+import shlex
 import signal
 import socket
 import subprocess
 import sys
 import time
-from typing import Optional
+from typing import Optional, Sequence
+
+
+def env_first(*names: str, default: str = "") -> str:
+    for name in names:
+        val = os.environ.get(name, "")
+        if val != "":
+            return val
+    return default
+
+
+def env_bool(*names: str, default: bool = False) -> bool:
+    raw = env_first(*names, default="").strip().lower()
+    if not raw:
+        return default
+    if raw in ("1", "true", "yes", "on"):
+        return True
+    if raw in ("0", "false", "no", "off"):
+        return False
+    raise ValueError(f"invalid boolean value {raw!r} in {'/'.join(names)}")
+
+
+def env_port_default() -> int:
+    raw = env_first("QEMU_HDC_PORT", "QEMU_HDC_HOST_PORT", "OHOS_QEMU_HDC_PORT", default="")
+    if not raw:
+        connect = env_first("QEMU_CONNECT", "OHOS_QEMU_CONNECT", default="")
+        if ":" in connect:
+            raw = connect.rsplit(":", 1)[-1]
+    if raw:
+        try:
+            return int(raw)
+        except ValueError:
+            pass
+    return 5555
 
 
 def get_host_clipboard() -> Optional[str]:
@@ -160,6 +199,13 @@ def run_daemon(args: argparse.Namespace) -> int:
             send_to_guest(f"THERMAL {args.thermal}", is_internal=True)
         if args.camera:
             send_to_guest(f"CAMERA {args.camera}", is_internal=True)
+        if args.locale or args.region:
+            if args.locale and args.region:
+                send_to_guest(f"LOCALE {args.locale}:{args.region}", is_internal=True)
+            elif args.locale:
+                send_to_guest(f"LOCALE {args.locale}", is_internal=True)
+            else:
+                send_to_guest(f"REGION {args.region}", is_internal=True)
         if initial_clip_text is not None:
             b64 = base64.b64encode(initial_clip_text.encode("utf-8")).decode("ascii")
             send_to_guest(f"CLIPBOARD_SET_B64 {b64}", is_internal=True)
@@ -283,7 +329,7 @@ def run_daemon(args: argparse.Namespace) -> int:
                         except OSError:
                             pass
                     pending_ctrl_client = c_conn
-                    pending_ctrl_deadline = time.time() + 4.0
+                    pending_ctrl_deadline = time.time() + 8.5
                     send_to_guest(cmd, is_internal=False)
 
                 elif s is guest_conn:
@@ -423,6 +469,17 @@ def run_client(args: argparse.Namespace) -> int:
         wire = f"USB_SERIAL_SEND_B64 {b64}"
     elif sub == "usb-serial-read":
         wire = "USB_SERIAL_READ"
+    elif sub in ("locale", "lang", "language"):
+        if not rest or rest.lower() in ("status", "get"):
+            wire = "LOCALE"
+        elif rest.lower() in ("list", "--list"):
+            wire = "LOCALE_LIST"
+        elif args.region and ":" not in rest:
+            wire = f"LOCALE {rest}:{args.region}"
+        else:
+            wire = f"LOCALE {rest}"
+    elif sub == "region":
+        wire = f"REGION {rest}" if rest else "LOCALE"
     elif sub == "time":
         ms = int(rest) if rest else int(time.time() * 1000)
         wire = f"TIME {ms}"
@@ -430,7 +487,7 @@ def run_client(args: argparse.Namespace) -> int:
         wire = " ".join(args.command)
 
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    s.settimeout(5.0)
+    s.settimeout(10.0)
     s.connect(ctrl_sock)
     s.sendall((wire + "\n").encode("utf-8"))
     resp = s.recv(8192).decode("utf-8", errors="replace").strip()
@@ -462,25 +519,111 @@ def run_client(args: argparse.Namespace) -> int:
     return 1 if resp.startswith("ERR") else 0
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="OpenHarmony QEMU Hardware Capability Controller")
-    parser.add_argument("--daemon", action="store_true", help="Run as host virtserial bridge daemon")
-    parser.add_argument("--port", type=int, default=5555, help="HDC host port (default: 5555)")
-    parser.add_argument("--socket", "--virtserial-socket", dest="virtserial_socket", default="", help="VirtIO serial UNIX socket path (or control socket in client mode)")
-    parser.add_argument("--ctrl-socket", "--control-socket", dest="control_socket", default="", help="Host control UNIX socket path")
-    parser.add_argument("--usb-serial-socket", dest="usb_serial_socket", default="", help="USB serial UNIX socket path")
-    parser.add_argument("--usb-serial-mode", dest="usb_serial_mode", default="loopback", help="USB serial host mode (loopback|on)")
-    parser.add_argument("--pidfile", default="", help="PID file path")
-    parser.add_argument("--log", default="/tmp/openharmony-qemu-hw.log", help="Log file path")
-    parser.add_argument("--gps", default="", help="Initial GPS coordinates")
-    parser.add_argument("--sensor", default="", help="Initial sensor coordinates")
-    parser.add_argument("--battery", default="", help="Initial battery state")
-    parser.add_argument("--thermal", default="", help="Initial thermal temperature")
-    parser.add_argument("--camera", default="", help="Initial camera pattern")
-    parser.add_argument("--clipboard", default="auto", help="Clipboard mode or initial text")
-    parser.add_argument("--clipboard-sync", action="store_true", help="Enable host-to-guest clipboard auto-sync")
-    parser.add_argument("command", nargs="*", help="Command when running in CLI client mode")
-    args = parser.parse_args()
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "OpenHarmony QEMU Hardware & Locale Capability Controller. "
+            "CLI options override matching QEMU_* / OHOS_QEMU_* environment variables."
+        )
+    )
+    parser.add_argument(
+        "--daemon",
+        action="store_true",
+        default=env_bool("QEMU_HW_DAEMON", default=False),
+        help="Run as host virtserial bridge daemon (env: QEMU_HW_DAEMON)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=env_port_default(),
+        help="HDC host port (env: QEMU_HDC_PORT / QEMU_HDC_HOST_PORT, default: 5555)",
+    )
+    parser.add_argument(
+        "--socket",
+        "--virtserial-socket",
+        dest="virtserial_socket",
+        default=env_first("QEMU_HW_VIRTSERIAL_SOCKET", "QEMU_HW_SOCKET", default=""),
+        help="VirtIO serial UNIX socket path, or control socket in client mode (env: QEMU_HW_VIRTSERIAL_SOCKET / QEMU_HW_SOCKET)",
+    )
+    parser.add_argument(
+        "--ctrl-socket",
+        "--control-socket",
+        dest="control_socket",
+        default=env_first("QEMU_HW_CTRL_SOCKET", "QEMU_HW_CONTROL_SOCKET", default=""),
+        help="Host control UNIX socket path (env: QEMU_HW_CTRL_SOCKET / QEMU_HW_CONTROL_SOCKET)",
+    )
+    parser.add_argument(
+        "--usb-serial-socket",
+        dest="usb_serial_socket",
+        default=env_first("QEMU_USB_SERIAL_SOCKET", default=""),
+        help="USB serial UNIX socket path (env: QEMU_USB_SERIAL_SOCKET)",
+    )
+    parser.add_argument(
+        "--usb-serial-mode",
+        dest="usb_serial_mode",
+        default=env_first("QEMU_USB_SERIAL_MODE", "QEMU_USB_SERIAL", default="loopback"),
+        help="USB serial host mode: loopback|on (env: QEMU_USB_SERIAL_MODE / QEMU_USB_SERIAL)",
+    )
+    parser.add_argument(
+        "--pidfile",
+        default=env_first("QEMU_HW_PIDFILE", default=""),
+        help="PID file path (env: QEMU_HW_PIDFILE)",
+    )
+    parser.add_argument(
+        "--log",
+        default=env_first("QEMU_HW_LOG", default="/tmp/openharmony-qemu-hw.log"),
+        help="Log file path (env: QEMU_HW_LOG)",
+    )
+    parser.add_argument(
+        "--gps",
+        default=env_first("QEMU_GPS", "OHOS_QEMU_GPS", default=""),
+        help="Initial GPS coordinates (env: QEMU_GPS)",
+    )
+    parser.add_argument(
+        "--sensor",
+        default=env_first("QEMU_SENSOR", "OHOS_QEMU_SENSOR", default=""),
+        help="Initial sensor coordinates (env: QEMU_SENSOR)",
+    )
+    parser.add_argument(
+        "--battery",
+        default=env_first("QEMU_BATTERY", "OHOS_QEMU_BATTERY", default=""),
+        help="Initial battery state (env: QEMU_BATTERY)",
+    )
+    parser.add_argument(
+        "--thermal",
+        default=env_first("QEMU_THERMAL", "OHOS_QEMU_THERMAL", default=""),
+        help="Initial thermal temperature (env: QEMU_THERMAL)",
+    )
+    parser.add_argument(
+        "--camera",
+        default=env_first("QEMU_CAMERA_FEED", "QEMU_CAMERA", "OHOS_QEMU_CAMERA_FEED", default=""),
+        help="Initial camera pattern (env: QEMU_CAMERA_FEED / QEMU_CAMERA)",
+    )
+    parser.add_argument(
+        "--locale",
+        "--lang",
+        dest="locale",
+        default=env_first("QEMU_LOCALE", "QEMU_LANG", "OHOS_QEMU_LOCALE", "OHOS_QEMU_LANG", default=""),
+        help="Initial or target system language/locale tag, e.g. en, en-Latn-US, zh-Hans, ja (env: QEMU_LOCALE / QEMU_LANG)",
+    )
+    parser.add_argument(
+        "--region",
+        default=env_first("QEMU_REGION", "OHOS_QEMU_REGION", default=""),
+        help="Initial or target ISO 3166-1 region tag, e.g. US, GB, CN, JP (env: QEMU_REGION)",
+    )
+    parser.add_argument(
+        "--clipboard",
+        default=env_first("QEMU_CLIPBOARD", "OHOS_QEMU_CLIPBOARD", default="auto"),
+        help="Clipboard mode or initial text (env: QEMU_CLIPBOARD)",
+    )
+    parser.add_argument(
+        "--clipboard-sync",
+        action="store_true",
+        default=env_bool("QEMU_CLIPBOARD_SYNC", default=False),
+        help="Enable host-to-guest clipboard auto-sync (env: QEMU_CLIPBOARD_SYNC)",
+    )
+    parser.add_argument("command", nargs="*", help="Command when running in CLI client mode (env: QEMU_HW_COMMAND)")
+    args = parser.parse_args(argv)
 
     if args.daemon:
         if not args.virtserial_socket:
@@ -488,6 +631,11 @@ def main() -> int:
         if not args.control_socket:
             args.control_socket = f"/tmp/openharmony-qemu-hw-{args.port}.ctrl.sock"
         return run_daemon(args)
+
+    if not args.command:
+        env_cmd = env_first("QEMU_HW_COMMAND", default="").strip()
+        if env_cmd:
+            args.command = shlex.split(env_cmd)
 
     if not args.command:
         parser.print_help(sys.stderr)

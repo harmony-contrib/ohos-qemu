@@ -19,8 +19,36 @@ validation for the migrated source graph are deferred.
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20261107
+curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20261114
 ```
+
+Every named option in `scripts/install.sh` also accepts a matching `OHOS_QEMU_*`
+environment variable (CLI options override environment variables), so CI jobs can
+install without `bash -s --`:
+
+```bash
+OHOS_QEMU_RELEASE=v20261114 \
+OHOS_QEMU_DEVICE_TYPE=2in1 \
+OHOS_QEMU_WITHOUT_HAP_SIGNER=1 \
+OHOS_QEMU_FORCE=1 \
+  bash -c "$(curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh)"
+```
+
+| Installer option | Environment variable | Default |
+| --- | --- | --- |
+| `--prefix DIR` | `OHOS_QEMU_PREFIX` | `$HOME/.ohos-qemu` |
+| `--platform NAME` | `OHOS_QEMU_PLATFORM` | `auto` (`linux` / `macos` / `windows`) |
+| `--arch ARCH` | `OHOS_QEMU_ARCH` | `auto` (`arm64` / `armv7a` / `x86_64`) |
+| `--device-type TYPE` | `OHOS_QEMU_DEVICE_TYPE` | `phone` (`phone` / `2in1`) |
+| `--repo URL` | `OHOS_QEMU_REPO` / `OHOS_QEMU_REPO_URL` | `https://github.com/harmony-contrib/ohos-qemu` |
+| `--release TAG` | `OHOS_QEMU_RELEASE` / `OHOS_QEMU_RELEASE_TAG` / `OHOS_QEMU_REF` | `v20261114` |
+| `--download-base-url URL` | `OHOS_QEMU_DOWNLOAD_BASE_URL` | unset |
+| `--github-token TOKEN` | `OHOS_QEMU_GITHUB_TOKEN` / `GITHUB_TOKEN` | unset |
+| `--force` / `--no-force` | `OHOS_QEMU_FORCE` | `0` (`0`/`1`/`true`/`false`) |
+| `--keep-archive` | `OHOS_QEMU_KEEP_ARCHIVE` | `0` (`0`/`1`/`true`/`false`) |
+| `--with-hap-signer` / `--without-hap-signer` | `OHOS_QEMU_WITH_HAP_SIGNER` / `OHOS_QEMU_WITHOUT_HAP_SIGNER` / `OHOS_QEMU_INSTALL_HAP_SIGNER` | `1` |
+| `--hap-signer-version TAG` | `OHOS_QEMU_HAP_SIGNER_VERSION` / `OHOS_QEMU_HAPSIGNER_VERSION` | `v0.1.0` |
+| `--hap-signer-download-base-url URL` | `OHOS_QEMU_HAP_SIGNER_DOWNLOAD_BASE_URL` / `OHOS_QEMU_HAPSIGNER_DOWNLOAD_BASE_URL` | unset |
 
 The installer downloads the selected Release and installs the package under
 `~/.ohos-qemu`. It selects `arm64` on Apple Silicon and `x86_64` on x64 hosts.
@@ -35,8 +63,6 @@ bash scripts/install.sh --release RELEASE_TAG --device-type phone
 bash scripts/install.sh --release RELEASE_TAG --device-type 2in1
 ```
 
-`OHOS_QEMU_DEVICE_TYPE=phone` and `OHOS_QEMU_DEVICE_TYPE=2in1` provide the same
-selection through the environment. CLI options override environment values.
 For `phone`, the installer first tries the current `-phone.tar.gz` asset and
 falls back to the legacy archive without a device-type suffix when necessary.
 It fails only when neither phone asset exists. A `2in1` selection requires the
@@ -70,8 +96,11 @@ Stop QEMU with `Ctrl+C`.
 CLI flags override environment variables, which override package defaults:
 
 ```bash
-# Resolution / resources (guest GPU + QEMU -m/-smp)
-./launch/linux.sh -r 1280x720 -m 8G -s 8
+# English UI + resolution / resources (guest GPU + QEMU -m/-smp)
+./launch/linux.sh --lang en -r 1280x800 -m 8G -s 8
+
+# Pure environment-variable CI launch (every CLI flag has a matching QEMU_* / OHOS_QEMU_* env var)
+QEMU_LANG=en QEMU_RESOLUTION=1280x800 QEMU_HEADLESS=1 QEMU_HDC_PORT=5556 ./launch/linux.sh
 
 # Headless / VNC
 ./launch/linux.sh --headless
@@ -88,26 +117,28 @@ CLI flags override environment variables, which override package defaults:
 ./launch/linux.sh --headless --a11y --qmp-socket /tmp/ohos-a11y.sock
 
 # Override the CPU model on an AMD host using Windows WHPX
-powershell.exe -ExecutionPolicy Bypass -File ./launch/windows.ps1 -Cpu EPYC-v5 -Accel whpx
+powershell.exe -ExecutionPolicy Bypass -File ./launch/windows.ps1 -Lang en -Cpu EPYC-v5 -Accel whpx
 ```
 
 | Option | Env | Default |
 | --- | --- | --- |
-| `-r, --resolution WxH` | `QEMU_XRES` / `QEMU_YRES` | `800x500` |
-| `--width` / `--height` | `QEMU_XRES` / `QEMU_YRES` | same |
+| `-r, --resolution WxH` | `QEMU_RESOLUTION` (`QEMU_XRES` / `QEMU_YRES`) | `800x500` |
+| `--width` / `--height` | `QEMU_WIDTH` / `QEMU_HEIGHT` (`QEMU_XRES` / `QEMU_YRES`) | same |
+| `-l, --lang, --locale TAG` | `QEMU_LANG` / `QEMU_LOCALE` | `zh-Hans-CN` (`en`, `en-US`, `en-GB`, `zh-Hant`, `ja`, `ko`, `fr`, `de`, `es`, `it`, `pt`, `ru`, `ar`, `vi`, `bo`, `ug`, …) |
+| `--region REGION` | `QEMU_REGION` | `CN` (`US`, `GB`, `TW`, `HK`, `JP`, `KR`, `FR`, `DE`, …) |
 | `-m, --memory SIZE` | `QEMU_MEMORY` | `4096` (armv7a: `3072`) |
 | `--userdata-size SIZE` | `QEMU_USERDATA_SIZE` | `2G` (`images/userdata.img`, online-resized on boot) |
-| `--reset` | `QEMU_RESET` | `0` (`1` resets active `userdata.img` to a clean factory F2FS image before boot, preserving any custom `userdata.img` size unless `--userdata-size` is also set) |
+| `--reset` | `QEMU_RESET` | `0` (`1`/`true` resets active `userdata.img` to a clean factory F2FS image before boot, preserving any custom `userdata.img` size unless `--userdata-size` is also set) |
 | `-s, --smp N` | `QEMU_SMP` | `4` |
 | `--cpu MODEL` | `QEMU_CPU` | `max` (arm64: `cortex-a57`, armv7a: `cortex-a7`) |
-| `-d, --display` / `--headless` | `QEMU_DISPLAY` | product default (`sdl` / `cocoa` / `none`) |
-| `-c, --connect` / `--hdc-port` | `QEMU_HDC_HOST_PORT` | `5555` |
+| `-d, --display` / `--headless` | `QEMU_DISPLAY` / `QEMU_HEADLESS` | product default (`sdl` / `cocoa` / `none`) |
+| `-c, --connect` / `--hdc-port` | `QEMU_CONNECT` / `QEMU_HDC_PORT` / `QEMU_HDC_HOST_PORT` | `5555` |
 | `--vnc-display N` | `QEMU_VNC_DISPLAY` | `21` (TCP 5921) |
 | `--serial-port PORT` | `QEMU_SERIAL_PORT` | unset |
-| `--a11y` | `QEMU_ACCESSIBILITY` | `0` |
+| `--a11y` | `QEMU_A11Y` / `QEMU_ACCESSIBILITY` | `0` |
 | `--qmp-socket PATH` | `QEMU_QMP_SOCKET` | `/tmp/openharmony-qemu-a11y-<HDC_PORT>.sock` with `--a11y` |
 | Windows `-QmpPort PORT` | `QEMU_QMP_PORT` | `4445` with `-A11y` |
-| `--audio MODE` | `QEMU_AUDIO_BACKEND` | `auto` (`auto\|none\|coreaudio\|pa\|pipewire\|alsa\|sdl\|dsound\|wav[:PATH]`) |
+| `--audio MODE` | `QEMU_AUDIO` / `QEMU_AUDIO_BACKEND` | `auto` (`auto\|none\|coreaudio\|pa\|pipewire\|alsa\|sdl\|dsound\|wav[:PATH]`) |
 | `--shared-dir DIR[:TAG]` | `QEMU_SHARED_DIR` | unset (mounts VirtFS 9p at `/mnt/share` and `/data/share`) |
 | `--usb` | `QEMU_USB` | `0` (attaches `qemu-xhci`) |
 | `--usb-disk FILE[:SIZE]` | `QEMU_USB_DISK` | unset (attaches USB mass storage on `xhci0.0` -> `/mnt/data/external/usb`, `/data/usb`; auto-creates/formats if `:SIZE` is given) |
@@ -116,50 +147,71 @@ powershell.exe -ExecutionPolicy Bypass -File ./launch/windows.ps1 -Cpu EPYC-v5 -
 | `--bt-usb VID:PID` | `QEMU_BT_USB` | unset (USB Bluetooth adapter passthrough by hex `VID:PID`) |
 | `--balloon` | `QEMU_BALLOON` | `0` (attaches `virtio-balloon-pci`) |
 | `--rng MODE` | `QEMU_RNG` | `on` (`auto\|on\|off`, attaches `virtio-rng-pci` hardware entropy source) |
-| `--port-forward SPEC` | `QEMU_PORT_FORWARD` | unset (`[tcp\|udp:]HOST_PORT:GUEST_PORT`, comma-separated or repeated SLIRP `hostfwd` rules) |
+| `--port-forward SPEC` | `QEMU_PORT_FORWARD` / `QEMU_HOSTFWD` | unset (`[tcp\|udp:]HOST_PORT:GUEST_PORT`, comma-separated or repeated SLIRP `hostfwd` rules) |
 | `--ril-modem MODE` | `QEMU_RIL_MODEM` | `auto` (`auto\|on\|off`, virtual AT modem over `virtio-serial` `/dev/ttyRIL0`) |
-| `--wifi MODE` | `QEMU_WIFI_MODE` | `auto` (`auto\|hwsim\|virt_wifi\|off`) |
+| `--wifi MODE` | `QEMU_WIFI` / `QEMU_WIFI_MODE` | `auto` (`auto\|hwsim\|virt_wifi\|off`) |
 | `--gps COORDS` | `QEMU_GPS` | unset (`LAT,LON[,ALT[,SPEED[,BEARING[,HACC[,VACC]]]]]`, streams to `/dev/unix/socket/qemu_gnss/input`) |
 | `--sensor VALUES` | `QEMU_SENSOR` | unset (`AX,AY,AZ[:RX,RY,RZ,RW]`, streams to `/dev/unix/socket/qemu_sensor/{input,rotation,headposture}`) |
 | `--battery SPEC` | `QEMU_BATTERY` | `100:charging` (`LEVEL[:charging\|discharging\|full\|not_charging]`, updates `/data/service/el0/battery` & status bar) |
 | `--thermal TEMP_C` | `QEMU_THERMAL` | `25.0` (temperature in Celsius, updates `/data/service/el0/thermal/sensor/*/temp`) |
 | `--sdcard FILE[:SIZE]` | `QEMU_SDCARD` | unset (attaches external SD card -> `/dev/mmcblk0`, `/mnt/data/external/sdcard`, `/data/sdcard`) |
-| `--nvme-disk FILE[:SIZE]` | `QEMU_NVME_DISK` | unset (attaches NVMe / high-speed disk -> `/dev/nvme0n1`, `/mnt/data/external/nvme`, `/data/nvme`) |
-| `--instance ID` | `QEMU_INSTANCE_ID` | unset (`1..999`; auto-isolates `userdata.img`/`sys_prod.img`/`chip_prod.img`, MACs, UUID, serial, HDC port, VNC display) |
-| `--peer MODE` | `QEMU_PEER_MODE` | `off` (`off\|listen[:PORT]\|connect[:PORT]`, attaches `virtio-net-pci` over loopback `stream` for DSoftBus LAN) |
+| `--nvme-disk FILE[:SIZE]` | `QEMU_NVME` / `QEMU_NVME_DISK` | unset (attaches NVMe / high-speed disk -> `/dev/nvme0n1`, `/mnt/data/external/nvme`, `/data/nvme`) |
+| `--instance ID` | `QEMU_INSTANCE` / `QEMU_INSTANCE_ID` | unset (`1..999`; auto-isolates `userdata.img`/`sys_prod.img`/`chip_prod.img`, MACs, UUID, serial, HDC port, VNC display) |
+| `--peer MODE` | `QEMU_PEER` / `QEMU_PEER_MODE` | `off` (`off\|listen[:PORT]\|connect[:PORT]`, attaches `virtio-net-pci` over loopback `stream` for DSoftBus LAN) |
 | `--userdata-file PATH` | `QEMU_USERDATA_FILE` | `images/userdata.img` |
 | `--rtc MODE` | `QEMU_RTC` | `utc` (`utc\|localtime\|host`, plus guest epoch sync via `/vendor/bin/qemu-hw-bridge`) |
 | `--watchdog MODEL` | `QEMU_WATCHDOG` | `none` (`none\|i6300esb[:reset\|shutdown\|poweroff\|pause\|none]`) |
 | `--tpm PATH` | `QEMU_TPM` | unset (`swtpm` UNIX control socket or state directory -> `tpm-crb` / `tpm-tis-device`) |
 | `--clipboard MODE` | `QEMU_CLIPBOARD` | `auto` (`auto\|on\|off\|text:...`, host-guest clipboard bridge -> `/data/service/el1/public/qemu_clipboard.txt`) |
-| `--camera-feed PATTERN` | `QEMU_CAMERA_FEED` | `bars` (`bars\|smpte\|squares\|checkers\|cross\|ramp\|noise\|moving`, live-switchable via `/data/vendor/camera_scene.cfg`) |
+| `--camera-feed PATTERN` | `QEMU_CAMERA` / `QEMU_CAMERA_FEED` | `bars` (`bars\|smpte\|squares\|checkers\|cross\|ramp\|noise\|moving`, live-switchable via `/data/vendor/camera_scene.cfg`) |
 | `--hw-bridge MODE` | `QEMU_HW_BRIDGE` | `auto` (`auto\|on\|off`, host-guest `ohos.hw.bridge0` control channel) |
 | `-a, --accel` | `QEMU_ACCEL` | `auto` (`hvf`/`kvm`/`tcg`/`whpx`) |
-| `-q, --qemu PATH` | `QEMU_BIN` | product `qemu-system-*` |
+| `-q, --qemu PATH` | `QEMU_BIN` / `QEMU_PATH` | product `qemu-system-*` |
 | `-- ...` | `QEMU_EXTRA_ARGS` | empty |
 
 On Windows PowerShell (`launch/windows.ps1`, included across `x86_64_virt`,
 `arm64_virt`, and `armv7a_virt` packages) the same knobs are available as
-parameters (`-Resolution`, `-Memory`, `-UserdataSize`, `-Reset`, `-Smp`, `-Cpu`,
-`-Display`, `-Headless`, `-UsbSerial`, `-PortForward`, `-Rng`, `-Sdcard`,
-`-NvmeDisk`, `-Gps`, `-Sensor`, `-Battery`, `-Thermal`, `-Instance`, `-Peer`,
-`-Rtc`, `-Watchdog`, `-CameraFeed`, `-Clipboard`, …) or via the environment
+parameters (`-Resolution`, `-Lang`, `-Locale`, `-Region`, `-Memory`,
+`-UserdataSize`, `-Reset`, `-Smp`, `-Cpu`, `-Display`, `-Headless`, `-UsbSerial`,
+`-PortForward`, `-Rng`, `-Sdcard`, `-NvmeDisk`, `-Gps`, `-Sensor`, `-Battery`,
+`-Thermal`, `-Instance`, `-Peer`, `-Rtc`, `-Watchdog`, `-CameraFeed`,
+`-Clipboard`, `-HwBridge`, …) or via the `QEMU_*` / `OHOS_QEMU_*` environment
 variables above.
 
-### Live runtime hardware control (`tools/qemu_hw_controller.py`)
+### Multi-language & English UI (`--lang en` / `QEMU_LANG=en`)
+
+All six `phone` and `2in1` images include built-in multi-language support (`SA 1602`
+`i18n_service`, ICU 72 locale data, and 18 whitelisted UI languages in
+`/system/etc/xml/i18n_param_config.xml`: `zh-Hans`, `en-Latn-US`, `zh-Hant`,
+`zh-Hant-HK`, `ja`, `ko`, `fr`, `de`, `es-ES`, `es-US`, `it`, `pt`, `pt-PT`,
+`ru`, `ar`, `vi`, `bo`, `ug`):
+
+- **At boot**: pass `--lang en` (or `QEMU_LANG=en`, `--locale en-GB`, `--lang ja`,
+  etc.) to boot directly into the selected language and persist it across reboots.
+- **At runtime without rebooting**: run `python3 ./tools/qemu_hw_controller.py locale en`
+  from the host, `hdc shell qemu-i18n-ctl en` from HDC, or switch interactively
+  under **Settings → System → Language & region → Add language**.
+
+### Live runtime hardware & locale control (`tools/qemu_hw_controller.py`)
 
 While QEMU is running, `tools/qemu_hw_controller.py` exposes a host UNIX control
-socket (`/tmp/openharmony-qemu-hw-<HDC_PORT>.ctrl.sock`) connected to
-`/vendor/bin/qemu-hw-bridge` inside the guest over `virtio-serial`
-(`ohos.hw.bridge0`) so GPS fixes, 3-axis accelerometer/rotation/head-posture and
-extended environmental sensors (`gyro`, `light`, `proximity`, `barometer`,
-`magnetic`), battery level/charging state, thermal zones, hardware key events
-(`power`, `volup`, `voldown`, `back`, `home`, …), network state (`online`,
-`offline`, `latency:MS`), camera test pattern, clipboard text, and USB serial
-data can be updated dynamically at runtime without rebooting:
+socket (`/tmp/openharmony-qemu-hw-<HDC_PORT>.ctrl.sock`, honoring `QEMU_HDC_PORT`
+/ `QEMU_HDC_HOST_PORT` automatically) connected to `/vendor/bin/qemu-hw-bridge`
+inside the guest over `virtio-serial` (`ohos.hw.bridge0`) so system UI
+language/locale (`locale`, `region`), GPS fixes, 3-axis
+accelerometer/rotation/head-posture and extended environmental sensors (`gyro`,
+`light`, `proximity`, `barometer`, `magnetic`), battery level/charging state,
+thermal zones, hardware key events (`power`, `volup`, `voldown`, `back`, `home`,
+…), network state (`online`, `offline`, `latency:MS`), camera test pattern,
+clipboard text, and USB serial data can be updated dynamically at runtime without
+rebooting:
 
 ```bash
 python3 ./tools/qemu_hw_controller.py --port 5555 status
+python3 ./tools/qemu_hw_controller.py --port 5555 locale en
+python3 ./tools/qemu_hw_controller.py --port 5555 locale zh-Hans
+python3 ./tools/qemu_hw_controller.py --port 5555 locale list
+python3 ./tools/qemu_hw_controller.py --port 5555 region US
 python3 ./tools/qemu_hw_controller.py --port 5555 gps 31.2304,121.4737,15.0,3.5,90.0
 python3 ./tools/qemu_hw_controller.py --port 5555 accel 0.0,9.81,0.0
 python3 ./tools/qemu_hw_controller.py --port 5555 rotation 0.0,0.0,0.7071,0.7071
@@ -353,7 +405,11 @@ the default device ID.
 
 From a source checkout, `scripts/sign-hap.sh` is the equivalent wrapper and
 `scripts/install-hap-signer.sh` installs the signer. Release packages carry the
-same scripts under `tools/`. The signer is implemented in the separate
+same scripts under `tools/`. `sign-hap.sh` also accepts environment variables
+(`OHOS_HAP_INPUT`, `OHOS_HAP_OUTPUT`, `OHOS_HAP_BUNDLE_NAME`,
+`OHOS_HAP_DEVICE_ID` / `OHOS_QEMU_UDID`, `OHOS_HAP_ACLS`, `OHOS_HAP_APL`,
+`OHOS_HAP_FORCE`) for CI pipelines, with explicit CLI flags taking precedence.
+The signer is implemented in the separate
 [`ohos-rs/hapsigner-rs`](https://github.com/ohos-rs/hapsigner-rs) repository
 with RustCrypto CMS, X.509, P-256 ECDSA, and SHA-256 crates. `rustls` is not used
 because the on-disk format is CMS/PKCS#7 rather than TLS.

@@ -51,42 +51,57 @@ To repackage existing release packages with a new deviceType only, prefer:
 USAGE
 }
 
-SOURCE_ROOT=
-PRODUCT=
-OUTPUT_DIR=
-REWRITE_ARM64_LAUNCHER=
-REWRITE_PACKAGE=
-DEVICE_TYPE="${DEVICE_TYPE:-}"
-DEVICE_TYPE_PROFILE="${DEVICE_TYPE_BUILD_PROFILE:-}"
+SOURCE_ROOT="${SOURCE_ROOT:-${OHOS_ROOT:-}}"
+PRODUCT="${PRODUCT:-${OHOS_QEMU_PRODUCT:-}}"
+OUTPUT_DIR="${OUTPUT_DIR:-${PACKAGE_OUT:-}}"
+REWRITE_ARM64_LAUNCHER="${REWRITE_ARM64_LAUNCHER:-}"
+REWRITE_PACKAGE="${REWRITE_PACKAGE:-}"
+DEVICE_TYPE="${DEVICE_TYPE:-${OHOS_QEMU_DEVICE_TYPE:-}}"
+DEVICE_TYPE_PROFILE="${DEVICE_TYPE_PROFILE:-${DEVICE_TYPE_BUILD_PROFILE:-}}"
+cli_package_opts=0
+cli_rewrite_package=0
+cli_rewrite_launcher=0
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
+    --*=*)
+      set -- "${1%%=*}" "${1#*=}" "${@:2}"
+      ;;
+  esac
+  case "$1" in
     --source-root)
       SOURCE_ROOT="${2:-}"
+      cli_package_opts=1
       shift 2
       ;;
     --product)
       PRODUCT="${2:-}"
+      cli_package_opts=1
       shift 2
       ;;
     --output-dir)
       OUTPUT_DIR="${2:-}"
+      cli_package_opts=1
       shift 2
       ;;
     --device-type)
       DEVICE_TYPE="${2:-}"
+      cli_package_opts=1
       shift 2
       ;;
     --device-type-profile)
       DEVICE_TYPE_PROFILE="${2:-}"
+      cli_package_opts=1
       shift 2
       ;;
     --rewrite-arm64-launcher)
       REWRITE_ARM64_LAUNCHER="${2:-}"
+      cli_rewrite_launcher=1
       shift 2
       ;;
     --rewrite-package)
       REWRITE_PACKAGE="${2:-}"
+      cli_rewrite_package=1
       shift 2
       ;;
     -h|--help)
@@ -1293,7 +1308,9 @@ QEMU_RTC="${QEMU_RTC:-utc}"
 QEMU_WATCHDOG="${QEMU_WATCHDOG:-none}"
 QEMU_TPM="${QEMU_TPM:-}"
 QEMU_CLIPBOARD="${QEMU_CLIPBOARD:-auto}"
-QEMU_CAMERA_FEED="${QEMU_CAMERA_FEED:-}"
+QEMU_CAMERA_FEED="${QEMU_CAMERA_FEED:-${QEMU_CAMERA:-}}"
+QEMU_LOCALE="${QEMU_LOCALE:-${QEMU_LANG:-${OHOS_QEMU_LOCALE:-${OHOS_QEMU_LANG:-}}}}"
+QEMU_REGION="${QEMU_REGION:-${OHOS_QEMU_REGION:-}}"
 QEMU_HW_BRIDGE="${QEMU_HW_BRIDGE:-auto}"
 QEMU_BOOT_EXTRAS="${QEMU_BOOT_EXTRAS:-}"
 QEMU_HOSTFWD_EXTRAS=""
@@ -1780,6 +1797,22 @@ if [ -n "${QEMU_CAMERA_FEED}" ]; then
   [ "${QEMU_HW_BRIDGE}" = "off" ] && QEMU_BOOT_EXTRAS="${QEMU_BOOT_EXTRAS:+${QEMU_BOOT_EXTRAS} }ohos.boot.qemu.camera=${QEMU_CAMERA_FEED}"
   echo "Virtual camera feed pattern: ${QEMU_CAMERA_FEED}" >&2
 fi
+if [ -n "${QEMU_LOCALE}" ]; then
+  if ! [[ "${QEMU_LOCALE}" =~ ^[A-Za-z0-9_.@-]+$ ]]; then
+    echo "invalid QEMU_LOCALE=${QEMU_LOCALE} (expected language/locale tag such as en, en-Latn-US, zh-Hans, ja)" >&2
+    exit 2
+  fi
+  QEMU_BOOT_EXTRAS="${QEMU_BOOT_EXTRAS:+${QEMU_BOOT_EXTRAS} }ohos.boot.qemu.locale=${QEMU_LOCALE}"
+  echo "System language/locale: ${QEMU_LOCALE}" >&2
+fi
+if [ -n "${QEMU_REGION}" ]; then
+  if ! [[ "${QEMU_REGION}" =~ ^[A-Za-z0-9]{2,3}$ ]]; then
+    echo "invalid QEMU_REGION=${QEMU_REGION} (expected 2-letter ISO or 3-digit region code such as US, GB, CN, JP)" >&2
+    exit 2
+  fi
+  QEMU_BOOT_EXTRAS="${QEMU_BOOT_EXTRAS:+${QEMU_BOOT_EXTRAS} }ohos.boot.qemu.region=${QEMU_REGION}"
+  echo "System region: ${QEMU_REGION}" >&2
+fi
 
 # 10. Cellular RIL Virtual AT Modem & Dynamic Hardware Bridge over VirtIO Serial
 qemu_virtio_serial_bus_added=0
@@ -1884,6 +1917,8 @@ case "${QEMU_HW_BRIDGE}" in
       [ -n "${QEMU_BATTERY}" ] && hw_ctrl_args+=(--battery "${QEMU_BATTERY}")
       [ -n "${QEMU_THERMAL}" ] && hw_ctrl_args+=(--thermal "${QEMU_THERMAL}")
       [ -n "${QEMU_CAMERA_FEED}" ] && hw_ctrl_args+=(--camera "${QEMU_CAMERA_FEED}")
+      [ -n "${QEMU_LOCALE}" ] && hw_ctrl_args+=(--locale "${QEMU_LOCALE}")
+      [ -n "${QEMU_REGION}" ] && hw_ctrl_args+=(--region "${QEMU_REGION}")
       case "${QEMU_CLIPBOARD}" in
         auto|off) ;;
         on) hw_ctrl_args+=(--clipboard-sync) ;;
@@ -2106,29 +2141,123 @@ Options:
       --tpm PATH         Attach TPM 2.0 emulator (swtpm unix socket or state directory)
       --clipboard MODE   Host-guest clipboard bridge: auto|on|off|text:STRING (default: auto)
       --camera-feed PAT  Virtual V4L2 camera test pattern: bars|smpte|squares|checkers|cross|ramp|noise|moving
+  -l, --lang, --locale TAG  System UI language/locale (e.g. en, en-US, en-GB, zh-Hans, zh-Hant, ja, ko, fr, de, es, ru, ar, vi)
+      --region REGION    System ISO 3166-1 region (e.g. US, GB, CN, TW, HK, JP, KR, FR, DE)
+      --hw-bridge MODE   Host-guest ohos.hw.bridge0 control channel: auto|on|off (default: auto)
   -a, --accel MODE       auto|hvf|kvm|tcg|whpx (default: auto)
   -q, --qemu PATH        Path to the qemu-system-* binary (default: \${DEFAULT_QEMU_BIN})
   -h, --help             Show this help
 
 CLI flags override environment variables, which override the defaults above.
-Supported environment variables:
-  QEMU_DISPLAY QEMU_XRES QEMU_YRES QEMU_SMP QEMU_MEMORY QEMU_CPU
-  QEMU_RESET QEMU_USERDATA_SIZE QEMU_USERDATA_FILE QEMU_INSTANCE_ID
-  QEMU_AUDIO_BACKEND QEMU_SHARED_DIR
-  QEMU_USB QEMU_USB_DISK QEMU_USB_HOST QEMU_USB_SERIAL QEMU_BT_USB QEMU_BALLOON QEMU_RNG
-  QEMU_PORT_FORWARD QEMU_RIL_MODEM QEMU_WIFI_MODE
-  QEMU_GPS QEMU_SENSOR QEMU_BATTERY QEMU_THERMAL
-  QEMU_SDCARD QEMU_NVME_DISK QEMU_RTC QEMU_WATCHDOG QEMU_TPM
-  QEMU_CLIPBOARD QEMU_CAMERA_FEED QEMU_HW_BRIDGE
-  QEMU_HDC_HOST_PORT QEMU_VNC_DISPLAY QEMU_SERIAL_PORT
-  QEMU_KERNEL_LOG_LEVEL
-  QEMU_ACCESSIBILITY QEMU_QMP_SOCKET
-  QEMU_ACCEL QEMU_BIN QEMU_EXTRA_ARGS
-  QEMU_PEER_MODE=off|listen|connect QEMU_PEER_PORT QEMU_PEER_MAC QEMU_MGMT_MAC
-  QEMU_INSTANCE_UUID QEMU_GUEST_SERIAL QEMU_PEER_CAPTURE_FILE
+Every CLI option has a matching QEMU_* (and OHOS_QEMU_*) environment variable:
+  QEMU_DISPLAY / QEMU_HEADLESS  QEMU_RESOLUTION / QEMU_WIDTH / QEMU_HEIGHT / QEMU_XRES / QEMU_YRES
+  QEMU_LANG / QEMU_LOCALE / QEMU_REGION  QEMU_SMP  QEMU_MEMORY  QEMU_CPU
+  QEMU_RESET  QEMU_USERDATA_SIZE  QEMU_USERDATA_FILE  QEMU_INSTANCE / QEMU_INSTANCE_ID
+  QEMU_AUDIO / QEMU_AUDIO_BACKEND  QEMU_SHARED_DIR
+  QEMU_USB  QEMU_USB_DISK  QEMU_USB_HOST  QEMU_USB_SERIAL  QEMU_BT_USB  QEMU_BALLOON  QEMU_RNG
+  QEMU_PORT_FORWARD / QEMU_HOSTFWD  QEMU_RIL_MODEM  QEMU_WIFI / QEMU_WIFI_MODE
+  QEMU_GPS  QEMU_SENSOR  QEMU_BATTERY  QEMU_THERMAL
+  QEMU_SDCARD  QEMU_NVME / QEMU_NVME_DISK  QEMU_RTC  QEMU_WATCHDOG  QEMU_TPM
+  QEMU_CLIPBOARD  QEMU_CAMERA / QEMU_CAMERA_FEED  QEMU_HW_BRIDGE
+  QEMU_CONNECT / QEMU_HDC_PORT / QEMU_HDC_HOST_PORT  QEMU_VNC_DISPLAY  QEMU_SERIAL_PORT
+  QEMU_KERNEL_LOG_LEVEL  QEMU_A11Y / QEMU_ACCESSIBILITY  QEMU_QMP_SOCKET
+  QEMU_ACCEL  QEMU_BIN / QEMU_PATH  QEMU_EXTRA_ARGS
+  QEMU_PEER / QEMU_PEER_MODE=off|listen|connect  QEMU_PEER_PORT  QEMU_PEER_MAC  QEMU_MGMT_MAC
+  QEMU_INSTANCE_UUID  QEMU_GUEST_SERIAL  QEMU_PEER_CAPTURE_FILE
   (peer LAN: POSIX full products only; separate instance disks and actual distinct UDIDs required)
 USAGE
 }
+
+normalize_qemu_bool() {
+  local var_name="\$1"
+  local raw="\${2:-0}"
+  local lower
+  lower="\$(printf '%s' "\${raw}" | tr '[:upper:]' '[:lower:]')"
+  case "\${lower}" in
+    1|true|yes|on) printf '1\n' ;;
+    0|false|no|off|"") printf '0\n' ;;
+    *)
+      echo "\${var_name} must be 0/1/true/false/yes/no/on/off, got: \${raw}" >&2
+      exit 2
+      ;;
+  esac
+}
+
+# Resolve environment variable aliases before parsing CLI options so CLI flags always win.
+_env_res="\${QEMU_RESOLUTION:-\${OHOS_QEMU_RESOLUTION:-}}"
+if [ -n "\${_env_res}" ]; then
+  case "\${_env_res}" in
+    *x*)
+      export QEMU_XRES="\${QEMU_XRES:-\${_env_res%x*}}"
+      export QEMU_YRES="\${QEMU_YRES:-\${_env_res#*x}}"
+      ;;
+    *)
+      echo "QEMU_RESOLUTION must be WxH, got: \${_env_res}" >&2
+      exit 2
+      ;;
+  esac
+fi
+[ -z "\${QEMU_XRES:-}" ] && [ -n "\${QEMU_WIDTH:-\${OHOS_QEMU_WIDTH:-}}" ] && export QEMU_XRES="\${QEMU_WIDTH:-\${OHOS_QEMU_WIDTH:-}}"
+[ -z "\${QEMU_YRES:-}" ] && [ -n "\${QEMU_HEIGHT:-\${OHOS_QEMU_HEIGHT:-}}" ] && export QEMU_YRES="\${QEMU_HEIGHT:-\${OHOS_QEMU_HEIGHT:-}}"
+[ -z "\${QEMU_MEMORY:-}" ] && [ -n "\${OHOS_QEMU_MEMORY:-}" ] && export QEMU_MEMORY="\${OHOS_QEMU_MEMORY}"
+[ -z "\${QEMU_USERDATA_SIZE:-}" ] && [ -n "\${QEMU_DATA_SIZE:-\${OHOS_QEMU_USERDATA_SIZE:-}}" ] && export QEMU_USERDATA_SIZE="\${QEMU_DATA_SIZE:-\${OHOS_QEMU_USERDATA_SIZE:-}}"
+[ -z "\${QEMU_RESET:-}" ] && [ -n "\${OHOS_QEMU_RESET:-}" ] && export QEMU_RESET="\${OHOS_QEMU_RESET}"
+[ -z "\${QEMU_SMP:-}" ] && [ -n "\${OHOS_QEMU_SMP:-}" ] && export QEMU_SMP="\${OHOS_QEMU_SMP}"
+[ -z "\${QEMU_CPU:-}" ] && [ -n "\${OHOS_QEMU_CPU:-}" ] && export QEMU_CPU="\${OHOS_QEMU_CPU}"
+[ -z "\${QEMU_DISPLAY:-}" ] && [ -n "\${OHOS_QEMU_DISPLAY:-}" ] && export QEMU_DISPLAY="\${OHOS_QEMU_DISPLAY}"
+if [ -z "\${QEMU_DISPLAY:-}" ] && [ -n "\${QEMU_HEADLESS:-\${OHOS_QEMU_HEADLESS:-}}" ]; then
+  if [ "\$(normalize_qemu_bool QEMU_HEADLESS "\${QEMU_HEADLESS:-\${OHOS_QEMU_HEADLESS:-}}")" = "1" ]; then
+    export QEMU_DISPLAY=none
+  fi
+fi
+if [ -z "\${QEMU_HDC_HOST_PORT:-}" ]; then
+  if [ -n "\${QEMU_HDC_PORT:-\${OHOS_QEMU_HDC_PORT:-}}" ]; then
+    export QEMU_HDC_HOST_PORT="\${QEMU_HDC_PORT:-\${OHOS_QEMU_HDC_PORT:-}}"
+  elif [ -n "\${QEMU_CONNECT:-\${OHOS_QEMU_CONNECT:-}}" ]; then
+    _env_conn="\${QEMU_CONNECT:-\${OHOS_QEMU_CONNECT:-}}"
+    case "\${_env_conn}" in
+      *:*) export QEMU_HDC_HOST_PORT="\${_env_conn##*:}" ;;
+      *) echo "QEMU_CONNECT must be host:port, got: \${_env_conn}" >&2; exit 2 ;;
+    esac
+  fi
+fi
+[ -z "\${QEMU_VNC_DISPLAY:-}" ] && [ -n "\${OHOS_QEMU_VNC_DISPLAY:-}" ] && export QEMU_VNC_DISPLAY="\${OHOS_QEMU_VNC_DISPLAY}"
+[ -z "\${QEMU_SERIAL_PORT:-}" ] && [ -n "\${OHOS_QEMU_SERIAL_PORT:-}" ] && export QEMU_SERIAL_PORT="\${OHOS_QEMU_SERIAL_PORT}"
+[ -z "\${QEMU_KERNEL_LOG_LEVEL:-}" ] && [ -n "\${OHOS_QEMU_KERNEL_LOG_LEVEL:-}" ] && export QEMU_KERNEL_LOG_LEVEL="\${OHOS_QEMU_KERNEL_LOG_LEVEL}"
+[ -z "\${QEMU_ACCESSIBILITY:-}" ] && [ -n "\${QEMU_A11Y:-\${OHOS_QEMU_A11Y:-\${OHOS_QEMU_ACCESSIBILITY:-}}}" ] && export QEMU_ACCESSIBILITY="\${QEMU_A11Y:-\${OHOS_QEMU_A11Y:-\${OHOS_QEMU_ACCESSIBILITY:-}}}"
+[ -z "\${QEMU_QMP_SOCKET:-}" ] && [ -n "\${OHOS_QEMU_QMP_SOCKET:-}" ] && export QEMU_QMP_SOCKET="\${OHOS_QEMU_QMP_SOCKET}"
+[ -z "\${QEMU_AUDIO_BACKEND:-}" ] && [ -n "\${QEMU_AUDIO:-\${OHOS_QEMU_AUDIO:-\${OHOS_QEMU_AUDIO_BACKEND:-}}}" ] && export QEMU_AUDIO_BACKEND="\${QEMU_AUDIO:-\${OHOS_QEMU_AUDIO:-\${OHOS_QEMU_AUDIO_BACKEND:-}}}"
+[ -z "\${QEMU_SHARED_DIR:-}" ] && [ -n "\${OHOS_QEMU_SHARED_DIR:-}" ] && export QEMU_SHARED_DIR="\${OHOS_QEMU_SHARED_DIR}"
+[ -z "\${QEMU_USB:-}" ] && [ -n "\${QEMU_USB_XHCI:-\${OHOS_QEMU_USB:-}}" ] && export QEMU_USB="\${QEMU_USB_XHCI:-\${OHOS_QEMU_USB:-}}"
+[ -z "\${QEMU_USB_DISK:-}" ] && [ -n "\${QEMU_USB_STORAGE:-\${OHOS_QEMU_USB_DISK:-}}" ] && export QEMU_USB_DISK="\${QEMU_USB_STORAGE:-\${OHOS_QEMU_USB_DISK:-}}"
+[ -z "\${QEMU_USB_HOST:-}" ] && [ -n "\${OHOS_QEMU_USB_HOST:-}" ] && export QEMU_USB_HOST="\${OHOS_QEMU_USB_HOST}"
+[ -z "\${QEMU_USB_SERIAL:-}" ] && [ -n "\${OHOS_QEMU_USB_SERIAL:-}" ] && export QEMU_USB_SERIAL="\${OHOS_QEMU_USB_SERIAL}"
+[ -z "\${QEMU_BT_USB:-}" ] && [ -n "\${OHOS_QEMU_BT_USB:-}" ] && export QEMU_BT_USB="\${OHOS_QEMU_BT_USB}"
+[ -z "\${QEMU_BALLOON:-}" ] && [ -n "\${OHOS_QEMU_BALLOON:-}" ] && export QEMU_BALLOON="\${OHOS_QEMU_BALLOON}"
+[ -z "\${QEMU_RNG:-}" ] && [ -n "\${OHOS_QEMU_RNG:-}" ] && export QEMU_RNG="\${OHOS_QEMU_RNG}"
+[ -z "\${QEMU_PORT_FORWARD:-}" ] && [ -n "\${QEMU_HOSTFWD:-\${OHOS_QEMU_PORT_FORWARD:-}}" ] && export QEMU_PORT_FORWARD="\${QEMU_HOSTFWD:-\${OHOS_QEMU_PORT_FORWARD:-}}"
+[ -z "\${QEMU_RIL_MODEM:-}" ] && [ -n "\${OHOS_QEMU_RIL_MODEM:-}" ] && export QEMU_RIL_MODEM="\${OHOS_QEMU_RIL_MODEM}"
+[ -z "\${QEMU_WIFI_MODE:-}" ] && [ -n "\${QEMU_WIFI:-\${OHOS_QEMU_WIFI:-\${OHOS_QEMU_WIFI_MODE:-}}}" ] && export QEMU_WIFI_MODE="\${QEMU_WIFI:-\${OHOS_QEMU_WIFI:-\${OHOS_QEMU_WIFI_MODE:-}}}"
+[ -z "\${QEMU_GPS:-}" ] && [ -n "\${OHOS_QEMU_GPS:-}" ] && export QEMU_GPS="\${OHOS_QEMU_GPS}"
+[ -z "\${QEMU_SENSOR:-}" ] && [ -n "\${OHOS_QEMU_SENSOR:-}" ] && export QEMU_SENSOR="\${OHOS_QEMU_SENSOR}"
+[ -z "\${QEMU_BATTERY:-}" ] && [ -n "\${OHOS_QEMU_BATTERY:-}" ] && export QEMU_BATTERY="\${OHOS_QEMU_BATTERY}"
+[ -z "\${QEMU_THERMAL:-}" ] && [ -n "\${OHOS_QEMU_THERMAL:-}" ] && export QEMU_THERMAL="\${OHOS_QEMU_THERMAL}"
+[ -z "\${QEMU_SDCARD:-}" ] && [ -n "\${OHOS_QEMU_SDCARD:-}" ] && export QEMU_SDCARD="\${OHOS_QEMU_SDCARD}"
+[ -z "\${QEMU_NVME_DISK:-}" ] && [ -n "\${QEMU_NVME:-\${OHOS_QEMU_NVME_DISK:-\${OHOS_QEMU_NVME:-}}}" ] && export QEMU_NVME_DISK="\${QEMU_NVME:-\${OHOS_QEMU_NVME_DISK:-\${OHOS_QEMU_NVME:-}}}"
+[ -z "\${QEMU_INSTANCE_ID:-}" ] && [ -n "\${QEMU_INSTANCE:-\${OHOS_QEMU_INSTANCE:-\${OHOS_QEMU_INSTANCE_ID:-}}}" ] && export QEMU_INSTANCE_ID="\${QEMU_INSTANCE:-\${OHOS_QEMU_INSTANCE:-\${OHOS_QEMU_INSTANCE_ID:-}}}"
+[ -z "\${QEMU_PEER_MODE:-}" ] && [ -n "\${QEMU_PEER:-\${OHOS_QEMU_PEER:-\${OHOS_QEMU_PEER_MODE:-}}}" ] && export QEMU_PEER_MODE="\${QEMU_PEER:-\${OHOS_QEMU_PEER:-\${OHOS_QEMU_PEER_MODE:-}}}"
+[ -z "\${QEMU_USERDATA_FILE:-}" ] && [ -n "\${OHOS_QEMU_USERDATA_FILE:-}" ] && export QEMU_USERDATA_FILE="\${OHOS_QEMU_USERDATA_FILE}"
+[ -z "\${QEMU_RTC:-}" ] && [ -n "\${OHOS_QEMU_RTC:-}" ] && export QEMU_RTC="\${OHOS_QEMU_RTC}"
+[ -z "\${QEMU_WATCHDOG:-}" ] && [ -n "\${OHOS_QEMU_WATCHDOG:-}" ] && export QEMU_WATCHDOG="\${OHOS_QEMU_WATCHDOG}"
+[ -z "\${QEMU_TPM:-}" ] && [ -n "\${OHOS_QEMU_TPM:-}" ] && export QEMU_TPM="\${OHOS_QEMU_TPM}"
+[ -z "\${QEMU_CLIPBOARD:-}" ] && [ -n "\${OHOS_QEMU_CLIPBOARD:-}" ] && export QEMU_CLIPBOARD="\${OHOS_QEMU_CLIPBOARD}"
+[ -z "\${QEMU_CAMERA_FEED:-}" ] && [ -n "\${QEMU_CAMERA:-\${OHOS_QEMU_CAMERA_FEED:-\${OHOS_QEMU_CAMERA:-}}}" ] && export QEMU_CAMERA_FEED="\${QEMU_CAMERA:-\${OHOS_QEMU_CAMERA_FEED:-\${OHOS_QEMU_CAMERA:-}}}"
+[ -z "\${QEMU_LOCALE:-}" ] && [ -n "\${QEMU_LANG:-\${OHOS_QEMU_LOCALE:-\${OHOS_QEMU_LANG:-}}}" ] && export QEMU_LOCALE="\${QEMU_LANG:-\${OHOS_QEMU_LOCALE:-\${OHOS_QEMU_LANG:-}}}"
+[ -z "\${QEMU_REGION:-}" ] && [ -n "\${OHOS_QEMU_REGION:-}" ] && export QEMU_REGION="\${OHOS_QEMU_REGION}"
+[ -z "\${QEMU_HW_BRIDGE:-}" ] && [ -n "\${OHOS_QEMU_HW_BRIDGE:-}" ] && export QEMU_HW_BRIDGE="\${OHOS_QEMU_HW_BRIDGE}"
+[ -z "\${QEMU_ACCEL:-}" ] && [ -n "\${OHOS_QEMU_ACCEL:-}" ] && export QEMU_ACCEL="\${OHOS_QEMU_ACCEL}"
+[ -z "\${QEMU_BIN:-}" ] && [ -n "\${QEMU_PATH:-\${OHOS_QEMU_BIN:-\${OHOS_QEMU_PATH:-}}}" ] && export QEMU_BIN="\${QEMU_PATH:-\${OHOS_QEMU_BIN:-\${OHOS_QEMU_PATH:-}}}"
+[ -z "\${QEMU_EXTRA_ARGS:-}" ] && [ -n "\${OHOS_QEMU_EXTRA_ARGS:-}" ] && export QEMU_EXTRA_ARGS="\${OHOS_QEMU_EXTRA_ARGS}"
 
 while [ "\$#" -gt 0 ]; do
   case "\$1" in
@@ -2333,6 +2462,18 @@ while [ "\$#" -gt 0 ]; do
       export QEMU_CAMERA_FEED="\${2:?missing camera feed pattern}"
       shift 2
       ;;
+    -l|--lang|--locale|--language)
+      export QEMU_LOCALE="\${2:?missing language or locale tag}"
+      shift 2
+      ;;
+    --region)
+      export QEMU_REGION="\${2:?missing region tag}"
+      shift 2
+      ;;
+    --hw-bridge)
+      export QEMU_HW_BRIDGE="\${2:?missing hw-bridge mode}"
+      shift 2
+      ;;
     -a|--accel)
       export QEMU_ACCEL="\${2:?missing accel mode}"
       shift 2
@@ -2382,16 +2523,16 @@ export QEMU_HDC_HOST_PORT="\${QEMU_HDC_HOST_PORT:-\${DEFAULT_HDC_PORT}}"
 export QEMU_VNC_DISPLAY="\${QEMU_VNC_DISPLAY:-\${DEFAULT_VNC_DISPLAY}}"
 export QEMU_SERIAL_PORT="\${QEMU_SERIAL_PORT:-}"
 export QEMU_KERNEL_LOG_LEVEL="\${QEMU_KERNEL_LOG_LEVEL:-4}"
-export QEMU_ACCESSIBILITY="\${QEMU_ACCESSIBILITY:-0}"
+export QEMU_ACCESSIBILITY="\$(normalize_qemu_bool QEMU_ACCESSIBILITY "\${QEMU_ACCESSIBILITY:-0}")"
 export QEMU_QMP_SOCKET="\${QEMU_QMP_SOCKET:-}"
 export QEMU_AUDIO_BACKEND="\${QEMU_AUDIO_BACKEND:-auto}"
 export QEMU_SHARED_DIR="\${QEMU_SHARED_DIR:-}"
-export QEMU_USB="\${QEMU_USB:-0}"
+export QEMU_USB="\$(normalize_qemu_bool QEMU_USB "\${QEMU_USB:-0}")"
 export QEMU_USB_DISK="\${QEMU_USB_DISK:-}"
 export QEMU_USB_HOST="\${QEMU_USB_HOST:-}"
 export QEMU_USB_SERIAL="\${QEMU_USB_SERIAL:-off}"
 export QEMU_BT_USB="\${QEMU_BT_USB:-}"
-export QEMU_BALLOON="\${QEMU_BALLOON:-0}"
+export QEMU_BALLOON="\$(normalize_qemu_bool QEMU_BALLOON "\${QEMU_BALLOON:-0}")"
 export QEMU_RNG="\${QEMU_RNG:-on}"
 export QEMU_PORT_FORWARD="\${QEMU_PORT_FORWARD:-}"
 export QEMU_RIL_MODEM="\${QEMU_RIL_MODEM:-auto}"
@@ -2409,9 +2550,12 @@ export QEMU_WATCHDOG="\${QEMU_WATCHDOG:-none}"
 export QEMU_TPM="\${QEMU_TPM:-}"
 export QEMU_CLIPBOARD="\${QEMU_CLIPBOARD:-auto}"
 export QEMU_CAMERA_FEED="\${QEMU_CAMERA_FEED:-}"
+export QEMU_LOCALE="\${QEMU_LOCALE:-}"
+export QEMU_REGION="\${QEMU_REGION:-}"
+export QEMU_HW_BRIDGE="\${QEMU_HW_BRIDGE:-auto}"
 export QEMU_ACCEL="\${QEMU_ACCEL:-auto}"
 export QEMU_BIN="\${QEMU_BIN:-\${DEFAULT_QEMU_BIN}}"
-export QEMU_RESET="\${QEMU_RESET:-0}"
+export QEMU_RESET="\$(normalize_qemu_bool QEMU_RESET "\${QEMU_RESET:-0}")"
 export QEMU_USERDATA_SIZE="\${QEMU_USERDATA_SIZE:-}"
 export QEMU_EXTRA_ARGS="\${QEMU_EXTRA_ARGS:-}"
 
@@ -2595,13 +2739,79 @@ param(
   [string]\$Watchdog,
   [string]\$Tpm,
   [string]\$Clipboard,
-  [string]\$CameraFeed,
+  [Alias("Camera")][string]\$CameraFeed,
+  [Alias("l", "Locale", "Language")][string]\$Lang,
+  [string]\$Region,
+  [string]\$HwBridge,
   [Alias("a")][string]\$Accel,
   [Alias("q")][string]\$QemuPath,
   [Parameter(ValueFromRemainingArguments = \$true)][string[]]\$ExtraArgs
 )
 
 \$ErrorActionPreference = "Stop"
+
+function Resolve-QemuBool([string]\$Name, [string]\$Raw = "0") {
+  if (-not \$Raw) { return "0" }
+  switch (\$Raw.Trim().ToLowerInvariant()) {
+    "1" { return "1" }
+    "true" { return "1" }
+    "yes" { return "1" }
+    "on" { return "1" }
+    "0" { return "0" }
+    "false" { return "0" }
+    "no" { return "0" }
+    "off" { return "0" }
+    default { throw "\$Name must be 0/1/true/false/yes/no/on/off, got: \$Raw" }
+  }
+}
+
+# Resolve environment variable aliases before applying explicit PowerShell parameters.
+\$EnvRes = if (\$env:QEMU_RESOLUTION) { \$env:QEMU_RESOLUTION } else { \$env:OHOS_QEMU_RESOLUTION }
+if (\$EnvRes) {
+  if (\$EnvRes -notmatch '^(\\d+)x(\\d+)\$') {
+    throw "QEMU_RESOLUTION must be WxH, got: \$EnvRes"
+  }
+  if (-not \$env:QEMU_XRES) { \$env:QEMU_XRES = \$Matches[1] }
+  if (-not \$env:QEMU_YRES) { \$env:QEMU_YRES = \$Matches[2] }
+}
+if (-not \$env:QEMU_XRES -and (\$env:QEMU_WIDTH -or \$env:OHOS_QEMU_WIDTH)) { \$env:QEMU_XRES = if (\$env:QEMU_WIDTH) { \$env:QEMU_WIDTH } else { \$env:OHOS_QEMU_WIDTH } }
+if (-not \$env:QEMU_YRES -and (\$env:QEMU_HEIGHT -or \$env:OHOS_QEMU_HEIGHT)) { \$env:QEMU_YRES = if (\$env:QEMU_HEIGHT) { \$env:QEMU_HEIGHT } else { \$env:OHOS_QEMU_HEIGHT } }
+if (-not \$env:QEMU_MEMORY -and \$env:OHOS_QEMU_MEMORY) { \$env:QEMU_MEMORY = \$env:OHOS_QEMU_MEMORY }
+if (-not \$env:QEMU_USERDATA_SIZE -and (\$env:QEMU_DATA_SIZE -or \$env:OHOS_QEMU_USERDATA_SIZE)) { \$env:QEMU_USERDATA_SIZE = if (\$env:QEMU_DATA_SIZE) { \$env:QEMU_DATA_SIZE } else { \$env:OHOS_QEMU_USERDATA_SIZE } }
+if (-not \$env:QEMU_RESET -and \$env:OHOS_QEMU_RESET) { \$env:QEMU_RESET = \$env:OHOS_QEMU_RESET }
+if (-not \$env:QEMU_SMP -and \$env:OHOS_QEMU_SMP) { \$env:QEMU_SMP = \$env:OHOS_QEMU_SMP }
+if (-not \$env:QEMU_CPU -and \$env:OHOS_QEMU_CPU) { \$env:QEMU_CPU = \$env:OHOS_QEMU_CPU }
+if (-not \$env:QEMU_DISPLAY -and \$env:OHOS_QEMU_DISPLAY) { \$env:QEMU_DISPLAY = \$env:OHOS_QEMU_DISPLAY }
+if (-not \$env:QEMU_DISPLAY -and (\$env:QEMU_HEADLESS -or \$env:OHOS_QEMU_HEADLESS)) {
+  \$EnvHeadless = if (\$env:QEMU_HEADLESS) { \$env:QEMU_HEADLESS } else { \$env:OHOS_QEMU_HEADLESS }
+  if ((Resolve-QemuBool "QEMU_HEADLESS" \$EnvHeadless) -eq "1") { \$env:QEMU_DISPLAY = "none" }
+}
+if (-not \$env:QEMU_HDC_HOST_PORT) {
+  if (\$env:QEMU_HDC_PORT -or \$env:OHOS_QEMU_HDC_PORT) {
+    \$env:QEMU_HDC_HOST_PORT = if (\$env:QEMU_HDC_PORT) { \$env:QEMU_HDC_PORT } else { \$env:OHOS_QEMU_HDC_PORT }
+  } elseif (\$env:QEMU_CONNECT -or \$env:OHOS_QEMU_CONNECT) {
+    \$EnvConn = if (\$env:QEMU_CONNECT) { \$env:QEMU_CONNECT } else { \$env:OHOS_QEMU_CONNECT }
+    if (\$EnvConn -notmatch '^[^:]+:(\\d+)\$') { throw "QEMU_CONNECT must be host:port, got: \$EnvConn" }
+    \$env:QEMU_HDC_HOST_PORT = \$Matches[1]
+  }
+}
+if (-not \$env:QEMU_ACCESSIBILITY -and (\$env:QEMU_A11Y -or \$env:OHOS_QEMU_A11Y -or \$env:OHOS_QEMU_ACCESSIBILITY)) {
+  \$env:QEMU_ACCESSIBILITY = if (\$env:QEMU_A11Y) { \$env:QEMU_A11Y } elseif (\$env:OHOS_QEMU_A11Y) { \$env:OHOS_QEMU_A11Y } else { \$env:OHOS_QEMU_ACCESSIBILITY }
+}
+if (-not \$env:QEMU_AUDIO_BACKEND -and (\$env:QEMU_AUDIO -or \$env:OHOS_QEMU_AUDIO)) { \$env:QEMU_AUDIO_BACKEND = if (\$env:QEMU_AUDIO) { \$env:QEMU_AUDIO } else { \$env:OHOS_QEMU_AUDIO } }
+if (-not \$env:QEMU_USB -and (\$env:QEMU_USB_XHCI -or \$env:OHOS_QEMU_USB)) { \$env:QEMU_USB = if (\$env:QEMU_USB_XHCI) { \$env:QEMU_USB_XHCI } else { \$env:OHOS_QEMU_USB } }
+if (-not \$env:QEMU_USB_DISK -and (\$env:QEMU_USB_STORAGE -or \$env:OHOS_QEMU_USB_DISK)) { \$env:QEMU_USB_DISK = if (\$env:QEMU_USB_STORAGE) { \$env:QEMU_USB_STORAGE } else { \$env:OHOS_QEMU_USB_DISK } }
+if (-not \$env:QEMU_PORT_FORWARD -and (\$env:QEMU_HOSTFWD -or \$env:OHOS_QEMU_PORT_FORWARD)) { \$env:QEMU_PORT_FORWARD = if (\$env:QEMU_HOSTFWD) { \$env:QEMU_HOSTFWD } else { \$env:OHOS_QEMU_PORT_FORWARD } }
+if (-not \$env:QEMU_WIFI_MODE -and (\$env:QEMU_WIFI -or \$env:OHOS_QEMU_WIFI)) { \$env:QEMU_WIFI_MODE = if (\$env:QEMU_WIFI) { \$env:QEMU_WIFI } else { \$env:OHOS_QEMU_WIFI } }
+if (-not \$env:QEMU_NVME_DISK -and (\$env:QEMU_NVME -or \$env:OHOS_QEMU_NVME_DISK)) { \$env:QEMU_NVME_DISK = if (\$env:QEMU_NVME) { \$env:QEMU_NVME } else { \$env:OHOS_QEMU_NVME_DISK } }
+if (-not \$env:QEMU_INSTANCE_ID -and (\$env:QEMU_INSTANCE -or \$env:OHOS_QEMU_INSTANCE)) { \$env:QEMU_INSTANCE_ID = if (\$env:QEMU_INSTANCE) { \$env:QEMU_INSTANCE } else { \$env:OHOS_QEMU_INSTANCE } }
+if (-not \$env:QEMU_PEER_MODE -and (\$env:QEMU_PEER -or \$env:OHOS_QEMU_PEER)) { \$env:QEMU_PEER_MODE = if (\$env:QEMU_PEER) { \$env:QEMU_PEER } else { \$env:OHOS_QEMU_PEER } }
+if (-not \$env:QEMU_CAMERA_FEED -and (\$env:QEMU_CAMERA -or \$env:OHOS_QEMU_CAMERA_FEED)) { \$env:QEMU_CAMERA_FEED = if (\$env:QEMU_CAMERA) { \$env:QEMU_CAMERA } else { \$env:OHOS_QEMU_CAMERA_FEED } }
+if (-not \$env:QEMU_LOCALE -and (\$env:QEMU_LANG -or \$env:OHOS_QEMU_LOCALE -or \$env:OHOS_QEMU_LANG)) {
+  \$env:QEMU_LOCALE = if (\$env:QEMU_LANG) { \$env:QEMU_LANG } elseif (\$env:OHOS_QEMU_LOCALE) { \$env:OHOS_QEMU_LOCALE } else { \$env:OHOS_QEMU_LANG }
+}
+if (-not \$env:QEMU_REGION -and \$env:OHOS_QEMU_REGION) { \$env:QEMU_REGION = \$env:OHOS_QEMU_REGION }
+if (-not \$env:QEMU_BIN -and (\$env:QEMU_PATH -or \$env:OHOS_QEMU_BIN)) { \$env:QEMU_BIN = if (\$env:QEMU_PATH) { \$env:QEMU_PATH } else { \$env:OHOS_QEMU_BIN } }
 
 \$Root = Split-Path -Parent (Split-Path -Parent \$MyInvocation.MyCommand.Path)
 \$Img = Join-Path \$Root "images"
@@ -2650,8 +2860,8 @@ if (\$A11y) { \$env:QEMU_ACCESSIBILITY = "1" }
 if (\$PSBoundParameters.ContainsKey("QmpPort")) { \$env:QEMU_QMP_PORT = "\$QmpPort" }
 if (\$Audio) { \$env:QEMU_AUDIO_BACKEND = \$Audio }
 if (\$SharedDir) { \$env:QEMU_SHARED_DIR = \$SharedDir }
-if (\$Usb) { \$env:QEMU_USB_XHCI = "1" }
-if (\$UsbDisk) { \$env:QEMU_USB_STORAGE = \$UsbDisk }
+if (\$Usb) { \$env:QEMU_USB = "1" }
+if (\$UsbDisk) { \$env:QEMU_USB_DISK = \$UsbDisk }
 if (\$UsbHost) { \$env:QEMU_USB_HOST = \$UsbHost }
 if (\$UsbSerial) { \$env:QEMU_USB_SERIAL = \$UsbSerial }
 if (\$BtUsb) { \$env:QEMU_BT_USB = \$BtUsb }
@@ -2674,8 +2884,16 @@ if (\$Watchdog) { \$env:QEMU_WATCHDOG = \$Watchdog }
 if (\$Tpm) { \$env:QEMU_TPM = \$Tpm }
 if (\$Clipboard) { \$env:QEMU_CLIPBOARD = \$Clipboard }
 if (\$CameraFeed) { \$env:QEMU_CAMERA_FEED = \$CameraFeed }
+if (\$Lang) { \$env:QEMU_LOCALE = \$Lang }
+if (\$Region) { \$env:QEMU_REGION = \$Region }
+if (\$HwBridge) { \$env:QEMU_HW_BRIDGE = \$HwBridge }
 if (\$Accel) { \$env:QEMU_ACCEL = \$Accel }
 if (\$QemuPath) { \$env:QEMU_BIN = \$QemuPath }
+
+\$env:QEMU_RESET = Resolve-QemuBool "QEMU_RESET" \$env:QEMU_RESET
+\$env:QEMU_ACCESSIBILITY = Resolve-QemuBool "QEMU_ACCESSIBILITY" \$env:QEMU_ACCESSIBILITY
+\$env:QEMU_USB = Resolve-QemuBool "QEMU_USB" \$env:QEMU_USB
+\$env:QEMU_BALLOON = Resolve-QemuBool "QEMU_BALLOON" \$env:QEMU_BALLOON
 
 \$MgmtMac = if (\$env:QEMU_MGMT_MAC) { \$env:QEMU_MGMT_MAC } else { "52:54:00:12:34:56" }
 \$PeerMac = if (\$env:QEMU_PEER_MAC) { \$env:QEMU_PEER_MAC } else { "52:54:00:12:35:56" }
@@ -2684,9 +2902,6 @@ if (\$QemuPath) { \$env:QEMU_BIN = \$QemuPath }
 \$SysProdImgPath = Join-Path \$Img "sys_prod.img"
 \$ChipProdImgPath = Join-Path \$Img "chip_prod.img"
 \$ResetRequested = (\$env:QEMU_RESET -eq "1")
-if (\$env:QEMU_RESET -and \$env:QEMU_RESET -notin @("0", "1")) {
-  throw "QEMU_RESET must be 0 or 1, got: \$(\$env:QEMU_RESET)"
-}
 
 \$PristineF2fsB64 = "7d3NbhvHAQfwXX5JdoRWDYwg1aW82SlqWqJkRw4KNG1yKvwCvRSgSEqWLYmqSMtuTmmBoocecs4hD9FD7z71HVrAT2AECPoBBHXhdGd3KMmGncrGOra4vx8wO/xYDsVZSeD8OZy9mESLCVBhi+1//yNNvpecyy7Xs7KQlXA5jeW/b4W95vN9/5nt8E1WaklRWrEOtz9x4/msvJOVpaLNNN71+/+sdc9/9vH5P/30z4NfffTF21eSQdJLJlkBquZiVnb3i8t3d4t6tFXUt+LtvcPtvN5dO4x1ccfu7Xh9VNR3hxt5C3d70/2K/yqrW8X+o/0741Bv7vT6od7a3sxv398rnnB8uDVtJ39AbzzJ97vVO8hvHww38np7PMrrrU+Kn+9erD8ZT4r2BrHd3+YPTyaTaV3cPrw3LF7X/u287u9N4u1Fu6PB8F6oD2Mdny652Stex81xUQ+KHyc53B3cLvYv+uk3/dHd7hn7PbixvXfnXvtweDDeHu213+8sd1bWLo8ONsaTXv/25eXl1fXly1u994fLve6gf/3q6tX2pem9H27c2d4ZDA/ea1/6aKe3t/WL7OqkaK8frh+12u12Vjqr7Us3J5P98QdXrmxtT27e2ej0R7tXdnYOi83l/YPRrWF/0snubA+vr69du7a2vjm4trK+OhxeG6z3NwYba1eXu92V1c3+5vXlbq+7svLeT9pPP/ONGx+f+vm8/iT5fMH/Ql5QIyvN+H6zoTtextt/33yYygFADiAHAOQAcgA5gBxADoAcoDI5QP7GfDFJHibLv8xv/PFcXr0V91nLyq+z8jB7Iz8XRwLh/fw3z/Bth+g0+6fpcfuNWMJzfpiV+2Es8v2T+waOIQAAAJzWgwd//EsacwAAAACqon60WYqfrIdNulR8lptvakvFh7r5pr6kz2bo6MsBAAAAKqix8FVJLZX7ffMwSE0ulDbmTcI888cltfb1dPp6KR6FzfxrOPJyAAAAAKiCPLJpygEAAACgMjlASw4AAAAAlckB5pwvAAAAACohnC8gH2yfIgf4sn4cHtSeM65/erGE8JCwisKj5+w/99T+zbTIDE6TAwAAAAAv5q//6jxOYw7QcN6IqsqPqKVCX8KZXyo0hnuNE1Va/LnHv/o0/nYUlfk3AAAwE2oxB3hyRNA8OUIEAAAAzr780716zAEAAACA2c8BGnIAAAAAqEwO0LROIAAAAFRCWCcwH3gvlrlMXHmLupXXUnlLw5WotAXmSlxcbqG0lswxAQAAeCM1WsZsAEClzOsCAKrsnByAN1tDFwAAAJTo/NM5QBpLvgxAcU6BsFmKI7I0XAjnFayFCyFFqC/pRQAAADgb3ilygLgMYPzstVlULd0DAAAAMyL/rD+NOQAAAAAw+zlATQ4AAAAAlckB6s/8XkCjuD9+PaBZXIvfEmgdPRYAAICzqH60WYoDwOlycM3pIDAsCdeajgEtCzdLGuYDAAAAyAHkAJXRkgMAAABUUGPhq5JayieMlzauDKeuSy6U1VoIO+aSxyW19nV4qaWd2/xR2Mx/90d+Tg4AAAAAVZBHNvNyAAAAAKhMDvBIDgAAAFBBvhfw4mbjewFhUYhwvL78edJ+otcXT1zO/OH+g1vPqp95/Hmuo0Pc1hcAAAC8OvXk6NyAR2P1sBZkGnOAT393PDLN73/3+HEvkgNMmWLw7TlAmvV2TRYAAADAK9JIjicvTHOAcBqImhzgteQA9ay3G3IAAAAAXpFmLCdzgHAGyLoc4LXkAM2st1tyAAAAAF6RViwnc4BGyADaxaC9/n9bqOePrE0v1o6WDgAAINOZ1h19AcCbK405wA9+dP9vIR/49INzeUlO5AZN3QQzTagH1VXXBVBZDV0A1X3/H3MAY30gfdn7fREIAADOjHrMAS7+0HwAqCrzAaDC7wN0AVSW+QBQ4b//mAMY6wPmAwAAwOxrxhzgws/MB4CqMh8Aqst8AKgu8wGguloxBzDWB8wHAACA2fc/"
 
@@ -2967,11 +3182,11 @@ if (\$env:QEMU_SHARED_DIR) {
   \$KernelBootArgs = "\$KernelBootArgs ohos.boot.qemu.share_tag=\$ShareTag"
 }
 \$UsbSerialMode = if (\$env:QEMU_USB_SERIAL) { \$env:QEMU_USB_SERIAL } else { "off" }
-if (\$env:QEMU_USB_XHCI -eq "1" -or \$env:QEMU_USB_STORAGE -or \$env:QEMU_USB_HOST -or \$env:QEMU_BT_USB -or (\$UsbSerialMode -notin @("off", "0", ""))) {
+if (\$env:QEMU_USB -eq "1" -or \$env:QEMU_USB_DISK -or \$env:QEMU_USB_HOST -or \$env:QEMU_BT_USB -or (\$UsbSerialMode -notin @("off", "0", ""))) {
   \$CapabilityArgs += @("-device", "qemu-xhci,id=xhci0")
 }
-if (\$env:QEMU_USB_STORAGE) {
-  \$UsbDiskPath = Prepare-QemuDiskImage \$env:QEMU_USB_STORAGE "USB disk"
+if (\$env:QEMU_USB_DISK) {
+  \$UsbDiskPath = Prepare-QemuDiskImage \$env:QEMU_USB_DISK "USB disk"
   \$CapabilityArgs += @(
     "-drive", "if=none,id=usb_disk0,file=\$UsbDiskPath,format=raw",
     "-device", "usb-storage,bus=xhci0.0,drive=usb_disk0"
@@ -3029,6 +3244,18 @@ if (\$env:QEMU_SENSOR) { \$KernelBootArgs = "\$KernelBootArgs ohos.boot.qemu.sen
 if (\$env:QEMU_BATTERY) { \$KernelBootArgs = "\$KernelBootArgs ohos.boot.qemu.battery=\$(\$env:QEMU_BATTERY)" }
 if (\$env:QEMU_THERMAL) { \$KernelBootArgs = "\$KernelBootArgs ohos.boot.qemu.thermal=\$(\$env:QEMU_THERMAL)" }
 if (\$env:QEMU_CAMERA_FEED) { \$KernelBootArgs = "\$KernelBootArgs ohos.boot.qemu.camera=\$(\$env:QEMU_CAMERA_FEED)" }
+if (\$env:QEMU_LOCALE) {
+  if (\$env:QEMU_LOCALE -notmatch '^[A-Za-z0-9_.@-]+\$') {
+    throw "Invalid QEMU_LOCALE: \$(\$env:QEMU_LOCALE) (expected language/locale tag such as en, en-Latn-US, zh-Hans, ja)"
+  }
+  \$KernelBootArgs = "\$KernelBootArgs ohos.boot.qemu.locale=\$(\$env:QEMU_LOCALE)"
+}
+if (\$env:QEMU_REGION) {
+  if (\$env:QEMU_REGION -notmatch '^[A-Za-z0-9]{2,3}\$') {
+    throw "Invalid QEMU_REGION: \$(\$env:QEMU_REGION) (expected 2-letter ISO or 3-digit region code such as US, GB, CN)"
+  }
+  \$KernelBootArgs = "\$KernelBootArgs ohos.boot.qemu.region=\$(\$env:QEMU_REGION)"
+}
 \$RtcMode = if (\$env:QEMU_RTC -and \$env:QEMU_RTC -in @("localtime", "host")) { "localtime" } else { "utc" }
 \$CapabilityArgs += @("-rtc", "base=\$RtcMode,clock=host")
 if (\$env:QEMU_WATCHDOG -and \$env:QEMU_WATCHDOG -notin @("none", "off", "0")) {
@@ -3165,55 +3392,59 @@ CLI flags override environment variables, which override package defaults.
 
 | Option | Env | Default |
 | --- | --- | --- |
-| \`-r, --resolution WxH\` | \`QEMU_XRES\` / \`QEMU_YRES\` | \`800x500\` |
-| \`--width\` / \`--height\` | \`QEMU_XRES\` / \`QEMU_YRES\` | same as above |
+| \`-r, --resolution WxH\` | \`QEMU_RESOLUTION\` (\`QEMU_XRES\` / \`QEMU_YRES\`) | \`800x500\` |
+| \`--width\` / \`--height\` | \`QEMU_WIDTH\` / \`QEMU_HEIGHT\` (\`QEMU_XRES\` / \`QEMU_YRES\`) | same as above |
+| \`-l, --lang, --locale TAG\` / Windows \`-Lang\` | \`QEMU_LANG\` / \`QEMU_LOCALE\` | \`zh-Hans-CN\` (\`en\`, \`en-US\`, \`en-GB\`, \`zh-Hant\`, \`ja\`, \`ko\`, \`fr\`, \`de\`, \`es\`, \`ru\`, \`ar\`, \`vi\`, …) |
+| \`--region REGION\` / Windows \`-Region\` | \`QEMU_REGION\` | \`CN\` (\`US\`, \`GB\`, \`TW\`, \`HK\`, \`JP\`, \`KR\`, \`FR\`, \`DE\`, …) |
 | \`-m, --memory SIZE\` | \`QEMU_MEMORY\` | \`${default_mem}\` |
 | \`--userdata-size SIZE\` / Windows \`-UserdataSize SIZE\` | \`QEMU_USERDATA_SIZE\` | current \`userdata.img\` size (\`2G\`) |
-| \`--reset\` / Windows \`-Reset\` | \`QEMU_RESET\` | \`0\` (\`1\` resets active \`userdata.img\` to clean factory F2FS image, preserving custom size) |
+| \`--reset\` / Windows \`-Reset\` | \`QEMU_RESET\` | \`0\` (\`1\`/\`true\` resets active \`userdata.img\` to clean factory F2FS image, preserving custom size) |
 | \`-s, --smp N\` | \`QEMU_SMP\` | \`${default_smp}\` |
 | \`--cpu MODEL\` | \`QEMU_CPU\` | \`${default_cpu}\` |
-| \`-d, --display TYPE\` / \`--headless\` | \`QEMU_DISPLAY\` | \`${default_display}\` |
-| \`-c, --connect host:port\` / \`--hdc-port\` | \`QEMU_HDC_HOST_PORT\` | \`5555\` |
+| \`-d, --display TYPE\` / \`--headless\` | \`QEMU_DISPLAY\` / \`QEMU_HEADLESS\` | \`${default_display}\` |
+| \`-c, --connect host:port\` / \`--hdc-port\` | \`QEMU_CONNECT\` / \`QEMU_HDC_PORT\` / \`QEMU_HDC_HOST_PORT\` | \`5555\` |
 | \`--vnc-display N\` | \`QEMU_VNC_DISPLAY\` | \`21\` (TCP 5921) |
 | \`--serial-port PORT\` | \`QEMU_SERIAL_PORT\` | unset |
 | \`--kernel-log-level N\` / Windows \`-KernelLogLevel N\` | \`QEMU_KERNEL_LOG_LEVEL\` | \`4\` (0..8) |
-| \`--a11y\` | \`QEMU_ACCESSIBILITY\` | \`0\` |
+| \`--a11y\` | \`QEMU_A11Y\` / \`QEMU_ACCESSIBILITY\` | \`0\` |
 | \`--qmp-socket PATH\` | \`QEMU_QMP_SOCKET\` | \`/tmp/openharmony-qemu-a11y-<HDC_PORT>.sock\` with \`--a11y\` |
 | Windows \`-QmpPort PORT\` | \`QEMU_QMP_PORT\` | \`4445\` with \`-A11y\` |
-| \`--audio MODE\` / Windows \`-Audio MODE\` | \`QEMU_AUDIO_BACKEND\` | \`auto\` (\`none\` headless, host audio windowed) |
+| \`--audio MODE\` / Windows \`-Audio MODE\` | \`QEMU_AUDIO\` / \`QEMU_AUDIO_BACKEND\` | \`auto\` (\`none\` headless, host audio windowed) |
 | \`--shared-dir DIR[:TAG]\` / Windows \`-SharedDir\` | \`QEMU_SHARED_DIR\` | unset (mounts at \`/mnt/share\` and \`/data/share\`) |
-| \`--usb\` / Windows \`-Usb\` | \`QEMU_USB_XHCI\` | \`0\` (auto-enabled by \`--usb-disk\`/\`--usb-host\`/\`--bt-usb\`/\`--usb-serial\`) |
-| \`--usb-disk FILE[:SIZE]\` / Windows \`-UsbDisk FILE[:SIZE]\` | \`QEMU_USB_STORAGE\` | unset (mounts at \`/mnt/data/external/usb\` and \`/data/usb\`) |
+| \`--usb\` / Windows \`-Usb\` | \`QEMU_USB\` | \`0\` (auto-enabled by \`--usb-disk\`/\`--usb-host\`/\`--bt-usb\`/\`--usb-serial\`) |
+| \`--usb-disk FILE[:SIZE]\` / Windows \`-UsbDisk FILE[:SIZE]\` | \`QEMU_USB_DISK\` | unset (mounts at \`/mnt/data/external/usb\` and \`/data/usb\`) |
 | \`--usb-host VID:PID\` / Windows \`-UsbHost VID:PID\` | \`QEMU_USB_HOST\` | unset |
 | \`--usb-serial MODE\` / Windows \`-UsbSerial MODE\` | \`QEMU_USB_SERIAL\` | \`off\` (\`off\`/\`auto\`/\`on\`/\`loopback\`/\`pty\`/\`unix:PATH\`/\`tcp:HOST:PORT\`) |
 | \`--bt-usb VID:PID\` / Windows \`-BtUsb VID:PID\` | \`QEMU_BT_USB\` | unset (uses virtual HCI \`libbt_vendor.z.so\` by default) |
 | \`--balloon\` / Windows \`-Balloon\` | \`QEMU_BALLOON\` | \`0\` |
 | \`--rng MODE\` / Windows \`-Rng MODE\` | \`QEMU_RNG\` | \`on\` (\`auto\`/\`on\`/\`off\`, attaches \`virtio-rng-pci\`) |
-| \`--port-forward SPEC\` / Windows \`-PortForward SPEC\` | \`QEMU_PORT_FORWARD\` | unset (\`[tcp\|udp:]HOST_PORT:GUEST_PORT\`, comma-separated or repeated) |
+| \`--port-forward SPEC\` / Windows \`-PortForward SPEC\` | \`QEMU_PORT_FORWARD\` / \`QEMU_HOSTFWD\` | unset (\`[tcp\|udp:]HOST_PORT:GUEST_PORT\`, comma-separated or repeated) |
 | \`--ril-modem MODE\` / Windows \`-RilModem MODE\` | \`QEMU_RIL_MODEM\` | \`auto\` (\`auto\`/\`on\`/\`off\`) |
-| \`--wifi MODE\` / Windows \`-Wifi MODE\` | \`QEMU_WIFI_MODE\` | \`auto\` (\`auto\`/\`hwsim\`/\`virt_wifi\`/\`off\`) |
+| \`--wifi MODE\` / Windows \`-Wifi MODE\` | \`QEMU_WIFI\` / \`QEMU_WIFI_MODE\` | \`auto\` (\`auto\`/\`hwsim\`/\`virt_wifi\`/\`off\`) |
 | \`--gps COORDS\` / Windows \`-Gps\` | \`QEMU_GPS\` | \`39.9042,116.4074,50\` |
 | \`--sensor VALUES\` / Windows \`-Sensor\` | \`QEMU_SENSOR\` | \`0.0,9.8,0.0:0.0,0.0,0.0,1.0\` |
 | \`--battery SPEC\` / Windows \`-Battery\` | \`QEMU_BATTERY\` | \`100:charging\` |
 | \`--thermal TEMP_C\` / Windows \`-Thermal\` | \`QEMU_THERMAL\` | \`25.0\` |
 | \`--sdcard FILE[:SIZE]\` / Windows \`-Sdcard\` | \`QEMU_SDCARD\` | unset (mounts at \`/mnt/data/external/sdcard\` and \`/data/sdcard\`) |
-| \`--nvme-disk FILE[:SIZE]\` / Windows \`-NvmeDisk\` | \`QEMU_NVME_DISK\` | unset (mounts at \`/mnt/data/external/nvme\` and \`/data/nvme\`) |
-| \`--instance ID\` / Windows \`-Instance\` | \`QEMU_INSTANCE_ID\` | unset (auto-isolates disks, MACs, UUID, serial, HDC port, VNC) |
-| \`--peer MODE\` / Windows \`-Peer\` | \`QEMU_PEER_MODE\` | \`off\` (\`off\`/\`listen[:PORT]\`/\`connect[:PORT]\`) |
+| \`--nvme-disk FILE[:SIZE]\` / Windows \`-NvmeDisk\` | \`QEMU_NVME\` / \`QEMU_NVME_DISK\` | unset (mounts at \`/mnt/data/external/nvme\` and \`/data/nvme\`) |
+| \`--instance ID\` / Windows \`-Instance\` | \`QEMU_INSTANCE\` / \`QEMU_INSTANCE_ID\` | unset (auto-isolates disks, MACs, UUID, serial, HDC port, VNC) |
+| \`--peer MODE\` / Windows \`-Peer\` | \`QEMU_PEER\` / \`QEMU_PEER_MODE\` | \`off\` (\`off\`/\`listen[:PORT]\`/\`connect[:PORT]\`) |
 | \`--userdata-file PATH\` / Windows \`-UserdataFile\` | \`QEMU_USERDATA_FILE\` | \`images/userdata.img\` |
 | \`--rtc MODE\` / Windows \`-Rtc\` | \`QEMU_RTC\` | \`utc\` (\`utc\`/\`localtime\`/\`host\`) |
 | \`--watchdog MODEL\` / Windows \`-Watchdog\` | \`QEMU_WATCHDOG\` | \`none\` (\`none\`/\`i6300esb[:ACTION]\`) |
 | \`--tpm PATH\` / Windows \`-Tpm\` | \`QEMU_TPM\` | unset (\`swtpm\` socket or state directory) |
 | \`--clipboard MODE\` / Windows \`-Clipboard\` | \`QEMU_CLIPBOARD\` | \`auto\` (\`auto\`/\`on\`/\`off\`/\`text:...\`) |
-| \`--camera-feed PAT\` / Windows \`-CameraFeed\` | \`QEMU_CAMERA_FEED\` | \`bars\` (\`bars\`/\`smpte\`/\`squares\`/\`checkers\`/\`cross\`/\`ramp\`/\`noise\`/\`moving\`) |
+| \`--camera-feed PAT\` / Windows \`-CameraFeed\` | \`QEMU_CAMERA\` / \`QEMU_CAMERA_FEED\` | \`bars\` (\`bars\`/\`smpte\`/\`squares\`/\`checkers\`/\`cross\`/\`ramp\`/\`noise\`/\`moving\`) |
+| \`--hw-bridge MODE\` / Windows \`-HwBridge\` | \`QEMU_HW_BRIDGE\` | \`auto\` (\`auto\`/\`on\`/\`off\`) |
 | \`-a, --accel MODE\` | \`QEMU_ACCEL\` | \`auto\` |
-| \`-q, --qemu PATH\` | \`QEMU_BIN\` | product QEMU binary |
+| \`-q, --qemu PATH\` | \`QEMU_BIN\` / \`QEMU_PATH\` | product QEMU binary |
 | \`-- ...\` | \`QEMU_EXTRA_ARGS\` | empty |
 
 Examples:
 
 \`\`\`bash
-./launch/linux.sh -r 1280x720 -m 8G -s 8
+./launch/linux.sh --lang en -r 1280x800 -m 8G -s 8
+QEMU_LANG=en QEMU_RESOLUTION=1280x800 QEMU_HEADLESS=1 QEMU_HDC_PORT=5556 ./launch/linux.sh
 ./launch/linux.sh --userdata-size 8G
 ./launch/linux.sh --reset
 ./launch/linux.sh --reset --userdata-size 4G
@@ -3222,11 +3453,13 @@ Examples:
 ./launch/linux.sh --gps 31.2304,121.4737,15 --battery 85:discharging --thermal 36.5 --camera-feed smpte
 ./launch/linux.sh --sdcard /tmp/ohos-sd.img:64M --nvme-disk /tmp/ohos-nvme.img:128M
 ./launch/linux.sh --instance 2 --peer connect:6666
-python3 ./tools/qemu_hw_controller.py --socket /tmp/openharmony-qemu-hw-5555.ctrl.sock status
-python3 ./tools/qemu_hw_controller.py --socket /tmp/openharmony-qemu-hw-5555.ctrl.sock key volup
-python3 ./tools/qemu_hw_controller.py --socket /tmp/openharmony-qemu-hw-5555.ctrl.sock network offline
-python3 ./tools/qemu_hw_controller.py --socket /tmp/openharmony-qemu-hw-5555.ctrl.sock light 800
-python3 ./tools/qemu_hw_controller.py --socket /tmp/openharmony-qemu-hw-5555.ctrl.sock usb-serial-send "AT\r\n"
+python3 ./tools/qemu_hw_controller.py status
+python3 ./tools/qemu_hw_controller.py locale en
+python3 ./tools/qemu_hw_controller.py locale zh-Hans
+python3 ./tools/qemu_hw_controller.py key volup
+python3 ./tools/qemu_hw_controller.py network offline
+python3 ./tools/qemu_hw_controller.py light 800
+python3 ./tools/qemu_hw_controller.py usb-serial-send "AT\r\n"
 ./launch/linux.sh --cpu ${cpu_example}
 ./launch/linux.sh --width 1080 --height 1920 --display cocoa
 ./launch/linux.sh --headless --vnc-display 21 --serial-port 4444
@@ -3604,6 +3837,14 @@ install_qemu_virt_device_support() {
   if [ -f "${SCRIPT_DIR}/qemu_hw_controller.py" ]; then
     cp "${SCRIPT_DIR}/qemu_hw_controller.py" "${tools_dir}/qemu_hw_controller.py"
     chmod +x "${tools_dir}/qemu_hw_controller.py"
+  fi
+  if [ -f "${SCRIPT_DIR}/sign-hap.sh" ]; then
+    cp "${SCRIPT_DIR}/sign-hap.sh" "${tools_dir}/sign-hap.sh"
+    chmod +x "${tools_dir}/sign-hap.sh"
+  fi
+  if [ -f "${SCRIPT_DIR}/install-hap-signer.sh" ]; then
+    cp "${SCRIPT_DIR}/install-hap-signer.sh" "${tools_dir}/install-hap-signer.sh"
+    chmod +x "${tools_dir}/install-hap-signer.sh"
   fi
 
   if [ "${product}" != "arm64_virt" ] && [ "${product}" != "x86_64_virt" ] && \
@@ -3991,6 +4232,29 @@ setup_external_storage() {
   done
 }
 
+setup_locale_defaults() {
+  [ -d /data ] || return 0
+  loc_spec=""
+  reg_spec=""
+  for tok in $(cat /proc/cmdline 2>/dev/null); do
+    case "${tok}" in
+      ohos.boot.qemu.locale=*) loc_spec="${tok#ohos.boot.qemu.locale=}" ;;
+      ohos.boot.qemu.lang=*) loc_spec="${tok#ohos.boot.qemu.lang=}" ;;
+      ohos.boot.qemu.region=*) reg_spec="${tok#ohos.boot.qemu.region=}" ;;
+    esac
+  done
+  [ -n "${loc_spec}" ] || [ -n "${reg_spec}" ] || return 0
+  if [ -x /system/bin/qemu-i18n-ctl ]; then
+    if [ -n "${loc_spec}" ] && [ -n "${reg_spec}" ]; then
+      /system/bin/qemu-i18n-ctl --preseed-only "${loc_spec}" --region "${reg_spec}" >/dev/null 2>&1 || true
+    elif [ -n "${loc_spec}" ]; then
+      /system/bin/qemu-i18n-ctl --preseed-only "${loc_spec}" >/dev/null 2>&1 || true
+    else
+      /system/bin/qemu-i18n-ctl --preseed-only --region "${reg_spec}" >/dev/null 2>&1 || true
+    fi
+  fi
+}
+
 start_hw_bridge() {
   if [ -x /vendor/bin/qemu-hw-bridge ]; then
     /vendor/bin/qemu-hw-bridge --daemon </dev/null >/dev/null 2>&1 &
@@ -4009,6 +4273,7 @@ case "${stage}" in
   post-fs-data)
     setup_virtio_ports
     setup_battery_and_thermal_defaults
+    setup_locale_defaults
     setup_shared_dir
     setup_external_storage
     start_hw_bridge
@@ -4016,6 +4281,7 @@ case "${stage}" in
   boot)
     setup_virtio_ports
     setup_battery_and_thermal_defaults
+    setup_locale_defaults
     setup_shared_dir
     setup_external_storage
     start_hw_bridge
@@ -4181,6 +4447,108 @@ STUB_EOF
         chmod 0755 "${hw_bridge_bin}"
         debugfs -w -R "rm /bin/qemu-hw-bridge" "${vendor_img}" >/dev/null 2>&1 || true
         debugfs -w -R "write ${hw_bridge_bin} /bin/qemu-hw-bridge" "${vendor_img}" >/dev/null
+      fi
+
+      if [ -f "${SCRIPT_DIR}/qemu_i18n_ctl.cpp" ] && [ -n "${ohos_sysroot}" ] && [ -f "${system_img}" ]; then
+        local llvm_dir
+        llvm_dir="$(cd "$(dirname "${clang_bin}")/.." && pwd)"
+        local clangxx_bin="${llvm_dir}/bin/clang++"
+        local libcxx_inc="${llvm_dir}/include/libcxx-ohos/include/c++/v1"
+        local libcxx_lib="${llvm_dir}/lib/${bt_target}"
+        if [ -x "${clangxx_bin}" ] && [ -d "${libcxx_inc}" ] && [ -d "${libcxx_lib}" ]; then
+          local i18n_ctl_bin="${tmpdir}/qemu-i18n-ctl"
+          local i18n_rpath="/system/lib64/platformsdk:/system/lib64/chipset-sdk-sp:/system/lib64:/system/lib/platformsdk:/system/lib/chipset-sdk-sp:/system/lib"
+          if [ "${bt_target}" = "arm-linux-ohos" ]; then
+            "${clangxx_bin}" --target="${bt_target}" -march=armv7-a -mfloat-abi=softfp \
+              --sysroot="${ohos_sysroot}" -nostdinc++ -isystem "${libcxx_inc}" \
+              -L"${libcxx_lib}" -Wl,-rpath,"${i18n_rpath}" \
+              -std=c++17 -O2 -Wall -Wextra -Werror \
+              "${SCRIPT_DIR}/qemu_i18n_ctl.cpp" -lc++ -ldl -o "${i18n_ctl_bin}"
+          else
+            "${clangxx_bin}" --target="${bt_target}" \
+              --sysroot="${ohos_sysroot}" -nostdinc++ -isystem "${libcxx_inc}" \
+              -L"${libcxx_lib}" -Wl,-rpath,"${i18n_rpath}" \
+              -std=c++17 -O2 -Wall -Wextra -Werror \
+              "${SCRIPT_DIR}/qemu_i18n_ctl.cpp" -lc++ -ldl -o "${i18n_ctl_bin}"
+          fi
+          chmod 0755 "${i18n_ctl_bin}"
+          python3 - "${system_img}" "${i18n_ctl_bin}" <<'I18N_INSTALL_PY'
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+system_img = Path(sys.argv[1]).resolve()
+i18n_bin = Path(sys.argv[2]).resolve()
+debugfs = shutil.which("debugfs") or "/opt/homebrew/opt/e2fsprogs/sbin/debugfs"
+e2fsck = shutil.which("e2fsck") or "/opt/homebrew/opt/e2fsprogs/sbin/e2fsck"
+
+if e2fsck and Path(e2fsck).is_file():
+    chk = subprocess.run([e2fsck, "-fn", str(system_img)], stdin=subprocess.DEVNULL, capture_output=True, text=True)
+    if chk.returncode != 0:
+        subprocess.run([e2fsck, "-fy", str(system_img)], stdin=subprocess.DEVNULL, capture_output=True, text=True)
+
+def has_inode(ext_path: str) -> bool:
+    r = subprocess.run([debugfs, "-R", f"stat {ext_path}", str(system_img)], capture_output=True, text=True)
+    return r.returncode == 0 and "Inode:" in r.stdout
+
+with tempfile.TemporaryDirectory(prefix="qemu-i18n-install-") as td:
+    work = Path(td)
+    ref_bin = "/system/bin/param" if has_inode("/system/bin/param") else "/bin/param"
+    dst_bin = "/system/bin/qemu-i18n-ctl" if ref_bin.startswith("/system/") else "/bin/qemu-i18n-ctl"
+    bin_lbl = work / "bin.selinux"
+    ea_bin = subprocess.run(
+        [debugfs, "-R", f"ea_get -f {bin_lbl} {ref_bin} security.selinux", str(system_img)],
+        capture_output=True, text=True,
+    )
+    subprocess.run([debugfs, "-w", "-R", f"rm {dst_bin}", str(system_img)], capture_output=True, text=True)
+    w_res = subprocess.run([debugfs, "-w", "-R", f"write {i18n_bin} {dst_bin}", str(system_img)], capture_output=True, text=True, check=True)
+    if re.search(r"(?:error|no space|file exists)", w_res.stderr, re.I):
+        raise RuntimeError(f"debugfs write {dst_bin} failed: {w_res.stderr.strip()}")
+    if ea_bin.returncode == 0 and bin_lbl.is_file() and bin_lbl.stat().st_size > 0:
+        subprocess.run(
+            [debugfs, "-w", "-R", f"ea_set -f {bin_lbl} {dst_bin} security.selinux", str(system_img)],
+            capture_output=True, text=True, check=True,
+        )
+
+    xml_path = "/system/etc/xml/i18n_param_config.xml" if has_inode("/system/etc/xml/i18n_param_config.xml") else "/etc/xml/i18n_param_config.xml"
+    if has_inode(xml_path):
+        xml_dump = work / "i18n_param_config.xml"
+        xml_lbl = work / "xml.selinux"
+        subprocess.run([debugfs, "-R", f"dump {xml_path} {xml_dump}", str(system_img)], capture_output=True, text=True, check=True)
+        ea_xml = subprocess.run(
+            [debugfs, "-R", f"ea_get -f {xml_lbl} {xml_path} security.selinux", str(system_img)],
+            capture_output=True, text=True,
+        )
+        xml_text = xml_dump.read_text(encoding="utf-8")
+        expanded_langs = "zh-Hans,en-Latn-US,zh-Hant,zh-Hant-HK,ja,ko,fr,de,es-ES,es-US,it,pt,pt-PT,ru,ar,vi,bo,ug"
+        new_xml = re.sub(
+            r"<white_languages>[^<]*</white_languages>",
+            f"<white_languages>{expanded_langs}</white_languages>",
+            xml_text,
+            count=1,
+        )
+        if new_xml != xml_text:
+            xml_new = work / "i18n_param_config.xml.new"
+            xml_new.write_text(new_xml, encoding="utf-8")
+            os.chmod(xml_new, 0o644)
+            subprocess.run([debugfs, "-w", "-R", f"rm {xml_path}", str(system_img)], capture_output=True, text=True)
+            wx = subprocess.run([debugfs, "-w", "-R", f"write {xml_new} {xml_path}", str(system_img)], capture_output=True, text=True, check=True)
+            if re.search(r"(?:error|no space|file exists)", wx.stderr, re.I):
+                raise RuntimeError(f"debugfs write {xml_path} failed: {wx.stderr.strip()}")
+            if ea_xml.returncode == 0 and xml_lbl.is_file() and xml_lbl.stat().st_size > 0:
+                subprocess.run(
+                    [debugfs, "-w", "-R", f"ea_set -f {xml_lbl} {xml_path} security.selinux", str(system_img)],
+                    capture_output=True, text=True, check=True,
+                )
+
+if e2fsck and Path(e2fsck).is_file():
+    subprocess.run([e2fsck, "-fn", str(system_img)], check=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+I18N_INSTALL_PY
+        fi
       fi
     elif ! debugfs -R "stat ${bt_lib_dest}" "${vendor_img}" 2>&1 \
            | grep -qE '(^|[[:space:]])Inode:[[:space:]]*[0-9]+'; then
@@ -4471,6 +4839,7 @@ data["launcher"] = {
     "cli": True,
 }
 data.setdefault("capabilities", {})["absolute_pointer_sync"] = absolute_pointer_sync == "true"
+data.setdefault("capabilities", {})["multi_language"] = True
 with open(path, "w", encoding="utf-8") as fh:
     json.dump(data, fh, indent=2)
     fh.write("\n")
@@ -4512,7 +4881,7 @@ RESET_PKG_PY
 }
 
 if [ -n "${REWRITE_PACKAGE}" ]; then
-  if [ -n "${SOURCE_ROOT}" ] || [ -n "${PRODUCT}" ] || [ -n "${OUTPUT_DIR}" ] || \
+  if [ "${cli_package_opts}" = "1" ] || [ "${cli_rewrite_launcher}" = "1" ] || \
      [ -n "${REWRITE_ARM64_LAUNCHER}" ]; then
     echo "--rewrite-package cannot be combined with other package options" >&2
     exit 2
@@ -4522,7 +4891,7 @@ if [ -n "${REWRITE_PACKAGE}" ]; then
 fi
 
 if [ -n "${REWRITE_ARM64_LAUNCHER}" ]; then
-  if [ -n "${SOURCE_ROOT}" ] || [ -n "${PRODUCT}" ] || [ -n "${OUTPUT_DIR}" ]; then
+  if [ "${cli_package_opts}" = "1" ] || [ "${cli_rewrite_package}" = "1" ]; then
     echo "--rewrite-arm64-launcher cannot be combined with package options" >&2
     exit 2
   fi
@@ -5930,6 +6299,7 @@ cat > "${PACKAGE_DIR}/manifest.json" <<EOF
   },
   "capabilities": {
     "absolute_pointer_sync": ${ABSOLUTE_POINTER_SYNC_VERIFIED},
+    "multi_language": true,
     "thread_qos": ${QOS_VERIFIED},
     "virtual_vibrator": ${VIRTUAL_VIBRATOR_VERIFIED},
     "virtual_vibrator_mode": "simulated",

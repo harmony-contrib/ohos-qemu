@@ -1,21 +1,50 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_URL="${OHOS_QEMU_REPO_URL:-https://github.com/harmony-contrib/ohos-qemu}"
-RELEASE_TAG="${OHOS_QEMU_RELEASE_TAG:-${OHOS_QEMU_REF:-v20261107}}"
+normalize_bool() {
+  local var_name="$1"
+  local raw="${2:-}"
+  local lower
+  lower="$(printf '%s' "${raw}" | tr '[:upper:]' '[:lower:]')"
+  case "${lower}" in
+    1|true|yes|on)
+      printf '1\n'
+      ;;
+    0|false|no|off)
+      printf '0\n'
+      ;;
+    *)
+      echo "${var_name} must be 0/1/true/false/yes/no/on/off, got: ${raw}" >&2
+      exit 2
+      ;;
+  esac
+}
+
+REPO_URL="${OHOS_QEMU_REPO:-${OHOS_QEMU_REPO_URL:-https://github.com/harmony-contrib/ohos-qemu}}"
+RELEASE_TAG="${OHOS_QEMU_RELEASE:-${OHOS_QEMU_RELEASE_TAG:-${OHOS_QEMU_REF:-v20261114}}}"
 DOWNLOAD_BASE_URL="${OHOS_QEMU_DOWNLOAD_BASE_URL:-}"
 GITHUB_TOKEN="${OHOS_QEMU_GITHUB_TOKEN:-${GITHUB_TOKEN:-}}"
 PREFIX="${OHOS_QEMU_PREFIX:-${HOME}/.ohos-qemu}"
 PLATFORM="${OHOS_QEMU_PLATFORM:-auto}"
 ARCH="${OHOS_QEMU_ARCH:-auto}"
 DEVICE_TYPE="${OHOS_QEMU_DEVICE_TYPE:-phone}"
-FORCE=0
-KEEP_ARCHIVE=0
-INSTALL_HAP_SIGNER="${OHOS_QEMU_INSTALL_HAP_SIGNER:-1}"
-HAP_SIGNER_REPO_URL="${OHOS_QEMU_HAPSIGNER_REPO_URL:-https://github.com/ohos-rs/hapsigner-rs}"
-HAP_SIGNER_VERSION="${OHOS_QEMU_HAPSIGNER_VERSION:-v0.1.0}"
-HAP_SIGNER_DOWNLOAD_BASE_URL="${OHOS_QEMU_HAPSIGNER_DOWNLOAD_BASE_URL:-}"
-HAP_SIGNER_INSTALLER="${OHOS_QEMU_HAPSIGNER_INSTALLER:-}"
+FORCE="$(normalize_bool OHOS_QEMU_FORCE "${OHOS_QEMU_FORCE:-0}")"
+KEEP_ARCHIVE="$(normalize_bool OHOS_QEMU_KEEP_ARCHIVE "${OHOS_QEMU_KEEP_ARCHIVE:-0}")"
+if [ -n "${OHOS_QEMU_WITHOUT_HAP_SIGNER:-}" ]; then
+  if [ "$(normalize_bool OHOS_QEMU_WITHOUT_HAP_SIGNER "${OHOS_QEMU_WITHOUT_HAP_SIGNER}")" = "1" ]; then
+    INSTALL_HAP_SIGNER=0
+  else
+    INSTALL_HAP_SIGNER=1
+  fi
+elif [ -n "${OHOS_QEMU_WITH_HAP_SIGNER:-}" ]; then
+  INSTALL_HAP_SIGNER="$(normalize_bool OHOS_QEMU_WITH_HAP_SIGNER "${OHOS_QEMU_WITH_HAP_SIGNER}")"
+else
+  INSTALL_HAP_SIGNER="$(normalize_bool OHOS_QEMU_INSTALL_HAP_SIGNER "${OHOS_QEMU_INSTALL_HAP_SIGNER:-1}")"
+fi
+HAP_SIGNER_REPO_URL="${OHOS_QEMU_HAP_SIGNER_REPO_URL:-${OHOS_QEMU_HAPSIGNER_REPO_URL:-${OHOS_HAPSIGNER_REPO_URL:-https://github.com/ohos-rs/hapsigner-rs}}}"
+HAP_SIGNER_VERSION="${OHOS_QEMU_HAP_SIGNER_VERSION:-${OHOS_QEMU_HAPSIGNER_VERSION:-${OHOS_HAPSIGNER_VERSION:-v0.1.0}}}"
+HAP_SIGNER_DOWNLOAD_BASE_URL="${OHOS_QEMU_HAP_SIGNER_DOWNLOAD_BASE_URL:-${OHOS_QEMU_HAPSIGNER_DOWNLOAD_BASE_URL:-${OHOS_HAPSIGNER_DOWNLOAD_BASE_URL:-}}}"
+HAP_SIGNER_INSTALLER="${OHOS_QEMU_HAP_SIGNER_INSTALLER:-${OHOS_QEMU_HAPSIGNER_INSTALLER:-}}"
 
 usage() {
   cat <<'USAGE'
@@ -23,36 +52,51 @@ Usage:
   install.sh [options]
 
 Network installer for OpenHarmony QEMU image packages.
+CLI options override environment variables, which override defaults.
 
-Options:
-  --prefix DIR       Install directory. Default: $HOME/.ohos-qemu
-  --platform NAME    Host platform: auto, linux, macos, windows
-  --arch ARCH        Guest/package architecture: auto, arm64, aarch64, armv7a, x86_64
-  --device-type TYPE Device type package: phone or 2in1. Default: phone
-  --repo URL         GitHub repository URL. Default: https://github.com/harmony-contrib/ohos-qemu
-  --release TAG      Release tag to download. Default: v20261107
+Options (and matching environment variables):
+  --prefix DIR       Install directory (OHOS_QEMU_PREFIX). Default: $HOME/.ohos-qemu
+  --platform NAME    Host platform: auto, linux, macos, windows (OHOS_QEMU_PLATFORM)
+  --arch ARCH        Guest/package architecture: auto, arm64, aarch64, armv7a, x86_64 (OHOS_QEMU_ARCH)
+  --device-type TYPE Device type package: phone or 2in1 (OHOS_QEMU_DEVICE_TYPE). Default: phone
+  --repo URL         GitHub repository URL (OHOS_QEMU_REPO / OHOS_QEMU_REPO_URL).
+                     Default: https://github.com/harmony-contrib/ohos-qemu
+  --release TAG      Release tag to download (OHOS_QEMU_RELEASE / OHOS_QEMU_RELEASE_TAG / OHOS_QEMU_REF).
+                     Default: v20261114
   --download-base-url URL
-                     Direct artifact base URL. Downloads URL/<package>.
+                     Direct artifact base URL (OHOS_QEMU_DOWNLOAD_BASE_URL). Downloads URL/<package>.
                      Useful for GitHub Releases, private mirrors, or CDNs.
-  --force            Replace an existing installed package directory
-  --keep-archive     Keep the downloaded archive after extraction
-  --with-hap-signer  Install the pure Rust hap-sign CLI (default)
+  --github-token TOK GitHub token for authenticated downloads (OHOS_QEMU_GITHUB_TOKEN / GITHUB_TOKEN)
+  --force            Replace an existing installed package directory (OHOS_QEMU_FORCE=1)
+  --no-force         Do not replace an existing installed directory (OHOS_QEMU_FORCE=0)
+  --keep-archive     Keep the downloaded archive after extraction (OHOS_QEMU_KEEP_ARCHIVE=1)
+  --no-keep-archive  Remove the downloaded archive after extraction (OHOS_QEMU_KEEP_ARCHIVE=0)
+  --with-hap-signer  Install the pure Rust hap-sign CLI (OHOS_QEMU_WITH_HAP_SIGNER=1, default)
   --without-hap-signer
-                     Install only the QEMU image package
+                     Install only the QEMU image package (OHOS_QEMU_WITHOUT_HAP_SIGNER=1 / OHOS_QEMU_INSTALL_HAP_SIGNER=0)
+  --hap-signer-repo URL
+                     hap-sign repository URL (OHOS_QEMU_HAP_SIGNER_REPO_URL)
   --hap-signer-version TAG
-                     hap-sign release tag. Default: v0.1.0
+                     hap-sign release tag (OHOS_QEMU_HAP_SIGNER_VERSION). Default: v0.1.0
   --hap-signer-download-base-url URL
-                     Direct URL containing hap-sign release assets
+                     Direct URL containing hap-sign release assets (OHOS_QEMU_HAP_SIGNER_DOWNLOAD_BASE_URL)
   -h, --help         Show this help
 
 Examples:
-  curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20261107
+  curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh | bash -s -- --release v20261114
+  OHOS_QEMU_RELEASE=v20261114 OHOS_QEMU_DEVICE_TYPE=2in1 OHOS_QEMU_WITHOUT_HAP_SIGNER=1 \
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/harmony-contrib/ohos-qemu/main/scripts/install.sh)"
   bash scripts/install.sh --prefix "$HOME/opt/ohos-qemu" --arch arm64 --device-type phone
   bash scripts/install.sh --release RELEASE_TAG --arch x86_64 --device-type 2in1
 USAGE
 }
 
 while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --*=*)
+      set -- "${1%%=*}" "${1#*=}" "${@:2}"
+      ;;
+  esac
   case "$1" in
     --prefix)
       PREFIX="${2:-}"
@@ -82,12 +126,24 @@ while [ "$#" -gt 0 ]; do
       DOWNLOAD_BASE_URL="${2:-}"
       shift 2
       ;;
+    --github-token)
+      GITHUB_TOKEN="${2:-}"
+      shift 2
+      ;;
     --force)
       FORCE=1
       shift
       ;;
+    --no-force)
+      FORCE=0
+      shift
+      ;;
     --keep-archive)
       KEEP_ARCHIVE=1
+      shift
+      ;;
+    --no-keep-archive)
+      KEEP_ARCHIVE=0
       shift
       ;;
     --with-hap-signer)
@@ -97,6 +153,10 @@ while [ "$#" -gt 0 ]; do
     --without-hap-signer)
       INSTALL_HAP_SIGNER=0
       shift
+      ;;
+    --hap-signer-repo)
+      HAP_SIGNER_REPO_URL="${2:-}"
+      shift 2
       ;;
     --hap-signer-version)
       HAP_SIGNER_VERSION="${2:-}"

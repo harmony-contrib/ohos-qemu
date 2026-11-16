@@ -13,6 +13,15 @@ on:
           - armv7a_virt
           - x86_64_virt
           - arm64_virt
+      device_type:
+        description: "Device type profile to package"
+        required: true
+        default: "phone"
+        type: choice
+        options:
+          - phone
+          - 2in1
+          - all
       manifest_url:
         description: "OpenHarmony manifest repository"
         required: true
@@ -65,9 +74,18 @@ jobs:
 
     env:
       OHOS_ROOT: ${{ github.workspace }}/openharmony
+      SOURCE_ROOT: ${{ github.workspace }}/openharmony
       PACKAGE_OUT: ${{ github.workspace }}/qemu-packages
+      OUTPUT_DIR: ${{ github.workspace }}/qemu-packages
       PC_IMAGE_OUT: ${{ github.workspace }}/pc-images
       CCACHE_DIR: ${{ github.workspace }}/.ccache
+      OHOS_QEMU_PRODUCT: ${{ inputs.product }}
+      OHOS_QEMU_DEVICE_TYPE: ${{ inputs.device_type }}
+      OHOS_MANIFEST_URL: ${{ inputs.manifest_url }}
+      OHOS_MANIFEST_BRANCH: ${{ inputs.manifest_branch }}
+      REPO_JOBS: ${{ inputs.repo_jobs }}
+      BUILD_JOBS: ${{ inputs.build_jobs }}
+      PC_DISK_SIZE: ${{ inputs.pc_disk_size }}
       DEBIAN_FRONTEND: noninteractive
 
     steps:
@@ -170,29 +188,43 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          case "${{ inputs.product }}" in
+          case "${OHOS_QEMU_PRODUCT}" in
             all)
               products="armv7a_virt x86_64_virt arm64_virt"
               ;;
             armv7a_virt|x86_64_virt|arm64_virt)
-              products="${{ inputs.product }}"
+              products="${OHOS_QEMU_PRODUCT}"
               ;;
             *)
-              echo "unsupported product: ${{ inputs.product }}" >&2
+              echo "unsupported product: ${OHOS_QEMU_PRODUCT}" >&2
+              exit 2
+              ;;
+          esac
+          case "${OHOS_QEMU_DEVICE_TYPE}" in
+            all)
+              device_types="phone 2in1"
+              ;;
+            phone|2in1)
+              device_types="${OHOS_QEMU_DEVICE_TYPE}"
+              ;;
+            *)
+              echo "unsupported device_type: ${OHOS_QEMU_DEVICE_TYPE}" >&2
               exit 2
               ;;
           esac
           echo "list=${products}" >> "${GITHUB_OUTPUT}"
-          printf 'Products: %s\n' "${products}"
+          echo "device_types=${device_types}" >> "${GITHUB_OUTPUT}"
+          printf 'Products: %s (device_types: %s)\n' "${products}" "${device_types}"
 
       - name: Resolve artifact name
         id: artifact
         shell: bash
         run: |
           set -euo pipefail
-          safe_branch="$(printf '%s' '${{ inputs.manifest_branch }}' | tr -c 'A-Za-z0-9._-' '-')"
-          safe_product="$(printf '%s' '${{ inputs.product }}' | tr -c 'A-Za-z0-9._-' '-')"
-          echo "name=openharmony-standard-qemu-${safe_product}-${safe_branch}-${GITHUB_RUN_ID}" >> "${GITHUB_OUTPUT}"
+          safe_branch="$(printf '%s' "${OHOS_MANIFEST_BRANCH}" | tr -c 'A-Za-z0-9._-' '-')"
+          safe_product="$(printf '%s' "${OHOS_QEMU_PRODUCT}" | tr -c 'A-Za-z0-9._-' '-')"
+          safe_device="$(printf '%s' "${OHOS_QEMU_DEVICE_TYPE}" | tr -c 'A-Za-z0-9._-' '-')"
+          echo "name=openharmony-standard-qemu-${safe_product}-${safe_device}-${safe_branch}-${GITHUB_RUN_ID}" >> "${GITHUB_OUTPUT}"
 
       - name: Sync OpenHarmony source
         shell: bash
@@ -201,10 +233,10 @@ jobs:
           mkdir -p "${OHOS_ROOT}"
           cd "${OHOS_ROOT}"
           repo init \
-            -u "${{ inputs.manifest_url }}" \
-            -b "${{ inputs.manifest_branch }}" \
+            -u "${OHOS_MANIFEST_URL}" \
+            -b "${OHOS_MANIFEST_BRANCH}" \
             -g ohos:standard
-          repo sync -c --no-tags --optimized-fetch -j"${{ inputs.repo_jobs }}"
+          repo sync -c --no-tags --optimized-fetch -j"${REPO_JOBS}"
 
       - name: Download OpenHarmony prebuilts
         shell: bash
@@ -260,7 +292,7 @@ jobs:
             ./build.sh \
               --product-name "${product}" \
               --ccache \
-              --jobs "${{ inputs.build_jobs }}"
+              --jobs "${BUILD_JOBS}"
             echo "::endgroup::"
           done
 
@@ -270,12 +302,12 @@ jobs:
           set -euo pipefail
           mkdir -p "${PACKAGE_OUT}"
           for product in ${{ steps.products.outputs.list }}; do
-            echo "::group::Package ${product}"
-            "${GITHUB_WORKSPACE}/scripts/package_standard_qemu.sh" \
-              --source-root "${OHOS_ROOT}" \
-              --product "${product}" \
-              --output-dir "${PACKAGE_OUT}"
-            echo "::endgroup::"
+            for device_type in ${{ steps.products.outputs.device_types }}; do
+              echo "::group::Package ${product} (${device_type})"
+              PRODUCT="${product}" DEVICE_TYPE="${device_type}" \
+                "${GITHUB_WORKSPACE}/scripts/package_standard_qemu.sh"
+              echo "::endgroup::"
+            done
           done
           find "${PACKAGE_OUT}" -maxdepth 2 -type f \( -name '*.tar.gz' -o -name '*.zip' \) -print
 
