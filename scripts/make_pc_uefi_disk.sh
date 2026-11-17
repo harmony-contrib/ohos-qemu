@@ -6,12 +6,14 @@ usage() {
 Usage:
   make_pc_uefi_disk.sh --source-root ROOT --output FILE [options]
 
-Options:
-  --product PRODUCT       Only x86_64_virt is currently supported.
-  --disk-size SIZE        Raw disk size passed to truncate, default: 32G.
-  --qemu-smoke           Run a short QEMU + OVMF boot smoke after creating disk.
-  --smoke-timeout SEC    QEMU smoke timeout, default: 90.
-  -h, --help             Show this help.
+Options (and matching environment variables):
+  --source-root ROOT      OpenHarmony source root (SOURCE_ROOT / OHOS_ROOT).
+  --output FILE           Output disk image path (OUTPUT).
+  --product PRODUCT       Only x86_64_virt is currently supported (PRODUCT).
+  --disk-size SIZE        Raw disk size passed to truncate, default: 32G (DISK_SIZE / PC_DISK_SIZE).
+  --qemu-smoke            Run a short QEMU + OVMF boot smoke after creating disk (QEMU_SMOKE=1).
+  --smoke-timeout SEC     QEMU smoke timeout, default: 90 (SMOKE_TIMEOUT).
+  -h, --help              Show this help.
 
 Required host tools:
   sgdisk losetup partprobe mkfs.vfat grub-mkstandalone dd mount umount
@@ -24,14 +26,22 @@ OpenHarmony x86_64_virt standard-system artifacts.
 USAGE
 }
 
-SOURCE_ROOT=
-PRODUCT=x86_64_virt
-OUTPUT=
-DISK_SIZE=32G
-QEMU_SMOKE=0
-SMOKE_TIMEOUT=90
+SOURCE_ROOT="${SOURCE_ROOT:-${OHOS_ROOT:-}}"
+PRODUCT="${PRODUCT:-x86_64_virt}"
+OUTPUT="${OUTPUT:-}"
+DISK_SIZE="${DISK_SIZE:-${PC_DISK_SIZE:-32G}}"
+case "$(printf '%s' "${QEMU_SMOKE:-0}" | tr '[:upper:]' '[:lower:]')" in
+  1|true|yes|on) QEMU_SMOKE=1 ;;
+  *) QEMU_SMOKE=0 ;;
+esac
+SMOKE_TIMEOUT="${SMOKE_TIMEOUT:-90}"
 
 while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --*=*)
+      set -- "${1%%=*}" "${1#*=}" "${@:2}"
+      ;;
+  esac
   case "$1" in
     --source-root)
       SOURCE_ROOT="${2:-}"

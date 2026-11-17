@@ -245,6 +245,12 @@ typedef struct {
     int net_latency_ms;
     uint64_t net_seq;
 
+    char locale_spec[64];
+    char region_spec[16];
+    char active_locale[64];
+    int locale_custom;
+    int locale_synced_after_boot;
+
     int vport_fd;
     int ctrl_listen_fd;
 } bridge_state_t;
@@ -1222,8 +1228,138 @@ static void parse_cmdline(bridge_state_t *st) {
         } else if (strncmp(tok, "ohos.boot.qemu.camera=", 22) == 0) {
             strncpy(st->camera_pattern, tok + 22, sizeof(st->camera_pattern) - 1);
             st->camera_custom = 1;
+        } else if (strncmp(tok, "ohos.boot.qemu.locale=", 22) == 0) {
+            strncpy(st->locale_spec, tok + 22, sizeof(st->locale_spec) - 1);
+            st->locale_custom = 1;
+        } else if (strncmp(tok, "ohos.boot.qemu.lang=", 20) == 0) {
+            strncpy(st->locale_spec, tok + 20, sizeof(st->locale_spec) - 1);
+            st->locale_custom = 1;
+        } else if (strncmp(tok, "ohos.boot.qemu.region=", 22) == 0) {
+            strncpy(st->region_spec, tok + 22, sizeof(st->region_spec) - 1);
+            st->locale_custom = 1;
         }
     }
+}
+
+static int invoke_i18n_ctl(bridge_state_t *st, const char *arg1, const char *arg2, const char *arg3,
+                           char *out, size_t out_cap, int timeout_ms, int background) {
+    if (out && out_cap > 0) {
+        out[0] = '\0';
+    }
+    const char *bin = "/system/bin/qemu-i18n-ctl";
+    if (access(bin, X_OK) != 0) {
+        bin = "/vendor/bin/qemu-i18n-ctl";
+        if (access(bin, X_OK) != 0) {
+            if (out && out_cap > 0) {
+                snprintf(out, out_cap, "ERR LOCALE qemu-i18n-ctl not installed\n");
+            }
+            return -1;
+        }
+    }
+
+    if (background) {
+        pid_t bg = fork();
+        if (bg == 0) {
+            alarm(8);
+            int null_fd = open("/dev/null", O_RDWR);
+            if (null_fd >= 0) {
+                dup2(null_fd, STDIN_FILENO);
+                dup2(null_fd, STDOUT_FILENO);
+                dup2(null_fd, STDERR_FILENO);
+                if (null_fd > 2) close(null_fd);
+            }
+            char *argv_exec[6];
+            int idx = 0;
+            argv_exec[idx++] = (char *)"qemu-i18n-ctl";
+            if (arg1 && arg1[0]) argv_exec[idx++] = (char *)arg1;
+            if (arg2 && arg2[0]) argv_exec[idx++] = (char *)arg2;
+            if (arg3 && arg3[0]) argv_exec[idx++] = (char *)arg3;
+            argv_exec[idx] = NULL;
+            execv(bin, argv_exec);
+            _exit(127);
+        }
+        return bg < 0 ? -1 : 0;
+    }
+
+    int pipefd[2];
+    if (pipe(pipefd) != 0) {
+        if (out && out_cap > 0) {
+            snprintf(out, out_cap, "ERR LOCALE pipe failed\n");
+        }
+        return -1;
+    }
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        if (out && out_cap > 0) {
+            snprintf(out, out_cap, "ERR LOCALE fork failed\n");
+        }
+        return -1;
+    }
+    if (pid == 0) {
+        close(pipefd[0]);
+        alarm(8);
+        int null_fd = open("/dev/null", O_RDWR);
+        if (null_fd >= 0) {
+            dup2(null_fd, STDIN_FILENO);
+            dup2(null_fd, STDERR_FILENO);
+            if (null_fd > 2) close(null_fd);
+        }
+        dup2(pipefd[1], STDOUT_FILENO);
+        if (pipefd[1] > 2) close(pipefd[1]);
+        char *argv_exec[6];
+        int idx = 0;
+        argv_exec[idx++] = (char *)"qemu-i18n-ctl";
+        if (arg1 && arg1[0]) argv_exec[idx++] = (char *)arg1;
+        if (arg2 && arg2[0]) argv_exec[idx++] = (char *)arg2;
+        if (arg3 && arg3[0]) argv_exec[idx++] = (char *)arg3;
+        argv_exec[idx] = NULL;
+        execv(bin, argv_exec);
+        const char *msg = "ERR LOCALE execv failed\n";
+        (void)write(STDOUT_FILENO, msg, strlen(msg));
+        _exit(127);
+    }
+    close(pipefd[1]);
+    fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
+    size_t used = 0;
+    uint64_t start = now_monotonic_ms();
+    while ((int)(now_monotonic_ms() - start) < timeout_ms && out && used + 1 < out_cap) {
+        struct pollfd pfd = {.fd = pipefd[0], .events = POLLIN | POLLHUP, .revents = 0};
+        int pr = poll(&pfd, 1, 100);
+        if (pr > 0) {
+            ssize_t rn = read(pipefd[0], out + used, out_cap - 1 - used);
+            if (rn > 0) {
+                used += (size_t)rn;
+                out[used] = '\0';
+            } else if (rn == 0) {
+                break;
+            }
+        }
+    }
+    close(pipefd[0]);
+    if (out && out_cap > 0) {
+        if (!out[0]) {
+            snprintf(out, out_cap, "ERR LOCALE timeout\n");
+            return -1;
+        }
+        if (out[strlen(out) - 1] != '\n' && strlen(out) + 2 < out_cap) {
+            strcat(out, "\n");
+        }
+        const char *loc_key = strstr(out, "locale=");
+        if (st && loc_key && strncmp(out, "OK ", 3) == 0) {
+            loc_key += 7;
+            size_t k = 0;
+            while (loc_key[k] && loc_key[k] != ' ' && loc_key[k] != '\r' && loc_key[k] != '\n' &&
+                   k + 1 < sizeof(st->active_locale)) {
+                st->active_locale[k] = loc_key[k];
+                ++k;
+            }
+            st->active_locale[k] = '\0';
+        }
+        return strncmp(out, "OK ", 3) == 0 ? 0 : -1;
+    }
+    return 0;
 }
 
 static void handle_command_line(bridge_state_t *st, const char *line_in, int reply_fd) {
@@ -1417,6 +1553,48 @@ static void handle_command_line(bridge_state_t *st, const char *line_in, int rep
         char b64[3072];
         b64_encode((const uint8_t *)raw, len, b64, sizeof(b64));
         snprintf(reply, sizeof(reply), "CLIPBOARD_B64 %s\n", b64);
+    } else if (strcasecmp(line, "LOCALE") == 0 || strcasecmp(line, "LOCALE_GET") == 0 ||
+               strcasecmp(line, "LANG") == 0) {
+        invoke_i18n_ctl(st, "--status", NULL, NULL, reply, sizeof(reply), 5000, 0);
+    } else if (strcasecmp(line, "LOCALE_LIST") == 0) {
+        invoke_i18n_ctl(st, "--list", NULL, NULL, reply, sizeof(reply), 3000, 0);
+    } else if (strncasecmp(line, "LOCALE ", 7) == 0 || strncasecmp(line, "LANG ", 5) == 0) {
+        const char *val = strchr(line, ' ') + 1;
+        while (*val == ' ') ++val;
+        if (!val[0] || strcasecmp(val, "status") == 0 || strcasecmp(val, "get") == 0) {
+            invoke_i18n_ctl(st, "--status", NULL, NULL, reply, sizeof(reply), 5000, 0);
+        } else if (strcasecmp(val, "list") == 0 || strcasecmp(val, "--list") == 0) {
+            invoke_i18n_ctl(st, "--list", NULL, NULL, reply, sizeof(reply), 3000, 0);
+        } else {
+            char spec_buf[64] = {0};
+            char reg_buf[16] = {0};
+            strncpy(spec_buf, val, sizeof(spec_buf) - 1);
+            char *sep = strchr(spec_buf, ':');
+            if (sep) {
+                *sep = '\0';
+                strncpy(reg_buf, sep + 1, sizeof(reg_buf) - 1);
+            }
+            if (reg_buf[0]) {
+                if (invoke_i18n_ctl(st, spec_buf, "--region", reg_buf, reply, sizeof(reply), 6500, 0) == 0) {
+                    strncpy(st->locale_spec, spec_buf, sizeof(st->locale_spec) - 1);
+                    strncpy(st->region_spec, reg_buf, sizeof(st->region_spec) - 1);
+                    st->locale_custom = 1;
+                }
+            } else {
+                if (invoke_i18n_ctl(st, spec_buf, NULL, NULL, reply, sizeof(reply), 6500, 0) == 0) {
+                    strncpy(st->locale_spec, spec_buf, sizeof(st->locale_spec) - 1);
+                    st->region_spec[0] = '\0';
+                    st->locale_custom = 1;
+                }
+            }
+        }
+    } else if (strncasecmp(line, "REGION ", 7) == 0) {
+        const char *val = line + 7;
+        while (*val == ' ') ++val;
+        if (invoke_i18n_ctl(st, "--region", val, NULL, reply, sizeof(reply), 6500, 0) == 0) {
+            strncpy(st->region_spec, val, sizeof(st->region_spec) - 1);
+            st->locale_custom = 1;
+        }
     } else if (strncasecmp(line, "TIME ", 5) == 0) {
         uint64_t epoch_ms = strtoull(line + 5, NULL, 10);
         if (epoch_ms > 1700000000000ULL) {
@@ -1429,10 +1607,14 @@ static void handle_command_line(bridge_state_t *st, const char *line_in, int rep
             snprintf(reply, sizeof(reply), "ERR TIME invalid epoch_ms\n");
         }
     } else if (strcasecmp(line, "STATUS") == 0 || strcasecmp(line, "PING") == 0) {
+        if (!st->active_locale[0]) {
+            char lbuf[256] = {0};
+            invoke_i18n_ctl(st, "--status", NULL, NULL, lbuf, sizeof(lbuf), 1500, 0);
+        }
         snprintf(reply, sizeof(reply),
                  "OK STATUS gnss=%d(ready=%d,seq=%llu,lat=%.4f,lon=%.4f) "
                  "sensor=%d(accel_ready=%d,seq=%llu,rot_ready=%d,head_ready=%d,light=%.1f,prox=%.1f,baro=%.1f) "
-                 "battery=%d:%s thermal=%.1fC camera=%s net=%s(wlan0=%s,lat=%dms) key=%s(seq=%llu)\n",
+                 "battery=%d:%s thermal=%.1fC camera=%s net=%s(wlan0=%s,lat=%dms) key=%s(seq=%llu) locale=%s\n",
                  st->gnss_enabled, st->gnss_ready, (unsigned long long)st->gnss_seq, st->lat, st->lon,
                  st->sensor_enabled, st->accel_ready, (unsigned long long)st->accel_seq, st->rot_ready, st->head_ready,
                  st->light_lux, st->proximity_cm, st->barometer_hpa,
@@ -1441,7 +1623,8 @@ static void handle_command_line(bridge_state_t *st, const char *line_in, int rep
                  st->net_wlan0[0] ? st->net_wlan0 : "up",
                  st->net_latency_ms,
                  st->last_key[0] ? st->last_key : "none",
-                 (unsigned long long)st->key_seq);
+                 (unsigned long long)st->key_seq,
+                 st->active_locale[0] ? st->active_locale : "zh-Hans-CN");
     } else {
         snprintf(reply, sizeof(reply), "ERR unknown command: %s\n", line);
     }
@@ -1763,6 +1946,17 @@ int main(int argc, char **argv) {
     if (st.camera_custom) {
         apply_camera_pattern(st.camera_pattern);
     }
+    if (st.locale_custom) {
+        char preseed_out[256];
+        if (st.locale_spec[0] && st.region_spec[0]) {
+            invoke_i18n_ctl(&st, "--preseed-only", st.locale_spec, NULL, preseed_out, sizeof(preseed_out), 2500, 0);
+            invoke_i18n_ctl(&st, "--preseed-only", "--region", st.region_spec, preseed_out, sizeof(preseed_out), 2500, 0);
+        } else if (st.locale_spec[0]) {
+            invoke_i18n_ctl(&st, "--preseed-only", st.locale_spec, NULL, preseed_out, sizeof(preseed_out), 2500, 0);
+        } else if (st.region_spec[0]) {
+            invoke_i18n_ctl(&st, "--preseed-only", "--region", st.region_spec, preseed_out, sizeof(preseed_out), 2500, 0);
+        }
+    }
     save_gnss_state(&st);
     save_sensor_state(&st);
     save_input_state(&st);
@@ -1893,6 +2087,17 @@ int main(int argc, char **argv) {
                 st.battery_synced_after_boot = 1;
             }
             apply_battery_and_thermal_files(&st, notify);
+        }
+
+        if (st.locale_custom && !st.locale_synced_after_boot && (now_ms - start_mono >= 22000)) {
+            st.locale_synced_after_boot = 1;
+            if (st.locale_spec[0] && st.region_spec[0]) {
+                invoke_i18n_ctl(&st, st.locale_spec, "--region", st.region_spec, NULL, 0, 0, 1);
+            } else if (st.locale_spec[0]) {
+                invoke_i18n_ctl(&st, st.locale_spec, NULL, NULL, NULL, 0, 0, 1);
+            } else if (st.region_spec[0]) {
+                invoke_i18n_ctl(&st, "--region", st.region_spec, NULL, NULL, 0, 0, 1);
+            }
         }
     }
     return 0;
