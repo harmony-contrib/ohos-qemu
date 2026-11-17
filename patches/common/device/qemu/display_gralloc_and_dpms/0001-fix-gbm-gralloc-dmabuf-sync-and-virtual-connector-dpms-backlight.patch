@@ -1,0 +1,158 @@
+diff --git a/device/qemu/common/virt_full/hardware/display/src/display_gralloc/display_gralloc_gbm.cpp b/device/qemu/common/virt_full/hardware/display/src/display_gralloc/display_gralloc_gbm.cpp
+--- a/device/qemu/common/virt_full/hardware/display/src/display_gralloc/display_gralloc_gbm.cpp
++++ b/device/qemu/common/virt_full/hardware/display/src/display_gralloc/display_gralloc_gbm.cpp
+@@ -59,13 +59,18 @@ static GrallocManager *GetGrallocManager(void)
+ {
+     if (g_grallocManager == nullptr) {
+         g_grallocManager = (GrallocManager *)malloc(sizeof(GrallocManager));
++        if (g_grallocManager == nullptr) {
++            DISPLAY_LOGE("gralloc manager malloc failed");
++            return nullptr;
++        }
+         errno_t eok = memset_s(g_grallocManager, sizeof(GrallocManager), 0, sizeof(GrallocManager));
+         if (eok != EOK) {
+             DISPLAY_LOGE("memset_s failed");
++            free(g_grallocManager);
++            g_grallocManager = nullptr;
++            return nullptr;
+         }
+-        if (g_grallocManager == nullptr) {
+-            DISPLAY_LOGE("gralloc manager malloc failed");
+-        }
++        g_grallocManager->drmFd = -1;
+     }
+     return g_grallocManager;
+ }
+@@ -219,8 +224,10 @@ static int32_t InitGbmDevice(const char *drmFile, GrallocManager *grallocManager
+ static void DeInitGbmDevice(GrallocManager *grallocManager)
+ {
+     DISPLAY_LOGD();
+-    hdi_gbm_device_destroy(grallocManager->gbmDevice);
+-    if (grallocManager->drmFd > 0) {
++    if (grallocManager->gbmDevice != nullptr) {
++        hdi_gbm_device_destroy(grallocManager->gbmDevice);
++    }
++    if (grallocManager->drmFd >= 0) {
+         close(grallocManager->drmFd);
+         grallocManager->drmFd = -1;
+     }
+@@ -230,6 +237,8 @@ static void DeInitGbmDevice(GrallocManager *grallocManager)
+ static int32_t DmaBufferSync(const BufferHandle *handle, bool start)
+ {
+     DISPLAY_LOGD();
++    DISPLAY_CHK_RETURN((handle == nullptr || handle->fd < 0), HDF_ERR_INVALID_PARAM,
++        DISPLAY_LOGE("dma buffer sync invalid handle"));
+     struct dma_buf_sync syncPrm;
+     errno_t eok = memset_s(&syncPrm, sizeof(syncPrm), 0, sizeof(syncPrm));
+     DISPLAY_CHK_RETURN((eok != EOK), HDF_ERR_INVALID_PARAM, DISPLAY_LOGE("dma buffer sync memset_s failed"));
+@@ -251,7 +260,7 @@ static int32_t DmaBufferSync(const BufferHandle *handle, bool start)
+     int ret;
+     do {
+         ret = ioctl(handle->fd, DMA_BUF_IOCTL_SYNC, &syncPrm);
+-    } while ((retry--) && (ret != -EAGAIN) && (ret != -EINTR));
++    } while ((ret < 0) && (retry-- > 0) && ((errno == EAGAIN) || (errno == EINTR)));
+ 
+     if (ret < 0) {
+         DISPLAY_LOGE("sync failed");
+@@ -290,6 +299,11 @@ int32_t GbmAllocMem(const AllocInfo *info, BufferHandle **buffer)
+     GrallocManager *grallocManager = GetGrallocManager();
+     DISPLAY_CHK_RETURN((grallocManager == nullptr), HDF_ERR_INVALID_PARAM, DISPLAY_LOGE("gralloc manager failed");
+         GRALLOC_UNLOCK());
++    if (grallocManager->gbmDevice == nullptr) {
++        int32_t initRet = InitGbmDevice(g_drmFileNode, grallocManager);
++        DISPLAY_CHK_RETURN((initRet != HDF_SUCCESS), initRet, DISPLAY_LOGE("lazy init gbm device failed");
++            GRALLOC_UNLOCK());
++    }
+     struct gbm_bo *bo =
+         hdi_gbm_bo_create(grallocManager->gbmDevice, info->width, info->height, drmFmt, ConvertUsageToGbm(info->usage));
+     DISPLAY_CHK_RETURN((bo == nullptr), HDF_DEV_ERR_NO_MEMORY, DISPLAY_LOGE("gbm create bo failed"); \
+@@ -370,8 +384,9 @@ void *GbmMmap(BufferHandle *buffer)
+         return buffer->virAddr;
+     }
+     virAddr = mmap(nullptr, buffer->size, PROT_READ | PROT_WRITE, MAP_SHARED, buffer->fd, 0);
+-    if (virAddr == reinterpret_cast<void *>(MAP_FAILED)) {
++    if (virAddr == MAP_FAILED) {
+         DISPLAY_LOGE("mmap failed errno %{public}s, fd : %{public}d", strerror(errno), buffer->fd);
++        return nullptr;
+     }
+     buffer->virAddr = virAddr;
+     return virAddr;
+@@ -414,12 +429,13 @@ int32_t GbmGrallocUninitialize(void)
+ {
+     DISPLAY_LOGD();
+     GRALLOC_LOCK();
+-    GrallocManager *grallocManager = GetGrallocManager();
+-    DISPLAY_CHK_RETURN((grallocManager == nullptr), HDF_ERR_INVALID_PARAM, DISPLAY_LOGE("gralloc manager failed"); \
+-        GRALLOC_UNLOCK());
+-    grallocManager->referCount--;
+-    if (grallocManager->referCount < 0) {
+-        DeInitGbmDevice(grallocManager);
++    if (g_grallocManager == nullptr) {
++        GRALLOC_UNLOCK();
++        return HDF_SUCCESS;
++    }
++    g_grallocManager->referCount--;
++    if (g_grallocManager->referCount <= 0) {
++        DeInitGbmDevice(g_grallocManager);
+         free(g_grallocManager);
+         g_grallocManager = nullptr;
+     }
+diff --git a/device/qemu/common/virt_full/hardware/display/src/display_device/drm_connector.h b/device/qemu/common/virt_full/hardware/display/src/display_device/drm_connector.h
+--- a/device/qemu/common/virt_full/hardware/display/src/display_device/drm_connector.h
++++ b/device/qemu/common/virt_full/hardware/display/src/display_device/drm_connector.h
+@@ -130,7 +130,7 @@ private:
+     uint64_t mDpmsState = 0;
+     uint32_t mPropCrtcId = DRM_INVALID_ID;
+     uint32_t mPropBrightnessId = DRM_INVALID_ID;
+-    uint32_t mBrightnessLevel = 0;
++    uint32_t mBrightnessLevel = 128;
+     std::unordered_map<int32_t, DrmMode> mModes;
+     int32_t mPreferenceId = INVALID_MODE_ID;
+ 
+diff --git a/device/qemu/common/virt_full/hardware/display/src/display_device/drm_connector.cpp b/device/qemu/common/virt_full/hardware/display/src/display_device/drm_connector.cpp
+--- a/device/qemu/common/virt_full/hardware/display/src/display_device/drm_connector.cpp
++++ b/device/qemu/common/virt_full/hardware/display/src/display_device/drm_connector.cpp
+@@ -84,7 +84,7 @@ int32_t DrmConnector::Init(DrmDevice &drmDevice)
+     ret = drmDevice.GetConnectorProperty(*this, PROP_DPMS, prop);
+     DISPLAY_CHK_RETURN((ret != DISPLAY_SUCCESS), DISPLAY_FAILURE, DISPLAY_LOGE("can not get mode prop id"));
+     mPropDpmsId = prop.propId;
+-    mDpmsState = prop.value;
++    mDpmsState = (mConnectState == DRM_MODE_CONNECTED) ? DRM_MODE_DPMS_ON : prop.value;
+     DISPLAY_LOGD("dpms state : %{public}" PRIu64 "", mDpmsState);
+     // find the crtcid
+     ret = drmDevice.GetConnectorProperty(*this, PROP_CRTCID, prop);
+@@ -116,13 +116,19 @@ int32_t DrmConnector::SetBrightness(uint32_t level)
+     char buffer[10];
+     int32_t light_level;
+ 
+-    if (blFd <= 0) {
++    static bool virtualBacklight = false;
++    if (!virtualBacklight && blFd <= 0) {
+         blFd = open("/sys/class/backlight/backlight/brightness", O_RDWR);
+         if (blFd < 0) {
+-            DISPLAY_LOGE("DrmConnector::SetBrightness open file error %{public}s", strerror(errno));
+-            return DISPLAY_FAILURE;
++            DISPLAY_LOGW("DrmConnector::SetBrightness no sysfs backlight (%{public}s), using virtual brightness",
++                strerror(errno));
++            virtualBacklight = true;
+         }
+     }
++    if (virtualBacklight) {
++        mBrightnessLevel = level;
++        return DISPLAY_SUCCESS;
++    }
+     if (level < 0) {
+         DISPLAY_LOGE("DrmConnector::SetBrightness write error");
+         return DISPLAY_FAILURE;
+@@ -359,7 +365,10 @@ int32_t DrmConnector::SetDpmsState(uint64_t dmps)
+ {
+     DISPLAY_LOGD("dmps %{public}" PRIu64 "", dmps);
+     int ret = drmModeConnectorSetProperty(mDrmFdPtr->GetFd(), mId, mPropDpmsId, dmps);
+-    DISPLAY_CHK_RETURN((ret != 0), DISPLAY_FAILURE, DISPLAY_LOGE("can not set dpms"));
++    if (ret != 0) {
++        DISPLAY_LOGW("drmModeConnectorSetProperty dpms=%{public}" PRIu64 " ret=%{public}d, tracking virtual dpms",
++            dmps, ret);
++    }
+     mDpmsState = dmps;
+     return DISPLAY_SUCCESS;
+ }

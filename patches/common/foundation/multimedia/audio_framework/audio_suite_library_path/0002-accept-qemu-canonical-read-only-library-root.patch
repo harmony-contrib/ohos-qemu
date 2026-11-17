@@ -1,0 +1,25 @@
+diff --git a/foundation/multimedia/audio_framework/services/audio_suite/client/utils/src/audio_suite_common.cpp b/foundation/multimedia/audio_framework/services/audio_suite/client/utils/src/audio_suite_common.cpp
+--- a/foundation/multimedia/audio_framework/services/audio_suite/client/utils/src/audio_suite_common.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_suite/client/utils/src/audio_suite_common.cpp
+@@ -29,8 +29,10 @@
+ #if defined(__LP64__)
+ static const char *const PREFIX = "/system/lib64/";
++static const char *const QEMU_PREFIX = "/usr/system/lib64/";
+ #else
+ static const char *const PREFIX = "/system/lib/";
++static const char *const QEMU_PREFIX = "/usr/system/lib/";
+ #endif
+ 
+ int32_t AudioSuiteRingBuffer::PushData(uint8_t* byteData, uint32_t size)
+ {
+@@ -119,8 +121,9 @@
+ bool AudioSuiteLibraryManager::IsValidPath(const char *path)
+ {
+     CHECK_AND_RETURN_RET_LOG(path != nullptr, false, "Path is null");
+     CHECK_AND_RETURN_RET_LOG(
+-        strncmp(path, PREFIX, strlen(PREFIX)) == 0, false, "Path is invalid");
++        strncmp(path, PREFIX, strlen(PREFIX)) == 0 ||
++        strncmp(path, QEMU_PREFIX, strlen(QEMU_PREFIX)) == 0, false, "Path is invalid");
+     return true;
+ }
+ 

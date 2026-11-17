@@ -1,0 +1,30 @@
+diff --git a/foundation/arkui/ace_engine/interfaces/napi/kits/intelligence/image_generation/js_image_generation.cpp b/foundation/arkui/ace_engine/interfaces/napi/kits/intelligence/image_generation/js_image_generation.cpp
+--- a/foundation/arkui/ace_engine/interfaces/napi/kits/intelligence/image_generation/js_image_generation.cpp
++++ b/foundation/arkui/ace_engine/interfaces/napi/kits/intelligence/image_generation/js_image_generation.cpp
+@@ -190,6 +190,26 @@
++static napi_value RegisterPublicPartialResultType(napi_env env, napi_value exports)
++{
++    // API 26 values consumed by the existing custom-model callback path.
++    const struct { const char *name; int32_t value; } members[] = {
++        { "PARTIAL", 0 },
++        { "COMPLETED", 1 },
++        { "PARTIAL_FAIL", 2 },
++    };
++    napi_value object = nullptr;
++    NAPI_CALL(env, napi_create_object(env, &object));
++    for (const auto &member : members) {
++        napi_value value = nullptr;
++        NAPI_CALL(env, napi_create_int32(env, member.value, &value));
++        NAPI_CALL(env, napi_set_named_property(env, object, member.name, value));
++    }
++    NAPI_CALL(env, napi_set_named_property(env, exports, "PartialResultType", object));
++    return exports;
++}
++
+ static napi_value Export(napi_env env, napi_value exports)
+ {
++    NAPI_ASSERT(env, RegisterPublicPartialResultType(env, exports) != nullptr, "failed to create partial result object");
+     napi_property_descriptor properties[] = {
+         DECLARE_NAPI_FUNCTION("showGeneratorDialog", JSShowGeneratorDialog),
+         DECLARE_NAPI_FUNCTION("scaleGeneratorDialog", JSScaleGeneratorDialog)
+     };

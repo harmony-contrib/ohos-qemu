@@ -1,0 +1,26 @@
+diff --git a/foundation/distributeddatamgr/relational_store/frameworks/js/napi/cloud_extension/cloud_extension_stub.js b/foundation/distributeddatamgr/relational_store/frameworks/js/napi/cloud_extension/cloud_extension_stub.js
+--- a/foundation/distributeddatamgr/relational_store/frameworks/js/napi/cloud_extension/cloud_extension_stub.js
++++ b/foundation/distributeddatamgr/relational_store/frameworks/js/napi/cloud_extension/cloud_extension_stub.js
+@@ -22,7 +22,13 @@
+ const MAX_SIZE = 4 * 1024 * 1024 * 1024 - 1;
+ 
+ export let cloudExtension;
+ (function (a) {
++    let operationFlag;
++    (function (flag) {
++        flag[flag["INSERT"] = 0] = "INSERT";
++        flag[flag["UPDATE"] = 1] = "UPDATE";
++        flag[flag["DELETE"] = 2] = "DELETE";
++    })(operationFlag = a.Flag || (a.Flag = {}));
+     let f;
+     (function (f) {
+         f[f["NULL"] = 0] = "NULL";
+@@ -924,7 +930,8 @@
+ export default {
+     cloudExtension,
+     FieldType: cloudExtension.FieldType,
+     ErrorCode: cloudExtension.ErrorCode,
++    Flag: cloudExtension.Flag,
+     createCloudServiceStub: cloudExtension.createCloudServiceStub,
+     createCloudDBStub: cloudExtension.createCloudDBStub,
+     createAssetLoaderStub: cloudExtension.createAssetLoaderStub,

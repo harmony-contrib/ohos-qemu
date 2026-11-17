@@ -1,0 +1,10 @@
+diff --git a/vendor/ohemu/virt/preinstall-config/install_list_capability.json b/vendor/ohemu/virt/preinstall-config/install_list_capability.json
+--- a/vendor/ohemu/virt/preinstall-config/install_list_capability.json
++++ b/vendor/ohemu/virt/preinstall-config/install_list_capability.json
+@@ -297,5 +297,5 @@
+       "bundleName": "com.ohos.calendardata",
+       "app_signature": [
+-        "CC249153FA175206B1427C71DB0F2232D91FA4B2ED7955AE1D6EBA4C362D359A"
++        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+       ],
+       "allowAppDesktopIconHide": true,

@@ -1,0 +1,11 @@
+diff --git a/foundation/filemanagement/app_file_service/services/backup.cfg b/foundation/filemanagement/app_file_service/services/backup.cfg
+--- a/foundation/filemanagement/app_file_service/services/backup.cfg
++++ b/foundation/filemanagement/app_file_service/services/backup.cfg
+@@ -8,6 +8,6 @@
+             "secon" : "u:r:backup_sa:s0",
+             "sandbox" : 0,
+-            "caps" : ["DAC_READ_SEARCH", "SYS_ADMIN", "CAP_CHOWN", "CAP_CHMOD", "CAP_FOWNER"],
++            "caps" : ["DAC_READ_SEARCH", "SYS_ADMIN", "CAP_CHOWN", "CAP_FOWNER"],
+             "permission" : [
+                         "ohos.permission.STORAGE_MANAGER",
+                         "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED",

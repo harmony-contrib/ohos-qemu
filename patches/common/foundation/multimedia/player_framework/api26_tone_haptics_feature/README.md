@@ -1,0 +1,1 @@
+Export STANDARD/GENTLE directly from the existing ToneHapticsFeature native enum. Preserve actual player capability checks, supported-feature discovery and vibrator behavior; the enum does not promise gentle physical haptics. This is a candidate, not guest validation.

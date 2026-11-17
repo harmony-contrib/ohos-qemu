@@ -1,0 +1,329 @@
+diff --git a/base/powermgr/thermal_manager/frameworks/napi/thermal_manager_napi.cpp b/base/powermgr/thermal_manager/frameworks/napi/thermal_manager_napi.cpp
+--- a/base/powermgr/thermal_manager/frameworks/napi/thermal_manager_napi.cpp
++++ b/base/powermgr/thermal_manager/frameworks/napi/thermal_manager_napi.cpp
+@@ -15,7 +15,7 @@
+ 
+ #include "thermal_manager_napi.h"
+ 
+-#include <uv.h>
++#include <memory>
+ 
+ #include "napi_utils.h"
+ #include "napi_errors.h"
+@@ -39,97 +39,177 @@
+ #endif
+ } // namespace
+ 
++namespace OHOS {
++namespace PowerMgr {
++struct ThermalCallbackCleanup {
++    sptr<ThermalLevelCallback> callback;
++};
++} // namespace PowerMgr
++} // namespace OHOS
++
+ ThermalLevelCallback::~ThermalLevelCallback()
+ {
+     ReleaseCallback();
+ }
+ 
+-void ThermalLevelCallback::UpdateCallback(napi_env env, napi_value jsCallback)
+-{
++bool ThermalLevelCallback::UpdateCallback(napi_env env, napi_value jsCallback, bool legacy)
++{
++    napi_ref reference = nullptr;
++    if (napi_ok != napi_create_reference(env, jsCallback, 1, &reference)) {
++        THERMAL_HILOGW(COMP_FWK, "Failed to create a JS callback reference");
++        return false;
++    }
++    auto cleanup = new (std::nothrow) ThermalCallbackCleanup {sptr<ThermalLevelCallback>(this)};
++    if (cleanup == nullptr) {
++        napi_delete_reference(env, reference);
++        return false;
++    }
++    if (napi_add_env_cleanup_hook(env, CleanupCallbackEnv, cleanup) != napi_ok) {
++        napi_delete_reference(env, reference);
++        delete cleanup;
++        return false;
++    }
++    ReleaseCallback();
+     std::lock_guard lock(mutex_);
+-    if (napi_ok != napi_create_reference(env, jsCallback, 1, &callbackRef_)) {
+-        THERMAL_HILOGW(COMP_FWK, "Failed to create a JS callback reference");
++    callbackRef_ = reference;
++    env_ = env;
++    cleanup_ = cleanup;
++    legacy_ = legacy;
++    return true;
++}
++
++void ThermalLevelCallback::ReleaseCallback()
++{
++    napi_ref reference = nullptr;
++    napi_env env = nullptr;
++    ThermalCallbackCleanup* cleanup = nullptr;
++    {
++        std::lock_guard lock(mutex_);
++        ++generation_;
++        reference = callbackRef_;
++        env = env_;
++        cleanup = cleanup_;
+         callbackRef_ = nullptr;
+-    }
+-    env_ = env;
+-}
+-
+-void ThermalLevelCallback::ReleaseCallback()
++        env_ = nullptr;
++        cleanup_ = nullptr;
++    }
++    const bool cleanupRemoved = cleanup != nullptr &&
++        napi_remove_env_cleanup_hook(env, CleanupCallbackEnv, cleanup) == napi_ok;
++    if (reference != nullptr) {
++        napi_delete_reference(env, reference);
++    }
++    // Drop the hook's strong owner only after releasing mutex_ so its final
++    // destructor cannot re-enter ReleaseCallback while the mutex is held.
++    if (cleanupRemoved) {
++        delete cleanup;
++    }
++}
++
++bool ThermalLevelCallback::HasCallback()
+ {
+     std::lock_guard lock(mutex_);
+-    if (callbackRef_ != nullptr) {
+-        napi_delete_reference(env_, callbackRef_);
+-    }
+-    callbackRef_ = nullptr;
+-    env_ = nullptr;
++    return callbackRef_ != nullptr && env_ != nullptr;
++}
++
++void ThermalLevelCallback::CleanupCallbackEnv(void* data)
++{
++    std::unique_ptr<ThermalCallbackCleanup> cleanup(static_cast<ThermalCallbackCleanup*>(data));
++    auto callback = cleanup->callback;
++    {
++        std::lock_guard lock(callback->mutex_);
++        if (callback->cleanup_ != cleanup.get()) {
++            // A previous hook whose removal failed must only release its own
++            // owner, not clear a later subscription or a different live env.
++            return;
++        }
++        // This hook is already executing, so ReleaseCallback must not remove
++        // it or delete its data a second time.
++        callback->cleanup_ = nullptr;
++    }
++    callback->ReleaseCallback();
++    ThermalMgrClient::GetInstance().UnSubscribeThermalLevelCallback(callback);
+ }
+ 
+ bool ThermalLevelCallback::OnAsyncThermalLevelChanged(ThermalLevel level)
+ {
+     std::lock_guard lock(mutex_);
+-    level_ = level;
+     THERMAL_RETURN_IF_WITH_RET(env_ == nullptr, false);
+-    uv_work_t* work = new (std::nothrow) uv_work_t;
+-    THERMAL_RETURN_IF_WITH_RET(work == nullptr, false);
+-    work->data = reinterpret_cast<void*>(this);
+-    auto uvcallback = [work]() mutable {
+-        ThermalLevelCallback* callback = reinterpret_cast<ThermalLevelCallback*>(work->data);
+-        if (callback != nullptr) {
+-            callback->OnThermalLevel();
+-        }
+-        delete work;
+-        work = nullptr;
++    const uint64_t generation = generation_;
++    auto uvcallback = [callback = sptr<ThermalLevelCallback>(this), level, generation]() {
++        callback->OnThermalLevel(level, generation);
+     };
+     if (napi_send_event(env_, uvcallback, napi_eprio_low, __func__) != napi_status::napi_ok) {
+-        delete work;
+-        work = nullptr;
+         THERMAL_HILOGW(COMP_FWK, "uv_queue_work is failed");
+         return false;
+     }
+     return true;
+ }
+ 
+-void ThermalLevelCallback::OnThermalLevel()
+-{
+-    THERMAL_HILOGD(COMP_FWK, "level is: %{public}d", static_cast<int32_t>(level_));
+-    THERMAL_RETURN_IF_WITH_LOG(callbackRef_ == nullptr || env_ == nullptr, "js callback ref or env is nullptr");
+-
++void ThermalLevelCallback::OnThermalLevel(ThermalLevel level, uint64_t generation)
++{
++    THERMAL_HILOGD(COMP_FWK, "level is: %{public}d", static_cast<int32_t>(level));
++    napi_env env = nullptr;
++    napi_value callback = nullptr;
++    bool legacy = false;
+     napi_handle_scope scope = nullptr;
+-    napi_open_handle_scope(env_, &scope);
+-    if (scope == nullptr) {
+-        THERMAL_HILOGW(COMP_FWK, "scope is nullptr");
++    {
++        std::lock_guard lock(mutex_);
++        if (generation != generation_ || callbackRef_ == nullptr || env_ == nullptr) {
++            return;
++        }
++        env = env_;
++        legacy = legacy_;
++        if (napi_open_handle_scope(env, &scope) != napi_ok || scope == nullptr) {
++            return;
++        }
++        if (napi_get_reference_value(env, callbackRef_, &callback) != napi_ok || callback == nullptr) {
++            napi_close_handle_scope(env, scope);
++            return;
++        }
++    }
++
++    napi_value levelValue = nullptr;
++    if (napi_ok != napi_create_int32(env, static_cast<int32_t>(level), &levelValue)) {
++        THERMAL_HILOGW(COMP_FWK, "napi_create_int32 callback failed");
++        napi_close_handle_scope(env, scope);
+         return;
+     }
+-
+-    napi_value levelValue = nullptr;
+-    if (napi_ok != napi_create_int32(env_, static_cast<int32_t>(level_), &levelValue)) {
+-        THERMAL_HILOGW(COMP_FWK, "napi_create_int32 callback failed");
+-        napi_close_handle_scope(env_, scope);
+-        return;
+-    }
+-
+-    napi_value callback = nullptr;
+-    napi_status status = napi_get_reference_value(env_, callbackRef_, &callback);
+-    if (status != napi_ok) {
+-        THERMAL_HILOGE(COMP_FWK, "napi_get_reference_value callback failed, status = %{public}d", status);
+-        napi_close_handle_scope(env_, scope);
+-        return;
+-    }
+-
++    napi_value arguments[2] = {levelValue, nullptr};
++    size_t argc = 1;
++    if (legacy) {
++        if (napi_get_undefined(env, &arguments[0]) != napi_ok) {
++            napi_close_handle_scope(env, scope);
++            return;
++        }
++        arguments[1] = levelValue;
++        argc = 2;
++    }
+     napi_value callResult = nullptr;
+-    status = napi_call_function(env_, nullptr, callback, ARG_1, &levelValue, &callResult);
++    // Never hold mutex_ while invoking JavaScript: callbacks may unregister
++    // themselves or replace the subscription synchronously.
++    napi_status status = napi_call_function(env, nullptr, callback, argc, arguments, &callResult);
+     if (status != napi_ok) {
+         THERMAL_HILOGE(COMP_FWK, "napi_call_function callback failed, status = %{public}d", status);
+     }
+-    napi_close_handle_scope(env_, scope);
++    napi_close_handle_scope(env, scope);
++}
++
++napi_value ThermalManagerNapi::SubscribeThermalLevelLegacy(napi_env env, napi_callback_info info)
++{
++    return SubscribeThermalLevelImpl(env, info, true);
++}
++
++napi_value ThermalManagerNapi::UnSubscribeThermalLevelLegacy(napi_env env, napi_callback_info info)
++{
++    return UnSubscribeThermalLevelImpl(env, info, true);
+ }
+ 
+ napi_value ThermalManagerNapi::Init(napi_env env, napi_value exports)
+ {
+     napi_property_descriptor desc[] = {
+         // Old Interface
+-        DECLARE_NAPI_STATIC_FUNCTION("subscribeThermalLevel", SubscribeThermalLevel),
+-        DECLARE_NAPI_STATIC_FUNCTION("unsubscribeThermalLevel", UnSubscribeThermalLevel),
++        DECLARE_NAPI_STATIC_FUNCTION("subscribeThermalLevel", SubscribeThermalLevelLegacy),
++        DECLARE_NAPI_STATIC_FUNCTION("unsubscribeThermalLevel", UnSubscribeThermalLevelLegacy),
+         DECLARE_NAPI_STATIC_FUNCTION("getThermalLevel", GetThermalLevel),
+         // New Interface
+         DECLARE_NAPI_STATIC_FUNCTION("registerThermalLevelCallback", SubscribeThermalLevel),
+@@ -212,6 +292,11 @@
+ 
+ napi_value ThermalManagerNapi::SubscribeThermalLevel(napi_env env, napi_callback_info info)
+ {
++    return SubscribeThermalLevelImpl(env, info, false);
++}
++
++napi_value ThermalManagerNapi::SubscribeThermalLevelImpl(napi_env env, napi_callback_info info, bool legacy)
++{
+ #ifdef THERMAL_API_METRICS_ENABLE
+     HISTOGRAM_BOOLEAN("BasicServicesKit.ThermalManager.subscribeThermalLevel.Boolean", HISTOGRAM_API_CALL_COUNT);
+ #endif
+@@ -227,15 +312,23 @@
+     napi_value result;
+     napi_get_undefined(env, &result);
+ 
+-    THERMAL_RETURN_IF_WITH_RET(g_thermalLevelCallback == nullptr, result);
+-    g_thermalLevelCallback->ReleaseCallback();
+-    g_thermalLevelCallback->UpdateCallback(env, argv[ARG_0]);
+-    g_thermalMgrClient.SubscribeThermalLevelCallback(g_thermalLevelCallback, false);
++    if (g_thermalLevelCallback == nullptr || !g_thermalLevelCallback->UpdateCallback(env, argv[ARG_0], legacy)) {
++        return error.ThrowError(env, ThermalErrors::ERR_CONNECTION_FAIL);
++    }
++    if (!g_thermalMgrClient.SubscribeThermalLevelCallback(g_thermalLevelCallback, false)) {
++        g_thermalLevelCallback->ReleaseCallback();
++        return error.ThrowError(env, ThermalErrors::ERR_CONNECTION_FAIL);
++    }
+ 
+     return result;
+ }
+ 
+ napi_value ThermalManagerNapi::UnSubscribeThermalLevel(napi_env env, napi_callback_info info)
++{
++    return UnSubscribeThermalLevelImpl(env, info, false);
++}
++
++napi_value ThermalManagerNapi::UnSubscribeThermalLevelImpl(napi_env env, napi_callback_info info, bool legacy)
+ {
+ #ifdef THERMAL_API_METRICS_ENABLE
+     HISTOGRAM_BOOLEAN("BasicServicesKit.ThermalManager.unsubscribeThermalLevel.Boolean", HISTOGRAM_API_CALL_COUNT);
+@@ -244,30 +337,25 @@
+     napi_value argv[argc];
+     NapiUtils::GetCallbackInfo(env, info, argc, argv);
+ 
+-    THERMAL_RETURN_IF_WITH_RET(g_thermalLevelCallback == nullptr, nullptr);
+-    g_thermalLevelCallback->ReleaseCallback();
+-    g_thermalMgrClient.UnSubscribeThermalLevelCallback(g_thermalLevelCallback);
+-
+-    THERMAL_RETURN_IF_WITH_RET(argc == ARG_0, nullptr);
+     NapiErrors error;
+-    if (argc > MAX_ARGC || !NapiUtils::CheckValueType(env, argv[ARG_0], napi_function)) {
++    if (argc > MAX_ARGC || (argc != ARG_0 && !NapiUtils::CheckValueType(env, argv[ARG_0], napi_function))) {
+         return error.ThrowError(env, ThermalErrors::ERR_PARAM_INVALID);
+     }
+-
+-    napi_value handler = nullptr;
+-    napi_ref handlerRef = nullptr;
+-    napi_create_reference(env, argv[ARG_0], 1, &handlerRef);
+-    napi_get_reference_value(env, handlerRef, &handler);
+-    napi_delete_reference(env, handlerRef);
+-
+     napi_value result = nullptr;
+-    if (handler == nullptr) {
+-        THERMAL_HILOGW(COMP_FWK, "Handler should not be nullptr");
++    napi_get_undefined(env, &result);
++    if (g_thermalLevelCallback != nullptr && g_thermalLevelCallback->HasCallback()) {
++        if (!g_thermalMgrClient.UnSubscribeThermalLevelCallback(g_thermalLevelCallback)) {
++            return error.ThrowError(env, ThermalErrors::ERR_CONNECTION_FAIL);
++        }
++        g_thermalLevelCallback->ReleaseCallback();
++    }
++    THERMAL_RETURN_IF_WITH_RET(argc == ARG_0, result);
++    napi_value argument = nullptr;
++    if (legacy && napi_get_undefined(env, &argument) != napi_ok) {
+         return result;
+     }
+-
+-    napi_get_undefined(env, &result);
+-    napi_status status = napi_call_function(env, nullptr, handler, ARG_0, nullptr, &result);
++    napi_status status = napi_call_function(env, nullptr, argv[ARG_0], legacy ? 1 : 0,
++        legacy ? &argument : nullptr, &result);
+     if (status != napi_ok) {
+         THERMAL_HILOGW(COMP_FWK, "status=%{public}d", status);
+         return result;

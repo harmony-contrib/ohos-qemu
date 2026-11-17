@@ -1,0 +1,75 @@
+# Copyright (c) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+if (defined(ohos_lite)) {
+  import("//build/lite/config/component/lite_component.gni")
+} else {
+  import("//build/ohos.gni")
+}
+
+config("libqrcodegen_config") {
+  include_dirs = [ "./interfaces/kits" ]
+}
+
+qrcodegen_sources = [
+  "frameworks/qrcode_generator.cpp",
+  "frameworks/qrcode_item.cpp",
+  "frameworks/qrcode_mask.cpp",
+  "frameworks/qrcode_string.cpp",
+  "frameworks/qrcode_stream.cpp",
+  "frameworks/qrcode_version.cpp",
+  "frameworks/qrcode_rscode.cpp",
+]
+
+if (defined(ohos_lite)) {
+  lite_library("qrcodegen") {
+    if (ohos_kernel_type == "liteos_m") {
+      target_type = "static_library"
+      external_deps = [ "bounds_checking_function:libsec_static" ]
+    } else {
+      target_type = "shared_library"
+      external_deps = [ "bounds_checking_function:libsec_shared" ]
+    }
+
+    sources = qrcodegen_sources
+    include_dirs = [ "./interfaces/innerkits" ]
+
+    if (defined(board_toolchain_type) && board_toolchain_type == "iccarm") {
+      cflags = [
+        "--diag_suppress",
+        "Pe366",
+      ]
+    } else {
+      cflags = [ "-Wall" ]
+    }
+    public_configs = [ ":libqrcodegen_config" ]
+  }
+} else {
+  ohos_static_library("qrcodegen") {
+    sources = qrcodegen_sources
+    include_dirs = [ "./interfaces/innerkits" ]
+    cflags = [
+      "-Wall",
+      "-fexceptions",
+    ]
+    cflags_cc = cflags
+    public_configs = [ ":libqrcodegen_config" ]
+    part_name = "qrcode_generator"
+    subsystem_name = "commonlibrary"
+    if (is_arkui_x) {
+      deps = [ "//third_party/bounds_checking_function:libsec_static" ]
+    } else {
+      external_deps = [ "bounds_checking_function:libsec_shared" ]
+    }
+  }
+}

@@ -1,0 +1,30 @@
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/IntelligentScene/AppAndMetaServices/AppAndMetaServicesComponent.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/IntelligentScene/AppAndMetaServices/AppAndMetaServicesComponent.ets
+@@ -183,6 +183,7 @@
+   @Builder
+   searchBarView(): void {
+     Search({ value: $$this.changeValue, placeholder: $r('app.string.setting_search'), controller: this.controller })
++      .id('intelligent-scene-app-search')
+       .margin({
+         top: $r('sys.float.padding_level4'),
+         bottom: $r('sys.float.padding_level5')
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/IntelligentScene/view/AppListItemComponent.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/IntelligentScene/view/AppListItemComponent.ets
+@@ -129,6 +129,7 @@
+       .constraintSize({
+         minHeight: '64vp'
+       })
++      .id('intelligent-scene-app-' + (this.item?.name ?? ''))
+       .onClick(() => {
+         if (this.item) {
+           this.item.isSelected = !this.item.isSelected;
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/IntelligentScene/view/SheetTittleComponent.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/IntelligentScene/view/SheetTittleComponent.ets
+@@ -73,6 +73,7 @@
+           .fillColor($r('sys.color.icon_primary'))
+           .draggable(false)
+       }
++      .id('intelligent-scene-select-cancel')
+       .accessibilityText($r('app.string.dialog_disable'))
+       .width(40)
+       .height(40)

@@ -1,0 +1,21 @@
+{
+  "schema": "settings579-dnd-source-vector/v1",
+  "scope": "source-only, NOT new-package or runtime acceptance",
+  "projects": {
+    "applications/standard/settings": "0aba461c750fda71977c2f5186ca0e756ecfc6ca"
+  },
+  "files": {
+    "applications/standard/settings/product/phone/src/main/ets/Setting/IntelligentScene/AppAndMetaServices/AppAndMetaServicesComponent.ets": [
+      "5ccf97bf432b5006371705869fa5b6df4d02a39c4418843b107bce3e02d4ccea",
+      "08d471955bb6d9f20b59d6d427a1ea12217556c7410b39eb74ddd1415fad3e2b"
+    ],
+    "applications/standard/settings/product/phone/src/main/ets/Setting/IntelligentScene/view/AppListItemComponent.ets": [
+      "9fbefb0e30d2b43e9ee0869fb82e17d0af0ad404cd576b27f632710878a00bae",
+      "00d6c213b3925f5f09b97e2c62e33d21e832c6e4239befb1df0852a637414f54"
+    ],
+    "applications/standard/settings/product/phone/src/main/ets/Setting/IntelligentScene/view/SheetTittleComponent.ets": [
+      "23d73c7051d23730a0578dfe74eda789feb88c17754475ce133091e91adeaf8e",
+      "b49c525d90c7620c2e5f523e688991154f94854258d9ce233a684294751f971f"
+    ]
+  }
+}

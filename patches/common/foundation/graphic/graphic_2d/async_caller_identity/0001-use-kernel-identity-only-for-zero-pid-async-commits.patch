@@ -1,0 +1,27 @@
+diff --git a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
+@@ -15,6 +15,7 @@
+ 
+ #include "rs_client_to_render_connection_stub.h"
+ #include <memory>
++#include "ipc_skeleton.h"
+ #include "ivsync_connection.h"
+ #ifdef RES_SCHED_ENABLE
+ #include "res_sched_client.h"
+@@ -304,6 +305,15 @@
+     uint32_t parcelNumber = RS_PROFILER_ON_REMOTE_REQUEST(this, code, data, reply, option);
+     AshmemFdContainer::SetIsUnmarshalThread(false);
+     pid_t callingPid = GetCallingPid();
++    if (code == static_cast<uint32_t>(RSIClientToRenderConnectionInterfaceCode::COMMIT_TRANSACTION) &&
++        callingPid == 0 && (option.GetFlags() & MessageOption::TF_ASYNC) != 0) {
++        // Linux keeps the asynchronous wire PID zero. Only the kernel sender
++        // info may supply the real identity; never trust a Parcel/command PID.
++        callingPid = IPCSkeleton::GetCallingRealPid();
++        if (callingPid <= 0) {
++            return ERR_INVALID_STATE;
++        }
++    }
+     RSMarshallingHelper::SetCallingPid(callingPid);
+     auto tid = gettid();
+     {

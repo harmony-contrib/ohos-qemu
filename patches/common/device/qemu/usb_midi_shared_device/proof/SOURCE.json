@@ -1,0 +1,10 @@
+{
+  "schema": "normal-readonly-source579-output/v1",
+  "facts": {
+    "path": "/evidence/actual-usb-midi26/FACTS579.json",
+    "sha256": "77ec46296a544bc873d00303ae06454f536f42b8a52eed30a6b90a1fba0f6616",
+    "bytes": 13950
+  },
+  "source_only": true,
+  "runtime_pass": false
+}

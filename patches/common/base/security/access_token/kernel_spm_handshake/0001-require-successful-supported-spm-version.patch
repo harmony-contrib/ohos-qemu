@@ -1,0 +1,22 @@
+diff --git a/base/security/access_token/services/accesstokenmanager/main/cpp/src/kernel/permission_kernel_utils.cpp b/base/security/access_token/services/accesstokenmanager/main/cpp/src/kernel/permission_kernel_utils.cpp
+--- a/base/security/access_token/services/accesstokenmanager/main/cpp/src/kernel/permission_kernel_utils.cpp
++++ b/base/security/access_token/services/accesstokenmanager/main/cpp/src/kernel/permission_kernel_utils.cpp
+@@ -97,11 +97,15 @@ bool PermissionKernelUtils::IsKernelSupportSpm()
+ 
+     uint32_t version = 0;
+     int ret = SpmGetVersion(&version);
++    // Only protocol v1 is implemented by this userspace. An unavailable
++    // device, failed ioctl, or unknown version must use the legacy bitmap
++    // path, not silently select SPM after an arbitrary kernel error.
++    const bool supported = (ret == 0 && version == 1);
+ #ifndef ATM_TEST_ENABLE
+-    isSupportSpm.store(ret != ENOTSUP, std::memory_order_release);
++    isSupportSpm.store(supported, std::memory_order_release);
+     hasChecked.store(true, std::memory_order_release);
+ #endif
+     LOGI(ATM_DOMAIN, ATM_TAG,
+-        "Spm is %{public}s", ret != ENOTSUP ? "supported" : "not supported");
+-    return ret != ENOTSUP;
++        "Spm is %{public}s", supported ? "supported" : "not supported");
++    return supported;
+ }

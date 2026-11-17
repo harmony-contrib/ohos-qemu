@@ -1,0 +1,20 @@
+diff --git a/foundation/communication/netmanager_ext/interfaces/innerkits/netvpnclient/include/networkvpn_client.h b/foundation/communication/netmanager_ext/interfaces/innerkits/netvpnclient/include/networkvpn_client.h
+--- a/foundation/communication/netmanager_ext/interfaces/innerkits/netvpnclient/include/networkvpn_client.h
++++ b/foundation/communication/netmanager_ext/interfaces/innerkits/netvpnclient/include/networkvpn_client.h
+@@ -42,11 +42,11 @@
+ };
+-
++
+ class VpnSetUpEventCallback : public VpnEventCallbackStub {
+ public:
+-    int32_t OnVpnStateChanged(bool isConnected, const sptr<VpnState> &vpnState) override{ return ERR_OK; };
+-    int32_t OnMultiVpnStateChanged(bool isConnected, const std::string &bundleName,
+-        const std::string &vpnId) override{ return ERR_OK; };
++    int32_t OnVpnStateChanged(bool, const sptr<VpnState> &) override{ return ERR_OK; };
++    int32_t OnMultiVpnStateChanged(bool, const std::string &,
++        const std::string &) override{ return ERR_OK; };
+     int32_t OnVpnMultiUserSetUp() override;
+ };
+-
++
+ class VpnEventCallbackCollection final : public VpnEventCallbackStub {

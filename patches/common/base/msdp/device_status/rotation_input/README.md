@@ -1,0 +1,5 @@
+# Fresh public rotation requests
+
+Fixed actual MSDP96335211bea5ca348325d55746e14e102208354f one-file source transaction. The public mathematical implementation already exists; this component preserves its ZXY axes/radians calculation and system-identity boundary. It serializes one-shot requests, rejects pre-request samples by actual CLOCK_MONOTONIC timestamp, waits with a predicate for at most1000ms, checks SensorManager start/stop results and releases the cache mutex before stopping/draining the listener. A missing sample stays a real failure and cannot reuse cached posture.
+
+`manifest.json` binds the complete actual before/after source. The normal build hook calls apply.py; exact final is idempotent and unknown source refuses without mutation. No data source, model, test or runtime result is installed by this component. Independent ROTATION_VECTOR input and all public boundary/restart/quiet/raw assertions are in the separate MSDP fixture and external sensor component. Actual new-image verification is still required.

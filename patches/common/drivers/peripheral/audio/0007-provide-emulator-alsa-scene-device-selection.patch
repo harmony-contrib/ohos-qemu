@@ -1,0 +1,30 @@
+diff --git a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c
+--- a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c
++++ b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c
+@@ -218,4 +218,10 @@ int32_t CaptureOverrideFunc(struct AlsaCapture *captureIns)
+     }
+     
+     return HDF_SUCCESS;
+-}
+\ No newline at end of file
++}
++
++int32_t CaptureGetSceneDev(enum AudioCategory scene)
++{
++    (void)scene;
++    return -1;
++}
+diff --git a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_render.c b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_render.c
+--- a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_render.c
++++ b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_render.c
+@@ -243,4 +243,10 @@ int32_t RenderOverrideFunc(struct AlsaRender *renderIns)
+     }
+ 
+     return HDF_SUCCESS;
+ }
++
++int32_t RenderGetSceneDev(enum AudioCategory scene)
++{
++    (void)scene;
++    return -1;
++}

@@ -1,0 +1,64 @@
+--- a/third_party/sonic/sonic.c
++++ b/third_party/sonic/sonic.c
+@@ -424,7 +424,7 @@
+   }
+   buffer = stream->inputBuffer + stream->numInputSamples * stream->numChannels;
+   while (count--) {
+-    *buffer++ = (*samples++ - 128) << 8;
++    *buffer++ = (*samples++ - 128) * 256;
+   }
+   stream->numInputSamples += numSamples;
+   return 1;
+@@ -880,45 +880,35 @@
+   int leftVal = sincTable[left];
+   int rightVal = sincTable[right];
+ 
+-  return ((leftVal * (width - position) + rightVal * position) << 1) / width;
+-}
+-
+-/* Return 1 if value >= 0, else -1.  This represents the sign of value. */
+-static int getSign(int value) { return value >= 0 ? 1 : -1; }
++  return (int)((((long long)leftVal * (width - position) + (long long)rightVal * position) * 2) / width);
++}
+ 
+ /* Interpolate the new output sample. */
+ static short interpolate(sonicStream stream, short* in, int oldSampleRate,
+                          int newSampleRate) {
+   /* Compute N-point sinc FIR-filter here.  Clip rather than overflow. */
+   int i;
+-  int total = 0;
++  long long total = 0;
+   int position = stream->newRatePosition * oldSampleRate;
+   int leftPosition = stream->oldRatePosition * newSampleRate;
+   int rightPosition = (stream->oldRatePosition + 1) * newSampleRate;
+   int ratio = rightPosition - position - 1;
+   int width = rightPosition - leftPosition;
+   int weight, value;
+-  int oldSign;
+-  int overflowCount = 0;
+ 
+   for (i = 0; i < SINC_FILTER_POINTS; i++) {
+     weight = findSincCoefficient(i, ratio, width);
+     /* printf("%u %f\n", i, weight); */
+     value = in[i * stream->numChannels] * weight;
+-    oldSign = getSign(total);
+-    total += value;
+-    if (oldSign != getSign(total) && getSign(value) == oldSign) {
+-      /* We must have overflowed.  This can happen with a sinc filter. */
+-      overflowCount += oldSign;
+-    }
++    total += (long long)value;
+   }
+   /* It is better to clip than to wrap if there was a overflow. */
+-  if (overflowCount > 0) {
++  if (total > INT_MAX) {
+     return SHRT_MAX;
+-  } else if (overflowCount < 0) {
++  } else if (total < INT_MIN) {
+     return SHRT_MIN;
+   }
+-  return total >> 16;
++  return (short)(total >= 0 ? total / 65536 : -((-total + 65535) / 65536));
+ }
+ 
+ /* Change the rate.  Interpolate with a sinc FIR filter using a Hann window. */

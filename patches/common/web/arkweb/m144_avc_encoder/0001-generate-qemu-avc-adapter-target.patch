@@ -1,0 +1,15 @@
+diff --git a/src/third_party/openh264/BUILD.gn b/src/third_party/openh264/BUILD.gn
+--- a/src/third_party/openh264/BUILD.gn
++++ b/src/third_party/openh264/BUILD.gn
+@@ -223,3 +223,11 @@
+     ":processing",
+   ]
+ }
++
++# A separate C ABI library for the fixed OHOS AVCodec software wrapper.
++# It is not a default Chromium build dependency or a mock encoder.
++if (target_os == "ohos") {
++  group("qemu_avc_backend") {
++    deps = [ "//ohos/qemu_avc:avcenc_ohos" ]
++  }
++}

@@ -1,0 +1,79 @@
+diff --git a/drivers/peripheral/camera/vdi_base/usb_camera/camera_config/BUILD.gn b/drivers/peripheral/camera/vdi_base/usb_camera/camera_config/BUILD.gn
+--- a/drivers/peripheral/camera/vdi_base/usb_camera/camera_config/BUILD.gn
++++ b/drivers/peripheral/camera/vdi_base/usb_camera/camera_config/BUILD.gn
+@@ -29,42 +29,1 @@
+-action("copy_source") {
+-  script = "/usr/bin/env"
+-  outputs = [ "$target_out_dir/tmp.c" ]  # no use, just for gn complains
+-  args = [
+-    "cp",
+-    "-f",
+-  ]
+-  args += rebase_path(get_target_outputs(":generate_source"))
+-  args += [ rebase_path(
+-          "$camera_path_usb/pipeline_core/pipeline_impl/src/strategy/config/") ]
+-  deps = [ ":generate_source" ]
+-}
+-
+-ohos_prebuilt_etc("config.c") {
+-  deps = [ ":copy_source" ]
+-  source = "$camera_path_usb/pipeline_core/pipeline_impl/src/strategy/config/config.c"
+-  exec_script(
+-      "/usr/bin/env",
+-      [
+-        "touch",
+-        rebase_path(
+-            "$camera_path_usb/pipeline_core/pipeline_impl/src/strategy/config/config.c"),
+-      ])
+-  subsystem_name = "hdf"
+-  part_name = "drivers_peripheral_camera"
+-}
+-
+-ohos_prebuilt_etc("params.c") {
+-  deps = [ ":copy_source" ]
+-  source = "$camera_path_usb/pipeline_core/pipeline_impl/src/strategy/config/params.c"
+-  exec_script(
+-      "/usr/bin/env",
+-      [
+-        "touch",
+-        rebase_path(
+-            "$camera_path_usb/pipeline_core/pipeline_impl/src/strategy/config/params.c"),
+-      ])
+-  subsystem_name = "hdf"
+-  part_name = "drivers_peripheral_camera"
+-}
+-
+ hc_gen("build_ipp_algo_config") {
+@@ -127,5 +86,4 @@
+   public_deps = [
+-    ":config.c",
++    ":generate_source",
+     ":ipp_algo_config.hcb",
+-    ":params.c",
+     "$camera_path_usb/adapter/platform/v4l2/src/driver_adapter:usb_camera_v4l2_adapter",
+diff --git a/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/BUILD.gn b/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/BUILD.gn
+--- a/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/BUILD.gn
++++ b/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/BUILD.gn
+@@ -65,6 +65,9 @@
+ ohos_shared_library("usb_camera_pipeline_core") {
++  camera_config_gen_dir =
++      get_label_info("$camera_path_usb/camera_config:generate_source",
++                     "target_gen_dir")
+   sources = [
+     "$camera_path_usb/adapter/platform/v4l2/src/pipeline_core/nodes/uvc_node/uvc_node.cpp",
+-    "$camera_path_usb/pipeline_core/pipeline_impl/src/strategy/config/config.c",
+-    "$camera_path_usb/pipeline_core/pipeline_impl/src/strategy/config/params.c",
++    "$camera_config_gen_dir/config.c",
++    "$camera_config_gen_dir/params.c",
+     "$camera_path_usb/pipeline_core/src/mjpeg_decoder/mjpeg_decoder.cpp",
+@@ -106,2 +109,3 @@
+   include_dirs = [
++    camera_config_gen_dir,
+     "$camera_path_vdi/utils/exif",
+@@ -167,5 +171,4 @@
+     "$camera_path_usb/buffer_manager:usb_camera_buffer_manager",
+-    "$camera_path_usb/camera_config:config.c",
+-    "$camera_path_usb/camera_config:params.c",
++    "$camera_path_usb/camera_config:generate_source",
+     "$camera_path_usb/device_manager:usb_camera_device_manager",
+     "$camera_path_usb/metadata_manager:usb_camera_metadata_manager",

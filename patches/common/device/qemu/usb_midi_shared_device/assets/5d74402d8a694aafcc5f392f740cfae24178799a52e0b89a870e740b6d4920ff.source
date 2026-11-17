@@ -1,0 +1,150 @@
+{
+  "product_name": "x86_64_virt",
+  "device_company": "qemu",
+  "device_build_path": "device/qemu/x86_64_virt/linux_full",
+  "target_cpu": "x86_64",
+  "type": "standard",
+  "version": "3.0",
+  "board": "x86_64_virt",
+  "api_version": 8,
+  "enable_ramdisk": true,
+  "enable_absystem": false,
+  "ext_sanitizer_check_list_path": "vendor/ohemu/virt/security_config/sanitizer_check_list.gni",
+  "build_selinux": true,
+  "build_seccomp": false,
+  "inherit": [
+    "productdefine/common/inherit/rich.json",
+    "productdefine/common/inherit/chipset_common.json",
+    "vendor/ohemu/virt/virt_common_x86_64.json"
+  ],
+  "subsystems": [
+    {
+      "subsystem": "thirdparty",
+      "components": [
+        {
+          "component": "rust_libc",
+          "features": []
+        },
+        {
+          "component": "typescript",
+          "features": []
+        },
+        {
+          "component": "libusb",
+          "features": []
+        },
+        {
+          "component": "expat",
+          "features": []
+        },
+        {
+          "component": "alsa-utils",
+          "features": []
+        },
+        {
+          "component": "pcre2",
+          "features": []
+        },
+        {
+          "component": "vma",
+          "features": []
+        }
+      ]
+    },
+    {
+      "subsystem": "sdk",
+      "components": [
+        {
+          "component": "sdk",
+          "features": []
+        }
+      ]
+    },
+    {
+      "subsystem": "developtools",
+      "components": [
+        {
+          "component": "ace_ets2bundle",
+          "features": []
+        }
+      ]
+    },
+    {
+      "subsystem": "arkcompiler",
+      "components": [
+        {
+          "component": "ets_runtime",
+          "features": [
+            "ets_runtime_feature_enable_static_backtrace = false"
+          ]
+        },
+        {
+          "component": "runtime_core",
+          "features": [
+            "runtime_core_enable_codegen = false"
+          ]
+        },
+        {
+          "component": "jsvm",
+          "features": []
+        }
+      ]
+    },
+    {
+      "subsystem": "graphic",
+      "components": [
+        {
+          "component": "graphics_effect",
+          "features": []
+        },
+        {
+          "component": "graphic_utils_lite",
+          "features": []
+        }
+      ]
+    },
+    {
+      "subsystem": "hdf",
+      "components": [
+        {
+          "component": "drivers_tools",
+          "features": []
+        },
+        {
+          "component": "drivers_interface_bluetooth",
+          "features": []
+        },
+        {
+          "component": "drivers_devhost",
+          "features": []
+        },
+        {
+          "component": "drivers_peripheral_display",
+          "features": [
+            "drivers_peripheral_display_bootstrap_hotplug=true"
+          ]
+        }
+      ]
+    },
+    {
+      "subsystem": "tee",
+      "components": [
+        {
+          "component": "tee_client",
+          "features": []
+        }
+      ]
+    },
+    {
+      "subsystem": "security",
+      "components": [
+        {
+          "component": "selinux_adapter",
+          "features": [
+            "selinux_adapter_enforce=false"
+          ]
+        }
+      ]
+    }
+  ]
+}

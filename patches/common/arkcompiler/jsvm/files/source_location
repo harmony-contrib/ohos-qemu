@@ -1,0 +1,56 @@
+// C++20 source_location compatibility for the OpenHarmony 7.0 libc++ headers.
+//
+// ArkWeb M144 exposes std::source_location through v8-source-location.h, while
+// the API 26 OpenHarmony libc++ does not yet ship the public header. Clang 15
+// already implements __builtin_source_location and expects the layout below.
+#ifndef OHOS_JSVM_SOURCE_LOCATION_COMPAT_H
+#define OHOS_JSVM_SOURCE_LOCATION_COMPAT_H
+
+#include <cstdint>
+
+namespace std {
+class source_location {
+    struct __impl {
+        const char* _M_file_name;
+        const char* _M_function_name;
+        unsigned _M_line;
+        unsigned _M_column;
+    };
+
+    const __impl* __ptr_ = nullptr;
+    using __builtin_result = decltype(__builtin_source_location());
+
+public:
+    static consteval source_location current(
+        __builtin_result ptr = __builtin_source_location()) noexcept
+    {
+        source_location location;
+        location.__ptr_ = static_cast<const __impl*>(ptr);
+        return location;
+    }
+
+    constexpr source_location() noexcept = default;
+
+    constexpr uint_least32_t line() const noexcept
+    {
+        return __ptr_ != nullptr ? __ptr_->_M_line : 0;
+    }
+
+    constexpr uint_least32_t column() const noexcept
+    {
+        return __ptr_ != nullptr ? __ptr_->_M_column : 0;
+    }
+
+    constexpr const char* file_name() const noexcept
+    {
+        return __ptr_ != nullptr ? __ptr_->_M_file_name : "";
+    }
+
+    constexpr const char* function_name() const noexcept
+    {
+        return __ptr_ != nullptr ? __ptr_->_M_function_name : "";
+    }
+};
+} // namespace std
+
+#endif // OHOS_JSVM_SOURCE_LOCATION_COMPAT_H

@@ -1,0 +1,13 @@
+diff --git a/foundation/multimedia/media_library/services/media_facard/src/operation/medialibrary_facard_operations.cpp b/foundation/multimedia/media_library/services/media_facard/src/operation/medialibrary_facard_operations.cpp
+--- a/foundation/multimedia/media_library/services/media_facard/src/operation/medialibrary_facard_operations.cpp
++++ b/foundation/multimedia/media_library/services/media_facard/src/operation/medialibrary_facard_operations.cpp
+@@ -123,3 +123,3 @@
+             AAFwk::Want want;
+-            want.SetElementName("com.huawei.hmos.photos", "FACardServiceAbility");
++            want.SetElementName("com.ohos.photos", "FACardServiceAbility");
+             want.SetParam("assetChangeUris", assetChangeUris);
+@@ -154,3 +154,3 @@
+             AAFwk::Want want;
+-            want.SetElementName("com.huawei.hmos.photos", "FACardServiceAbility");
++            want.SetElementName("com.ohos.photos", "FACardServiceAbility");
+             want.SetParam("assetChangeUris", assetChangeUris);

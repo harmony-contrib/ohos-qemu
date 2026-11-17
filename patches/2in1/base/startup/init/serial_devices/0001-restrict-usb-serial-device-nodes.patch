@@ -1,0 +1,12 @@
+diff --git a/base/startup/init/ueventd/etc/ueventd.config b/base/startup/init/ueventd/etc/ueventd.config
+--- a/base/startup/init/ueventd/etc/ueventd.config
++++ b/base/startup/init/ueventd/etc/ueventd.config
+@@ -76,6 +76,6 @@
+ /dev/HDF* 0666 0 0
+ /dev/ttyS* 0666 0 0
+-/dev/ttyACM* 0666 0 0
+-/dev/ttyUSB* 0666 0 0
++/dev/ttyACM* 0660 serial serial
++/dev/ttyUSB* 0660 serial serial
+ /dev/video* 0660 camera_host camera_host
+ /dev/btdev* 0660 dsoftbus dsoftbus

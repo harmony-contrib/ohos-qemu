@@ -1,0 +1,139 @@
+--- a/base/msdp/device_status/device_status.gni
++++ b/base/msdp/device_status/device_status.gni
+@@ -25,6 +25,7 @@
+   device_status_hitrace_enable = false
+   device_status_udmf_enabled = false
+   device_status_sensor_enable = true
++  device_status_allow_mock_fallback = true
+   device_status_memmgr_enable = false
+   device_status_enable_universal_drag = false
+   device_status_enable_internal_drop_animation = false
+--- a/base/msdp/device_status/bundle.json
++++ b/base/msdp/device_status/bundle.json
+@@ -33,6 +33,7 @@
+       "device_status_drag_enable_animation",
+       "device_status_performance_check",
+       "device_status_sensor_enable",
++      "device_status_allow_mock_fallback",
+       "device_status_memmgr_enable",
+       "device_status_device_type",
+       "device_status_enable_universal_drag",
+--- a/base/msdp/device_status/services/BUILD.gn
++++ b/base/msdp/device_status/services/BUILD.gn
+@@ -157,6 +157,9 @@
+   }
+ 
+   defines = []
++  if (!device_status_allow_mock_fallback) {
++    defines += [ "DEVICE_STATUS_DISABLE_MOCK_FALLBACK" ]
++  }
+   external_deps = external_deps_set
+   if (device_status_sensor_enable) {
+     defines += [ "DEVICE_STATUS_SENSOR_ENABLE" ]
+@@ -227,6 +230,9 @@
+   }
+ 
+   defines = []
++  if (!device_status_allow_mock_fallback) {
++    defines += [ "DEVICE_STATUS_DISABLE_MOCK_FALLBACK" ]
++  }
+   external_deps = external_deps_set
+   if (device_status_sensor_enable) {
+     defines += [ "DEVICE_STATUS_SENSOR_ENABLE" ]
+--- a/base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp
++++ b/base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp
+@@ -64,10 +64,14 @@
+     #else
+     FI_HILOGE("Enable:sensor is not exist");
+     #endif // DEVICE_STATUS_SENSOR_ENABLE
++#ifndef DEVICE_STATUS_DISABLE_MOCK_FALLBACK
+     if (MockHandle(type) == RET_OK) {
+         FI_HILOGI("MockHandle is support");
+         return RET_OK;
+     }
++#else
++    FI_HILOGE("No real sensor backend supports this type; mock fallback is disabled");
++#endif
+     return RET_ERR;
+ }
+ 
+--- a/base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp
++++ b/base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp
+@@ -18,6 +18,7 @@
+ 
+ #include <cmath>
+ #include <cstdio>
++#include <cstring>
+ 
+ #include "devicestatus_define.h"
+ #include "include/util.h"
+@@ -30,6 +31,7 @@
+ namespace DeviceStatus {
+ namespace {
+ constexpr int32_t RATE_MILLISEC { 100100100 };
++constexpr size_t MAX_PENDING_ACCEL_SAMPLES { 256 };
+ } // namespace
+ 
+ SensorDataCallback::SensorDataCallback() {}
+@@ -120,15 +122,24 @@
+ {
+     CALL_DEBUG_ENTER;
+     CHKPF(data);
+-    AccelData* acclData = reinterpret_cast<AccelData*>(data);
+-    if ((abs(acclData->x) > ACC_VALID_THRHD) ||
+-        (abs(acclData->y) > ACC_VALID_THRHD) ||
+-        (abs(acclData->z) > ACC_VALID_THRHD)) {
++    if (sensorTypeId != SENSOR_TYPE_ID_ACCELEROMETER) {
++        return false;
++    }
++    AccelData sample;
++    std::memcpy(&sample, data, sizeof(sample));
++    const AccelData* acclData = &sample;
++    if (!std::isfinite(acclData->x) || !std::isfinite(acclData->y) || !std::isfinite(acclData->z) ||
++        std::fabs(acclData->x) > ACC_VALID_THRHD || std::fabs(acclData->y) > ACC_VALID_THRHD ||
++        std::fabs(acclData->z) > ACC_VALID_THRHD) {
+         FI_HILOGE("Acc data is invalid");
+         return false;
+     }
+     {
+         std::lock_guard lock(dataMutex_);
++        if (accelDataList_.size() >= MAX_PENDING_ACCEL_SAMPLES) {
++            FI_HILOGE("Accelerometer input queue is full");
++            return false;
++        }
+         accelDataList_.emplace_back(*acclData);
+         FI_HILOGD("ACCEL pushData:x:%{public}f, y:%{public}f, z:%{public}f, PushData sensorTypeId:%{public}d",
+             acclData->x, acclData->y, acclData->z, sensorTypeId);
+@@ -160,6 +171,11 @@
+ {
+     CALL_DEBUG_ENTER;
+     CHKPV(event);
++    if (event->sensorTypeId != SENSOR_TYPE_ID_ACCELEROMETER || event->data == nullptr ||
++        event->dataLen != static_cast<decltype(event->dataLen)>(sizeof(AccelData))) {
++        FI_HILOGE("Invalid accelerometer event envelope");
++        return;
++    }
+     FI_HILOGI("SensorDataCallbackImpl sensorTypeId:%{public}d", event->sensorTypeId);
+     SENSOR_DATA_CB.PushData(event->sensorTypeId, event->data);
+ }
+@@ -176,11 +192,20 @@
+     ret = SetBatch(sensorTypeId, &user_, RATE_MILLISEC, RATE_MILLISEC);
+     if (ret != 0) {
+         FI_HILOGE("SetBatch failed");
++        if (UnsubscribeSensor(sensorTypeId, &user_) != 0) {
++            FI_HILOGE("Rollback UnsubscribeSensor failed");
++        }
+         return false;
+     }
+     ret = ActivateSensor(sensorTypeId, &user_);
+     if (ret != 0) {
+         FI_HILOGE("ActivateSensor failed");
++        if (DeactivateSensor(sensorTypeId, &user_) != 0) {
++            FI_HILOGE("Rollback DeactivateSensor failed");
++        }
++        if (UnsubscribeSensor(sensorTypeId, &user_) != 0) {
++            FI_HILOGE("Rollback UnsubscribeSensor failed");
++        }
+         return false;
+     }
+     return true;

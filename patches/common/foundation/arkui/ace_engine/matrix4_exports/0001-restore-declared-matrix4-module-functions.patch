@@ -1,0 +1,11 @@
+diff --git a/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsi/modules/jsi_matrix4_module.cpp b/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsi/modules/jsi_matrix4_module.cpp
+--- a/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsi/modules/jsi_matrix4_module.cpp
++++ b/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsi/modules/jsi_matrix4_module.cpp
+@@ -370,4 +370,7 @@ void InitMatrix4Module(const shared_ptr<JsRuntime>& runtime, shared_ptr<JsValue>& moduleObj)
+     moduleObj->SetProperty(runtime, MATRIX_4X4, ConvertToJSValue(runtime, Matrix4::CreateIdentity()));
+     moduleObj->SetProperty(runtime, MATRIX_INIT, runtime->NewFunction(Init));
+     moduleObj->SetProperty(runtime, MATRIX_IDENTITY, runtime->NewFunction(Identity));
++    // The API 26 dynamic declaration retains the legacy module-level helpers.
++    // Their implementations already exist on Matrix4Transit objects.
++    AddCommonMatrixProperties(runtime, moduleObj);
+ }

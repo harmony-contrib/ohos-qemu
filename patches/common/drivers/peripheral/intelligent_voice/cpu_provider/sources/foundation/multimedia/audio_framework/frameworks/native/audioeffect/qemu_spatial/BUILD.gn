@@ -1,0 +1,45 @@
+# Fixed normal product AudioEffect + OpenAL loopback HRTF, no host example.
+import("//build/ohos.gni")
+import("//build/config/clang/clang.gni")
+import("//build/config/sysroot.gni")
+import("../../../../sensor.gni")
+_spatial_build = "$target_gen_dir/openal"
+_cmake = "//prebuilts/cmake/linux-x86/bin/cmake"
+_ninja = "//prebuilts/build-tools/linux-x86/bin/ninja"
+action("qemu_openal_hrtf") {
+  script = "/usr/bin/python3"
+  inputs = [ "build_openal.py", _cmake, _ninja, "OPENAL-INPUTS.json", "openal-soft/CMakeLists.txt", "openal-soft/hrtf/Default HRTF.mhr" ]
+  outputs = [ "$_spatial_build/libopenal.a", "$_spatial_build/BUILD.json" ]
+  args = [ rebase_path("build_openal.py"), "--source", rebase_path("openal-soft"), "--build", rebase_path(_spatial_build),
+           "--clang", rebase_path("$clang_base_path/bin/clang"), "--sysroot", rebase_path(sysroot),
+           "--cpu", current_cpu, "--cmake", rebase_path(_cmake), "--ninja", rebase_path(_ninja) ]
+}
+ohos_shared_library("audio_qemu_spatial") {
+  sources = [ "qemu_spatial_effect.cpp" ]
+  include_dirs = [ "openal-soft/include", "../../../../interfaces/inner_api/native/audiocommon/include" ]
+  deps = [ ":qemu_openal_hrtf", ":qemu_spatial_notices" ]
+  libs = [ rebase_path("$_spatial_build/libopenal.a"), "dl", "m", "pthread" ]
+  defines = [ "AL_LIBTYPE_STATIC", "AL_ALEXT_PROTOTYPES" ]
+  external_deps = [ "c_utils:utils", "ipc:ipc_single" ]
+  if (sensor_enable) {
+    defines += [ "SENSOR_ENABLE" ]
+    external_deps += [ "sensor:sensor_interface_native" ]
+  }
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+  cflags = [ "-Wall", "-Wextra", "-Werror", "-fvisibility=hidden" ]
+  install_enable = true
+  subsystem_name = "multimedia"
+  part_name = "audio_framework"
+}
+
+ohos_prebuilt_etc("qemu_spatial_notices") {
+  source = "OPENAL-NOTICES.txt"
+  output = "OPENAL-NOTICES.txt"
+  module_install_dir = "etc/audio/qemu_spatial"
+  part_name = "audio_framework"
+  subsystem_name = "multimedia"
+}

@@ -1,0 +1,18 @@
+{
+  "component": "audio-vivid-integrity",
+  "projects": {
+    "foundation/multimedia/av_codec": "e5c525670d1f6622d441c9e5bf975ea0579ea177"
+  },
+  "files": {
+    "foundation/multimedia/av_codec/services/media_engine/modules/sink/audio_sink.cpp": {
+      "before": "aff7c42c7c3f388fb8bfd03787e60a9b7a90b02046ee0977ded4d688c72cfa46",
+      "after": "3bb47db1ee09e9eee25aa03b79c4e94890a125b7ecc002199da4ef10404f3f4e",
+      "payload": "audio_sink.cpp"
+    }
+  },
+  "source_export": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r60-Vivid-source-vector-375-01/result.json",
+    "sha256": "eea0b86fb0cd8d5c157367a90df27ab89b201a1caf2c717a1b88034f37062fb4"
+  },
+  "scope": "bounded metadata/data integrity only; no AudioVivid plugin implementation or runtime acceptance"
+}

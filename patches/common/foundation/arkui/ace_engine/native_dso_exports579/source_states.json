@@ -1,0 +1,24 @@
+{
+  "schema": "guarded-product-source-vector579/v1",
+  "component": "native_dso_exports579",
+  "projects": {
+    "foundation/arkui/ace_engine": "e55e178228b9f6388b15d3024e8caf125fa293d7"
+  },
+  "files": {
+    "foundation/arkui/ace_engine/build/libace.map": [
+      "51f2d090041e111edc17ff3aa87963b8024ceb3d67b1e860d0773aa3d115d566",
+      "c8b5d562a10f84d82c28450ed4c29b2f5bd1b16081306cfbb79d6066e07a0d95"
+    ]
+  },
+  "managed_count": 1,
+  "actual_source_binding": {
+    "path": "actual_source_binding.json",
+    "sha256": "70c78956039662bd0a6bac53b718ffd458133893f8fb49577053d9624447e5af",
+    "bytes": 14099
+  },
+  "patch": "0001-product-source.patch",
+  "patch_sha256": "65bd7f432dec587a40760d4119d0a3c2fc4d869584ec0ffbaec0b755177cae1c",
+  "source_only": true,
+  "runtime_pass": false,
+  "first_artifact_behavior_gate_passed": false
+}

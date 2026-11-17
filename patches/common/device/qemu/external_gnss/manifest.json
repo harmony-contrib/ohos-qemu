@@ -1,0 +1,59 @@
+{
+  "project": "drivers/peripheral",
+  "revision": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+  "originals": {
+    "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp": {
+      "before": "6221743ea6d708bb4bffa7a50d383486c60f8083335935094348af7583f237b8",
+      "after": "a4fad337702457a3b1a744b2907d6e271798ccfb5639776ff81bcdcfa77234f4"
+    },
+    "drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.cpp": {
+      "before": "496452bb22b609bcd2e078d4fc32afd57f3c609eb08c68537e92da4fcb1eb031",
+      "after": "6d94a8ac1c8a28f1475467975e1bd058fbab1a22e2cff22d062795c6bc83c75b"
+    },
+    "drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.h": {
+      "before": "001eef3dddc760a25dd0386e55cafdfb8aad8da27c41d3d6bba18e68a52c42f8",
+      "after": "ef47e8ba4634d171418d85efddb8ec87c82e919cca678f3275454241d01488a1"
+    }
+  },
+  "files": {
+    "device/qemu/common/virt_full/external_gnss/BUILD.gn": {
+      "component_file": "files/BUILD.gn",
+      "sha256": "a33e9ad3ab6652be5e57eb1b310f31652f1b1491b1221dad79d6684a68ad4f16"
+    },
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.cpp": {
+      "component_file": "files/qemu_gnss_input.cpp",
+      "sha256": "a6e79eaf1ec95c2596cb7f15bc6398f467f40731a26b861d6f325b831ae33c29"
+    },
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.h": {
+      "component_file": "files/qemu_gnss_input.h",
+      "sha256": "f879d0083750680101cf43428a6181eeee3268bb070ba14a7df12f8cda51bae6"
+    },
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_protocol.h": {
+      "component_file": "files/qemu_gnss_protocol.h",
+      "sha256": "5fbc7507ec36c65cc008c71aece211a1d8b9a32417d7bd727ed67e0cb0f5aba2"
+    },
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_vendor.cpp": {
+      "component_file": "files/qemu_gnss_vendor.cpp",
+      "sha256": "af3d2bd6774032fd63b045471560d78485ebaf106cd781abbea65c6e59eabcfc"
+    }
+  },
+  "patch_sha256": "931097628212553a66c95f5ce63901cce15f7035638f4d0ed242d081a618fcf4",
+  "abi_header_sha256": "f0df806ff59b5cad6a793a25191b36f546e77c72afb638681fbe1261e39035b5",
+  "projects": {
+    "drivers/peripheral": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+    "device/qemu": "b017aee8e2dfc97e45aeb508facc1527c3d06f4b"
+  },
+  "dependencies": {
+    "drivers/peripheral/location/gnss/hdi_service/location_vendor_lib.h": "f0df806ff59b5cad6a793a25191b36f546e77c72afb638681fbe1261e39035b5"
+  },
+  "installed_predecessor": {
+    "device/qemu/common/virt_full/external_gnss/BUILD.gn": "436e42030c3e582156b8f9e11a265b4e153890c2c72a4f5d7ed2907245175330"
+  },
+  "installed_qgn1": {
+    "device/qemu/common/virt_full/external_gnss/BUILD.gn": "a33e9ad3ab6652be5e57eb1b310f31652f1b1491b1221dad79d6684a68ad4f16",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.cpp": "2435f10d6243974508ffec8188fa9794d67dc96068a09cac612e71cb3bb88c94",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_input.h": "f879d0083750680101cf43428a6181eeee3268bb070ba14a7df12f8cda51bae6",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_protocol.h": "c8a2bffd726a3cc9f6b1f53637ec0bf5b3832277988e1afbd99f51286b8909cc",
+    "device/qemu/common/virt_full/external_gnss/qemu_gnss_vendor.cpp": "d2e65a9e9032a251a04bfef72d69bf8837ccfb4bfc23402af92eb95d77660b02"
+  }
+}

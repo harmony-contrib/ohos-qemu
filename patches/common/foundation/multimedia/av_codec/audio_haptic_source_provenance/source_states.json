@@ -1,0 +1,69 @@
+{
+  "schema": "audio-haptic-source-provenance-source/v1",
+  "project": "foundation/multimedia/av_codec",
+  "revision": "e5c525670d1f6622d441c9e5bf975ea0579ea177",
+  "files": [
+    {
+      "relative": "services/media_engine/plugins/sink/audio_server_sink_plugin.cpp",
+      "original_sha256": "24bc39c901437a47b178e022a055322e0bf055dcbf5074c044ba155e6213b276",
+      "final_sha256": "3e4d125773c8dfacf36360231d7b414dd78bf56aa8d0e8c6fe9f52a250d3bbcc"
+    },
+    {
+      "relative": "services/media_engine/plugins/sink/audio_server_sink_plugin.h",
+      "original_sha256": "c256981b4dc8012e5eac1327ee5d572f834e43ec476c62101ee3657bcf0f4abc",
+      "final_sha256": "cfabb2c11d1e9e6021aff8cd0ebc9f14c0586f380289c2d0d82bb6438221b647"
+    },
+    {
+      "relative": "services/media_engine/plugins/sink/qemu_audio_provenance505.h",
+      "original_sha256": null,
+      "final_sha256": "e6a9cfbf52d5cbe868d1b0ee1e663f282f9f68b1442b06087bf1976fa783ef73"
+    },
+    {
+      "relative": "services/media_engine/filters/audio_sink_filter.cpp",
+      "original_sha256": "0e5d427cc26152d092b486e45921f302a45f2e5e9cac1ac218dcd905918390ea",
+      "final_sha256": "0fd322964b9235d964ba77a80918e3680d7dc07e40e05ed54807e5b83ca7e0e2"
+    },
+    {
+      "relative": "services/media_engine/modules/sink/audio_sink.cpp",
+      "original_sha256": "3bb47db1ee09e9eee25aa03b79c4e94890a125b7ecc002199da4ef10404f3f4e",
+      "final_sha256": "d211fafe5ef895f8642b02ba87d66bcf57daa2548feea8624726288bae681ef0"
+    }
+  ],
+  "prerequisites": [
+    {
+      "relative": "foundation/multimedia/audio_framework/interfaces/inner_api/native/audiorenderer/include/audio_renderer.h",
+      "sha256": "0e655c03ceb2ad7725982496253bc70ce713392c7492c350659e35f586bdb29f",
+      "bytes": 48254
+    },
+    {
+      "relative": "foundation/multimedia/player_framework/services/services/player/server/player_server.cpp",
+      "sha256": "85bcefcb7f0c1e5722ccd355c31c59a98a642f790bd7d29ef13c54164d7a842f",
+      "bytes": 121554
+    },
+    {
+      "relative": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_player_impl.cpp",
+      "sha256": "b654c792352a010f5526f707b94e7a8de7c52027c5011ed2847caa12dae890e1",
+      "bytes": 41062
+    },
+    {
+      "relative": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_player_impl.h",
+      "sha256": "69b9ab3c4a3a49bfdb2f754efcadc86e79591a5ac30fc169f82c9af4acad91c3",
+      "bytes": 7056
+    },
+    {
+      "relative": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_playback_session.h",
+      "sha256": "d3b63a658f58b2091154b5006b6657fb3866c064cc2291ae3f619e3f5995a30c",
+      "bytes": 1925
+    },
+    {
+      "relative": "foundation/multimedia/player_framework/frameworks/native/audio_haptic/audio_haptic_publication_callback.h",
+      "sha256": "1716816d6db703f582367bfbd478090938f50743e44d48074d7da57586cc5d6c",
+      "bytes": 1575
+    }
+  ],
+  "patch": "0001-source-provenance.patch",
+  "patch_sha256": "15ea6bd0f940e138d3bdab40e64d545a84840fa59928e3a2a81d6bbe23488b7d",
+  "accepted": false,
+  "onset_proven": false,
+  "first_artifact_behavior_gate_passed": false
+}

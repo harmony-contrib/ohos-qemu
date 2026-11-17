@@ -1,0 +1,24 @@
+diff --git a/tools/cem/src/common_event_command.cpp b/tools/cem/src/common_event_command.cpp
+index a8325ec..a70c956 100644
+--- a/tools/cem/src/common_event_command.cpp
++++ b/tools/cem/src/common_event_command.cpp
+@@ -80,6 +80,9 @@ ErrCode CommonEventCommand::RunAsPublishCommand()
+     if (result == ERR_OK) {
+         Want want;
+         want.SetAction(cmdInfo.action);
++        if (cmdInfo.userId != UNDEFINED_USER) {
++            want.SetParam("userId", cmdInfo.userId);
++        }
+         CommonEventData commonEventData;
+         commonEventData.SetWant(want);
+         commonEventData.SetCode(cmdInfo.code);
+@@ -86,8 +89,8 @@ ErrCode CommonEventCommand::RunAsPublishCommand()
+         publishInfo.SetSticky(cmdInfo.isSticky);
+         publishInfo.SetOrdered(cmdInfo.isOrdered);
+         // publish the common event
+         int32_t publishResult = CommonEvent::GetInstance()->PublishCommonEventAsUser(
+-            commonEventData, publishInfo, nullptr, cmdInfo.userId);
++            commonEventData, publishInfo, nullptr, UNDEFINED_USER);
+         if (publishResult == ERR_OK) {
+             resultReceiver_ = STRING_PUBLISH_COMMON_EVENT_OK;
+         } else {

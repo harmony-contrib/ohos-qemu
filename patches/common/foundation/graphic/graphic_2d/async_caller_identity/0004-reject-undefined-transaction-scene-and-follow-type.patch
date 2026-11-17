@@ -1,0 +1,23 @@
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/transaction/rs_transaction_data.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/transaction/rs_transaction_data.cpp
+@@ -387,7 +387,8 @@
+                 ROSEN_LOGE("RSTransactionData::UnmarshallingCommand cannot read nodeId");
+                 return false;
+             }
+-            if (!parcel.ReadUint8(followType)) {
++            if (!parcel.ReadUint8(followType) ||
++                followType > static_cast<uint8_t>(FollowType::FOLLOW_TO_SELF)) {
+                 ROSEN_LOGE("RSTransactionData::UnmarshallingCommand cannot read followType");
+                 return false;
+             }
+@@ -437,6 +438,10 @@
+         parcel.ReadUint64(index_) && parcel.ReadUint64(syncId_) && parcel.ReadInt32(parentPid_) &&
+         parcel.ReadBool(dvsyncTimeUpdate_) && parcel.ReadUint64(dvsyncTime_) &&
+         parcel.ReadUint8(scene);
++    if (!flag || (scene != static_cast<uint8_t>(RSTransactionDataScenes::Default) &&
++        scene != static_cast<uint8_t>(RSTransactionDataScenes::Rebuild))) {
++        return false;
++    }
+     scene_ = static_cast<RSTransactionDataScenes>(scene);
+ #ifndef ROSEN_CROSS_PLATFORM
+     flag = flag && parcel.ReadInt32(tid);

@@ -1,0 +1,10 @@
+diff --git a/vendor/ohemu/virt/image_conf/userdata_image_conf.txt b/vendor/ohemu/virt/image_conf/userdata_image_conf.txt
+--- a/vendor/ohemu/virt/image_conf/userdata_image_conf.txt
++++ b/vendor/ohemu/virt/image_conf/userdata_image_conf.txt
+@@ -1,5 +1,6 @@
+ /data
+ 2147483648
+ --fs_type=f2fs
+ --dac_config ../../build/ohos/images/mkimage/dac.txt
+ --file_context obj/base/security/selinux/file_contexts.bin
++--prjquota

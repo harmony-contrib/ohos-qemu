@@ -1,0 +1,15 @@
+diff --git a/base/telephony/call_manager/services/call/call_state_observer/src/call_records_manager.cpp b/base/telephony/call_manager/services/call/call_state_observer/src/call_records_manager.cpp
+--- a/base/telephony/call_manager/services/call/call_state_observer/src/call_records_manager.cpp
++++ b/base/telephony/call_manager/services/call/call_state_observer/src/call_records_manager.cpp
+@@ -166,10 +166,10 @@
+ #ifdef SUPPORT_RTT_CALL
+ void CallRecordsManager::RefreshRttFlag(sptr<CallBase> &callObjectPtr, CallAttributeInfo &info)
+ {
+     if (callObjectPtr->GetCallType() == CallType::TYPE_IMS) {
+         sptr<IMSCall> imsCall = reinterpret_cast<IMSCall *>(callObjectPtr.GetRefPtr());
+-        info.isPrevRtt = imsCall->GetIsPrevRtt();
++        info.isPrevRtt = imsCall->IsPrevRtt();
+     }
+ }
+ #endif
+ 

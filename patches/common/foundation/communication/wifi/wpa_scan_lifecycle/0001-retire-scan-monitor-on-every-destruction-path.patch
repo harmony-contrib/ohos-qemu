@@ -1,0 +1,71 @@
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_monitor.h b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_monitor.h
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_monitor.h
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_monitor.h
+@@ -80,4 +80,5 @@
+ private:
+     int m_instId;
++    bool mRegistered {false};
+ };
+ }  // namespace Wifi
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_monitor.cpp b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_monitor.cpp
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_monitor.cpp
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_monitor.cpp
+@@ -29,7 +29,12 @@
+ ScanMonitor::~ScanMonitor()
+-{}
++{
++    UnInitScanMonitor();
++}
+ 
+ bool ScanMonitor::InitScanMonitor()
+ {
+     WIFI_LOGI("Enter ScanMonitor::InitScanMonitor.");
++    if (mRegistered) {
++        return true;
++    }
+ 
+@@ -44,5 +44,6 @@
+     }
+ 
++    mRegistered = true;
+     return true;
+ }
+ 
+@@ -51,6 +51,11 @@
+     WIFI_LOGI("Enter ScanMonitor::UnInitScanMonitor.");
++    if (!mRegistered) {
++        return;
++    }
+     if (WifiSupplicantHalInterface::GetInstance().UnRegisterSupplicantEventCallback() != WIFI_HAL_OPT_OK) {
+         WIFI_LOGE("UnRegisterSupplicantEventCallback failed.");
++        return;
+     }
++    mRegistered = false;
+     return;
+ }
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_service.cpp b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_service.cpp
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_service.cpp
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_scan/scan_service.cpp
+@@ -69,7 +69,7 @@
+     WIFI_LOGI("Enter ~ScanService.\n");
+ 
+     if (pScanMonitor != nullptr) {
+-        pScanMonitor->SetScanStateMachine(nullptr);
++        // The monitor retires its callback before its state machine is destroyed.
+         delete pScanMonitor;
+         pScanMonitor = nullptr;
+     }
+@@ -114,11 +114,12 @@
+         return false;
+     }
+ 
++    // Publish only a fully initialized callback owner to the WPA event thread.
++    pScanMonitor->SetScanStateMachine(pScanStateMachine);
+     if (!pScanMonitor->InitScanMonitor()) {
+         WIFI_LOGE("InitScanMonitor failed.\n");
+         return false;
+     }
+ 
+-    pScanMonitor->SetScanStateMachine(pScanStateMachine);
+     int delayMs = 100;
+     pScanStateMachine->MessageExecutedLater(static_cast<int>(CMD_SCAN_PREPARE), delayMs);

@@ -1,0 +1,132 @@
+--- a/applications/standard/calendardata/datamanager/src/main/ets/processor/events/ConditionalEventMutation.ets
++++ b/applications/standard/calendardata/datamanager/src/main/ets/processor/events/ConditionalEventMutation.ets
+@@ -16,8 +16,17 @@
+   operation: string;
+ }
+ 
+-function invalid(message: string): BusinessError {
+-  return { code: 401, name: 'CalendarConditionalMutationParameterError', message: message };
++class CalendarConditionalMutationParameterError extends Error implements BusinessError {
++  code: number;
++  constructor(message: string) {
++    super(message);
++    this.code = 401;
++    this.name = 'CalendarConditionalMutationParameterError';
++  }
++}
++
++function invalid(message: string): CalendarConditionalMutationParameterError {
++  return new CalendarConditionalMutationParameterError(message);
+ }
+ 
+ /** Invoked only after the existing DataShare authentication and creator filter. */
+@@ -121,6 +130,6 @@
+     return { id: id, count: count, operation: operation };
+   } catch (error) {
+     if (!finished) { await tx.rollback(); }
+-    throw error; // Actual RDB/provider errors must not become stale=false.
++    throw error as Error; // Actual RDB/provider errors must not become stale=false.
+   }
+ }
+--- a/applications/standard/calendardata/datamanager/src/main/ets/processor/events/EventsProcessor.ets
++++ b/applications/standard/calendardata/datamanager/src/main/ets/processor/events/EventsProcessor.ets
+@@ -47,6 +47,17 @@
+ const TAG: string = 'EventsProcessor';
+ const CHANNEL_ID: string = 'channel_id';
+ 
++/** Copy every permitted value without allowing callers to write the CAS revision. */
++function filterMutableEventValues(value: data_rdb.ValuesBucket): data_rdb.ValuesBucket {
++  const filtered: data_rdb.ValuesBucket = filterValuesBucket(value, CHANNEL_ID);
++  const values: data_rdb.ValuesBucket = {};
++  for (const key of Object.keys(filtered)) {
++    if (key !== MUTATION_COLUMN) { values[key] = filtered[key]; }
++  }
++  return values;
++}
++
++
+ /**
+  * the Events table processor
+  *
+@@ -55,8 +66,7 @@
+ export class EventsProcessor extends DefaultProcessor {
+   async insertByHighAuthority(rdbStore: data_rdb.RdbStore, uri: string,
+                               value: data_rdb.ValuesBucket, callback: Function) {
+-    let values = filterValuesBucket(value, CHANNEL_ID);
+-    delete values[MUTATION_COLUMN];
++    let values = filterMutableEventValues(value);
+     if (!this.isFromMigrate) {
+       const callerName = getBundleNameByUri(uri);
+       initValueCreator(values, callerName);
+@@ -79,8 +89,7 @@
+ 
+   async insertByLowAuthority(rdbStore: data_rdb.RdbStore, uri: string,
+                              value: data_rdb.ValuesBucket, callback: Function) {
+-    let values = filterValuesBucket(value, CHANNEL_ID);
+-    delete values[MUTATION_COLUMN];
++    let values = filterMutableEventValues(value);
+     if (!this.isFromMigrate) {
+       const callerName = getBundleNameByUri(uri);
+       initValueCreator(values, callerName);
+@@ -131,8 +140,7 @@
+ 
+   async updateByHighAuthority(rdbStore: data_rdb.RdbStore, uri: string, value: data_rdb.ValuesBucket,
+                               predicates: dataSharePredicates.DataSharePredicates, callback: Function) {
+-    let values = filterValuesBucket(value, CHANNEL_ID);
+-    delete values[MUTATION_COLUMN];
++    let values = filterMutableEventValues(value);
+     values = deleteValueCreator(values);
+     if (values[MUTATION_KIND] !== undefined) {
+       await this.conditionalMutation(rdbStore, values, predicates, callback);
+@@ -143,8 +151,7 @@
+ 
+   async updateByLowAuthority(rdbStore: data_rdb.RdbStore, uri: string, value: data_rdb.ValuesBucket,
+                              predicates: dataSharePredicates.DataSharePredicates, callback: Function) {
+-    let values = filterValuesBucket(value, CHANNEL_ID);
+-    delete values[MUTATION_COLUMN];
++    let values = filterMutableEventValues(value);
+     const callerName = getBundleNameByUri(uri);
+     values = deleteValueCreator(values);
+     initPredicateCreator(predicates, callerName);
+--- a/applications/standard/calendardata/datamanager/src/main/ets/utils/CalendarDataHelper.ets
++++ b/applications/standard/calendardata/datamanager/src/main/ets/utils/CalendarDataHelper.ets
+@@ -438,7 +438,7 @@
+       Log.log(TAG, 'initRdbStore executeSql end');
+     } catch (err) {
+       Log.error(TAG, `initRdbStore err:${err.message}`);
+-      throw err;
++      throw err as Error;
+     }
+     await ensureCalendarMutationSchema(this.rdbStore);
+   }
+--- a/applications/standard/calendardata/entry/src/main/ets/calendar/CalendarChangeSubscription.ets
++++ b/applications/standard/calendardata/entry/src/main/ets/calendar/CalendarChangeSubscription.ets
+@@ -47,7 +47,7 @@
+       this.helper = helper;
+       console.info('CALENDAR579 ' + JSON.stringify({ event: 'subscribe', instance: this.instance,
+         timestamp: Date.now(), uri: URI }));
+-    } catch (error) { await helper.close(); throw error; }
++    } catch (error) { await helper.close(); throw error as Error; }
+   }
+ 
+   stop(): void {
+--- a/applications/standard/calendardata/entry/src/main/ets/pages/index.ets
++++ b/applications/standard/calendardata/entry/src/main/ets/pages/index.ets
+@@ -76,7 +76,7 @@
+     this.reminderStatus = '正在读取日程';
+     try {
+       this.bindObserverStop();
+-      const reader = new CalendarReminderReader(getContext(this) as common.UIAbilityContext, this.instance,
++      const reader: CalendarReminderReader = new CalendarReminderReader(getContext(this) as common.UIAbilityContext, this.instance,
+         () => this.publishReminder(reader, generation));
+       this.reader = reader;
+       await reader.open(this.route);
+@@ -114,7 +114,7 @@
+     }
+     try {
+       if (this.controller === undefined) {
+-        const controller = new CalendarBusinessController(getContext(this) as common.UIAbilityContext,
++        const controller: CalendarBusinessController = new CalendarBusinessController(getContext(this) as common.UIAbilityContext,
+           (view: CalendarView) => {
+             if (this.controller === controller) {
+               this.view = view;

@@ -1,0 +1,25 @@
+{
+  "schema": "actual579-readonly-normal-link-source-production/v1",
+  "result": {
+    "status": "optional_facts_budget_partial_keep_raw",
+    "inner_ref": {
+      "path": "/evidence/six-source-facts579/FACTS579.json",
+      "sha256": "2a7f7bd1908e78686989b2c939b10bde807da156ef738278f328b1c8a5b08c05",
+      "bytes": 4430563
+    },
+    "owner_output_relative": "six-source-facts579/FACTS579.json",
+    "primary_export_modified": false,
+    "primary_export_blocked": false,
+    "runtime_validated": false
+  },
+  "facts": {
+    "path": "/evidence/six-source-facts579/FACTS579.json",
+    "sha256": "2a7f7bd1908e78686989b2c939b10bde807da156ef738278f328b1c8a5b08c05",
+    "bytes": 4430563
+  },
+  "missing_primary_export_intentional": true,
+  "scope": "source grammar and existing raw out only; no selected image/compiler/ABI/runtime acceptance",
+  "host_tests_executed": false,
+  "runtime_pass": false,
+  "first_artifact_behavior_gate_passed": false
+}

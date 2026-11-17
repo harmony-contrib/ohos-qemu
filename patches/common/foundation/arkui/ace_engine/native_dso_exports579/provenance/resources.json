@@ -1,0 +1,397 @@
+{
+  "schema": "owned-resource35/v1",
+  "owner_uuid": "dce9ff9cac2a4dafb1262d3655c8f3aa",
+  "owner_pid": 90348,
+  "phase": "closed",
+  "failed": false,
+  "cleanup_verified": true,
+  "lock_path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/.representative10-resource.lock",
+  "output": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01",
+  "containers": [
+    {
+      "name": "ohos-readonly-normal-link579-dce9ff9cac2a4dafb1262d3655c8f3aa",
+      "owner": "dce9ff9cac2a4dafb1262d3655c8f3aa",
+      "commit": "553cdfc7fc0a8cdd0422d2dffbea853ac2578dd4",
+      "image": "sha256:8f7a960c7dc515a597d43a510d6d8a5e634e5c94a55aa5d9e22bfbf6b0f42c55",
+      "mounts": {
+        "/ohos": {
+          "Type": "volume",
+          "Name": "ohos-qemu-7_0-release-source",
+          "RW": false
+        },
+        "/ohos/out": {
+          "Type": "volume",
+          "Name": "ohos-qemu-7_0-release-out",
+          "RW": false
+        },
+        "/input": {
+          "Type": "bind",
+          "Source": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-ro579-build02-all-sources-draft",
+          "RW": false
+        },
+        "/evidence": {
+          "Type": "bind",
+          "Source": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01",
+          "RW": true
+        }
+      },
+      "command": [
+        "python3",
+        "-B",
+        "/input/inner.py"
+      ],
+      "id": "2145d8730176bf1efb93f3909662b68d8af7717a84ec2243a98ce58f21549ee1",
+      "absent": true,
+      "cidfile": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/ohos-readonly-normal-link579-dce9ff9cac2a4dafb1262d3655c8f3aa.cid",
+      "create_attempted": true,
+      "create_outcome": "known_created"
+    }
+  ],
+  "commands": [
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "ohos-readonly-normal-link579-dce9ff9cac2a4dafb1262d3655c8f3aa"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 1,
+      "timed_out": false,
+      "started_monotonic": 1419265.382332416,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0000-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0000-inspect-owned-stderr.bin",
+      "host_pid": 90378,
+      "seconds": 1.0763584170490503,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0000-inspect-owned-stdout.bin",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "bytes": 3
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0000-inspect-owned-stderr.bin",
+        "sha256": "a310cca535a95f15bc11d7ba9f24cb42921d3a3753aab95c7987e1594a05e26a",
+        "bytes": 85
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "create",
+        "--name",
+        "ohos-readonly-normal-link579-dce9ff9cac2a4dafb1262d3655c8f3aa",
+        "--cidfile",
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/ohos-readonly-normal-link579-dce9ff9cac2a4dafb1262d3655c8f3aa.cid",
+        "--label",
+        "ohos-qemu.root-run=dce9ff9cac2a4dafb1262d3655c8f3aa",
+        "--label",
+        "ohos-qemu.source-commit=553cdfc7fc0a8cdd0422d2dffbea853ac2578dd4",
+        "--platform",
+        "linux/amd64",
+        "--read-only",
+        "--cpus",
+        "2",
+        "--memory",
+        "2g",
+        "--pids-limit",
+        "256",
+        "--network",
+        "none",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--tmpfs",
+        "/tmp:rw,exec,nosuid,nodev,size=512m",
+        "--mount",
+        "type=volume,src=ohos-qemu-7_0-release-source,dst=/ohos,readonly",
+        "--mount",
+        "type=volume,src=ohos-qemu-7_0-release-out,dst=/ohos/out,readonly",
+        "--mount",
+        "type=bind,src=/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-ro579-build02-all-sources-draft,dst=/input,readonly",
+        "--mount",
+        "type=bind,src=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01,dst=/evidence",
+        "sha256:8f7a960c7dc515a597d43a510d6d8a5e634e5c94a55aa5d9e22bfbf6b0f42c55",
+        "python3",
+        "-B",
+        "/input/inner.py"
+      ],
+      "label": "create-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1419266.466969,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0001-create-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0001-create-owned-stderr.bin",
+      "host_pid": 90437,
+      "seconds": 0.7258568750694394,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0001-create-owned-stdout.bin",
+        "sha256": "0ae383d8769cb23845e30fb84c3df8644f6e2bfd30b9f1ae903a17b2be828835",
+        "bytes": 65
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0001-create-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "2145d8730176bf1efb93f3909662b68d8af7717a84ec2243a98ce58f21549ee1"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1419267.197475666,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0002-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0002-inspect-owned-stderr.bin",
+      "host_pid": 90443,
+      "seconds": 0.0402900839690119,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0002-inspect-owned-stdout.bin",
+        "sha256": "29689d03e9db118cf2818d5f0020deb7c3869f4255ac04b7ed3e883e9803e00e",
+        "bytes": 12223
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0002-inspect-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "2145d8730176bf1efb93f3909662b68d8af7717a84ec2243a98ce58f21549ee1"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1419267.243476708,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0003-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0003-inspect-owned-stderr.bin",
+      "host_pid": 90444,
+      "seconds": 0.07841533306054771,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0003-inspect-owned-stdout.bin",
+        "sha256": "29689d03e9db118cf2818d5f0020deb7c3869f4255ac04b7ed3e883e9803e00e",
+        "bytes": 12223
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0003-inspect-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "start",
+        "-a",
+        "2145d8730176bf1efb93f3909662b68d8af7717a84ec2243a98ce58f21549ee1"
+      ],
+      "label": "start-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1419267.32658625,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0004-start-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0004-start-owned-stderr.bin",
+      "host_pid": 90446,
+      "seconds": 37.52432516613044,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0004-start-owned-stdout.bin",
+        "sha256": "f6b89a9173c789e1ed282d3caf591549050d835a113a4401cdd6a68298491eaf",
+        "bytes": 862
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0004-start-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "2145d8730176bf1efb93f3909662b68d8af7717a84ec2243a98ce58f21549ee1"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1419304.856374166,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0005-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0005-inspect-owned-stderr.bin",
+      "host_pid": 90878,
+      "seconds": 0.20375304203480482,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0005-inspect-owned-stdout.bin",
+        "sha256": "07d397eaf91e6e337f01f37e6809389d4367e885cf083b7baaf2e7b950464c98",
+        "bytes": 12770
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0005-inspect-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "2145d8730176bf1efb93f3909662b68d8af7717a84ec2243a98ce58f21549ee1"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1419305.07161675,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0006-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0006-inspect-owned-stderr.bin",
+      "host_pid": 90880,
+      "seconds": 0.14578462508507073,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0006-inspect-owned-stdout.bin",
+        "sha256": "07d397eaf91e6e337f01f37e6809389d4367e885cf083b7baaf2e7b950464c98",
+        "bytes": 12770
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0006-inspect-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "2145d8730176bf1efb93f3909662b68d8af7717a84ec2243a98ce58f21549ee1"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1419305.224790833,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0007-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0007-inspect-owned-stderr.bin",
+      "host_pid": 90883,
+      "seconds": 0.04664458311162889,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0007-inspect-owned-stdout.bin",
+        "sha256": "07d397eaf91e6e337f01f37e6809389d4367e885cf083b7baaf2e7b950464c98",
+        "bytes": 12770
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0007-inspect-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "rm",
+        "2145d8730176bf1efb93f3909662b68d8af7717a84ec2243a98ce58f21549ee1"
+      ],
+      "label": "remove-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1419305.277416041,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0008-remove-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0008-remove-owned-stderr.bin",
+      "host_pid": 90884,
+      "seconds": 0.35505141713656485,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0008-remove-owned-stdout.bin",
+        "sha256": "0ae383d8769cb23845e30fb84c3df8644f6e2bfd30b9f1ae903a17b2be828835",
+        "bytes": 65
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0008-remove-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "2145d8730176bf1efb93f3909662b68d8af7717a84ec2243a98ce58f21549ee1"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 1,
+      "timed_out": false,
+      "started_monotonic": 1419305.636744916,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0009-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0009-inspect-owned-stderr.bin",
+      "host_pid": 90890,
+      "seconds": 0.0922320841345936,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0009-inspect-owned-stdout.bin",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "bytes": 3
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0009-inspect-owned-stderr.bin",
+        "sha256": "5e401a4321f752fb22079b1edb7aebd99448432ac14884df6c3abb2f37518e25",
+        "bytes": 88
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "ohos-readonly-normal-link579-dce9ff9cac2a4dafb1262d3655c8f3aa"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 1,
+      "timed_out": false,
+      "started_monotonic": 1419305.734323958,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0010-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0010-inspect-owned-stderr.bin",
+      "host_pid": 90891,
+      "seconds": 0.08105454198084772,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0010-inspect-owned-stdout.bin",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "bytes": 3
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0010-inspect-owned-stderr.bin",
+        "sha256": "a310cca535a95f15bc11d7ba9f24cb42921d3a3753aab95c7987e1594a05e26a",
+        "bytes": 85
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "ps",
+        "-aq",
+        "--no-trunc",
+        "--filter",
+        "label=ohos-qemu.root-run=dce9ff9cac2a4dafb1262d3655c8f3aa"
+      ],
+      "label": "owner-final-inventory",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1419305.824282791,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0011-owner-final-inventory-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0011-owner-final-inventory-stderr.bin",
+      "host_pid": 90893,
+      "seconds": 0.08393962495028973,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0011-owner-final-inventory-stdout.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/commands/0011-owner-final-inventory-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    }
+  ],
+  "errors": [],
+  "signals": [],
+  "quarantine_attempts": [],
+  "first_artifact_behavior_gate_passed": false,
+  "updated_utc": "2026-10-21T17:23:03.390837+00:00"
+}

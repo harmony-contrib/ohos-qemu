@@ -1,0 +1,20 @@
+diff --git a/base/global/i18n/services/etc/init/i18n_service.cfg b/base/global/i18n/services/etc/init/i18n_service.cfg
+--- a/base/global/i18n/services/etc/init/i18n_service.cfg
++++ b/base/global/i18n/services/etc/init/i18n_service.cfg
+@@ -4,10 +4,10 @@
+             "name": "boot",
+             "cmds": [
+-                "mkdir /data/service/el1/public/i18n/ 0755 i18n_service i18n_service",
+-                "mkdir /data/service/el1/public/i18n/timezone/ 0755 i18n_service i18n_service",
+-                "mkdir /data/service/el1/public/i18n/libphonenumber/ 0755 i18n_service i18n_service",
+-                "mkdir /data/service/el1/public/i18n/taboo/ 0755 i18n_service i18n_service",
+-                "mkdir /data/service/el1/public/i18n/global/ 0777 i18n_service i18n_service",
+-                "mkdir /data/service/el1/public/i18n/icu/ 0755 i18n_service i18n_service",
++                "mkdir /data/service/el1/public/i18n/ 0755 i18n i18n",
++                "mkdir /data/service/el1/public/i18n/timezone/ 0755 i18n i18n",
++                "mkdir /data/service/el1/public/i18n/libphonenumber/ 0755 i18n i18n",
++                "mkdir /data/service/el1/public/i18n/taboo/ 0755 i18n i18n",
++                "mkdir /data/service/el1/public/i18n/global/ 0777 i18n i18n",
++                "mkdir /data/service/el1/public/i18n/icu/ 0755 i18n i18n",
+                 "exec /system/bin/hmos_cust_timezone_mount",
+                 "exec /system/bin/hmos_cust_libphonenumber_mount",

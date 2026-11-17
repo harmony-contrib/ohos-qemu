@@ -1,0 +1,139 @@
+diff --git a/src/arkweb/ohos_adapter_ndk/interfaces/graphic_adapter.h b/src/arkweb/ohos_adapter_ndk/interfaces/graphic_adapter.h
+index ad070a5..83b7c26 100644
+--- a/src/arkweb/ohos_adapter_ndk/interfaces/graphic_adapter.h
++++ b/src/arkweb/ohos_adapter_ndk/interfaces/graphic_adapter.h
+@@ -17,6 +17,7 @@
+ #define GRAPHIC_ADAPTER_H
+ 
+ #include <functional>
++#include <memory>
+ 
+ namespace OHOS::NWeb {
+ 
+@@ -147,8 +148,6 @@ public:
+     virtual ColorGamutAdapter GetColorGamut() = 0;
+ 
+     virtual TransformTypeAdapter GetTransformType() = 0;
+-
+-    virtual int64_t GetTimestamp() = 0;
+ };
+ 
+ class BufferFlushConfigAdapter {
+@@ -256,7 +255,9 @@ public:
+ 
+     virtual ~FrameAvailableListener() = default;
+ 
+-    virtual void OnFrameAvailableListener() = 0;
++    virtual void* GetContext() = 0;
++
++    virtual OnFrameAvailableCb GetOnFrameAvailableCb() = 0;
+ };
+ 
+ class OhosNativeImageAdapter {
+diff --git a/src/arkweb/ohos_adapter_ndk/graphic_adapter/native_image_adapter_impl.cpp b/src/arkweb/ohos_adapter_ndk/graphic_adapter/native_image_adapter_impl.cpp
+index c6ddac0..6edc5b2 100644
+--- a/src/arkweb/ohos_adapter_ndk/graphic_adapter/native_image_adapter_impl.cpp
++++ b/src/arkweb/ohos_adapter_ndk/graphic_adapter/native_image_adapter_impl.cpp
+@@ -24,9 +24,6 @@ namespace OHOS::NWeb {
+ 
+ NativeImageAdapterImpl::~NativeImageAdapterImpl()
+ {
+-    if (callback_index_ > 0) {
+-        callback_wrapper_.Clear(callback_index_);
+-    }
+     DestroyNativeImage();
+ }
+ 
+@@ -104,25 +101,33 @@ void NativeImageAdapterImpl::OnFrameAvailable(void *context) {
+         WVLOG_E("NativeImageAdapterImpl OnFrameAvailable fail");
+         return;
+     }
+-    listener->OnFrameAvailableListener();
++    auto callback = listener->GetOnFrameAvailableCb();
++    if (callback != nullptr) {
++        callback(listener->GetContext());
++    }
+ }
+ 
+ int32_t NativeImageAdapterImpl::SetOnFrameAvailableListener(std::shared_ptr<FrameAvailableListener> listener)
+ {
+-    if (ohNativeImage_ == nullptr || listener == nullptr) {
++    if (ohNativeImage_ == nullptr || listener == nullptr || listener->GetOnFrameAvailableCb() == nullptr) {
+         return NATIVE_ERROR_UNKNOWN;
+     }
+ 
+-    if (callback_index_ > 0) {
+-        callback_wrapper_.Clear(callback_index_);
+-    }
+-
+-    callback_index_ = callback_wrapper_.AddCallback(listener);
++    size_t newIndex = callback_wrapper_.AddCallback(listener);
+ 
+     OH_OnFrameAvailableListener callback;
+     callback.onFrameAvailable = OnFrameAvailable;
+-    callback.context = reinterpret_cast<void*>(callback_index_);
+-    return OH_NativeImage_SetOnFrameAvailableListener(ohNativeImage_, callback);
++    callback.context = reinterpret_cast<void*>(newIndex);
++    int32_t ret = OH_NativeImage_SetOnFrameAvailableListener(ohNativeImage_, callback);
++    if (ret != NATIVE_ERROR_OK) {
++        callback_wrapper_.Clear(newIndex);
++        return ret;
++    }
++    if (callback_index_ > 0) {
++        callback_wrapper_.Clear(callback_index_);
++    }
++    callback_index_ = newIndex;
++    return ret;
+ }
+ 
+ int32_t NativeImageAdapterImpl::UnsetOnFrameAvailableListener()
+@@ -130,17 +135,23 @@ int32_t NativeImageAdapterImpl::UnsetOnFrameAvailableListener()
+     if (ohNativeImage_ == nullptr) {
+         return NATIVE_ERROR_UNKNOWN;
+     }
+-    return OH_NativeImage_UnsetOnFrameAvailableListener(ohNativeImage_);
++    int32_t ret = OH_NativeImage_UnsetOnFrameAvailableListener(ohNativeImage_);
++    if (ret == NATIVE_ERROR_OK) {
++        callback_wrapper_.Clear(callback_index_);
++        callback_index_ = 0;
++    }
++    return ret;
+ }
+ 
+ void NativeImageAdapterImpl::DestroyNativeImage()
+ {
+-    if (ohNativeImage_ == nullptr) {
+-        return;
++    if (ohNativeImage_ != nullptr) {
++        OH_NativeImage* raw = ohNativeImage_.get();
++        OH_NativeImage_Destroy(&raw);
++        ohNativeImage_ = nullptr;
+     }
+-    OH_NativeImage* raw = ohNativeImage_.get();
+-    OH_NativeImage_Destroy(&raw);
+-    ohNativeImage_ = nullptr;
++    callback_wrapper_.Clear(callback_index_);
++    callback_index_ = 0;
+ }
+ 
+ 
+diff --git a/src/arkweb/ohos_adapter_ndk/graphic_adapter/native_window_adapter_impl.cpp b/src/arkweb/ohos_adapter_ndk/graphic_adapter/native_window_adapter_impl.cpp
+index 072eee0..1b19476 100644
+--- a/src/arkweb/ohos_adapter_ndk/graphic_adapter/native_window_adapter_impl.cpp
++++ b/src/arkweb/ohos_adapter_ndk/graphic_adapter/native_window_adapter_impl.cpp
+@@ -324,7 +324,6 @@ std::shared_ptr<SurfaceBufferAdapter> ProducerNativeAdapterImpl::RequestBuffer(
+         return nullptr;
+     }
+     TransToBufferConfig(configAdapter);
+-    OH_NativeWindow_NativeWindowHandleOpt(window_, SET_UI_TIMESTAMP, configAdapter->GetTimestamp());
+     OHNativeWindowBuffer* buffer = nullptr;
+     if (OH_NativeWindow_NativeWindowRequestBuffer(window_, &buffer, &fence) != 0) {
+         WVLOG_E("native window request buffer failed");
+@@ -344,6 +343,7 @@ int32_t ProducerNativeAdapterImpl::FlushBuffer(std::shared_ptr<SurfaceBufferAdap
+     Region::Rect rect = { flushConfigAdapter->GetX(), flushConfigAdapter->GetY(),
+         flushConfigAdapter->GetW(), flushConfigAdapter->GetH() };
+     Region region = {.rects = &rect, .rectNumber = 0};
++    OH_NativeWindow_NativeWindowHandleOpt(window_, SET_UI_TIMESTAMP, flushConfigAdapter->GetTimestamp());
+     return OH_NativeWindow_NativeWindowFlushBuffer(window_, bufferImpl->GetBuffer(), fence, region);
+ }
+ } // namespace OHOS::NWeb

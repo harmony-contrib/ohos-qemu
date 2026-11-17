@@ -1,0 +1,12 @@
+diff --git a/src/third_party/ohos_nweb_hap/build-profile.json5 b/src/third_party/ohos_nweb_hap/build-profile.json5
+--- a/src/third_party/ohos_nweb_hap/build-profile.json5
++++ b/src/third_party/ohos_nweb_hap/build-profile.json5
+@@ -4,7 +4,7 @@
+     "products": [
+       {
+         "name": "default",
+-        "compileSdkVersion": 24,
++        "compileSdkVersion": 26,
+         "compatibleSdkVersion": 12,
+         "runtimeOS": "OpenHarmony"
+       },

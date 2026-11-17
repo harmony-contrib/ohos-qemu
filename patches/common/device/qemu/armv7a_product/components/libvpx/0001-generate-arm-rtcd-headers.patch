@@ -1,0 +1,50 @@
+diff --git a/third_party/libvpx/BUILD.gn b/third_party/libvpx/BUILD.gn
+index a6e352821..c5a6c6115 100644
+--- a/third_party/libvpx/BUILD.gn
++++ b/third_party/libvpx/BUILD.gn
+@@ -50,6 +50,8 @@ action("generate_vpx_config_headers") {
+       "$code_dir/vpx_dsp_rtcd.h",
+       "$code_dir/vpx_scale_rtcd.h",
+     ]
++  } else if (is_vpx_arm64 || is_vpx_arm) {
++    outputs += [ "$code_dir/vpx_scale_rtcd.h" ]
+   }
+   
+ }
+diff --git a/third_party/libvpx/build.sh b/third_party/libvpx/build.sh
+index d1fdcc988..6a35ad08f 100755
+--- a/third_party/libvpx/build.sh
++++ b/third_party/libvpx/build.sh
+@@ -54,6 +54,32 @@ if [ "$CPU" == "arm" ]; then
+       --disable-neon
+ fi
+ 
++if [ "$CPU" == "arm" ] || [ "$CPU" == "arm64" ]; then
++  cat > rtcd_config.mk <<'EOF'
++CONFIG_RUNTIME_CPU_DETECT=no
++CONFIG_VP8_DECODER=yes
++CONFIG_VP8_ENCODER=no
++CONFIG_VP9=yes
++CONFIG_VP9_DECODER=yes
++CONFIG_VP9_ENCODER=no
++CONFIG_VP9_HIGHBITDEPTH=yes
++CONFIG_SPATIAL_RESAMPLING=yes
++CONFIG_POSTPROC=no
++CONFIG_MULTITHREAD=yes
++CONFIG_WEBM_IO=no
++CONFIG_LIBYUV=no
++EOF
++
++  RTCD_ARCH="armv7"
++  if [ "$CPU" == "arm64" ]; then
++    RTCD_ARCH="armv8"
++  fi
++  perl build/make/rtcd.pl --arch="$RTCD_ARCH" --sym=vpx_scale_rtcd \
++      --config=rtcd_config.mk vpx_scale/vpx_scale_rtcd.pl \
++      > "$OUTPUT_DIR/vpx_scale_rtcd.h"
++  rm -f rtcd_config.mk
++fi
++
+ if [ "$CPU" == "x86_64" ]; then
+   ./configure \
+       --target=generic-gnu \

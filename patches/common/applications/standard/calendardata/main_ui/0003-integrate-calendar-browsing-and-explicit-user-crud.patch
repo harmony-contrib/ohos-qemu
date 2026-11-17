@@ -1,0 +1,841 @@
+diff --git a/applications/standard/calendardata/entry/src/main/ets/MainAbility/MainAbility.ets b/applications/standard/calendardata/entry/src/main/ets/MainAbility/MainAbility.ets
+--- a/applications/standard/calendardata/entry/src/main/ets/MainAbility/MainAbility.ets
++++ b/applications/standard/calendardata/entry/src/main/ets/MainAbility/MainAbility.ets
+@@ -6,8 +6,10 @@
+ export default class MainAbility extends UIAbility {
+   private storage: LocalStorage = new LocalStorage();
+   private revision: number = 0;
++  private visible: boolean = false;
+ 
+   onCreate(want: Want): void {
++    this.storage.setOrCreate<boolean>('calendarForeground', false);
+     this.storage.setOrCreate<string>('calendarRoute', want.uri ?? '');
+     this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+   }
+@@ -18,14 +20,31 @@
+   }
+ 
+   onWindowStageCreate(windowStage: window.WindowStage): void {
++    this.storage.setOrCreate<boolean>('calendarForeground', this.visible);
++    this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+     windowStage.loadContent('pages/index', this.storage);
+   }
+ 
+   onForeground(): void {
++    this.visible = true;
++    this.storage.setOrCreate<boolean>('calendarForeground', true);
++    this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
++  }
++
++  onBackground(): void {
++    this.visible = false;
++    this.storage.setOrCreate<boolean>('calendarForeground', false);
++    this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
++  }
++
++  onWindowStageDestroy(): void {
++    this.storage.setOrCreate<boolean>('calendarForeground', false);
+     this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+   }
+ 
+   onDestroy(): void {
++    this.visible = false;
++    this.storage.setOrCreate<boolean>('calendarForeground', false);
+     this.storage.setOrCreate<string>('calendarRoute', '');
+     this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+   }
+diff --git a/applications/standard/calendardata/entry/src/main/ets/calendar/CalendarBusinessController.ets b/applications/standard/calendardata/entry/src/main/ets/calendar/CalendarBusinessController.ets
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/calendardata/entry/src/main/ets/calendar/CalendarBusinessController.ets
+@@ -0,0 +1,429 @@
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import calendarManager from '@ohos.calendarManager';
++import { common } from '@kit.AbilityKit';
++import { BusinessError } from '@ohos.base';
++import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
++
++export class CalendarChoice {
++  id: number = 0;
++  label: string = '';
++}
++
++export class CalendarView {
++  calendars: CalendarChoice[] = [];
++  calendarId: number = 0;
++  events: calendarManager.Event[] = [];
++  selected: calendarManager.Event | undefined = undefined;
++  day: number = Date.now();
++  error: string = '';
++  notice: string = '';
++  loading: boolean = false;
++  writing: boolean = false;
++  ready: boolean = false;
++}
++
++export class CalendarBusinessController {
++  private manager: calendarManager.CalendarManager | undefined = undefined;
++  private context: common.UIAbilityContext;
++  private calendars: calendarManager.Calendar[] = [];
++  private view: CalendarView = new CalendarView();
++  private active: boolean = false;
++  private disposed: boolean = false;
++  private generation: number = 0;
++  private writing: boolean = false;
++  private readFilter: calendarManager.EventFilter | undefined = undefined;
++  private publish: (view: CalendarView) => void;
++
++  constructor(context: common.UIAbilityContext, publish: (view: CalendarView) => void) {
++    this.context = context;
++    this.publish = publish;
++  }
++
++  private emit(): void {
++    if (!this.active || this.disposed) {
++      return;
++    }
++    const next = new CalendarView();
++    next.calendars = this.view.calendars.slice();
++    next.calendarId = this.view.calendarId;
++    next.events = this.view.events.slice();
++    next.selected = this.view.selected;
++    next.day = this.view.day;
++    next.error = this.view.error;
++    next.notice = this.view.notice;
++    next.loading = this.view.loading;
++    next.writing = this.writing;
++    next.ready = this.view.ready;
++    this.publish(next);
++  }
++
++  private current(generation: number): boolean {
++    return this.active && !this.disposed && generation === this.generation;
++  }
++
++
++  foreground(): void {
++    if (this.disposed) {
++      return;
++    }
++    this.active = true;
++    this.refresh();
++  }
++
++  background(): void {
++    this.active = false;
++    this.generation++;
++    this.calendars = [];
++    this.view = new CalendarView();
++    // No queued mutation may start after background/destroy. An already
++    // submitted provider transaction cannot be cancelled by destroying a UI.
++    this.publish(new CalendarView());
++  }
++
++  dispose(): void {
++    this.background();
++    this.disposed = true;
++  }
++
++  async refresh(): Promise<void> {
++    if (!this.active || this.disposed || this.writing) {
++      return;
++    }
++    const generation = ++this.generation;
++    this.view.loading = true;
++    this.view.ready = false;
++    this.view.error = '';
++    this.view.notice = '';
++    this.view.selected = undefined;
++    this.view.events = [];
++    this.emit();
++    try {
++      const grants = await abilityAccessCtrl.createAtManager().requestPermissionsFromUser(
++        this.context, ['ohos.permission.READ_WHOLE_CALENDAR']);
++      if (!this.current(generation)) {
++        return;
++      }
++      if (grants.permissions.length !== 1 || grants.permissions[0] !== 'ohos.permission.READ_WHOLE_CALENDAR' ||
++        grants.authResults.length !== 1 || grants.authResults[0] !== 0) {
++        throw new Error('未授予读取日历权限；可授权后重新读取');
++      }
++      const manager = this.manager ?? calendarManager.getCalendarManager(this.context);
++      this.manager = manager;
++      const calendars = await manager.getAllCalendars();
++      if (!this.current(generation)) {
++        return;
++      }
++      if (calendars.length === 0) {
++        calendars.push(await manager.getCalendar());
++      }
++      if (!this.current(generation)) {
++        return;
++      }
++      if (calendars.length > 100 || calendars.some((item: calendarManager.Calendar) =>
++        !Number.isInteger(item.id) || item.id <= 0 || item.id > 2147483647)) {
++        throw new Error('日历列表无效或超过当前显示范围');
++      }
++      this.calendars = calendars;
++      this.view.calendars = calendars.map((item: calendarManager.Calendar) => {
++        const choice = new CalendarChoice();
++        choice.id = item.id;
++        const account = item.getAccount();
++        choice.label = account.displayName || account.name;
++        return choice;
++      });
++      if (!calendars.some((item: calendarManager.Calendar) => item.id === this.view.calendarId)) {
++        this.view.calendarId = calendars[0].id;
++      }
++      const calendar = this.calendar();
++      const start = new Date(this.view.day);
++      start.setHours(0, 0, 0, 0);
++      const end = new Date(start.getTime());
++      end.setDate(end.getDate() + 1);
++      if (!Number.isSafeInteger(start.getTime()) || !Number.isSafeInteger(end.getTime()) ||
++        start.getTime() < 0 || end.getTime() > 8640000000000000 || end.getTime() <= start.getTime()) {
++        throw new Error('日期超出当前显示范围');
++      }
++      const events = await calendar.queryEventInstances(start.getTime(), end.getTime(), [], ['id', 'type', 'title', 'startTime', 'endTime',
++  'isAllDay', 'location', 'description', 'reminderTime', 'recurrenceRule', 'attendee', 'service',
++  'identifier', 'isLunar', 'timeZone', 'instanceStartTime', 'instanceEndTime']);
++      if (!this.current(generation)) {
++        return;
++      }
++      this.checkEvents(events);
++      this.view.day = start.getTime();
++      this.view.events = events.sort((a: calendarManager.Event, b: calendarManager.Event) =>
++        (a.instanceStartTime ?? a.startTime) - (b.instanceStartTime ?? b.startTime));
++      if (this.current(generation)) {
++        this.view.ready = true;
++      }
++    } catch (error) {
++      if (this.current(generation)) {
++        this.view.error = this.failure(error as BusinessError, '日历读取失败');
++        this.view.events = [];
++        this.view.selected = undefined;
++      }
++    } finally {
++      if (this.current(generation)) {
++        this.view.loading = false;
++        this.emit();
++      }
++    }
++  }
++
++  private checkEvents(events: calendarManager.Event[]): void {
++    if (events.length > 4096 || events.some((event: calendarManager.Event) => {
++      const start = event.instanceStartTime ?? event.startTime;
++      const end = event.instanceEndTime ?? event.endTime;
++      return !Number.isInteger(event.id) || (event.id ?? 0) <= 0 || (event.id ?? 0) > 2147483647 ||
++        !Number.isSafeInteger(event.startTime) || !Number.isSafeInteger(event.endTime) ||
++        event.startTime < 0 || event.endTime > 8640000000000000 || event.endTime <= event.startTime ||
++        !Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 ||
++        end > 8640000000000000 || end <= start;
++    })) {
++      throw new Error('日程数据无效或超过当前显示范围');
++    }
++  }
++
++
++  private calendar(): calendarManager.Calendar {
++    const calendar = this.calendars.find((item: calendarManager.Calendar) => item.id === this.view.calendarId);
++    if (calendar === undefined) {
++      throw new Error('请先选择可访问的日历');
++    }
++    return calendar;
++  }
++
++  chooseCalendar(id: number): void {
++    if (!this.active || this.writing || !this.calendars.some((item: calendarManager.Calendar) => item.id === id)) {
++      return;
++    }
++    this.view.calendarId = id;
++    this.refresh();
++  }
++
++  moveDay(offset: number): void {
++    if (!this.active || this.writing || !Number.isInteger(offset) || Math.abs(offset) > 1) {
++      return;
++    }
++    const day = new Date(this.view.day);
++    day.setDate(day.getDate() + offset);
++    this.view.day = offset === 0 ? Date.now() : day.getTime();
++    this.refresh();
++  }
++
++  select(id: number, start: number): void {
++    const event = this.view.events.find((item: calendarManager.Event) => item.id === id &&
++      (item.instanceStartTime ?? item.startTime) === start);
++    if (this.active && !this.writing && this.view.ready && event !== undefined) {
++      this.view.selected = event;
++      this.emit();
++    }
++  }
++
++  cancel(): void {
++    if (this.active && !this.writing) {
++      this.view.selected = undefined;
++      this.view.error = '';
++      this.emit();
++    }
++  }
++
++  private editable(event: calendarManager.Event): boolean {
++    // Recurring/all-day/lunar/important events remain visible; this small UI
++    // must not silently rewrite their richer series or instance semantics.
++    return event.type === calendarManager.EventType.NORMAL && event.recurrenceRule === undefined &&
++      !event.isAllDay && !event.isLunar && (event.reminderTime?.length ?? 0) <= 1;
++  }
++
++  async save(title: string, startText: string, endText: string, description: string,
++    reminderText: string, existingId: number): Promise<void> {
++    if (!this.active || this.disposed || this.writing || !this.view.ready) {
++      return;
++    }
++    const generation = this.generation;
++    let submitted = false;
++    this.writing = true;
++    this.view.error = '';
++    this.view.notice = '';
++    this.emit();
++    try {
++      const calendar = this.calendar();
++      const start = Date.parse(startText);
++      const end = Date.parse(endText);
++      const reminder = reminderText.length === 0 ? undefined : Number(reminderText);
++      if (title.trim().length === 0 || title.length > 5000 || description.length > 5000 ||
++        !Number.isInteger(existingId) || existingId < 0 || existingId > 2147483647 ||
++        !Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 ||
++        end <= start || end > 8640000000000000 ||
++        new Date(start).toISOString() !== startText || new Date(end).toISOString() !== endText ||
++        (reminder !== undefined && (!/^(0|[1-9][0-9]{0,4})$/.test(reminderText) || reminder > 10080))) {
++        throw new Error('请检查标题、开始和结束时间、提醒分钟数（0–10080）');
++      }
++      if (existingId > 0 && (this.view.selected?.id !== existingId || !this.editable(this.view.selected))) {
++        throw new Error('该日程仅支持查看，不能在此编辑');
++      }
++      if (!await this.requestWrite(generation)) {
++        return;
++      }
++      let event: calendarManager.Event = { type: calendarManager.EventType.NORMAL,
++        title: title, startTime: start, endTime: end, description: description, timeZone: 'UTC' };
++      if (existingId > 0) {
++        // Keep the native filter wrapper strongly owned across the async read,
++        // including background/dispose, until the actual promise settles.
++        this.readFilter = calendarManager.EventFilter.filterById([existingId]);
++        const current = await calendar.getEvents(this.readFilter, ['id', 'type', 'title', 'startTime', 'endTime',
++  'isAllDay', 'location', 'description', 'reminderTime', 'recurrenceRule', 'attendee', 'service',
++  'identifier', 'isLunar', 'timeZone', 'instanceStartTime', 'instanceEndTime']);
++        if (!this.current(generation)) {
++          return;
++        }
++        if (current.length !== 1 || current[0].id !== existingId || !this.editable(current[0])) {
++          throw new Error('日程已变更，请刷新后重试');
++        }
++        this.checkEvents(current);
++        // Preserve every untouched public field; do not replace the event
++        // with a reduced title/time object and erase attendees or services.
++        event = current[0];
++        event.title = title;
++        event.startTime = start;
++        event.endTime = end;
++        event.description = description;
++        event.instanceStartTime = undefined;
++        event.instanceEndTime = undefined;
++      }
++      event.reminderTime = reminder === undefined ? [] : [reminder];
++      if (!this.current(generation)) {
++        return;
++      }
++      submitted = true;
++      if (existingId > 0) {
++        await calendar.updateEvent(event);
++      } else {
++        const id = await calendar.addEvent(event);
++        if (!Number.isInteger(id) || id <= 0 || id > 2147483647) {
++          throw new Error('日程保存未返回有效编号；请先刷新确认，勿重复提交');
++        }
++      }
++      if (this.current(generation)) {
++        this.view.notice = '日程已保存';
++        this.view.day = start;
++      }
++    } catch (error) {
++      if (this.current(generation)) {
++        this.view.error = this.failure(error as BusinessError, '日程保存失败') +
++          (submitted ? '；已请求重新读取，请确认结果后再操作' : '');
++      }
++    } finally {
++      this.readFilter = undefined;
++      this.writing = false;
++      if (submitted || generation !== this.generation) {
++        if (this.active && !this.disposed) {
++          // Read again after a submitted transaction, including when its UI
++          // was backgrounded. Never pretend that a submitted write was undone.
++          const error = this.current(generation) ? this.view.error : '';
++          const notice = this.current(generation) ? this.view.notice : '';
++          const refreshGeneration = this.generation + 1;
++          await this.refresh();
++          if (this.current(refreshGeneration)) {
++            if (this.view.ready) {
++              this.view.notice = notice;
++            }
++            if (error.length > 0) {
++              this.view.error = error + (this.view.ready ? '' : '；重新读取也失败，请稍后确认');
++            }
++          }
++        }
++      }
++      this.emit();
++    }
++  }
++
++  private async requestWrite(generation: number): Promise<boolean> {
++    const grants = await abilityAccessCtrl.createAtManager().requestPermissionsFromUser(
++      this.context, ['ohos.permission.WRITE_WHOLE_CALENDAR']);
++    if (!this.current(generation)) {
++      return false;
++    }
++    if (grants.permissions.length !== 1 || grants.permissions[0] !== 'ohos.permission.WRITE_WHOLE_CALENDAR' ||
++      grants.authResults.length !== 1 || grants.authResults[0] !== 0) {
++      throw new Error('未授予修改日历权限；本次操作未提交');
++    }
++    return true;
++  }
++
++  private failure(error: BusinessError, fallback: string): string {
++    if (error.code === 201) {
++      return '日历权限已被拒绝或撤回，请检查权限后重试';
++    }
++    if (error.code === 801) {
++      return '当前设备不支持此日历操作';
++    }
++    if (error.code === 23900003) {
++      return '日历账号已不可用，请重新读取';
++    }
++    return (error.message || fallback) + (error.code ? `（${error.code}）` : '');
++  }
++
++  async remove(id: number, confirmed: boolean): Promise<void> {
++    if (!confirmed || !this.active || this.disposed || this.writing || !this.view.ready ||
++      !Number.isInteger(id) || id <= 0 || id > 2147483647 ||
++      this.view.selected?.id !== id || !this.editable(this.view.selected)) {
++      return;
++    }
++    const generation = this.generation;
++    let submitted = false;
++    this.writing = true;
++    this.view.error = '';
++    this.view.notice = '';
++    this.emit();
++    try {
++      const calendar = this.calendar();
++      if (!await this.requestWrite(generation)) {
++        return;
++      }
++      // Re-read after the user grants WRITE: the displayed item may have
++      // been removed or changed into a recurring/read-only event meanwhile.
++      this.readFilter = calendarManager.EventFilter.filterById([id]);
++      const current = await calendar.getEvents(this.readFilter, ['id', 'type', 'title', 'startTime', 'endTime',
++  'isAllDay', 'location', 'description', 'reminderTime', 'recurrenceRule', 'attendee', 'service',
++  'identifier', 'isLunar', 'timeZone', 'instanceStartTime', 'instanceEndTime']);
++      if (!this.current(generation)) {
++        return;
++      }
++      this.checkEvents(current);
++      if (current.length !== 1 || current[0].id !== id || !this.editable(current[0]) ||
++        current[0].title !== this.view.selected?.title || current[0].startTime !== this.view.selected?.startTime ||
++        current[0].endTime !== this.view.selected?.endTime || current[0].description !== this.view.selected?.description) {
++        throw new Error('日程已变更，请刷新后重试');
++      }
++      submitted = true;
++      await calendar.deleteEvent(id);
++      if (this.current(generation)) {
++        this.view.notice = '日程已删除';
++      }
++    } catch (error) {
++      if (this.current(generation)) {
++        this.view.error = this.failure(error as BusinessError, '删除失败') +
++          (submitted ? '；已请求重新读取，请确认结果后再操作' : '');
++      }
++    } finally {
++      this.readFilter = undefined;
++      this.writing = false;
++      if ((submitted || generation !== this.generation) && this.active && !this.disposed) {
++        const error = this.current(generation) ? this.view.error : '';
++        const notice = this.current(generation) ? this.view.notice : '';
++        const refreshGeneration = this.generation + 1;
++        await this.refresh();
++        if (this.current(refreshGeneration)) {
++          if (this.view.ready) {
++            this.view.notice = notice;
++          }
++          if (error.length > 0) {
++            this.view.error = error + (this.view.ready ? '' : '；重新读取也失败，请稍后确认');
++          }
++        }
++      }
++      this.emit();
++    }
++  }
++}
+diff --git a/applications/standard/calendardata/entry/src/main/ets/pages/index.ets b/applications/standard/calendardata/entry/src/main/ets/pages/index.ets
+--- a/applications/standard/calendardata/entry/src/main/ets/pages/index.ets
++++ b/applications/standard/calendardata/entry/src/main/ets/pages/index.ets
+@@ -1,66 +1,313 @@
+ /* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
+ import common from '@ohos.app.ability.common';
++import { BusinessError } from '@ohos.base';
++import calendarManager from '@ohos.calendarManager';
+ import { CalendarReminderReader } from '../reminder/CalendarReminderReader';
++import { CalendarChoice, CalendarBusinessController, CalendarView } from '../calendar/CalendarBusinessController';
+ 
+ @Entry({ useSharedStorage: true })
+ @Component
+ struct Index {
+   @LocalStorageLink('calendarRoute') route: string = '';
+   @LocalStorageLink('calendarRevision') @Watch('routeChanged') revision: number = 0;
+-  @State title: string = '';
+-  @State start: string = '';
+-  @State end: string = '';
+-  @State description: string = '';
+-  @State status: string = '';
++  @LocalStorageLink('calendarForeground') foreground: boolean = false;
++  @State private browsing: boolean = false;
++  @State private view: CalendarView = new CalendarView();
++  @State private form: boolean = false;
++  @State private deleteConfirm: boolean = false;
++  @State private editingId: number = 0;
++  @State private title: string = '';
++  @State private start: string = '';
++  @State private end: string = '';
++  @State private description: string = '';
++  @State private reminder: string = '';
++  @State private reminderTitle: string = '';
++  @State private reminderStart: string = '';
++  @State private reminderEnd: string = '';
++  @State private reminderDescription: string = '';
++  @State private reminderStatus: string = '';
+   private reader: CalendarReminderReader | undefined = undefined;
++  private controller: CalendarBusinessController | undefined = undefined;
+   private generation: number = 0;
++  private appearing: boolean = false;
+ 
+   aboutToAppear(): void {
+-    this.reader = new CalendarReminderReader(getContext(this) as common.UIAbilityContext);
++    this.appearing = true;
+     this.routeChanged();
+   }
+ 
+   aboutToDisappear(): void {
++    this.appearing = false;
+     this.generation++;
+     this.reader?.dispose();
+     this.reader = undefined;
++    this.controller?.dispose();
++    this.controller = undefined;
++    this.form = false;
++    this.deleteConfirm = false;
+   }
+ 
+   private async routeChanged(): Promise<void> {
+-    const reader: CalendarReminderReader | undefined = this.reader;
+-    if (reader === undefined) {
++    const generation = ++this.generation;
++    this.reader?.dispose();
++    this.reader = undefined;
++    this.controller?.background();
++    this.form = false;
++    this.deleteConfirm = false;
++    this.reminderTitle = '';
++    this.reminderStart = '';
++    this.reminderEnd = '';
++    this.reminderDescription = '';
++    this.reminderStatus = '';
++    if (!this.appearing || !this.foreground) {
+       return;
+     }
+-    const generation: number = ++this.generation;
+-    this.title = '';
+-    this.start = '';
+-    this.end = '';
+-    this.description = '';
+-    this.status = '正在读取日程';
+-    await reader.open(this.route);
+-    if (generation !== this.generation || this.reader !== reader) {
++    // An exported Want can open a read-only reminder. Only the user's browse
++    // control reaches mutation controls; no Want field supplies write data.
++    this.browsing = this.route === '';
++    if (this.browsing) {
++      this.startBusiness();
+       return;
+     }
+-    this.status = reader.status;
+-    if (reader.event !== undefined) {
+-      this.title = reader.event.title ?? '无标题日程';
+-      this.start = new Date(reader.event.startTime).toLocaleString();
+-      this.end = new Date(reader.event.endTime).toLocaleString();
+-      this.description = reader.event.description ?? '';
+-    }
+-  }
+-
+-  build() {
++    this.reminderStatus = '正在读取日程';
++    try {
++      const reader = new CalendarReminderReader(getContext(this) as common.UIAbilityContext);
++      this.reader = reader;
++      await reader.open(this.route);
++      if (generation !== this.generation || this.reader !== reader || !this.foreground || !this.appearing) {
++        return;
++      }
++      this.reminderStatus = reader.status;
++      if (reader.event !== undefined) {
++        this.reminderTitle = reader.event.title ?? '无标题日程';
++        this.reminderStart = new Date(reader.event.startTime).toLocaleString();
++        this.reminderEnd = new Date(reader.event.endTime).toLocaleString();
++        this.reminderDescription = reader.event.description ?? '';
++      }
++    } catch (error) {
++      if (generation === this.generation && this.foreground && this.appearing) {
++        this.reminderStatus = '日历初始化失败：' + (error as BusinessError).message;
++      }
++    }
++  }
++
++  private startBusiness(): void {
++    if (!this.appearing || !this.foreground) {
++      return;
++    }
++    try {
++      if (this.controller === undefined) {
++        const controller = new CalendarBusinessController(getContext(this) as common.UIAbilityContext,
++          (view: CalendarView) => {
++            if (this.controller === controller) {
++              this.view = view;
++              this.viewChanged();
++            }
++          });
++        this.controller = controller;
++      }
++      this.controller.foreground();
++    } catch (error) {
++      this.view = new CalendarView();
++      this.view.error = '日历初始化失败：' + (error as BusinessError).message;
++    }
++  }
++
++  private openBrowser(): void {
++    this.generation++;
++    this.reader?.dispose();
++    this.reader = undefined;
++    this.browsing = true;
++    this.form = false;
++    this.deleteConfirm = false;
++    this.startBusiness();
++  }
++
++  private openReminder(): void {
++    this.routeChanged();
++  }
++
++  private viewChanged(): void {
++    if (!this.view.ready) {
++      this.form = false;
++      this.deleteConfirm = false;
++    }
++  }
++
++  private editable(event: calendarManager.Event): boolean {
++    return event.type === calendarManager.EventType.NORMAL && event.recurrenceRule === undefined &&
++      !event.isAllDay && !event.isLunar && (event.reminderTime?.length ?? 0) <= 1;
++  }
++
++  private openForm(edit: boolean): void {
++    const event = edit ? this.view.selected : undefined;
++    if (!this.view.ready || this.view.writing || (edit && (event === undefined || !this.editable(event)))) {
++      return;
++    }
++    const start = new Date(this.view.day);
++    start.setHours(9, 0, 0, 0);
++    this.editingId = event?.id ?? 0;
++    this.title = event?.title ?? '';
++    this.start = new Date(event?.startTime ?? start.getTime()).toISOString();
++    this.end = new Date(event?.endTime ?? start.getTime() + 3600000).toISOString();
++    this.description = event?.description ?? '';
++    this.reminder = event?.reminderTime?.[0]?.toString() ?? '';
++    this.deleteConfirm = false;
++    this.form = true;
++  }
++
++  private cancel(): void {
++    if (!this.view.writing) {
++      this.form = false;
++      this.deleteConfirm = false;
++      this.controller?.cancel();
++    }
++  }
++
++  onBackPress(): boolean {
++    if (this.view.writing) {
++      // Leaving a UI cannot roll back an already submitted provider operation.
++      return false;
++    }
++    if (this.form || this.deleteConfirm || this.view.selected !== undefined) {
++      this.cancel();
++      return true;
++    }
++    if (this.browsing && this.route.length > 0) {
++      this.openReminder();
++      return true;
++    }
++    return false;
++  }
++
++  @Builder
++  private reminderPage() {
+     Scroll() {
+       Column({ space: 16 }) {
+         Text('日程详情').fontSize(28).id('calendar-main-heading')
+-        Text(this.status).fontSize(18).id('calendar-main-status')
+-        Text(this.title).fontSize(24).id('calendar-main-title')
+-        Text(this.start).fontSize(18).id('calendar-main-start')
+-        Text(this.end).fontSize(18).id('calendar-main-end')
+-        Text(this.description).fontSize(18).id('calendar-main-description')
++        Text(this.reminderStatus).fontSize(18).id('calendar-main-status')
++        Text(this.reminderTitle).fontSize(24).id('calendar-main-title')
++        Text(this.reminderStart).fontSize(18).id('calendar-main-start')
++        Text(this.reminderEnd).fontSize(18).id('calendar-main-end')
++        Text(this.reminderDescription).fontSize(18).id('calendar-main-description')
+         Button('重新读取').id('calendar-main-refresh').onClick(() => this.routeChanged())
++        Button('浏览日历').id('calendar-business-browse').onClick(() => this.openBrowser())
+       }.width('100%').padding(24)
+     }.height('100%').width('100%')
+   }
++
++  @Builder
++  private businessPage() {
++    Scroll() {
++      Column({ space: 12 }) {
++        Text('日历').fontSize(26).fontWeight(FontWeight.Bold).id('calendar-business-heading');
++        if (this.route.length > 0) {
++          Button('返回提醒详情').id('calendar-business-reminder').enabled(!this.view.writing)
++            .onClick(() => this.openReminder());
++        }
++        Text('使用当前系统账号与已授予权限可访问的日历。').fontSize(14);
++        if (this.view.writing) {
++          Text('正在提交日程操作；离开页面后已提交的操作仍可能完成。').id('calendar-business-writing');
++        }
++        if (this.controller === undefined) {
++          Text('日历服务未初始化').fontColor(Color.Red).id('calendar-main-unavailable');
++        }
++        if (this.view.loading) {
++          Text('正在读取日历…').id('calendar-main-loading');
++        }
++        if (this.view.error.length > 0) {
++          Text(this.view.error).fontColor(Color.Red).id('calendar-main-error');
++        }
++        if (this.view.notice.length > 0) {
++          Text(this.view.notice).id('calendar-main-notice');
++        }
++        Button('刷新').id('calendar-main-refresh').enabled(!this.view.writing)
++          .onClick(() => this.controller?.refresh());
++        ForEach(this.view.calendars, (choice: CalendarChoice) => {
++          Button(`${choice.id === this.view.calendarId ? '✓ ' : ''}${choice.label}`)
++            .id(`calendar-main-calendar-${choice.id}`).enabled(!this.view.writing)
++            .onClick(() => this.controller?.chooseCalendar(choice.id));
++        }, (choice: CalendarChoice) => choice.id.toString());
++        Row({ space: 12 }) {
++          Button('前一天').id('calendar-main-prev').enabled(!this.view.writing)
++            .onClick(() => this.controller?.moveDay(-1));
++          Button('今天').id('calendar-main-today').enabled(!this.view.writing)
++            .onClick(() => this.controller?.moveDay(0));
++          Button('后一天').id('calendar-main-next').enabled(!this.view.writing)
++            .onClick(() => this.controller?.moveDay(1));
++        }
++        Text(new Date(this.view.day).toLocaleDateString()).id('calendar-main-day');
++        Button('新建日程').id('calendar-main-new').enabled(this.view.ready && !this.view.writing)
++          .onClick(() => this.openForm(false));
++        if (this.form) {
++          Text(this.editingId > 0 ? '编辑日程' : '新建日程').fontSize(22);
++          TextInput({ text: this.title, placeholder: '标题' }).id('calendar-main-event-title')
++            .maxLength(5000).enabled(!this.view.writing).onChange((value: string) => this.title = value);
++          Text('开始时间（UTC，ISO 8601）');
++          TextInput({ text: this.start }).id('calendar-main-start').enabled(!this.view.writing)
++            .onChange((value: string) => this.start = value);
++          Text('结束时间（UTC，ISO 8601）');
++          TextInput({ text: this.end }).id('calendar-main-end').enabled(!this.view.writing)
++            .onChange((value: string) => this.end = value);
++          TextArea({ text: this.description, placeholder: '备注' }).id('calendar-main-description')
++            .maxLength(5000).enabled(!this.view.writing).onChange((value: string) => this.description = value);
++          TextInput({ text: this.reminder, placeholder: '提前提醒分钟数；留空则不提醒' })
++            .id('calendar-main-reminder').enabled(!this.view.writing)
++            .onChange((value: string) => this.reminder = value);
++          Text('提醒会交给现有系统提醒服务；保存日程不代表通知已经发出。').fontSize(14);
++          Row({ space: 12 }) {
++            Button('保存').id('calendar-main-save').enabled(!this.view.writing)
++              .onClick(() => this.controller?.save(this.title, this.start, this.end,
++                this.description, this.reminder, this.editingId));
++            Button('取消').id('calendar-main-cancel').enabled(!this.view.writing).onClick(() => this.cancel());
++          }
++        } else if (this.view.selected !== undefined) {
++          Text(this.view.selected.title ?? '').fontSize(22).id('calendar-main-detail-title');
++          Text(`编号：${this.view.selected.id}`).id('calendar-main-detail-id');
++          Text(new Date(this.view.selected.instanceStartTime ?? this.view.selected.startTime).toLocaleString())
++            .id('calendar-main-detail-start');
++          Text(new Date(this.view.selected.instanceEndTime ?? this.view.selected.endTime).toLocaleString())
++            .id('calendar-main-detail-end');
++          Text(this.view.selected.description ?? '').id('calendar-main-detail-description');
++          Text(`事件时区：${this.view.selected.timeZone ?? '系统时区'}`);
++          Text(`地点：${this.view.selected.location?.location ?? ''}`);
++          Text(`提醒（提前分钟）：${this.view.selected.reminderTime?.join(', ') ?? '无'}`);
++          if (this.editable(this.view.selected)) {
++            Row({ space: 12 }) {
++              Button('编辑').id('calendar-main-edit').enabled(!this.view.writing).onClick(() => this.openForm(true));
++              Button('删除').id('calendar-main-delete').enabled(!this.view.writing)
++                .onClick(() => this.deleteConfirm = true);
++            }
++            if (this.deleteConfirm) {
++              Text('确定删除此日程？').id('calendar-main-delete-question');
++              Button('确认删除').id('calendar-main-confirm-delete').enabled(!this.view.writing)
++                .onClick(() => this.controller?.remove(this.view.selected?.id ?? 0, true));
++              Button('取消删除').id('calendar-main-cancel-delete').enabled(!this.view.writing)
++                .onClick(() => this.deleteConfirm = false);
++            }
++          } else {
++            Text('全天、农历、重复、重要及多次提醒日程在此仅查看。');
++          }
++          Button('返回').id('calendar-main-detail-back').enabled(!this.view.writing).onClick(() => this.cancel());
++        } else {
++          if (this.view.ready && this.view.events.length === 0) {
++            Text('当天没有日程').id('calendar-main-empty');
++          }
++          ForEach(this.view.events, (event: calendarManager.Event) => {
++            Button(`${event.title ?? ''}  ${new Date(event.instanceStartTime ?? event.startTime).toLocaleTimeString()}`)
++              .id(`calendar-main-event-${event.id}`).enabled(!this.view.writing)
++              .onClick(() => this.controller?.select(event.id ?? 0, event.instanceStartTime ?? event.startTime));
++          }, (event: calendarManager.Event) => `${event.id}:${event.instanceStartTime ?? event.startTime}`);
++        }
++      }.padding(20).width('100%').alignItems(HorizontalAlign.Start);
++    }.width('100%').height('100%').backgroundColor(Color.White);
++  }
++
++  build() {
++    if (this.browsing) {
++      this.businessPage()
++    } else {
++      this.reminderPage()
++    }
++  }
+ }
+diff --git a/applications/standard/calendardata/entry/src/main/module.json5 b/applications/standard/calendardata/entry/src/main/module.json5
+--- a/applications/standard/calendardata/entry/src/main/module.json5
++++ b/applications/standard/calendardata/entry/src/main/module.json5
+@@ -102,7 +102,8 @@
+             "DataShareLowerExtAbility",
+             "DataShareHighExtAbility",
+             "ReminderCallbackExtAbility",
+-            "EditorUIExtensionAbility"
++            "EditorUIExtensionAbility",
++            "MainAbility"
+           ],
+           "when": "inuse"
+         }

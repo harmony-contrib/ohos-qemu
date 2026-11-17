@@ -1,0 +1,210 @@
+--- a/base/location/location/frameworks/native/locator_sdk/ILocatorService.idl
++++ b/base/location/location/frameworks/native/locator_sdk/ILocatorService.idl
+@@ -88,4 +88,5 @@
+     [ipccode 62] void IsGnssServiceSupported([out] boolean isGnssSupported);
+     [ipccode 63] void IsGnssFenceServiceSupported([out] boolean isGnssFenceSupported);
+     [ipccode 64] void IsCachedGnssServiceSupported([out] boolean isCachedGnssSupported);
++    [ipccode 65] void GetLocationIconStatus([out] int status);
+ }
+\ No newline at end of file
+--- a/base/location/location/interfaces/inner_api/include/locator_impl.h
++++ b/base/location/location/interfaces/inner_api/include/locator_impl.h
+@@ -730,6 +730,7 @@
+      *
+      * @return Returns ERRCODE_SUCCESS if Get perform locating app list.
+      */
++    LocationErrCode GetLocationIconStatus(int32_t& status);
+     LocationErrCode GetAppsPerformLocating(std::vector<AppIdentity>& performLocatingAppList);
+
+     void ResetLocatorProxy(const wptr<IRemoteObject> &remote);
+--- a/base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp
++++ b/base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp
+@@ -1916,6 +1916,18 @@
+ #endif
+ }
+
++LocationErrCode LocatorImpl::GetLocationIconStatus(int32_t& status)
++{
++    if (!SaLoadWithStatistic::InitLocationSa(LOCATION_LOCATOR_SA_ID)) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    auto proxy = GetProxy();
++    if (proxy == nullptr) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    return CommonUtils::ErrCodeToLocationErrCode(proxy->GetLocationIconStatus(status));
++}
++
+ LocationErrCode LocatorImpl::GetAppsPerformLocating(std::vector<AppIdentity>& performLocatingAppList)
+ {
+     if (!SaLoadWithStatistic::InitLocationSa(LOCATION_LOCATOR_SA_ID)) {
+--- a/base/location/location/services/location_locator/locator/include/locator_ability.h
++++ b/base/location/location/services/location_locator/locator/include/locator_ability.h
+@@ -202,6 +202,7 @@
+     ErrCode SetLocationSwitchIgnored(bool isEnabled) override;
+     ErrCode AddBeaconFence(const BeaconFenceRequest& beaconFenceRequest) override;
+     ErrCode RemoveBeaconFence(const BeaconFence& beaconFence) override;
++    ErrCode GetLocationIconStatus(int32_t& status) override;
+     ErrCode GetAppsPerformLocating(std::vector<AppIdentity>& performLocatingAppList) override;
+
+     std::shared_ptr<std::map<std::string, std::list<std::shared_ptr<Request>>>> GetRequests();
+--- a/base/location/location/services/location_locator/locator/source/locator_ability.cpp
++++ b/base/location/location/services/location_locator/locator/source/locator_ability.cpp
+@@ -2287,6 +2287,22 @@
+         std::make_shared<BeaconFence>(const_cast<BeaconFence&>(beaconFence));
+     ErrCode locationErrCode = BeaconFenceManager::GetInstance()->RemoveBeaconFence(beacon, identity.GetBundleName());
+     return locationErrCode;
++}
++
++ErrCode LocatorAbility::GetLocationIconStatus(int32_t& status)
++{
++    AppIdentity identity;
++    GetAppIdentityInfo(identity);
++    if (!PermissionManager::CheckSystemPermission(identity.GetTokenId(), identity.GetTokenIdEx())) {
++        return LOCATION_ERRCODE_SYSTEM_PERMISSION_DENIED;
++    }
++    if (!CheckRequestAvailable(LocatorInterfaceCode::GET_LOCATION_ICON_STATUS, identity)) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    // This source has normal GNSS/network providers, with no HD provider state.
++    // Never infer HD from an accuracy number or a requested priority.
++    status = RequestManager::GetInstance()->IsLocatingInCurrentAccount() ? 1 : 0;
++    return ERRCODE_SUCCESS;
+ }
+
+ ErrCode LocatorAbility::GetAppsPerformLocating(std::vector<AppIdentity>& performLocatingAppList)
+--- a/base/location/location/frameworks/js/napi/include/location_napi_adapter.h
++++ b/base/location/location/frameworks/js/napi/include/location_napi_adapter.h
+@@ -28,6 +28,7 @@
+
+ namespace OHOS {
+ namespace Location {
++napi_value GetLocationIconStatus(napi_env env, napi_callback_info info);
+ napi_value GetLastLocation(napi_env env, napi_callback_info info);
+ napi_value IsLocationEnabled(napi_env env, napi_callback_info info);
+ napi_value EnableLocation(napi_env env, napi_callback_info info);
+--- a/base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp
++++ b/base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp
+@@ -34,6 +34,23 @@
+ std::map<std::shared_ptr<BeaconFence>, sptr<LocationGnssGeofenceCallbackNapi>> g_beaconFenceRequestMap;
+ std::mutex g_gnssGeofenceCallbackHostMutex;
+ std::mutex g_beaconFenceRequestMutex;
++
++napi_value GetLocationIconStatus(napi_env env, napi_callback_info info)
++{
++    int32_t status = 0;
++    if (g_locatorClient == nullptr) {
++        HandleSyncErrCode(env, ERRCODE_SERVICE_UNAVAILABLE);
++        return nullptr;
++    }
++    auto errorCode = g_locatorClient->GetLocationIconStatus(status);
++    if (errorCode != ERRCODE_SUCCESS) {
++        HandleSyncErrCode(env, errorCode);
++        return nullptr;
++    }
++    napi_value result = nullptr;
++    NAPI_CALL(env, napi_create_int32(env, status, &result));
++    return result;
++}
+
+ napi_value GetLastLocation(napi_env env, napi_callback_info info)
+ {
+--- a/base/location/location/frameworks/js/napi/source/location_napi_entry.cpp
++++ b/base/location/location/frameworks/js/napi/source/location_napi_entry.cpp
+@@ -413,6 +413,7 @@
+         DECLARE_NAPI_FUNCTION("removeBeaconFence", RemoveBeaconFence),
+         DECLARE_NAPI_FUNCTION("isBeaconFenceSupported", IsBeaconFenceSupported),
+         DECLARE_NAPI_FUNCTION("getActiveGeoFences", GetActiveGeoFences),
++        DECLARE_NAPI_FUNCTION("getLocationIconStatus", GetLocationIconStatus),
+
+         DECLARE_NAPI_PROPERTY("LocationRequestPriority", LocationRequestPriorityTypeConstructor(env)),
+         DECLARE_NAPI_PROPERTY("LocationRequestScenario", LocationRequestScenarioTypeConstructor(env)),
+--- a/base/location/location/frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp
++++ b/base/location/location/frameworks/ets/taihe/locator_sdk/src/ohos.geoLocationManager.impl.cpp
+@@ -634,8 +634,12 @@
+
+ ::ohos::geoLocationManager::LocationIconStatus GetLocationIconStatus()
+ {
+-    Util::ThrowBussinessError(LocationErrCode::ERRCODE_NOT_SUPPORTED);
+-    return static_cast<::ohos::geoLocationManager::LocationIconStatus::key_t>(0);
++    int32_t status = 0;
++    auto errorCode = Locator::GetInstance()->GetLocationIconStatus(status);
++    if (errorCode != ERRCODE_SUCCESS) {
++        Util::ThrowBussinessError(errorCode);
++    }
++    return static_cast<::ohos::geoLocationManager::LocationIconStatus::key_t>(status);
+ }
+
+ ::taihe::array<::ohos::geoLocationManager::LocatingRequiredData> GetLocatingRequiredDataSync(
+--- a/base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h
++++ b/base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h
+@@ -79,7 +79,8 @@
+     REMOVE_BEACON_FENCE = 58,
+     GET_APPS_PERFORM_LOCATING = 59,
+     GET_POI_INFO = 60,
+-	GET_ACTIVE_GEO_FENCES = 61
++	GET_ACTIVE_GEO_FENCES = 61,
++    GET_LOCATION_ICON_STATUS = 65
+ };
+
+ enum class GeoConvertInterfaceCode {
+--- a/base/location/location/services/location_locator/locator/include/request_manager.h
++++ b/base/location/location/services/location_locator/locator/include/request_manager.h
+@@ -74,6 +74,7 @@
+     void SyncIdleState(bool state);
+     static RequestManager* GetInstance();
+     void IsStandby();
++    bool IsLocatingInCurrentAccount();
+     void UpdateLocationError(std::shared_ptr<Request> request);
+
+ private:
+--- a/base/location/location/services/location_locator/locator/source/request_manager.cpp
++++ b/base/location/location/services/location_locator/locator/source/request_manager.cpp
+@@ -491,6 +491,47 @@
+     return true;
+ }
+
++bool RequestManager::IsLocatingInCurrentAccount()
++{
++    // Keep the same request -> permission lock order as request deletion.
++    std::unique_lock<ffrt::mutex> requestsLock(requestMutex_);
++    std::unique_lock<ffrt::mutex> permissionLock(permissionRecordMutex_);
++    auto locator = LocatorAbility::GetInstance();
++    auto requests = locator->GetRequests();
++    if (requests == nullptr) {
++        return false;
++    }
++    for (const auto& entry : *requests) {
++        if (entry.first != GNSS_ABILITY && entry.first != NETWORK_ABILITY && entry.first != FUSED_ABILITY) {
++            continue;
++        }
++        for (auto request : entry.second) {
++            if (request == nullptr || request->GetRequestConfig() == nullptr ||
++                !request->GetApproximatelyPermState() || !IsRequestAvailable(request)) {
++                continue;
++            }
++            AppIdentity identity;
++            identity.SetUid(request->GetUid());
++            identity.SetTokenId(request->GetTokenId());
++            if (!CommonUtils::IsAppBelongCurrentAccount(identity)) {
++                continue;
++            }
++            auto tokenId = request->GetTokenId();
++            auto firstTokenId = request->GetFirstTokenId();
++            if (!PermissionManager::CheckLocationPermission(tokenId, firstTokenId) &&
++                !PermissionManager::CheckApproximatelyPermission(tokenId, firstTokenId)) {
++                continue;
++            }
++            auto userId = CommonUtils::GetUserIdByUid(request->GetUid());
++            if (LocationDataRdbManager::QuerySwitchStateForUser(userId) == ENABLED ||
++                locator->GetLocationSwitchIgnoredFlag(tokenId)) {
++                return true;
++            }
++        }
++    }
++    return false;
++}
++
+ void RequestManager::IsStandby()
+ {
+ #ifdef DEVICE_STANDBY_ENABLE

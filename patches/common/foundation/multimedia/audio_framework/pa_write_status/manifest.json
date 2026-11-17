@@ -1,0 +1,89 @@
+{
+  "schema": "pa-write-status542/v1",
+  "component": "pa_write_status",
+  "scope": "one exact PA source failure-status repair; preserve offload/lock/dequeue/callback and normal PA zero status contract",
+  "files": {
+    "foundation/multimedia/audio_framework/services/audio_service/server/src/pa_renderer_stream_impl.cpp": {
+      "before_sha256": "b43b5bb50d7ceb0c97b417bfc3f83d254d7a972d459b706e9a2ac9b7dde89393",
+      "after_sha256": "8591fc04f7ed830a5830b26b4924d5a964f139a368486781b7a1f9fd0c50801a",
+      "before_bytes": 55047,
+      "after_bytes": 55085,
+      "mode": 420
+    }
+  },
+  "prerequisites": {
+    "foundation/multimedia/audio_framework/services/audio_service/server/include/i_renderer_stream.h": "919722efa8f255f7dea8131db904730997f9235802dca42a82c73753d744c496",
+    "foundation/multimedia/audio_framework/services/audio_service/server/include/pa_renderer_stream_impl.h": "3b89be8529685c443bf37820bee61bb01ac4ac441767d8ea042cdab8b2be46be",
+    "third_party/pulseaudio/src/pulse/internal.h": "bb67198a11fe8a40a40f738d961caf35c8c3040b2728e58fea53a880e74490ab",
+    "third_party/pulseaudio/src/pulse/stream.c": "855a7118f47a4c45e53393ba3dfa405f6e2b5b2b4bf90bb7cbfd093fcb3bd76a",
+    "third_party/pulseaudio/src/pulse/stream.h": "e951258e0dd33ebebb48a302b2f65b836673649eeb873210a590f07c66f43ce7"
+  },
+  "patch_sha256": "f844cb71ff1e5477ddb8f7acf9e832847e4a17d40c091b42c7ea54654d08e7e0",
+  "source_receipts": [
+    {
+      "receipt": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-audio-pa539-copy-01/receipt.json",
+      "sha256": "216faa022c8b9ecfe1e285fa0c6f14ef2435516198367c5209fbc7a3d58d1a49",
+      "files": [
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-audio-pa539-copy-01/files/foundation/multimedia/audio_framework/services/audio_service/server/src/pa_renderer_stream_impl.cpp",
+          "source_relative": "foundation/multimedia/audio_framework/services/audio_service/server/src/pa_renderer_stream_impl.cpp",
+          "sha256": "b43b5bb50d7ceb0c97b417bfc3f83d254d7a972d459b706e9a2ac9b7dde89393",
+          "bytes": 55047,
+          "two_read_payloads_equal": true
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-audio-pa539-copy-01/files/foundation/multimedia/audio_framework/services/audio_service/server/include/i_renderer_stream.h",
+          "source_relative": "foundation/multimedia/audio_framework/services/audio_service/server/include/i_renderer_stream.h",
+          "sha256": "919722efa8f255f7dea8131db904730997f9235802dca42a82c73753d744c496",
+          "bytes": 4665,
+          "two_read_payloads_equal": true
+        }
+      ]
+    },
+    {
+      "receipt": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-audio-pa542-copy-01/receipt.json",
+      "sha256": "98ef6a7bcc89ae7c6dd9caf976dfa8e53d1ac8f1be1d1c04c58c049dd718cdf0",
+      "files": [
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-audio-pa542-copy-01/files/foundation/multimedia/audio_framework/services/audio_service/server/include/pa_renderer_stream_impl.h",
+          "source_relative": "foundation/multimedia/audio_framework/services/audio_service/server/include/pa_renderer_stream_impl.h",
+          "sha256": "3b89be8529685c443bf37820bee61bb01ac4ac441767d8ea042cdab8b2be46be",
+          "bytes": 7301,
+          "two_read_payloads_equal": true
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-audio-pa542-copy-01/files/third_party/pulseaudio/src/pulse/stream.c",
+          "source_relative": "third_party/pulseaudio/src/pulse/stream.c",
+          "sha256": "855a7118f47a4c45e53393ba3dfa405f6e2b5b2b4bf90bb7cbfd093fcb3bd76a",
+          "bytes": 101685,
+          "two_read_payloads_equal": true
+        },
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-audio-pa542-copy-01/files/third_party/pulseaudio/src/pulse/stream.h",
+          "source_relative": "third_party/pulseaudio/src/pulse/stream.h",
+          "sha256": "e951258e0dd33ebebb48a302b2f65b836673649eeb873210a590f07c66f43ce7",
+          "bytes": 41974,
+          "two_read_payloads_equal": true
+        }
+      ]
+    },
+    {
+      "receipt": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-audio-pa542-macro-copy-01/receipt.json",
+      "sha256": "fcb46412b70b3f3b736c2137a3a2825148048d7b344e43e0b7b1beb1da18a256",
+      "files": [
+        {
+          "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r62-audio-pa542-macro-copy-01/files/third_party/pulseaudio/src/pulse/internal.h",
+          "source_relative": "third_party/pulseaudio/src/pulse/internal.h",
+          "sha256": "bb67198a11fe8a40a40f738d961caf35c8c3040b2728e58fea53a880e74490ab",
+          "bytes": 10898,
+          "two_read_payloads_equal": true
+        }
+      ]
+    }
+  ],
+  "contract": "actual Pulse write wrapper delegates to ext_free; every negative validity return precedes the first send_memblock; after send begins both branches return0 only. Zero is local success, never an accepted byte count or HW playback proof.",
+  "target_build_passed": false,
+  "runtime_passed": false,
+  "onset_proven": false,
+  "first_artifact_behavior_gate_passed": false
+}

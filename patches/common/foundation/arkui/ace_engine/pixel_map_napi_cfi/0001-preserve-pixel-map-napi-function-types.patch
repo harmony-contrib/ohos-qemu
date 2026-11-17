@@ -1,0 +1,41 @@
+--- a/foundation/arkui/ace_engine/frameworks/bridge/js_frontend/engine/common/js_engine.cpp
++++ b/foundation/arkui/ace_engine/frameworks/bridge/js_frontend/engine/common/js_engine.cpp
+@@ -37,7 +37,7 @@
+ PixelMapNapiEntry JsEngine::GetPixelMapNapiEntry()
+ {
+ #if defined(IOS_PLATFORM) || defined(ANDROID_PLATFORM)
+-    return reinterpret_cast<PixelMapNapiEntry>(&OHOS_MEDIA_GetPixelMap);
++    return &OHOS_MEDIA_GetPixelMap;
+ #else
+     static PixelMapNapiEntry pixelMapNapiEntry_ = nullptr;
+     if (!pixelMapNapiEntry_) {
+--- a/foundation/arkui/ace_engine/frameworks/bridge/js_frontend/engine/common/js_engine.h
++++ b/foundation/arkui/ace_engine/frameworks/bridge/js_frontend/engine/common/js_engine.h
+@@ -30,6 +30,7 @@
+ 
+ class NativeEngine;
+ class NativeReference;
++typedef struct napi_env__* napi_env;
+ typedef struct napi_value__* napi_value;
+ 
+ namespace OHOS::Ace {
+@@ -39,7 +40,7 @@
+ namespace OHOS::Ace::Framework {
+ class JsAcePage;
+ class FrontendDelegate;
+-using PixelMapNapiEntry = void* (*)(void*, void*);
++using PixelMapNapiEntry = void* (*)(napi_env, napi_value);
+ struct JsModule {
+     const std::string moduleName;
+     const std::string methods;
+--- a/foundation/arkui/ace_engine/interfaces/napi/kits/drag_controller/js_drag_controller.cpp
++++ b/foundation/arkui/ace_engine/interfaces/napi/kits/drag_controller/js_drag_controller.cpp
+@@ -84,7 +84,7 @@
+ using DragRet = OHOS::Ace::DragRet;
+ using OnDragCallback = std::function<void(const DragNotifyMsg&)>;
+ using StopDragCallback = std::function<void()>;
+-using PixelMapNapiEntry = void* (*)(void*, void*);
++using PixelMapNapiEntry = Framework::PixelMapNapiEntry;
+ 
+ enum class DragState { PENDING, SENDING, REJECT, SUCCESS };
+ enum class DragStatus { STARTED, ENDED };

@@ -1,0 +1,23 @@
+diff --git a/base/powermgr/thermal_manager/frameworks/napi/thermal_manager_napi.cpp b/base/powermgr/thermal_manager/frameworks/napi/thermal_manager_napi.cpp
+--- a/base/powermgr/thermal_manager/frameworks/napi/thermal_manager_napi.cpp
++++ b/base/powermgr/thermal_manager/frameworks/napi/thermal_manager_napi.cpp
+@@ -338,7 +338,9 @@
+     NapiUtils::GetCallbackInfo(env, info, argc, argv);
+ 
+     NapiErrors error;
+-    if (argc > MAX_ARGC || (argc != ARG_0 && !NapiUtils::CheckValueType(env, argv[ARG_0], napi_function))) {
++    const bool omitted = argc == ARG_0 ||
++        (argc == MAX_ARGC && NapiUtils::CheckValueType(env, argv[ARG_0], napi_undefined));
++    if (argc > MAX_ARGC || (!omitted && !NapiUtils::CheckValueType(env, argv[ARG_0], napi_function))) {
+         return error.ThrowError(env, ThermalErrors::ERR_PARAM_INVALID);
+     }
+     napi_value result = nullptr;
+@@ -350,7 +352,7 @@
+         }
+         g_thermalLevelCallback->ReleaseCallback();
+     }
+-    THERMAL_RETURN_IF_WITH_RET(argc == ARG_0, result);
++    THERMAL_RETURN_IF_WITH_RET(omitted, result);
+     napi_value argument = nullptr;
+     if (legacy && napi_get_undefined(env, &argument) != napi_ok) {
+         return result;

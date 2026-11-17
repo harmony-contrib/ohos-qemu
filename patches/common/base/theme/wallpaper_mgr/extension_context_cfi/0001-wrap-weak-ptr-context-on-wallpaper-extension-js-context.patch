@@ -1,0 +1,21 @@
+diff --git a/base/theme/wallpaper_mgr/frameworks/kits/extension/src/js_wallpaper_extension_ability.cpp b/base/theme/wallpaper_mgr/frameworks/kits/extension/src/js_wallpaper_extension_ability.cpp
+--- a/base/theme/wallpaper_mgr/frameworks/kits/extension/src/js_wallpaper_extension_ability.cpp
++++ b/base/theme/wallpaper_mgr/frameworks/kits/extension/src/js_wallpaper_extension_ability.cpp
+@@ -107,14 +107,15 @@ void JsWallpaperExtensionAbility::InitMoudle(std::string srcPath)
+         HILOG_ERROR("Failed to get wallpaper extension native object!");
+         return;
+     }
+-    auto workContext = new (std::nothrow) WallpaperExtensionContext();
++    auto workContext = new (std::nothrow) std::weak_ptr<AbilityRuntime::Context>(context);
+     if (workContext == nullptr) {
+         HILOG_ERROR("Failed to new workContext!");
+         return;
+     }
+     auto ret = napi_wrap(
+         env, contextObj, workContext,
+-        [](napi_env, void *data, void *) { delete static_cast<AbilityRuntime::Context *>(data); }, nullptr, nullptr);
++        [](napi_env, void *data, void *) { delete static_cast<std::weak_ptr<AbilityRuntime::Context> *>(data); },
++        nullptr, nullptr);
+     if (ret != napi_ok) {
+         delete workContext;
+     }

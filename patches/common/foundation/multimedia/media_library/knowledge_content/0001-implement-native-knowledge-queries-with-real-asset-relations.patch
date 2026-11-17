@@ -1,0 +1,767 @@
+diff --git a/foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn b/foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn
+--- a/foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn
++++ b/foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn
+@@ -224,6 +224,8 @@
+     "${MEDIALIB_JS_PATH}/src/media_change_request_napi.cpp",
+     "${MEDIALIB_JS_PATH}/src/media_library_comm_napi.cpp",
+     "${MEDIALIB_JS_PATH}/src/media_library_napi.cpp",
++    "${MEDIALIB_JS_PATH}/src/knowledge_content_napi.cpp",
++    "${MEDIALIB_JS_PATH}/src/knowledge_content_query.cpp",
+     "${MEDIALIB_JS_PATH}/src/medialibrary_napi_utils.cpp",
+     "${MEDIALIB_JS_PATH}/src/medialibrary_notify_asset_manager_observer.cpp",
+     "${MEDIALIB_JS_PATH}/src/medialibrary_notify_new_observer.cpp",
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/native_module_ohos_photoaccess_helper.cpp b/foundation/multimedia/media_library/frameworks/js/src/native_module_ohos_photoaccess_helper.cpp
+--- a/foundation/multimedia/media_library/frameworks/js/src/native_module_ohos_photoaccess_helper.cpp
++++ b/foundation/multimedia/media_library/frameworks/js/src/native_module_ohos_photoaccess_helper.cpp
+@@ -30,6 +30,7 @@
+ #include "photo_asset_custom_record_manager_napi.h"
+ #include "cloud_media_download_resources_status_napi.h"
+ #include "result_set_napi.h"
++#include "knowledge_content_napi.h"
+ #include "task_signal_napi.h"
+
+ namespace OHOS {
+@@ -48,6 +49,9 @@
+     HighlightAlbumNapi::AnalysisAlbumInit(env, exports);
+     HighlightAlbumNapi::Init(env, exports);
+     ResultSetNapi::Init(env, exports);
++    if (KnowledgeContentNapi::Init(env, exports) == nullptr) {
++        return nullptr;
++    }
+     MediaAssetEditDataNapi::Init(env, exports);
+     MediaAssetChangeRequestNapi::Init(env, exports);
+     MediaAssetsChangeRequestNapi::Init(env, exports);
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js b/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
+--- a/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
++++ b/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
+@@ -1670,5 +1670,6 @@
+   AvailabilityStatus: photoAccessHelper.AvailabilityStatus,
+   MediaAssetPermissionState: photoAccessHelper.MediaAssetPermissionState,
+   TaskSignal: photoAccessHelper.TaskSignal,
++  KnowledgeContent: photoAccessHelper.KnowledgeContent,
+   DeepOptimizeState: photoAccessHelper.DeepOptimizeState
+ };
+diff --git a/foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/include/media_asset_rdbstore.h b/foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/include/media_asset_rdbstore.h
+--- a/foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/include/media_asset_rdbstore.h
++++ b/foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/include/media_asset_rdbstore.h
+@@ -49,6 +49,8 @@
+         std::vector<std::string>& columns, OperationObject& object);
+     EXPORT int32_t QueryTimeIdBatch(int32_t start, int32_t count, std::vector<std::string> &batchKeys);
+     EXPORT std::shared_ptr<NativeRdb::ResultSet> QueryByStep(const std::string &sql);
++    EXPORT std::shared_ptr<NativeRdb::ResultSet> QueryByStep(const std::string &sql,
++        const std::vector<NativeRdb::ValueObject> &args);
+
+ private:
+     MediaAssetRdbStore();
+diff --git a/foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp b/foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp
+--- a/foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp
++++ b/foundation/multimedia/media_library/frameworks/innerkitsimpl/media_library_helper/src/media_asset_rdbstore.cpp
+@@ -400,6 +400,24 @@
+         }
+     }
+     return rdbStore_->QueryByStep(sql);
++}
++
++std::shared_ptr<NativeRdb::ResultSet> MediaAssetRdbStore::QueryByStep(const std::string &sql,
++    const std::vector<NativeRdb::ValueObject> &args)
++{
++    std::shared_ptr<NativeRdb::RdbStore> store;
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        store = rdbStore_;
++    }
++    if (store == nullptr) {
++        if (TryGetRdbStore(false) != NativeRdb::E_OK) {
++            return nullptr;
++        }
++        std::lock_guard<std::mutex> lock(mutex_);
++        store = rdbStore_;
++    }
++    return store == nullptr ? nullptr : store->QueryByStep(sql, args);
+ }
+
+ bool MediaAssetRdbStore::IsSupportSharedAssetQuery(Uri& uri, OperationObject& object, bool isIgnoreSELinux)
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/knowledge_content_napi.cpp b/foundation/multimedia/media_library/frameworks/js/src/knowledge_content_napi.cpp
+new file mode 100644
+--- /dev/null
++++ b/foundation/multimedia/media_library/frameworks/js/src/knowledge_content_napi.cpp
+@@ -0,0 +1,450 @@
++/*
++ * Copyright (C) 2026 OpenHarmony Contributors.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ * http://www.apache.org/licenses/LICENSE-2.0
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#include "knowledge_content_napi.h"
++#include "knowledge_content_query.h"
++#include "accesstoken_kit.h"
++#include "ipc_skeleton.h"
++#include "medialibrary_napi_utils.h"
++#include "media_asset_rdbstore.h"
++#include <algorithm>
++#include <cerrno>
++#include <cmath>
++#include <limits>
++#include <memory>
++#include <sys/random.h>
++namespace OHOS::Media {
++namespace {
++constexpr int32_t PERMISSION = 201;
++constexpr int32_t SYSTEM_APP = 202;
++constexpr int32_t PARAMETER = 13900020;
++constexpr int32_t SCENARIO = 23800151;
++constexpr int32_t INTERNAL = 23800301;
++constexpr size_t SUGGESTION_TYPE_COUNT = 7;
++const std::vector<int32_t> DEFAULT_FIELDS = {1,2,3,4,5,6,8};
++struct Suggestion {
++    int32_t type = 0;
++    std::string value;
++    int32_t count = 0;
++};
++struct Work {
++    napi_async_work work = nullptr;
++    napi_deferred deferred = nullptr;
++    Knowledge::Query query;
++    bool related = false;
++    size_t count = 10;
++    int32_t error = 0;
++    std::string message;
++    std::vector<Knowledge::Entity> entities;
++    std::vector<Suggestion> suggestions;
++};
++int32_t AccessError()
++{
++    // Both checks execute natively against the actual process token/security
++    // service, including when the request starts and when it completes.
++    if (!MediaLibraryNapiUtils::IsSystemApp()) {
++        return SYSTEM_APP;
++    }
++    using namespace OHOS::Security::AccessToken;
++    if (AccessTokenKit::VerifyAccessToken(static_cast<AccessTokenID>(IPCSkeleton::GetSelfTokenID()),
++        "ohos.permission.READ_IMAGEVIDEO") != PermissionState::PERMISSION_GRANTED) {
++        return PERMISSION;
++    }
++    return 0;
++}
++napi_value Error(napi_env env, int32_t code, const std::string &message)
++{
++    napi_value text = nullptr;
++    napi_value error = nullptr;
++    napi_value number = nullptr;
++    if (napi_create_string_utf8(env, message.c_str(), message.size(), &text) != napi_ok ||
++        napi_create_error(env, nullptr, text, &error) != napi_ok ||
++        napi_create_int32(env, code, &number) != napi_ok ||
++        napi_set_named_property(env, error, "code", number) != napi_ok) {
++        return nullptr;
++    }
++    return error;
++}
++napi_value Throw(napi_env env, int32_t code, const std::string &message)
++{
++    napi_value error = Error(env, code, message);
++    if (error != nullptr) {
++        napi_throw(env, error);
++    }
++    return nullptr;
++}
++bool Number(napi_env env, napi_value value, int32_t &result)
++{
++    napi_valuetype type;
++    double number = 0;
++    if (napi_typeof(env, value, &type) != napi_ok || type != napi_number ||
++        napi_get_value_double(env, value, &number) != napi_ok || !std::isfinite(number) ||
++        std::trunc(number) != number || number < std::numeric_limits<int32_t>::min() ||
++        number > std::numeric_limits<int32_t>::max()) {
++        return false;
++    }
++    result = static_cast<int32_t>(number);
++    return true;
++}
++bool String(napi_env env, napi_value value, std::string &result)
++{
++    napi_valuetype type;
++    size_t size = 0;
++    if (napi_typeof(env, value, &type) != napi_ok || type != napi_string ||
++        napi_get_value_string_utf8(env, value, nullptr, 0, &size) != napi_ok) {
++        return false;
++    }
++    std::vector<char> bytes(size + 1);
++    size_t read = 0;
++    if (napi_get_value_string_utf8(env, value, bytes.data(), bytes.size(), &read) != napi_ok || read != size) {
++        return false;
++    }
++    result.assign(bytes.data(), size);
++    return true;
++}
++bool IntegerArray(napi_env env, napi_value value, std::vector<int32_t> &result, bool suggestions)
++{
++    bool array = false;
++    uint32_t length = 0;
++    if (napi_is_array(env, value, &array) != napi_ok || !array ||
++        napi_get_array_length(env, value, &length) != napi_ok || length == 0 ||
++        (suggestions && length > SUGGESTION_TYPE_COUNT)) {
++        return false;
++    }
++    for (uint32_t i = 0; i < length; ++i) {
++        napi_value element = nullptr;
++        int32_t field = 0;
++        if (napi_get_element(env, value, i, &element) != napi_ok || !Number(env, element, field) ||
++            (suggestions ? (field < 0 || field > 6) : !Knowledge::IsField(field))) {
++            return false;
++        }
++        if (std::find(result.begin(), result.end(), field) == result.end()) {
++            result.push_back(field);
++        }
++    }
++    return true;
++}
++bool Object(napi_env env, napi_value value)
++{
++    napi_valuetype type;
++    bool array = false;
++    napi_value nullValue = nullptr;
++    bool isNull = false;
++    return napi_typeof(env, value, &type) == napi_ok && type == napi_object &&
++        napi_is_array(env, value, &array) == napi_ok && !array &&
++        napi_get_null(env, &nullValue) == napi_ok &&
++        napi_strict_equals(env, value, nullValue, &isNull) == napi_ok && !isNull;
++}
++bool FieldProperty(napi_env env, napi_value object, const char *key, std::vector<int32_t> &fields)
++{
++    napi_value value = nullptr;
++    return napi_get_named_property(env, object, key, &value) == napi_ok && IntegerArray(env, value, fields, false);
++}
++bool SetString(napi_env env, napi_value object, const char *name, const std::string &value)
++{
++    napi_value result = nullptr;
++    return napi_create_string_utf8(env, value.c_str(), value.size(), &result) == napi_ok &&
++        napi_set_named_property(env, object, name, result) == napi_ok;
++}
++bool SetNumber(napi_env env, napi_value object, const char *name, int32_t value)
++{
++    napi_value result = nullptr;
++    return napi_create_int32(env, value, &result) == napi_ok &&
++        napi_set_named_property(env, object, name, result) == napi_ok;
++}
++void ReadEntities(const std::shared_ptr<NativeRdb::ResultSet> &result, int rows, Work &work)
++{
++    for (int i = 0; i < rows; ++i) {
++        Knowledge::Entity entity;
++        std::string alias;
++        if (result->GoToNextRow() != NativeRdb::E_OK || result->GetInt(0, entity.field) != NativeRdb::E_OK ||
++            result->GetString(1, entity.id) != NativeRdb::E_OK || result->GetString(2, entity.name) != NativeRdb::E_OK ||
++            result->GetString(3, alias) != NativeRdb::E_OK || result->GetLong(4, entity.votes) != NativeRdb::E_OK ||
++            entity.id.empty() || entity.name.empty() || entity.votes <= 0 || !Knowledge::HasProducer(entity.field)) {
++            work.error = INTERNAL;
++            return;
++        }
++        if (work.entities.empty() || work.entities.back().field != entity.field ||
++            work.entities.back().id != entity.id || work.entities.back().name != entity.name) {
++            work.entities.push_back(std::move(entity));
++        }
++        auto &existing = work.entities.back();
++        if (!alias.empty() && std::find(existing.aliases.begin(), existing.aliases.end(), alias) == existing.aliases.end()) {
++            existing.aliases.push_back(alias);
++        }
++    }
++}
++void ReadSuggestions(const std::shared_ptr<NativeRdb::ResultSet> &result, int rows, Work &work)
++{
++    for (int i = 0; i < rows; ++i) {
++        Suggestion suggestion;
++        int64_t count = 0;
++        if (result->GoToNextRow() != NativeRdb::E_OK || result->GetInt(0, suggestion.type) != NativeRdb::E_OK ||
++            result->GetString(1, suggestion.value) != NativeRdb::E_OK || result->GetLong(2, count) != NativeRdb::E_OK ||
++            suggestion.type < 0 || suggestion.type > 6 || suggestion.value.empty() || count <= 0 ||
++            count > std::numeric_limits<int32_t>::max()) {
++            work.error = INTERNAL;
++            return;
++        }
++        suggestion.count = static_cast<int32_t>(count);
++        work.suggestions.push_back(std::move(suggestion));
++    }
++}
++void Execute(napi_env, void *data)
++{
++    auto &work = *static_cast<Work *>(data);
++    work.error = AccessError();
++    if (work.error != 0) {
++        return;
++    }
++    std::vector<NativeRdb::ValueObject> args;
++    for (const auto &argument : work.query.args) {
++        if (std::holds_alternative<int64_t>(argument)) {
++            args.emplace_back(std::get<int64_t>(argument));
++        } else {
++            args.emplace_back(std::get<std::string>(argument));
++        }
++    }
++    auto result = MediaAssetRdbStore::GetInstance()->QueryByStep(work.query.sql, args);
++    int rows = 0;
++    if (result == nullptr || result->GetRowCount(rows) != NativeRdb::E_OK || rows < 0) {
++        if (result != nullptr) {
++            result->Close();
++        }
++        work.error = INTERNAL;
++        work.message = "Knowledge database query unavailable";
++        return;
++    }
++    if (work.related) {
++        ReadEntities(result, rows, work);
++    } else {
++        ReadSuggestions(result, rows, work);
++    }
++    result->Close();
++    if (work.error == 0 && work.related) {
++        if (work.entities.empty() || work.count == 0) {
++            work.entities.clear();
++            return;
++        }
++        uint64_t seed = 0;
++        size_t received = 0;
++        while (received < sizeof(seed)) {
++            const ssize_t bytes = getrandom(reinterpret_cast<char *>(&seed) + received, sizeof(seed) - received, 0);
++            if (bytes < 0 && errno == EINTR) {
++                continue;
++            }
++            if (bytes <= 0) {
++                work.error = INTERNAL;
++                return;
++            }
++            received += static_cast<size_t>(bytes);
++        }
++        std::mt19937_64 random(seed);
++        work.entities = Knowledge::RandomVote(std::move(work.entities), work.count, random);
++    }
++}
++napi_value BuildResult(napi_env env, const Work &work)
++{
++    napi_value output = nullptr;
++    const size_t size = work.related ? work.entities.size() : work.suggestions.size();
++    if (napi_create_array_with_length(env, size, &output) != napi_ok) {
++        return nullptr;
++    }
++    for (size_t i = 0; i < size; ++i) {
++        napi_value object = nullptr;
++        if (napi_create_object(env, &object) != napi_ok) {
++            return nullptr;
++        }
++        if (work.related) {
++            const auto &entity = work.entities[i];
++            napi_value aliases = nullptr;
++            if (!SetString(env, object, "id", entity.id) || !SetString(env, object, "name", entity.name) ||
++                !SetNumber(env, object, "field", entity.field) ||
++                napi_create_array_with_length(env, entity.aliases.size(), &aliases) != napi_ok) {
++                return nullptr;
++            }
++            for (size_t j = 0; j < entity.aliases.size(); ++j) {
++                napi_value alias = nullptr;
++                if (napi_create_string_utf8(env, entity.aliases[j].c_str(), entity.aliases[j].size(), &alias) != napi_ok ||
++                    napi_set_element(env, aliases, j, alias) != napi_ok) {
++                    return nullptr;
++                }
++            }
++            if (napi_set_named_property(env, object, "alias", aliases) != napi_ok) {
++                return nullptr;
++            }
++        } else {
++            const auto &suggestion = work.suggestions[i];
++            if (!SetNumber(env, object, "type", suggestion.type) || !SetString(env, object, "value", suggestion.value) ||
++                !SetNumber(env, object, "count", suggestion.count)) {
++                return nullptr;
++            }
++        }
++        if (napi_set_element(env, output, i, object) != napi_ok) {
++            return nullptr;
++        }
++    }
++    return output;
++}
++void Complete(napi_env env, napi_status status, void *data)
++{
++    std::unique_ptr<Work> work(static_cast<Work *>(data));
++    const int32_t access = AccessError();
++    if (access != 0) {
++        work->error = access;
++    } else if (status != napi_ok) {
++        work->error = INTERNAL;
++    }
++    napi_value result = work->error == 0 ? BuildResult(env, *work) : nullptr;
++    if (result != nullptr) {
++        napi_resolve_deferred(env, work->deferred, result);
++    } else {
++        bool pending = false;
++        napi_value error = nullptr;
++        if (napi_is_exception_pending(env, &pending) == napi_ok && pending) {
++            napi_get_and_clear_last_exception(env, &error);
++        } else {
++            error = Error(env, work->error == 0 ? INTERNAL : work->error,
++                work->message.empty() ? "Knowledge content request failed" : work->message);
++        }
++        if (error != nullptr) {
++            napi_reject_deferred(env, work->deferred, error);
++        }
++    }
++    napi_delete_async_work(env, work->work);
++}
++napi_value Schedule(napi_env env, std::unique_ptr<Work> work)
++{
++    napi_value promise = nullptr;
++    napi_value name = nullptr;
++    if (napi_create_promise(env, &work->deferred, &promise) != napi_ok ||
++        napi_create_string_utf8(env, "KnowledgeContent", NAPI_AUTO_LENGTH, &name) != napi_ok ||
++        napi_create_async_work(env, nullptr, name, Execute, Complete, work.get(), &work->work) != napi_ok) {
++        return Throw(env, INTERNAL, "Cannot create knowledge request");
++    }
++    if (napi_queue_async_work(env, work->work) != napi_ok) {
++        napi_delete_async_work(env, work->work);
++        return Throw(env, INTERNAL, "Cannot queue knowledge request");
++    }
++    work.release();
++    return promise;
++}
++} // namespace
++napi_value KnowledgeContentNapi::Constructor(napi_env env, napi_callback_info info)
++{
++    napi_value self = nullptr;
++    size_t argc = 0;
++    if (napi_get_cb_info(env, info, &argc, nullptr, &self, nullptr) != napi_ok) {
++        return nullptr;
++    }
++    return self;
++}
++napi_value KnowledgeContentNapi::GetRelatedEntity(napi_env env, napi_callback_info info)
++{
++    const int32_t access = AccessError();
++    if (access != 0) {
++        return Throw(env, access, "System application and READ_IMAGEVIDEO required");
++    }
++    napi_value argv[4] = {};
++    size_t argc = 4;
++    std::string topic;
++    std::vector<int32_t> topicFields;
++    std::vector<int32_t> suggestionFields = DEFAULT_FIELDS;
++    auto work = std::make_unique<Work>();
++    work->related = true;
++    if (napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr) != napi_ok || argc < 2 || argc > 3 ||
++        !String(env, argv[0], topic) || topic.empty() || !Object(env, argv[1]) ||
++        !FieldProperty(env, argv[1], "topicField", topicFields)) {
++        return Throw(env, PARAMETER, "Invalid related entity parameters");
++    }
++    if (argc == 3) {
++        napi_valuetype type;
++        if (napi_typeof(env, argv[2], &type) != napi_ok) {
++            return nullptr;
++        }
++        if (type != napi_undefined) {
++            if (!Object(env, argv[2])) {
++                return Throw(env, PARAMETER, "Invalid related entity options");
++            }
++            bool has = false;
++            napi_value value = nullptr;
++            int32_t number = 0;
++            for (const char *key : {"rankingMethod", "recommendationCount", "suggestionFields"}) {
++                if (napi_has_named_property(env, argv[2], key, &has) != napi_ok) {
++                    return nullptr;
++                }
++                if (!has) {
++                    continue;
++                }
++                if (napi_get_named_property(env, argv[2], key, &value) != napi_ok) {
++                    return nullptr;
++                }
++                napi_valuetype valueType;
++                if (napi_typeof(env, value, &valueType) != napi_ok) {
++                    return nullptr;
++                }
++                if (valueType == napi_undefined) {
++                    continue;
++                }
++                if (std::string(key) == "suggestionFields") {
++                    suggestionFields.clear();
++                    if (!IntegerArray(env, value, suggestionFields, false)) {
++                        return Throw(env, PARAMETER, "Invalid suggestion fields");
++                    }
++                } else if (!Number(env, value, number) ||
++                    (std::string(key) == "rankingMethod" ? number != 0 : number < 0)) {
++                    return Throw(env, PARAMETER, "Invalid ranking or recommendation count");
++                } else if (std::string(key) == "recommendationCount") {
++                    work->count = static_cast<size_t>(number);
++                }
++            }
++        }
++    }
++    if (std::any_of(topicFields.begin(), topicFields.end(), [](int32_t field) {return !Knowledge::HasProducer(field);}) ||
++        std::any_of(suggestionFields.begin(), suggestionFields.end(), [](int32_t field) {return !Knowledge::HasProducer(field);})) {
++        return Throw(env, INTERNAL, "Requested knowledge field has no indexed producer");
++    }
++    work->query = Knowledge::Related(topic, topicFields, suggestionFields);
++    return Schedule(env, std::move(work));
++}
++napi_value KnowledgeContentNapi::GetSearchSuggestion(napi_env env, napi_callback_info info)
++{
++    const int32_t access = AccessError();
++    if (access != 0) {
++        return Throw(env, access, "System application and READ_IMAGEVIDEO required");
++    }
++    napi_value argv[2] = {};
++    size_t argc = 2;
++    std::vector<int32_t> types;
++    if (napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr) != napi_ok || argc != 1 ||
++        !IntegerArray(env, argv[0], types, true)) {
++        return Throw(env, SCENARIO, "Search suggestion types must contain 1 to 7 valid entries");
++    }
++    auto work = std::make_unique<Work>();
++    work->query = Knowledge::Suggestions(types);
++    return Schedule(env, std::move(work));
++}
++napi_value KnowledgeContentNapi::Init(napi_env env, napi_value exports)
++{
++    const napi_property_descriptor methods[] = {
++        {"getRelatedEntity", nullptr, GetRelatedEntity, nullptr, nullptr, nullptr, napi_static, nullptr},
++        {"getSearchSuggestion", nullptr, GetSearchSuggestion, nullptr, nullptr, nullptr, napi_static, nullptr},
++    };
++    napi_value constructor = nullptr;
++    if (napi_define_class(env, "KnowledgeContent", NAPI_AUTO_LENGTH, Constructor, nullptr,
++        sizeof(methods) / sizeof(methods[0]), methods, &constructor) != napi_ok ||
++        napi_set_named_property(env, exports, "KnowledgeContent", constructor) != napi_ok) {
++        return nullptr;
++    }
++    return exports;
++}
++} // namespace OHOS::Media
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/knowledge_content_query.cpp b/foundation/multimedia/media_library/frameworks/js/src/knowledge_content_query.cpp
+new file mode 100644
+--- /dev/null
++++ b/foundation/multimedia/media_library/frameworks/js/src/knowledge_content_query.cpp
+@@ -0,0 +1,145 @@
++/*
++ * Copyright (C) 2026 OpenHarmony Contributors.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ * http://www.apache.org/licenses/LICENSE-2.0
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#include "knowledge_content_query.h"
++#include <algorithm>
++#include <set>
++namespace OHOS::Media::Knowledge {
++namespace {
++// A single statement sees one real database snapshot. Every entity/map/alias
++// remains joined to a currently visible Photos row; stale analysis entries
++// cannot survive a photo delete/trash/hide or appear through stored album counts.
++// Risk photos stay excluded: READ_IMAGEVIDEO does not grant MANAGE_RISK_PHOTOS.
++const std::string ROWS = R"SQL(WITH eligible AS (
++ SELECT file_id,date_year,date_month,date_day,media_type FROM Photos
++ WHERE sync_status=0 AND clean_flag=0 AND hidden=0 AND date_trashed=0
++ AND time_pending=0 AND is_temp=0 AND is_critical=0 AND burst_cover_level=1
++ AND media_type IN (1,2)
++), entity_rows(asset_id,field,entity_id,name,alias) AS (
++ SELECT p.file_id,CASE a.album_subtype WHEN 4102 THEN 1 WHEN 4097 THEN 2 WHEN 4100 THEN 3 END,
++ CAST(a.album_id AS TEXT),a.album_name,COALESCE(n.nick_name,'')
++ FROM eligible p JOIN AnalysisPhotoMap m ON m.map_asset=p.file_id
++ JOIN AnalysisAlbum a ON a.album_id=m.map_album
++ LEFT JOIN tab_analysis_nick_name n ON n.album_id=a.album_id AND a.album_subtype=4102
++ WHERE a.album_subtype IN (4102,4097,4100) AND a.album_name IS NOT NULL AND a.album_name<>''
++ UNION ALL SELECT file_id,4,date_year,date_year,'' FROM eligible WHERE date_year<>''
++ UNION ALL SELECT file_id,5,date_month,date_month,'' FROM eligible WHERE date_month<>''
++ UNION ALL SELECT file_id,6,date_day,date_day,'' FROM eligible WHERE date_day<>''
++ UNION ALL SELECT file_id,8,CAST(media_type AS TEXT),
++ CASE media_type WHEN 1 THEN 'IMAGE' ELSE 'VIDEO' END,'' FROM eligible
++))SQL";
++std::string Placeholders(const std::vector<int32_t> &values, std::vector<Argument> &args)
++{
++    std::string result;
++    std::set<int32_t> distinct(values.begin(), values.end());
++    for (int32_t value : distinct) {
++        if (!result.empty()) {
++            result += ',';
++        }
++        result += '?';
++        args.emplace_back(static_cast<int64_t>(value));
++    }
++    return result;
++}
++} // namespace
++bool IsField(int32_t field)
++{
++    return field >= 0 && field <= 8;
++}
++bool HasProducer(int32_t field)
++{
++    return field >= 1 && field <= 8 && field != 7;
++}
++Query Related(const std::string &topic, const std::vector<int32_t> &topicFields,
++    const std::vector<int32_t> &suggestionFields)
++{
++    Query query;
++    query.sql = ROWS + ", topic_entities AS (SELECT DISTINCT field,entity_id,asset_id FROM entity_rows WHERE field IN (";
++    query.sql += Placeholders(topicFields, query.args);
++    query.sql += ") AND (instr(lower(name),lower(?))>0 OR instr(lower(alias),lower(?))>0)),";
++    query.args.emplace_back(topic);
++    query.args.emplace_back(topic);
++    query.sql += " votes AS (SELECT e.field,e.entity_id,e.name,COUNT(DISTINCT e.asset_id) AS votes"
++        " FROM entity_rows e JOIN (SELECT DISTINCT asset_id FROM topic_entities) t ON t.asset_id=e.asset_id"
++        " WHERE e.field IN (";
++    query.sql += Placeholders(suggestionFields, query.args);
++    query.sql += ") AND NOT EXISTS (SELECT 1 FROM topic_entities x WHERE x.field=e.field AND x.entity_id=e.entity_id)"
++        " GROUP BY e.field,e.entity_id,e.name)"
++        " SELECT DISTINCT v.field,v.entity_id,v.name,e.alias,v.votes FROM votes v"
++        " JOIN entity_rows e ON e.field=v.field AND e.entity_id=v.entity_id AND e.name=v.name"
++        " ORDER BY v.field,v.entity_id,v.name,e.alias";
++    return query;
++}
++Query Suggestions(const std::vector<int32_t> &types)
++{
++    Query query;
++    query.sql = ROWS;
++    // Actual source fields per SDK SearchSuggestionType; a scenario exists only
++    // when all its named time/people/geography/label components share an asset.
++    const std::vector<std::vector<int32_t>> fields = {
++        {6,3,2}, {6,3}, {6,2}, {6,1,3,2}, {6,1,3}, {6,1,2}, {6,1}
++    };
++    std::set<int32_t> distinct(types.begin(), types.end());
++    bool first = true;
++    for (int32_t type : distinct) {
++        if (type < 0 || type >= static_cast<int32_t>(fields.size())) {
++            return {};
++        }
++        query.sql += first ? " SELECT * FROM (" : " UNION ALL SELECT * FROM (";
++        first = false;
++        query.sql += "SELECT ? AS type,";
++        query.args.emplace_back(static_cast<int64_t>(type));
++        const auto &components = fields[type];
++        for (size_t i = 0; i < components.size(); ++i) {
++            if (i != 0) {
++                query.sql += " || ' ' || ";
++            }
++            query.sql += "e" + std::to_string(i) + ".name";
++        }
++        query.sql += " AS value,COUNT(DISTINCT e0.asset_id) AS count FROM entity_rows e0";
++        for (size_t i = 1; i < components.size(); ++i) {
++            const std::string name = "e" + std::to_string(i);
++            query.sql += " JOIN entity_rows " + name + " ON " + name + ".asset_id=e0.asset_id";
++        }
++        query.sql += " WHERE ";
++        for (size_t i = 0; i < components.size(); ++i) {
++            if (i != 0) {
++                query.sql += " AND ";
++            }
++            query.sql += "e" + std::to_string(i) + ".field=?";
++            query.args.emplace_back(static_cast<int64_t>(components[i]));
++        }
++        query.sql += " GROUP BY value ORDER BY count DESC,value)";
++    }
++    return query;
++}
++std::vector<Entity> RandomVote(std::vector<Entity> candidates, size_t count, std::mt19937_64 &random)
++{
++    std::vector<Entity> selected;
++    count = std::min(count, candidates.size());
++    selected.reserve(count);
++    while (selected.size() < count) {
++        std::vector<double> weights;
++        weights.reserve(candidates.size());
++        for (const auto &candidate : candidates) {
++            weights.push_back(static_cast<double>(std::max<int64_t>(candidate.votes, 0)));
++        }
++        if (std::all_of(weights.begin(), weights.end(), [](double value) { return value <= 0; })) {
++            break;
++        }
++        const size_t index = std::discrete_distribution<size_t>(weights.begin(), weights.end())(random);
++        selected.push_back(std::move(candidates[index]));
++        candidates.erase(candidates.begin() + index);
++    }
++    return selected;
++}
++} // namespace OHOS::Media::Knowledge
+diff --git a/foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_napi.h b/foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_napi.h
+new file mode 100644
+--- /dev/null
++++ b/foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_napi.h
+@@ -0,0 +1,26 @@
++/*
++ * Copyright (C) 2026 OpenHarmony Contributors.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ * http://www.apache.org/licenses/LICENSE-2.0
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#ifndef OHOS_MEDIA_KNOWLEDGE_CONTENT_NAPI_H
++#define OHOS_MEDIA_KNOWLEDGE_CONTENT_NAPI_H
++#include "napi/native_api.h"
++namespace OHOS::Media {
++class KnowledgeContentNapi {
++public:
++    static napi_value Init(napi_env env, napi_value exports);
++private:
++    static napi_value Constructor(napi_env env, napi_callback_info info);
++    static napi_value GetRelatedEntity(napi_env env, napi_callback_info info);
++    static napi_value GetSearchSuggestion(napi_env env, napi_callback_info info);
++};
++} // namespace OHOS::Media
++#endif
+diff --git a/foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_query.h b/foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_query.h
+new file mode 100644
+--- /dev/null
++++ b/foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_query.h
+@@ -0,0 +1,43 @@
++/*
++ * Copyright (C) 2026 OpenHarmony Contributors.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ * http://www.apache.org/licenses/LICENSE-2.0
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#ifndef OHOS_MEDIA_KNOWLEDGE_CONTENT_QUERY_H
++#define OHOS_MEDIA_KNOWLEDGE_CONTENT_QUERY_H
++#include <cstddef>
++#include <cstdint>
++#include <random>
++#include <string>
++#include <variant>
++#include <vector>
++namespace OHOS::Media::Knowledge {
++using Argument = std::variant<int64_t, std::string>;
++struct Query {
++    std::string sql;
++    std::vector<Argument> args;
++};
++struct Entity {
++    int32_t field = 0;
++    std::string id;
++    std::string name;
++    std::vector<std::string> aliases;
++    int64_t votes = 0;
++};
++// Field 0 (NONE) and 7 (HOLIDAY) have no indexed producer in the pinned tree.
++// They are reported as unavailable; they never yield a fabricated empty success.
++bool IsField(int32_t field);
++bool HasProducer(int32_t field);
++Query Related(const std::string &topic, const std::vector<int32_t> &topicFields,
++    const std::vector<int32_t> &suggestionFields);
++Query Suggestions(const std::vector<int32_t> &types);
++std::vector<Entity> RandomVote(std::vector<Entity> candidates, size_t count, std::mt19937_64 &random);
++} // namespace OHOS::Media::Knowledge
++#endif

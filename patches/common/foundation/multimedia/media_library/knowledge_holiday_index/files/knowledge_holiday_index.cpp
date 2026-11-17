@@ -1,0 +1,599 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+#include "knowledge_holiday_index.h"
+#define MLOG_TAG "KnowledgeHolidayIndex"
+#include "media_log.h"
+#include "rdb_errno.h"
+#include "transaction.h"
+#include <algorithm>
+#include <atomic>
+#include <cerrno>
+#include <cstdint>
+#include <cstring>
+#include <fcntl.h>
+#include <map>
+#include <new>
+#include <pthread.h>
+#include <openssl/sha.h>
+#include <set>
+#include <string>
+#include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
+#include <vector>
+namespace OHOS::Media {
+namespace {
+constexpr size_t MAX_BYTES = 1024 * 1024;
+constexpr size_t MAX_LINE = 8192;
+constexpr size_t MAX_LINES = 131136;
+constexpr size_t MAX_EVENTS = 4096;
+constexpr size_t MAX_DAYS = 20000;
+constexpr int MAX_SPAN = 366;
+constexpr size_t MAX_TEXT = 1024;
+constexpr const char *DIRECTORY = "/system/etc/knowledge-content";
+constexpr const char *FILENAME = "holidays.ics";
+constexpr const char *SCHEMA = "CREATE TABLE IF NOT EXISTS KnowledgeHoliday("
+    "uid TEXT NOT NULL,instance_start TEXT NOT NULL,civil_date TEXT NOT NULL,name TEXT NOT NULL,"
+    "entity_id TEXT NOT NULL,PRIMARY KEY(uid,instance_start,civil_date))";
+constexpr const char *META = "CREATE TABLE IF NOT EXISTS KnowledgeHolidayResource("
+    "id INTEGER PRIMARY KEY CHECK(id=1),schema_version INTEGER NOT NULL,sha256 TEXT NOT NULL,"
+    "present INTEGER NOT NULL CHECK(present IN(0,1)),row_count INTEGER NOT NULL)";
+struct Day { int year; int month; int day; };
+struct Event { std::string uid; std::string name; std::string start; std::string end; };
+struct Entry { std::string uid; std::string start; std::string day; std::string name; std::string id; };
+struct Resource { bool present = false; std::string hash = "absent"; std::vector<Entry> entries; };
+bool Leap(int year) { return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0); }
+int MonthDays(int year, int month)
+{
+    constexpr int DAYS[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+    return DAYS[month - 1] + (month == 2 && Leap(year) ? 1 : 0);
+}
+bool Date(const std::string &text, Day &value)
+{
+    if (text.size() != 8 || !std::all_of(text.begin(), text.end(), [](char c) {return c >= '0' && c <= '9';})) return false;
+    // Fixed validated decimal fields cannot overflow and need no throwing conversion.
+    auto decimal = [&](size_t offset, size_t count) {
+        int number = 0;
+        for (size_t i = offset; i < offset + count; ++i) number = number * 10 + text[i] - '0';
+        return number;
+    };
+    value = {decimal(0,4),decimal(4,2),decimal(6,2)};
+    return value.year >= 1600 && value.year <= 9999 && value.month >= 1 && value.month <= 12 &&
+        value.day >= 1 && value.day <= MonthDays(value.year, value.month);
+}
+std::string Format(const Day &value)
+{
+    char text[9]{};
+    if (snprintf(text, sizeof(text), "%04d%02d%02d", value.year, value.month, value.day) != 8) return {};
+    return text;
+}
+bool Next(Day &value)
+{
+    if (++value.day > MonthDays(value.year, value.month)) {
+        value.day = 1;
+        if (++value.month > 12) {value.month = 1; ++value.year;}
+    }
+    return value.year <= 9999;
+}
+bool Utf8(const std::string &text)
+{
+    size_t index = 0;
+    while (index < text.size()) {
+        uint32_t code = static_cast<unsigned char>(text[index++]);
+        if (code == 0 || code == '\r' || (code < 0x20 && code != '\n' && code != '\t')) return false;
+        if (code < 0x80) continue;
+        int tails;
+        uint32_t minimum;
+        if (code >= 0xc2 && code <= 0xdf) {tails = 1; minimum = 0x80; code &= 0x1f;}
+        else if (code >= 0xe0 && code <= 0xef) {tails = 2; minimum = 0x800; code &= 0x0f;}
+        else if (code >= 0xf0 && code <= 0xf4) {tails = 3; minimum = 0x10000; code &= 0x07;}
+        else return false;
+        for (int tail = 0; tail < tails; ++tail) {
+            if (index == text.size()) return false;
+            unsigned char next = static_cast<unsigned char>(text[index++]);
+            if ((next & 0xc0) != 0x80) return false;
+            code = (code << 6) | (next & 0x3f);
+        }
+        if (code < minimum || code > 0x10ffff || (code >= 0xd800 && code <= 0xdfff)) return false;
+    }
+    return true;
+}
+std::string Upper(std::string text)
+{
+    for (char &c : text) if (c >= 'a' && c <= 'z') c = static_cast<char>(c - 'a' + 'A');
+    return text;
+}
+bool Text(const std::string &encoded, std::string &value)
+{
+    value.clear();
+    for (size_t i = 0; i < encoded.size(); ++i) {
+        char c = encoded[i];
+        if (c == '\\') {
+            if (++i == encoded.size()) return false;
+            c = encoded[i];
+            if (c == 'N' || c == 'n') c = '\n';
+            else if (c != '\\' && c != ',' && c != ';') return false;
+        }
+        value += c;
+        if (value.size() > MAX_TEXT) return false;
+    }
+    return !value.empty() && Utf8(value);
+}
+bool Lines(const std::string &bytes, std::vector<std::string> &lines)
+{
+    if (bytes.empty() || bytes.size() > MAX_BYTES || bytes.find('\0') != std::string::npos) return false;
+    size_t start = 0;
+    while (start < bytes.size()) {
+        size_t end = bytes.find('\n', start);
+        if (end == std::string::npos) end = bytes.size();
+        std::string line = bytes.substr(start, end - start);
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line.find('\r') != std::string::npos || line.size() > MAX_LINE) return false;
+        if (!line.empty() && (line[0] == ' ' || line[0] == '\t')) {
+            if (lines.empty() || lines.back().size() + line.size() - 1 > MAX_LINE) return false;
+            lines.back().append(line.substr(1));
+        } else if (!line.empty()) {
+            if (lines.size() >= MAX_LINES) return false;
+            lines.push_back(std::move(line));
+        }
+        start = end + 1;
+    }
+    return !lines.empty() && std::all_of(lines.begin(),lines.end(),[](const std::string &line) {return Utf8(line);});
+}
+bool Expand(const Event &event, std::vector<Entry> &entries)
+{
+    Day start{}, end{};
+    if (event.uid.empty() || event.name.empty() || !Date(event.start, start)) return false;
+    if (event.end.empty()) {end = start; if (!Next(end)) return false;}
+    else if (!Date(event.end, end)) return false;
+    const std::string exclusive = Format(end);
+    if (exclusive <= event.start) return false;
+    Day current = start;
+    int span = 0;
+    while (Format(current) < exclusive) {
+        if (++span > MAX_SPAN || entries.size() >= MAX_DAYS) return false;
+        // Length prefix prevents a UID containing delimiters from aliasing another instance.
+        const std::string id = std::to_string(event.uid.size()) + ":" + event.uid + ":" + event.start;
+        entries.push_back({event.uid,event.start,Format(current),event.name,id});
+        if (!Next(current)) return false;
+    }
+    return true;
+}
+bool ParseCalendar(const std::string &bytes, std::vector<Entry> &entries)
+{
+    std::vector<std::string> lines;
+    if (!Lines(bytes, lines) || Upper(lines.front()) != "BEGIN:VCALENDAR" ||
+        Upper(lines.back()) != "END:VCALENDAR") return false;
+    bool inside = false, version = false;
+    Event event;
+    std::set<std::string> properties;
+    std::map<std::string, Event> events;
+    const std::set<std::string> harmless = {"DTSTAMP","CREATED","LAST-MODIFIED","SEQUENCE","DESCRIPTION", "TRANSP", "CLASS"};
+    for (size_t index = 1; index + 1 < lines.size(); ++index) {
+        const std::string &line = lines[index];
+        const size_t colon = line.find(':');
+        if (colon == std::string::npos) return false;
+        const std::string property = Upper(line.substr(0, colon));
+        const std::string value = line.substr(colon + 1);
+        if (property == "BEGIN") {
+            if (inside || Upper(value) != "VEVENT") return false;
+            inside = true; event = {}; properties.clear(); continue;
+        }
+        if (property == "END") {
+            if (!inside || Upper(value) != "VEVENT" || event.uid.empty() || event.start.empty() || event.name.empty()) return false;
+            auto previous = events.find(event.uid);
+            if (previous != events.end()) {
+                if (previous->second.start != event.start || previous->second.end != event.end || previous->second.name != event.name) return false;
+            } else {
+                if (events.size() >= MAX_EVENTS) return false;
+                events.emplace(event.uid,event);
+            }
+            inside = false; continue;
+        }
+        if (!inside) {
+            if (property == "VERSION") {if (version || value != "2.0") return false; version = true;}
+            else if (property == "CALSCALE") {if (Upper(value) != "GREGORIAN") return false;}
+            else if (property == "METHOD") {if (Upper(value) != "PUBLISH") return false;}
+            else if (property != "PRODID" && property.rfind("X-", 0) != 0) return false;
+            continue;
+        }
+        const size_t semicolon = property.find(';');
+        const std::string key = property.substr(0, semicolon);
+        if (!properties.insert(key).second) return false;
+        if (key == "UID") {
+            if (property != "UID" || !Text(value,event.uid) || event.uid.find('\n') != std::string::npos) return false;
+        } else if (key == "SUMMARY") {
+            if (semicolon != std::string::npos) {
+                const std::string language = property.substr(semicolon + 1);
+                if (language.rfind("LANGUAGE=", 0) != 0 || language.size() == 9 ||
+                    !std::all_of(language.begin()+9,language.end(),[](char c) {return (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-';})) return false;
+            }
+            if (!Text(value,event.name)) return false;
+        } else if (key == "DTSTART" || key == "DTEND") {
+            Day parsed{};
+            if (property != key + ";VALUE=DATE" || !Date(value,parsed)) return false;
+            if (key == "DTSTART") event.start = value;
+            else event.end = value;
+        } else if (key == "STATUS") {
+            if (property != "STATUS" || Upper(value) != "CONFIRMED") return false;
+        } else if (harmless.count(key) == 0) {
+            // RRULE/RDATE/EXDATE/RECURRENCE-ID, timed/TZID dates and nested components
+            // are unsupported resources; never silently drop or invent occurrences.
+            return false;
+        }
+    }
+    if (inside || !version) return false;
+    std::vector<Entry> parsed;
+    for (const auto &[uid,item] : events) {
+        (void)uid;
+        if (!Expand(item,parsed)) return false;
+    }
+    entries = std::move(parsed);
+    return true;
+}
+bool Trusted(const struct stat &info, bool directory)
+{
+    return (directory ? S_ISDIR(info.st_mode) : S_ISREG(info.st_mode)) &&
+        (info.st_uid == 0 || info.st_uid == 1000) && (info.st_mode & (S_IWGRP | S_IWOTH)) == 0;
+}
+int Load(Resource &resource)
+{
+    int directory = open(DIRECTORY, O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW);
+    if (directory < 0) return errno == ENOENT ? NativeRdb::E_OK : NativeRdb::E_ERROR;
+    struct stat parent{};
+    if (fstat(directory,&parent) != 0 || !Trusted(parent,true)) {close(directory); return NativeRdb::E_ERROR;}
+    int fd = openat(directory,FILENAME,O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+    const int saved = errno;
+    close(directory);
+    if (fd < 0) return saved == ENOENT ? NativeRdb::E_OK : NativeRdb::E_ERROR;
+    struct stat before{}, after{};
+    if (fstat(fd,&before) != 0 || !Trusted(before,false) || before.st_size <= 0 || static_cast<uint64_t>(before.st_size) > MAX_BYTES) {
+        close(fd); return NativeRdb::E_ERROR;
+    }
+    std::string bytes(static_cast<size_t>(before.st_size),'\0');
+    size_t offset = 0;
+    while (offset < bytes.size()) {
+        const ssize_t count = read(fd,bytes.data()+offset,bytes.size()-offset);
+        if (count < 0 && errno == EINTR) continue;
+        if (count <= 0) {close(fd); return NativeRdb::E_ERROR;}
+        offset += static_cast<size_t>(count);
+    }
+    char extra;
+    ssize_t extraCount;
+    do {extraCount = read(fd,&extra,1);} while (extraCount < 0 && errno == EINTR);
+    const bool stable = extraCount == 0 && fstat(fd,&after) == 0 && before.st_dev == after.st_dev &&
+        before.st_ino == after.st_ino && before.st_size == after.st_size && before.st_mtime == after.st_mtime &&
+        before.st_ctime == after.st_ctime && Trusted(after,false)
+#if defined(__APPLE__)
+        && before.st_mtimespec.tv_nsec == after.st_mtimespec.tv_nsec && before.st_ctimespec.tv_nsec == after.st_ctimespec.tv_nsec
+#else
+        && before.st_mtim.tv_nsec == after.st_mtim.tv_nsec && before.st_ctim.tv_nsec == after.st_ctim.tv_nsec
+#endif
+        ;
+    if (close(fd) != 0 || !stable || !ParseCalendar(bytes,resource.entries)) return NativeRdb::E_ERROR;
+    unsigned char digest[SHA256_DIGEST_LENGTH];
+    if (SHA256(reinterpret_cast<const unsigned char *>(bytes.data()),bytes.size(),digest) == nullptr) return NativeRdb::E_ERROR;
+    constexpr char HEX[] = "0123456789abcdef";
+    resource.hash.clear();
+    for (unsigned char byte : digest) {resource.hash += HEX[byte >> 4]; resource.hash += HEX[byte & 15];}
+    resource.present = true;
+    return NativeRdb::E_OK;
+}
+int Synchronize(NativeRdb::RdbStore &store)
+{
+    const auto created = store.CreateTransaction(NativeRdb::Transaction::IMMEDIATE);
+    const auto transaction = created.second;
+    if (created.first != NativeRdb::E_OK || transaction == nullptr) {
+        return created.first == NativeRdb::E_OK ? NativeRdb::E_ERROR : created.first;
+    }
+    struct TransactionScope {
+        std::shared_ptr<NativeRdb::Transaction> value;
+        bool committed = false;
+        bool closed = false;
+        int Close() {closed = true; return value->Close();}
+        ~TransactionScope() {if (!committed) value->Rollback(); if (!closed) value->Close();}
+    } scope{transaction};
+    auto execute = [&](const std::string &sql, const std::vector<NativeRdb::ValueObject> &args = {}) {
+        return transaction->Execute(sql,args).first;
+    };
+    for (const char *sql : {SCHEMA,META,"CREATE INDEX IF NOT EXISTS idx_knowledge_holiday_day ON KnowledgeHoliday(civil_date)"}) {
+        const int result = execute(sql);
+        if (result != NativeRdb::E_OK) return result;
+    }
+    // Serialize resource snapshots with the native IMMEDIATE transaction rather
+    // than holding an application/lifecycle mutex across external RDB calls.
+    Resource resource;
+    const int loaded = Load(resource);
+    if (loaded != NativeRdb::E_OK) {
+        // An old database still gains the schema. Invalid/I/O-denied resources
+        // cannot replace a committed index or its acknowledged resource hash.
+        const int committed = transaction->Commit();
+        if (committed != NativeRdb::E_OK) return committed;
+        scope.committed = true;
+        const int closed = scope.Close();
+        if (closed != NativeRdb::E_OK) return closed;
+        MEDIA_ERR_LOG("Knowledge holiday resource unavailable; retaining committed index: %{public}d", loaded);
+        return loaded;
+    }
+    // A source version is acknowledged only with the complete data transaction.
+    int result = execute("DELETE FROM KnowledgeHoliday");
+    if (result != NativeRdb::E_OK) return result;
+    for (const auto &entry : resource.entries) {
+        result = execute("INSERT INTO KnowledgeHoliday(uid,instance_start,civil_date,name,entity_id) VALUES(?,?,?,?,?)",
+            {entry.uid,entry.start,entry.day,entry.name,entry.id});
+        if (result != NativeRdb::E_OK) return result;
+    }
+    result = execute("INSERT OR REPLACE INTO KnowledgeHolidayResource(id,schema_version,sha256,present,row_count) VALUES(1,1,?,?,?)",
+        {resource.hash,static_cast<int64_t>(resource.present),static_cast<int64_t>(resource.entries.size())});
+    if (result != NativeRdb::E_OK) return result;
+    result = transaction->Commit();
+    if (result != NativeRdb::E_OK) return result;
+    scope.committed = true;
+    return scope.Close();
+}
+// All lifecycle operations use pthread return values under the product's
+// -fno-exceptions contract. Workers own an intrusive state reference and never
+// capture ObserverOwner, MediaLibraryRdbStore/this or a raw RdbStore.
+class MutexLock final {
+public:
+    explicit MutexLock(pthread_mutex_t &mutex) : mutex_(mutex), locked_(false)
+    {
+        const int result = pthread_mutex_lock(&mutex_);
+        locked_ = result == 0;
+        if (result != 0) MEDIA_ERR_LOG("Knowledge observer mutex lock failed: %{public}d", result);
+    }
+    ~MutexLock()
+    {
+        if (locked_) {
+            const int result = pthread_mutex_unlock(&mutex_);
+            if (result != 0) MEDIA_ERR_LOG("Knowledge observer mutex unlock failed: %{public}d", result);
+        }
+    }
+    bool Locked() const {return locked_;}
+private:
+    pthread_mutex_t &mutex_;
+    bool locked_;
+};
+struct ObserverState {
+    pthread_mutex_t mutex{};
+    pthread_cond_t wake{};
+    bool mutexReady = false;
+    bool wakeReady = false;
+    bool cancelled = false;
+    std::atomic<unsigned> references{1};
+    std::weak_ptr<NativeRdb::RdbStore> store;
+    int Init()
+    {
+        int result = pthread_mutex_init(&mutex,nullptr);
+        if (result != 0) return result;
+        mutexReady = true;
+        result = pthread_cond_init(&wake,nullptr);
+        if (result == 0) wakeReady = true;
+        return result;
+    }
+    ~ObserverState()
+    {
+        if (wakeReady) {
+            const int result = pthread_cond_destroy(&wake);
+            if (result != 0) MEDIA_ERR_LOG("Knowledge observer condition destroy failed: %{public}d", result);
+        }
+        if (mutexReady) {
+            const int result = pthread_mutex_destroy(&mutex);
+            if (result != 0) MEDIA_ERR_LOG("Knowledge observer mutex destroy failed: %{public}d", result);
+        }
+    }
+    void Retain() {references.fetch_add(1,std::memory_order_relaxed);}
+    void Release()
+    {
+        if (references.fetch_sub(1,std::memory_order_acq_rel) == 1) delete this;
+    }
+    int Cancel()
+    {
+        MutexLock lock(mutex);
+        if (!lock.Locked()) return NativeRdb::E_ERROR;
+        cancelled = true;
+        const int result = pthread_cond_broadcast(&wake);
+        if (result != 0) MEDIA_ERR_LOG("Knowledge observer cancellation wake failed: %{public}d", result);
+        return result == 0 ? NativeRdb::E_OK : NativeRdb::E_ERROR;
+    }
+    int Wait(bool &stopped)
+    {
+        MutexLock lock(mutex);
+        if (!lock.Locked()) return NativeRdb::E_ERROR;
+        timespec deadline{};
+        if (clock_gettime(CLOCK_REALTIME,&deadline) != 0) {
+            MEDIA_ERR_LOG("Knowledge observer clock read failed: %{public}d", errno);
+            return NativeRdb::E_ERROR;
+        }
+        deadline.tv_sec += 5;
+        while (!cancelled) {
+            const int result = pthread_cond_timedwait(&wake,&mutex,&deadline);
+            if (result == ETIMEDOUT) {stopped = cancelled; return NativeRdb::E_OK;}
+            if (result != 0) {
+                MEDIA_ERR_LOG("Knowledge observer condition wait failed: %{public}d", result);
+                return NativeRdb::E_ERROR;
+            }
+        }
+        stopped = true;
+        return NativeRdb::E_OK;
+    }
+};
+class ObserverOwner final {
+public:
+    ~ObserverOwner()
+    {
+        if (Stop() != NativeRdb::E_OK) {
+            // A callback may destroy its own owner. Detach only for destruction;
+            // the worker retains independent state through its last DB call.
+            ObserverState *previous = nullptr;
+            {
+                MutexLock lock(mutex_);
+                if (lock.Locked() && joinable_) {
+                    if (state_ != nullptr) state_->Cancel();
+                    const int result = pthread_detach(worker_);
+                    if (result != 0) MEDIA_ERR_LOG("Knowledge observer detach failed: %{public}d", result);
+                    joinable_ = false;
+                    previous = state_;
+                    state_ = nullptr;
+                }
+            }
+            if (previous != nullptr) previous->Release();
+        }
+        const int conditionResult = pthread_cond_destroy(&joined_);
+        const int mutexResult = pthread_mutex_destroy(&mutex_);
+        if (conditionResult != 0 || mutexResult != 0) {
+            MEDIA_ERR_LOG("Knowledge observer owner cleanup failed: %{public}d/%{public}d", conditionResult,mutexResult);
+        }
+    }
+    int Stop()
+    {
+        pthread_t previous{};
+        ObserverState *state = nullptr;
+        {
+            MutexLock lock(mutex_);
+            if (!lock.Locked()) return NativeRdb::E_ERROR;
+            if (state_ != nullptr && state_->Cancel() != NativeRdb::E_OK) return NativeRdb::E_ERROR;
+            // Do not wait for our own thread even if an external Stop is already
+            // joining it. The external caller remains responsible for that join.
+            const pthread_t caller = pthread_self();
+            if ((joinable_ && pthread_equal(worker_,caller)) ||
+                (joining_ && pthread_equal(joiningId_,caller))) return NativeRdb::E_ERROR;
+            while (joining_) {
+                const int result = pthread_cond_wait(&joined_,&mutex_);
+                if (result != 0) {
+                    MEDIA_ERR_LOG("Knowledge observer join wait failed: %{public}d", result);
+                    return NativeRdb::E_ERROR;
+                }
+            }
+            if (!joinable_) return NativeRdb::E_OK;
+            if (state_->Cancel() != NativeRdb::E_OK) return NativeRdb::E_ERROR;
+            previous = worker_;
+            state = state_;
+            state_ = nullptr;
+            joinable_ = false;
+            joining_ = true;
+            joiningId_ = previous;
+        }
+        // No owner or state lock is held across join or an external RDB call.
+        const int result = pthread_join(previous,nullptr);
+        int notified = 0;
+        {
+            MutexLock lock(mutex_);
+            if (!lock.Locked()) return NativeRdb::E_ERROR;
+            if (result != 0) {
+                // A failed join has not reclaimed the thread. Preserve the same
+                // cancelled generation and its reference so Stop can retry.
+                worker_ = previous;
+                state_ = state;
+                joinable_ = true;
+            }
+            joining_ = false;
+            notified = pthread_cond_broadcast(&joined_);
+            if (notified != 0) MEDIA_ERR_LOG("Knowledge observer join notification failed: %{public}d", notified);
+        }
+        if (result != 0) {
+            MEDIA_ERR_LOG("Knowledge observer join failed: %{public}d", result);
+            return NativeRdb::E_ERROR;
+        }
+        state->Release();
+        return notified == 0 ? NativeRdb::E_OK : NativeRdb::E_ERROR;
+    }
+    int Start(const std::shared_ptr<NativeRdb::RdbStore> &store)
+    {
+        if (store == nullptr || Stop() != NativeRdb::E_OK) return NativeRdb::E_ERROR;
+        auto *state = new (std::nothrow) ObserverState;
+        if (state == nullptr) {
+            MEDIA_ERR_LOG("Knowledge observer state allocation failed");
+            return NativeRdb::E_ERROR;
+        }
+        const int initialized = state->Init();
+        if (initialized != 0) {
+            MEDIA_ERR_LOG("Knowledge observer initialization failed: %{public}d", initialized);
+            state->Release();
+            return NativeRdb::E_ERROR;
+        }
+        state->store = store;
+        int result = NativeRdb::E_ERROR;
+        bool retained = false;
+        {
+            MutexLock lock(mutex_);
+            if (lock.Locked() && !joinable_ && !joining_) {
+                state->Retain();
+                retained = true;
+                result = pthread_create(&worker_,nullptr,Run,state);
+                if (result == 0) {
+                    state_ = state;
+                    joinable_ = true;
+                    return NativeRdb::E_OK;
+                }
+            }
+        }
+        if (retained) state->Release();
+        state->Release();
+        MEDIA_ERR_LOG("Knowledge observer thread start failed: %{public}d", result);
+        return NativeRdb::E_ERROR;
+    }
+private:
+    static void *Run(void *argument)
+    {
+        auto *state = static_cast<ObserverState *>(argument);
+        {
+            std::string lastHash;
+            bool lastPresent = false;
+            bool acknowledged = false;
+            while (true) {
+                bool stopped = false;
+                const int waited = state->Wait(stopped);
+                if (waited != NativeRdb::E_OK || stopped) break;
+                auto live = state->store.lock();
+                if (live == nullptr) break;
+                Resource observed;
+                int result = Load(observed);
+                if (result == NativeRdb::E_OK && (!acknowledged ||
+                    observed.hash != lastHash || observed.present != lastPresent)) {
+                    result = KnowledgeHolidayIndex::Refresh(*live);
+                    if (result == NativeRdb::E_OK) {
+                        lastHash = observed.hash;
+                        lastPresent = observed.present;
+                        acknowledged = true;
+                    }
+                }
+                if (result != NativeRdb::E_OK) MEDIA_ERR_LOG("Knowledge calendar configuration refresh failed: %{public}d", result);
+                // Last strong DB release may call Stop on this worker. It holds
+                // no owner/state lock and only this independent state is used.
+                live.reset();
+            }
+        }
+        state->Release();
+        return nullptr;
+    }
+    pthread_mutex_t mutex_ = PTHREAD_MUTEX_INITIALIZER;
+    pthread_cond_t joined_ = PTHREAD_COND_INITIALIZER;
+    bool joining_ = false;
+    bool joinable_ = false;
+    pthread_t joiningId_{};
+    pthread_t worker_{};
+    ObserverState *state_ = nullptr;
+};
+ObserverOwner &Observer()
+{
+    static ObserverOwner owner;
+    return owner;
+}
+}
+int32_t KnowledgeHolidayIndex::Refresh(NativeRdb::RdbStore &store)
+{
+    // RDB/IO/parser failures use explicit status returns under -fno-exceptions.
+    return Synchronize(store);
+}
+int32_t KnowledgeHolidayIndex::Observe(const std::shared_ptr<NativeRdb::RdbStore> &store)
+{
+    // Bounded fixed-path polling also covers absent/replaced directories and
+    // watcher invalidation. It does not provide any write/update API or bypass
+    // the system partition's read-only policy.
+    return Observer().Start(store);
+}
+int32_t KnowledgeHolidayIndex::StopObserver()
+{
+    return Observer().Stop();
+}
+}

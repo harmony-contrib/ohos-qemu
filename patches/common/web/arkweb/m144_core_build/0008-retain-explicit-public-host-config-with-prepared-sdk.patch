@@ -1,0 +1,20 @@
+diff --git a/src/arkweb/build/build.sh b/src/arkweb/build/build.sh
+--- a/src/arkweb/build/build.sh
++++ b/src/arkweb/build/build.sh
+@@ -103,6 +103,8 @@
+ build_debug_version=0
+ build_legacy=0
+ debug_args="is_debug=false"
++# Explicit public SDK preparation also owns its locked host tool configuration.
++if [ "${ARKWEB_PREPARED_SDK:-0}" != 1 ]; then
+ npm config set registry http://mirrors.tools.huawei.com/npm/
+ npm config set @ohpm-test:registry https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/product_npm/
+ npm config set @ohos:registry https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/product_npm/
+@@ -109,6 +111,7 @@
+ npm config set @baize:registry https://cmc.centralrepo.rnd.huawei.com/artifactory/api/npm/product_npm/
+ npm config set strict-ssl false
+ cat ${HOME}/.npmrc | grep 'lockfile=false' || echo 'lockfile=false' >> ${HOME}/.npmrc
++fi
+ cp -rf ./src/upper_level/include_vector_patch.py ./
+ cp -rf ./src/upper_level/.cloudbuild ./
+ cp -rf ./src/upper_level/.codecheck ./

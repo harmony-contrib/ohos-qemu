@@ -1,0 +1,23 @@
+{
+  global:
+    iMedia_Eq_GetSPECS;
+    iMedia_Surround_GetSPECS;
+    iMedia_Env_GetSPECS;
+    iMedia_Eq_GetSize;
+    iMedia_Eq_Init;
+    iMedia_Eq_Apply;
+    iMedia_Eq_SetParams;
+    iMedia_Eq_GetParams;
+    iMedia_Eq_GetVersion;
+    iMedia_Surround_GetSize;
+    iMedia_Surround_Init;
+    iMedia_Surround_Apply;
+    iMedia_Surround_SetParams;
+    iMedia_Surround_GetParams;
+    iMedia_Env_GetSize;
+    iMedia_Env_Init;
+    iMedia_Env_Apply;
+    iMedia_Env_SetParams;
+    iMedia_Env_GetParams;
+  local: *;
+};

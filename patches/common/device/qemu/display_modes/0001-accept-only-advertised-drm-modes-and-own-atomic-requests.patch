@@ -1,0 +1,88 @@
+diff --git a/device/qemu/common/virt_full/hardware/display/src/display_device/drm_crtc.cpp b/device/qemu/common/virt_full/hardware/display/src/display_device/drm_crtc.cpp
+--- a/device/qemu/common/virt_full/hardware/display/src/display_device/drm_crtc.cpp
++++ b/device/qemu/common/virt_full/hardware/display/src/display_device/drm_crtc.cpp
+@@ -71,7 +71,7 @@
+ int32_t DrmCrtc::SetActivieMode(int32_t id)
+ {
+     DISPLAY_LOGD("set activie modeid to %{public}d", id);
+-    DISPLAY_CHK_RETURN((id != 0), DISPLAY_PARAM_ERR, DISPLAY_LOGE("id %{public}d is invalid ", id));
++    DISPLAY_CHK_RETURN((id < 0), DISPLAY_PARAM_ERR, DISPLAY_LOGE("id %{public}d is invalid ", id));
+     if (mActiveModeId != id) {
+         mNeedModeSet = true;
+     }
+diff --git a/device/qemu/common/virt_full/hardware/display/src/display_device/drm_display.cpp b/device/qemu/common/virt_full/hardware/display/src/display_device/drm_display.cpp
+--- a/device/qemu/common/virt_full/hardware/display/src/display_device/drm_display.cpp
++++ b/device/qemu/common/virt_full/hardware/display/src/display_device/drm_display.cpp
+@@ -17,6 +17,7 @@
+ #include <string>
+ #include <cerrno>
+ #include <memory>
++#include <limits>
+ #include <sys/ioctl.h>
+ #include <xf86drm.h>
+ #include <xf86drmMode.h>
+@@ -94,7 +95,15 @@
+
+ int32_t DrmDisplay::SetDisplayMode(uint32_t modeId)
+ {
+-    return mCrtc->SetActivieMode(modeId);
++    DISPLAY_CHK_RETURN((mConnector == nullptr || mCrtc == nullptr), DISPLAY_NULL_PTR,
++        DISPLAY_LOGE("display connector or crtc is nullptr"));
++    DISPLAY_CHK_RETURN((modeId > static_cast<uint32_t>(std::numeric_limits<int32_t>::max())),
++        DISPLAY_PARAM_ERR, DISPLAY_LOGE("mode id is out of range"));
++    DrmMode mode;
++    int32_t id = static_cast<int32_t>(modeId);
++    DISPLAY_CHK_RETURN((mConnector->GetModeFromId(id, mode) != DISPLAY_SUCCESS),
++        DISPLAY_PARAM_ERR, DISPLAY_LOGE("mode %{public}d is not advertised by this connector", id));
++    return mCrtc->SetActivieMode(id);
+ }
+
+ int32_t DrmDisplay::GetDisplayPowerStatus(DispPowerStatus *status)
+diff --git a/device/qemu/common/virt_full/hardware/display/src/display_device/hdi_drm_composition.cpp b/device/qemu/common/virt_full/hardware/display/src/display_device/hdi_drm_composition.cpp
+--- a/device/qemu/common/virt_full/hardware/display/src/display_device/hdi_drm_composition.cpp
++++ b/device/qemu/common/virt_full/hardware/display/src/display_device/hdi_drm_composition.cpp
+@@ -168,12 +168,17 @@
+     DISPLAY_LOGD();
+     if (mCrtc->NeedModeSet()) {
+         int drmFd = mDrmDevice->GetDrmFd();
+-        drmModeAtomicReqPtr pset = drmModeAtomicAlloc();
++        std::unique_ptr<drmModeAtomicReq, decltype(&drmModeAtomicFree)> pset(
++            drmModeAtomicAlloc(), drmModeAtomicFree);
++        DISPLAY_CHK_RETURN((pset == nullptr), DISPLAY_FAILURE,
++            DISPLAY_LOGE("can not allocate atomic mode request"));
+         modeBlock = mConnector->GetModeBlockFromId(mCrtc->GetActiveModeId());
++        DISPLAY_CHK_RETURN((modeBlock == nullptr || modeBlock->GetBlockId() == DRM_INVALID_ID),
++            DISPLAY_FAILURE, DISPLAY_LOGE("can not create requested mode block"));
+         if ((modeBlock != nullptr) && (modeBlock->GetBlockId() != DRM_INVALID_ID)) {
+             // set to active
+             DISPLAY_LOGD("set crtc to active");
+-            int ret = drmModeAtomicAddProperty(pset, mCrtc->GetId(), mCrtc->GetActivePropId(), 1);
++            int ret = drmModeAtomicAddProperty(pset.get(), mCrtc->GetId(), mCrtc->GetActivePropId(), 1);
+             DISPLAY_CHK_RETURN((ret < 0), DISPLAY_FAILURE,
+                 DISPLAY_LOGE("can not add the active prop errno %{public}d", errno));
+
+@@ -181,13 +186,13 @@
+             // set the mode id
+             DISPLAY_LOGD("set the mode");
+-            ret = drmModeAtomicAddProperty(pset, mCrtc->GetId(), mCrtc->GetModePropId(), modeBlock->GetBlockId());
++            ret = drmModeAtomicAddProperty(pset.get(), mCrtc->GetId(), mCrtc->GetModePropId(), modeBlock->GetBlockId());
+             DISPLAY_LOGD("set the mode planeId %{public}d, propId %{public}d, GetBlockId: %{public}d",
+                 mCrtc->GetId(), mCrtc->GetModePropId(), modeBlock->GetBlockId());
+             DISPLAY_CHK_RETURN((ret < 0), DISPLAY_FAILURE,
+                 DISPLAY_LOGE("can not add the mode prop errno %{public}d", errno));
+-            ret = drmModeAtomicAddProperty(pset, mConnector->GetId(), mConnector->GetPropCrtcId(), mCrtc->GetId());
++            ret = drmModeAtomicAddProperty(pset.get(), mConnector->GetId(), mConnector->GetPropCrtcId(), mCrtc->GetId());
+             DISPLAY_LOGD("set the connector id: %{public}d, propId %{public}d, crtcId %{public}d",
+                 mConnector->GetId(), mConnector->GetPropCrtcId(), mCrtc->GetId());
+             DISPLAY_CHK_RETURN((ret < 0), DISPLAY_FAILURE,
+                 DISPLAY_LOGE("can not add the crtc id prop %{public}d", errno));
+
+@@ -195,7 +200,7 @@
+             uint32_t flags = DRM_MODE_ATOMIC_ALLOW_MODESET;
+-            ret = drmModeAtomicCommit(drmFd, pset, flags, nullptr);
++            ret = drmModeAtomicCommit(drmFd, pset.get(), flags, nullptr);
+             DISPLAY_CHK_RETURN((ret != 0), DISPLAY_FAILURE,
+                 DISPLAY_LOGE("drmModeAtomicCommit failed %{public}d errno %{public}d", ret, errno));
+             mCrtc->ClearModeSet();
+         }
+     }

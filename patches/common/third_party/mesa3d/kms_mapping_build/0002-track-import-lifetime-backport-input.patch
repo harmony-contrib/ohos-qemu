@@ -1,0 +1,11 @@
+diff --git a/third_party/mesa3d/ohos/BUILD.gn b/third_party/mesa3d/ohos/BUILD.gn
+--- a/third_party/mesa3d/ohos/BUILD.gn
++++ b/third_party/mesa3d/ohos/BUILD.gn
+@@ -117,6 +117,7 @@
+     inputs = [
+       "//device/qemu/common/virt_full/hardware/gpu/mesa_kms_mapping/apply_mesa_kms_mapping.py",
+       "//device/qemu/common/virt_full/hardware/gpu/mesa_kms_mapping/0001-serialize-displaytarget-mapping.patch",
++      "//device/qemu/common/virt_full/hardware/gpu/mesa_kms_mapping/0002-serialize-import-reference-and-final-destroy.patch",
+     ]
+     deps += [ "//third_party/libdrm:libdrm" ]
+     external_deps = [

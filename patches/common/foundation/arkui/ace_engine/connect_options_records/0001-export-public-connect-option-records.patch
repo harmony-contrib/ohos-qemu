@@ -1,0 +1,18 @@
+diff --git a/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsStateManagement.js b/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsStateManagement.js
+--- a/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsStateManagement.js
++++ b/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsStateManagement.js
+@@ -442,7 +442,14 @@
+ 
+ UIUtils.uiUtilsImpl_ = UIUtilsImpl.instance();
+ 
++// Public SDK data classes. Values are supplied by the caller; validation and
++// default area selection remain in the existing PersistenceV2 implementation.
++class ConnectOptions {}
++class ConnectOptionsCollections extends ConnectOptions {}
++
+ export default {
++  ConnectOptions,
++  ConnectOptionsCollections,
+   AppStorageV2,
+   PersistenceV2,
+   Type,

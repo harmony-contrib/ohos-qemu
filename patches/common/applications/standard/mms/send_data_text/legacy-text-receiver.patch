@@ -1,0 +1,117 @@
+diff --git a/applications/standard/mms/entry/src/main/module.json5 b/applications/standard/mms/entry/src/main/module.json5
+--- a/applications/standard/mms/entry/src/main/module.json5
++++ b/applications/standard/mms/entry/src/main/module.json5
+@@ -73,6 +73,16 @@
+         ],
+         "skills": [
+           {
++            "actions": [
++              "ohos.want.action.sendData"
++            ],
++            "uris": [
++              {
++                "type": "text/plain"
++              }
++            ]
++          },
++          {
+             "entities": [
+               'entity.system.home'
+             ],
+diff --git a/applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets b/applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets
+--- a/applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets
++++ b/applications/standard/mms/entry/src/main/ets/utils/WantUtil.ets
+@@ -36,6 +36,8 @@
+ import { IWantHelper, WantMaster } from './WantUtilTools';
+ import { BusinessError, systemDateTime } from '@kit.BasicServicesKit';
+ import ConversationController from '../pages/conversation/conversationController';
++import promptAction from '@ohos.promptAction';
++import { SendDataPayload } from './SendDataPayload';
+ 
+ const TAG = 'WantUtil';
+ 
+@@ -237,6 +239,7 @@
+   }
+ }
+ export class WantUtil {
++  private shareGeneration: number = 0;
+   public timeOutIdOfHideIndexPage: null | number = null;
+   getWant(context: Context, pageInfos: NavPathStack) {
+     HiLog.i(TAG, 'getWant start:');
+@@ -246,6 +249,11 @@
+     }
+     let abilityWant: AbilityWant = GlobalContext.getContext().getObject('abilityWant') as AbilityWant;
+     GlobalContext.getContext().setObject('abilityWant', null)
++    const generation: number = ++this.shareGeneration;
++    abilityWant.parameters = abilityWant.parameters ?? {};
++    if (this.handlePlainSendData(abilityWant, pageInfos, generation)) {
++      return;
++    }
+     HiLog.i(TAG, 'ohos.aafwk.param.callerAbilityName: ' + JSON.stringify(abilityWant.parameters['ohos.aafwk.param.callerAbilityName']));
+     HiLog.i(TAG, 'ohos.aafwk.param.callerBundleName: ' + JSON.stringify(abilityWant.parameters['ohos.aafwk.param.callerBundleName']));
+     HiLog.i(TAG, 'ohos.aafwk.param.callerPid: ' + JSON.stringify(abilityWant.parameters['ohos.aafwk.param.callerPid']));
+@@ -379,6 +387,35 @@
+       AppStorage.setOrCreate('isHideIndexPage', false);
+       EnhancedInfoTemporaryDataSource.getInstance().isHideIndexPage = false;
+     }, 2000);
++  }
++
++  private handlePlainSendData(want: AbilityWant, pageInfos: NavPathStack, generation: number): boolean {
++    let text: string | undefined;
++    try {
++      text = SendDataPayload.text(want);
++    } catch (error) {
++      HiLog.e(TAG, 'Invalid text sendData: ' + (error as Error).message);
++      promptAction.showToast({ message: '分享内容无效，未创建消息' });
++      return true;
++    }
++    if (text === undefined) {
++      return false;
++    }
++    // Open the existing recipient/draft UI. Receiving an intent never sends SMS.
++    const param = this.buildThirdParam({ content: text });
++    DynamicLoader.getInstance().fire('TransmitMsg').then(() => {
++      if (generation !== this.shareGeneration) {
++        return;
++      }
++      AppStorage.setOrCreate('isSettingShow', false);
++      pageInfos.pushPathByName('TransmitMsg', param);
++    }).catch((error: Error) => {
++      if (generation === this.shareGeneration) {
++        HiLog.e(TAG, 'Cannot open shared-text draft: ' + error.message);
++        promptAction.showToast({ message: '无法打开消息草稿，未发送消息' });
++      }
++    });
++    return true;
+   }
+ 
+   // deepLink 网页url跳转短信
+diff --git a/applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets b/applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/mms/entry/src/main/ets/utils/SendDataPayload.ets
+@@ -0,0 +1,24 @@
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import Want from '@ohos.app.ability.Want';
++
++export class SendDataPayload {
++  static text(want: Want): string | undefined {
++    if (want.action !== 'ohos.want.action.sendData' || want.type !== 'text/plain' ||
++        (want.uri !== undefined && want.uri.length > 0) || want.parameters?.['ability.picker.records'] !== undefined) {
++      return undefined;
++    }
++    const stream = want.parameters?.['ability.params.stream'];
++    let text: string;
++    if (typeof stream === 'string') {
++      text = stream;
++    } else if (Array.isArray(stream) && stream.length === 1 && typeof stream[0] === 'string') {
++      text = stream[0] as string;
++    } else {
++      throw new Error('sendData text/plain requires one text stream');
++    }
++    if (text.length === 0 || text.length > 262144 || text.includes('\u0000')) {
++      throw new Error('Invalid shared text length or content');
++    }
++    return text;
++  }
++}

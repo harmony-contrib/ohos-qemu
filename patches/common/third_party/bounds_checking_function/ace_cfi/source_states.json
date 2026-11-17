@@ -1,0 +1,17 @@
+{
+  "schema": "native-ace-sec-static-cfi-source/v1",
+  "project": "third_party/bounds_checking_function",
+  "revision": "61baa7a3eb9347efca58397d1d0504faa96d79f0",
+  "files": [
+    {
+      "relative": "BUILD.gn",
+      "original_sha256": "78dceed022da3bbea9175e5385d89f17f2950e18dc065dc2a1dfea30cd875477",
+      "final_sha256": "7a1185bc4c0ec95af9b7e6b5000a71e51ec94d69203e4edc7a159312ce0a35b5"
+    }
+  ],
+  "patch": "0001-add-fixed-ACE-only-secstatic-CFI-variant.patch",
+  "patch_sha256": "3313501f50cd0bab2bb2b6b53bb16c5c9dfa6e714cfd674f028e2ebb611b73f1",
+  "scope": "fixed ACE-only secstatic variant; global original target and shared/Lite code preserved",
+  "actual_gn_compile_solink_runtime_pending": true,
+  "first_artifact_behavior_gate_passed": false
+}

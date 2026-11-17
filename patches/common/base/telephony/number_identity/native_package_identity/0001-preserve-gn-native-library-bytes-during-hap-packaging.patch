@@ -1,0 +1,14 @@
+--- a/base/telephony/number_identity/entry/build-profile.json5
++++ b/base/telephony/number_identity/entry/build-profile.json5
+@@ -1,6 +1,11 @@
+ {
+   "apiType": 'stageMode', 
+   "buildOption": {
++    "nativeLib": {
++      "debugSymbol": {
++        "strip": false
++      }
++    },
+     "arkOptions": {
+       "obfuscation": {
+         "ruleOptions": {

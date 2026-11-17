@@ -1,0 +1,20 @@
+--- a/foundation/multimodalinput/input/etc/ability_launch_config.json
++++ b/foundation/multimodalinput/input/etc/ability_launch_config.json
+@@ -1,5 +1,17 @@
+ {
+   "Shortkeys": [
++    {
++      "businessId": "qemu.settings",
++      "preKey": [2076],
++      "finalKey": 2025,
++      "trigger": "key_down",
++      "keyDownDuration": 500,
++      "statusConfig": "",
++      "ability": {
++        "bundleName": "com.ohos.settings",
++        "abilityName": "com.ohos.settings.MainAbility"
++      }
++    }
+   ],
+   "Sequences": [
+   ],

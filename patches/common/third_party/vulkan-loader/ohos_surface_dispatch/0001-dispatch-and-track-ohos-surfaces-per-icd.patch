@@ -1,0 +1,82 @@
+diff --git a/third_party/vulkan-loader/loader/wsi.h b/third_party/vulkan-loader/loader/wsi.h
+--- a/third_party/vulkan-loader/loader/wsi.h
++++ b/third_party/vulkan-loader/loader/wsi.h
+@@ -67,3 +67,6 @@
+ #endif  // VK_USE_PLATFORM_VI_NN
++#if defined(VK_USE_PLATFORM_OHOS)
++        VkIcdSurfaceOHOS ohos_surf;
++#endif  // VK_USE_PLATFORM_OHOS
+         VkIcdSurfaceDisplay display_surf;
+         VkIcdSurfaceHeadless headless_surf;
+diff --git a/third_party/vulkan-loader/loader/wsi.c b/third_party/vulkan-loader/loader/wsi.c
+--- a/third_party/vulkan-loader/loader/wsi.c
++++ b/third_party/vulkan-loader/loader/wsi.c
+@@ -1253,25 +1253,47 @@
+ VKAPI_ATTR VkResult VKAPI_CALL terminator_CreateSurfaceOHOS(VkInstance instance,
+                                                             const VkSurfaceCreateInfoOHOS *pCreateInfo,
+                                                             const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface) {
+-    // First, check to ensure the appropriate extension was enabled:
+-    struct loader_instance *loader_inst = loader_get_instance(instance);
+-    if (!loader_inst->wsi_ohos_surface_enabled) {
+-        loader_log(loader_inst, VULKAN_LOADER_ERROR_BIT, 0,
+-                   "VK_OHOS_surface extension not enabled. vkCreateSurfaceOHOS not executed!\n");
+-        return VK_ERROR_EXTENSION_NOT_PRESENT;
+-    }
+-
+-    // Next, if so, proceed with the implementation of this function:
+-    VkIcdSurfaceOHOS *pIcdSurface =
+-        loader_instance_heap_alloc(loader_inst, sizeof(VkIcdSurfaceOHOS), VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
+-    if (pIcdSurface == NULL) {
+-        return VK_ERROR_OUT_OF_HOST_MEMORY;
+-    }
+-
+-    pIcdSurface->base.platform = VK_ICD_WSI_PLATFORM_OHOS;
+-    pIcdSurface->window = pCreateInfo->window;
+-
+-    *pSurface = (VkSurfaceKHR)(uintptr_t)pIcdSurface;
+-
+-    return VK_SUCCESS;
++    VkResult result = VK_SUCCESS;
++    VkIcdSurface *icd_surface = NULL;
++    struct loader_instance *loader_inst = loader_get_instance(instance);
++    bool supported = false;
++    if (pSurface == NULL) return VK_ERROR_INITIALIZATION_FAILED;
++    *pSurface = VK_NULL_HANDLE;
++    loader_platform_thread_lock_mutex(&loader_lock);
++    if (!loader_inst->wsi_ohos_surface_enabled) {
++        result = VK_ERROR_EXTENSION_NOT_PRESENT;
++        goto out;
++    }
++    if (pCreateInfo == NULL || pCreateInfo->window == NULL) {
++        result = VK_ERROR_INITIALIZATION_FAILED;
++        goto out;
++    }
++    // Use the same indexed per-ICD surface representation as other WSIs.
++    // A bare VkIcdSurfaceOHOS has no surface_index and cannot safely be used
++    // by the modern query, swapchain and destruction terminators.
++    result = allocate_icd_surface_struct(loader_inst, sizeof(icd_surface->ohos_surf.base),
++                                         sizeof(icd_surface->ohos_surf), pAllocator, &icd_surface);
++    if (result != VK_SUCCESS) goto out;
++    icd_surface->ohos_surf.base.platform = VK_ICD_WSI_PLATFORM_OHOS;
++    icd_surface->ohos_surf.window = pCreateInfo->window;
++    for (struct loader_icd_term *icd_term = loader_inst->icd_terms; icd_term != NULL; icd_term = icd_term->next) {
++        if (icd_term->scanned_icd->interface_version < ICD_VER_SUPPORTS_ICD_SURFACE_KHR) {
++            // Interface v2 drivers consume the platform struct directly.
++            supported = true;
++        } else if (icd_term->dispatch.CreateSurfaceOHOS != NULL) {
++            result = icd_term->dispatch.CreateSurfaceOHOS(icd_term->instance, pCreateInfo, pAllocator,
++                                                         &icd_term->surface_list.list[icd_surface->surface_index]);
++            if (result != VK_SUCCESS) goto out;
++            supported = true;
++        }
++    }
++    if (!supported) {
++        result = VK_ERROR_EXTENSION_NOT_PRESENT;
++        goto out;
++    }
++    *pSurface = (VkSurfaceKHR)(uintptr_t)icd_surface;
++out:
++    cleanup_surface_creation(loader_inst, result, icd_surface, pAllocator);
++    loader_platform_thread_unlock_mutex(&loader_lock);
++    return result;
+ }

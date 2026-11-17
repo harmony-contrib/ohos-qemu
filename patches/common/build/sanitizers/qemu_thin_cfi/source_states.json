@@ -1,0 +1,17 @@
+{
+  "schema": "qemu579-thin-cfi-source-vector/v1",
+  "scope": "resource repair source preparation only; actual new QEMU CFI/runtime required",
+  "projects": {
+    "build": "5c0623072ed9c2ee93ab909a7a01f428fee95082"
+  },
+  "files": {
+    "build/config/sanitizers/BUILD.gn": [
+      "543b08c7e9b6b06a9eeea950b5c17bdc02e044bff93edf00cbf49c18af85f7cc",
+      "792fdcf79b0f11adab125f0b8f20913f3a7273a74acb1fbf6f317cadac700115"
+    ],
+    "build/config/sanitizers/sanitizers.gni": [
+      "47e33d89baef840266710aecdbefceaa73c58aa6740db103d0bbf07e062c1348",
+      "4d0253f49cb5617e40fb959b89bfad636dcb98ce1ea14c062e76a238234a6789"
+    ]
+  }
+}

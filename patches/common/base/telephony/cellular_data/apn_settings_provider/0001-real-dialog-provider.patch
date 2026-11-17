@@ -1,0 +1,15 @@
+--- a/base/telephony/cellular_data/frameworks/js/napi/src/show_system_apn_settings.cpp
++++ b/base/telephony/cellular_data/frameworks/js/napi/src/show_system_apn_settings.cpp
+@@ -26,10 +26,10 @@
+ namespace OHOS {
+ namespace Telephony {
+ 
+-static constexpr const char *SETTINGS_PACKAGE_NAME = "com.huawei.hmos.callsetting";
++static constexpr const char *SETTINGS_PACKAGE_NAME = "com.ohos.callsetting";
+ static constexpr const char *SETTINGS_ABILITY_NAME = "GeneralCallSettingDialogAbility";
+ static constexpr const char *UIEXTENSION_TYPE_KEY = "ability.want.params.uiExtensionType";
+-static constexpr const char *UIEXTENSION_TYPE_VALUE = "sysDialog/common";
++static constexpr const char *UIEXTENSION_TYPE_VALUE = "sys/commonUI";
+ static constexpr const char *DIALOG_REASON_KEY = "dialogReason";
+ static constexpr const char *DIALOG_REASON_VALUE = "SYSTEM_APN_SETTINGS";
+ static constexpr const char *SLOT_ID_KEY = "slotId";

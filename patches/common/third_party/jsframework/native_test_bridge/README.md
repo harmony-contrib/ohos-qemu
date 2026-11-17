@@ -1,0 +1,7 @@
+# JSFramework native test bridge exact component
+
+Manages only test/lib.ts and js_framework_build.sh at locked third_party_jsframework revision abb00e2f162379c008b71fbaccd015dce5706322. Exact before/final byte pairs and one fixed patch preserve the original runtime.ts oracle and native-only product execution policy. The Node test host uses vm.Script to compile the original bundle and return a real function; the shell waits both children and aggregates their statuses. The two edits are installed together.
+
+Use apply.sh --source-root ROOT, then verify_source.py --source-root ROOT --require-patched. Original, final and repeat are supported; mixed, unknown, missing, symlink or hardlinked managed inputs fail before mutation. The original generic exact helper is reused unchanged. Its stage API validates only the managed pair; it does not require a Git checkout or unrelated siblings in scratch. The real project revision check remains the original helper rule whenever the source project has .git.
+
+Actual original Mocha replay on Darwin arm64/Node18.20.1 changed exit2/41pass+2fail to exit0/43pass with unchanged expanded argv and original oracle. That is a host result, not native Linux Node/Mocha, build, image or runtime acceptance. Static source verifier outputs keep all those gates false. The actual Linux Node version is not yet proven. Do not run npm install/--fix or weaken either original test expected. Full product validation follows the parent's next representative batch. Builder/packager wiring is parent-owned and not included in this component.

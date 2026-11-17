@@ -1,0 +1,48 @@
+--- a/foundation/ability/ability_runtime/frameworks/native/appkit/app/main_thread.cpp
++++ b/foundation/ability/ability_runtime/frameworks/native/appkit/app/main_thread.cpp
+@@ -17,6 +17,8 @@
+ 
+ #include <malloc.h>
+ #include <new>
++#include <cstdint>
++#include <time.h>
+ #include <regex>
+ #include <sys/prctl.h>
+ #include <sys/wait.h>
+@@ -2501,10 +2503,36 @@
+             TAG_LOGE(AAFwkTag::APPKIT, "errno = %{public}d", errno);
+             continue;
+         }
++        const bool observeNumberNative = bundleInfo.name == "com.ohos.numberidentity" &&
++            fileEntry.substr(fileEntry.find_last_of('/') + 1) == "libnumber_identity.z.so";
++        uint64_t numberNativeLoadId = 0;
++        auto observeNumberLoad = [&](const char *event, int result) {
++            if (!observeNumberNative) {
++                return;
++            }
++            const int savedErrno = errno;
++            struct timespec observedTime = {};
++            const bool clockOk = clock_gettime(CLOCK_MONOTONIC, &observedTime) == 0;
++            const uint64_t monotonicNs = clockOk ? static_cast<uint64_t>(observedTime.tv_sec) * 1000000000ULL +
++                static_cast<uint64_t>(observedTime.tv_nsec) : 0;
++            if (numberNativeLoadId == 0) {
++                numberNativeLoadId = monotonicNs;
++            }
++            TAG_LOGI(AAFwkTag::APPKIT, "NUMBER_NATIVE495_LOAD v=1 event=%{public}s pid=%{public}d tid=%{public}d "
++                "load=%{public}llu mono_ns=%{public}llu result=%{public}d path=%{public}s",
++                event, getpid(), gettid(), static_cast<unsigned long long>(numberNativeLoadId),
++                static_cast<unsigned long long>(monotonicNs), result, resolvedPath);
++            errno = savedErrno;
++        };
++        observeNumberLoad("enter", -1);
+         handleAbilityLib = dlopen(resolvedPath, RTLD_NOW | RTLD_GLOBAL);
++        if (handleAbilityLib != nullptr) {
++            observeNumberLoad("result", 1);
++        }
+         if (handleAbilityLib == nullptr) {
+             if (fileEntry.find("libformrender.z.so") == std::string::npos) {
+                 TAG_LOGE(AAFwkTag::APPKIT, "dlopen %{public}s, [%{public}s] failed", fileEntry.c_str(), dlerror());
++                observeNumberLoad("result", 0);
+                 exit(-1);
+             } else {
+                 TAG_LOGD(AAFwkTag::APPKIT, "Load libformrender.z.so from native lib path.");

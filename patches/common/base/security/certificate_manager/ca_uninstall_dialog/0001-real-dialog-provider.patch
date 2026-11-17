@@ -1,0 +1,26 @@
+--- a/base/security/certificate_manager/interfaces/kits/napi/src/dialog/cm_napi_open_uninstall_dialog.cpp
++++ b/base/security/certificate_manager/interfaces/kits/napi/src/dialog/cm_napi_open_uninstall_dialog.cpp
+@@ -51,10 +51,12 @@
+         CM_LOG_E("parse type failed");
+         return nullptr;
+     }
+-    if (!CMIsCertificateType(certificateType, asyncContext->certificateType)) {
++    if (!CMIsCertificateType(certificateType, asyncContext->pageType)) {
+         CM_LOG_E("certificateType invalid");
+         return nullptr;
+     }
++
++    asyncContext->certificateType = certificateType;
+ 
+     // Parse the third param: certUri
+     if (ParseString(asyncContext->env, argv[PARAM2], asyncContext->certUri) != CM_SUCCESS) {
+@@ -69,7 +71,8 @@
+ {
+     OHOS::AAFwk::Want want;
+     want.SetElementName(CERT_MANAGER_BUNDLENAME, CERT_MANAGER_ABILITYNAME);
+-    want.SetParam(CERT_MANAGER_PAGE_TYPE, static_cast<int32_t>(asyncContext->certificateType));
++    want.SetParam(CERT_MANAGER_PAGE_TYPE, static_cast<int32_t>(asyncContext->pageType));
++    want.SetParam(CERT_MANAGER_CERT_TYPE, static_cast<int32_t>(asyncContext->certificateType));
+     want.SetParam(CERT_MANAGER_CALLER_BUNDLENAME, asyncContext->labelName);
+     CmBlob *certUri = asyncContext->certUri;
+     std::string uriStr(reinterpret_cast<char *>(certUri->data), certUri->size);

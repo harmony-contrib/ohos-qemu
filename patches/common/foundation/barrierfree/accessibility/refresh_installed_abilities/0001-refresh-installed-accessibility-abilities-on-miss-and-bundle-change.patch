@@ -1,0 +1,25 @@
+diff --git a/foundation/barrierfree/accessibility/services/aams/src/accessibility_account_data.cpp b/foundation/barrierfree/accessibility/services/aams/src/accessibility_account_data.cpp
+index 579958d..fbe9f3b 100644
+--- a/foundation/barrierfree/accessibility/services/aams/src/accessibility_account_data.cpp
++++ b/foundation/barrierfree/accessibility/services/aams/src/accessibility_account_data.cpp
+@@ -678,6 +678,10 @@ RetError AccessibilityAccountData::EnableAbility(const std::string &name, const
+ {
+     HILOG_DEBUG("start and name[%{public}s] capabilities[%{public}d]", name.c_str(), capabilities);
+     RetError ret = accessibleAbilityManager_.UpdateInstalledAbility(name, capabilities);
++    if (ret == RET_ERR_NOT_INSTALLED) {
++        GetInstalledAbilitiesFromBMS();
++        ret = accessibleAbilityManager_.UpdateInstalledAbility(name, capabilities);
++    }
+     if (ret != RET_OK) {
+         HILOG_ERROR("the ability[%{public}s] is not installed", name.c_str());
+         return ret;
+@@ -1019,7 +1023,8 @@ void AccessibilityAccountData::ChangeAbility(const std::string &bundleName)
+ 
+     std::vector<AccessibilityAbilityInfo> installedAbilities = accessibleAbilityManager_.GetInstalledAbilities();
+     if (installedAbilities.empty()) {
+-        HILOG_DEBUG("There is no installed abilities.");
++        HILOG_DEBUG("There is no installed abilities, refreshing added bundle.");
++        AddAbility(bundleName);
+         return;
+     }
+     

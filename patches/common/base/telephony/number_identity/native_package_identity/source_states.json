@@ -1,0 +1,16 @@
+{
+  "schema": "number-identity-native-package-identity382/v1",
+  "project": "base/telephony/number_identity",
+  "revision": "50e1330646432ce166e7981c577f25f46c90e7ac",
+  "files": [
+    [
+      "entry/build-profile.json5",
+      "3ecb8b166df73aa2ff50bdc1d8974d4dc3cc6493aad7d71941d00edd0440c01a",
+      "bd223a25fb30f98b5772abe2c575e62ff87f20a2fe42b24c8604e2cc64c51ea7"
+    ]
+  ],
+  "patch": "0001-preserve-gn-native-library-bytes-during-hap-packaging.patch",
+  "patch_sha256": "6dc2c97e3ba16833fd7b7849e7ab37e33e189e1e27e7881fa44daf09b82c6f9d",
+  "source_only": true,
+  "build_or_guest_pass": false
+}

@@ -1,0 +1,10 @@
+diff --git a/vendor/ohemu/virt/preinstall-config/install_list_capability.json b/vendor/ohemu/virt/preinstall-config/install_list_capability.json
+--- a/vendor/ohemu/virt/preinstall-config/install_list_capability.json
++++ b/vendor/ohemu/virt/preinstall-config/install_list_capability.json
+@@ -202,5 +202,5 @@
+       "bundleName": "com.ohos.photos",
+       "app_signature": [
+-        "9AED2A79925ECA050CD2BB9D2A7F694E49E5E135D28EBDCE53836DE76B5080ED"
++        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+       ],
+       "allowAppUsePrivilegeExtension": true,

@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "bundle": "com.ohos.systemui",
+  "modules": {
+    "phone": [
+      {
+        "name": "phone_entry",
+        "source": "entry/phone",
+        "hap": "SystemUI.hap"
+      },
+      {
+        "name": "default_navigationBar",
+        "source": "product/default/navigationBar",
+        "hap": "SystemUI-NavigationBar.hap"
+      },
+      {
+        "name": "default_notificationmanagement",
+        "source": "product/default/notificationmanagement",
+        "hap": "SystemUI-NotificationManagement.hap"
+      },
+      {
+        "name": "default_volumepanel",
+        "source": "product/default/volumepanel",
+        "hap": "SystemUI-VolumePanel.hap"
+      },
+      {
+        "name": "default_dialog",
+        "source": "product/default/dialog",
+        "hap": "SystemUI-SystemDialog.hap"
+      },
+      {
+        "name": "phone_dropdownpanel",
+        "source": "product/phone/dropdownpanel",
+        "hap": "SystemUI-DropdownPanel.hap"
+      },
+      {
+        "name": "phone_statusbar",
+        "source": "product/phone/statusbar",
+        "hap": "SystemUI-StatusBar.hap"
+      }
+    ],
+    "2in1": [
+      {
+        "name": "pc_entry",
+        "source": "entry/pc",
+        "hap": "SystemUI.hap"
+      },
+      {
+        "name": "default_navigationBar",
+        "source": "product/default/navigationBar",
+        "hap": "SystemUI-NavigationBar.hap"
+      },
+      {
+        "name": "default_notificationmanagement",
+        "source": "product/default/notificationmanagement",
+        "hap": "SystemUI-NotificationManagement.hap"
+      },
+      {
+        "name": "default_volumepanel",
+        "source": "product/default/volumepanel",
+        "hap": "SystemUI-VolumePanel.hap"
+      },
+      {
+        "name": "default_dialog",
+        "source": "product/default/dialog",
+        "hap": "SystemUI-SystemDialog.hap"
+      },
+      {
+        "name": "pc_controlpanel",
+        "source": "product/pc/controlpanel",
+        "hap": "SystemUI-ControlPanel.hap"
+      },
+      {
+        "name": "pc_notificationpanel",
+        "source": "product/pc/notificationpanel",
+        "hap": "SystemUI-NotificationPanel.hap"
+      },
+      {
+        "name": "pc_statusbar",
+        "source": "product/pc/statusbar",
+        "hap": "SystemUI-StatusBar.hap"
+      }
+    ]
+  },
+  "retained_screenlock": {
+    "hap": "SystemUI-ScreenLock.hap",
+    "sha256": "7e6d99cf44f67a421e20ef2d7a86084d52b45dc1fc4c0ea0902dd4ede47c2cc9",
+    "bytes": 851864,
+    "module_name": "phone",
+    "type": "feature",
+    "versionCode": 1000000,
+    "versionName": "1.0.0"
+  }
+}

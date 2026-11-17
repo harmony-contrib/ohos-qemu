@@ -1,0 +1,12 @@
+diff --git a/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp b/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
+--- a/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
++++ b/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
+@@ -1743,7 +1743,7 @@
+     }
+ 
+     std::shared_lock<ffrt::shared_mutex> lock(netVpnMutex_);
+-    if (vpnObj_ == nullptr) {
++    if (vpnObj_ == nullptr || vpnObj_->GetUserId() != userId) {
+         NETMGR_EXT_LOG_I("GetConnectedSysVpnConfig is null. maybe not setup yet");
+         return NETMANAGER_EXT_SUCCESS;
+     }

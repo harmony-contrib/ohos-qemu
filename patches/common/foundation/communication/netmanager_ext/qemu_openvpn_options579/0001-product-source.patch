@@ -1,0 +1,321 @@
+--- a/foundation/communication/netmanager_base/services/netmanagernative/include/manager/multi_vpn_manager.h
++++ b/foundation/communication/netmanager_base/services/netmanagernative/include/manager/multi_vpn_manager.h
+@@ -19,10 +19,11 @@
+ #include <cstdint>
+-#include <linux/if.h>
++#include <net/if.h>
+ #include <string>
+ #include <mutex>
+ #include <atomic>
+ #include <memory>
+ #include <unordered_map>
++#include <vector>
+ 
+ namespace OhosOpenvpn { struct BrokerCommand; }
+ 
+@@ -61,7 +62,7 @@
+     void SetVpnRemoteAddress(const std::string &remoteIp);
+     void ClearPppFd(const std::string &connectName);
+     int32_t BindQemuSession(const OhosOpenvpn::BrokerCommand &command, int32_t broker, const std::string &startTime, int32_t worker, const std::string &workerStart);
+-    void UnbindQemuSession(const std::string &generation);
++    bool UnbindQemuSession(const std::string &generation);
+     bool HasQemuSession(const std::string &generation);
+     bool QemuRecoveryReady(const OhosOpenvpn::BrokerCommand &command);
+     bool QemuCanStartBroker();
+@@ -84,6 +85,7 @@
+     void StartMultiVpnInterfaceFdListen();
+ 
+ private:
++    struct QemuMetric { std::string destination; std::string gateway; uint32_t metric; };
+     struct QemuBinding {
+         std::string interfaceName;
+         int32_t broker;
+@@ -91,10 +93,13 @@
+         int32_t worker;
+         std::string workerStartTime;
+         std::string stopIdentity;
++        std::vector<QemuMetric> metrics {};
++        unsigned metricIfindex = 0;
+     };
+     std::unordered_map<std::string, QemuBinding> qemuBindings_;
+     bool qemuListening_ = false;
+     void StartQemuSocketListen(int32_t server);
++    bool ClearQemuMetrics(QemuBinding &binding);
+     std::atomic_bool multiVpnListeningFlag_ = false;
+     std::unordered_map<std::string, std::atomic_int> multiVpnFdMap_;
+     std::string phyName_;
+--- a/foundation/communication/netmanager_base/services/netmanagernative/include/manager/route_manager.h
++++ b/foundation/communication/netmanager_base/services/netmanagernative/include/manager/route_manager.h
+@@ -46,6 +46,7 @@
+     std::string routeDestinationName;
+     std::string routeNextHop;
+     bool isExcludedRoute = false;
++    uint32_t metric = 0; // Internal netlink attribute, never a public Parcel.
+ } RouteInfo;
+ 
+ typedef struct InetAddr {
+@@ -57,6 +58,8 @@
+ 
+ class RouteManager {
+ public:
++    static int32_t ReplaceQemuRouteMetric(const std::string &interfaceName,
++        const std::string &destination, const std::string &gateway, uint32_t from, uint32_t to);
+     RouteManager();
+     ~RouteManager() = default;
+ 
+--- a/foundation/communication/netmanager_base/services/netmanagernative/src/manager/multi_vpn_manager.cpp
++++ b/foundation/communication/netmanager_base/services/netmanagernative/src/manager/multi_vpn_manager.cpp
+@@ -32,6 +32,7 @@
+ #include "route_manager.h"
+ #ifdef OHOS_QEMU_OPENVPN
+ #include "../../../../../netmanager_ext/qemu_openvpn/broker_protocol.h"
++#include "../../../../../netmanager_ext/qemu_openvpn/route_metrics.h"
+ #endif
+ 
+ namespace OHOS {
+@@ -549,10 +550,34 @@
+     return qemuBindings_.find(generation) != qemuBindings_.end();
+ }
+ 
+-void MultiVpnManager::UnbindQemuSession(const std::string &generation)
++bool MultiVpnManager::ClearQemuMetrics(QemuBinding &binding)
++{
++    // Restore only routes this capability actually changed. Keep each entry
++    // until its kernel ACK succeeds, so a partial rollback cannot be forgotten.
++    if (!binding.metrics.empty()) {
++        const auto tun=multiVpnFdMap_.find(binding.interfaceName);ifreq observed {};
++        if (!binding.metricIfindex || if_nametoindex(binding.interfaceName.c_str())!=binding.metricIfindex ||
++            tun==multiVpnFdMap_.end() || tun->second.load()<0 || ioctl(tun->second.load(),TUNGETIFF,&observed)!=0 ||
++            strnlen(observed.ifr_name,IFNAMSIZ)==IFNAMSIZ || binding.interfaceName!=observed.ifr_name ||
++            !(observed.ifr_flags&IFF_TUN) || !(observed.ifr_flags&IFF_NO_PI)) return false;
++    }
++    while (!binding.metrics.empty()) {
++        const auto &row = binding.metrics.back();
++        if (nmd::RouteManager::ReplaceQemuRouteMetric(binding.interfaceName, row.destination,
++            row.gateway, row.metric, 0) != 0) return false;
++        binding.metrics.pop_back();
++    }
++    binding.metricIfindex=0;
++    return true;
++}
++
++bool MultiVpnManager::UnbindQemuSession(const std::string &generation)
+ {
+     std::lock_guard<std::mutex> lock(mutex_);
+-    qemuBindings_.erase(generation);
++    auto found = qemuBindings_.find(generation);
++    if (found == qemuBindings_.end()) return true;
++    if (!ClearQemuMetrics(found->second)) return false;
++    qemuBindings_.erase(found); return true;
+ }
+ 
+ void MultiVpnManager::StartQemuSocketListen(int32_t server)
+@@ -565,13 +590,20 @@
+         if (!OhosOpenvpn::BrokerPeer(connection.value, OhosOpenvpn::BROKER_UID,
+             "/system/bin/qemu_openvpn_tun", bridge, &bridgeStart)) continue;
+         std::string request;
+-        constexpr std::string_view prefix = "qemu-openvpn-tun-v2\n";
+-        if (!OhosOpenvpn::ReadFrame(connection.value, request) || request.size() != prefix.size() + 32 ||
+-            request.compare(0, prefix.size(), prefix) || !OhosOpenvpn::Token(std::string_view(request).substr(prefix.size()))) continue;
++        constexpr std::string_view prefix = "qemu-openvpn-tun-v3\n";
++        if (!OhosOpenvpn::ReadFrame(connection.value, request) || request.size() < prefix.size()+34 ||
++            request.compare(0,prefix.size(),prefix) || request[prefix.size()+32]!='\n' ||
++            !OhosOpenvpn::Token(std::string_view(request).substr(prefix.size(),32))) continue;
++        const auto actionEnd=request.find('\n',prefix.size()+33);
++        if(actionEnd==std::string::npos) continue;
++        const auto action=request.substr(prefix.size()+33,actionEnd-prefix.size()-33);
++        std::vector<OhosOpenvpn::RouteMetric> metrics;
++        if ((action!="clear" && action!="tun") || !OhosOpenvpn::ReadMetrics(request.substr(actionEnd+1),metrics) ||
++            (action=="clear" && !metrics.empty())) continue;
+         std::lock_guard<std::mutex> lock(mutex_);
+-        const auto binding = qemuBindings_.find(request.substr(prefix.size()));
++        const auto binding = qemuBindings_.find(request.substr(prefix.size(),32));
+         if (binding == qemuBindings_.end()) continue;
+-        const auto &owner = binding->second;
++        auto &owner = binding->second;
+         const pid_t client = OhosOpenvpn::Parent(bridge);
+         const pid_t worker = OhosOpenvpn::Parent(client);
+         const auto clientStart = OhosOpenvpn::ProcessStart(client);
+@@ -583,12 +615,26 @@
+             OhosOpenvpn::Parent(worker) != owner.broker || OhosOpenvpn::ProcessStart(owner.broker) != owner.brokerStartTime ||
+             OhosOpenvpn::ProcessStart(worker) != workerStart || OhosOpenvpn::ProcessStart(client) != clientStart ||
+             OhosOpenvpn::ProcessStart(bridge) != bridgeStart) continue;
++        if (action=="clear") {
++            OhosOpenvpn::SendFrame(connection.value,ClearQemuMetrics(owner)?"0":"1"); continue;
++        }
++        if (!owner.metrics.empty()) continue; // Caller clears before a fresh negotiated snapshot.
+         const auto tun = multiVpnFdMap_.find(owner.interfaceName);
+         if (tun == multiVpnFdMap_.end() || tun->second.load() < 0) continue;
+         ifreq requestIf {};
+         if (ioctl(tun->second.load(), TUNGETIFF, &requestIf) != 0 ||
+             strnlen(requestIf.ifr_name, IFNAMSIZ) == IFNAMSIZ || owner.interfaceName != requestIf.ifr_name ||
+             !(requestIf.ifr_flags & IFF_TUN) || !(requestIf.ifr_flags & IFF_NO_PI)) continue;
++        owner.metricIfindex=if_nametoindex(owner.interfaceName.c_str());
++        if(!owner.metricIfindex) continue;
++        bool applied=true;
++        for(const auto &metric:metrics) {
++            if(nmd::RouteManager::ReplaceQemuRouteMetric(owner.interfaceName,metric.destination,metric.gateway,0,metric.metric)!=0) {
++                applied=false;break;
++            }
++            owner.metrics.push_back({metric.destination,metric.gateway,metric.metric});
++        }
++        if(!applied) { ClearQemuMetrics(owner);continue; }
+         SendVpnInterfaceFdToClient(connection.value, tun->second.load());
+     }
+ }
+--- a/foundation/communication/netmanager_base/services/netmanagernative/src/manager/route_manager.cpp
++++ b/foundation/communication/netmanager_base/services/netmanagernative/src/manager/route_manager.cpp
+@@ -1528,6 +1528,30 @@
+     return SendNetlinkMsgToKernel(nlmsg.GetNetLinkMessage());
+ }
+ 
++int32_t RouteManager::ReplaceQemuRouteMetric(const std::string &interfaceName,
++    const std::string &destination, const std::string &gateway, uint32_t from, uint32_t to)
++{
++    // Only the authenticated QEMU TUN broker calls this. It supplies the
++    // already-owned interface and validates both endpoints before this cut.
++    NetworkRouteInfo network;
++    network.destination = destination; network.ifName = interfaceName;
++    network.nextHop = gateway; network.isExcludedRoute = false;
++    RouteInfo route;
++    if (SetRouteInfo(VPN_NETWORK, network, route) != 0 || route.routeTable == RT_TABLE_UNSPEC) return -EINVAL;
++    route.metric = from;
++    int32_t result = UpdateRouteRule(RTM_DELROUTE, 0, route);
++    if (result != 0) return result;
++    route.metric = to;
++    result = UpdateRouteRule(RTM_NEWROUTE, NLM_F_CREATE | NLM_F_EXCL, route);
++    if (result != 0) {
++        route.metric = from;
++        if (UpdateRouteRule(RTM_NEWROUTE, NLM_F_CREATE | NLM_F_EXCL, route) != 0) return -EIO;
++    }
++    NETNATIVE_LOGI("QemuRouteMetric interface=%{public}s table=%{public}u from=%{public}u to=%{public}u result=%{public}d",
++        interfaceName.c_str(), route.routeTable, from, to, result);
++    return result;
++}
++
+ int32_t RouteManager::UpdateRouteRule(uint16_t action, uint16_t flags, RouteInfo routeInfo)
+ {
+     NETNATIVE_LOG_D("UpdateRouteRule");
+@@ -1595,6 +1619,9 @@
+     nlmsg.AddRoute(action, msg);
+     if (int32_t ret = nlmsg.AddAttr32(RTA_TABLE, routeInfo.routeTable)) {
+         return ret;
++    }
++    if (routeInfo.metric) {
++        if (int32_t ret = nlmsg.AddAttr32(RTA_PRIORITY, routeInfo.metric)) return ret;
+     }
+     if (int32_t ret = nlmsg.AddAttr(RTA_DST, dst.data, dst.bitlen / BYTE_ALIGNMENT)) {
+         return ret;
+--- a/foundation/communication/netmanager_base/services/netmanagernative/src/netsys/system_vpn_wrapper.cpp
++++ b/foundation/communication/netmanager_base/services/netmanagernative/src/netsys/system_vpn_wrapper.cpp
+@@ -171,7 +171,7 @@
+             }
+             return NETMANAGER_ERROR;
+         }
+-        if (!command.start) MultiVpnManager::GetInstance().UnbindQemuSession(command.session.token);
++        if (!command.start && !MultiVpnManager::GetInstance().UnbindQemuSession(command.session.token)) return NETMANAGER_ERROR;
+         // START acknowledges an owned worker only; TLS/TUN prove CONNECTED.
+         // STOP acknowledges actual exit of this worker's entire process group.
+         return NetManagerStandard::NETMANAGER_SUCCESS;
+--- a/foundation/communication/netmanager_ext/services/vpnmanager/include/open_vpn_ctl.h
++++ b/foundation/communication/netmanager_ext/services/vpnmanager/include/open_vpn_ctl.h
+@@ -107,6 +107,7 @@
+     bool qemuNeedsCleanup_ = false;
+     bool qemuConfigured_ = false;
+     bool qemuTunReady_ = false;
++    std::string qemuLastConfig_;
+ };
+ } // namespace NetManagerStandard
+ } // namespace OHOS
+--- a/foundation/communication/netmanager_ext/services/vpnmanager/src/open_vpn_ctl.cpp
++++ b/foundation/communication/netmanager_ext/services/vpnmanager/src/open_vpn_ctl.cpp
+@@ -25,6 +25,7 @@
+ #include "../../../qemu_openvpn/broker_protocol.h"
+ #include "multi_vpn_helper.h"
+ #include "../../../qemu_openvpn/negotiated_config.h"
++#include "../../../qemu_openvpn/profile_policy.h"
+ 
+ #include "base64_utils.h"
+ #include "netmanager_base_common_utils.h"
+@@ -410,7 +411,7 @@
+     qemuWorkerStopped_ = qemuNeedsCleanup_ = qemuStoppingRequested_ = false;
+     qemuBroker_ = -1; qemuBrokerStart_.clear();
+     qemuClaimDeadline_ = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+-    qemuConfigured_ = qemuTunReady_ = false;
++    qemuConfigured_ = qemuTunReady_ = false; qemuLastConfig_.clear();
+     if (access("/system/bin/qemu_openvpn_service", X_OK) != 0) return true;
+     std::array<unsigned char, 16> random {};
+     size_t offset = 0;
+@@ -535,16 +536,63 @@
+         auto setup = cJSON_GetObjectItemCaseSensitive(message, "setupVpnTun");
+         auto state = cJSON_GetObjectItemCaseSensitive(message, "updateState");
+         auto reconnect = cJSON_GetObjectItemCaseSensitive(message, "reconnecting");
+-        if (role == OhosOpenvpn::SessionRole::Bridge && config && !qemuTunReady_) response = UpdateQemuConfig(config);
+-        else if (role == OhosOpenvpn::SessionRole::Bridge && cJSON_IsObject(setup) &&
+-            cJSON_GetArraySize(setup) == 0 && qemuConfigured_ && !qemuTunReady_) {
+-            qemuNeedsCleanup_ = true;
+-            response = SetUpVpnTun(); qemuTunReady_ = response == NETMANAGER_EXT_SUCCESS;
+-            if (response != NETMANAGER_EXT_SUCCESS) qemuNeedsCleanup_ = NetVpnImpl::Destroy() != NETMANAGER_EXT_SUCCESS;
++        const bool persistent = openvpnConfig_ && OhosOpenvpn::ProfileHasOption(
++            Base64::Decode(openvpnConfig_->ovpnConfig_), "persist-tun");
++        if (role == OhosOpenvpn::SessionRole::Bridge && config && (!qemuTunReady_ || persistent)) {
++            char *printed = cJSON_PrintUnformatted(config);
++            const std::string next = printed ? printed : ""; cJSON_free(printed);
++            if (!next.empty() && next == qemuLastConfig_ && qemuConfigured_) response = NETMANAGER_EXT_SUCCESS;
++            else if (!qemuTunReady_) {
++                response = UpdateQemuConfig(config);
++                if (response == NETMANAGER_EXT_SUCCESS) qemuLastConfig_ = next;
++            } else if (!next.empty()) {
++                // The enclosing service netVpnMutex_ serializes the whole
++                // replacement. Parse every new field before removing old
++                // routes/DNS; restore the old snapshot if any operation fails.
++                const auto saved = *vpnConfig_;
++                const auto savedLocal = openvpnConfig_->localAddresses_;
++                response = UpdateQemuConfig(config);
++                *vpnConfig_ = saved; openvpnConfig_->localAddresses_ = savedLocal;
++                if (response == NETMANAGER_EXT_SUCCESS) {
++                    response = NetVpnImpl::Destroy();
++                    if (response == NETMANAGER_EXT_SUCCESS) {
++                        qemuNeedsCleanup_ = false;
++                        response = UpdateQemuConfig(config);
++                        if (response == NETMANAGER_EXT_SUCCESS) {
++                            qemuNeedsCleanup_ = true; response = NetVpnImpl::SetUp();
++                        }
++                        if (response == NETMANAGER_EXT_SUCCESS) qemuLastConfig_ = next;
++                        else {
++                            const int original = response;
++                            const int clear = NetVpnImpl::Destroy();
++                            *vpnConfig_ = saved; openvpnConfig_->localAddresses_ = savedLocal;
++                            const int restored = clear == NETMANAGER_EXT_SUCCESS ? NetVpnImpl::SetUp() : clear;
++                            qemuTunReady_ = restored == NETMANAGER_EXT_SUCCESS;
++                            qemuNeedsCleanup_ = true;
++                            NETMGR_EXT_LOG_E("QemuReconfigure rollback generation=%{public}s result=%{public}d restore=%{public}d",
++                                qemuGeneration_.c_str(), original, restored);
++                            response = original;
++                        }
++                    }
++                }
++                NETMGR_EXT_LOG_I("QemuReconfigure generation=%{public}s interface=%{public}s result=%{public}d",
++                    qemuGeneration_.c_str(), GetInterfaceName().c_str(), response);
++            }
++        } else if (role == OhosOpenvpn::SessionRole::Bridge && cJSON_IsObject(setup) &&
++            cJSON_GetArraySize(setup) == 0 && qemuConfigured_) {
++            if (qemuTunReady_ && persistent) response = NETMANAGER_EXT_SUCCESS;
++            else if (!qemuTunReady_) {
++                qemuNeedsCleanup_ = true;
++                response = SetUpVpnTun(); qemuTunReady_ = response == NETMANAGER_EXT_SUCCESS;
++                if (response != NETMANAGER_EXT_SUCCESS) qemuNeedsCleanup_ = NetVpnImpl::Destroy() != NETMANAGER_EXT_SUCCESS;
++            }
+         } else if (role == OhosOpenvpn::SessionRole::Supervisor && cJSON_IsObject(reconnect) && cJSON_GetArraySize(reconnect) == 0) {
+-            response = qemuNeedsCleanup_ ? NetVpnImpl::Destroy() : NETMANAGER_EXT_SUCCESS;
+-            if (response == NETMANAGER_EXT_SUCCESS) qemuNeedsCleanup_ = false;
+-            qemuConfigured_ = qemuTunReady_ = false;
++            const bool preserve = persistent && qemuTunReady_ && qemuConfigured_;
++            response = !preserve && qemuNeedsCleanup_ ? NetVpnImpl::Destroy() : NETMANAGER_EXT_SUCCESS;
++            if (!preserve && response == NETMANAGER_EXT_SUCCESS) qemuNeedsCleanup_ = false;
++            qemuConfigured_ = qemuTunReady_ = preserve;
++            NETMGR_EXT_LOG_I("QemuReconnect generation=%{public}s interface=%{public}s preserve=%{public}d result=%{public}d",
++                qemuGeneration_.c_str(), GetInterfaceName().c_str(), preserve, response);
+             UpdateOpenvpnState(OPENVPN_STATE_DISCONNECTED);
+             if (response == NETMANAGER_EXT_SUCCESS) UpdateOpenvpnState(OPENVPN_STATE_STARTED);
+         } else if (role == OhosOpenvpn::SessionRole::Supervisor && cJSON_IsObject(state) && cJSON_GetArraySize(state) == 1) {

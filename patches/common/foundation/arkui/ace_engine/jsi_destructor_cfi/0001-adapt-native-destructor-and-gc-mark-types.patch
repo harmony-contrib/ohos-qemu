@@ -1,0 +1,78 @@
+--- a/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsi/jsi_bindings.h
++++ b/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsi/jsi_bindings.h
+@@ -15,6 +15,8 @@
+ 
+ #ifndef FRAMEWORKS_BRIDGE_DECLARATIVE_FRONTEND_ENGINE_JSI_JSI_BINDINGS_H
+ #define FRAMEWORKS_BRIDGE_DECLARATIVE_FRONTEND_ENGINE_JSI_JSI_BINDINGS_H
++
++#include <functional>
+ 
+ #include "frameworks/bridge/declarative_frontend/engine/bindings_implementation.h"
+ #include "frameworks/bridge/declarative_frontend/engine/jsi/jsi_class_base.h"
+@@ -37,8 +39,26 @@
+ 
+ struct JsiClassConstructorBinding {
+     JSFunctionCallback jsConstructor = nullptr;
+-    JSDestructorCallbackErased jsDestructorErased = nullptr;
+-    JSGCMarkCallbackErased jsGcMarkErased = nullptr;
++    std::function<void(void*)> jsDestructorErased = nullptr;
++    std::function<void(void*, const JSGCMarkCallbackInfo&)> jsGcMarkErased = nullptr;
++
++    template<typename C>
++    void SetNativeCallbacks(JSDestructorCallback<C> dtor, JSGCMarkCallback<C> gcMark)
++    {
++        // Capture callback addresses only, retaining the callbacks' native object ownership.
++        jsDestructorErased = nullptr;
++        if (dtor != nullptr) {
++            jsDestructorErased = [dtor](void* nativePtr) {
++                dtor(static_cast<C*>(nativePtr));
++            };
++        }
++        jsGcMarkErased = nullptr;
++        if (gcMark != nullptr) {
++            jsGcMarkErased = [gcMark](void* nativePtr, const JSGCMarkCallbackInfo& info) {
++                gcMark(static_cast<C*>(nativePtr), info);
++            };
++        }
++    }
+ };
+ 
+ inline panda::Local<panda::JSValueRef> JsiJSConstructorInterceptor(panda::JsiRuntimeCallInfo* runtimeCallInfo);
+--- a/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsi/jsi_bindings.inl
++++ b/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/jsi/jsi_bindings.inl
+@@ -212,10 +212,7 @@
+     BindingTarget t, JSFunctionCallback ctor, JSDestructorCallback<C> dtor, JSGCMarkCallback<C> gcMark)
+ {
+     jsConstructorBinding_.jsConstructor = ctor;
+-    jsConstructorBinding_.jsDestructorErased =
+-        dtor == nullptr ? nullptr : reinterpret_cast<JSDestructorCallbackErased>(dtor);
+-    jsConstructorBinding_.jsGcMarkErased =
+-        gcMark == nullptr ? nullptr : reinterpret_cast<JSGCMarkCallbackErased>(gcMark);
++    jsConstructorBinding_.SetNativeCallbacks<C>(dtor, gcMark);
+     auto runtime = std::static_pointer_cast<ArkJSRuntime>(JsiDeclarativeEngineInstance::GetCurrentRuntime());
+     auto vm = const_cast<EcmaVM*>(runtime->GetEcmaVm());
+     LocalScope scope(vm);
+@@ -250,10 +247,7 @@
+ template<typename... Args>
+ void JsiClass<C>::Bind(BindingTarget t, JSDestructorCallback<C> dtor, JSGCMarkCallback<C> gcMark)
+ {
+-    jsConstructorBinding_.jsDestructorErased =
+-        dtor == nullptr ? nullptr : reinterpret_cast<JSDestructorCallbackErased>(dtor);
+-    jsConstructorBinding_.jsGcMarkErased =
+-        gcMark == nullptr ? nullptr : reinterpret_cast<JSGCMarkCallbackErased>(gcMark);
++    jsConstructorBinding_.SetNativeCallbacks<C>(dtor, gcMark);
+     auto runtime = std::static_pointer_cast<ArkJSRuntime>(JsiDeclarativeEngineInstance::GetCurrentRuntime());
+     auto vm = const_cast<EcmaVM*>(runtime->GetEcmaVm());
+     LocalScope scope(vm);
+@@ -318,10 +312,7 @@
+     }
+ 
+     jsConstructorBinding_.jsConstructor = ctor;
+-    jsConstructorBinding_.jsDestructorErased =
+-        dtor == nullptr ? nullptr : reinterpret_cast<JSDestructorCallbackErased>(dtor);
+-    jsConstructorBinding_.jsGcMarkErased =
+-        gcMark == nullptr ? nullptr : reinterpret_cast<JSGCMarkCallbackErased>(gcMark);
++    jsConstructorBinding_.SetNativeCallbacks<C>(dtor, gcMark);
+     classFunction_ = panda::Global<panda::FunctionRef>(
+         vm, panda::FunctionRef::NewClassFunction(vm, JsiJSConstructorInterceptor, nullptr,
+             reinterpret_cast<void*>(&JsiClass<C>::jsConstructorBinding_)));

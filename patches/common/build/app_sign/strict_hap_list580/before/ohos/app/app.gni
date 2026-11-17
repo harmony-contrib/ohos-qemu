@@ -1,0 +1,862 @@
+# Copyright (c) 2021 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/config/python.gni")
+import("//build/ohos/app/app_internal.gni")
+import("//build/ohos/notice/notice.gni")
+import("//build/ohos_var.gni")
+import("//build/templates/common/collect_target.gni")
+import("//build/templates/metadata/module_info.gni")
+
+declare_args() {
+  app_need_publicity = false
+}
+
+# Declare an OHOS AppScope target
+#
+# Variables:
+#   app_profile: common config of hap.
+#   sources: list of asset files to be included in hap.
+#
+template("ohos_app_scope") {
+  forward_variables_from(invoker, [ "testonly" ])
+  assert(defined(invoker.app_profile),
+         "app_profile must be defined for ohos_app_scope")
+  assert(defined(invoker.sources), "sources must be defined for ohos_app_scope")
+
+  _metadata = "$target_gen_dir/$target_name.metadata"
+  _metadata_target = "${target_name}__metadata"
+  write_meta_data(_metadata_target) {
+    forward_variables_from(invoker, [ "app_profile" ])
+    type = "app_profile"
+    meta_data = _metadata
+    resources = invoker.sources
+    app_profile = invoker.app_profile
+  }
+  group(target_name) {
+    deps = [ ":$_metadata_target" ]
+  }
+}
+
+# Declare an OHOS assets target
+#
+# Variables:
+#   deps: dependencies of this target.
+#   sources: list of asset files to be included in hap.
+#
+template("ohos_assets") {
+  forward_variables_from(invoker, [ "testonly" ])
+  assert(defined(invoker.sources), "sources must be defined for ohos_assets")
+  _metadata = "$target_gen_dir/$target_name.metadata"
+
+  _metadata_target = "${target_name}__metadata"
+  write_meta_data(_metadata_target) {
+    forward_variables_from(invoker, [ "deps" ])
+    type = "assets"
+    meta_data = _metadata
+    raw_assets = invoker.sources
+  }
+  group(target_name) {
+    public_deps = [ ":$_metadata_target" ]
+  }
+}
+
+# Declare a js assets target
+#
+# Variables:
+#   source_dir: js assets directory, only one directory supported, string not list.
+#   js2abc: whether to transform js bundle to ark bytecode, default value
+#             follows build_ark.
+#   ets2abc: whether to transform ets bundle to ark bytecode, default value false
+#   deps: dependencies of this target.
+#
+template("ohos_js_assets") {
+  forward_variables_from(invoker, [ "testonly" ])
+  assert(defined(invoker.source_dir),
+         "source_dir must be defined for ohos_js_assets")
+
+  _metadata = "$target_gen_dir/$target_name.metadata"
+  _metadata_target = "${target_name}__metadata"
+  write_meta_data(_metadata_target) {
+    forward_variables_from(invoker,
+                           [
+                             "source_dir",
+                             "deps",
+                           ])
+    meta_data = _metadata
+    if (defined(invoker.ets2abc) && invoker.ets2abc) {
+      type = "ets_assets"
+      ets_assets = [ source_dir ]
+    } else if (defined(invoker.js2abc) && invoker.js2abc) {
+      type = "js_assets"
+      js_assets = [ source_dir ]
+    } else {
+      type = "unresolved_assets"
+      unresolved_assets = [ source_dir ]
+    }
+    if (defined(invoker.hap_profile)) {
+      hap_profile = invoker.hap_profile
+    }
+  }
+  group(target_name) {
+    deps = [ ":$_metadata_target" ]
+  }
+}
+
+# Declare an OHOS resource target
+#
+# Variables:
+#   deps: dependencies of this target.
+#   sources: list of resource files to be compiled.
+#   hap_profile: hap_profile is used when building resources.
+#
+template("ohos_resources") {
+  forward_variables_from(invoker, [ "testonly" ])
+  assert(defined(invoker.sources), "sources must be defined for ohos_resources")
+  _metadata = "$target_gen_dir/$target_name.metadata"
+
+  _deps = []
+  if (defined(invoker.deps)) {
+    _deps += invoker.deps
+  }
+
+  module_config = ""
+  module_configs = string_split(invoker.hap_profile, "/")
+  foreach(_module_config, module_configs) {
+    module_config = _module_config
+  }
+  _generated_profile = "$target_gen_dir/${target_name}/${module_config}"
+  _metadata_target = "${target_name}__metadata"
+  write_meta_data(_metadata_target) {
+    forward_variables_from(invoker, [ "package_name" ])
+    type = "resources"
+    meta_data = _metadata
+    resources = invoker.sources
+    hap_profile = _generated_profile
+    deps = _deps
+    possible_deps = _deps
+  }
+
+  _deps += [ ":$_metadata_target" ]
+
+  # compile_resources target here only used for concat app.json to module.json
+  _compile_profile_target = "${target_name}__compile_profile"
+  merge_profile(_compile_profile_target) {
+    forward_variables_from(invoker,
+                           [
+                             "deps",
+                             "hap_profile",
+                           ])
+    meta_data = _metadata
+    generated_profile = _generated_profile
+    if (defined(deps)) {
+      deps += _deps
+    } else {
+      deps = _deps
+    }
+  }
+
+  _deps += [ ":$_compile_profile_target" ]
+
+  # compile_resources target here only used for resources.h generation
+  _compile_resources_target = "${target_name}__compile_resources"
+  _generated_header_dir = "$target_gen_dir/$target_name"
+  compile_resources(_compile_resources_target) {
+    forward_variables_from(invoker,
+                           [
+                             "deps",
+                             "package_name",
+                           ])
+    hap_profile = _generated_profile
+    meta_data = _metadata
+    generated_header_dir = _generated_header_dir
+    if (defined(deps)) {
+      deps += _deps
+    } else {
+      deps = _deps
+    }
+  }
+
+  _resources_config = "${target_name}__resources_headers"
+  config(_resources_config) {
+    include_dirs = [ _generated_header_dir ]
+  }
+
+  group(target_name) {
+    deps = [ ":$_metadata_target" ]
+    deps += [
+      ":$_compile_profile_target",
+      ":$_compile_resources_target",
+    ]
+    public_configs = [ ":$_resources_config" ]
+  }
+}
+
+if (app_need_publicity) {
+  template("_ohos_publicity") {
+    forward_variables_from(invoker,
+                           [
+                             "_hap_name",
+                             "module_install_dir",
+                             "relative_install_dir",
+                           ])
+
+    action(target_name) {
+      script = "//build/scripts/collect_publicity.py"
+      depfile = "${target_gen_dir}/${target_name}.d"
+      if (defined(module_install_dir)) {
+        not_needed([ "relative_install_dir" ])
+        module_type = "app"
+        install_dir = string_replace(module_install_dir, "${module_type}/", "")
+      } else if (defined(relative_install_dir)) {
+        install_dir = relative_install_dir
+      } else {
+        install_dir = ""
+      }
+
+      if (install_dir == "") {
+        print(
+            "${invoker.module_label} not set install dir, empty install dir is invalid.")
+      }
+      args = [
+        "--depfile",
+        rebase_path(depfile, root_build_dir),
+      ]
+      if (defined(invoker.publicity_file)) {
+        inputs = [ invoker.publicity_file ]
+        source = inputs[0]
+        args += [
+          "--source",
+          rebase_path(source, root_build_dir),
+        ]
+      } else {
+        print("${invoker.module_label} need to set publicity_file.")
+      }
+      outputs = [ "${root_build_dir}/app_publicity/${install_dir}/${_hap_name}_publicity.xml" ]
+      args += [
+        "--output",
+        rebase_path(outputs[0], root_build_dir),
+      ]
+    }
+  }
+}
+
+template("ohos_app") {
+  forward_variables_from(invoker,
+                         [
+                           "testonly",
+                           "install_enable",
+                           "install_images",
+                           "module_install_dir",
+                           "relative_install_dir",
+                           "nodejs_path",
+                           "visibility",
+                         ])
+  if (defined(invoker.hvigor_home) || defined(invoker.sdk_home)) {
+    _check_target = "${target_name}__hap_check"
+    target_path = get_label_info(":${target_name}", "label_no_toolchain")
+    action(_check_target) {
+      forward_variables_from(invoker,
+                             [
+                               "sdk_home",
+                               "hvigor_home",
+                             ])
+      script = "//build/scripts/check_hvigor_hap.py"
+      outputs = [ "${target_out_dir}/${target_name}.txt" ]
+      inputs = [ "${preloader_output_dir}/hvigor_compile_hap_whitelist.json" ]
+      depfile = "${target_gen_dir}/${target_name}.d"
+      args = [
+        "--depfile",
+        rebase_path(depfile, root_build_dir),
+        "--target-path",
+        target_path,
+        "--output",
+        rebase_path(outputs[0], root_build_dir),
+        "--hvigor-compile-hap-allow-file",
+        rebase_path(inputs[0], root_build_dir),
+      ]
+      if (defined(sdk_home) && sdk_home != "") {
+        args += [
+          "--sdk-home",
+          rebase_path(sdk_home, "//"),
+        ]
+      }
+      if (defined(hvigor_home) && hvigor_home != "") {
+        args += [
+          "--hvigor-home",
+          rebase_path(hvigor_home, "//"),
+        ]
+      }
+    }
+  }
+  _test_target = defined(testonly) && testonly
+  _unsigned_hap_path_list =
+      "${target_out_dir}/${target_name}/unsigned_hap_path_list.json"
+
+  _abs_path = get_path_info("./", "abspath")
+  _hap_out_dir = "${target_out_dir}/${target_name}"
+  if (defined(invoker.nodejs_path)) {
+    _nodejs_path = invoker.nodejs_path
+  }
+  if (defined(invoker.hap_out_dir)) {
+    _hap_out_dir = invoker.hap_out_dir
+  }
+
+  _hap_name = target_name
+  if (defined(invoker.hap_name)) {
+    _hap_name = invoker.hap_name
+  }
+
+  if (defined(invoker.build_profile)) {
+    build_profile = invoker.build_profile
+  } else {
+    build_profile = "./build-profile.json5"
+  }
+
+  _js_build_mode = "release"
+  if (defined(invoker.js_build_mode)) {
+    _js_build_mode = invoker.js_build_mode
+  }
+
+  if (defined(invoker.system_lib_deps)) {
+    _system_lib_deps = invoker.system_lib_deps
+  }
+
+  _main_target_name = target_name
+
+  if (defined(invoker.subsystem_name) && defined(invoker.part_name)) {
+    _subsystem_name = invoker.subsystem_name
+    _part_name = invoker.part_name
+  } else if (defined(invoker.part_name)) {
+    _part_name = invoker.part_name
+    _part_subsystem_info_file =
+        "$root_build_dir/build_configs/parts_info/part_subsystem.json"
+    _arguments = [
+      "--part-name",
+      _part_name,
+      "--part-subsystem-info-file",
+      rebase_path(_part_subsystem_info_file, root_build_dir),
+    ]
+    _get_subsystem_script = "//build/templates/common/get_subsystem_name.py"
+    _subsystem_name =
+        exec_script(_get_subsystem_script, _arguments, "trim string")
+  } else if (defined(invoker.subsystem_name)) {
+    _subsystem_name = invoker.subsystem_name
+    _part_name = _subsystem_name
+  } else {
+    _subsystem_name = "build"
+    _part_name = "build_framework"
+  }
+
+  assert(_subsystem_name != "")  # Mark as used
+  assert(_part_name != "")  # Mark as used
+
+  module_label = get_label_info(":${target_name}", "label_with_toolchain")
+  _collect_target = "${target_name}__collect"
+  collect_module_target(_collect_target) {
+  }
+
+  if (!defined(install_enable)) {
+    install_enable = true
+  }
+
+  if (!_test_target) {
+    if (defined(install_images)) {
+      app_allow_images = [
+        "system",
+        "cloud_rom",
+      ]
+      allow_image = filter_exclude(install_images, app_allow_images)
+      assert(
+          allow_image == [],
+          "${module_label} has invaild install_images: ${invoker.install_images}, allowed values: ${app_allow_images}")
+    }
+    if (defined(module_install_dir)) {
+      app_allow_path = [ "app/*" ]
+      if (filter_exclude([ module_install_dir ], app_allow_path) != [] ||
+          module_install_dir == "app/") {
+        assert(
+            false,
+            "${module_label} has invaild module_install_dir: ${invoker.module_install_dir}, allowed values: app/{{app_name}}")
+      }
+    }
+
+    if (!defined(module_install_dir) && !defined(relative_install_dir)) {
+      print(
+          "Set module_install_dir or relative_install_dir field in the ${module_label}. Do not install the module to app.")
+    }
+
+    if (app_need_publicity) {
+      if (install_enable) {
+        _publicity_target = "${_main_target_name}_publicity"
+        _ohos_publicity(_publicity_target) {
+          forward_variables_from(invoker, [ "publicity_file" ])
+        }
+      }
+    }
+  }
+
+  _module_info_target = "${_main_target_name}_info"
+  generate_module_info(_module_info_target) {
+    part_name = _part_name
+    module_name = _main_target_name
+    module_type = "app"
+    module_source_dir = get_path_info(_hap_out_dir, "dir")
+
+    if (defined(invoker.install_images)) {
+      module_install_images = []
+      module_install_images += invoker.install_images
+    } else {
+      module_install_images = [ "system" ]
+    }
+
+    if (defined(invoker.symlink_target_name)) {
+      symlink_target_name = invoker.symlink_target_name
+    }
+
+    notice = "$target_out_dir/$_main_target_name.notice.txt"
+  }
+
+  _notice_target = "${target_name}_notice"
+  collect_notice(_notice_target) {
+    forward_variables_from(invoker,
+                           [
+                             "license_as_sources",
+                             "license_file",
+                           ])
+    module_name = _main_target_name
+    module_type = "app"
+    module_source_dir = get_label_info(":${_main_target_name}", "dir")
+  }
+
+  _compile_app_target = "${target_name}_compile_app"
+  compile_app(_compile_app_target) {
+    if (defined(_nodejs_path)) {
+      nodejs_path = _nodejs_path
+    }
+    build_mode = _js_build_mode
+    cwd = _abs_path
+    unsigned_hap_path_list = _unsigned_hap_path_list
+    deps = [
+      ":${_collect_target}",
+      ":${_notice_target}",
+    ]
+
+    if (defined(invoker.hvigor_home) || defined(invoker.sdk_home)) {
+      deps += [ ":${_check_target}" ]
+    }
+
+    if (!_test_target && app_need_publicity) {
+      if (install_enable) {
+        deps += [ ":${_publicity_target}" ]
+      } else {
+        if (defined(invoker.publicity_file)) {
+          print(
+              "${module_label} is not install, please delete set publicity_file: ${invoker.publicity_file}.")
+        }
+      }
+    } else {
+      if (defined(invoker.publicity_file)) {
+        not_needed(invoker, [ "publicity_file" ])
+      }
+    }
+
+    product = "default"
+    if (defined(invoker.product) && invoker.product != "") {
+      product = invoker.product
+    }
+
+    ohos_test_coverage = false
+    if (defined(invoker.ohos_test_coverage) && invoker.ohos_test_coverage) {
+      ohos_test_coverage = invoker.ohos_test_coverage
+    }
+
+    if (defined(invoker.deps)) {
+      deps += invoker.deps
+    }
+    if (defined(invoker.system_lib_deps)) {
+      system_lib_deps = _system_lib_deps
+      deps += _system_lib_deps
+    }
+    if (defined(invoker.test_hap)) {
+      test_hap = invoker.test_hap
+    }
+    if (defined(invoker.test_module)) {
+      test_module = invoker.test_module
+    }
+    if (defined(invoker.module_libs_dir)) {
+      module_libs_dir = invoker.module_libs_dir
+    }
+    if (defined(invoker.sdk_home)) {
+      sdk_home = invoker.sdk_home
+    } else {
+      sdk_home = "//prebuilts/ohos-sdk/linux"
+    }
+    if (defined(invoker.sdk_type_name)) {
+      sdk_type_name = invoker.sdk_type_name
+    }
+    if (defined(invoker.hvigor_home)) {
+      hvigor_home = invoker.hvigor_home
+    }
+    if (defined(invoker.build_modules)) {
+      build_modules = invoker.build_modules
+    }
+    if (defined(invoker.assemble_type)) {
+      assemble_type = invoker.assemble_type
+    }
+    if (defined(invoker.build_level)) {
+      build_level = invoker.build_level
+    }
+  }
+  _hap_list = "${target_out_dir}/${target_name}/hap_list.json"
+  if (defined(invoker.hap_list)) {
+    _hap_list_json = {
+      do_filter = true
+      hap_list = invoker.hap_list
+    }
+    write_file(_hap_list, _hap_list_json, "json")
+  }
+
+  if (defined(visibility) && visibility != []) {
+    if (test_label_type != "") {
+       visibility += [ "${root_build_dir}/build_configs/*" ]
+    }
+  }
+
+  app_sign(target_name) {
+    forward_variables_from(invoker,
+                           [
+                             "private_key_path",
+                             "signature_algorithm",
+                             "certificate_profile",
+                             "keystore_path",
+                             "keystore_password",
+                             "key_alias",
+                             "certificate_file",
+                             "compatible_version",
+                             "test_type",
+                           ])
+    unsigned_hap_path_list = _unsigned_hap_path_list
+    deps = [
+      ":$_compile_app_target",
+      ":$_module_info_target",
+    ]
+    hap_out_dir = _hap_out_dir
+    hap_name = _hap_name
+    hap_list = _hap_list
+    install_module_info = {
+      module_def = get_label_info(":$target_name", "label_with_toolchain")
+      module_info_file =
+          rebase_path(get_label_info(module_def, "target_out_dir"),
+                      root_build_dir) + "/${target_name}_module_info.json"
+      toolchain = current_toolchain
+      toolchain_out_dir = rebase_path(root_out_dir, root_build_dir)
+      part_name = _part_name
+      subsystem_name = _subsystem_name
+    }
+  }
+}
+
+# Declare an OHOS hap target
+#
+# Variables:
+#   deps: dependencies of this target.
+#   hap_name: name of output hap file.
+#   final_hap_path: full path of output hap file, final_hap_path overwrites hap_name.
+#   js2abc:   whether to transform js bundle to ark bytecode, default value
+#             follows build_ark.
+#   ets2abc:   whether to transform js bundle to ark bytecode, default value false
+#
+#
+template("ohos_hap") {
+  forward_variables_from(invoker,
+                         [
+                           "testonly",
+                           "install_enable",
+                           "install_images",
+                           "module_install_dir",
+                           "relative_install_dir",
+                           "visibility",
+                         ])
+  assert(defined(invoker.hap_profile),
+         "hap_profile must be defined for ohos_hap")
+
+  _test_target = defined(testonly) && testonly
+  _deps = []
+  if (defined(invoker.deps)) {
+    _deps = invoker.deps
+  }
+
+  _hap_profile = invoker.hap_profile
+  _hap_name = target_name
+  if (defined(invoker.hap_name)) {
+    _hap_name = invoker.hap_name
+  }
+
+  _hap_path = "$target_out_dir/$_hap_name.hap"
+  if (defined(invoker.final_hap_path)) {
+    _hap_path = invoker.final_hap_path
+  }
+
+  _js2abc = build_ark
+  if (defined(invoker.js2abc)) {
+    _js2abc = invoker.js2abc
+  }
+
+  _ets2abc = false
+  if (defined(invoker.ets2abc)) {
+    _ets2abc = invoker.ets2abc
+  }
+
+  if (_ets2abc) {
+    _js2abc = false
+  }
+
+  _js_build_mode = "release"
+  if (defined(invoker.js_build_mode)) {
+    _js_build_mode = invoker.js_build_mode
+  }
+
+  _main_target_name = target_name
+
+  if (defined(invoker.subsystem_name) && defined(invoker.part_name)) {
+    _subsystem_name = invoker.subsystem_name
+    _part_name = invoker.part_name
+  } else if (defined(invoker.part_name)) {
+    _part_name = invoker.part_name
+    _part_subsystem_info_file =
+        "$root_build_dir/build_configs/parts_info/part_subsystem.json"
+    _arguments = [
+      "--part-name",
+      _part_name,
+      "--part-subsystem-info-file",
+      rebase_path(_part_subsystem_info_file, root_build_dir),
+    ]
+    _get_subsystem_script = "//build/templates/common/get_subsystem_name.py"
+    _subsystem_name =
+        exec_script(_get_subsystem_script, _arguments, "trim string")
+  } else if (defined(invoker.subsystem_name)) {
+    _subsystem_name = invoker.subsystem_name
+    _part_name = _subsystem_name
+  } else {
+    _subsystem_name = "build"
+    _part_name = "build_framework"
+  }
+
+  assert(_subsystem_name != "")  # Mark as used
+  assert(_part_name != "")  # Mark as used
+
+  # metadata is used to record all necessary data for hap.
+  _metadata_target = "${target_name}__metadata"
+  _meta_data = "$target_gen_dir/$target_name.metadata"
+  write_meta_data(_metadata_target) {
+    forward_variables_from(invoker,
+                           [
+                             "raw_assets",
+                             "resources",
+                             "js_assets",
+                             "ets_assets",
+                           ])
+    hap_profile = invoker.hap_profile
+    meta_data = _meta_data
+    possible_deps = _deps
+    type = "hap"
+    js2abc = _js2abc
+    hap_path = _hap_path
+  }
+
+  _js_assets_target = "${target_name}__js_assets"
+  _packaged_js_assets = "$target_out_dir/$target_name/js_assets.zip"
+  compile_js_assets(_js_assets_target) {
+    hap_profile = _hap_profile
+    packaged_js_assets = _packaged_js_assets
+    meta_data = _meta_data
+    deps = [ ":$_metadata_target" ] + _deps
+    build_mode = _js_build_mode
+    js2abc = _js2abc
+    ets2abc = _ets2abc
+    if (defined(testonly) && testonly == true) {
+      main_target_name = _main_target_name
+    }
+  }
+
+  _resources_target = "${target_name}__compile_resources"
+  _packaged_resources = "$target_out_dir/$target_name/resources.zip"
+  _generated_header_dir = "$target_out_dir/$target_name"
+  compile_resources(_resources_target) {
+    hap_profile = _hap_profile
+    packaged_resources = _packaged_resources
+    generated_header_dir = _generated_header_dir
+    meta_data = _meta_data
+    deps = [ ":$_metadata_target" ] + _deps
+  }
+
+  module_label = get_label_info(":${target_name}", "label_with_toolchain")
+  _collect_target = "${target_name}__collect"
+  collect_module_target(_collect_target) {
+    forward_variables_from(invoker, [ "install_images" ])
+  }
+
+  _notice_target = "${target_name}__notice"
+  collect_notice(_notice_target) {
+    forward_variables_from(invoker,
+                           [
+                             "license_as_sources",
+                             "license_file",
+                           ])
+    module_type = "app"
+    module_name = _main_target_name
+    module_source_dir = get_label_info(":${_main_target_name}", "dir")
+  }
+
+  if (!defined(install_enable)) {
+    install_enable = true
+  }
+
+  if (!_test_target) {
+    if (defined(install_images)) {
+      app_allow_images = [ "system" ]
+      allow_image = filter_exclude(install_images, app_allow_images)
+      assert(
+          allow_image == [],
+          "${module_label} has invaild install_images: ${invoker.install_images}, allowed values: ${app_allow_images}")
+    }
+
+    if (defined(module_install_dir)) {
+      app_allow_path = [ "app/*" ]
+      if (filter_exclude([ module_install_dir ], app_allow_path) != [] ||
+          module_install_dir == "app/") {
+        assert(
+            false,
+            "${module_label} has invaild module_install_dir: ${invoker.module_install_dir}, allowed values: app/{{app_name}}")
+      }
+    }
+
+    if (!defined(module_install_dir) && !defined(relative_install_dir)) {
+      print(
+          "Set module_install_dir or relative_install_dir field in the ${module_label}. Do not install the module to app.")
+    }
+
+    if (app_need_publicity) {
+      if (install_enable) {
+        _publicity_target = "${_main_target_name}_publicity"
+        _ohos_publicity(_publicity_target) {
+          forward_variables_from(invoker, [ "publicity_file" ])
+        }
+      }
+    }
+  }
+
+  _module_info_target = "${_main_target_name}_info"
+  generate_module_info(_module_info_target) {
+    part_name = _part_name
+    module_name = _main_target_name
+    module_type = "app"
+
+    module_source_dir = get_path_info(_hap_path, "dir")
+    module_install_name = get_path_info(_hap_path, "name")
+    if (defined(invoker.module_install_name)) {
+      module_install_name = invoker.module_install_name
+    }
+
+    module_install_images = [ "system" ]
+    if (defined(invoker.install_images)) {
+      module_install_images = []
+      module_install_images += invoker.install_images
+    }
+
+    module_output_extension = ".hap"
+
+    if (defined(invoker.symlink_target_name)) {
+      symlink_target_name = invoker.symlink_target_name
+    }
+    notice = "$target_out_dir/$_main_target_name.notice.txt"
+  }
+
+  if (defined(visibility) && visibility != []) {
+    if (test_label_type != "") {
+       visibility += [ "${root_build_dir}/build_configs/*" ]
+    }
+  }
+
+  package_app(target_name) {
+    forward_variables_from(invoker,
+                           [
+                             "shared_libraries",
+                             "external_deps",
+                             "private_key_path",
+                             "signature_algorithm",
+                             "certificate_profile",
+                             "keystore_path",
+                             "keystore_password",
+                             "key_alias",
+                             "certificate_file",
+                             "compatible_version",
+                             "test_type",
+                           ])
+    deps = [
+      ":$_js_assets_target",
+      ":$_metadata_target",
+      ":$_notice_target",
+      ":$_resources_target",
+      ":${_collect_target}",
+    ]
+
+    if (!ohos_indep_compiler_enable) {
+      if (_part_name == "packing_tool" || is_arkui_x) {
+        deps += [ "//developtools/packing_tool:packing_tool" ]
+      } else {
+        external_deps = [ "packing_tool:packing_tool_external" ]
+      }
+
+    }
+    if (!_test_target && app_need_publicity) {
+      if (install_enable) {
+        deps += [ ":${_publicity_target}" ]
+      } else {
+        if (defined(invoker.publicity_file)) {
+          print(
+              "${module_label} is not install, please delete set publicity_file: ${invoker.publicity_file}.")
+        }
+      }
+    } else {
+      if (defined(invoker.publicity_file)) {
+        not_needed(invoker, [ "publicity_file" ])
+      }
+    }
+    if (!skip_gen_module_info) {
+      deps += [ ":$_module_info_target" ]
+    }
+    enable_ark = build_ark
+    if (defined(shared_libraries)) {
+      deps += shared_libraries
+    }
+    packaged_js_assets = _packaged_js_assets
+    packaged_resources = _packaged_resources
+    hap_profile = _hap_profile
+    meta_data = _meta_data
+    hap_path = _hap_path
+    build_mode = _js_build_mode
+
+    install_module_info = {
+      module_def = get_label_info(":$target_name", "label_with_toolchain")
+      module_info_file =
+          rebase_path(get_label_info(module_def, "target_out_dir"),
+                      root_build_dir) + "/${target_name}_module_info.json"
+      subsystem_name = _subsystem_name
+      part_name = _part_name
+      toolchain = current_toolchain
+      toolchain_out_dir = rebase_path(root_out_dir, root_build_dir)
+    }
+  }
+}

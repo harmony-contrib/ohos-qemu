@@ -1,0 +1,7 @@
+{
+  "project": "base/msdp/device_status",
+  "revision": "96335211bea5ca348325d55746e14e102208354f",
+  "path": "base/msdp/device_status/intention/stationary/server/src/stationary_server.cpp",
+  "before": "c6aa30108eb8a11ee5f7d23448524dd0d8c6564dd896537abe3a11c740c423ec",
+  "after": "4f0074597e868bf0a22923c88873177253094c573847273d751684a43fe3b1fa"
+}

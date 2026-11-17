@@ -1,0 +1,33 @@
+diff --git a/foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp b/foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp
+--- a/foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp
++++ b/foundation/multimedia/camera_framework/frameworks/js/camera_napi/src/native_module_ohos_camera.cpp
+@@ -107,6 +107,29 @@
+     PhotoNapi::Init(env, exports);
+     CapturePhotoNapi::Init(env, exports);
+     SecureCameraSessionNapi::Init(env, exports);
++    // Public caller-owned configuration record, not a camera service object.
++    // Leave fields unset until assigned by the caller, as in the SDK declaration.
++    napi_value effectSuggestionStatus = nullptr;
++    auto constructor = [](napi_env env, napi_callback_info info) -> napi_value {
++        napi_value target = nullptr;
++        if (napi_get_new_target(env, info, &target) != napi_ok) {
++            return nullptr;
++        }
++        if (target == nullptr) {
++            napi_throw_type_error(env, nullptr, "EffectSuggestionStatus requires new");
++            return nullptr;
++        }
++        napi_value instance = nullptr;
++        if (napi_get_cb_info(env, info, nullptr, nullptr, &instance, nullptr) != napi_ok) {
++            return nullptr;
++        }
++        return instance;
++    };
++    if (napi_define_class(env, "EffectSuggestionStatus", NAPI_AUTO_LENGTH, constructor,
++            nullptr, 0, nullptr, &effectSuggestionStatus) != napi_ok ||
++        napi_set_named_property(env, exports, "EffectSuggestionStatus", effectSuggestionStatus) != napi_ok) {
++        return nullptr;
++    }
+     MEDIA_DEBUG_LOG("Export is end");
+     return exports;
+ }

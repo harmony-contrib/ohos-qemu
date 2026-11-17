@@ -1,0 +1,24 @@
+diff --git a/device/qemu/common/virt_full/kernel/arm64_virt_defconfig b/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
+--- a/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
++++ b/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
+@@ -8902,3 +8902,3 @@
+ # CONFIG_QFMT_V1 is not set
+-# CONFIG_QFMT_V2 is not set
++CONFIG_QFMT_V2=y
+ CONFIG_QUOTACTL=y
+diff --git a/device/qemu/common/virt_full/kernel/arm_virt_defconfig b/device/qemu/common/virt_full/kernel/arm_virt_defconfig
+--- a/device/qemu/common/virt_full/kernel/arm_virt_defconfig
++++ b/device/qemu/common/virt_full/kernel/arm_virt_defconfig
+@@ -6086,3 +6086,4 @@
+ # CONFIG_FANOTIFY is not set
+ CONFIG_QUOTA=y
++CONFIG_QFMT_V2=y
+ CONFIG_AUTOFS_FS=y
+diff --git a/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig b/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig
+--- a/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig
++++ b/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig
+@@ -5700,3 +5700,4 @@
+ # CONFIG_FANOTIFY is not set
+ CONFIG_QUOTA=y
++CONFIG_QFMT_V2=y
+ CONFIG_QUOTACTL=y

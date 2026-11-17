@@ -1,0 +1,22 @@
+diff --git a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c
+--- a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c
++++ b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_capture.c
+@@ -49,6 +49,7 @@ static int32_t CaptureSelectSceneImpl(struct AlsaCapture *captureIns, const stru
+ {
+     CHECK_NULL_PTR_RETURN_DEFAULT(captureIns);
+-    captureIns->descPins = descPins;
++    CHECK_NULL_PTR_RETURN_DEFAULT(handleData);
++    captureIns->descPins = handleData->captureMode.hwInfo.deviceDescript.pins;
+     return HDF_SUCCESS;
+ }
+ 
+diff --git a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_render.c b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_render.c
+--- a/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_render.c
++++ b/drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_render.c
+@@ -49,5 +49,6 @@ static int32_t RenderSelectSceneImpl(struct AlsaRender *renderIns, const struct
+ {
+     CHECK_NULL_PTR_RETURN_DEFAULT(renderIns);
++    CHECK_NULL_PTR_RETURN_DEFAULT(handleData);
+     renderIns->descPins = handleData->renderMode.hwInfo.deviceDescript.pins;
+     return HDF_SUCCESS;
+ }

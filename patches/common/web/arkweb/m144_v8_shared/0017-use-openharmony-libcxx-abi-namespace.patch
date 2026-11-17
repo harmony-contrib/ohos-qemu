@@ -1,0 +1,30 @@
+diff --git a/src/build/config/ohos/BUILD.gn b/src/build/config/ohos/BUILD.gn
+--- a/src/build/config/ohos/BUILD.gn
++++ b/src/build/config/ohos/BUILD.gn
+@@ -39,6 +39,13 @@ config("compiler") {
+     "HAVE_SYS_UIO_H",
+   ]
+   
++  # JSVM is built by the OpenHarmony toolchain, whose libc++ ABI namespace is
++  # __h. v8_shared exposes standard-library types in its public C++ symbols,
++  # so the target-side Chromium libc++ must use the same namespace.
++  if (use_custom_libcxx) {
++    defines += [ "_LIBCPP_ABI_NAMESPACE=__h" ]
++  }
++
+   if (is_arkweb) {
+     defines += [ "IS_ARKWEB_TRUE" ]
+   }
+diff --git a/src/buildtools/third_party/libc++/__config_site b/src/buildtools/third_party/libc++/__config_site
+--- a/src/buildtools/third_party/libc++/__config_site
++++ b/src/buildtools/third_party/libc++/__config_site
+@@ -16,7 +16,9 @@
+ //    on Windows, the increase is great enough that we go above the 4GB size
+ //    limit for PDBs (https://crbug.com/1327710#c5). To fix this, we set
+ //    _LIBCPP_ABI_NAMESPACE to a shorter value.
++#ifndef _LIBCPP_ABI_NAMESPACE
+ #define _LIBCPP_ABI_NAMESPACE __Cr
++#endif
+ 
+ #define _LIBCPP_ABI_VERSION 2
+ 

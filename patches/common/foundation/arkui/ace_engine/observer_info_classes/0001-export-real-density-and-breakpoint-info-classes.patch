@@ -1,0 +1,251 @@
+diff --git a/foundation/arkui/ace_engine/interfaces/napi/kits/observer/js_ui_observer.cpp b/foundation/arkui/ace_engine/interfaces/napi/kits/observer/js_ui_observer.cpp
+index 28c0ec7..8300fa2 100644
+--- a/foundation/arkui/ace_engine/interfaces/napi/kits/observer/js_ui_observer.cpp
++++ b/foundation/arkui/ace_engine/interfaces/napi/kits/observer/js_ui_observer.cpp
+@@ -2005,6 +2005,7 @@ static napi_value UIObserverExport(napi_env env, napi_value exports)
+     NAPI_CALL(
+         env, napi_define_properties(env, exports, sizeof(uiObserverDesc) / sizeof(uiObserverDesc[0]), uiObserverDesc));
+     NAPI_CALL(env, GestureObserver::DefineGestureObserver(env, exports));
++    InitObserverInfoClasses(env, exports);
+     return exports;
+ }
+ 
+diff --git a/foundation/arkui/ace_engine/interfaces/napi/kits/observer/ui_observer.cpp b/foundation/arkui/ace_engine/interfaces/napi/kits/observer/ui_observer.cpp
+index 01cfd81..de492d3 100644
+--- a/foundation/arkui/ace_engine/interfaces/napi/kits/observer/ui_observer.cpp
++++ b/foundation/arkui/ace_engine/interfaces/napi/kits/observer/ui_observer.cpp
+@@ -632,7 +632,20 @@ void UIObserver::HandleDensityChange(NG::AbilityContextInfo& info, double densit
+     if (iter == specifiedDensityListeners_.end()) {
+         return;
+     }
+-    SafeIterateListeners(iter->second, &UIObserverListener::OnDensityChange, density);
++    auto env = GetCurrentNapiEnv();
++    if (env == nullptr) {
++        return;
++    }
++    napi_handle_scope scope = nullptr;
++    if (napi_open_handle_scope(env, &scope) != napi_ok) {
++        return;
++    }
++    // Use the actual UIContext from this container, as for routerPageUpdate.
++    auto context = GetContextValue();
++    if (context != nullptr) {
++        SafeIterateListeners(iter->second, &UIObserverListener::OnDensityChange, density, context);
++    }
++    napi_close_handle_scope(env, scope);
+ }
+ 
+ void UIObserver::RegisterWinSizeLayoutBreakpointCallback(
+diff --git a/foundation/arkui/ace_engine/interfaces/napi/kits/observer/ui_observer_listener.cpp b/foundation/arkui/ace_engine/interfaces/napi/kits/observer/ui_observer_listener.cpp
+index 1043c05..74eee7e 100644
+--- a/foundation/arkui/ace_engine/interfaces/napi/kits/observer/ui_observer_listener.cpp
++++ b/foundation/arkui/ace_engine/interfaces/napi/kits/observer/ui_observer_listener.cpp
+@@ -13,6 +13,10 @@
+  * limitations under the License.
+  */
+ 
++#include <map>
++#include <memory>
++#include <new>
++
+ #include "ui_observer_listener.h"
+ #include "js_native_api.h"
+ #include "core/common/container.h"
+@@ -20,6 +24,111 @@
+ #include "interfaces/napi/kits/observer/gesture/gesture_observer_listener.h"
+ 
+ namespace OHOS::Ace::Napi {
++namespace {
++struct ObserverInfoConstructors {
++    napi_env env = nullptr;
++    napi_ref density = nullptr;
++    napi_ref breakpoint = nullptr;
++};
++
++thread_local std::map<napi_env, std::unique_ptr<ObserverInfoConstructors>> observerInfoConstructors;
++
++void CleanUpObserverInfoConstructors(void* data)
++{
++    auto context = static_cast<ObserverInfoConstructors*>(data);
++    if (context->density != nullptr) {
++        napi_delete_reference(context->env, context->density);
++    }
++    if (context->breakpoint != nullptr) {
++        napi_delete_reference(context->env, context->breakpoint);
++    }
++    observerInfoConstructors.erase(context->env);
++}
++
++ObserverInfoConstructors* GetObserverInfoConstructors(napi_env env)
++{
++    auto existing = observerInfoConstructors.find(env);
++    if (existing != observerInfoConstructors.end()) {
++        return existing->second.get();
++    }
++    auto context = std::unique_ptr<ObserverInfoConstructors>(new (std::nothrow) ObserverInfoConstructors());
++    if (!context) {
++        return nullptr;
++    }
++    context->env = env;
++    if (napi_add_env_cleanup_hook(env, CleanUpObserverInfoConstructors, context.get()) != napi_ok) {
++        return nullptr;
++    }
++    auto pointer = context.get();
++    observerInfoConstructors.emplace(env, std::move(context));
++    return pointer;
++}
++
++napi_value ObserverInfoConstructor(napi_env env, napi_callback_info info)
++{
++    napi_value target = nullptr;
++    napi_value instance = nullptr;
++    if (napi_get_new_target(env, info, &target) != napi_ok) {
++        return nullptr;
++    }
++    if (target == nullptr) {
++        napi_throw_type_error(env, nullptr, "Observer info class constructor requires new");
++        return nullptr;
++    }
++    if (napi_get_cb_info(env, info, nullptr, nullptr, &instance, nullptr) != napi_ok) {
++        return nullptr;
++    }
++    return instance;
++}
++
++napi_value GetObserverInfoConstructor(napi_env env, const char* name, napi_ref& reference)
++{
++    napi_value constructor = nullptr;
++    if (reference != nullptr) {
++        return napi_get_reference_value(env, reference, &constructor) == napi_ok ? constructor : nullptr;
++    }
++    if (napi_define_class(env, name, NAPI_AUTO_LENGTH, ObserverInfoConstructor, nullptr,
++        0, nullptr, &constructor) != napi_ok ||
++        napi_create_reference(env, constructor, 1, &reference) != napi_ok) {
++        return nullptr;
++    }
++    return constructor;
++}
++
++napi_value CreateObserverInfo(napi_env env, bool density)
++{
++    auto context = GetObserverInfoConstructors(env);
++    if (context == nullptr) {
++        return nullptr;
++    }
++    auto constructor = GetObserverInfoConstructor(env,
++        density ? "DensityInfo" : "WindowSizeLayoutBreakpointInfo",
++        density ? context->density : context->breakpoint);
++    napi_value result = nullptr;
++    if (constructor == nullptr || napi_new_instance(env, constructor, 0, nullptr, &result) != napi_ok) {
++        return nullptr;
++    }
++    return result;
++}
++} // namespace
++
++napi_value InitObserverInfoClasses(napi_env env, napi_value exports)
++{
++    auto context = GetObserverInfoConstructors(env);
++    if (context == nullptr) {
++        return exports;
++    }
++    auto density = GetObserverInfoConstructor(env, "DensityInfo", context->density);
++    if (density == nullptr || napi_set_named_property(env, exports, "DensityInfo", density) != napi_ok) {
++        return exports;
++    }
++    auto breakpoint = GetObserverInfoConstructor(env, "WindowSizeLayoutBreakpointInfo", context->breakpoint);
++    if (breakpoint != nullptr) {
++        napi_set_named_property(env, exports, "WindowSizeLayoutBreakpointInfo", breakpoint);
++    }
++    return exports;
++}
++
+ namespace {
+ constexpr char NAV_BAR[] = "navBar";
+ constexpr char GET_MODIFIER_KEY_STATE[] = "getModifierKeyState";
+@@ -452,9 +561,9 @@ void UIObserverListener::OnRouterPageStateChange(const NG::RouterPageInfoNG& pag
+     napi_close_handle_scope(env_, scope);
+ }
+ 
+-void UIObserverListener::OnDensityChange(double density)
++void UIObserverListener::OnDensityChange(double density, napi_value context)
+ {
+-    if (!env_ || !callback_) {
++    if (!env_ || !callback_ || IsNullOrUndefined(env_, context)) {
+         TAG_LOGW(AceLogTag::ACE_OBSERVER,
+             "Handle density change failed, runtime or callback function invalid!");
+         return;
+@@ -465,14 +574,15 @@ void UIObserverListener::OnDensityChange(double density)
+         return;
+     }
+     napi_value callback = nullptr;
+-    napi_get_reference_value(env_, callback_, &callback);
+-    napi_value objValue = nullptr;
+-    napi_create_object(env_, &objValue);
++    napi_value objValue = CreateObserverInfo(env_, true);
+     napi_value napiDensity = nullptr;
+-    napi_create_double(env_, density, &napiDensity);
+-    napi_set_named_property(env_, objValue, "density", napiDensity);
+-    napi_value argv[] = { objValue };
+-    napi_call_function(env_, nullptr, callback, 1, argv, nullptr);
++    if (objValue != nullptr && napi_get_reference_value(env_, callback_, &callback) == napi_ok &&
++        napi_create_double(env_, density, &napiDensity) == napi_ok &&
++        napi_set_named_property(env_, objValue, "density", napiDensity) == napi_ok &&
++        napi_set_named_property(env_, objValue, "context", context) == napi_ok) {
++        napi_value argv[] = { objValue };
++        napi_call_function(env_, nullptr, callback, 1, argv, nullptr);
++    }
+     napi_close_handle_scope(env_, scope);
+ }
+ 
+@@ -489,17 +599,17 @@ void UIObserverListener::OnWinSizeLayoutBreakpointChange(const WindowSizeBreakpo
+         return;
+     }
+     napi_value callback = nullptr;
+-    napi_get_reference_value(env_, callback_, &callback);
+-    napi_value objValue = nullptr;
+-    napi_create_object(env_, &objValue);
+-    napi_value widthValue;
+-    napi_create_int32(env_, static_cast<int32_t>(info.widthBreakpoint), &widthValue);
+-    napi_set_named_property(env_, objValue, "widthBreakpoint", widthValue);
+-    napi_value heightValue;
+-    napi_create_int32(env_, static_cast<int32_t>(info.heightBreakpoint), &heightValue);
+-    napi_set_named_property(env_, objValue, "heightBreakpoint", heightValue);
+-    napi_value argv[] = { objValue };
+-    napi_call_function(env_, nullptr, callback, 1, argv, nullptr);
++    napi_value objValue = CreateObserverInfo(env_, false);
++    napi_value widthValue = nullptr;
++    napi_value heightValue = nullptr;
++    if (objValue != nullptr && napi_get_reference_value(env_, callback_, &callback) == napi_ok &&
++        napi_create_int32(env_, static_cast<int32_t>(info.widthBreakpoint), &widthValue) == napi_ok &&
++        napi_set_named_property(env_, objValue, "widthBreakpoint", widthValue) == napi_ok &&
++        napi_create_int32(env_, static_cast<int32_t>(info.heightBreakpoint), &heightValue) == napi_ok &&
++        napi_set_named_property(env_, objValue, "heightBreakpoint", heightValue) == napi_ok) {
++        napi_value argv[] = { objValue };
++        napi_call_function(env_, nullptr, callback, 1, argv, nullptr);
++    }
+     napi_close_handle_scope(env_, scope);
+ }
+ 
+diff --git a/foundation/arkui/ace_engine/interfaces/napi/kits/observer/ui_observer_listener.h b/foundation/arkui/ace_engine/interfaces/napi/kits/observer/ui_observer_listener.h
+index 5582e19..ee68557 100644
+--- a/foundation/arkui/ace_engine/interfaces/napi/kits/observer/ui_observer_listener.h
++++ b/foundation/arkui/ace_engine/interfaces/napi/kits/observer/ui_observer_listener.h
+@@ -27,6 +27,8 @@ enum class NodeRenderState;
+ }
+ 
+ namespace OHOS::Ace::Napi {
++napi_value InitObserverInfoClasses(napi_env env, napi_value exports);
++
+ class UIObserverListener {
+ public:
+     UIObserverListener(napi_env env, napi_value callback) : env_(env)
+@@ -43,7 +45,7 @@ public:
+     void OnScrollEventStateChange(
+         const std::string& id, int32_t uniqueId, NG::ScrollEventType eventType, float offset, Ace::Axis axis);
+     void OnRouterPageStateChange(const NG::RouterPageInfoNG& pageInfo, napi_value context = nullptr);
+-    void OnDensityChange(double density);
++    void OnDensityChange(double density, napi_value context);
+     void OnWinSizeLayoutBreakpointChange(const WindowSizeBreakpoint info);
+     void OnWillClick(const GestureEvent& gestureEventInfo, const ClickInfo& clickInfo,
+         const RefPtr<NG::FrameNode> frameNode);

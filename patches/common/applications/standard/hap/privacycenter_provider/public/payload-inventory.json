@@ -1,0 +1,50 @@
+{
+  ".pages.info": {
+    "bytes": 32,
+    "sha256": "288936cdcc4661bcaf86c8f433e36d8f8dc80a7b9a662648e104d3d47ad1ae69"
+  },
+  "ets/modules.abc": {
+    "bytes": 202336,
+    "sha256": "7420d4bd3698a99b01ef0f004646ec27784f49a20677ac2f4d50a8bc2718c640"
+  },
+  "ets/sourceMaps.map": {
+    "bytes": 83597,
+    "sha256": "3e9e17852397b5e6e6c4fb0b87c7d0d450b4f8f82d5952d72ff0c044bd1a80e2"
+  },
+  "module.json": {
+    "bytes": 2009,
+    "sha256": "1a3445fdb9e70281ca26e2d771331f9c14710e11508af37c8222ef7e4d63bfbf"
+  },
+  "pack.info": {
+    "bytes": 628,
+    "sha256": "4c978411795304c504861b6cd216e50a730ef30c538f516bfd4445421ae000aa"
+  },
+  "resources.index": {
+    "bytes": 23517,
+    "sha256": "275b697924512da89e6a0ce8912aba60b6c0b762f861cf40b3b38c83af6a5ed5"
+  },
+  "resources/base/media/app_icon.png": {
+    "bytes": 6790,
+    "sha256": "53ce1f45f81705a84f05aa0d6956a64180d1fd6984a79b7a784f3931a311bd6f"
+  },
+  "resources/base/media/ic_back.svg": {
+    "bytes": 454,
+    "sha256": "43865ce8d5d7b91ebad5193fb431e2da3c0669fcd7320172d13ba3bbfa21cc4e"
+  },
+  "resources/base/media/ic_settings_arrow.svg": {
+    "bytes": 709,
+    "sha256": "5980051b33e9ad068175de1e74e50f5e7a69ac6704c61f02a645ba1526579161"
+  },
+  "resources/base/media/icon.png": {
+    "bytes": 6790,
+    "sha256": "53ce1f45f81705a84f05aa0d6956a64180d1fd6984a79b7a784f3931a311bd6f"
+  },
+  "resources/base/profile/main_pages.json": {
+    "bytes": 72,
+    "sha256": "7ddba6ca92d6df48f068920ed80b338af29dc0a40e5de3edd39d7d1e3573fdf4"
+  },
+  "rpcid.sc": {
+    "bytes": 52230,
+    "sha256": "b42b2a5badd53fd8da5f675d3f4b324d66a3ce269777d9ef02500c5da31ca0a5"
+  }
+}

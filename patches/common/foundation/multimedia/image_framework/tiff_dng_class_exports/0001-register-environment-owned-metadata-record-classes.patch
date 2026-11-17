@@ -1,0 +1,190 @@
+diff --git a/foundation/multimedia/image_framework/frameworks/kits/js/common/metadata_napi.cpp b/foundation/multimedia/image_framework/frameworks/kits/js/common/metadata_napi.cpp
+index 0f669fa..47575f7 100644
+--- a/foundation/multimedia/image_framework/frameworks/kits/js/common/metadata_napi.cpp
++++ b/foundation/multimedia/image_framework/frameworks/kits/js/common/metadata_napi.cpp
+@@ -14,6 +14,7 @@
+  */
+ 
+ #include <map>
++#include <new>
+ #include "metadata_napi.h"
+ #include "media_errors.h"
+ #include "image_log.h"
+@@ -965,17 +966,117 @@ napi_value MetadataNapi::CreateRfDataBMetadata(napi_env env, std::shared_ptr<Ima
+     return result;
+ }
+ 
+-napi_value MetadataNapi::CreateDngMetadata(napi_env env)
++namespace {
++struct RecordMetadataConstructors {
++    napi_env env = nullptr;
++    napi_ref dng = nullptr;
++    napi_ref tiff = nullptr;
++};
++
++// Constructors are specific to a NAPI environment, including worker runtimes.
++thread_local std::map<napi_env, std::unique_ptr<RecordMetadataConstructors>> recordConstructors;
++
++void CleanUpRecordConstructors(void* data)
+ {
+-    napi_value obj = nullptr;
+-    napi_status status = napi_create_object(env, &obj);
+-    if (status != napi_ok) {
+-        IMAGE_LOGE("Failed to create empty DngMetadata object: %{public}d", status);
+-        napi_value result = nullptr;
+-        napi_get_undefined(env, &result);
+-        return result;
++    auto context = static_cast<RecordMetadataConstructors*>(data);
++    if (context->dng != nullptr) {
++        napi_delete_reference(context->env, context->dng);
++    }
++    if (context->tiff != nullptr) {
++        napi_delete_reference(context->env, context->tiff);
++    }
++    recordConstructors.erase(context->env);
++}
++
++RecordMetadataConstructors* GetRecordConstructors(napi_env env)
++{
++    auto existing = recordConstructors.find(env);
++    if (existing != recordConstructors.end()) {
++        return existing->second.get();
++    }
++    auto context = std::unique_ptr<RecordMetadataConstructors>(new (std::nothrow) RecordMetadataConstructors());
++    if (!context) {
++        return nullptr;
+     }
+-    return obj;
++    context->env = env;
++    if (napi_add_env_cleanup_hook(env, CleanUpRecordConstructors, context.get()) != napi_ok) {
++        return nullptr;
++    }
++    auto pointer = context.get();
++    recordConstructors.emplace(env, std::move(context));
++    return pointer;
++}
++
++napi_value RecordMetadataConstructor(napi_env env, napi_callback_info info)
++{
++    napi_value target = nullptr;
++    napi_value instance = nullptr;
++    if (napi_get_new_target(env, info, &target) != napi_ok) {
++        return nullptr;
++    }
++    if (target == nullptr) {
++        napi_throw_type_error(env, nullptr, "Metadata class constructor requires new");
++        return nullptr;
++    }
++    if (napi_get_cb_info(env, info, nullptr, nullptr, &instance, nullptr) != napi_ok) {
++        return nullptr;
++    }
++    // Optional record fields are populated by ImageSource's existing parser.
++    // No native metadata or shared parser state belongs to an empty record.
++    return instance;
++}
++
++napi_value GetRecordConstructor(napi_env env, const char* name, napi_ref& reference)
++{
++    napi_value constructor = nullptr;
++    if (reference != nullptr) {
++        return napi_get_reference_value(env, reference, &constructor) == napi_ok ? constructor : nullptr;
++    }
++    if (napi_define_class(env, name, NAPI_AUTO_LENGTH, RecordMetadataConstructor, nullptr,
++        0, nullptr, &constructor) != napi_ok ||
++        napi_create_reference(env, constructor, 1, &reference) != napi_ok) {
++        return nullptr;
++    }
++    return constructor;
++}
++
++napi_value CreateRecordMetadata(napi_env env, bool dng)
++{
++    napi_value result = nullptr;
++    auto context = GetRecordConstructors(env);
++    if (context != nullptr) {
++        auto constructor = GetRecordConstructor(env, dng ? "DngMetadata" : "TiffMetadata",
++            dng ? context->dng : context->tiff);
++        if (constructor != nullptr && napi_new_instance(env, constructor, 0, nullptr, &result) == napi_ok) {
++            return result;
++        }
++    }
++    IMAGE_LOGE("Failed to create metadata record instance");
++    napi_get_undefined(env, &result);
++    return result;
++}
++} // namespace
++
++napi_value MetadataNapi::InitRecordMetadata(napi_env env, napi_value exports)
++{
++    auto context = GetRecordConstructors(env);
++    if (context == nullptr) {
++        return exports;
++    }
++    auto dng = GetRecordConstructor(env, "DngMetadata", context->dng);
++    if (dng == nullptr || napi_set_named_property(env, exports, "DngMetadata", dng) != napi_ok) {
++        return exports;
++    }
++    auto tiff = GetRecordConstructor(env, "TiffMetadata", context->tiff);
++    if (tiff != nullptr) {
++        napi_set_named_property(env, exports, "TiffMetadata", tiff);
++    }
++    return exports;
++}
++
++napi_value MetadataNapi::CreateDngMetadata(napi_env env)
++{
++    return CreateRecordMetadata(env, true);
+ }
+ 
+ napi_value MetadataNapi::CreateWebPMetadata(napi_env env, std::shared_ptr<ImageMetadata> metadata)
+@@ -1003,15 +1104,7 @@ napi_value MetadataNapi::CreateWebPMetadata(napi_env env, std::shared_ptr<ImageM
+ 
+ napi_value MetadataNapi::CreateTiffMetadata(napi_env env)
+ {
+-    napi_value obj = nullptr;
+-    napi_status status = napi_create_object(env, &obj);
+-    if (status != napi_ok) {
+-        IMAGE_LOGE("Failed to create empty TiffMetadata object: %{public}d", status);
+-        napi_value result = nullptr;
+-        napi_get_undefined(env, &result);
+-        return result;
+-    }
+-    return obj;
++    return CreateRecordMetadata(env, false);
+ }
+ 
+ napi_value MetadataNapi::CreateJfifMetadata(napi_env env, std::shared_ptr<ImageMetadata> metadata)
+@@ -2713,6 +2806,7 @@ napi_value MetadataNapi::InitAvisMetadata(napi_env env, napi_value exports)
+     napi_add_env_cleanup_hook(env, ImageNapiUtils::CleanUpConstructorContext, context);
+ 
+     IMAGE_LOGD("InitAvisMetadata EXIT");
++    InitRecordMetadata(env, exports);
+     return exports;
+ }
+ 
+@@ -2737,4 +2831,4 @@ napi_value MetadataNapi::CreateAvisMetadata(napi_env env, std::shared_ptr<ImageM
+     return result;
+ }
+ } // namespace Media
+-} // namespace OHOS
+\ No newline at end of file
++} // namespace OHOS
+diff --git a/foundation/multimedia/image_framework/interfaces/kits/js/common/include/metadata_napi.h b/foundation/multimedia/image_framework/interfaces/kits/js/common/include/metadata_napi.h
+index 39bd275..ffc7159 100644
+--- a/foundation/multimedia/image_framework/interfaces/kits/js/common/include/metadata_napi.h
++++ b/foundation/multimedia/image_framework/interfaces/kits/js/common/include/metadata_napi.h
+@@ -47,6 +47,7 @@ public:
+     static napi_value InitWebPMetadata(napi_env env, napi_value exports);
+     static napi_value InitPngMetadata(napi_env env, napi_value exports);
+     static napi_value InitAvisMetadata(napi_env env, napi_value exports);
++    static napi_value InitRecordMetadata(napi_env env, napi_value exports);
+     static napi_value CreateMetadata(napi_env env, std::shared_ptr<ImageMetadata> metadata);
+     static napi_value CreateExifMetadata(napi_env env, std::shared_ptr<ImageMetadata> metadata);
+     static napi_value CreateMakerNoteMetadata(napi_env env, std::shared_ptr<ImageMetadata> metadata);
+@@ -118,4 +119,4 @@ private:
+ };
+ } // namespace Media
+ } // namespace OHOS
+-#endif // INTERFACES_KITS_JS_COMMON_INCLUDE_METADATA_NAPI_H
+\ No newline at end of file
++#endif // INTERFACES_KITS_JS_COMMON_INCLUDE_METADATA_NAPI_H

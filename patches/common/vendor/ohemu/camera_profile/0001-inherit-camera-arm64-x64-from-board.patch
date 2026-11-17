@@ -1,0 +1,33 @@
+diff --git a/vendor/ohemu/qemu_arm64_linux_full/config.json b/vendor/ohemu/qemu_arm64_linux_full/config.json
+--- a/vendor/ohemu/qemu_arm64_linux_full/config.json
++++ b/vendor/ohemu/qemu_arm64_linux_full/config.json
+@@ -116,8 +116,2 @@
+         },
+-        {
+-          "component": "drivers_peripheral_camera",
+-          "features": [
+-            "drivers_peripheral_camera_v4l2_emulator=false"
+-          ]
+-        },
+         {
+diff --git a/vendor/ohemu/qemu_x86_64_linux_full/config.json b/vendor/ohemu/qemu_x86_64_linux_full/config.json
+--- a/vendor/ohemu/qemu_x86_64_linux_full/config.json
++++ b/vendor/ohemu/qemu_x86_64_linux_full/config.json
+@@ -120,8 +120,2 @@
+         },
+-        {
+-          "component": "drivers_peripheral_camera",
+-          "features": [
+-            "drivers_peripheral_camera_v4l2_emulator=false"
+-          ]
+-        },
+         {
+diff --git a/vendor/ohemu/virt/virt_common.json b/vendor/ohemu/virt/virt_common.json
+--- a/vendor/ohemu/virt/virt_common.json
++++ b/vendor/ohemu/virt/virt_common.json
+@@ -162,4 +162,5 @@
+           "component": "drivers_peripheral_camera",
+           "features": [
++            "drivers_peripheral_camera_v4l2_emulator=false",
+             "drivers_peripheral_camera_feature_usb = false"
+           ]

@@ -1,0 +1,35 @@
+# Copyright (c) 2026 harmony-contrib
+# Licensed under the Apache License, Version 2.0.
+import("//build/ohos.gni")
+import("../../../config.gni")
+
+group("package") {
+  if (audio_framework_feature_audiosuite_support) {
+    deps = [ ":qemu_audio_suite_dsp" ]
+  }
+}
+
+ohos_shared_library("qemu_audio_suite_dsp") {
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    cfi_vcall_icall_only = true
+    debug = false
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+  }
+  sources = [ "qemu_audio_suite_dsp.cpp" ]
+  include_dirs = [ "../client/utils/include" ]
+  cflags_cc = [
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-fno-exceptions",
+    "-fno-rtti",
+  ]
+  version_script = "qemu_audio_suite_dsp.map"
+  install_enable = true
+  subsystem_name = "multimedia"
+  part_name = "audio_framework"
+}

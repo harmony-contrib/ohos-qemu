@@ -1,0 +1,13 @@
+diff --git a/base/telephony/number_identity/frameworks/js/src/napi_number_identity.cpp b/base/telephony/number_identity/frameworks/js/src/napi_number_identity.cpp
+--- a/base/telephony/number_identity/frameworks/js/src/napi_number_identity.cpp
++++ b/base/telephony/number_identity/frameworks/js/src/napi_number_identity.cpp
+@@ -107,6 +107,9 @@
+ 
+ static inline JsError NapiError(int32_t errCode, const char *funcName, const char *permission)
+ {
++    if (errCode == NUMBER_IDENTITY_ERR_PERMISSION_ERR) {
++        errCode = TELEPHONY_ERR_PERMISSION_ERR;
++    }
+     return NapiUtil::ConverErrorMessageWithPermissionForJs(errCode, funcName, permission);
+ }
+ 

@@ -1,0 +1,1122 @@
+diff --git a/foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp b/foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp
+--- a/foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp
++++ b/foundation/communication/bluetooth_service/services/bluetooth/server/src/bluetooth_host_server.cpp
+@@ -12,10 +12,12 @@
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+-
++
+ #include <thread>
++#include <algorithm>
++#include <cctype>
+-
++
+ #include "bluetooth_a2dp_sink_server.h"
+ #include "bluetooth_a2dp_source_server.h"
+ #include "bluetooth_avrcp_ct_server.h"
+ #include "bluetooth_avrcp_tg_server.h"
+@@ -938,11 +940,22 @@
+     }
+ }
+-
++
+ int32_t BluetoothHostServer::GenerateLocalOobData(int32_t transport, const sptr<IBluetoothOobObserver> &observer)
+ {
+-    return NO_ERROR;
++    if (transport != BT_TRANSPORT_BREDR && transport != BT_TRANSPORT_BLE) {
++        return BT_ERR_INVALID_PARAM;
++    }
++    if (observer == nullptr) {
++        return BT_ERR_INVALID_PARAM;
++    }
++    if ((transport == BT_TRANSPORT_BREDR && !IsBtEnabled()) ||
++        (transport == BT_TRANSPORT_BLE && !IsBleEnabled())) {
++        return BT_ERR_INVALID_STATE;
++    }
++    // No controller generation is currently wired to this observer API.
++    return BT_ERR_API_NOT_SUPPORT;
+ }
+-
++
+ int32_t BluetoothHostServer::EnableBle(bool noAutoConnect, bool isAsync, const std::string &callingName)
+ {
+     HILOGI("Enter!");
+@@ -1442,13 +1455,69 @@
+ }
+-
++
+ int32_t BluetoothHostServer::StartPair(int32_t transport, const BluetoothRawAddress &bluetoothRawAddress,
+     const BluetoothOobData &oobData)
+ {
+-    if (oobData.HasOobData()) {
+-        HILOGE("pairDeviceOutOfBand not supported");
+-        return BT_ERR_API_NOT_SUPPORT;
++    const bool isOob = oobData.HasOobData() || oobData.HasAddressWithType() || oobData.HasConfirmHash() ||
++        oobData.HasRandomHash() || oobData.HasDeviceName();
++    if (isOob) {
++        int32_t permission = PermissionManager::VerifyMultiPermissions(CHECK_PERM(true, {}, {ACCESS_BLUETOOTH}));
++        if (permission != NO_ERROR) {
++            return permission;
++        }
++        if (transport != BT_TRANSPORT_BREDR && transport != BT_TRANSPORT_BLE) {
++            return BT_ERR_INVALID_PARAM;
++        }
++        auto raw = oobData.GetAddressWithType();
++        auto confirmation = oobData.GetConfirmationHash();
++        auto randomizer = oobData.GetRandomizerHash();
++        if (!oobData.HasOobData() || raw.size() != 7 || confirmation.size() != 16 ||
++            (oobData.HasRandomHash() && randomizer.size() != 16) || raw[6] > 1 ||
++            (transport == BT_TRANSPORT_BREDR && raw[6] != 0) ||
++            (oobData.GetOobDataType() != OHOS::bluetooth::P192 && oobData.GetOobDataType() != OHOS::bluetooth::P256) ||
++            oobData.GetDeviceRole() > OHOS::bluetooth::DEVICE_ROLE_BOTH_PREFER_CENTRAL ||
++            (oobData.HasDeviceName() && (oobData.GetDeviceName().empty() || oobData.GetDeviceName().size() > 256))) {
++            return BT_ERR_INVALID_PARAM;
++        }
++        PairingOobData data;
++        std::reverse_copy(raw.begin(), raw.begin() + 6, data.peer.begin());
++        data.addressType = raw[6];
++        data.curve = oobData.GetOobDataType();
++        data.hasRandomizer = oobData.HasRandomHash();
++        std::copy(confirmation.begin(), confirmation.end(), data.confirmation.begin());
++        if (data.hasRandomizer) {
++            std::copy(randomizer.begin(), randomizer.end(), data.randomizer.begin());
++        }
++        std::string target = bluetoothRawAddress.GetAddress();
++        std::transform(target.begin(), target.end(), target.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
++        // This fixed service has no virtual-to-raw mapping. Reject a mismatch
++        // rather than applying one peer's OOB material to another device.
++        if (target != RawAddress::ConvertToString(data.peer.data()).GetAddress()) {
++            return BT_ERR_INVALID_PARAM;
++        }
++        if ((transport == BT_TRANSPORT_BREDR && !IsBtEnabled()) ||
++            (transport == BT_TRANSPORT_BLE && !IsBleEnabled())) {
++            return BT_ERR_INVALID_STATE;
++        }
++        if (transport == BT_TRANSPORT_BLE && data.curve != OHOS::bluetooth::P256) {
++            // LE legacy requires a TK, which this C/R SDK shape cannot carry.
++            return BT_ERR_API_NOT_SUPPORT;
++        }
++        if (!data.hasRandomizer) {
++            // This backend cannot validate C without its matching R.
++            return BT_ERR_API_NOT_SUPPORT;
++        }
++        RawAddress device(target);
++        auto classic = IAdapterManager::GetInstance()->GetClassicAdapterInterface();
++        auto ble = IAdapterManager::GetInstance()->GetBleAdapterInterface();
++        if (transport == BT_TRANSPORT_BREDR && IsBtEnabled() && classic) {
++            return classic->StartPairOutOfBand(device, data) ? NO_ERROR : BT_ERR_INTERNAL_ERROR;
++        }
++        if (transport == BT_TRANSPORT_BLE && IsBleEnabled() && ble) {
++            return ble->StartPairOutOfBand(device, data) ? NO_ERROR : BT_ERR_INTERNAL_ERROR;
++        }
++        return BT_ERR_INVALID_STATE;
+     }
+     std::string address = bluetoothRawAddress.GetAddress();
+     HILOGI("transport: %{public}d, address: %{public}s", transport, GetEncryptAddr(address).c_str());
+     auto classicService = IAdapterManager::GetInstance()->GetClassicAdapterInterface();
+     auto bleService = IAdapterManager::GetInstance()->GetBleAdapterInterface();
+diff --git a/foundation/communication/bluetooth_service/services/bluetooth/service/include/interface_adapter.h b/foundation/communication/bluetooth_service/services/bluetooth/service/include/interface_adapter.h
+--- a/foundation/communication/bluetooth_service/services/bluetooth/service/include/interface_adapter.h
++++ b/foundation/communication/bluetooth_service/services/bluetooth/service/include/interface_adapter.h
+@@ -31,10 +31,14 @@
+  */
+-
++
+ #ifndef INTERFACE_ADAPTER_H
+ #define INTERFACE_ADAPTER_H
+-
++
++#include <algorithm>
++#include <array>
++#include <chrono>
++#include <mutex>
+ #include <string>
+ #include <vector>
+-
++
+ #include "bt_def.h"
+ #include "bt_uuid.h"
+@@ -58,10 +62,139 @@
+ /**
+  * @brief Represents basic adapter for classic and ble, including the common functions.
+  *
+  * @since 6
+  */
++// Peer bytes use the stack's little-endian BtAddr order. C/R octets retain
++// their supplied order. Only one selected SDK curve is sent over existing IPC.
++struct PairingOobData {
++    PairingOobData() = default;
++    PairingOobData(const PairingOobData &) = default;
++    PairingOobData &operator=(const PairingOobData &) = default;
++    std::array<uint8_t, 6> peer {};
++    uint8_t addressType = 0;
++    uint8_t curve = 0;
++    std::array<uint8_t, 16> confirmation {};
++    std::array<uint8_t, 16> randomizer {};
++    bool hasRandomizer = false;
++
++    void Clear()
++    {
++        // Do not leave OOB credentials in a consumed or expired service slot.
++        volatile uint8_t *c = confirmation.data();
++        volatile uint8_t *r = randomizer.data();
++        for (size_t i = 0; i < confirmation.size(); ++i) {
++            c[i] = 0;
++            r[i] = 0;
++        }
++        curve = 0;
++        hasRandomizer = false;
++    }
++    ~PairingOobData() { Clear(); }
++};
++
++class PendingOobPair {
++public:
++    static constexpr int TIMEOUT_MS = 60000;
++    // A consumed/cancelled/expired pair stays reserved until the real terminal
++    // GAP event; a delayed request must not consume a new pair for that peer.
++    bool Arm(const PairingOobData &data)
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        ExpireLocked();
++        if (!enabled_ || active_) {
++            return false;
++        }
++        peer_ = data.peer;
++        addressType_ = data.addressType;
++        data_ = data;
++        active_ = available_ = true;
++        expires_ = std::chrono::steady_clock::now() + std::chrono::milliseconds(TIMEOUT_MS);
++        return true;
++    }
++    // 0: unrelated pair, 1: live OOB data, 2: OOB pair with invalid/used data.
++    int State(const uint8_t *peer, uint8_t addressType)
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        ExpireLocked();
++        if (!Matches(peer)) {
++            return 0;
++        }
++        return enabled_ && available_ && addressType == addressType_ ? 1 : 2;
++    }
++    uint8_t Curve(const uint8_t *peer, uint8_t addressType)
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        ExpireLocked();
++        return enabled_ && available_ && Matches(peer) && addressType == addressType_ ? data_.curve : 0;
++    }
++    bool Take(const uint8_t *peer, uint8_t addressType, PairingOobData &data)
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        ExpireLocked();
++        if (!enabled_ || !available_ || !Matches(peer) || addressType != addressType_) {
++            return false;
++        }
++        data = data_;
++        data_.Clear();
++        available_ = false;
++        return true;
++    }
++    void Invalidate(const uint8_t *peer)
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        if (Matches(peer)) {
++            data_.Clear();
++            available_ = false;
++        }
++    }
++    void Complete(const uint8_t *peer)
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        if (Matches(peer)) {
++            ClearLocked();
++        }
++    }
++    void SetEnabled(bool enabled)
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        ClearLocked();
++        enabled_ = enabled;
++    }
++    void Expire()
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        ExpireLocked();
++    }
++private:
++    bool Matches(const uint8_t *peer) const
++    {
++        return active_ && peer != nullptr && std::equal(peer_.begin(), peer_.end(), peer);
++    }
++    void ExpireLocked()
++    {
++        if (available_ && std::chrono::steady_clock::now() >= expires_) {
++            data_.Clear();
++            available_ = false;
++        }
++    }
++    void ClearLocked()
++    {
++        data_.Clear();
++        peer_.fill(0);
++        active_ = available_ = false;
++    }
++    std::mutex mutex_;
++    PairingOobData data_;
++    std::array<uint8_t, 6> peer_ {};
++    uint8_t addressType_ = 0;
++    bool enabled_ = false;
++    bool active_ = false;
++    bool available_ = false;
++    std::chrono::steady_clock::time_point expires_ {};
++};
++
+ class IAdapter {
+ public:
+     /**
+      * @brief A destructor used to delete the <b>IAdapter</b> instance.
+      *
+@@ -267,10 +400,13 @@
+      *
+      * @return Returns the pointer for adapter.
+      * @since 6
+      */
+     virtual utility::Context *GetContext() = 0;
++
++    // Internal service extension; rebuild the adapter interface consumers together.
++    virtual bool StartPairOutOfBand(const RawAddress &, const PairingOobData &) { return false; }
+ };
+ }  // namespace bluetooth
+ }  // namespace OHOS
+-
++
+ #endif  // INTERFACE_ADAPTER_H
+\ No newline at end of file
+diff --git a/foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.cpp b/foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.cpp
+--- a/foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.cpp
++++ b/foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.cpp
+@@ -33,12 +33,15 @@
+ namespace OHOS {
+ namespace bluetooth {
+ struct ClassicAdapter::impl {
+     std::recursive_mutex syncMutex_ {};
+     BaseObserverList<IAdapterClassicObserver> adapterObservers_ {};
+     BaseObserverList<IClassicRemoteDeviceObserver> remoteObservers_ {};
++    std::shared_ptr<PendingOobPair> oobPair_ = std::make_shared<PendingOobPair>();
++    std::unique_ptr<utility::Timer> oobTimer_;
++
+ };
+-
++
+ ClassicAdapter::ClassicAdapter()
+     : utility::Context(ADAPTER_NAME_CLASSIC, "5.0"),
+       adapterProperties_(ClassicAdapterProperties::GetInstance()),
+       batteryObserverHf_(std::make_unique<ClassicBatteryObserverHf>(*GetDispatcher())),
+@@ -88,20 +91,23 @@
+     ClassicUtils::CheckReturnValue("ClassicAdapter", "ConfigProperties", ret);
+-
++
+     ret &= adapterProperties_.SetSecurityMode();
+     ClassicUtils::CheckReturnValue("ClassicAdapter", "SetSecurityMode", ret);
+-
++
+     LoadPairedDeviceInfo();
++    pimpl->oobPair_->SetEnabled(ret);
+-
++
+     GetContext()->OnEnable(ADAPTER_NAME_CLASSIC, ret);
+ }
+-
++
+ void ClassicAdapter::Disable()
+ {
+     HILOGI("%{public}s Disable", Name().c_str());
+-
++
++    std::lock_guard<std::recursive_mutex> lock(pimpl->syncMutex_);
++    pimpl->oobPair_->SetEnabled(false);
+     GetDispatcher()->PostTask(std::bind(&ClassicAdapter::ShutDown, this));
+ }
+-
++
+ void ClassicAdapter::ShutDown()
+ {
+     HILOGI("enter");
+@@ -758,14 +764,12 @@
+ }
+-
++
+ void ClassicAdapter::RemoteOobReqCallback(const BtAddr *addr, void *context)
+ {
+     HILOGI("enter");
+-
++
+-    /// OOB Pair not support for current framework api.
+-    /// This is used for extending.
+     GapCallbackParam param = {};
+     (void)memcpy_s((void *)&param.remoteOobReqParam_.addr, sizeof(BtAddr), addr, sizeof(BtAddr));
+-
++
+     auto adapter = static_cast<ClassicAdapter *>(context);
+     if (adapter != nullptr) {
+         adapter->GetDispatcher()->PostTask(
+@@ -953,14 +957,13 @@
+                 param.userConfirmReqParam_.localMitmRequired, param.userConfirmReqParam_.remoteMitmRequired);
+             break;
+         case GAP_PIN_CODE_REQ_EVT:
+             PinCodeReq(param.pinCodeReqParam_.addr);
+             break;
+         case GAP_REMOTE_OOB_REQ_EVT:
+-            /// OOB Pair not support for current framework api.
+-            /// This is used for extending.
++            ReplyRemoteOob(param.remoteOobReqParam_.addr);
+             break;
+         case GAP_IO_CAPABILITY_REQ_EVT:
+             SetIoCapability(param.ioCapabilityReqParam_.addr);
+             break;
+         case GAP_IO_CAPABILITY_RSP_EVT:
+             SaveRemoteIoCapability(param.ioCapabilityRspParam_.addr, param.ioCapabilityRspParam_.ioCapability);
+@@ -1553,12 +1556,13 @@
+         HILOGW("Bondmode is off, so not save the link key");
+     }
+ }
+-
++
+ void ClassicAdapter::ReceiveSimplePairComplete(const BtAddr &addr, uint8_t status)
+ {
++    if (status != SUCCESS) pimpl->oobPair_->Invalidate(addr.addr);
+     HILOGI("status: %{public}u", status);
+-
++
+     std::lock_guard<std::recursive_mutex> lk(pimpl->syncMutex_);
+     if (status != SUCCESS) {
+         RawAddress device = RawAddress::ConvertToString(addr.addr);
+         std::shared_ptr<ClassicRemoteDevice> remoteDevice = FindRemoteDevice(device);
+@@ -1582,12 +1586,13 @@
+         remoteDevice->SetLinkKeyType(PAIR_INVALID_LINK_KEY_TYPE);
+     }
+ }
+-
++
+ void ClassicAdapter::ReceiveAuthenticationComplete(const BtAddr &addr, uint8_t status)
+ {
++    pimpl->oobPair_->Complete(addr.addr);
+     HILOGI("status: %{public}u", status);
+-
++
+     std::lock_guard<std::recursive_mutex> lk(pimpl->syncMutex_);
+     RawAddress device = RawAddress::ConvertToString(addr.addr);
+     std::shared_ptr<ClassicRemoteDevice> remoteDevice = FindRemoteDevice(device);
+     remoteDevice->SetPairConfirmState(PAIR_CONFIRM_STATE_INVALID);
+@@ -1839,24 +1844,82 @@
+     remoteDevice->SetPairedStatus(PAIR_PAIRING);
+     SendPairStatusChanged(ADAPTER_BREDR, device, PAIR_PAIRING);
+-
++
+     return true;
+ }
+-
++
++bool ClassicAdapter::StartPairOutOfBand(const RawAddress &device, const PairingOobData &data)
++{
++    std::lock_guard<std::recursive_mutex> lock(pimpl->syncMutex_);
++    BtAddr peer = ConvertToBtAddr(device);
++    if (!std::equal(data.peer.begin(), data.peer.end(), peer.addr)) return false;
++    if (isDisable_ || !btmEnableSuccess_ || data.addressType != BT_PUBLIC_DEVICE_ADDRESS ||
++        (data.curve != GAP_OOB_DATA_PRESENT_P192 && data.curve != GAP_OOB_DATA_PRESENT_P256) ||
++        !data.hasRandomizer || !pimpl->oobPair_->Arm(data)) {
++        return false;
++    }
++    const auto weak = std::weak_ptr<PendingOobPair>(pimpl->oobPair_);
++    pimpl->oobTimer_ = std::make_unique<utility::Timer>([weak]() {
++        if (auto session = weak.lock()) {
++            session->Expire();
++        }
++    });
++    if (!pimpl->oobTimer_->Start(PendingOobPair::TIMEOUT_MS) || !StartPair(device)) {
++        pimpl->oobPair_->Complete(data.peer.data());
++        return false;
++    }
++    return true;
++}
++
++void ClassicAdapter::ReplyRemoteOob(const BtAddr &addr)
++{
++    PairingOobData data;
++    const bool available = pimpl->oobPair_->Take(addr.addr, addr.type, data);
++    GapOOBData gapData {};
++    if (available) {
++        (void)memcpy_s(gapData.C, sizeof(gapData.C), data.confirmation.data(), data.confirmation.size());
++        (void)memcpy_s(gapData.R, sizeof(gapData.R), data.randomizer.data(), data.randomizer.size());
++    }
++    int ret;
++    if (available && data.curve == GAP_OOB_DATA_PRESENT_P256) {
++        ret = GAPIF_RemoteOobExtendedRsp(&addr, GAP_ACCEPT, nullptr, &gapData);
++    } else {
++        ret = GAPIF_RemoteOobRsp(&addr, available ? GAP_ACCEPT : GAP_NOT_ACCEPT, &gapData);
++    }
++    (void)memset_s(&gapData, sizeof(gapData), 0, sizeof(gapData));
++    if (ret != BT_SUCCESS || !available) {
++        pimpl->oobPair_->Invalidate(addr.addr);
++        (void)GAPIF_CancelAuthenticationReq(&addr);
++        RawAddress device = RawAddress::ConvertToString(addr.addr);
++        auto remote = FindRemoteDevice(device);
++        if (remote != nullptr && remote->GetPairedStatus() == PAIR_PAIRING) {
++            remote->SetPairedStatus(PAIR_NONE);
++            SendPairStatusChanged(ADAPTER_BREDR, device, PAIR_NONE);
++        }
++        ClassicUtils::CheckReturnValue("ClassicAdapter", "ReplyRemoteOob", false);
++    }
++}
++
+ bool ClassicAdapter::CancelPairing(const RawAddress &device)
+ {
+     HILOGI("enter");
+-
++
+     std::lock_guard<std::recursive_mutex> lk(pimpl->syncMutex_);
+     auto it = devices_.find(device.GetAddress());
++    BtAddr oobPeer = ConvertToBtAddr(device);
++    const bool isOobPair = pimpl->oobPair_->State(oobPeer.addr, oobPeer.type) != 0;
++    pimpl->oobPair_->Invalidate(oobPeer.addr);
+     if (it == devices_.end() || (it->second->GetPairedStatus() != PAIR_PAIRING)) {
+         HILOGE("failed, because of not in PAIR_PAIRING!");
+         return false;
+     }
+-
++
+     it->second->SetPairedStatus(PAIR_CANCELING);
++    if (isOobPair) {
++        return GAPIF_CancelAuthenticationReq(&oobPeer) == BT_SUCCESS;
++    }
+     int pairConfirmState = it->second->GetPairConfirmState();
+     if (pairConfirmState == PAIR_CONFIRM_STATE_USER_CONFIRM_REPLY) {
+         BtAddr btAddr = ConvertToBtAddr(device);
+         bool ret = (GAPIF_CancelAuthenticationReq(&btAddr) == BT_SUCCESS);
+         ClassicUtils::CheckReturnValue("ClassicAdapter", "GAPIF_CancelAuthenticationReq", ret);
+         return ret;
+@@ -2004,13 +2067,15 @@
+         HILOGE("failed, not in pairing state.");
+         return false;
+     }
+-
++
+     BtAddr btAddr = ConvertToBtAddr(device);
+     int io = adapterProperties_.GetIoCapability();
+-    bool ret = (GAPIF_IOCapabilityRsp(&btAddr, accept, io, GAP_OOB_DATA_NOT_PRESENT, GAP_MITM_REQUIRED) == BT_SUCCESS);
++    const uint8_t curve = pimpl->oobPair_->Curve(btAddr.addr, btAddr.type);
++    accept = accept && pimpl->oobPair_->State(btAddr.addr, btAddr.type) != 2;
++    bool ret = (GAPIF_IOCapabilityRsp(&btAddr, accept, io, curve, GAP_MITM_REQUIRED) == BT_SUCCESS);
+     ClassicUtils::CheckReturnValue("ClassicAdapter", "GAPIF_IOCapabilityRsp", ret);
+-
++
+     return ret;
+ }
+-
++
+ void ClassicAdapter::ConnectionComplete(const BtmAclConnectCompleteParam *param, void *context)
+@@ -2194,20 +2259,22 @@
+     remoteDevice->SetBondedFromLocal(bondFromLocal);
+-
++
+     if ((remoteDevice->GetPairedStatus() != PAIR_PAIRING) && (remoteDevice->GetPairedStatus() != PAIR_CANCELING)) {
+         remoteDevice->SetPairedStatus(PAIR_PAIRING);
+     }
+-
++
+-    if (bondFromLocal == false) {
++    const uint8_t curve = pimpl->oobPair_->Curve(addr.addr, addr.type);
++    const bool oobInvalid = pimpl->oobPair_->State(addr.addr, addr.type) == 2;
++    if (bondFromLocal == false && curve == GAP_OOB_DATA_NOT_PRESENT && !oobInvalid) {
+         SendPairRequested(ADAPTER_BREDR, rawAddr);
+     } else {
+         int io = adapterProperties_.GetIoCapability();
+-        if (remoteDevice->GetPairedStatus() == PAIR_CANCELING) {
++        if (remoteDevice->GetPairedStatus() == PAIR_CANCELING || oobInvalid) {
+             ret = (GAPIF_IOCapabilityRsp(&addr, false, io, GAP_OOB_DATA_NOT_PRESENT, GAP_MITM_REQUIRED) == BT_SUCCESS);
+         } else {
+-            ret = (GAPIF_IOCapabilityRsp(&addr, true, io, GAP_OOB_DATA_NOT_PRESENT, GAP_MITM_REQUIRED) == BT_SUCCESS);
++            ret = (GAPIF_IOCapabilityRsp(&addr, true, io, curve, GAP_MITM_REQUIRED) == BT_SUCCESS);
+         }
+         ClassicUtils::CheckReturnValue("ClassicAdapter", "GAPIF_IOCapabilityRsp", ret);
+     }
+ }
+-
++
+ void ClassicAdapter::SaveRemoteIoCapability(const BtAddr &addr, uint8_t ioCapability)
+diff --git a/foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.h b/foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.h
+--- a/foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.h
++++ b/foundation/communication/bluetooth_service/services/bluetooth/service/src/classic/classic_adapter.h
+@@ -139,6 +139,8 @@
+      *         returns <b>false</b> if the operation fails.
+      */
+     bool StartPair(const RawAddress &device) override;
++    bool StartPairOutOfBand(const RawAddress &device, const PairingOobData &data) override;
++    void ReplyRemoteOob(const BtAddr &addr);
+-
++
+     /**
+      * @brief Check if remote device was bonded from local.
+diff --git a/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.cpp b/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.cpp
+--- a/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.cpp
++++ b/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.cpp
+@@ -236,16 +236,20 @@
+     SavePeerDevices2BTM(pimpl->peerConnDeviceList_);
+     return ret;
+ }
+-
++
+ void BleAdapter::Disable()
+ {
+     LOG_DEBUG("[BleAdapter] %{public}s:%{public}s", __func__, Name().c_str());
+-
++
++    {
++        std::lock_guard<std::recursive_mutex> lock(pimpl->syncMutex_);
++        if (pimpl->bleSecurity_ != nullptr) pimpl->bleSecurity_->SetOobEnabled(false);
++    }
+     GetDispatcher()->PostTask(std::bind(&BleAdapter::DisableTask, this));
+ }
+-
++
+ bool BleAdapter::DisableTask()
+ {
+     LOG_DEBUG("[BleAdapter] %{public}s", __func__);
+-
++
+     std::lock_guard<std::recursive_mutex> lk(pimpl->syncMutex_);
+@@ -659,16 +663,37 @@
+     if (!ret) {
+         LOG_ERROR("[BleAdapter] %{public}s:failed", __func__);
+         return false;
+     }
+     LePairingStatus(device);
+     return true;
+ }
+-
++
++bool BleAdapter::StartPairOutOfBand(const RawAddress &device, const PairingOobData &data)
++{
++    std::lock_guard<std::recursive_mutex> lock(pimpl->syncMutex_);
++    if (!pimpl->btmEnableFlag_ || pimpl->bleSecurity_ == nullptr || data.addressType > BT_RANDOM_DEVICE_ADDRESS) {
++        return false;
++    }
++    {
++        std::lock_guard<std::recursive_mutex> peerLock(pimpl->peerDevlistMutex_);
++        auto peer = pimpl->peerConnDeviceList_.find(device.GetAddress());
++        if (peer != pimpl->peerConnDeviceList_.end() &&
++            (peer->second.GetAddressType() != data.addressType || peer->second.GetPairedStatus() == BLE_PAIR_PAIRING)) {
++            return false;
++        }
++    }
++    if (!pimpl->bleSecurity_->StartPairOutOfBand(device, data)) {
++        return false;
++    }
++    LePairingStatus(device);
++    return true;
++}
++
+ bool BleAdapter::CancelPairing(const RawAddress &device)
+ {
+     HILOGI("addr: %{public}s", GetEncryptAddr(device.GetAddress()).c_str());
+-
++
+     std::lock_guard<std::recursive_mutex> lk(pimpl->syncMutex_);
+     std::unique_lock<std::recursive_mutex> peerlk(pimpl->peerDevlistMutex_);
+     auto it = pimpl->peerConnDeviceList_.find(device.GetAddress());
+     if (it != pimpl->peerConnDeviceList_.end()) {
+@@ -1075,16 +1100,17 @@
+ {
+     LOG_DEBUG("[BleAdapter] %{public}s", __func__);
+-
++
+     if (pimpl->bleSecurity_ == nullptr) {
+         pimpl->bleSecurity_ = std::make_unique<BleSecurity>(*this, *GetDispatcher(), callback);
+     } else {
+         pimpl->bleSecurity_->RegisterCallbackToGap();
+     }
++    pimpl->bleSecurity_->SetOobEnabled(pimpl->btmEnableFlag_);
+ }
+-
++
+ void BleAdapter::DeregisterBleSecurityCallback() const
+ {
+     LOG_DEBUG("[BleAdapter] %{public}s", __func__);
+-
++
+     if (pimpl->bleSecurity_ != nullptr) {
+         pimpl->bleSecurity_->DeregisterCallbackToGap();
+diff --git a/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.h b/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.h
+--- a/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.h
++++ b/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_adapter.h
+@@ -106,6 +106,7 @@
+     std::vector<RawAddress> GetPairedDevices() const override;
+     std::vector<RawAddress> GetConnectedDevices() const;
+     bool StartPair(const RawAddress &device) override;
++    bool StartPairOutOfBand(const RawAddress &device, const PairingOobData &data) override;
+     bool CancelPairing(const RawAddress &device) override;
+     bool RemovePair(const RawAddress &device) override;
+     bool RemoveAllPairs() override;
+diff --git a/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.cpp b/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.cpp
+--- a/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.cpp
++++ b/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.cpp
+@@ -13,39 +13,43 @@
+  * limitations under the License.
+  */
+-
++
+ #include "ble_security.h"
+-
++
+ #include <iostream>
+-
++
+ #include "ble_adapter.h"
+ #include "ble_config.h"
+ #include "ble_properties.h"
+ #include "ble_utils.h"
+-
++
+ #include "btm.h"
+ #include "compat.h"
+ #include "log.h"
+ #include "securec.h"
++#include "timer.h"
+-
++
+ namespace OHOS {
+ namespace bluetooth {
+ struct BleSecurity::impl {
+ public:
+     uint8_t pairMethod_ = 0;
+     std::map<int, func> funcMap_ {};
++    std::shared_ptr<PendingOobPair> oobPair_ = std::make_shared<PendingOobPair>();
++    std::unique_ptr<utility::Timer> oobTimer_;
++
+ };
+ BleSecurity::BleSecurity(
+     IAdapterBle &bleAdapter, utility::Dispatcher &dispatch, BaseObserverList<IAdapterBleObserver> &observer)
+     : bleAdapter_(&bleAdapter),
+       dispatcher_(&dispatch),
+       baseCallback_(&observer),
+       pimpl(std::make_unique<BleSecurity::impl>())
+ {
+     InitGapEventFuncTable();
+     int ret = RegisterCallbackToGap();
+     if (ret != BT_SUCCESS) {
+         LOG_ERROR("[BleSecurity] %{public}s", __func__);
+     }
+ }
+-
++
+ BleSecurity::~BleSecurity()
+@@ -622,58 +626,67 @@
+     if (!BleConfig::GetInstance().GetPeerCsrk(addr.GetAddress()).empty()) {
+         remoteKey.counter = BleConfig::GetInstance().GetPeerSignCounter(addr.GetAddress());
+         std::vector<uint8_t> vec;
+         BleUtils::ConvertHexStringToInt(BleConfig::GetInstance().GetPeerCsrk(addr.GetAddress()), vec);
+         (void)memcpy_s(remoteKey.csrk, GAP_CSRK_SIZE, &vec[0], vec.size());
+         info.remoteKey = &remoteKey;
+         accept &= GAP_ACCEPT;
+     }
+-
++
+     int ret = GAPIF_RequestSigningAlgorithmInfoRsp(&param.gapRequestSigningAlgorithmInfo_.addr, accept, info);
+     if (ret != BT_SUCCESS) {
+         LOG_ERROR("[BleSecurity] %{public}s:%{public}s", __func__, "Ble request signing algorithm info rsp failed!");
+     }
+     return ret;
+ }
+-
++
+-bool BleSecurity::LePairFeatureReq(const BleGapCallbackParam &param)
++bool BleSecurity::LePairFeatureReq(const BleGapCallbackParam &param) const
+ {
+     RawAddress addr = RawAddress::ConvertToString(param.lePairFeatureReq_.peerAddr.addr);
+     GapLePairFeature feature;
+     (void)memset_s(&feature, sizeof(feature), 0x00, sizeof(feature));
+     feature.ioCapability = BleConfig::GetInstance().GetIoCapability();
+     feature.maxEncKeySize = GAP_LINKKEY_SIZE;
+-
++
+     if (BleConfig::GetInstance().GetBleSecurity()) {
+         feature.authReq = GAP_LE_AUTH_REQ_BONDING | GAP_LE_AUTH_REQ_BIT_MITM | GAP_LE_AUTH_REQ_BIT_SC;
+     } else {
+         feature.authReq = GAP_LE_AUTH_REQ_BONDING | GAP_LE_AUTH_REQ_BIT_MITM;
+     }
+-
++
+     /// Compat check
+     GAP_LeSecMode1Level level1 = static_cast<GAP_LeSecMode1Level>(BleConfig::GetInstance().GetBleModel1Level());
+     if ((level1 != LE_MODE_1_LEVEL_4) &&
+         (Compat::CompatCheck(CompatType::COMPAT_DISABLE_BLE_SECURE_CONNECTIONS, addr.GetAddress()))) {
+         BtmLocalVersionInformation version;
+         (void)memset_s(&version, sizeof(version), 0x00, sizeof(version));
+         if ((BTM_GetLocalVersionInformation(&version) == BT_SUCCESS) &&
+             (version.hciVersion >= BLUETOOTH_CORE_SPECIFICATION_4_2)) {
+             feature.authReq &= ~GAP_LE_AUTH_REQ_BIT_SC;
+         }
+     }
+-
++
++    const auto &peer = param.lePairFeatureReq_.peerAddr;
++    const int oobState = pimpl->oobPair_->State(peer.addr, peer.type);
++    if (oobState == 2 || (oobState == 1 &&
++        (pimpl->oobPair_->Curve(peer.addr, peer.type) != 2 || !(feature.authReq & GAP_LE_AUTH_REQ_BIT_SC)))) {
++        pimpl->oobPair_->Invalidate(peer.addr);
++        (void)GAPIF_LeCancelPair(&peer);
++        return false;
++    }
++    feature.oobDataFlag = oobState == 1 ? GAP_LE_OOB_DATA_PRESENT : 0;
+     feature.respKeyDis = GAP_LE_KEY_DIST_ENC_KEY | GAP_LE_KEY_DIST_ID_KEY | GAP_LE_KEY_DIST_SIGN_KEY;
+     feature.initKeyDis = GAP_LE_KEY_DIST_ENC_KEY | GAP_LE_KEY_DIST_ID_KEY | GAP_LE_KEY_DIST_SIGN_KEY;
+-
++
+     int ret = GAPIF_LePairFeatureRsp(&param.lePairFeatureReq_.peerAddr, feature);
+     if (ret != BT_SUCCESS) {
+         LOG_ERROR("[BleSecurity] %{public}s:%{public}s", __func__, "Ble pair feature rsp failed!");
+     }
+     return ret == BT_SUCCESS;
+ }
+-
++
+ bool BleSecurity::PairRequestReply(const RawAddress &addr, int addrType, bool accept) const
+ {
+     LOG_DEBUG("[BleSecurity] %{public}s", __func__);
+-
++
+     if (accept) {
+         BleGapCallbackParam param;
+@@ -749,77 +762,79 @@
+ {
+     LOG_DEBUG("[BleSecurity] %{public}s", __func__);
+-
++
+     RawAddress addr = RawAddress::ConvertToString(param.lePairPassKeyNotification_.addr.addr);
+     uint8_t pairMethod = pimpl->pairMethod_;
+     uint32_t number = param.lePairPassKeyNotification_.number;
+     if (baseCallback_ != nullptr) {
+         baseCallback_->ForEach([addr, pairMethod, number](IAdapterBleObserver &observer) {
+             observer.OnPairConfirmed(BTTransport::ADAPTER_BLE, addr, pairMethod, number);
+         });
+     }
+     return true;
+ }
+-
++
+ bool BleSecurity::GapLePairOobReq(const BleGapCallbackParam &param) const
+ {
+-    LOG_DEBUG("[BleSecurity] %{public}s", __func__);
+-
+-    RawAddress addr = RawAddress::ConvertToString(param.lePairOobReq_.addr.addr);
+-    uint8_t pairMethod = pimpl->pairMethod_;
+-    if (baseCallback_ != nullptr) {
+-        baseCallback_->ForEach([addr, pairMethod](IAdapterBleObserver &observer) {
+-            observer.OnPairConfirmed(BTTransport::ADAPTER_BLE, addr, pairMethod, 0);
+-        });
+-    }
+-    return true;
++    const auto &peer = param.lePairOobReq_.addr;
++    // The SDK supplies elliptic-curve C/R, not the legacy LE Temporary Key.
++    pimpl->oobPair_->Invalidate(peer.addr);
++    uint8_t unused[GAP_OOB_DATA_SIZE] {};
++    const int ret = GAPIF_LePairOobRsp(&peer, GAP_NOT_ACCEPT, unused);
++    return ret == BT_SUCCESS;
+ }
+-
++
+ bool BleSecurity::GapLePairScOobReq(const BleGapCallbackParam &param) const
+ {
+-    LOG_DEBUG("[BleSecurity] %{public}s", __func__);
+-
+-    RawAddress addr = RawAddress::ConvertToString(param.lePairScOob_req_.addr.addr);
+-    uint8_t pairMethod = pimpl->pairMethod_;
+-    if (baseCallback_ != nullptr) {
+-        baseCallback_->ForEach([addr, pairMethod](IAdapterBleObserver &observer) {
+-            observer.OnPairConfirmed(BTTransport::ADAPTER_BLE, addr, pairMethod, 0);
+-        });
++    const auto &peer = param.lePairScOob_req_.addr;
++    PairingOobData data;
++    const bool available = pimpl->oobPair_->Take(peer.addr, peer.type, data) && data.curve == 2 && data.hasRandomizer;
++    const int ret = GAPIF_LePairScOobRsp(&peer, available ? GAP_ACCEPT : GAP_NOT_ACCEPT,
++        data.confirmation.data(), data.randomizer.data());
++    if (ret != BT_SUCCESS || !available) {
++        pimpl->oobPair_->Invalidate(peer.addr);
++        (void)GAPIF_LeCancelPair(&peer);
++        if (bleAdapter_ != nullptr) {
++            static_cast<BleAdapter *>(bleAdapter_)->LePairComplete(RawAddress::ConvertToString(peer.addr),
++                ret == BT_SUCCESS ? BT_BAD_PARAM : ret);
++        }
++        return false;
+     }
+     return true;
+ }
+-
++
+ bool BleSecurity::GapLePairScUserConfirmReq(const BleGapCallbackParam &param) const
+ {
+     LOG_DEBUG("[BleSecurity] %{public}s", __func__);
+-
++
+     RawAddress addr = RawAddress::ConvertToString(param.lePairScUserConfirmReq_.addr.addr);
+     uint8_t pairMethod = pimpl->pairMethod_;
+     uint32_t number = param.lePairScUserConfirmReq_.number;
+     if (baseCallback_ != nullptr) {
+         baseCallback_->ForEach([addr, pairMethod, number](IAdapterBleObserver &observer) {
+             observer.OnPairConfirmed(BTTransport::ADAPTER_BLE, addr, pairMethod, number);
+         });
+     }
+     return true;
+ }
+-
++
+ bool BleSecurity::GapLePairComplete(const BleGapCallbackParam &param) const
+ {
+     LOG_DEBUG("[BleSecurity] %{public}s", __func__);
+-
++
++    pimpl->oobPair_->Complete(param.lePairComplete_.addr.addr);
+     RawAddress addr = RawAddress::ConvertToString(param.lePairComplete_.addr.addr);
+-
++
+     if (param.lePairComplete_.result == BT_SUCCESS) {
+         BleConfig::GetInstance().SetPeerKeyType(addr.GetAddress(), std::to_string(param.lePairComplete_.keyType));
+         BleConfig::GetInstance().Save();
+     }
+-
++
+     if (bleAdapter_ != nullptr) {
+         (static_cast<BleAdapter *>(bleAdapter_))->LePairComplete(addr, param.lePairComplete_.result);
+     }
+-
++
+     LOG_DEBUG("[BleSecurity] %{public}s:Ble pair comelete event result = %u", __func__, param.lePairComplete_.result);
+     return true;
+ }
+-
++
+ bool BleSecurity::GapLePairKeyNotify(const BleGapCallbackParam &param) const
+@@ -879,32 +894,58 @@
+     gapPairCallbacks_.lePairScUserConfirmReq = &BleSecurity::LePairScUserConfirmReq;
+     gapPairCallbacks_.lePairComplete = &BleSecurity::LePairComplete;
+     gapPairCallbacks_.lePairKeyNotify = &BleSecurity::LePairKeyNotify;
+     ret &= GAPIF_RegisterLePairCallback(&gapPairCallbacks_, this);
+     return ret;
+ }
+-
++
+ int BleSecurity::DeregisterCallbackToGap() const
+ {
+     LOG_DEBUG("[BleSecurity] %{public}s", __func__);
+-
++
+     int ret = GAPIF_DeregisterLeSecurityCallback();
+     ret &= GAPIF_DeregisterLePairCallback();
+     return ret;
+ }
+-
++
++void BleSecurity::SetOobEnabled(bool enabled)
++{
++    pimpl->oobPair_->SetEnabled(enabled);
++}
++
++bool BleSecurity::StartPairOutOfBand(const RawAddress &device, const PairingOobData &data)
++{
++    std::array<uint8_t, 6> peer {};
++    device.ConvertToUint8(peer.data());
++    if (data.peer != peer || data.addressType > BT_RANDOM_DEVICE_ADDRESS || data.curve != 2 ||
++        !data.hasRandomizer || !pimpl->oobPair_->Arm(data)) {
++        return false;
++    }
++    const auto weak = std::weak_ptr<PendingOobPair>(pimpl->oobPair_);
++    pimpl->oobTimer_ = std::make_unique<utility::Timer>([weak]() {
++        if (auto session = weak.lock()) {
++            session->Expire();
++        }
++    });
++    if (!pimpl->oobTimer_->Start(PendingOobPair::TIMEOUT_MS) || !StartPair(device, data.addressType)) {
++        pimpl->oobPair_->Complete(data.peer.data());
++        return false;
++    }
++    return true;
++}
++
+ bool BleSecurity::StartPair(const RawAddress &device, uint8_t peerAddrType)
+ {
+     LOG_DEBUG("[BleSecurity] %{public}s", __func__);
+-
++
+     BtAddr addr = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, peerAddrType};
+     device.ConvertToUint8(addr.addr);
+     int ret = GAPIF_LePair(&addr);
+     if (ret != BT_SUCCESS) {
+         LOG_ERROR("[BleSecurity] %{public}s:GAP_LePair failed!", __func__);
+     }
+     return (ret == BT_SUCCESS);
+ }
+-
++
+ int BleSecurity::SetDevicePasskey(const RawAddress &device, int passkey, int accept) const
+ {
+     LOG_DEBUG("[BleSecurity] %{public}s", __func__);
+@@ -934,20 +975,21 @@
+     device.ConvertToUint8(addr.addr);
+     int ret = GAPIF_LePairScUserConfirmRsp(&addr, accept);
+     if (ret != BT_SUCCESS) {
+         LOG_ERROR("[BleSecurity] %{public}s:%{public}s", __func__, "Ble pair user confirm failed!");
+     }
+     return ret;
+ }
+-
++
+ int BleSecurity::CancelPairing(const RawAddress &device) const
+ {
+     if (bleAdapter_ == nullptr) {
+         return BT_BAD_PARAM;
+     }
+     uint8_t peerAddrType = (uint8_t)bleAdapter_->GetPeerDeviceAddrType(device);
+     BtAddr addr = {{0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, peerAddrType};
+     device.ConvertToUint8(addr.addr);
++    pimpl->oobPair_->Invalidate(addr.addr);
+     return GAPIF_LeCancelPair(&addr);
+ }
+ }  // namespace bluetooth
+ }  // namespace OHOS
+\ No newline at end of file
+diff --git a/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.h b/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.h
+--- a/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.h
++++ b/foundation/communication/bluetooth_service/services/bluetooth/service/src/ble/ble_security.h
+@@ -45,8 +45,10 @@
+      */
+     virtual ~BleSecurity();
+-
++
+     static bool StartPair(const RawAddress &device, uint8_t peerAddrType = BT_PUBLIC_DEVICE_ADDRESS);
++    bool StartPairOutOfBand(const RawAddress &device, const PairingOobData &data);
++    void SetOobEnabled(bool enabled);
+     int SetDevicePasskey(const RawAddress &device, int passkey, int accept) const;
+     int SetUserConfirm(const RawAddress &device, int accept) const;
+     int GapLeRequestSecurity(uint16_t connectionHandle, const BtAddr &addr, uint8_t role);
+     int CancelPairing(const RawAddress &device) const;
+@@ -114,9 +116,9 @@
+     bool GapLePairScUserConfirmReq(const BleGapCallbackParam &param) const;
+     bool GapLePairComplete(const BleGapCallbackParam &param) const;
+     bool GapLePairKeyNotify(const BleGapCallbackParam &param) const;
+     bool GapLeRequestSecurityResultEvt(const BleGapCallbackParam &param) const;
+-    static bool LePairFeatureReq(const BleGapCallbackParam &param);
++    bool LePairFeatureReq(const BleGapCallbackParam &param) const;
+-
++
+     void InitGapEventFuncTable() const;
+-
++
+     typedef bool (BleSecurity::*func)(const BleGapCallbackParam &param) const;
+diff --git a/foundation/communication/bluetooth_service/services/bluetooth/stack/include/gap_if.h b/foundation/communication/bluetooth_service/services/bluetooth/stack/include/gap_if.h
+--- a/foundation/communication/bluetooth_service/services/bluetooth/stack/include/gap_if.h
++++ b/foundation/communication/bluetooth_service/services/bluetooth/stack/include/gap_if.h
+@@ -421,6 +421,8 @@
+  *              @c otherwise        : The function is not executed successfully.
+  */
+ BTSTACK_API int GAPIF_RemoteOobRsp(const BtAddr *addr, uint8_t accept, const GapOOBData *data);
++BTSTACK_API int GAPIF_RemoteOobExtendedRsp(const BtAddr *addr, uint8_t accept,
++    const GapOOBData *data192, const GapOOBData *data256);
+-
++
+ /**
+  * @brief       Respond PIN code request. Reply callback GapAuthenticationCallback::pinCodeReq
+diff --git a/foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap.h b/foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap.h
+--- a/foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap.h
++++ b/foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap.h
+@@ -229,6 +229,8 @@
+  *              @c otherwise        : The function is not executed successfully.
+  */
+ int GAP_RemoteOobRsp(const BtAddr *addr, uint8_t accept, const GapOOBData *data);
++int GAP_RemoteOobExtendedRsp(const BtAddr *addr, uint8_t accept,
++    const GapOOBData *data192, const GapOOBData *data256);
+-
++
+ /**
+  * @brief       Respond PIN code request. Reply callback GapAuthenticationCallback::pinCodeReq
+diff --git a/foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_if.c b/foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_if.c
+--- a/foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_if.c
++++ b/foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_if.c
+@@ -890,6 +890,35 @@
+     return ret;
+ }
+-
++
++static void GapRemoteOobExtendedRspTask(void *ctx)
++{
++    GapRemoteExtandedOobRspInfo *info = ctx;
++    info->result = GAP_RemoteOobExtendedRsp(info->addr, info->accept, info->data192, info->data256);
++}
++
++int GAPIF_RemoteOobExtendedRsp(const BtAddr *addr, uint8_t accept,
++    const GapOOBData *data192, const GapOOBData *data256)
++{
++    if (addr == NULL || (accept == GAP_ACCEPT && data192 == NULL && data256 == NULL)) {
++        return GAP_ERR_INVAL_PARAM;
++    }
++    GapRemoteExtandedOobRspInfo *ctx = MEM_MALLOC.alloc(sizeof(GapRemoteExtandedOobRspInfo));
++    if (ctx == NULL) {
++        return BT_NO_MEMORY;
++    }
++    (void)memset_s(ctx, sizeof(*ctx), 0, sizeof(*ctx));
++    ctx->addr = (BtAddr *)addr;
++    ctx->accept = accept;
++    ctx->data192 = (GapOOBData *)data192;
++    ctx->data256 = (GapOOBData *)data256;
++    int ret = GapRunTaskBlockProcess(GapRemoteOobExtendedRspTask, ctx);
++    if (ret == BT_SUCCESS) {
++        ret = ctx->result;
++    }
++    MEM_MALLOC.free(ctx);
++    return ret;
++}
++
+ static void GapPinCodeRspTask(void *ctx)
+ {
+     GapPinCodeRspInfo *info = ctx;
+diff --git a/foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_br_sec.c b/foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_br_sec.c
+--- a/foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_br_sec.c
++++ b/foundation/communication/bluetooth_service/services/bluetooth/stack/src/gap/gap_br_sec.c
+@@ -1406,6 +1406,36 @@
+     return ret;
+ }
+-
++
++int GAP_RemoteOobExtendedRsp(const BtAddr *addr, uint8_t accept,
++    const GapOOBData *data192, const GapOOBData *data256)
++{
++    if (!GapIsBredrEnable()) {
++        return GAP_ERR_NOT_ENABLE;
++    }
++    if (addr == NULL || addr->type != BT_PUBLIC_DEVICE_ADDRESS) {
++        return GAP_ERR_INVAL_PARAM;
++    }
++    if (accept == GAP_NOT_ACCEPT) {
++        return GapRemoteOOBDataRequestNegativeReply(addr);
++    }
++    if (accept != GAP_ACCEPT || (data192 == NULL && data256 == NULL)) {
++        return GAP_ERR_INVAL_PARAM;
++    }
++    HciRemoteOobExtendedDataRequestReplyParam command = {0};
++    (void)memcpy_s(command.bdAddr.raw, sizeof(command.bdAddr.raw), addr->addr, BT_ADDRESS_SIZE);
++    if (data192 != NULL) {
++        (void)memcpy_s(command.c192, sizeof(command.c192), data192->C, GAP_OOB_DATA_CONFIRM_SIZE);
++        (void)memcpy_s(command.r192, sizeof(command.r192), data192->R, GAP_OOB_DATA_RANDOM_SIZE);
++    }
++    if (data256 != NULL) {
++        (void)memcpy_s(command.c256, sizeof(command.c256), data256->C, GAP_OOB_DATA_CONFIRM_SIZE);
++        (void)memcpy_s(command.r256, sizeof(command.r256), data256->R, GAP_OOB_DATA_RANDOM_SIZE);
++    }
++    int ret = HCI_RemoteOOBExtendedDataRequestReply(&command);
++    (void)memset_s(&command, sizeof(command), 0, sizeof(command));
++    return ret;
++}
++
+ static int GapPINCodeRequestReply(const BtAddr *addr, uint8_t pinCode[GAP_PINCODE_SIZE], uint8_t pinCodeLength)
+ {
+     HciPinCodeRequestReplyParam hciCmdParam;

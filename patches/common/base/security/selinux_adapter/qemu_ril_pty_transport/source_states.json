@@ -1,0 +1,12 @@
+{
+  "scope": "QEMU-only reference AT PTY access source candidate; NOT runtime acceptance",
+  "projects": {
+    "base/security/selinux_adapter": "cfc1d5b31a7438dbc87763f9222f00337221cf21"
+  },
+  "files": {
+    "base/security/selinux_adapter/sepolicy/ohos_policy/telephony/telephony_sa/system/riladapter_host.te": [
+      "170ee019eb9e35b6b803997884dcd7531d860c7ef820104abc0649361d1dfa8c",
+      "ad232ac88e9471a1cd9f4eeae78581f7f2b625310c0ccd820f5bddf9d192f3e6"
+    ]
+  }
+}

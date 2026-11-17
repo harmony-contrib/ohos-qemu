@@ -1,0 +1,370 @@
+diff --git a/foundation/communication/ipc/ipc/native/src/napi_common/source/napi_remote_object.cpp b/foundation/communication/ipc/ipc/native/src/napi_common/source/napi_remote_object.cpp
+--- a/foundation/communication/ipc/ipc/native/src/napi_common/source/napi_remote_object.cpp
++++ b/foundation/communication/ipc/ipc/native/src/napi_common/source/napi_remote_object.cpp
+@@ -16,7 +16,13 @@
+ #include "napi_remote_object_holder.h"
+ #include "napi_remote_object_internal.h"
+ 
++#include <array>
++#include <memory>
++#include <mutex>
++#include <cstdint>
++#include <vector>
++
+ #include <hitrace_meter.h>
+ #include <string_ex.h>
+ #include <uv.h>
+ 
+@@ -34,8 +40,9 @@
+ #include "native_engine/native_value.h"
+ #include "napi_process_skeleton.h"
+ 
+ namespace OHOS {
++static constexpr napi_type_tag REMOTE_INTERFACE_STUB_TAG = {0x67586d35e34947baULL, 0xb4a8f0be52bc1791ULL};
+ static constexpr OHOS::HiviewDFX::HiLogLabel LOG_LABEL = { LOG_CORE, LOG_ID_IPC_NAPI, "napi_remoteObject" };
+ 
+ static const size_t ARGV_INDEX_0 = 0;
+ static const size_t ARGV_INDEX_1 = 1;
+@@ -655,8 +662,117 @@
+     return jsRemoteObject;
+ }
+ 
++struct RemoteInterfaceIdentity {
++    napi_env env = nullptr;
++    napi_ref object = nullptr;
++    NAPIRemoteObjectHolder *holder = nullptr;
++    RemoteInterfaceIdentity *next = nullptr;
++    bool registered = false;
++    ~RemoteInterfaceIdentity();
++};
++
++static std::mutex remoteInterfaceIdentityMutex;
++static std::array<RemoteInterfaceIdentity *, 256> remoteInterfaceIdentities{};
++
++static size_t RemoteInterfaceIdentityBucket(void *holder)
++{
++    return (reinterpret_cast<uintptr_t>(holder) >> 4) % remoteInterfaceIdentities.size();
++}
++
++static void RemoveRemoteInterfaceIdentity(RemoteInterfaceIdentity *identity)
++{
++    // Caller holds the registry lock. Intrusive buckets need no extra
++    // allocation and work with this product's -fno-exceptions build.
++    if (!identity->registered) {
++        return;
++    }
++    auto link = &remoteInterfaceIdentities[RemoteInterfaceIdentityBucket(identity->holder)];
++    while (*link != nullptr && *link != identity) {
++        link = &(*link)->next;
++    }
++    if (*link == identity) {
++        *link = identity->next;
++    }
++    identity->registered = false;
++}
++
++RemoteInterfaceIdentity::~RemoteInterfaceIdentity()
++{
++    {
++        std::lock_guard<std::mutex> lock(remoteInterfaceIdentityMutex);
++        RemoveRemoteInterfaceIdentity(this);
++    }
++    if (env != nullptr && object != nullptr) {
++        napi_delete_reference(env, object);
++    }
++}
++
++static void FinalizeRemoteInterfaceStub(napi_env env, void *data, void *hint)
++{
++    auto identity = static_cast<RemoteInterfaceIdentity *>(hint);
++    {
++        std::lock_guard<std::mutex> lock(remoteInterfaceIdentityMutex);
++        RemoveRemoteInterfaceIdentity(identity);
++    }
++    if (env == nullptr) {
++        identity->object = nullptr;
++    }
++    delete identity;
++    RemoteObjectHolderFinalizeCb(env, data, nullptr);
++}
++
++static napi_value IRemoteObject_JS_Constructor(napi_env env, napi_callback_info info)
++{
++    size_t argc = 1;
++    napi_value argv[1] = {nullptr};
++    napi_value thisVar = nullptr;
++    if (napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr) != napi_ok || argc != 0) {
++        return napiErr.ThrowError(env, errorDesc::CHECK_PARAM_ERROR);
++    }
++    // The SDK abstract base has no descriptor constructor parameter. A real
++    // derived instance owns the same Binder stub/JS callback holder as RemoteObject.
++    auto holder = new (std::nothrow) NAPIRemoteObjectHolder(env, u"", thisVar);
++    NAPI_ASSERT(env, holder != nullptr, "new IRemoteObject holder failed");
++    auto identity = std::unique_ptr<RemoteInterfaceIdentity>(new (std::nothrow) RemoteInterfaceIdentity());
++    if (identity == nullptr) {
++        delete holder;
++        NAPI_ASSERT(env, false, "allocate IRemoteObject identity failed");
++    }
++    identity->env = env;
++    identity->holder = holder;
++    napi_status status = napi_create_reference(env, thisVar, 0, &identity->object);
++    if (status != napi_ok) {
++        delete holder;
++        NAPI_ASSERT(env, false, "retain weak IRemoteObject identity failed");
++    }
++    {
++        std::lock_guard<std::mutex> lock(remoteInterfaceIdentityMutex);
++        auto &head = remoteInterfaceIdentities[RemoteInterfaceIdentityBucket(holder)];
++        identity->next = head;
++        head = identity.get();
++        identity->registered = true;
++    }
++    status = napi_coerce_to_native_binding_object(env, thisVar,
++        RemoteObjectDetachCb, RemoteObjectAttachCb, holder, nullptr);
++    if (status != napi_ok) {
++        delete holder;
++        NAPI_ASSERT(env, false, "bind native IRemoteObject failed");
++    }
++    status = napi_wrap(env, thisVar, holder, FinalizeRemoteInterfaceStub, identity.get(), nullptr);
++    if (status != napi_ok) {
++        delete holder;
++        NAPI_ASSERT(env, false, "wrap native IRemoteObject failed");
++    }
++    identity.release();
++    // In this pinned engine a type tag is observable JS data. It is only a
++    // lookup hint; the registry and weak object identity authorize unwrapping.
++    status = napi_type_tag_object(env, thisVar, &REMOTE_INTERFACE_STUB_TAG);
++    NAPI_ASSERT(env, status == napi_ok, "tag native IRemoteObject failed");
++    return thisVar;
++}
++
+ napi_value RemoteObject_JS_Constructor(napi_env env, napi_callback_info info)
+ {
+     // new napi remote object
+     size_t argc = 2;
+     size_t expectedArgc = 1;
+@@ -1124,8 +1240,33 @@
+     if (!napiScope.IsValid()) {
+         return nullptr;
+     }
+     if (object != nullptr) {
++        bool interfaceStub = false;
++        napi_status tagStatus = napi_check_object_type_tag(env, object, &REMOTE_INTERFACE_STUB_TAG, &interfaceStub);
++        if (tagStatus == napi_ok && interfaceStub) {
++            void *wrapped = nullptr;
++            NAPIRemoteObjectHolder *verifiedHolder = nullptr;
++            if (napi_unwrap(env, object, &wrapped) == napi_ok && wrapped != nullptr) {
++                std::lock_guard<std::mutex> lock(remoteInterfaceIdentityMutex);
++                auto identity = remoteInterfaceIdentities[RemoteInterfaceIdentityBucket(wrapped)];
++                while (identity != nullptr) {
++                    if (identity->holder == wrapped && identity->env == env) {
++                        napi_value actual = nullptr;
++                        bool equal = false;
++                        if (napi_get_reference_value(env, identity->object, &actual) == napi_ok && actual != nullptr &&
++                            napi_strict_equals(env, actual, object, &equal) == napi_ok && equal) {
++                            verifiedHolder = identity->holder;
++                        }
++                        break;
++                    }
++                    identity = identity->next;
++                }
++            }
++            if (verifiedHolder != nullptr) {
++                return verifiedHolder->Get();
++            }
++        }
+         napi_value global = nullptr;
+         napi_status status = napi_get_global(env, &global);
+         NAPI_ASSERT(env, status == napi_ok, "get napi global failed");
+         napi_value stubConstructor = nullptr;
+@@ -1715,9 +1856,55 @@
+     return result;
+ }
+ 
++struct RemoteInterfaceMethod {
++    napi_callback stub = nullptr;
++    napi_callback proxy = nullptr;
++};
++
++static napi_value InvokeRemoteInterfaceMethod(napi_env env, napi_callback_info info)
++{
++    napi_value thisVar = nullptr;
++    void *data = nullptr;
++    NAPI_ASSERT(env, napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, &data) == napi_ok,
++        "read IRemoteObject call failed");
++    auto method = static_cast<const RemoteInterfaceMethod *>(data);
++    sptr<IRemoteObject> target = NAPI_ohos_rpc_getNativeRemoteObject(env, thisVar);
++    if (target == nullptr) {
++        return napiErr.ThrowError(env, errorDesc::PROXY_OR_REMOTE_OBJECT_INVALID_ERROR);
++    }
++    // Call the real native callback with the original callback_info. Calling a
++    // concrete class's JS method would reject a base-derived receiver in V8.
++    return (target->IsProxyObject() ? method->proxy : method->stub)(env, info);
++}
++
++static napi_status SetRemoteInterfaceParent(napi_env env, napi_value child, napi_value parent)
++{
++    napi_value global = nullptr;
++    napi_value object = nullptr;
++    napi_value setter = nullptr;
++    napi_value result = nullptr;
++    napi_value actual = nullptr;
++    if (napi_get_global(env, &global) != napi_ok ||
++        napi_get_named_property(env, global, "Object", &object) != napi_ok ||
++        napi_get_named_property(env, object, "setPrototypeOf", &setter) != napi_ok) {
++        return napi_generic_failure;
++    }
++    napi_value argv[] = {child, parent};
++    napi_status status = napi_call_function(env, object, setter, 2, argv, &result);
++    if (status != napi_ok) {
++        return status;
++    }
++    bool equal = false;
++    if (napi_get_prototype(env, child, &actual) != napi_ok ||
++        napi_strict_equals(env, actual, parent, &equal) != napi_ok || !equal) {
++        return napi_generic_failure;
++    }
++    return napi_ok;
++}
++
+ EXTERN_C_START
+ /*
+  * function for module exports
+  */
+ napi_value NAPIRemoteObjectExport(napi_env env, napi_value exports)
+ {
+@@ -1751,7 +1938,80 @@
+     NAPI_ASSERT(env, status == napi_ok, "get napi global failed");
+     status = napi_set_named_property(env, global, "IPCStubConstructor_", constructor);
+     NAPI_ASSERT(env, status == napi_ok, "set stub constructor failed");
+     return exports;
+ }
++
++napi_value NAPIRemoteInterfaceExport(napi_env env, napi_value exports,
++    const napi_callback *proxyMethods, size_t proxyCount)
++{
++    static constexpr const char *names[] = {
++        "queryLocalInterface", "getLocalInterface", "sendRequest", "sendMessageRequest",
++        "addDeathRecipient", "registerDeathRecipient", "removeDeathRecipient",
++        "unregisterDeathRecipient", "getInterfaceDescriptor", "getDescriptor", "isObjectDead",
++    };
++    static constexpr napi_callback stubMethods[] = {
++        NAPI_RemoteObject_queryLocalInterface, NAPI_RemoteObject_getLocalInterface,
++        NAPI_RemoteObject_sendRequest, NAPI_RemoteObject_sendMessageRequest,
++        NAPI_RemoteObject_addDeathRecipient, NAPI_RemoteObject_registerDeathRecipient,
++        NAPI_RemoteObject_removeDeathRecipient, NAPI_RemoteObject_unregisterDeathRecipient,
++        NAPI_RemoteObject_getInterfaceDescriptor, NAPI_RemoteObject_getDescriptor, NAPI_RemoteObject_isObjectDead,
++    };
++    constexpr size_t count = sizeof(names) / sizeof(names[0]);
++    static_assert(sizeof(stubMethods) / sizeof(stubMethods[0]) == count);
++    NAPI_ASSERT(env, proxyMethods != nullptr && proxyCount == count, "complete native RPC method table required");
++    // These are DLL-lifetime, environment-independent C++ callbacks. Keep no
++    // per-environment references or heap callback data that can outlive a realm.
++    static std::array<RemoteInterfaceMethod, count> methods{};
++    static std::mutex methodsMutex;
++    {
++        std::lock_guard<std::mutex> lock(methodsMutex);
++        for (size_t index = 0; index < count; ++index) {
++            NAPI_ASSERT(env, proxyMethods[index] != nullptr &&
++                (methods[index].proxy == nullptr || methods[index].proxy == proxyMethods[index]),
++                "native RPC callback implementation changed");
++        }
++        for (size_t index = 0; index < count; ++index) {
++            if (methods[index].proxy == nullptr) {
++                methods[index] = {stubMethods[index], proxyMethods[index]};
++            }
++        }
++    }
++    napi_value stub = nullptr;
++    napi_value proxy = nullptr;
++    napi_value stubPrototype = nullptr;
++    napi_value proxyPrototype = nullptr;
++    NAPI_ASSERT(env, napi_get_named_property(env, exports, "RemoteObject", &stub) == napi_ok,
++        "read RemoteObject constructor failed");
++    NAPI_ASSERT(env, napi_get_named_property(env, exports, "RemoteProxy", &proxy) == napi_ok,
++        "read RemoteProxy constructor failed");
++    NAPI_ASSERT(env, napi_get_named_property(env, stub, "prototype", &stubPrototype) == napi_ok,
++        "read RemoteObject prototype failed");
++    NAPI_ASSERT(env, napi_get_named_property(env, proxy, "prototype", &proxyPrototype) == napi_ok,
++        "read RemoteProxy prototype failed");
++    napi_value constructor = nullptr;
++    NAPI_ASSERT(env, napi_define_class(env, "IRemoteObject", NAPI_AUTO_LENGTH, IRemoteObject_JS_Constructor,
++        nullptr, 0, nullptr, &constructor) == napi_ok, "define IRemoteObject failed");
++    napi_value prototype = nullptr;
++    NAPI_ASSERT(env, napi_get_named_property(env, constructor, "prototype", &prototype) == napi_ok,
++        "read IRemoteObject prototype failed");
++    for (size_t index = 0; index < count; ++index) {
++        napi_value method = nullptr;
++        // Plain native functions accept either actual RPC wrapper kind; class
++        // method signatures would brand them only for IRemoteObject's template.
++        NAPI_ASSERT(env, napi_create_function(env, names[index], NAPI_AUTO_LENGTH, InvokeRemoteInterfaceMethod,
++            &methods[index], &method) == napi_ok, "create native IRemoteObject method failed");
++        napi_property_descriptor property = {
++            names[index], nullptr, nullptr, nullptr, nullptr, method, napi_default, nullptr};
++        NAPI_ASSERT(env, napi_define_properties(env, prototype, 1, &property) == napi_ok,
++            "define IRemoteObject method failed");
++    }
++    NAPI_ASSERT(env, SetRemoteInterfaceParent(env, stubPrototype, prototype) == napi_ok &&
++        SetRemoteInterfaceParent(env, proxyPrototype, prototype) == napi_ok &&
++        SetRemoteInterfaceParent(env, stub, constructor) == napi_ok &&
++        SetRemoteInterfaceParent(env, proxy, constructor) == napi_ok, "link real RPC base class failed");
++    NAPI_ASSERT(env, napi_set_named_property(env, exports, "IRemoteObject", constructor) == napi_ok,
++        "export IRemoteObject failed");
++    return exports;
++}
+ EXTERN_C_END
+ } // namespace OHOS
+diff --git a/foundation/communication/ipc/ipc/native/src/napi/src/napi_rpc_native_module.cpp b/foundation/communication/ipc/ipc/native/src/napi/src/napi_rpc_native_module.cpp
+--- a/foundation/communication/ipc/ipc/native/src/napi/src/napi_rpc_native_module.cpp
++++ b/foundation/communication/ipc/ipc/native/src/napi/src/napi_rpc_native_module.cpp
+@@ -20,10 +20,24 @@
+ #include "napi/native_node_api.h"
+ #include "napi_remote_object.h"
+ 
+ namespace OHOS {
+-EXTERN_C_START
+-extern napi_value NAPIIPCSkeletonExport(napi_env env, napi_value exports);
+-extern napi_value NAPIRemoteProxyExport(napi_env env, napi_value exports);
++extern napi_value NAPI_RemoteProxy_queryLocalInterface(napi_env env, napi_callback_info info);
++extern napi_value NAPI_RemoteProxy_getLocalInterface(napi_env env, napi_callback_info info);
++extern napi_value NAPI_RemoteProxy_sendRequest(napi_env env, napi_callback_info info);
++extern napi_value NAPI_RemoteProxy_sendMessageRequest(napi_env env, napi_callback_info info);
++extern napi_value NAPI_RemoteProxy_addDeathRecipient(napi_env env, napi_callback_info info);
++extern napi_value NAPI_RemoteProxy_registerDeathRecipient(napi_env env, napi_callback_info info);
++extern napi_value NAPI_RemoteProxy_removeDeathRecipient(napi_env env, napi_callback_info info);
++extern napi_value NAPI_RemoteProxy_unregisterDeathRecipient(napi_env env, napi_callback_info info);
++extern napi_value NAPI_RemoteProxy_getInterfaceDescriptor(napi_env env, napi_callback_info info);
++extern napi_value NAPI_RemoteProxy_getDescriptor(napi_env env, napi_callback_info info);
++extern napi_value NAPI_RemoteProxy_isObjectDead(napi_env env, napi_callback_info info);
++
++EXTERN_C_START
++extern napi_value NAPIIPCSkeletonExport(napi_env env, napi_value exports);
++extern napi_value NAPIRemoteProxyExport(napi_env env, napi_value exports);
++extern napi_value NAPIRemoteInterfaceExport(napi_env env, napi_value exports,
++    const napi_callback *proxyMethods, size_t proxyCount);
+ extern napi_value NAPIMessageOptionExport(napi_env env, napi_value exports);
+ extern napi_value NAPICallingInfoExport(napi_env env, napi_value exports);
+ 
+@@ -34,8 +48,22 @@
+     NAPIAshmem::AshmemExport(env, exports);
+     NAPIIPCSkeletonExport(env, exports);
+     NAPIRemoteObjectExport(env, exports);
+     NAPIRemoteProxyExport(env, exports);
++    static constexpr napi_callback proxyMethods[] = {
++        NAPI_RemoteProxy_queryLocalInterface,
++        NAPI_RemoteProxy_getLocalInterface,
++        NAPI_RemoteProxy_sendRequest,
++        NAPI_RemoteProxy_sendMessageRequest,
++        NAPI_RemoteProxy_addDeathRecipient,
++        NAPI_RemoteProxy_registerDeathRecipient,
++        NAPI_RemoteProxy_removeDeathRecipient,
++        NAPI_RemoteProxy_unregisterDeathRecipient,
++        NAPI_RemoteProxy_getInterfaceDescriptor,
++        NAPI_RemoteProxy_getDescriptor,
++        NAPI_RemoteProxy_isObjectDead,
++    };
++    NAPIRemoteInterfaceExport(env, exports, proxyMethods, sizeof(proxyMethods) / sizeof(proxyMethods[0]));
+     NAPIMessageOptionExport(env, exports);
+     NapiError::NAPIRpcErrorEnumExport(env, exports);
+     NAPICallingInfoExport(env, exports);
+     return exports;

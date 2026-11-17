@@ -1,0 +1,52 @@
+diff --git a/applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets b/applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerController.ets
+@@ -125,6 +125,9 @@
+       const targets: ShareTarget[] = [];
+       const seen: Set<string> = new Set();
+       for (let i = 0; i < infos.length; i++) {
++        if (!this.active || this.completed || revision !== this.revision) {
++          return;
++        }
+         const info = infos[i];
+         if (!info.exported || !info.enabled || !info.applicationInfo.enabled ||
+             !info.bundleName || !info.moduleName || !info.name) {
+diff --git a/applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets b/applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/SharePicker/SharePickerExtension.ets
+@@ -5,14 +5,16 @@
+ import { SharePickerController } from './SharePickerController';
+ 
+ export default class SharePickerExtension extends UIExtensionAbility {
+-  private opened: Set<UIExtensionContentSession> = new Set();
++  private opened: Map<UIExtensionContentSession, number> = new Map();
++  private revision: number = 0;
+   private sessions: Map<UIExtensionContentSession, SharePickerController> = new Map();
+ 
+   async onSessionCreate(want: Want, session: UIExtensionContentSession): Promise<void> {
+     if (this.opened.has(session)) {
+       return;
+     }
+-    this.opened.add(session);
++    const revision: number = ++this.revision;
++    this.opened.set(session, revision);
+     let failureCode: number = 401;
+     try {
+       const controller = new SharePickerController(want, session);
+@@ -22,11 +24,13 @@
+       storage.setOrCreate('shareController', controller);
+       await session.loadContent('pages/SharePicker', storage);
+     } catch (error) {
++      // A destroyed/recreated session owns a different operation, even if its
++      // host reuses the content-session object. Never tear down that lifetime.
++      if (this.opened.get(session) !== revision) {
++        return;
++      }
+       this.sessions.get(session)?.dispose();
+       this.sessions.delete(session);
+-      if (!this.opened.has(session)) {
+-        return;
+-      }
+       try {
+         await session.terminateSelfWithResult({ resultCode: failureCode,
+           want: { parameters: { outcome: failureCode === 401 ? 'invalid' : 'error', message: (error as Error).message } } });

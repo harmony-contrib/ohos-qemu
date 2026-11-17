@@ -1,0 +1,12 @@
+diff --git a/src/third_party/swiftshader/third_party/llvm-10.0/BUILD.gn b/src/third_party/swiftshader/third_party/llvm-10.0/BUILD.gn
+--- a/src/third_party/swiftshader/third_party/llvm-10.0/BUILD.gn
++++ b/src/third_party/swiftshader/third_party/llvm-10.0/BUILD.gn
+@@ -103,7 +103,7 @@ llvm_include_dirs = [
+   "configs/common/lib/Transforms/InstCombine/",
+ ]
+ 
+-if (is_linux || is_chromeos) {
++if (is_linux || is_chromeos || is_ohos) {
+   llvm_include_dirs += [ "configs/linux/include/" ]
+ } else if (is_fuchsia) {
+   llvm_include_dirs += [ "configs/fuchsia/include/" ]

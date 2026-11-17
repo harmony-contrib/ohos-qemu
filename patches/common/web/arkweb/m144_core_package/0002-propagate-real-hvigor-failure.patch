@@ -1,0 +1,37 @@
+diff --git a/src/arkweb/build/hap/build_hap_rk.py b/src/arkweb/build/hap/build_hap_rk.py
+--- a/src/arkweb/build/hap/build_hap_rk.py
++++ b/src/arkweb/build/hap/build_hap_rk.py
+@@ -97,24 +97,13 @@
+   def Hvigor(self, cmd_array):
+     cmd = [self.hvigor_wrapper] + cmd_array
+-    try:
+-      process = subprocess.Popen(cmd,
+-                               stdout=subprocess.PIPE,
+-                               stderr=subprocess.PIPE,
+-                               env=self.env)
+-      stdout, stderr = process.communicate()
+-    except Exception as e:
+-      print(f"An error occurred: {e}")
+-    print("***********************************")
+-    print(self.root)
+-    os.chdir(self.root)
+-    command = ['./hvigorw', '--mode=module', 'clean', '-p', 'debuggable=false', 'assembleHap', '--no-daemon']
+-    try:
+-      result = subprocess.run(command, capture_output=True, text=True)
+-      print("Standard output:", result.stdout)
+-      print("Standard error:", result.stderr)
+-    except Exception as e:
+-      print(f"An error occurred: {e}")
+-    print("***********************************")
+-    return stdout
++    result = subprocess.run(cmd,
++                            cwd=self.root,
++                            stdout=subprocess.PIPE,
++                            stderr=subprocess.PIPE,
++                            env=self.env)
++    if result.returncode != 0:
++      err = result.stderr if result.stderr else result.stdout
++      raise RuntimeError('Command \'%s\' failed\n%s' % (' '.join(cmd), err))
++    return result.stdout
+ 
+   def Build(self, auto_signed):

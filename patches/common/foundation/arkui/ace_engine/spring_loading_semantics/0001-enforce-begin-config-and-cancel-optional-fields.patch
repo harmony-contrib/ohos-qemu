@@ -1,0 +1,86 @@
+diff --git a/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/functions/js_drag_function.cpp b/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/functions/js_drag_function.cpp
+--- a/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/functions/js_drag_function.cpp
++++ b/foundation/arkui/ace_engine/frameworks/bridge/declarative_frontend/engine/functions/js_drag_function.cpp
+@@ -710,71 +710,82 @@
+ void JsDragSpringLoadingContext::GetDragInfos(const JSCallbackInfo& args)
+ {
+     CHECK_NULL_VOID(context_);
++    if (context_->GetState() == DragSpringLoadingState::CANCEL) {
++        args.SetReturnValue(JSVal::Undefined());
++        return;
++    }
+     JSRef<JSObject> dragInfosObj = JSRef<JSObject>::New();
+     auto summary = context_->GetSummary();
+     napi_value nativeValue = UdmfClient::GetInstance()->TransformSummary(summary);
+     CHECK_NULL_VOID(nativeValue);
+     auto jsValue = JsConverter::ConvertNapiValueToJsVal(nativeValue);
+     dragInfosObj->SetPropertyObject("dataSummary", jsValue);
+     dragInfosObj->SetProperty<std::string>("extraInfos", context_->GetExtraInfos());
+     JSRef<JSVal> dragInfosRef = dragInfosObj;
+     args.SetReturnValue(dragInfosRef);
+ }
+ 
+ void JsDragSpringLoadingContext::SetDragInfos(const JSCallbackInfo& args)
+ {
+     TAG_LOGD(AceLogTag::ACE_DRAG, "JsDragSpringLoadingContext can not support set dragInfos value.");
+ }
+ 
+ void JsDragSpringLoadingContext::GetCurrentConfig(const JSCallbackInfo& args)
+ {
+     CHECK_NULL_VOID(context_);
++    if (context_->GetState() == DragSpringLoadingState::CANCEL) {
++        args.SetReturnValue(JSVal::Undefined());
++        return;
++    }
+     JSRef<JSObject> curConfigObj = JSRef<JSObject>::New();
+     const auto& config = context_->GetDragSpringLoadingConfiguration();
+     CHECK_NULL_VOID(config);
+     curConfigObj->SetProperty<int32_t>("stillTimeLimit", config->stillTimeLimit);
+     curConfigObj->SetProperty<int32_t>("updateInterval", config->updateInterval);
+     curConfigObj->SetProperty<int32_t>("updateNotifyCount", config->updateNotifyCount);
+     curConfigObj->SetProperty<int32_t>("updateToFinishInterval", config->updateToFinishInterval);
+     JSRef<JSVal> curConfigRef = curConfigObj;
+     args.SetReturnValue(curConfigRef);
+ }
+ 
+ void JsDragSpringLoadingContext::SetCurrentConfig(const JSCallbackInfo& args)
+ {
+     TAG_LOGD(AceLogTag::ACE_DRAG, "JsDragSpringLoadingContext can not support set currentConfig value.");
+ }
+ 
+ void JsDragSpringLoadingContext::Abort(const JSCallbackInfo& args)
+ {
+     CHECK_NULL_VOID(context_);
+     context_->SetSpringLoadingAborted();
+ }
+ 
+ void JsDragSpringLoadingContext::UpdateConfiguration(const JSCallbackInfo& args)
+ {
+     if (!args[0]->IsObject()) {
+         return;
+     }
+     CHECK_NULL_VOID(context_);
++    if (context_->GetState() != DragSpringLoadingState::BEGIN) {
++        return;
++    }
+ 
+     auto validateAndSet = [](double value, int32_t defaultValue) -> int32_t {
+         return (std::isnan(value) || value < 0 || value > INT32_MAX) ? defaultValue : static_cast<int32_t>(value);
+     };
+ 
+     auto config = MakeRefPtr<NG::DragSpringLoadingConfiguration>();
+     JSRef<JSObject> jsObj = JSRef<JSObject>::Cast(args[0]);
+ 
+     config->stillTimeLimit = validateAndSet(
+         jsObj->GetPropertyValue<double>("stillTimeLimit", NG::DEFAULT_STILL_TIME_LIMIT), NG::DEFAULT_STILL_TIME_LIMIT);
+     config->updateInterval = validateAndSet(
+         jsObj->GetPropertyValue<double>("updateInterval", NG::DEFAULT_UPDATE_INTERVAL), NG::DEFAULT_UPDATE_INTERVAL);
+     config->updateNotifyCount =
+         validateAndSet(jsObj->GetPropertyValue<double>("updateNotifyCount", NG::DEFAULT_UPDATE_NOTIFY_COUNT),
+             NG::DEFAULT_UPDATE_NOTIFY_COUNT);
+     config->updateToFinishInterval =
+         validateAndSet(jsObj->GetPropertyValue<double>("updateToFinishInterval", NG::DEFAULT_UPDATE_TO_FINISH_INTERVAL),
+             NG::DEFAULT_UPDATE_TO_FINISH_INTERVAL);
+ 
+     context_->SetDragSpringLoadingConfiguration(std::move(config));
+ }

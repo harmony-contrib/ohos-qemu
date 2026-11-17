@@ -1,0 +1,114 @@
+diff --git a/base/security/certificate_manager/interfaces/kits/napi/src/cm_napi_common.cpp b/base/security/certificate_manager/interfaces/kits/napi/src/cm_napi_common.cpp
+--- a/base/security/certificate_manager/interfaces/kits/napi/src/cm_napi_common.cpp
++++ b/base/security/certificate_manager/interfaces/kits/napi/src/cm_napi_common.cpp
+@@ -343,32 +343,32 @@
+ napi_value GenerateCertAbstractArray(napi_env env, const struct CertAbstract *certAbstract, const uint32_t certCount)
+ {
+-    if (certCount == 0 || certAbstract == nullptr) {
++    if (certCount != 0 && certAbstract == nullptr) {
+         return nullptr;
+     }
+     napi_value array = nullptr;
+     NAPI_CALL(env, napi_create_array(env, &array));
+     for (uint32_t i = 0; i < certCount; i++) {
+         napi_value uri = nullptr;
+         napi_value certAlias = nullptr;
+         napi_value subjectName = nullptr;
+         napi_value status = nullptr;
+ 
+         napi_create_string_latin1(env, static_cast<const char *>(certAbstract[i].uri), NAPI_AUTO_LENGTH, &uri);
+         napi_create_string_latin1(env, static_cast<const char *>(certAbstract[i].certAlias),
+             NAPI_AUTO_LENGTH, &certAlias);
+         napi_create_string_latin1(env, static_cast<const char *>(certAbstract[i].subjectName),
+             NAPI_AUTO_LENGTH, &subjectName);
+         napi_get_boolean(env, certAbstract[i].status, &status);
+ 
+         napi_value element = nullptr;
+         napi_create_object(env, &element);
+         napi_set_named_property (env, element, CM_CERT_PROPERTY_URI.c_str(), uri);
+         napi_set_named_property (env, element, CM_CERT_PROPERTY_CERTALIAS.c_str(), certAlias);
+         napi_set_named_property (env, element, CM_CERT_PROPERTY_STATUS.c_str(), status);
+         napi_set_named_property (env, element, CM_CERT_PROPERTY_STATE.c_str(), status);
+         napi_set_named_property (env, element, CM_CERT_PROPERTY_SUBJECTNAME.c_str(), subjectName);
+ 
+         napi_set_element(env, array, i, element);
+     }
+     return array;
+ }
+@@ -376,29 +376,29 @@
+ napi_value GenerateCredentialAbstractArray(napi_env env,
+     const struct CredentialAbstract *credentialAbstract, const uint32_t credentialCount)
+ {
+-    if (credentialCount == 0 || credentialAbstract == nullptr) {
++    if (credentialCount != 0 && credentialAbstract == nullptr) {
+         return nullptr;
+     }
+     napi_value array = nullptr;
+     NAPI_CALL(env, napi_create_array(env, &array));
+     for (uint32_t i = 0; i < credentialCount; i++) {
+         napi_value type = nullptr;
+         napi_value alias = nullptr;
+         napi_value keyUri = nullptr;
+         napi_create_string_latin1(env, static_cast<const char *>(credentialAbstract[i].type),
+             NAPI_AUTO_LENGTH, &type);
+         napi_create_string_latin1(env, static_cast<const char *>(credentialAbstract[i].alias),
+             NAPI_AUTO_LENGTH, &alias);
+         napi_create_string_latin1(env, static_cast<const char *>(credentialAbstract[i].keyUri),
+             NAPI_AUTO_LENGTH, &keyUri);
+ 
+         napi_value element = nullptr;
+         napi_create_object(env, &element);
+         napi_set_named_property (env, element, CM_CERT_PROPERTY_TYPE.c_str(), type);
+         napi_set_named_property (env, element, CM_CERT_PROPERTY_CREDENTIAL_ALIAS.c_str(), alias);
+         napi_set_named_property (env, element, CM_CERT_PROPERTY_KEY_URI.c_str(), keyUri);
+ 
+         napi_set_element(env, array, i, element);
+     }
+     return array;
+ }
+@@ -406,16 +406,16 @@
+ napi_value GenerateCredentialArray(napi_env env,
+     const struct Credential *credential, const uint32_t credentialCount)
+ {
+-    if (credentialCount == 0 || credential == nullptr) {
++    if (credentialCount != 0 && credential == nullptr) {
+         return nullptr;
+     }
+     napi_value array = nullptr;
+     NAPI_CALL(env, napi_create_array(env, &array));
+     for (uint32_t i = 0; i < credentialCount; i++) {
+         napi_value element = nullptr;
+         napi_create_object(env, &element);
+         element = GenerateUkeyCertInfo(env, &credential[i]);
+         napi_set_element(env, array, i, element);
+     }
+     return array;
+ }
+@@ -698,12 +698,12 @@
+ void FreeCertList(CertList *&certList)
+ {
+-    if (certList == nullptr || certList->certAbstract == nullptr) {
++    if (certList == nullptr) {
+         return;
+     }
+ 
+     FreeCertAbstract(certList->certAbstract);
+     certList->certAbstract = nullptr;
+ 
+     CmFree(certList);
+     certList = nullptr;
+ }
+@@ -711,12 +711,12 @@
+ void FreeCredentialList(CredentialList *&credentialList)
+ {
+-    if (credentialList == nullptr || credentialList->credentialAbstract == nullptr) {
++    if (credentialList == nullptr) {
+         return;
+     }
+ 
+     FreeCredentialAbstract(credentialList->credentialAbstract);
+     credentialList->credentialAbstract = nullptr;
+ 
+     CmFree(credentialList);
+     credentialList = nullptr;
+ }

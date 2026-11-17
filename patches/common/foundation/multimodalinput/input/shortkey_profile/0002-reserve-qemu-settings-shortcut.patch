@@ -1,0 +1,12 @@
+--- a/foundation/multimodalinput/input/etc/system_keys_config.json
++++ b/foundation/multimodalinput/input/etc/system_keys_config.json
+@@ -1,5 +1,9 @@
+ {
+     "SystemKeys": [
++        {
++            "preKeys": [ 2076 ],
++            "finalKey": 2025
++        },
+         {
+             "preKeys": [ 2076 ],
+             "finalKey": -1

@@ -1,0 +1,10 @@
+diff --git a/kernel/linux/common_modules/qos_auth/auth_ctl/qos_ctrl.c b/kernel/linux/common_modules/qos_auth/auth_ctl/qos_ctrl.c
+--- a/kernel/linux/common_modules/qos_auth/auth_ctl/qos_ctrl.c
++++ b/kernel/linux/common_modules/qos_auth/auth_ctl/qos_ctrl.c
+@@ -8,3 +8,6 @@
++#ifdef CONFIG_COMPAT
++#include <linux/compat.h>
++#endif
+ #include <linux/sched.h>
+ #include <linux/list.h>
+ #include <linux/mutex.h>

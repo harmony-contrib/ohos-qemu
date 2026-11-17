@@ -1,0 +1,69 @@
+{
+  "project": "base/msdp/device_status",
+  "revision": "96335211bea5ca348325d55746e14e102208354f",
+  "patch_sha256": "49fbb5272058812f9110aaa04dfe33c71900a720f78e666570143d5eba0d57bc",
+  "originals": {
+    "base/msdp/device_status/libs/include/devicestatus_algorithm_manager.h": {
+      "before": "3c3bb7dc518b4ab89a6ee62271ca436e07475fbdb49b8a4de46259b0741ac935",
+      "after": "de10bd52b1bddd8ac7d8b4de58dc74706bf4055f82faa94f51d724346440bba7"
+    },
+    "base/msdp/device_status/libs/src/devicestatus_algorithm_manager.cpp": {
+      "before": "5e07d69bdb885cf7600a60834403b92ae3036e92cd972bf757e466346987ecab",
+      "after": "66e7494899a03569b37b0999dd90cc17414220d9575fde727ad588819b239f49"
+    },
+    "base/msdp/device_status/libs/include/algorithm/algo_absolute_still.h": {
+      "before": "e6af0875377c2fb654e9af801f13620e009f96afdfd2acc5b2cc68fb43bdb23e",
+      "after": "8ab73111265048e7089cb143f01aaee2700374fe6e8ef901a57c7bcefdd358fc"
+    },
+    "base/msdp/device_status/libs/src/algorithm/algo_absolute_still.cpp": {
+      "before": "d75dd2f848aa21b736055a6b05a2fa38d2950f89c0e64fdf86498c2d17aa1deb",
+      "after": "c3f4d63f6c1d6573fb6c5c112b0c5da13bee38819b74a9f34bed2f4905858ed1"
+    },
+    "base/msdp/device_status/libs/include/datahub/sensor_data_callback.h": {
+      "before": "6cdecfafea1ba1f9d17195cb7eb9d06bcffc98d741e4082d9ae14c151ca51ec4",
+      "after": "4aa693d4644e22b822b754bc7c7dc8a47d9d5b5891740422be9709499cce8b40"
+    },
+    "base/msdp/device_status/libs/src/datahub/sensor_data_callback.cpp": {
+      "before": "39703f1645ba480f9bc6111c807a8ede4aeb6154fc1b7cdb97aafb50ff9ab7d4",
+      "after": "2ad7b6c16c08e182f6beac40cb8acb2cc91032dae87ee233ca545cd3611ea340"
+    },
+    "base/msdp/device_status/services/native/include/devicestatus_msdp_client_impl.h": {
+      "before": "64e8c8b4cb78edccb6755bb2a803b5990b8ebbf002ae6ed807d7323720c2d785",
+      "after": "300b90e2942b3eaf3380a66b7cd4e24eda7e0ecea607a76e7e2ef34ca47c4bf1"
+    },
+    "base/msdp/device_status/services/native/src/devicestatus_msdp_client_impl.cpp": {
+      "before": "61b6b25cad17e638d60825175c65375f8f8cac2995d788800cde4905f41bd1a6",
+      "after": "445396673473d9503aacf19fa03d630ec6241a641a172dad121d3fb9919c9192"
+    },
+    "base/msdp/device_status/services/native/include/devicestatus_manager.h": {
+      "before": "43f03fc7ab6ff8a03311013187f9453f1923a34388249553671d89b55a739143",
+      "after": "f3753c4b8f85892384117bd9cf9e28862344837a69b31a474b2325cda839a241"
+    },
+    "base/msdp/device_status/services/native/src/devicestatus_manager.cpp": {
+      "before": "cf53629a41af6013fb7b3dfd9be6c7cab580f0744124bbcf713ec11b7b06f01c",
+      "after": "ac7456522a534e3492a8fcac14fb9d00107d937164047c99f75109940d8a621f"
+    },
+    "base/msdp/device_status/libs/include/algorithm/algo_base.h": {
+      "before": "4dca37104459292d43aa1cfdae05135163a5d435c675eda0f319c76b81fec0a4",
+      "after": "4e486ad0616f52aba932f3c38ba833b3c5a07a8d2c219fa46809391f19c706ec"
+    },
+    "base/msdp/device_status/libs/src/algorithm/algo_horizontal.cpp": {
+      "before": "7ac5d35f808b4b78ef4c3fc85eda218e7c881bafed0823dbc2b4df9c02df53b1",
+      "after": "92880f3f506b4ae657c63fb880ffe23f092e6f71e2d0d4cb00eacdebdc92347d"
+    },
+    "base/msdp/device_status/libs/src/algorithm/algo_vertical.cpp": {
+      "before": "d0a8cd5f35ac57a4413b2883a6858d6353526c99af9b7dc8e789f340d40e7d63",
+      "after": "75d45158e27d0c5d44351fb56bd0d7eb6903dae20cc4867e3c7b3ff32c6038c5"
+    },
+    "base/msdp/device_status/libs/interface/devicestatus_msdp_interface.h": {
+      "before": "eb3bb180126b51d321de5b5bea5ca861e8aa9d4c4c5c40ff992302882c919821",
+      "after": "8724e8ff239ea7f27443a5e9e9315aff85e78883a0e54c6549d7c4b22a2a5f6d"
+    }
+  },
+  "files": {},
+  "composition": {
+    "after_component": "sensor_input",
+    "after_component_manifest_sha256": "b4810b00121059214391e27a0618d1059e79408adcb052c1bfcc7ec4c6bc685c"
+  },
+  "first_artifact_behavior_gate_passed": false
+}

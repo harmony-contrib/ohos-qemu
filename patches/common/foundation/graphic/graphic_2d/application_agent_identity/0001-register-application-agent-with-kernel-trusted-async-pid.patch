@@ -1,0 +1,18 @@
+diff --git a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
+@@ -553,6 +553,14 @@
+         // LCOV_EXCL_START
+         case static_cast<uint32_t>(RSIClientToRenderConnectionInterfaceCode::REGISTER_APPLICATION_AGENT): {
+             pid_t pid = GetCallingPid();
++            if (pid == 0 && (option.GetFlags() & MessageOption::TF_ASYNC) != 0) {
++                // One-way Binder wire PIDs stay zero; use only the kernel sender identity.
++                pid = IPCSkeleton::GetCallingRealPid();
++            }
++            if (pid <= 0) {
++                ret = ERR_INVALID_STATE;
++                break;
++            }
+             RS_PROFILER_PATCH_PID(data, pid);
+             auto remoteObject = data.ReadRemoteObject();
+             if (remoteObject == nullptr) {

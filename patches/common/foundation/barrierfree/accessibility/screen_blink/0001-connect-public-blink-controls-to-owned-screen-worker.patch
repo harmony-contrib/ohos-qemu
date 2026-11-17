@@ -1,0 +1,729 @@
+diff --git a/foundation/barrierfree/accessibility/common/interface/IAccessibleAbilityManagerService.idl b/foundation/barrierfree/accessibility/common/interface/IAccessibleAbilityManagerService.idl
+--- a/foundation/barrierfree/accessibility/common/interface/IAccessibleAbilityManagerService.idl
++++ b/foundation/barrierfree/accessibility/common/interface/IAccessibleAbilityManagerService.idl
+@@ -112,4 +112,5 @@
+     void GetSeniorModeStateForApp([in] String name, [in] int appIndex, [out] boolean state);
+     void SetSeniorModeStateForApp([in] AccessibilityBundleSeniorModeInfoParcel[] infos);
+     void DeRegisterSeniorModeStateObserver([in] IRemoteObject obj);
++    void ControlBlinking([in] boolean start, [in] int mode, [in] int scenario, [out] int blinkResult);
+ }
+diff --git a/foundation/barrierfree/accessibility/frameworks/acfwk/include/accessibility_config_impl.h b/foundation/barrierfree/accessibility/frameworks/acfwk/include/accessibility_config_impl.h
+--- a/foundation/barrierfree/accessibility/frameworks/acfwk/include/accessibility_config_impl.h
++++ b/foundation/barrierfree/accessibility/frameworks/acfwk/include/accessibility_config_impl.h
+@@ -85,6 +85,7 @@
+     Accessibility::RetError SetClickResponseTime(const CLICK_RESPONSE_TIME time);
+     Accessibility::RetError SetIgnoreRepeatClickState(const bool state);
+     Accessibility::RetError SetIgnoreRepeatClickTime(const IGNORE_REPEAT_CLICK_TIME time);
++    Accessibility::RetError ControlBlinking(bool start, int32_t mode, int32_t scenario, int32_t &result);
+ 
+     Accessibility::RetError GetScreenMagnificationState(bool &state);
+     Accessibility::RetError GetShortKeyState(bool &state);
+diff --git a/foundation/barrierfree/accessibility/frameworks/acfwk/src/accessibility_config.cpp b/foundation/barrierfree/accessibility/frameworks/acfwk/src/accessibility_config.cpp
+--- a/foundation/barrierfree/accessibility/frameworks/acfwk/src/accessibility_config.cpp
++++ b/foundation/barrierfree/accessibility/frameworks/acfwk/src/accessibility_config.cpp
+@@ -226,6 +226,13 @@
+     return pImpl_->SetIgnoreRepeatClickTime(time);
+ }
+ 
++Accessibility::RetError AccessibilityConfig::ControlBlinking(bool start, int32_t mode, int32_t scenario,
++    int32_t &result)
++{
++    CHECK_IMPL_PTR(Accessibility::RET_ERR_NULLPTR)
++    return pImpl_->ControlBlinking(start, mode, scenario, result);
++}
++
+ Accessibility::RetError AccessibilityConfig::GetScreenMagnificationState(bool &state) const
+ {
+     CHECK_IMPL_PTR(Accessibility::RET_ERR_NULLPTR)
+@@ -398,4 +405,4 @@
+     return pImpl_->UnsubscribeAppSeniorModeStateObserver(observer);
+ }
+ } // Accessibility
+-} // OHOS
+\ No newline at end of file
++} // OHOS
+diff --git a/foundation/barrierfree/accessibility/frameworks/acfwk/src/accessibility_config_impl.cpp b/foundation/barrierfree/accessibility/frameworks/acfwk/src/accessibility_config_impl.cpp
+--- a/foundation/barrierfree/accessibility/frameworks/acfwk/src/accessibility_config_impl.cpp
++++ b/foundation/barrierfree/accessibility/frameworks/acfwk/src/accessibility_config_impl.cpp
+@@ -1398,6 +1398,16 @@
+     Accessibility::RetError ret = static_cast<Accessibility::RetError>(proxy->SetIgnoreRepeatClickTime(
+         time));
+     return ret;
++}
++
++Accessibility::RetError AccessibilityConfig::Impl::ControlBlinking(bool start, int32_t mode, int32_t scenario,
++    int32_t &result)
++{
++    auto proxy = GetServiceProxy();
++    if (proxy == nullptr) {
++        return Accessibility::RET_ERR_SAMGR;
++    }
++    return static_cast<Accessibility::RetError>(proxy->ControlBlinking(start, mode, scenario, result));
+ }
+ 
+ Accessibility::RetError AccessibilityConfig::Impl::GetInvertColorState(bool &state)
+@@ -2252,4 +2262,4 @@
+     return Accessibility::RET_OK;
+ }
+ } // namespace AccessibilityConfig
+-} // namespace OHOS
+\ No newline at end of file
++} // namespace OHOS
+diff --git a/foundation/barrierfree/accessibility/interfaces/innerkits/acfwk/include/accessibility_config.h b/foundation/barrierfree/accessibility/interfaces/innerkits/acfwk/include/accessibility_config.h
+--- a/foundation/barrierfree/accessibility/interfaces/innerkits/acfwk/include/accessibility_config.h
++++ b/foundation/barrierfree/accessibility/interfaces/innerkits/acfwk/include/accessibility_config.h
+@@ -354,6 +354,8 @@
+      */
+     Accessibility::RetError SetIgnoreRepeatClickTime(const IGNORE_REPEAT_CLICK_TIME time);
+ 
++    Accessibility::RetError ControlBlinking(bool start, int32_t mode, int32_t scenario, int32_t &result);
++
+     /**
+      * @brief Get the status of whether the magnification function is enabled
+      * @param state(out) true:the magnification function is enabled; false:the magnification function is disabled
+diff --git a/foundation/barrierfree/accessibility/interfaces/kits/napi/accessibility_config/src/napi_blink_control.h b/foundation/barrierfree/accessibility/interfaces/kits/napi/accessibility_config/src/napi_blink_control.h
+new file mode 100644
+--- /dev/null
++++ b/foundation/barrierfree/accessibility/interfaces/kits/napi/accessibility_config/src/napi_blink_control.h
+@@ -0,0 +1,70 @@
++// SPDX-License-Identifier: Apache-2.0
++#ifndef OHOS_NAPI_BLINK_CONTROL_H
++#define OHOS_NAPI_BLINK_CONTROL_H
++#include <cmath>
++#include "accesstoken_kit.h"
++#include "ipc_skeleton.h"
++#include "napi_accessibility_config.h"
++#include "accessibility_config.h"
++
++namespace OHOS::Accessibility {
++inline napi_value BlinkFailure(napi_env env, RetError code)
++{
++    napi_value error = AccessibilityNapi::CreateBusinessError(env, code);
++    if (error != nullptr) {
++        napi_throw(env, error);
++    } else {
++        bool pending = false;
++        napi_is_exception_pending(env, &pending);
++        if (!pending) {
++            napi_throw_error(env, nullptr, "Unable to construct accessibility BusinessError");
++        }
++    }
++    return nullptr;
++}
++
++inline napi_value ControlBlinkingNapi(napi_env env, napi_callback_info info, bool start)
++{
++    using namespace Security::AccessToken;
++    if (!AccessTokenKit::IsSystemAppByFullTokenID(IPCSkeleton::GetCallingFullTokenID())) {
++        return BlinkFailure(env, RET_ERR_NOT_SYSTEM_APP);
++    }
++    if (AccessTokenKit::VerifyAccessToken(IPCSkeleton::GetCallingTokenID(),
++        "ohos.permission.WRITE_ACCESSIBILITY_CONFIG") != PERMISSION_GRANTED) {
++        return BlinkFailure(env, RET_ERR_NO_PERMISSION);
++    }
++    size_t count = 3;
++    napi_value args[3] = {nullptr, nullptr, nullptr};
++    if (napi_get_cb_info(env, info, &count, args, nullptr, nullptr) != napi_ok || count != 2) {
++        return BlinkFailure(env, RET_ERR_INVALID_PARAM);
++    }
++    double mode = 0, scenario = 0;
++    if (napi_get_value_double(env, args[0], &mode) != napi_ok ||
++        napi_get_value_double(env, args[1], &scenario) != napi_ok ||
++        !std::isfinite(mode) || !std::isfinite(scenario) ||
++        (mode != 1 && mode != 2) || scenario < 1 || scenario > 4 || std::floor(scenario) != scenario) {
++        return BlinkFailure(env, RET_ERR_INVALID_PARAM);
++    }
++    int32_t result = 0;
++    auto &config = AccessibilityConfig::AccessibilityConfig::GetInstance();
++    RetError error = config.ControlBlinking(start, static_cast<int32_t>(mode),
++        static_cast<int32_t>(scenario), result);
++    if (error != RET_OK) {
++        return BlinkFailure(env, error);
++    }
++    napi_value value = nullptr;
++    if (napi_create_int32(env, result, &value) != napi_ok) {
++        return BlinkFailure(env, RET_ERR_FAILED);
++    }
++    return value;
++}
++inline napi_value StartBlinkingNapi(napi_env env, napi_callback_info info)
++{
++    return ControlBlinkingNapi(env, info, true);
++}
++inline napi_value StopBlinkingNapi(napi_env env, napi_callback_info info)
++{
++    return ControlBlinkingNapi(env, info, false);
++}
++} // namespace OHOS::Accessibility
++#endif
+diff --git a/foundation/barrierfree/accessibility/interfaces/kits/napi/accessibility_config/src/native_module.cpp b/foundation/barrierfree/accessibility/interfaces/kits/napi/accessibility_config/src/native_module.cpp
+--- a/foundation/barrierfree/accessibility/interfaces/kits/napi/accessibility_config/src/native_module.cpp
++++ b/foundation/barrierfree/accessibility/interfaces/kits/napi/accessibility_config/src/native_module.cpp
+@@ -23,6 +23,7 @@
+ #include "napi/native_api.h"
+ #include "napi/native_node_api.h"
+ #include "accessibility_config.h"
++#include "napi_blink_control.h"
+ 
+ EXTERN_C_START
+ /*
+@@ -652,6 +653,8 @@
+ {
+     NAPI_ASSERT(env, RegisterPublicBlinkEnums(env, exports) != nullptr, "failed to create blinking enum objects");
+     napi_property_descriptor desc[] = {
++        DECLARE_NAPI_FUNCTION("startBlinking", OHOS::Accessibility::StartBlinkingNapi),
++        DECLARE_NAPI_FUNCTION("stopBlinking", OHOS::Accessibility::StopBlinkingNapi),
+         DECLARE_NAPI_FUNCTION("on", NAccessibilityConfig::SubscribeState),
+         DECLARE_NAPI_FUNCTION("off", NAccessibilityConfig::UnsubscribeState),
+         DECLARE_NAPI_FUNCTION("enableAbility", NAccessibilityConfig::EnableAbility),
+diff --git a/foundation/barrierfree/accessibility/services/aams/BUILD.gn b/foundation/barrierfree/accessibility/services/aams/BUILD.gn
+--- a/foundation/barrierfree/accessibility/services/aams/BUILD.gn
++++ b/foundation/barrierfree/accessibility/services/aams/BUILD.gn
+@@ -84,6 +84,7 @@
+   }
+ 
+   sources = accessibleabilityms_files
++  sources += [ "src/accessibility_blink_controller.cpp" ]
+   if (accessibility_feature_power_manager) {
+     sources += [ "${services_path}/src/accessibility_power_manager.cpp" ]
+   }
+@@ -127,6 +128,9 @@
+     "safwk:system_ability_fwk",
+     "samgr:samgr_proxy",
+     "window_manager:libwm",
++    "window_manager:libdm",
++    "graphic_2d:librender_service_client",
++    "graphic_2d:librender_service_base",
+   ]
+ 
+   if (accessibility_feature_power_manager) {
+diff --git a/foundation/barrierfree/accessibility/services/aams/include/accessibility_blink_controller.h b/foundation/barrierfree/accessibility/services/aams/include/accessibility_blink_controller.h
+new file mode 100644
+--- /dev/null
++++ b/foundation/barrierfree/accessibility/services/aams/include/accessibility_blink_controller.h
+@@ -0,0 +1,32 @@
++// SPDX-License-Identifier: Apache-2.0
++#ifndef OHOS_ACCESSIBILITY_BLINK_CONTROLLER_H
++#define OHOS_ACCESSIBILITY_BLINK_CONTROLLER_H
++
++#include <cstdint>
++#include <functional>
++#include <memory>
++#include "accessibility_def.h"
++
++namespace OHOS {
++namespace Accessibility {
++// Internal screen backend. Caller identity must come from synchronous Binder,
++// after the service's existing system-app and WRITE_ACCESSIBILITY_CONFIG checks.
++// It never represents camera torch support or accepts app-supplied identity.
++class AccessibilityBlinkController final {
++public:
++    using ReadEnabled = std::function<RetError(bool &)>;
++    explicit AccessibilityBlinkController(ReadEnabled readEnabled);
++    ~AccessibilityBlinkController();
++    RetError Control(bool start, int32_t mode, int32_t scenario, int32_t callerPid,
++        uint32_t callerToken, int32_t &result);
++    void Shutdown();
++    void CancelForAccountChange();
++    AccessibilityBlinkController(const AccessibilityBlinkController &) = delete;
++    AccessibilityBlinkController &operator=(const AccessibilityBlinkController &) = delete;
++private:
++    class Impl;
++    std::unique_ptr<Impl> impl_;
++};
++} // namespace Accessibility
++} // namespace OHOS
++#endif
+diff --git a/foundation/barrierfree/accessibility/services/aams/include/accessible_ability_manager_service.h b/foundation/barrierfree/accessibility/services/aams/include/accessible_ability_manager_service.h
+--- a/foundation/barrierfree/accessibility/services/aams/include/accessible_ability_manager_service.h
++++ b/foundation/barrierfree/accessibility/services/aams/include/accessible_ability_manager_service.h
+@@ -47,6 +47,7 @@
+ namespace Accessibility {
+ class AccessibilityAccountData;
+ class AccessibilitySettings;
++class AccessibilityBlinkController;
+ class AccessibilityResourceBundleManager;
+ 
+ enum CallBackID {
+@@ -260,6 +261,7 @@
+     ErrCode GetIgnoreRepeatClickState(bool &state) override;
+     ErrCode GetIgnoreRepeatClickTime(uint32_t &time) override;
+     ErrCode GetFlashReminderSwitch(bool &state) override;
++    ErrCode ControlBlinking(bool start, int32_t mode, int32_t scenario, int32_t &result) override;
+     ErrCode GetAllConfigs(AccessibilityConfigData& configData, CaptionPropertyParcel& caption) override;
+     ErrCode GetSeniorModeState(bool &state) override;
+     ErrCode GetSeniorModeStateForApp(bool &state) override; // asac
+@@ -447,6 +449,9 @@
+     ffrt::mutex mutex_; // current used for register state observer
+     std::vector<sptr<IAccessibleAbilityManagerConfigObserver>> defaultConfigCallbacks_;
+     std::shared_ptr<AccessibilitySettings> accessibilitySettings_ = nullptr;
++    ffrt::mutex blinkMutex_;
++    bool blinkStopping_ = false;
++    std::shared_ptr<AccessibilityBlinkController> blinkController_;
+     std::shared_ptr<AccessibilityShortKey> accessibilityShortKey_ = nullptr;
+     std::vector<std::string> removedAutoStartAbilities_ {};
+ 
+@@ -461,4 +466,4 @@
+ };
+ } // namespace Accessibility
+ } // namespace OHOS
+-#endif // ACCESSIBLE_ABILITY_MANAGER_SERVICE_H
+\ No newline at end of file
++#endif // ACCESSIBLE_ABILITY_MANAGER_SERVICE_H
+diff --git a/foundation/barrierfree/accessibility/services/aams/src/accessibility_blink_controller.cpp b/foundation/barrierfree/accessibility/services/aams/src/accessibility_blink_controller.cpp
+new file mode 100644
+--- /dev/null
++++ b/foundation/barrierfree/accessibility/services/aams/src/accessibility_blink_controller.cpp
+@@ -0,0 +1,347 @@
++// SPDX-License-Identifier: Apache-2.0
++// UNINTEGRATED CANDIDATE: requires real product compilation and pixel/lifecycle
++// validation before packaging or claiming the public APIs are implemented.
++#include "accessibility_blink_controller.h"
++
++#include <atomic>
++#include <chrono>
++#include <future>
++#include <mutex>
++#include <poll.h>
++#include <sys/syscall.h>
++#include <unistd.h>
++#include <utility>
++
++#include "display_manager.h"
++#include "event_handler.h"
++#include "event_runner.h"
++#include "hilog_wrapper.h"
++#include "ui/rs_canvas_node.h"
++#include "ui/rs_surface_node.h"
++#include "ui/rs_ui_context.h"
++#include "transaction/rs_transaction.h"
++#include "wm/window.h"
++#include "window_option.h"
++
++namespace OHOS {
++namespace Accessibility {
++namespace {
++constexpr int32_t ALREADY_FLASHING = 1;
++constexpr int32_t DEVICE_IN_USE = 2;
++constexpr int32_t FEATURE_DISABLED = 5;
++constexpr int32_t SINGLE_BLINK = 1;
++constexpr int32_t CONTINUOUS_BLINK = 2;
++constexpr int64_t PULSE_MS = 750; // Below one complete on/off cycle per second.
++constexpr uint32_t VISIBLE_COLOR = 0x70ffff00;
++constexpr const char *TICK = "AccessibilityScreenBlinkTick";
++
++struct Reply {
++    RetError error = RET_ERR_FAILED;
++    int32_t result = SUCCESS;
++};
++struct Request {
++    std::mutex mutex;
++    bool cancelled = false;
++    bool completed = false;
++    Reply reply;
++    std::promise<Reply> promise;
++};
++}
++
++class AccessibilityBlinkController::Impl {
++public:
++    explicit Impl(ReadEnabled readEnabled) : readEnabled_(std::move(readEnabled))
++    {
++        runner_ = AppExecFwk::EventRunner::Create("AccessibilityScreenBlink");
++        if (runner_) {
++            handler_ = std::make_shared<AppExecFwk::EventHandler>(runner_);
++        }
++    }
++    ~Impl() { Shutdown(); }
++
++    RetError Control(bool start, int32_t mode, int32_t scenario, int32_t pid,
++        uint32_t token, int32_t &result)
++    {
++        result = SUCCESS;
++        if ((mode != SINGLE_BLINK && mode != CONTINUOUS_BLINK) || scenario < 1 || scenario > 4 || pid <= 0) {
++            return RET_ERR_INVALID_PARAM;
++        }
++        auto request = std::make_shared<Request>();
++        auto future = request->promise.get_future();
++        const uint64_t epoch = epoch_.load();
++        {
++            std::lock_guard<std::mutex> submit(submitMutex_);
++            if (closing_ || !handler_) {
++                return RET_ERR_FAILED;
++            }
++            if (!handler_->PostTask([this, request, start, mode, scenario, pid, token, epoch] {
++                {
++                    std::lock_guard<std::mutex> guard(request->mutex);
++                    if (request->cancelled || closing_ || epoch != epoch_.load()) {
++                        request->completed = true;
++                        request->promise.set_value(request->reply);
++                        return;
++                    }
++                }
++                const uint64_t previous = generation_;
++                Reply reply = Apply(start, mode, scenario, pid, token, epoch, request);
++                bool abandoned;
++                {
++                    std::lock_guard<std::mutex> guard(request->mutex);
++                    abandoned = request->cancelled || epoch != epoch_.load() || closing_;
++                    if (abandoned) {
++                        reply = {};
++                    }
++                    request->reply = reply;
++                    request->completed = true;
++                }
++                if (abandoned && generation_ != previous) {
++                    Clear();
++                }
++                request->promise.set_value(reply);
++            }, "AccessibilityScreenBlinkControl")) {
++                return RET_ERR_FAILED;
++            }
++        }
++        if (future.wait_for(std::chrono::seconds(3)) == std::future_status::ready) {
++            const auto reply = future.get();
++            result = reply.result;
++            return reply.error;
++        }
++        std::lock_guard<std::mutex> guard(request->mutex);
++        if (request->completed) {
++            result = request->reply.result;
++            return request->reply.error;
++        }
++        request->cancelled = true;
++        return RET_ERR_TIME_OUT;
++    }
++
++    void CancelForAccountChange()
++    {
++        std::lock_guard<std::mutex> submit(submitMutex_);
++        ++epoch_;
++        if (!closing_ && handler_) {
++            // Never synchronously wait here: account changes run on the AAMS
++            // handler which supplies ReadEnabled to the screen worker.
++            handler_->PostTask([this] { Clear(); }, "AccessibilityBlinkAccountChanged");
++        }
++    }
++
++    void Shutdown()
++    {
++        std::shared_ptr<AppExecFwk::EventHandler> handler;
++        {
++            std::lock_guard<std::mutex> submit(submitMutex_);
++            if (closing_.exchange(true)) {
++                return;
++            }
++            ++epoch_;
++            handler = handler_;
++        }
++        if (handler) {
++            handler->RemoveAllEvents();
++            if (!handler->PostSyncTask([this] { Clear(); }, "AccessibilityBlinkShutdown")) {
++                HILOG_ERROR("Unable to drain accessibility screen blink worker");
++            }
++        }
++        std::lock_guard<std::mutex> submit(submitMutex_);
++        handler_.reset();
++        runner_.reset();
++    }
++
++private:
++    bool Cancelled(const std::shared_ptr<Request> &request, uint64_t epoch)
++    {
++        std::lock_guard<std::mutex> guard(request->mutex);
++        return request->cancelled || closing_ || epoch != epoch_.load();
++    }
++
++    Reply Apply(bool start, int32_t mode, int32_t scenario, int32_t pid, uint32_t token, uint64_t epoch,
++        const std::shared_ptr<Request> &request)
++    {
++        if (!start) {
++            if (active_ && (pid != ownerPid_ || token != ownerToken_ || mode != mode_ || scenario != scenario_)) {
++                return {RET_OK, DEVICE_IN_USE};
++            }
++            return {Clear(), SUCCESS};
++        }
++        bool enabled = false;
++        const RetError read = readEnabled_(enabled);
++        // Settings/WM IPC can outlive the public command deadline. Never
++        // create a new visible window for a request already abandoned.
++        if (Cancelled(request, epoch)) {
++            return {};
++        }
++        if (read != RET_OK) {
++            return {read, SUCCESS};
++        }
++        if (!enabled) {
++            return {RET_OK, FEATURE_DISABLED};
++        }
++        if (active_) {
++            return {RET_OK, pid == ownerPid_ && token == ownerToken_ && mode == mode_ && scenario == scenario_ ?
++                ALREADY_FLASHING : DEVICE_IN_USE};
++        }
++        if (window_ && Clear() != RET_OK) {
++            return {};
++        }
++#ifdef SYS_pidfd_open
++        const int pidfd = static_cast<int>(syscall(SYS_pidfd_open, pid, 0));
++#else
++        const int pidfd = -1;
++#endif
++        if (pidfd < 0) {
++            return {}; // No PID-existence fallback: it cannot protect against reuse.
++        }
++        ownerFd_ = pidfd;
++        ownerPid_ = pid;
++        ownerToken_ = token;
++        mode_ = mode;
++        scenario_ = scenario;
++        activeEpoch_ = epoch;
++        ++generation_;
++        if (!CreateWindow([this, request, epoch] { return Cancelled(request, epoch); })) {
++            Clear();
++            return {};
++        }
++        active_ = true;
++        visible_ = true;
++        if (!Schedule()) {
++            Clear();
++            return {};
++        }
++        return {RET_OK, SUCCESS};
++    }
++
++    bool CreateWindow(const std::function<bool()> &cancelled)
++    {
++        if (cancelled()) {
++            return false;
++        }
++        auto display = Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
++        if (!display || display->GetWidth() <= 0 || display->GetHeight() <= 0) {
++            return false;
++        }
++        displayId_ = display->GetId();
++        width_ = display->GetWidth();
++        height_ = display->GetHeight();
++        sptr<Rosen::WindowOption> option = new Rosen::WindowOption();
++        option->SetWindowType(Rosen::WindowType::WINDOW_TYPE_SYSTEM_FLOAT);
++        option->SetWindowMode(Rosen::WindowMode::WINDOW_MODE_FLOATING);
++        option->SetDisplayId(displayId_);
++        option->SetWindowRect({0, 0, static_cast<uint32_t>(width_), static_cast<uint32_t>(height_)});
++        option->SetFocusable(false);
++        option->SetTouchable(false);
++        window_ = Rosen::Window::Create("AccessibilityScreenBlink", option);
++        if (!window_) {
++            return false;
++        }
++        surface_ = window_->GetSurfaceNode();
++        context_ = surface_ ? surface_->GetRSUIContext() : nullptr;
++        if (!context_ || !context_->GetRSTransaction()) {
++            return false;
++        }
++        canvas_ = Rosen::RSCanvasNode::Create(false, false, context_);
++        if (!canvas_) {
++            return false;
++        }
++        canvas_->SetBounds(0, 0, width_, height_);
++        canvas_->SetFrame(0, 0, width_, height_);
++        canvas_->SetBackgroundColor(VISIBLE_COLOR);
++        surface_->AddChild(canvas_, -1);
++        context_->GetRSTransaction()->FlushImplicitTransaction();
++        return !cancelled() && window_->Show() == Rosen::WMError::WM_OK;
++    }
++
++    bool Schedule()
++    {
++        const uint64_t generation = generation_;
++        return handler_->PostTask([this, generation] { Tick(generation); }, TICK, PULSE_MS);
++    }
++
++    void Tick(uint64_t generation)
++    {
++        if (!active_ || generation != generation_) {
++            return;
++        }
++        bool enabled = false;
++        pollfd owner = {ownerFd_, POLLIN, 0};
++        auto display = Rosen::DisplayManager::GetInstance().GetDefaultDisplay();
++        if (closing_ || activeEpoch_ != epoch_.load() || poll(&owner, 1, 0) != 0 ||
++            readEnabled_(enabled) != RET_OK || !enabled || !display || display->GetId() != displayId_ ||
++            display->GetWidth() != width_ || display->GetHeight() != height_ || mode_ == SINGLE_BLINK) {
++            Clear();
++            return;
++        }
++        visible_ = !visible_;
++        canvas_->SetBackgroundColor(visible_ ? VISIBLE_COLOR : 0);
++        context_->GetRSTransaction()->FlushImplicitTransaction();
++        if (!Schedule()) {
++            Clear();
++        }
++    }
++
++    RetError Clear()
++    {
++        ++generation_;
++        active_ = false;
++        visible_ = false;
++        if (handler_) {
++            handler_->RemoveTask(TICK);
++        }
++        if (ownerFd_ >= 0) {
++            close(ownerFd_);
++            ownerFd_ = -1;
++        }
++        if (canvas_ && context_ && context_->GetRSTransaction()) {
++            canvas_->SetBackgroundColor(0);
++            context_->GetRSTransaction()->FlushImplicitTransaction();
++        }
++        if (window_ && window_->Destroy() != Rosen::WMError::WM_OK) {
++            HILOG_ERROR("Unable to destroy accessibility screen blink window");
++            return RET_ERR_FAILED; // Retain the transparent window for a later cleanup attempt.
++        }
++        canvas_.reset();
++        surface_.reset();
++        context_.reset();
++        window_ = nullptr;
++        return RET_OK;
++    }
++
++    ReadEnabled readEnabled_;
++    std::mutex submitMutex_;
++    std::atomic<bool> closing_ {false};
++    std::atomic<uint64_t> epoch_ {0};
++    std::shared_ptr<AppExecFwk::EventRunner> runner_;
++    std::shared_ptr<AppExecFwk::EventHandler> handler_;
++    sptr<Rosen::Window> window_;
++    std::shared_ptr<Rosen::RSSurfaceNode> surface_;
++    std::shared_ptr<Rosen::RSCanvasNode> canvas_;
++    std::shared_ptr<Rosen::RSUIContext> context_;
++    uint64_t generation_ = 0;
++    uint64_t activeEpoch_ = 0;
++    uint64_t displayId_ = 0;
++    int32_t width_ = 0;
++    int32_t height_ = 0;
++    int ownerFd_ = -1;
++    int32_t ownerPid_ = 0;
++    uint32_t ownerToken_ = 0;
++    int32_t mode_ = 0;
++    int32_t scenario_ = 0;
++    bool active_ = false;
++    bool visible_ = false;
++};
++
++AccessibilityBlinkController::AccessibilityBlinkController(ReadEnabled readEnabled)
++    : impl_(std::make_unique<Impl>(std::move(readEnabled))) {}
++AccessibilityBlinkController::~AccessibilityBlinkController() = default;
++RetError AccessibilityBlinkController::Control(bool start, int32_t mode, int32_t scenario,
++    int32_t callerPid, uint32_t callerToken, int32_t &result)
++{
++    return impl_->Control(start, mode, scenario, callerPid, callerToken, result);
++}
++void AccessibilityBlinkController::Shutdown() { impl_->Shutdown(); }
++void AccessibilityBlinkController::CancelForAccountChange() { impl_->CancelForAccountChange(); }
++} // namespace Accessibility
++} // namespace OHOS
+diff --git a/foundation/barrierfree/accessibility/services/aams/src/accessible_ability_manager_service.cpp b/foundation/barrierfree/accessibility/services/aams/src/accessible_ability_manager_service.cpp
+--- a/foundation/barrierfree/accessibility/services/aams/src/accessible_ability_manager_service.cpp
++++ b/foundation/barrierfree/accessibility/services/aams/src/accessible_ability_manager_service.cpp
+@@ -14,6 +14,7 @@
+  */
+ 
+ #include "accessible_ability_manager_service.h"
++#include "accessibility_blink_controller.h"
+ #include "element_operator_callback_impl.h"
+ #include "ability_manager_client.h"
+ #include "want.h"
+@@ -188,6 +189,9 @@
+ AccessibleAbilityManagerService::~AccessibleAbilityManagerService()
+ {
+     HILOG_INFO("AccessibleAbilityManagerService::~AccessibleAbilityManagerService");
++    if (blinkController_) {
++        blinkController_->Shutdown();
++    }
+     a11yAccountsData_.Clear();
+ }
+ 
+@@ -309,11 +313,25 @@
+     AddSystemAbilityListener(MEMORY_MANAGER_SA_ID);
+ 
+     accessibilitySettings_->RegisterSettingsHandler(handler_);
++    {
++        std::lock_guard<ffrt::mutex> guard(blinkMutex_);
++        blinkStopping_ = false;
++    }
+ }
+ 
+ void AccessibleAbilityManagerService::OnStop()
+ {
+     HILOG_COMM_INFO("stop AccessibleAbilityManagerService");
++    std::shared_ptr<AccessibilityBlinkController> blink;
++    {
++        std::lock_guard<ffrt::mutex> guard(blinkMutex_);
++        blinkStopping_ = true;
++        blink.swap(blinkController_);
++    }
++    // Drain the screen worker before tearing down its settings handler.
++    if (blink) {
++        blink->Shutdown();
++    }
+     if (!handler_) {
+         HILOG_ERROR("AccessibleAbilityManagerService::OnStop failed!");
+         return;
+@@ -1699,7 +1717,13 @@
+         UpdateAccessibilityState();
+         UpdateShortKeyRegister();
+     }
+-    currentAccountId_ = accountId;
++    {
++        std::lock_guard<ffrt::mutex> guard(blinkMutex_);
++        currentAccountId_ = accountId;
++        if (blinkController_) {
++            blinkController_->CancelForAccountChange();
++        }
++    }
+     if (Singleton<ExtendManagerServiceProxy>::GetInstance().CheckExtProxyStatus()) {
+         Singleton<ExtendManagerServiceProxy>::GetInstance().SetCurrentAccountId(accountId);
+     }
+@@ -2289,6 +2313,35 @@
+         return RET_ERR_NO_PERMISSION;
+     }
+     return accessibilitySettings_->SetIgnoreRepeatClickTime(time);
++}
++
++ErrCode AccessibleAbilityManagerService::ControlBlinking(bool start, int32_t mode, int32_t scenario,
++    int32_t &result)
++{
++    PostDelayUnloadTask();
++    result = 0;
++    if (!IsSystemApp()) {
++        return RET_ERR_NOT_SYSTEM_APP;
++    }
++    if (!CheckPermission(OHOS_PERMISSION_WRITE_ACCESSIBILITY_CONFIG)) {
++        return RET_ERR_NO_PERMISSION;
++    }
++    const int32_t pid = IPCSkeleton::GetCallingPid();
++    const uint32_t token = IPCSkeleton::GetCallingTokenID();
++    std::shared_ptr<AccessibilityBlinkController> blink;
++    {
++        std::lock_guard<ffrt::mutex> guard(blinkMutex_);
++        if (blinkStopping_ || !accessibilitySettings_) {
++            return RET_ERR_FAILED;
++        }
++        if (!blinkController_) {
++            auto settings = accessibilitySettings_;
++            blinkController_ = std::make_shared<AccessibilityBlinkController>(
++                [settings](bool &enabled) { return settings->GetFlashReminderSwitch(enabled); });
++        }
++        blink = blinkController_;
++    }
++    return blink->Control(start, mode, scenario, pid, token, result);
+ }
+ 
+ ErrCode AccessibleAbilityManagerService::GetScreenMagnificationState(bool &state)
+@@ -4091,4 +4144,4 @@
+     return ret;
+ }
+ } // namespace Accessibility
+-} // namespace OHOS
+\ No newline at end of file
++} // namespace OHOS

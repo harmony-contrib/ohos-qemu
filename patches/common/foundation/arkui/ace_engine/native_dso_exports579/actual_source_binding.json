@@ -1,0 +1,395 @@
+{
+  "schema": "arkui579-actual-native-dso-export-binding/v1",
+  "project": "foundation/arkui/ace_engine",
+  "revision": "e55e178228b9f6388b15d3024e8caf125fa293d7",
+  "source_commit_preimage": "553cdfc7fc0a8cdd0422d2dffbea853ac2578dd4",
+  "managed_files": {
+    "foundation/arkui/ace_engine/build/libace.map": {
+      "path": "before/foundation/arkui/ace_engine/build/libace.map",
+      "sha256": "51f2d090041e111edc17ff3aa87963b8024ceb3d67b1e860d0773aa3d115d566",
+      "bytes": 488885
+    }
+  },
+  "provenance": {
+    "FACTS579.json": {
+      "path": "provenance/FACTS579.json",
+      "sha256": "2a7f7bd1908e78686989b2c939b10bde807da156ef738278f328b1c8a5b08c05",
+      "bytes": 4430563
+    },
+    "SOURCE.json": {
+      "path": "provenance/SOURCE.json",
+      "sha256": "b683a989b141904081aca6576961885f41deabafc1e11cc45a2eca56c50e9368",
+      "bytes": 948
+    },
+    "producer.json": {
+      "path": "provenance/producer.json",
+      "sha256": "c0b1ea06f2582b0681b2f1ff7da4dd9f70956531d8846ef053891c4f59e17530",
+      "bytes": 19172
+    },
+    "resources.json": {
+      "path": "provenance/resources.json",
+      "sha256": "80341877feddf5cc738a568024116b5b994b95f91bfa38bd77a041cbb1d73874",
+      "bytes": 18636
+    }
+  },
+  "original_provenance": {
+    "FACTS579.json": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/six-source-facts579/FACTS579.json",
+      "sha256": "2a7f7bd1908e78686989b2c939b10bde807da156ef738278f328b1c8a5b08c05",
+      "bytes": 4430563
+    },
+    "SOURCE.json": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/SOURCE.json",
+      "sha256": "b683a989b141904081aca6576961885f41deabafc1e11cc45a2eca56c50e9368",
+      "bytes": 948
+    },
+    "producer.json": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/receipt.json",
+      "sha256": "c0b1ea06f2582b0681b2f1ff7da4dd9f70956531d8846ef053891c4f59e17530",
+      "bytes": 19172
+    },
+    "resources.json": {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01/resources.json",
+      "sha256": "80341877feddf5cc738a568024116b5b994b95f91bfa38bd77a041cbb1d73874",
+      "bytes": 18636
+    }
+  },
+  "map_record": {
+    "kind": "source",
+    "path": "/ohos/foundation/arkui/ace_engine/build/libace.map",
+    "before": {
+      "path": "/ohos/foundation/arkui/ace_engine/build/libace.map",
+      "exists": true,
+      "regular": true,
+      "directory": false,
+      "symlink": false,
+      "dev": 39,
+      "ino": 177062743,
+      "mode": 420,
+      "uid": 0,
+      "gid": 0,
+      "nlink": 1,
+      "bytes": 488885,
+      "mtime_ns": 1788884477616333533,
+      "ctime_ns": 1788884477616333533
+    },
+    "status": "exported_stable",
+    "commands": [
+      {
+        "argv": [
+          "stat",
+          "--printf=%d\t%i\t%f\t%h\t%u\t%g\t%s\t%Y\t%Z\n",
+          "--",
+          "/ohos/foundation/arkui/ace_engine/build/libace.map"
+        ],
+        "label": "sixfacts_129_stat_before",
+        "started_monotonic": 111187.324846184,
+        "exit_code": 0,
+        "timed_out": false,
+        "executed": true,
+        "cwd": "/work",
+        "environment": {
+          "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "GIT_OPTIONAL_LOCKS": "0",
+          "LC_ALL": "C",
+          "LANG": "C"
+        },
+        "finished_monotonic": 111187.344767481,
+        "stdout": {
+          "path": "/evidence/six-source-facts579/commands/0129-sixfacts_129_stat_before-stdout.bin",
+          "sha256": "58c454a09a4a7212a341665a6884127e4f17483746614694b7f987dbbf6b2ceb",
+          "bytes": 53
+        },
+        "stderr": {
+          "path": "/evidence/six-source-facts579/commands/0129-sixfacts_129_stat_before-stderr.bin",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      {
+        "argv": [
+          "cat",
+          "--",
+          "/ohos/foundation/arkui/ace_engine/build/libace.map"
+        ],
+        "label": "sixfacts_130_cat",
+        "started_monotonic": 111187.345733204,
+        "exit_code": 0,
+        "timed_out": false,
+        "executed": true,
+        "cwd": "/work",
+        "environment": {
+          "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "GIT_OPTIONAL_LOCKS": "0",
+          "LC_ALL": "C",
+          "LANG": "C"
+        },
+        "finished_monotonic": 111187.372670833,
+        "stdout": {
+          "path": "/evidence/six-source-facts579/files/foundation/arkui/ace_engine/build/libace.map",
+          "sha256": "51f2d090041e111edc17ff3aa87963b8024ceb3d67b1e860d0773aa3d115d566",
+          "bytes": 488885
+        },
+        "stderr": {
+          "path": "/evidence/six-source-facts579/commands/0130-sixfacts_130_cat-stderr.bin",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      {
+        "argv": [
+          "stat",
+          "--printf=%d\t%i\t%f\t%h\t%u\t%g\t%s\t%Y\t%Z\n",
+          "--",
+          "/ohos/foundation/arkui/ace_engine/build/libace.map"
+        ],
+        "label": "sixfacts_131_stat_after",
+        "started_monotonic": 111187.377912944,
+        "exit_code": 0,
+        "timed_out": false,
+        "executed": true,
+        "cwd": "/work",
+        "environment": {
+          "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "GIT_OPTIONAL_LOCKS": "0",
+          "LC_ALL": "C",
+          "LANG": "C"
+        },
+        "finished_monotonic": 111187.397215846,
+        "stdout": {
+          "path": "/evidence/six-source-facts579/commands/0131-sixfacts_131_stat_after-stdout.bin",
+          "sha256": "58c454a09a4a7212a341665a6884127e4f17483746614694b7f987dbbf6b2ceb",
+          "bytes": 53
+        },
+        "stderr": {
+          "path": "/evidence/six-source-facts579/commands/0131-sixfacts_131_stat_after-stderr.bin",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      }
+    ],
+    "export_ref": {
+      "path": "/evidence/six-source-facts579/files/foundation/arkui/ace_engine/build/libace.map",
+      "sha256": "51f2d090041e111edc17ff3aa87963b8024ceb3d67b1e860d0773aa3d115d566",
+      "bytes": 488885
+    },
+    "export_relative": "files/foundation/arkui/ace_engine/build/libace.map",
+    "after": {
+      "path": "/ohos/foundation/arkui/ace_engine/build/libace.map",
+      "exists": true,
+      "regular": true,
+      "directory": false,
+      "symlink": false,
+      "dev": 39,
+      "ino": 177062743,
+      "mode": 420,
+      "uid": 0,
+      "gid": 0,
+      "nlink": 1,
+      "bytes": 488885,
+      "mtime_ns": 1788884477616333533,
+      "ctime_ns": 1788884477616333533
+    },
+    "after_sha256": "51f2d090041e111edc17ff3aa87963b8024ceb3d67b1e860d0773aa3d115d566",
+    "source_read_only_after": true
+  },
+  "head_before": {
+    "argv": [
+      "git",
+      "-c",
+      "safe.directory=/ohos/foundation/arkui/ace_engine",
+      "-C",
+      "/ohos/foundation/arkui/ace_engine",
+      "rev-parse",
+      "HEAD"
+    ],
+    "label": "sixfacts_21_git_head_before",
+    "started_monotonic": 111183.411341092,
+    "exit_code": 0,
+    "timed_out": false,
+    "executed": true,
+    "cwd": "/work",
+    "environment": {
+      "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "GIT_OPTIONAL_LOCKS": "0",
+      "LC_ALL": "C",
+      "LANG": "C"
+    },
+    "finished_monotonic": 111183.454550234,
+    "stdout": {
+      "path": "/evidence/six-source-facts579/commands/0021-sixfacts_21_git_head_before-stdout.bin",
+      "sha256": "660c7d00ca4d4969aaef8aef4b92af3da91c429f35ad99adb35d6c8cccf06e80",
+      "bytes": 41
+    },
+    "stderr": {
+      "path": "/evidence/six-source-facts579/commands/0021-sixfacts_21_git_head_before-stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "head_after": {
+    "argv": [
+      "git",
+      "-c",
+      "safe.directory=/ohos/foundation/arkui/ace_engine",
+      "-C",
+      "/ohos/foundation/arkui/ace_engine",
+      "rev-parse",
+      "HEAD"
+    ],
+    "label": "sixfacts_1317_git_head_after",
+    "started_monotonic": 111214.895012346,
+    "exit_code": 0,
+    "timed_out": false,
+    "executed": true,
+    "cwd": "/work",
+    "environment": {
+      "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "GIT_OPTIONAL_LOCKS": "0",
+      "LC_ALL": "C",
+      "LANG": "C"
+    },
+    "finished_monotonic": 111214.926403799,
+    "stdout": {
+      "path": "/evidence/six-source-facts579/commands/1317-sixfacts_1317_git_head_after-stdout.bin",
+      "sha256": "660c7d00ca4d4969aaef8aef4b92af3da91c429f35ad99adb35d6c8cccf06e80",
+      "bytes": 41
+    },
+    "stderr": {
+      "path": "/evidence/six-source-facts579/commands/1317-sixfacts_1317_git_head_after-stderr.bin",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  },
+  "raw_bindings": [
+    {
+      "original": {
+        "path": "/evidence/six-source-facts579/commands/0021-sixfacts_21_git_head_before-stdout.bin",
+        "sha256": "660c7d00ca4d4969aaef8aef4b92af3da91c429f35ad99adb35d6c8cccf06e80",
+        "bytes": 41
+      },
+      "local": {
+        "path": "provenance/raw/0021-sixfacts_21_git_head_before-stdout.bin",
+        "sha256": "660c7d00ca4d4969aaef8aef4b92af3da91c429f35ad99adb35d6c8cccf06e80",
+        "bytes": 41
+      }
+    },
+    {
+      "original": {
+        "path": "/evidence/six-source-facts579/commands/0021-sixfacts_21_git_head_before-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local": {
+        "path": "provenance/raw/0021-sixfacts_21_git_head_before-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "original": {
+        "path": "/evidence/six-source-facts579/commands/1317-sixfacts_1317_git_head_after-stdout.bin",
+        "sha256": "660c7d00ca4d4969aaef8aef4b92af3da91c429f35ad99adb35d6c8cccf06e80",
+        "bytes": 41
+      },
+      "local": {
+        "path": "provenance/raw/1317-sixfacts_1317_git_head_after-stdout.bin",
+        "sha256": "660c7d00ca4d4969aaef8aef4b92af3da91c429f35ad99adb35d6c8cccf06e80",
+        "bytes": 41
+      }
+    },
+    {
+      "original": {
+        "path": "/evidence/six-source-facts579/commands/1317-sixfacts_1317_git_head_after-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local": {
+        "path": "provenance/raw/1317-sixfacts_1317_git_head_after-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "original": {
+        "path": "/evidence/six-source-facts579/commands/0129-sixfacts_129_stat_before-stdout.bin",
+        "sha256": "58c454a09a4a7212a341665a6884127e4f17483746614694b7f987dbbf6b2ceb",
+        "bytes": 53
+      },
+      "local": {
+        "path": "provenance/raw/0129-sixfacts_129_stat_before-stdout.bin",
+        "sha256": "58c454a09a4a7212a341665a6884127e4f17483746614694b7f987dbbf6b2ceb",
+        "bytes": 53
+      }
+    },
+    {
+      "original": {
+        "path": "/evidence/six-source-facts579/commands/0129-sixfacts_129_stat_before-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local": {
+        "path": "provenance/raw/0129-sixfacts_129_stat_before-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "original": {
+        "path": "/evidence/six-source-facts579/files/foundation/arkui/ace_engine/build/libace.map",
+        "sha256": "51f2d090041e111edc17ff3aa87963b8024ceb3d67b1e860d0773aa3d115d566",
+        "bytes": 488885
+      },
+      "local": {
+        "path": "before/foundation/arkui/ace_engine/build/libace.map",
+        "sha256": "51f2d090041e111edc17ff3aa87963b8024ceb3d67b1e860d0773aa3d115d566",
+        "bytes": 488885
+      }
+    },
+    {
+      "original": {
+        "path": "/evidence/six-source-facts579/commands/0130-sixfacts_130_cat-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local": {
+        "path": "provenance/raw/0130-sixfacts_130_cat-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "original": {
+        "path": "/evidence/six-source-facts579/commands/0131-sixfacts_131_stat_after-stdout.bin",
+        "sha256": "58c454a09a4a7212a341665a6884127e4f17483746614694b7f987dbbf6b2ceb",
+        "bytes": 53
+      },
+      "local": {
+        "path": "provenance/raw/0131-sixfacts_131_stat_after-stdout.bin",
+        "sha256": "58c454a09a4a7212a341665a6884127e4f17483746614694b7f987dbbf6b2ceb",
+        "bytes": 53
+      }
+    },
+    {
+      "original": {
+        "path": "/evidence/six-source-facts579/commands/0131-sixfacts_131_stat_after-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "local": {
+        "path": "provenance/raw/0131-sixfacts_131_stat_after-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    }
+  ],
+  "host_mapping": {
+    "container_prefix": "/evidence/",
+    "host_root": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-build02-all-sources579-01"
+  },
+  "source_scope_status": "optional_facts_budget_partial_keep_raw",
+  "source_only": true,
+  "candidate_executed": false,
+  "runtime_pass": false,
+  "first_artifact_behavior_gate_passed": false
+}

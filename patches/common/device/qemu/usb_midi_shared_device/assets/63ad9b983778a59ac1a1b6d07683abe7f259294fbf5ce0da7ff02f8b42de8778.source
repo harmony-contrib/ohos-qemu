@@ -1,0 +1,212 @@
+# Copyright (C) 2022-2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//foundation/multimedia/media_library/media_library.gni")
+
+group("media_mtp_package") {
+  deps = []
+  if (media_library_feature_mtp &&
+      defined(global_parts_info.hdf_drivers_interface_usb)) {
+    deps += [ ":media_mtp" ]
+  } else {
+  }
+}
+
+group("mtp") {
+  if (defined(global_parts_info.hdf_drivers_interface_usb)) {
+    deps = [ ":media_mtp" ]
+  }
+}
+
+ohos_shared_library("media_mtp") {
+  install_enable = true
+
+  sources = [
+    "src/header_data.cpp",
+    "src/mtp_data_utils.cpp",
+    "src/mtp_dfx_reporter.cpp",
+    "src/mtp_driver.cpp",
+    "src/mtp_error_utils.cpp",
+    "src/mtp_event.cpp",
+    "src/mtp_file_observer.cpp",
+    "src/mtp_ipc_utils.cpp",
+    "src/mtp_manager.cpp",
+    "src/mtp_media_library.cpp",
+    "src/mtp_medialibrary_manager.cpp",
+    "src/mtp_monitor.cpp",
+    "src/mtp_operation.cpp",
+    "src/mtp_operation_utils.cpp",
+    "src/mtp_packet.cpp",
+    "src/mtp_packet_tools.cpp",
+    "src/mtp_ptp_proxy.cpp",
+    "src/mtp_service.cpp",
+    "src/mtp_storage_manager.cpp",
+    "src/mtp_store_observer.cpp",
+    "src/object_info.cpp",
+    "src/packet_payload_factory.cpp",
+    "src/payload_data.cpp",
+    "src/payload_data/close_session_data.cpp",
+    "src/payload_data/copy_object_data.cpp",
+    "src/payload_data/delete_object_data.cpp",
+    "src/payload_data/get_device_info_data.cpp",
+    "src/payload_data/get_device_prop_desc_data.cpp",
+    "src/payload_data/get_device_prop_value_data.cpp",
+    "src/payload_data/get_num_objects_data.cpp",
+    "src/payload_data/get_object_data.cpp",
+    "src/payload_data/get_object_handles_data.cpp",
+    "src/payload_data/get_object_info_data.cpp",
+    "src/payload_data/get_object_prop_desc_data.cpp",
+    "src/payload_data/get_object_prop_list_data.cpp",
+    "src/payload_data/get_object_prop_value_data.cpp",
+    "src/payload_data/get_object_props_supported_data.cpp",
+    "src/payload_data/get_object_references_data.cpp",
+    "src/payload_data/get_partial_object_data.cpp",
+    "src/payload_data/get_storage_ids_data.cpp",
+    "src/payload_data/get_storage_info_data.cpp",
+    "src/payload_data/get_thumb_data.cpp",
+    "src/payload_data/move_object_data.cpp",
+    "src/payload_data/object_event_data.cpp",
+    "src/payload_data/open_session_data.cpp",
+    "src/payload_data/resp_common_data.cpp",
+    "src/payload_data/send_object_data.cpp",
+    "src/payload_data/send_object_info_data.cpp",
+    "src/payload_data/set_device_prop_value_data.cpp",
+    "src/payload_data/set_object_prop_value_data.cpp",
+    "src/payload_data/set_object_references_data.cpp",
+    "src/property.cpp",
+    "src/ptp_album_handles.cpp",
+    "src/ptp_media_sync_observer.cpp",
+    "src/ptp_special_handles.cpp",
+    "src/storage.cpp",
+  ]
+
+  media_service_vo_source = [
+    "${MEDIALIB_BUSINESS_PATH}/media_assets_manager/src/vo/asset_change_vo.cpp",
+    "${MEDIALIB_BUSINESS_PATH}/media_assets_manager/src/vo/close_asset_vo.cpp",
+    "${MEDIALIB_BUSINESS_PATH}/media_assets_manager/src/vo/create_asset_vo.cpp",
+    "${MEDIALIB_BUSINESS_PATH}/media_assets_manager/src/vo/delete_photos_completed_vo.cpp",
+    "${MEDIALIB_BUSINESS_PATH}/media_albums_manager/src/vo/album_get_assets_vo.cpp",
+    "${MEDIALIB_BUSINESS_PATH}/media_albums_manager/src/vo/change_request_move_assets_vo.cpp",
+    "${MEDIALIB_BUSINESS_PATH}/media_albums_manager/src/vo/change_request_set_album_name_vo.cpp",
+    "${MEDIALIB_BUSINESS_PATH}/media_albums_manager/src/vo/create_album_vo.cpp",
+    "${MEDIALIB_BUSINESS_PATH}/media_albums_manager/src/vo/delete_albums_vo.cpp",
+    "${MEDIALIB_BUSINESS_PATH}/media_albums_manager/src/vo/query_albums_vo.cpp",
+  ]
+
+  sources += media_service_vo_source
+
+  cflags = [ "-fPIC" ]
+  cflags += [ "-Wall" ]
+
+  if (target_cpu == "arm") {
+    cflags += [ "-DBINDER_IPC_32BIT" ]
+  }
+
+  cflags_cc = cflags
+  include_dirs = [
+    "${MEDIALIB_MTP_PATH}/include",
+    "${MEDIALIB_INTERFACES_PATH}/inner_api/media_library_helper/include",
+    "${MEDIALIB_INNERKITS_PATH}/media_library_helper/include",
+    "${MEDIALIB_INNERKITS_PATH}/medialibrary_data_extension/include",
+    "${MEDIALIB_SERVICES_PATH}/media_async_worker/include",
+    "${MEDIALIB_SERVICES_PATH}/media_cloud_sync_notify_handle/include",
+    "${MEDIALIB_SERVICES_PATH}/media_library/include",
+    "${MEDIALIB_UTILS_PATH}/include",
+    "${MEDIALIB_INNERKITS_PATH}/media_library_helper/include",
+    "${MEDIALIB_COMMON_PATH}/utils/include",
+  ]
+
+  user_ipc_client_include_dirs = [
+    "${MEDIALIB_INNERKITS_PATH}/medialibrary_data_extension/include/ipc/util",
+    "${MEDIALIB_BUSINESS_PATH}/media_assets_manager/include/vo",
+    "${MEDIALIB_BUSINESS_PATH}/media_assets_manager/include/dto",
+    "${MEDIALIB_BUSINESS_PATH}/media_albums_manager/include/vo",
+    "${MEDIALIB_BUSINESS_PATH}/media_albums_manager/include/dto",
+  ]
+
+  include_media_ipc_common = [
+    "${MEDIALIB_IPC_COMMON}/include/config",
+    "${MEDIALIB_IPC_COMMON}/include/utils",
+    "${MEDIALIB_IPC_COMMON}/include/vo",
+  ]
+
+  include_dirs += include_media_ipc_common
+  include_dirs += user_ipc_client_include_dirs
+
+  deps = [
+    "${MEDIALIB_INNERKITS_PATH}/media_library_helper:media_library",
+    "${MEDIALIB_COMMON_PATH}:media_library_common",
+    "${MEDIALIB_INNERKITS_PATH}/media_library_manager:media_library_manager",
+    "${MEDIALIB_IPC_COMMON}:media_ipc_common",
+  ]
+
+  external_deps = [
+    "ability_base:base",
+    "ability_base:want",
+    "ability_base:zuri",
+    "ability_runtime:abilitykit_native",
+    "ability_runtime:app_context",
+    "ability_runtime:dataobs_manager",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libnativetoken_shared",
+    "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
+    "data_share:datashare_common",
+    "data_share:datashare_consumer",
+    "drivers_interface_usb:libusb_proxy_1.0",
+    "drivers_interface_usb:libusbfn_mtp_proxy_1.0",
+    "drivers_interface_usb:usbfn_mtp_idl_headers",
+    "hilog:libhilog",
+    "hisysevent:libhisysevent",
+    "hitrace:hitrace_meter",
+    "init:libbeget_proxy",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "kv_store:distributeddata_inner",
+    "media_foundation:media_foundation",
+    "os_account:os_account_innerkits",
+    "player_framework:media_client",
+    "relational_store:native_rdb",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "usb_manager:usbsrv_client",
+  ]
+
+  defines = []
+  if (media_library_feature_qemu_standard_functionfs) {
+    defines += [ "MEDIA_QEMU_STANDARD_FUNCTIONFS" ]
+  }
+  if (media_library_feature_mtp) {
+    defines += [ "MEDIALIBRARY_MTP_ENABLE=1" ]
+  }
+
+  sanitize = {
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+  }
+
+  if (defined(global_parts_info.powermgr_battery_manager)) {
+    external_deps += [ "battery_manager:batterysrv_client" ]
+    cflags_cc += [ "-DHAS_BATTERY_MANAGER_PART" ]
+  }
+
+  if (ability_runtime_graphics) {
+    external_deps += [ "image_framework:image_native" ]
+  }
+
+  innerapi_tags = [ "platformsdk" ]
+  part_name = "media_library"
+  subsystem_name = "multimedia"
+}

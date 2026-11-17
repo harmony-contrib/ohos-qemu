@@ -1,0 +1,33 @@
+diff --git a/src/arkweb/build/prepare.sh b/src/arkweb/build/prepare.sh
+--- a/src/arkweb/build/prepare.sh
++++ b/src/arkweb/build/prepare.sh
+@@ -28,3 +28,3 @@
+ 
+-CLANG_FORMAT_DIR=${WORK_SPACE}/buildtools/linux64
++CLANG_FORMAT_DIR=${WORK_SPACE}/buildtools/linux64-format
+ 
+@@ -34,3 +34,12 @@
+ NEW_REVISION=
+ 
++interface_headers_sha256() {
++  {
++   (cd "${INTERFACE_INCLUDE_DIR}";
++   find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum) |
++     sha256sum | awk '{print $1}'
++   sha256sum "${CLANG_FORMAT_DIR}/clang-format" | awk '{print $1}'
++  } | sha256sum | awk '{print $1}'
++}
++
+ need_processed() {
+@@ -53,3 +62,5 @@
+   local_revision=`head -n 1 ${OHOS_GLUE_REVISION}`
+-  if [ "X$deps_code_revision" == "X$local_revision" ]; then
++  local_header_sha256=$(sed -n '2p' "${OHOS_GLUE_REVISION}")
++  if [ "X$deps_code_revision" == "X$local_revision" ] &&
++     [ "$(interface_headers_sha256)" = "${local_header_sha256}" ]; then
+     echo "deps_code/webview's revision not changed, no need prepare ohos_glue."
+@@ -69,3 +80,3 @@
+     echo "write deps_code/webview's revision into ${OHOS_GLUE_REVISION}:${NEW_REVISION}"
+-    echo "${NEW_REVISION}" > ${OHOS_GLUE_REVISION}
++    printf '%s\n%s\n' "${NEW_REVISION}" "$(interface_headers_sha256)" > "${OHOS_GLUE_REVISION}"
+   fi

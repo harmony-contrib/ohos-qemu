@@ -1,0 +1,33 @@
+--- a/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets
++++ b/applications/standard/settings/product/phone/src/main/ets/Setting/Accessibility/service/IgnoreRepeatClickService.ets
+@@ -15,7 +15,7 @@
+  
+ import Want from '@ohos.app.ability.Want';
+ import config from '@ohos.accessibility.config';
+-import { ServiceExtensionAbility, common } from '@kit.AbilityKit';
++import { ServiceExtensionAbility } from '@kit.AbilityKit';
+ import { LogUtil } from '@ohos/settings.common/src/main/ets/utils/LogUtil';
+ import { SettingsDataUtils } from '@ohos/settings.common/src/main/ets/utils/SettingsDataUtils';
+ import { HiSysEventUtil } from '@ohos/settings.common/src/main/ets/systemEvent/HiSysEventUtil';
+@@ -32,12 +32,6 @@
+ const DISABLE_TRANSITION_ANIMATIONS_NOTIFICATION: string = 'disableTransitionAnimationsNotification';
+ const DISABLE_TRANSITION_ANIMATIONS_NOTIFICATION_KEY: string = 'transition_animations_notification';
+  
+-// SDK26 does not yet declare this implemented native method. This is a type
+-// declaration only; the same image's ServiceExtensionContext supplies the method.
+-interface ConditionalServiceExtensionContext extends common.ServiceExtensionContext {
+-  terminateSelfIfStartId(expectedStartId: number): Promise<boolean>;
+-}
+-
+ export default class IgnoreRepeatClickService extends ServiceExtensionAbility {
+   private requestQueue: Promise<void> = Promise.resolve();
+   private active: boolean = true;
+@@ -69,7 +63,7 @@
+       return;
+     }
+     try {
+-      const context = this.context as ConditionalServiceExtensionContext;
++      const context = this.context;
+       const stopped: boolean = await context.terminateSelfIfStartId(startId);
+       if (this.active && lifecycle === this.lifecycle) {
+         LogUtil.info(`${TAG} conditional idle stop startId:${startId} accepted:${stopped}`);

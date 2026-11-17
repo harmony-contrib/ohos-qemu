@@ -1,0 +1,107 @@
+{
+  "scope": "source-only F service-routed successor; NOT native/SDK/guest validation",
+  "expected_project_revision": "564ae888e7dcc7e0ec4c17ec9c77bf780e9cb380",
+  "exports": [
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-postcycle-native-readonly-export-14-01/public-source/exports.json",
+      "sha256": "fb7357c1823163f12e1eb5ce295b6e85777103bd411797bb92cb9117a0bf34ba"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-Knowledge-interfaces-readonly-export-15-01/public-source/exports.json",
+      "sha256": "472a83c9bf6a58d4e393451590620a287f2e5152e934746c18f32ae8829ffbc1"
+    },
+    {
+      "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r58-E-Knowledge-and-Settings-readonly-export-19-01/public-source/exports.json",
+      "sha256": "55fda9f51466de8c53c74d263f23d839d4444ba1d24f2b496c69a3130e055ff9"
+    }
+  ],
+  "actual_failure": {
+    "evidence_sha256": "50ec81e30b1ee5e25063be936cfba96aa60569fa4a180ed8e3c35a8c66004a53",
+    "journal_sha256": "3e0a2e4c8ba0d620f8e0308bff06839e9c4067abef5586bc659c45be0cdb258f",
+    "api": "KnowledgeContent.getRelatedEntity",
+    "code": 23800301,
+    "message": "Knowledge database query unavailable",
+    "exact_visitor_open_or_SQL_failure_not_disambiguated": true
+  },
+  "changed_whole_sources": {
+    "foundation/multimedia/media_library/interfaces/kits/js/BUILD.gn": {
+      "E_before_sha256": "a1a8837cc24b435ae4916bca1232ed1a1e4152766217675e0d03f378a6a1e284",
+      "F_after_sha256": "3aa2ee923d7b289a0512a9b77e117a945f20417e24c3f0d82c730e83a04d9e95"
+    },
+    "foundation/multimedia/media_library/frameworks/js/src/knowledge_content_napi.cpp": {
+      "E_before_sha256": "fc166b8a9a6d26a992974c5cdfdef3b4e03f9e4e4436bb434696a84cc9dc91fe",
+      "F_after_sha256": "bd2238c3a91c0a06bb09788ca64a634a5a10a1696550e1d6cc5d182dd9f8a777"
+    },
+    "foundation/multimedia/media_library/frameworks/js/src/knowledge_content_query.cpp": {
+      "E_before_sha256": "0a00a86f279afa6c436bec01396167a2908964ae707619d079d14d892f47c1ae",
+      "F_after_sha256": "b4f42200532773528b5f6c2632c93dca5731fbe68bfdd276222ce3b30e0ab088"
+    },
+    "foundation/multimedia/media_library/interfaces/kits/js/include/knowledge_content_query.h": {
+      "E_before_sha256": "88fcca1adb082448a6a374e129610bdf4554344250ecfb4aa93c654a9ce269d5",
+      "F_after_sha256": "4eeff8ca8288f495cc29ca8a78e9f604d22ae1f9f6075a34252632d885a52906"
+    },
+    "foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/BUILD.gn": {
+      "E_before_sha256": "ca2df3459393b453ee3ee30ba7689c54d29d668614ff0c10468f50db7ffd9764",
+      "F_after_sha256": "145315aa36d5050f628a1fe48b20a515696cab6b275d0084eaddb0087b8ac1ed"
+    },
+    "foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/src/media_datashare_ext_ability.cpp": {
+      "E_before_sha256": "448f3f46da6b28399ad3a74233af7f97b70884e5975b1af1153b1c40a41da3bf",
+      "F_after_sha256": "40f5ac5bbec245a998f504aa1756bd69d5ae87a1a2e4f8a89c11bebd9bbe70ce"
+    }
+  },
+  "review_patches_sha256": {
+    "0001-index-real-system-holidays-and-bound-knowledge-responses.patch": "0929985d4dbd92814941dc16cd07bb04d9e4ade496ec040cb6503ef76ed0475b",
+    "0002-query-knowledge-through-permission-checked-media-owner.patch": "354bc061ba68131aa56f185230c0fead3c39b615b0843207d6d85a4e8c86584f"
+  },
+  "cursor_contract": {
+    "actual_datashare_normal_EOF_and_OnGo_failure_both_E_ERROR": 1001,
+    "IsEnded_cannot_disambiguate": true,
+    "checked_count_then_exact_row_iteration": true,
+    "SQL_budget_extra_row_rejected_never_truncated_success": true,
+    "original_8MiB_byte_budget_retained": true
+  },
+  "authorization": "client self-token request/row/completion; service actual IPC caller system app plus READ_IMAGEVIDEO before decode/query; no ACL/APL/SELinux expansion",
+  "underlying_SQL_rc_unavailable_when_QueryByStep_returns_null": true,
+  "tests_run": false,
+  "native_compiled": false,
+  "SDK_compiled": false,
+  "guest_validated": false,
+  "delivery_files_sha256": {
+    "ci/capability-audit/fixtures/batch_media/knowledge/holiday/cursor_harness.cpp": "fd9b304603f6dea9224a6d538ccc58cf836c6c8c4a493402c247149fb3689d6a",
+    "ci/capability-audit/fixtures/batch_media/knowledge/holiday/service_harness.cpp": "a400e06d07c0f869a5a9054ba0ea9e21340eff9bec2676f5ee00a7f42cfb7e0b",
+    "ci/capability-audit/fixtures/batch_media/knowledge/service-backend-E-source.json": "d032d5aa9205e049a999d1158735c30c9e4579457155fc910e46e8341e1c12f3",
+    "ci/capability-audit/fixtures/batch_media/knowledge_runtime/Query.ets": "0c85b26faaf9220eaa8164e440d2a2a3e06d55f6b919c7adb758595118375f21",
+    "ci/capability-audit/fixtures/batch_system/calendar_main/main-component-hashes.json": "82d79ffa3c51ce504e36421c58fa3cf173dca2ed392c8dee8f80ba29502440d9",
+    "ci/capability-audit/fixtures/batch_system/calendar_runtime/Index.ets": "e6f44c15c6e231260fe4426fd13efb5a81de6abd834ea8554f0dd66cc991a4b9",
+    "ci/capability-audit/test_batch_media_knowledge_holiday.py": "19a0706b2cb9754ae9a16e9f0d28dad3d61d6e8ec719f3b74ee0af4f53697040",
+    "ci/capability-audit/test_batch_media_knowledge_holiday_install.py": "893f6f7d9353bee8bfbf9fd8837c55798d545ca020d1c1b894b9cbc84f8fb8f1",
+    "ci/capability-audit/test_batch_media_knowledge_service.py": "3cb6fe7cfa76a76fcabec215ace34c204a685ce3a8aa3a161b0a7ac3300c97fa",
+    "ci/capability-audit/test_batch_system_calendar_runtime_shared_storage.py": "016214771c14b4e06c4942f6d62b7a7002db04ccff337611511428e3d57602d6",
+    "patches/common/applications/standard/calendardata/main_ui/0002-bind-viewer-to-ability-local-storage.patch": "a6fc3306e278a053983f875c855e7628c632b085c1ee2f25b8e1beb1653b6906",
+    "patches/common/applications/standard/calendardata/main_ui/README.md": "63955d8330b138cdb7a7d479382ce45f2aa8f46b1731375eaec8bf70d99fef4a",
+    "patches/common/applications/standard/calendardata/main_ui/apply.py": "3a8c89b99ced9742a5e4ee2aeb5d1eb6076fe2604cdf9015b2cedef780fdeb26",
+    "patches/common/applications/standard/calendardata/main_ui/source_states.json": "39bdb52048717b0797d6c313051be69f6a3026b4f2a525d6c45e00fd6ff142df",
+    "patches/common/applications/standard/calendardata/main_ui/verify_source.py": "068c79147366ebdbdd7b99a08b9108290e998911d34d95d67a08c1b2bb9cb4b1",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/0002-query-knowledge-through-permission-checked-media-owner.patch": "354bc061ba68131aa56f185230c0fead3c39b615b0843207d6d85a4e8c86584f",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/README.md": "bbdf6f17ba2c8969f68cd83ae41a0cccde330872e02c6a2556c3029799f6adc6",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/files/knowledge_content_napi.cpp": "bd2238c3a91c0a06bb09788ca64a634a5a10a1696550e1d6cc5d182dd9f8a777",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/files/knowledge_content_query.cpp": "b4f42200532773528b5f6c2632c93dca5731fbe68bfdd276222ce3b30e0ab088",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/files/knowledge_content_query.h": "4eeff8ca8288f495cc29ca8a78e9f604d22ae1f9f6075a34252632d885a52906",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/manifest.json": "cb16c397ffe634bca4aa48413ae619734e2f17f045a65cad02d3417b3f97e759",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/previous-complete-state.json": "9921031abae5fe84356748de93525aebee3394bd8f0d8829bf58578728699b15",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/transforms.py": "58c51aeca5bdba4e5836dd7ed725deba9bc873b753d3d19aaf07208ab3678d30"
+  },
+  "root_test_commands": [
+    "python -m unittest test_batch_system_calendar_runtime_shared_storage test_batch_system_calendar_main batch_system_calendar_runtime_tests test_batch_system_calendar_runtime_resources",
+    "python -m unittest test_batch_media_knowledge_service test_batch_media_knowledge_content test_batch_media_knowledge_install test_batch_media_knowledge_holiday test_batch_media_knowledge_holiday_install test_batch_media_knowledge_runtime",
+    "root: run unchanged knowledge_suite and its tests after root-owned UI fixes; actual native CFI builds, fresh Calendar3+Knowledge4 SDK roles, and new representative package runtime required"
+  ],
+  "delivery_source_checks": {
+    "AST_and_JSON_parse_only": true,
+    "lease_scope_verified": true,
+    "old_review_patch_bytes_preserved": true,
+    "four_complete_14_file_states": true,
+    "payload_hashes_match_manifest": true,
+    "tests_imports_compiler_SDK_Git_Docker_VM_HDC_QMP_signing_run": false
+  }
+}

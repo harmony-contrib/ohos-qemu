@@ -1,0 +1,29 @@
+diff --git a/arkcompiler/jsvm/CMakeLists.txt b/arkcompiler/jsvm/CMakeLists.txt
+--- a/arkcompiler/jsvm/CMakeLists.txt
++++ b/arkcompiler/jsvm/CMakeLists.txt
+@@ -120,7 +120,6 @@ add_library(jsvm
+ 
+ target_link_options(jsvm
+   PRIVATE
+-  "-Wl,--exclude-libs=libc++_static.a"
+   "-Wl,--build-id=md5"
+ )
+ 
+@@ -139,7 +138,7 @@ target_link_libraries(jsvm
+   libv8_shared.so
+   libhilog.so
+   libhisysevent.z.so
+-  c++_static
++  c++
+   libdfx_signalhandler.z.so
+   libfaultloggerd.z.so
+ )
+@@ -158,7 +157,7 @@ target_link_libraries(jsvm
+   libv8_shared.so
+   libhilog.so
+   libhisysevent.z.so
+-  c++_static
++  c++
+   libdfx_signalhandler.z.so
+   libfaultloggerd.z.so
+ )

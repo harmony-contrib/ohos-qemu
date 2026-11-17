@@ -1,0 +1,37 @@
+diff --git a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/rs_connect_to_render_process.cpp b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/rs_connect_to_render_process.cpp
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/rs_connect_to_render_process.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/rs_connect_to_render_process.cpp
+@@ -37,7 +37,7 @@ std::pair<sptr<RSIClientToRenderConnection>, uint64_t> RSConnectToRenderProcess::CreateRenderConnection(
+     RS_PROFILER_ON_CREATE_CONNECTION(remotePid);
+     auto [renderConnection, oldTokenMaskId] = renderPipelineAgent_->FindClientToRenderConnection(remotePid);
+     if (renderConnection != nullptr) {
+-        return {renderConnection, INVALID_TOKEN_MASK_ID};
++        return {renderConnection, oldTokenMaskId};
+     }
+     auto newRenderConn =
+         sptr<RSClientToRenderConnection>::MakeSptr(remotePid, renderPipelineAgent_, tokenObj, needRefresh);
+@@ -45,6 +45,7 @@ std::pair<sptr<RSIClientToRenderConnection>, uint64_t> RSConnectToRenderProcess::CreateRenderConnection(
+     renderPipelineAgent_->AddTransactionDataPidInfo(remotePid);
+     renderPipelineAgent_->AddConnection(remotePid, tokenMaskId, tokenObj, newRenderConn);
+-    return {newRenderConn, INVALID_TOKEN_MASK_ID};
++    // Return the actual registered connection, including an insertion failure.
++    return renderPipelineAgent_->FindClientToRenderConnection(remotePid);
+ }
+ 
+ std::pair<sptr<RSIClientToRenderConnection>, uint64_t> RSConnectToRenderProcess::FindClientToRenderConnection()
+diff --git a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_connect_to_render_process_stub.cpp b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_connect_to_render_process_stub.cpp
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_connect_to_render_process_stub.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_connect_to_render_process_stub.cpp
+@@ -72,6 +72,12 @@ int RSConnectToRenderProcessStub::OnRemoteRequest(
+                 break;
+             }
+ 
++            if (!reply.WriteBool(true)) {
++                ret = ERR_INVALID_STATE;
++                RS_LOGE("RSConnectToRenderProcessStub::CREATE_CONNECTION WriteBool replyBool failed");
++                break;
++            }
++
+             auto replyObj = newRenderConn->AsObject();
+             if (replyObj == nullptr || !reply.WriteRemoteObject(replyObj)) {
+                 ret = ERR_UNKNOWN_OBJECT;

@@ -1,0 +1,33 @@
+--- a/foundation/communication/ipc/ipc/native/src/core/invoker/source/binder_connector.cpp
++++ b/foundation/communication/ipc/ipc/native/src/core/invoker/source/binder_connector.cpp
+@@ -241,20 +241,18 @@
+ // LCOV_EXCL_START
+ BinderConnector *BinderConnector::GetInstance()
+ {
++    std::lock_guard<std::mutex> lockGuard(skeletonMutex);
+     if (instance_ == nullptr) {
+-        std::lock_guard<std::mutex> lockGuard(skeletonMutex);
+-        if (instance_ == nullptr) {
+-            auto temp = new (std::nothrow) BinderConnector(std::string(DRIVER_NAME));
+-            if (temp == nullptr) {
+-                ZLOGE(LABEL, "create BinderConnector object failed");
+-                return nullptr;
+-            }
+-            if (!temp->OpenDriver()) {
+-                delete temp;
+-                temp = nullptr;
+-            }
+-            instance_ = temp;
++        auto temp = new (std::nothrow) BinderConnector(std::string(DRIVER_NAME));
++        if (temp == nullptr) {
++            ZLOGE(LABEL, "create BinderConnector object failed");
++            return nullptr;
+         }
++        if (!temp->OpenDriver()) {
++            delete temp;
++            temp = nullptr;
++        }
++        instance_ = temp;
+     }
+ 
+     return instance_;

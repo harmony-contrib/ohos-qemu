@@ -1,0 +1,53 @@
+--- a/base/telephony/state_registry/frameworks/native/observer/include/telephony_observer_proxy.h
++++ b/base/telephony/state_registry/frameworks/native/observer/include/telephony_observer_proxy.h
+@@ -28,27 +28,27 @@
+     explicit TelephonyObserverProxy(const sptr<IRemoteObject> &impl);
+     virtual ~TelephonyObserverProxy() = default;
+     void OnCallStateUpdated(
+-        int32_t slotId, int32_t callState, const std::u16string &phoneNumber);
++        int32_t slotId, int32_t callState, const std::u16string &phoneNumber) override;
+     void OnCallStateUpdatedEx(
+-        int32_t slotId, int32_t callStateEx);
++        int32_t slotId, int32_t callStateEx) override;
+     void OnSignalInfoUpdated(
+-        int32_t slotId, const std::vector<sptr<SignalInformation>> &vec);
++        int32_t slotId, const std::vector<sptr<SignalInformation>> &vec) override;
+     void OnNetworkStateUpdated(
+-        int32_t slotId, const sptr<NetworkState> &networkState);
++        int32_t slotId, const sptr<NetworkState> &networkState) override;
+     void OnCellInfoUpdated(
+-        int32_t slotId, const std::vector<sptr<CellInformation>> &vec);
++        int32_t slotId, const std::vector<sptr<CellInformation>> &vec) override;
+     void OnSimStateUpdated(
+-        int32_t slotId, CardType type, SimState state, LockReason reason);
++        int32_t slotId, CardType type, SimState state, LockReason reason) override;
+     void OnCellularDataConnectStateUpdated(
+-        int32_t slotId, int32_t dataState, int32_t networkType);
++        int32_t slotId, int32_t dataState, int32_t networkType) override;
+     void OnCellularDataFlowUpdated(
+-        int32_t slotId, int32_t dataFlowType);
+-    void OnCfuIndicatorUpdated(int32_t slotId, bool cfuResult);
+-    void OnVoiceMailMsgIndicatorUpdated(int32_t slotId, bool voiceMailMsgResult);
+-    void OnIccAccountUpdated();
+-    void OnCCallStateUpdated(int32_t slotId, int32_t callState, const std::u16string &phoneNumber);
++        int32_t slotId, int32_t dataFlowType) override;
++    void OnCfuIndicatorUpdated(int32_t slotId, bool cfuResult) override;
++    void OnVoiceMailMsgIndicatorUpdated(int32_t slotId, bool voiceMailMsgResult) override;
++    void OnIccAccountUpdated() override;
++    void OnCCallStateUpdated(int32_t slotId, int32_t callState, const std::u16string &phoneNumber) override;
+     void OnCommunicationStateUpdated(int32_t slotId, bool is5A) override;
+-    void OnSimActiveStateUpdated(int32_t slotId, bool enable);
++    void OnSimActiveStateUpdated(int32_t slotId, bool enable) override;
+
+ private:
+     int32_t SendRequest(int32_t msgId, MessageParcel &dataParcel, MessageParcel &replyParcel, MessageOption &option);
+--- a/base/telephony/state_registry/services/src/telephony_state_registry_service.cpp
++++ b/base/telephony/state_registry/services/src/telephony_state_registry_service.cpp
+@@ -23,6 +23,7 @@
+
+ #include "common_event_manager.h"
+ #include "common_event_support.h"
++#include "ipc_skeleton.h"
+ #include "iservice_registry.h"
+ #include "state_registry_errors.h"
+ #include "string_ex.h"

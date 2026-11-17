@@ -1,0 +1,93 @@
+diff --git a/applications/standard/settings/BUILD.gn b/applications/standard/settings/BUILD.gn
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/settings/BUILD.gn
+@@ -0,0 +1,19 @@
++# Copyright (c) 2026 Harmony Contrib
++# SPDX-License-Identifier: Apache-2.0
++import("//build/ohos.gni")
++
++# Compile the real Stage UI and extensions instead of the stale phone HAP.
++ohos_app("settings_hap") {
++  deps = []
++  certificate_profile = "signature/settings.p7b"
++  hap_name = "Settings"
++  part_name = "settings"
++  subsystem_name = "applications"
++  module_install_dir = "app/com.ohos.settings"
++  sdk_home = "//prebuilts/ohos-sdk/linux"
++  sdk_type_name = [ "sdk.dir" ]
++  assemble_type = "assembleHap"
++  build_level = "module"
++  build_modules = [ "phone" ]
++  js_build_mode = "release"
++}
+diff --git a/applications/standard/settings/bundle.json b/applications/standard/settings/bundle.json
+--- a/applications/standard/settings/bundle.json
++++ b/applications/standard/settings/bundle.json
+@@ -50,3 +50,4 @@
+         "build": {
+             "sub_component": [
++                "//applications/standard/settings:settings_hap",
+                 "//applications/standard/settings/napi/settings:settings",
+diff --git a/applications/standard/settings/build-profile.json5 b/applications/standard/settings/build-profile.json5
+--- a/applications/standard/settings/build-profile.json5
++++ b/applications/standard/settings/build-profile.json5
+@@ -4,7 +4,6 @@
+       {
+         "name": "default",
+-        "signingConfig": "release",
+         "targetSdkVersion": 23,
+         "compatibleSdkVersion": 23,
+         "compileSdkVersion": "26.0.0",
+         "runtimeOS": "OpenHarmony"
+diff --git a/applications/standard/settings/native_api/build-profile.json5 b/applications/standard/settings/native_api/build-profile.json5
+--- a/applications/standard/settings/native_api/build-profile.json5
++++ b/applications/standard/settings/native_api/build-profile.json5
+@@ -11,6 +11,7 @@
+       "cppFlags": "",
+       "abiFilters": [
+         "arm64-v8a",
++        "armeabi-v7a",
+         "x86_64"
+       ]
+     }
+diff --git a/applications/standard/settings/oh-package.json5 b/applications/standard/settings/oh-package.json5
+--- a/applications/standard/settings/oh-package.json5
++++ b/applications/standard/settings/oh-package.json5
+@@ -2,5 +2,5 @@
+   "modelVersion": "6.0.0",
+   "devDependencies": {
+-    "@ohos/hypium": "1.0.16"
++    "@ohos/hypium": "file:./hypium-1.0.16.har"
+   },
+   "name": "settings",
+diff --git a/applications/standard/settings/product/phone/oh-package.json5 b/applications/standard/settings/product/phone/oh-package.json5
+--- a/applications/standard/settings/product/phone/oh-package.json5
++++ b/applications/standard/settings/product/phone/oh-package.json5
+@@ -21,5 +21,5 @@
+     "@ohos/settings.accessibility": "file:../../feature/accessibility",
+-    "@ohos/lottie": "2.0.23",
+-    "@ohos/mpchart": "3.0.15",
++    "@ohos/lottie": "file:../../lottie-2.0.23.har",
++    "@ohos/mpchart": "file:../../mpchart-3.0.15.har",
+ //    "@hw-hmos/settings-face-auth": "6.0.0-318",
+     "@ohos/settings.search": "file:../../feature/search",
+diff --git a/applications/standard/settings/feature/uikit/oh-package.json5 b/applications/standard/settings/feature/uikit/oh-package.json5
+--- a/applications/standard/settings/feature/uikit/oh-package.json5
++++ b/applications/standard/settings/feature/uikit/oh-package.json5
+@@ -7,3 +7,3 @@
+     "@ohos/settings.common": "file:../../common",
+-    "@ohos/mpchart": "3.0.15"
++    "@ohos/mpchart": "file:../../mpchart-3.0.15.har"
+   }
+diff --git a/applications/standard/settings/hvigor/hvigor-config.json5 b/applications/standard/settings/hvigor/hvigor-config.json5
+--- a/applications/standard/settings/hvigor/hvigor-config.json5
++++ b/applications/standard/settings/hvigor/hvigor-config.json5
+@@ -2,6 +2,4 @@
+   "modelVersion": "6.0.0",
+   "dependencies": {
+ //    "@ohos/hypium-plugin": "1.0.10-rc1",
+-    "fs-extra": "10.0.1",
+-    "execa": "5.1.1",
+   },

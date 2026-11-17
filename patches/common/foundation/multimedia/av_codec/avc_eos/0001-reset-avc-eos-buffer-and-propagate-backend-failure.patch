@@ -1,0 +1,25 @@
+diff --git a/foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder.cpp b/foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder.cpp
+--- a/foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder.cpp
++++ b/foundation/multimedia/av_codec/services/engine/codec/video/avcencoder/avc_encoder.cpp
+@@ -1602,3 +1602,7 @@
+     if (isSendEos_) {
++        CHECK_AND_RETURN_RET_LOG(ret == 0, AVCS_ERR_VID_ENC_FAILED,
++            "Cannot encode AVC EOS: %{public}u", ret);
++        outputAVBuffer->memory_->SetSize(outArgs.bytes);
++        outputAVBuffer->pts_ = static_cast<int64_t>(outArgs.timestamp);
+         outputAVBuffer->flag_ = AVCODEC_BUFFER_FLAG_EOS;
+     } else if (ret == 0) {
+@@ -1694,3 +1698,7 @@
+     int32_t ret = EncoderAvcFrame(eosInArgs, avcEncOutputArgs_);
+-    CHECK_AND_RETURN_LOG(ret == AVCS_ERR_OK, "Avc Encoder tailer error: %{public}d", ret);
++    if (ret != AVCS_ERR_OK) {
++        AVCODEC_LOGE("Avc Encoder tailer error: %{public}d", ret);
++        callback_->OnError(AVCodecErrorType::AVCODEC_ERROR_INTERNAL, AVCodecServiceErrCode::AVCS_ERR_UNKNOWN);
++        state_ = State::ERROR;
++    }
+ }
+@@ -1733,3 +1741,4 @@
+         EncoderAvcTailer();
++        CHECK_AND_RETURN_LOG(state_ != State::ERROR, "AVC EOS encoding failed");
+         state_ = State::EOS;
+         sendCv_.wait_for(sendLock, std::chrono::milliseconds(DEFAULT_ENCODE_WAIT_TIME));

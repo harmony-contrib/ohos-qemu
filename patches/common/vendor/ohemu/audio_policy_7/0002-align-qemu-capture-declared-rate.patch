@@ -1,0 +1,11 @@
+--- a/vendor/ohemu/virt/hals/audio/config/audio_policy_config_new.xml
++++ b/vendor/ohemu/virt/hals/audio/config/audio_policy_config_new.xml
+@@ -29,7 +29,7 @@
+                 <pipe name="primary_input" role="input">
+                     <paProp lib="libmodule-hdi-source.z.so" role="source" moduleName="Built_in_mic"/>
+                     <streamProps>
+-                        <streamProp format="s16le" sampleRates="44100" channelLayout="CH_LAYOUT_STEREO" bufferSize="8192" supportDevices="Builtin_Mic_In, Wired_Headset_In"/>
++                        <streamProp format="s16le" sampleRates="48000" channelLayout="CH_LAYOUT_STEREO" bufferSize="8192" supportDevices="Builtin_Mic_In, Wired_Headset_In"/>
+                     </streamProps>
+                     <attributes>
+                         <attribute name="flag" value="AUDIO_INPUT_FLAG_NORMAL"/>

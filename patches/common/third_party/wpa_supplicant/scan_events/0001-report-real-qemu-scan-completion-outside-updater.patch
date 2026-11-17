@@ -1,0 +1,58 @@
+diff --git a/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/BUILD.gn b/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/BUILD.gn
+--- a/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/BUILD.gn
++++ b/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/BUILD.gn
+@@ -518,6 +518,13 @@
+   ]
+   if (wpa_supplicant_config_ext_auth) {
+     cflags += [ "-DEXT_AUTHENTICATION_SUPPORT" ]
+   }
++  # QEMU uses the WPA HDI for scan completion, without chip scan offload.
++  # Other products retain their existing chip/updater event selection.
++  if (defined(product_name) &&
++      (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++       product_name == "x86_64_virt")) {
++    cflags += [ "-DCONFIG_QEMU_WPA_SCAN_EVENTS" ]
++  }
+   if ("${CONFIG_CTRL_IFACE}" == "udp") {
+     cflags += [ "-DCONFIG_CTRL_IFACE_UDP" ]
+diff --git a/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/src/utils/common.h b/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/src/utils/common.h
+--- a/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/src/utils/common.h
++++ b/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/src/utils/common.h
+@@ -651,3 +651,11 @@
+ #ifdef CONFIG_OPEN_HARMONY_PATCH
+ bool IsUpdaterMode(void);
++static inline bool IsWpaScanEventEnabled(void)
++{
++#ifdef CONFIG_QEMU_WPA_SCAN_EVENTS
++    return true;
++#else
++    return IsUpdaterMode();
++#endif
++}
+ #endif /* CONFIG_OPEN_HARMONY_PATCH */
+diff --git a/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/wpa_supplicant/events.c b/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/wpa_supplicant/events.c
+--- a/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/wpa_supplicant/events.c
++++ b/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/wpa_supplicant/events.c
+@@ -2734,3 +2734,3 @@
+ #if defined(CONFIG_LIBWPA_VENDOR) && defined(CONFIG_OPEN_HARMONY_PATCH)
+-        if (IsUpdaterMode()) {
++        if (IsWpaScanEventEnabled()) {
+             struct WpaRecvScanResultParam wpaRecvScanResultParam;
+@@ -2746,3 +2746,3 @@
+ #if defined(CONFIG_LIBWPA_VENDOR) && defined(CONFIG_OPEN_HARMONY_PATCH)
+-        if (IsUpdaterMode()) {
++        if (IsWpaScanEventEnabled()) {
+ 			struct WpaRecvScanResultParam wpaRecvScanResultParam;
+diff --git a/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/wpa_supplicant/scan.c b/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/wpa_supplicant/scan.c
+--- a/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/wpa_supplicant/scan.c
++++ b/third_party/wpa_supplicant/wpa_supplicant-2.9_standard/wpa_supplicant/scan.c
+@@ -3381,3 +3381,3 @@
+ #if defined(CONFIG_LIBWPA_VENDOR) && defined(CONFIG_OPEN_HARMONY_PATCH)
+-        if (IsUpdaterMode()) {
++        if (IsWpaScanEventEnabled()) {
+ 			struct WpaRecvScanResultParam wpaRecvScanResultParam;
+@@ -3394,3 +3394,3 @@
+ #if defined(CONFIG_LIBWPA_VENDOR) && defined(CONFIG_OPEN_HARMONY_PATCH)
+-        if (IsUpdaterMode()) {
++        if (IsWpaScanEventEnabled()) {
+ 			struct WpaRecvScanResultParam wpaRecvScanResultParam;

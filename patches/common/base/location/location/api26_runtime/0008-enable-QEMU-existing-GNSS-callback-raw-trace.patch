@@ -1,0 +1,253 @@
+diff --git a/base/location/location/services/location_gnss/gnss/include/gnss_event_callback.h b/base/location/location/services/location_gnss/gnss/include/gnss_event_callback.h
+--- a/base/location/location/services/location_gnss/gnss/include/gnss_event_callback.h
++++ b/base/location/location/services/location_gnss/gnss/include/gnss_event_callback.h
+@@ -29,6 +29,11 @@
+ using HDI::Location::Gnss::V2_0::GnssRefInfoType;
+ using HDI::Location::Gnss::V2_0::GnssNiNotificationRequest;
+ 
++#if defined(QEMU_GNSS_HDI_RAW_TRACE) && QEMU_GNSS_HDI_RAW_TRACE == 1
++// Internal QEMU diagnostic only. No HDI registration or provider lifecycle action.
++__attribute__((visibility("hidden"))) void CaptureQemuGnssHdiRawTrace(const LocationInfo& location);
++__attribute__((visibility("hidden"))) bool RenderQemuGnssHdiRawTrace(std::string& output);
++#endif
+ class GnssEventCallback : public IGnssCallback {
+ public:
+     ~GnssEventCallback() override {}
+diff --git a/base/location/location/services/location_gnss/gnss/source/gnss_ability.cpp b/base/location/location/services/location_gnss/gnss/source/gnss_ability.cpp
+--- a/base/location/location/services/location_gnss/gnss/source/gnss_ability.cpp
++++ b/base/location/location/services/location_gnss/gnss/source/gnss_ability.cpp
+@@ -21,6 +21,9 @@
+ #include <fstream>
+ #include <algorithm>
+ #include <limits>
++#if defined(QEMU_GNSS_HDI_RAW_TRACE) && QEMU_GNSS_HDI_RAW_TRACE == 1
++#include <cerrno>
++#endif
+ 
+ #include "agnss_ni_manager.h"
+ #include "event_runner.h"
+@@ -2326,6 +2329,17 @@
+ 
+ int32_t GnssAbility::Dump(int32_t fd, const std::vector<std::u16string>& args)
+ {
++#if defined(QEMU_GNSS_HDI_RAW_TRACE) && QEMU_GNSS_HDI_RAW_TRACE == 1
++    if (args.size() == 1 && args[0] == u"--qemu-gnss-hdi-raw-trace") {
++        // DUMP_TRANSACTION arrives synchronously with its actual IPC identity.
++        // Shell/hidumper-service forwarding is intentionally insufficient.
++        if (!IPCSkeleton::IsLocalCalling() || IPCSkeleton::GetCallingUid() != 0) return -EACCES;
++        if (fd < 0) return -EBADF;
++        std::string trace;
++        if (!RenderQemuGnssHdiRawTrace(trace) || !SaveStringToFd(fd, trace)) return -EIO;
++        return ERR_OK;
++    }
++#endif
+     std::vector<std::string> vecArgs;
+     std::transform(args.begin(), args.end(), std::back_inserter(vecArgs), [](const std::u16string &arg) {
+         return Str16ToStr8(arg);
+diff --git a/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp b/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp
+--- a/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp
++++ b/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp
+@@ -16,6 +16,16 @@
+ #ifdef FEATURE_GNSS_SUPPORT
+ #include "gnss_event_callback.h"
+ #include <cmath>
++#if defined(QEMU_GNSS_HDI_RAW_TRACE) && QEMU_GNSS_HDI_RAW_TRACE == 1
++#include <array>
++#include <cinttypes>
++#include <cstdio>
++#include <cstring>
++#include <limits>
++#include <mutex>
++#include <time.h>
++#include <unistd.h>
++#endif
+ #include <singleton.h>
+ #include <sys/time.h>
+ #include "ipc_skeleton.h"
+@@ -35,6 +45,149 @@
+ namespace OHOS {
+ namespace Location {
+ using namespace OHOS::HiviewDFX;
++#if defined(QEMU_GNSS_HDI_RAW_TRACE) && QEMU_GNSS_HDI_RAW_TRACE == 1
++namespace {
++constexpr size_t QEMU_GNSS_TRACE_CAPACITY = 128;
++struct QemuGnssHdiTraceRecord {
++    uint64_t localOrdinal = 0;
++    uint32_t fieldValidity = 0;
++    uint32_t horizontalAccuracyBits = 0;
++    uint64_t latitudeBits = 0;
++    uint64_t longitudeBits = 0;
++    int64_t sourceUtcMs = 0;
++    int64_t sourceBootNs = 0;
++    int64_t receiptBootNs = -1;
++    int32_t callerUid = -1;
++    int32_t callerPid = -1;
++};
++static_assert(sizeof(decltype(LocationInfo::horizontalAccuracy)) == sizeof(uint32_t) &&
++    std::numeric_limits<float>::is_iec559, "Actual HDI accuracy must remain IEEE binary32");
++static_assert(sizeof(decltype(LocationInfo::latitude)) == sizeof(uint64_t) &&
++    sizeof(decltype(LocationInfo::longitude)) == sizeof(uint64_t) &&
++    std::numeric_limits<double>::is_iec559, "Actual HDI coordinates must remain IEEE binary64");
++static_assert(sizeof(decltype(LocationInfo::timeForFix)) == sizeof(int64_t) &&
++    sizeof(decltype(LocationInfo::timeSinceBoot)) == sizeof(int64_t), "Actual HDI source clocks must remain int64");
++static_assert(sizeof(QemuGnssHdiTraceRecord) <= 96, "Fixed trace storage must remain bounded");
++
++int64_t QemuTraceBootNs()
++{
++    timespec value{};
++    constexpr int64_t nanosPerSecond = 1000000000;
++    if (clock_gettime(CLOCK_BOOTTIME, &value) != 0 || value.tv_sec < 0 || value.tv_nsec < 0 ||
++        value.tv_nsec >= nanosPerSecond ||
++        value.tv_sec > (std::numeric_limits<int64_t>::max() - value.tv_nsec) / nanosPerSecond) {
++        return -1;
++    }
++    return static_cast<int64_t>(value.tv_sec) * nanosPerSecond + value.tv_nsec;
++}
++
++struct QemuGnssHdiTraceState {
++    std::mutex mutex;
++    std::array<QemuGnssHdiTraceRecord, QEMU_GNSS_TRACE_CAPACITY> records{};
++    size_t next = 0;
++    size_t count = 0;
++    uint64_t lastOrdinal = 0;
++    uint64_t overwritten = 0;
++    uint64_t clockErrors = 0;
++    uint64_t droppedBeforeStore = 0;
++    bool ordinalOverflow = false;
++    const int64_t traceEpochBootNs = QemuTraceBootNs();
++    const int32_t processPid = getpid();
++};
++
++QemuGnssHdiTraceState& QemuTraceState()
++{
++    static QemuGnssHdiTraceState state;
++    return state;
++}
++} // namespace
++
++void CaptureQemuGnssHdiRawTrace(const LocationInfo& location)
++{
++    // Called only at the existing live HDI ReportLocation entry. Do not evaluate
++    // any floating payload, including sNaN, while making this diagnostic copy.
++    auto& state = QemuTraceState();
++    QemuGnssHdiTraceRecord record;
++    std::memcpy(&record.fieldValidity, &location.fieldValidity, sizeof(record.fieldValidity));
++    std::memcpy(&record.horizontalAccuracyBits, &location.horizontalAccuracy, sizeof(record.horizontalAccuracyBits));
++    std::memcpy(&record.latitudeBits, &location.latitude, sizeof(record.latitudeBits));
++    std::memcpy(&record.longitudeBits, &location.longitude, sizeof(record.longitudeBits));
++    std::memcpy(&record.sourceUtcMs, &location.timeForFix, sizeof(record.sourceUtcMs));
++    std::memcpy(&record.sourceBootNs, &location.timeSinceBoot, sizeof(record.sourceBootNs));
++    record.receiptBootNs = QemuTraceBootNs();
++    record.callerUid = IPCSkeleton::GetCallingUid();
++    record.callerPid = IPCSkeleton::GetCallingPid();
++    std::lock_guard<std::mutex> lock(state.mutex);
++    if (state.lastOrdinal == std::numeric_limits<uint64_t>::max()) {
++        state.ordinalOverflow = true; // A later Dump cannot claim a complete interval.
++        if (state.droppedBeforeStore != std::numeric_limits<uint64_t>::max()) ++state.droppedBeforeStore;
++        return;
++    }
++    record.localOrdinal = ++state.lastOrdinal;
++    if (record.receiptBootNs < 0) ++state.clockErrors;
++    state.records[state.next] = record;
++    state.next = (state.next + 1) % QEMU_GNSS_TRACE_CAPACITY;
++    if (state.count < QEMU_GNSS_TRACE_CAPACITY) ++state.count;
++    else ++state.overwritten;
++    // No allocation, logging, fd write, callback, or provider call in this lock.
++}
++
++bool RenderQemuGnssHdiRawTrace(std::string& output)
++{
++    std::array<QemuGnssHdiTraceRecord, QEMU_GNSS_TRACE_CAPACITY> snapshot{};
++    size_t count;
++    uint64_t lastOrdinal, overwritten, clockErrors, droppedBeforeStore;
++    bool ordinalOverflow;
++    int64_t traceEpochBootNs, snapshotBootNs;
++    int32_t processPid;
++    {
++        auto& state = QemuTraceState();
++        std::lock_guard<std::mutex> lock(state.mutex);
++        count = state.count;
++        lastOrdinal = state.lastOrdinal;
++        overwritten = state.overwritten;
++        clockErrors = state.clockErrors;
++        droppedBeforeStore = state.droppedBeforeStore;
++        ordinalOverflow = state.ordinalOverflow;
++        traceEpochBootNs = state.traceEpochBootNs;
++        processPid = state.processPid;
++        const size_t first = (state.next + QEMU_GNSS_TRACE_CAPACITY - count) % QEMU_GNSS_TRACE_CAPACITY;
++        for (size_t i = 0; i < count; ++i) snapshot[i] = state.records[(first + i) % QEMU_GNSS_TRACE_CAPACITY];
++        snapshotBootNs = QemuTraceBootNs();
++    }
++    // Snapshot owns its values. Formatting/allocation and the caller's fd write
++    // happen after releasing the capture mutex; a slow Dump reader cannot hold it.
++    constexpr size_t lineCapacity = 512;
++    output.clear();
++    output.reserve((count + 1) * lineCapacity);
++    char line[lineCapacity];
++    const uint64_t firstOrdinal = count == 0 ? 0 : snapshot[0].localOrdinal;
++    int length = std::snprintf(line, sizeof(line),
++        "{\"schema\":\"qemu-gnss-hdi-trace/v1\",\"kind\":\"snapshot\",\"capacity\":%zu,\"count\":%zu,"
++        "\"firstRetainedOrdinal\":%" PRIu64 ",\"lastCapturedOrdinal\":%" PRIu64 ",\"overwrittenTotal\":%" PRIu64 ","
++        "\"droppedBeforeStore\":%" PRIu64 ",\"ordinalOverflow\":%s,\"clockErrorsTotal\":%" PRIu64 ","
++        "\"traceEpochBootNs\":%" PRId64 ",\"snapshotBootNs\":%" PRId64 ",\"processPid\":%" PRId32 ","
++        "\"cachedCaptured\":false}\n",
++        QEMU_GNSS_TRACE_CAPACITY, count, firstOrdinal, lastOrdinal, overwritten,
++        droppedBeforeStore, ordinalOverflow ? "true" : "false", clockErrors, traceEpochBootNs, snapshotBootNs, processPid);
++    if (length < 0 || static_cast<size_t>(length) >= sizeof(line)) return false;
++    output.append(line, static_cast<size_t>(length));
++    for (size_t i = 0; i < count; ++i) {
++        const auto& record = snapshot[i];
++        length = std::snprintf(line, sizeof(line),
++            "{\"kind\":\"hdi_report_location\",\"localOrdinal\":%" PRIu64 ",\"fieldValidity\":%" PRIu32 ","
++            "\"horizontalAccuracyBits\":\"0x%08" PRIx32 "\",\"latitudeBits\":\"0x%016" PRIx64 "\","
++            "\"longitudeBits\":\"0x%016" PRIx64 "\",\"sourceUtcMs\":%" PRId64 ",\"sourceBootNs\":%" PRId64 ","
++            "\"receiptBootNs\":%" PRId64 ",\"callbackCallerUid\":%" PRId32 ",\"callbackCallerPid\":%" PRId32 "}\n",
++            record.localOrdinal, record.fieldValidity, record.horizontalAccuracyBits, record.latitudeBits,
++            record.longitudeBits, record.sourceUtcMs, record.sourceBootNs, record.receiptBootNs,
++            record.callerUid, record.callerPid);
++        if (length < 0 || static_cast<size_t>(length) >= sizeof(line)) return false;
++        output.append(line, static_cast<size_t>(length));
++    }
++    return true;
++}
++#endif
+ static void SetGpsTime(int64_t gpsTime)
+ {
+ #ifdef TIME_SERVICE_ENABLE
+@@ -48,6 +201,9 @@
+ 
+ int32_t GnssEventCallback::ReportLocation(const LocationInfo& location)
+ {
++#if defined(QEMU_GNSS_HDI_RAW_TRACE) && QEMU_GNSS_HDI_RAW_TRACE == 1
++    CaptureQemuGnssHdiRawTrace(location);
++#endif
+     // An HDI report with unmeasured/default coordinates is not a location fix.
+     using GnssValidity = HDI::Location::Gnss::V2_0::GnssLocationValidity;
+     constexpr uint32_t requiredFields = GnssValidity::GNSS_LOCATION_LAT_VALID | GnssValidity::GNSS_LOCATION_LONG_VALID;
+diff --git a/base/location/location/services/location_gnss/gnss/BUILD.gn b/base/location/location/services/location_gnss/gnss/BUILD.gn
+--- a/base/location/location/services/location_gnss/gnss/BUILD.gn
++++ b/base/location/location/services/location_gnss/gnss/BUILD.gn
+@@ -112,6 +112,11 @@
+       external_deps +=
+           [ "drivers_interface_location_gnss:liblocation_gnss_proxy_2.0" ]
+       defines += [ "FEATURE_GNSS_SUPPORT" ]
++      if (device_company == "qemu" &&
++          (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++           product_name == "x86_64_virt")) {
++        defines += [ "QEMU_GNSS_HDI_RAW_TRACE=1" ]
++      }
+     }
+ 
+     if (location_feature_with_passive) {
+@@ -235,6 +240,11 @@
+       external_deps +=
+           [ "drivers_interface_location_gnss:liblocation_gnss_proxy_2.0" ]
+       defines += [ "FEATURE_GNSS_SUPPORT" ]
++      if (device_company == "qemu" &&
++          (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++           product_name == "x86_64_virt")) {
++        defines += [ "QEMU_GNSS_HDI_RAW_TRACE=1" ]
++      }
+     }
+ 
+     if (location_feature_with_passive) {

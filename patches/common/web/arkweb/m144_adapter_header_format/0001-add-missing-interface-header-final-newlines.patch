@@ -1,0 +1,126 @@
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_browser_host_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_browser_host_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_browser_host_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_browser_host_adapter.h
+@@ -33,3 +33,3 @@
+ } // namespace OHOS::NWeb
+ 
+-#endif // AAFWK_BROWSER_HOST_ADAPTER_H
+\ No newline at end of file
++#endif // AAFWK_BROWSER_HOST_ADAPTER_H
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_browser_client_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_browser_client_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_browser_client_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_browser_client_adapter.h
+@@ -37,3 +37,3 @@
+ } // namespace OHOS::NWeb
+ 
+-#endif // AAFWK_BROWSER_CLIENT_ADAPTER_H
+\ No newline at end of file
++#endif // AAFWK_BROWSER_CLIENT_ADAPTER_H
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_render_scheduler_host_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_render_scheduler_host_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_render_scheduler_host_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_render_scheduler_host_adapter.h
+@@ -38,3 +38,3 @@
+ } // namespace OHOS::NWeb
+ 
+-#endif // AAFWK_RENDER_SCHEDULER_HOST_ADAPTER_H
+\ No newline at end of file
++#endif // AAFWK_RENDER_SCHEDULER_HOST_ADAPTER_H
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_app_mgr_client_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_app_mgr_client_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_app_mgr_client_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/aafwk_app_mgr_client_adapter.h
+@@ -50,3 +50,3 @@
+ } // namespace OHOS::NWeb
+ 
+-#endif // AAFWK_APP_MGR_CLIENT_ADAPTER_H
+\ No newline at end of file
++#endif // AAFWK_APP_MGR_CLIENT_ADAPTER_H
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/drm_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/drm_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/drm_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/drm_adapter.h
+@@ -128,3 +128,3 @@
+ };
+ } // namespace OHOS::NWeb
+-#endif // DRM_ADAPTER_H
+\ No newline at end of file
++#endif // DRM_ADAPTER_H
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/keystore_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/keystore_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/keystore_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/keystore_adapter.h
+@@ -35,3 +35,3 @@
+ } // namespace OHOS::NWeb
+ 
+-#endif // KEYSTORE_ADAPTER_H
+\ No newline at end of file
++#endif // KEYSTORE_ADAPTER_H
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/media_avsession_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/media_avsession_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/media_avsession_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/media_avsession_adapter.h
+@@ -136,3 +136,3 @@
+ } // namespace OHOS::NWeb
+ 
+-#endif // MEDIA_AVSESSION_ADAPTER_H
+\ No newline at end of file
++#endif // MEDIA_AVSESSION_ADAPTER_H
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/media_codec_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/media_codec_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/media_codec_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/media_codec_adapter.h
+@@ -164,3 +164,3 @@
+ } // namespace OHOS::NWeb
+ 
+-#endif
+\ No newline at end of file
++#endif
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/audio_cenc_info_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/audio_cenc_info_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/audio_cenc_info_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/audio_cenc_info_adapter.h
+@@ -111,3 +111,3 @@
+ } // namespace OHOS::NWeb
+ 
+-#endif // AUDIO_CODEC_DECODER_ADAPTER_H
+\ No newline at end of file
++#endif // AUDIO_CODEC_DECODER_ADAPTER_H
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/ohos_drawing_text_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/ohos_drawing_text_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/ohos_drawing_text_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/ohos_drawing_text_adapter.h
+@@ -160,3 +160,3 @@
+ } // namespace OHOS::NWeb
+ 
+-#endif // OHOS_DRAWING_TEXT_ADAPTER_H
+\ No newline at end of file
++#endif // OHOS_DRAWING_TEXT_ADAPTER_H
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/ohos_image_decoder_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/ohos_image_decoder_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/ohos_image_decoder_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/ohos_image_decoder_adapter.h
+@@ -72,3 +72,3 @@
+ }  // namespace OHOS::NWeb
+ 
+-#endif  // OHOS_IMAGE_DECODER_ADAPTER_H
+\ No newline at end of file
++#endif  // OHOS_IMAGE_DECODER_ADAPTER_H
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/power_mgr_client_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/power_mgr_client_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/power_mgr_client_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/power_mgr_client_adapter.h
+@@ -48,3 +48,3 @@
+ } // namespace OHOS::NWeb
+ 
+-#endif // POWER_MGR_CLIENT_ADAPTER_H
+\ No newline at end of file
++#endif // POWER_MGR_CLIENT_ADAPTER_H
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/surface_control_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/surface_control_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/surface_control_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/surface_control_adapter.h
+@@ -101,3 +101,3 @@
+ };
+ } // namespace OHOS::NWeb
+-#endif // SURFACE_CONTROL_ADAPTER_H
+\ No newline at end of file
++#endif // SURFACE_CONTROL_ADAPTER_H
+diff --git a/deps_code/webview/ohos_interface/include/ohos_adapter/sensor_adapter.h b/deps_code/webview/ohos_interface/include/ohos_adapter/sensor_adapter.h
+--- a/deps_code/webview/ohos_interface/include/ohos_adapter/sensor_adapter.h
++++ b/deps_code/webview/ohos_interface/include/ohos_adapter/sensor_adapter.h
+@@ -64,3 +64,3 @@
+ }
+ 
+-#endif // SENSOR_ADAPTER_H
+\ No newline at end of file
++#endif // SENSOR_ADAPTER_H

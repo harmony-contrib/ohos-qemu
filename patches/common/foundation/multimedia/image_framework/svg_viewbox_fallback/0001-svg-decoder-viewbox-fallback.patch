@@ -1,0 +1,19 @@
+diff --git a/foundation/multimedia/image_framework/plugins/common/libs/image/libsvgplugin/src/svg_decoder.cpp b/foundation/multimedia/image_framework/plugins/common/libs/image/libsvgplugin/src/svg_decoder.cpp
+index bf2b793f3..aab59cf0f 100644
+--- a/foundation/multimedia/image_framework/plugins/common/libs/image/libsvgplugin/src/svg_decoder.cpp
++++ b/foundation/multimedia/image_framework/plugins/common/libs/image/libsvgplugin/src/svg_decoder.cpp
+@@ -460,6 +460,14 @@ bool SvgDecoder::BuildDom()
+     CHECK_ERROR_RETURN_RET_LOG(cond, false, "[BuildDom] DOM is null.");
+ 
+     svgSize_ = svgDom_->containerSize();
++    if (svgSize_.isEmpty() && svgDom_->getRoot() != nullptr &&
++        svgDom_->getRoot()->getViewBox().isValid() && !svgDom_->getRoot()->getViewBox()->isEmpty()) {
++        const auto &viewBox = svgDom_->getRoot()->getViewBox();
++        svgSize_ = SkSize::Make(viewBox->width(), viewBox->height());
++        svgDom_->getRoot()->setWidth(SkSVGLength(svgSize_.width()));
++        svgDom_->getRoot()->setHeight(SkSVGLength(svgSize_.height()));
++        svgDom_->setContainerSize(svgSize_);
++    }
+     cond = svgSize_.isEmpty();
+     CHECK_ERROR_RETURN_RET_LOG(cond, false, "[BuildDom] size is empty.");
+ 

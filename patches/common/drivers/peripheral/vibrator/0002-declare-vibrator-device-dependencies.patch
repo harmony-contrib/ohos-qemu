@@ -1,0 +1,28 @@
+diff --git a/device/qemu/arm_virt/linux_full/bundle.json b/device/qemu/arm_virt/linux_full/bundle.json
+index b03be52..af87f56 100644
+--- a/device/qemu/arm_virt/linux_full/bundle.json
++++ b/device/qemu/arm_virt/linux_full/bundle.json
+@@ -23,7 +23,9 @@
+         "c_utils",
+         "drivers_interface_camera",
+         "drivers_interface_display",
++        "drivers_interface_vibrator",
+         "drivers_peripheral_camera",
++        "drivers_peripheral_vibrator",
+         "ffmpeg",
+         "graphic_surface",
+         "hdf_core",
+diff --git a/device/qemu/x86_64_virt/linux_full/bundle.json b/device/qemu/x86_64_virt/linux_full/bundle.json
+index 0c8f4f5..2824236 100644
+--- a/device/qemu/x86_64_virt/linux_full/bundle.json
++++ b/device/qemu/x86_64_virt/linux_full/bundle.json
+@@ -23,7 +23,9 @@
+         "c_utils",
+         "drivers_interface_camera",
+         "drivers_interface_display",
++        "drivers_interface_vibrator",
+         "drivers_peripheral_camera",
++        "drivers_peripheral_vibrator",
+         "ffmpeg",
+         "graphic_surface",
+         "hdf_core",

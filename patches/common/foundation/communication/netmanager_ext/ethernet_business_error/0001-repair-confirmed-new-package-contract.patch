@@ -1,0 +1,13 @@
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/ethernet/ethernet_module.cpp b/foundation/communication/netmanager_ext/frameworks/js/napi/ethernet/ethernet_module.cpp
+--- a/foundation/communication/netmanager_ext/frameworks/js/napi/ethernet/ethernet_module.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/ethernet/ethernet_module.cpp
+@@ -115,8 +115,7 @@
+         NETMANAGER_EXT_LOGE("IsEthernetEnabled error, errorCode: %{public}d", result);
+         int32_t napiCode = EthernetExec::MapToNapiErrorCode(result);
+         std::string errMsg = EthernetExec::GetNapiErrorMessage(napiCode);
+-        std::string napiCodeStr = std::to_string(napiCode);
+-        napi_throw_error(env, napiCodeStr.c_str(), errMsg.c_str());
++        napi_throw_business_error(env, napiCode, errMsg.c_str());
+         return NapiUtils::GetBoolean(env, false);
+     }
+     return NapiUtils::GetBoolean(env, enabled != 0);

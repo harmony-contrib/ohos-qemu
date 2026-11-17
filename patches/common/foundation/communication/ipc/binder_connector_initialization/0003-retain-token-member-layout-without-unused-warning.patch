@@ -1,0 +1,9 @@
+--- a/foundation/communication/ipc/ipc/native/src/core/invoker/include/binder_connector.h
++++ b/foundation/communication/ipc/ipc/native/src/core/invoker/include/binder_connector.h
+@@ -49,5 +49,5 @@
+     const std::string deviceName_;
+     int32_t version_;
+     uint64_t featureSet_;
+-    uint64_t selfTokenID_;
++    [[maybe_unused]] uint64_t selfTokenID_;
+ };

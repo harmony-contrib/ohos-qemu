@@ -1,0 +1,240 @@
+{
+  "schema": "screen-capture-resource-component/v1",
+  "project": "foundation/multimedia/player_framework",
+  "revision": "3d3b1231db27561e8978652d7ae867c12f488d9a",
+  "readonly_GN": {
+    "path": "services/etc/BUILD.gn",
+    "sha256": "611723ea3f2d7217980eeefa76718399740399dbacd2e902e4ac95b4858c3cd7",
+    "bytes": 3918
+  },
+  "source_payload_manifest": {
+    "sha256": "f4e15bf4e7df8865dd7376c2a031a0fc52c5bdbaa56c4526ca8eb88f7307e8fb",
+    "bytes": 12185,
+    "source_lock_provenance_only": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/scripts/openharmony_7_0_release_source_lock.json"
+  },
+  "assets": [
+    {
+      "target": "foundation/multimedia/player_framework/services/etc/image/capsule.svg",
+      "before": null,
+      "sha256": "74a720bf8e59f118a93ce62b455bb55e2596bceb2c4fb308e5e798cadd7153a6",
+      "bytes": 1857,
+      "mode": "0644",
+      "role": "video capture indicator; legacy GN-required resource",
+      "source": {
+        "organization": "openharmony",
+        "repository": "global_system_resources",
+        "revision": "8cb84b3f3dd2142826e3f09cf2c171a421a06c14",
+        "path": "systemres/main/resources/base/media/ohos_ic_public_video.svg",
+        "url": "https://raw.githubusercontent.com/openharmony/global_system_resources/8cb84b3f3dd2142826e3f09cf2c171a421a06c14/systemres/main/resources/base/media/ohos_ic_public_video.svg",
+        "sha256": "74a720bf8e59f118a93ce62b455bb55e2596bceb2c4fb308e5e798cadd7153a6",
+        "bytes": 1857
+      },
+      "license": "LICENSES/global_system_resources.txt",
+      "transformation": "destination filename only; source bytes unchanged"
+    },
+    {
+      "target": "foundation/multimedia/player_framework/services/etc/image/capsule_stop.svg",
+      "before": null,
+      "sha256": "84442cf7f6519282820983306ad74ed7f3a03bceb70be97f735120d7f4e3bb76",
+      "bytes": 894,
+      "mode": "0644",
+      "role": "stop recording: white square in circle",
+      "source": {
+        "organization": "openharmony",
+        "repository": "applications_mms",
+        "revision": "26df98e3738f4219aa45efe6a3e7f6b1be55c051",
+        "path": "entry/src/main/resources/rawfile/icon/take_video_stop.svg",
+        "url": "https://raw.githubusercontent.com/openharmony/applications_mms/26df98e3738f4219aa45efe6a3e7f6b1be55c051/entry/src/main/resources/rawfile/icon/take_video_stop.svg",
+        "sha256": "84442cf7f6519282820983306ad74ed7f3a03bceb70be97f735120d7f4e3bb76",
+        "bytes": 894
+      },
+      "license": "LICENSES/applications_mms.txt",
+      "transformation": "destination filename only; source bytes unchanged"
+    },
+    {
+      "target": "foundation/multimedia/player_framework/services/etc/image/mic.svg",
+      "before": null,
+      "sha256": "68ba68db5fa4add018bf98de1a93101a5b565d6e7e2a8be2f0666352e9653d11",
+      "bytes": 1476,
+      "mode": "0644",
+      "role": "microphone enabled",
+      "source": {
+        "organization": "openharmony",
+        "repository": "global_system_resources",
+        "revision": "8cb84b3f3dd2142826e3f09cf2c171a421a06c14",
+        "path": "systemres/main/resources/base/media/ohos_ic_public_voice.svg",
+        "url": "https://raw.githubusercontent.com/openharmony/global_system_resources/8cb84b3f3dd2142826e3f09cf2c171a421a06c14/systemres/main/resources/base/media/ohos_ic_public_voice.svg",
+        "sha256": "68ba68db5fa4add018bf98de1a93101a5b565d6e7e2a8be2f0666352e9653d11",
+        "bytes": 1476
+      },
+      "license": "LICENSES/global_system_resources.txt",
+      "transformation": "destination filename only; source bytes unchanged"
+    },
+    {
+      "target": "foundation/multimedia/player_framework/services/etc/image/mic_off.svg",
+      "before": null,
+      "sha256": "0ca1b2edbde81755a124dc41d7207a82cfb320374b43cd81ac8d4245cbc56092",
+      "bytes": 2618,
+      "mode": "0644",
+      "role": "microphone disabled",
+      "source": {
+        "organization": "openharmony",
+        "repository": "global_system_resources",
+        "revision": "8cb84b3f3dd2142826e3f09cf2c171a421a06c14",
+        "path": "systemres/main/resources/base/media/ohos_ic_public_voice_off.svg",
+        "url": "https://raw.githubusercontent.com/openharmony/global_system_resources/8cb84b3f3dd2142826e3f09cf2c171a421a06c14/systemres/main/resources/base/media/ohos_ic_public_voice_off.svg",
+        "sha256": "0ca1b2edbde81755a124dc41d7207a82cfb320374b43cd81ac8d4245cbc56092",
+        "bytes": 2618
+      },
+      "license": "LICENSES/global_system_resources.txt",
+      "transformation": "destination filename only; source bytes unchanged"
+    },
+    {
+      "target": "foundation/multimedia/player_framework/services/etc/image/notification.png",
+      "before": null,
+      "sha256": "54287281f24db1144a494c39328bd13ac0eaf8d3dc07e388d07a960bfb67d2a7",
+      "bytes": 3864,
+      "mode": "0644",
+      "role": "active recording indicator: red dot in white circle",
+      "source": {
+        "organization": "openharmony",
+        "repository": "applications_sample_camera",
+        "revision": "dc0da04e26898223cc4a4c5421f99c2518f0b8c6",
+        "path": "cameraApp/cameraApp/src/main/resources/base/media/ic_camera_record.png",
+        "url": "https://raw.githubusercontent.com/openharmony/applications_sample_camera/dc0da04e26898223cc4a4c5421f99c2518f0b8c6/cameraApp/cameraApp/src/main/resources/base/media/ic_camera_record.png",
+        "sha256": "54287281f24db1144a494c39328bd13ac0eaf8d3dc07e388d07a960bfb67d2a7",
+        "bytes": 3864
+      },
+      "license": "LICENSES/applications_sample_camera.txt",
+      "transformation": "destination filename only; source bytes unchanged",
+      "png_ihdr": {
+        "width": 114,
+        "height": 114
+      }
+    },
+    {
+      "target": "foundation/multimedia/player_framework/services/etc/image/stop_dark.png",
+      "before": null,
+      "sha256": "6a5cf6983b2603f37ce95cd0fe5f39d0ec1f61e04d39f984290de0f447c978d3",
+      "bytes": 2795,
+      "mode": "0644",
+      "role": "legacy GN-required stop recording square; exact alias of stop.png",
+      "source": {
+        "organization": "openharmony",
+        "repository": "applications_sample_camera",
+        "revision": "dc0da04e26898223cc4a4c5421f99c2518f0b8c6",
+        "path": "cameraApp/cameraApp/src/main/resources/base/media/ic_camera_record_stop.png",
+        "url": "https://raw.githubusercontent.com/openharmony/applications_sample_camera/dc0da04e26898223cc4a4c5421f99c2518f0b8c6/cameraApp/cameraApp/src/main/resources/base/media/ic_camera_record_stop.png",
+        "sha256": "6a5cf6983b2603f37ce95cd0fe5f39d0ec1f61e04d39f984290de0f447c978d3",
+        "bytes": 2795
+      },
+      "license": "LICENSES/applications_sample_camera.txt",
+      "transformation": "destination filename only; source bytes unchanged",
+      "png_ihdr": {
+        "width": 114,
+        "height": 114
+      }
+    },
+    {
+      "target": "foundation/multimedia/player_framework/services/etc/image/stop.png",
+      "before": null,
+      "sha256": "6a5cf6983b2603f37ce95cd0fe5f39d0ec1f61e04d39f984290de0f447c978d3",
+      "bytes": 2795,
+      "mode": "0644",
+      "role": "stop recording square",
+      "source": {
+        "organization": "openharmony",
+        "repository": "applications_sample_camera",
+        "revision": "dc0da04e26898223cc4a4c5421f99c2518f0b8c6",
+        "path": "cameraApp/cameraApp/src/main/resources/base/media/ic_camera_record_stop.png",
+        "url": "https://raw.githubusercontent.com/openharmony/applications_sample_camera/dc0da04e26898223cc4a4c5421f99c2518f0b8c6/cameraApp/cameraApp/src/main/resources/base/media/ic_camera_record_stop.png",
+        "sha256": "6a5cf6983b2603f37ce95cd0fe5f39d0ec1f61e04d39f984290de0f447c978d3",
+        "bytes": 2795
+      },
+      "license": "LICENSES/applications_sample_camera.txt",
+      "transformation": "destination filename only; source bytes unchanged",
+      "png_ihdr": {
+        "width": 114,
+        "height": 114
+      }
+    },
+    {
+      "target": "foundation/multimedia/player_framework/services/etc/image/capsule_stop_live2.svg",
+      "before": null,
+      "sha256": "84442cf7f6519282820983306ad74ed7f3a03bceb70be97f735120d7f4e3bb76",
+      "bytes": 894,
+      "mode": "0644",
+      "role": "stop recording; exact alias of capsule_stop.svg for live2 style",
+      "source": {
+        "organization": "openharmony",
+        "repository": "applications_mms",
+        "revision": "26df98e3738f4219aa45efe6a3e7f6b1be55c051",
+        "path": "entry/src/main/resources/rawfile/icon/take_video_stop.svg",
+        "url": "https://raw.githubusercontent.com/openharmony/applications_mms/26df98e3738f4219aa45efe6a3e7f6b1be55c051/entry/src/main/resources/rawfile/icon/take_video_stop.svg",
+        "sha256": "84442cf7f6519282820983306ad74ed7f3a03bceb70be97f735120d7f4e3bb76",
+        "bytes": 894
+      },
+      "license": "LICENSES/applications_mms.txt",
+      "transformation": "destination filename only; source bytes unchanged"
+    },
+    {
+      "target": "foundation/multimedia/player_framework/services/etc/image/light.svg",
+      "before": null,
+      "sha256": "84442cf7f6519282820983306ad74ed7f3a03bceb70be97f735120d7f4e3bb76",
+      "bytes": 894,
+      "mode": "0644",
+      "role": "server BUTTON_NAME_STOP action icon; exact stop recording square",
+      "source": {
+        "organization": "openharmony",
+        "repository": "applications_mms",
+        "revision": "26df98e3738f4219aa45efe6a3e7f6b1be55c051",
+        "path": "entry/src/main/resources/rawfile/icon/take_video_stop.svg",
+        "url": "https://raw.githubusercontent.com/openharmony/applications_mms/26df98e3738f4219aa45efe6a3e7f6b1be55c051/entry/src/main/resources/rawfile/icon/take_video_stop.svg",
+        "sha256": "84442cf7f6519282820983306ad74ed7f3a03bceb70be97f735120d7f4e3bb76",
+        "bytes": 894
+      },
+      "license": "LICENSES/applications_mms.txt",
+      "transformation": "destination filename only; source bytes unchanged"
+    },
+    {
+      "target": "foundation/multimedia/player_framework/services/etc/image/pause.svg",
+      "before": null,
+      "sha256": "0247d52d26968d954d4ce68920f73697655adbdab1e07a471134f0fb3ab80b92",
+      "bytes": 907,
+      "mode": "0644",
+      "role": "pause recording",
+      "source": {
+        "organization": "openharmony",
+        "repository": "global_system_resources",
+        "revision": "8cb84b3f3dd2142826e3f09cf2c171a421a06c14",
+        "path": "systemres/main/resources/base/media/ohos_ic_public_pause.svg",
+        "url": "https://raw.githubusercontent.com/openharmony/global_system_resources/8cb84b3f3dd2142826e3f09cf2c171a421a06c14/systemres/main/resources/base/media/ohos_ic_public_pause.svg",
+        "sha256": "0247d52d26968d954d4ce68920f73697655adbdab1e07a471134f0fb3ab80b92",
+        "bytes": 907
+      },
+      "license": "LICENSES/global_system_resources.txt",
+      "transformation": "destination filename only; source bytes unchanged"
+    },
+    {
+      "target": "foundation/multimedia/player_framework/services/etc/image/play.svg",
+      "before": null,
+      "sha256": "ae755a3e3a3674538cdfe8b895a6d82e1a9f26ad2de44b6a7cbd6beecef32a1d",
+      "bytes": 1140,
+      "mode": "0644",
+      "role": "resume recording",
+      "source": {
+        "organization": "openharmony",
+        "repository": "global_system_resources",
+        "revision": "8cb84b3f3dd2142826e3f09cf2c171a421a06c14",
+        "path": "systemres/main/resources/base/media/ohos_ic_public_play.svg",
+        "url": "https://raw.githubusercontent.com/openharmony/global_system_resources/8cb84b3f3dd2142826e3f09cf2c171a421a06c14/systemres/main/resources/base/media/ohos_ic_public_play.svg",
+        "sha256": "ae755a3e3a3674538cdfe8b895a6d82e1a9f26ad2de44b6a7cbd6beecef32a1d",
+        "bytes": 1140
+      },
+      "license": "LICENSES/global_system_resources.txt",
+      "transformation": "destination filename only; source bytes unchanged"
+    }
+  ],
+  "runtime_validated": false,
+  "first_artifact_behavior_gate_passed": false
+}

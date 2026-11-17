@@ -1,0 +1,75 @@
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
+@@ -305,8 +305,10 @@
+     uint32_t parcelNumber = RS_PROFILER_ON_REMOTE_REQUEST(this, code, data, reply, option);
+     AshmemFdContainer::SetIsUnmarshalThread(false);
+     pid_t callingPid = GetCallingPid();
+-    if (code == static_cast<uint32_t>(RSIClientToRenderConnectionInterfaceCode::COMMIT_TRANSACTION) &&
+-        callingPid == 0 && (option.GetFlags() & MessageOption::TF_ASYNC) != 0) {
++    const bool isAsyncZeroPidCommit =
++        code == static_cast<uint32_t>(RSIClientToRenderConnectionInterfaceCode::COMMIT_TRANSACTION) &&
++        callingPid == 0 && (option.GetFlags() & MessageOption::TF_ASYNC) != 0;
++    if (isAsyncZeroPidCommit) {
+         // Linux keeps the asynchronous wire PID zero. Only the kernel sender
+         // info may supply the real identity; never trust a Parcel/command PID.
+         callingPid = IPCSkeleton::GetCallingRealPid();
+@@ -314,6 +316,7 @@
+             return ERR_INVALID_STATE;
+         }
+     }
++    const RSScopedAsyncCallerPid asyncCaller(isAsyncZeroPidCommit ? callingPid : 0);
+     RSMarshallingHelper::SetCallingPid(callingPid);
+     auto tid = gettid();
+     {
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.h
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.h
+@@ -28,6 +28,37 @@
+ 
+ namespace OHOS {
+ namespace Rosen {
++// Internal request-scoped identity; not a Parcel field or public IPC API.
++class RSScopedAsyncCallerPid final {
++public:
++    explicit RSScopedAsyncCallerPid(pid_t callingPid) : previous_(Current())
++    {
++        Current() = callingPid;
++    }
++
++    ~RSScopedAsyncCallerPid()
++    {
++        Current() = previous_;
++    }
++
++    RSScopedAsyncCallerPid(const RSScopedAsyncCallerPid&) = delete;
++    RSScopedAsyncCallerPid& operator=(const RSScopedAsyncCallerPid&) = delete;
++
++    static pid_t Get()
++    {
++        return Current();
++    }
++
++private:
++    static pid_t& Current()
++    {
++        static thread_local pid_t callingPid = 0;
++        return callingPid;
++    }
++
++    const pid_t previous_;
++};
++
+ class RSClientToRenderConnectionStub : public IRemoteStub<RSIClientToRenderConnection> {
+ public:
+     RSClientToRenderConnectionStub() = default;
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/rs_client_to_render_connection.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/rs_client_to_render_connection.cpp
+@@ -278,6 +278,9 @@
+         return ERR_INVALID_VALUE;
+     }
+     pid_t callingPid = GetCallingPid();
++    if (callingPid == 0 && RSScopedAsyncCallerPid::Get() > 0) {
++        callingPid = RSScopedAsyncCallerPid::Get();
++    }
+     bool isTokenTypeValid = true;
+     bool isNonSystemAppCalling = false;
+     RSInterfaceCodeAccessVerifierBase::GetAccessType(isTokenTypeValid, isNonSystemAppCalling);

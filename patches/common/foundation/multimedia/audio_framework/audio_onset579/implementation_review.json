@@ -1,0 +1,53 @@
+{
+  "actual_export": {
+    "bytes": 268160,
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r68-readonly-sdk-kernel-provider-source579-01/SOURCE.json",
+    "sha256": "d7528b1571ba956eecc4305b8a480b0f3275c12353c3b06997d306c8df1a8ef3"
+  },
+  "files": {
+    "kernel/linux/linux-6.6/arch/arm/Kconfig": {
+      "bytes": 60795,
+      "sha256": "4793a64bb6fd5fcae3bf18cfa2a1bc733cee6773379c7aea3985f9f631201e1c"
+    },
+    "kernel/linux/linux-6.6/arch/arm/vdso/vgettimeofday.c": {
+      "bytes": 929,
+      "sha256": "e5bf23424a0c328bea5bc4027f174b8339fb0f5787e7fa8a395d2a571203b513"
+    },
+    "kernel/linux/linux-6.6/fs/proc/namespaces.c": {
+      "bytes": 4323,
+      "sha256": "cc38b0cd358741199f25ecb99487caf46e3794bc8d444dd777791b7c1d49fb45"
+    },
+    "kernel/linux/linux-6.6/include/linux/time_namespace.h": {
+      "bytes": 4068,
+      "sha256": "d99650e247b1d4faa704161063a1d7a94e8f9ab56cd28baff2cb4d1095cde81f"
+    },
+    "kernel/linux/linux-6.6/init/Kconfig": {
+      "bytes": 67024,
+      "sha256": "545e3c8fcb6f44dda9f0c91d1dd1705c6b652578646f824745731a0cd2d07e31"
+    },
+    "kernel/linux/linux-6.6/kernel/time/posix-timers.c": {
+      "bytes": 42908,
+      "sha256": "6918cac7acc14895b03d371b0371b9e25ec5b8239aa11fd0d184acc6d2a97955"
+    },
+    "kernel/linux/linux-6.6/kernel/time/timekeeping.c": {
+      "bytes": 72851,
+      "sha256": "d56f6561a288a4e8d87162e81038f82008f0168adbd3d6714b02e154f5074e08"
+    },
+    "kernel/linux/linux-6.6/lib/vdso/Kconfig": {
+      "bytes": 674,
+      "sha256": "cbf9681abf0e9e41c7ae414cfc7afab0446236e6a09377ca8ced849190e47135"
+    },
+    "kernel/linux/linux-6.6/lib/vdso/gettimeofday.c": {
+      "bytes": 10760,
+      "sha256": "63881cbf52d1f5d9cb3f5a699720202fac6081827b8b446e138a94dcfa430481"
+    }
+  },
+  "generated_config_proven": false,
+  "head": "14c77f1541a53e814d89ad6dea5f7f211f9895a6",
+  "held_boot_proven": false,
+  "package_kernel_correspondence_proven": false,
+  "project": "kernel/linux/linux-6.6",
+  "runtime_pass": false,
+  "schema": "audio579-fixed-clock-implementation-review/v1",
+  "source_implementation_review_only": true
+}
