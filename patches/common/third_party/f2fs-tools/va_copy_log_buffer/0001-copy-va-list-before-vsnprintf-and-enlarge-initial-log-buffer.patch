@@ -1,0 +1,25 @@
+diff --git a/third_party/f2fs-tools/lib/libf2fs_log.c b/third_party/f2fs-tools/lib/libf2fs_log.c
+index c7b448e..5ca9e8b 100644
+--- a/third_party/f2fs-tools/lib/libf2fs_log.c
++++ b/third_party/f2fs-tools/lib/libf2fs_log.c
+@@ -29,7 +29,7 @@
+ #define LOG_SLOG_FILENAME_DIFFERENCE        2
+ #define LOG_SLOG_INIT_MEM_BUF_ELEMENT_NUM   1
+ #define LOG_SLOG_INIT_MEM_BUF_SIZE          64
+-#define LOG_BUF_INITIAL_SIZE                64
++#define LOG_BUF_INITIAL_SIZE                2048
+ #define LOG_TM_STARTING_YEAR                1900
+ #define LOG_KMSG_NODE_DEV                   ((1 << 8) | 11)
+ #define LOG_BUF_SIZE_PROTECT_THRESHOLD      2048 /* maximum buffer size allowed */
+@@ -458,7 +458,10 @@ int SlogInitBuffer(char **buffer, int *bufferSize, const char *fmt, va_list args
+             return LOG_ERR;
+         }
+ 
+-        ret = vsnprintf_s(buf, size, size - 1, fmt, args);
++        va_list copy_args;
++        va_copy(copy_args, args);
++        ret = vsnprintf_s(buf, size, size - 1, fmt, copy_args);
++        va_end(copy_args);
+         /* when buf is truncated but return -1 */
+         if (ret < 0 && strlen(buf) == size - 1) {
+             ret = size - 1;

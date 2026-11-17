@@ -1,0 +1,19 @@
+diff --git a/device/qemu/common/virt_full/hardware/display/src/display_gralloc/hi_gbm_internal.h b/device/qemu/common/virt_full/hardware/display/src/display_gralloc/hi_gbm_internal.h
+index 7bdcd3e..f8e05d2 100644
+--- a/device/qemu/common/virt_full/hardware/display/src/display_gralloc/hi_gbm_internal.h
++++ b/device/qemu/common/virt_full/hardware/display/src/display_gralloc/hi_gbm_internal.h
+@@ -21,7 +21,13 @@ namespace HDI {
+ namespace DISPLAY {
+ #define DIV_ROUND_UP(n, d) (((n) + (d)-1) / (d))
+ #define ALIGN_UP(x, a) ((((x) + ((a)-1)) / (a)) * (a))
+-const uint32_t HEIGHT_ALIGN = 2U;
++const uint32_t HEIGHT_ALIGN = 4U;
++#if defined(__has_attribute) && __has_attribute(retain)
++__attribute__((used, retain))
++#elif defined(__GNUC__)
++__attribute__((used))
++#endif
++static const char OHOS_QEMU_GBM_HEIGHT_ALIGN_MARKER[] = "OHOS_QEMU_GBM_HEIGHT_ALIGN_4_V1";
+ const uint32_t WIDTH_ALIGN = 8U;
+ 
+ const uint32_t MAX_PLANES = 3U;

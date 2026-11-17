@@ -1,0 +1,123 @@
+diff --git a/src/gallium/winsys/sw/kms-dri/kms_dri_sw_winsys.c b/src/gallium/winsys/sw/kms-dri/kms_dri_sw_winsys.c
+index 38861b3..f746fff 100644
+--- a/src/gallium/winsys/sw/kms-dri/kms_dri_sw_winsys.c
++++ b/src/gallium/winsys/sw/kms-dri/kms_dri_sw_winsys.c
+@@ -82,6 +82,8 @@ struct kms_sw_displaytarget
+    uint32_t handle;
+    void *mapped;
+    void *ro_mapped;
++   size_t mapped_size;
++   size_t ro_mapped_size;
+ 
+    int ref_count;
+    int map_count;
+@@ -243,6 +245,18 @@ kms_sw_displaytarget_destroy(struct sw_winsys *ws,
+ 
+    if (kms_sw_dt->map_count > 0) {
+       DEBUG_PRINT("KMS-DEBUG: leaked map buffer %u\n", kms_sw_dt->handle);
++      if (kms_sw_dt->mapped != MAP_FAILED) {
++         munmap(kms_sw_dt->mapped,
++                kms_sw_dt->mapped_size ? kms_sw_dt->mapped_size : kms_sw_dt->size);
++         kms_sw_dt->mapped = MAP_FAILED;
++         kms_sw_dt->mapped_size = 0;
++      }
++      if (kms_sw_dt->ro_mapped != MAP_FAILED) {
++         munmap(kms_sw_dt->ro_mapped,
++                kms_sw_dt->ro_mapped_size ? kms_sw_dt->ro_mapped_size : kms_sw_dt->size);
++         kms_sw_dt->ro_mapped = MAP_FAILED;
++         kms_sw_dt->ro_mapped_size = 0;
++      }
+    }
+ 
+    memset(&destroy_req, 0, sizeof destroy_req);
+@@ -264,6 +278,29 @@ kms_sw_displaytarget_destroy(struct sw_winsys *ws,
+    mtx_unlock(&kms_sw->bo_lock);
+ }
+ 
++#ifndef MAP_ANONYMOUS
++#define MAP_ANONYMOUS MAP_ANON
++#endif
++
++static size_t
++kms_sw_compute_safe_map_size(const struct kms_sw_displaytarget *kms_sw_dt)
++{
++   long sc_page = sysconf(_SC_PAGESIZE);
++   size_t page_size = (sc_page > 0) ? (size_t)sc_page : 4096u;
++   size_t min_bytes = (size_t)kms_sw_dt->size;
++   const struct kms_sw_plane *p;
++
++   LIST_FOR_EACH_ENTRY(p, &kms_sw_dt->planes, link) {
++      size_t aligned_h = ((size_t)p->height + 3u) & ~(size_t)3u;
++      size_t plane_end = (size_t)p->offset + aligned_h * (size_t)p->stride + page_size;
++      if (plane_end > min_bytes)
++         min_bytes = plane_end;
++   }
++   if (min_bytes == (size_t)kms_sw_dt->size)
++      min_bytes += page_size;
++   return (min_bytes + page_size - 1u) & ~(page_size - 1u);
++}
++
+ static void *
+ kms_sw_displaytarget_map(struct sw_winsys *ws,
+                          struct sw_displaytarget *dt,
+@@ -284,12 +321,37 @@ kms_sw_displaytarget_map(struct sw_winsys *ws,
+ 
+    prot = (flags == PIPE_MAP_READ) ? PROT_READ : (PROT_READ | PROT_WRITE);
+    void **ptr = (flags == PIPE_MAP_READ) ? &kms_sw_dt->ro_mapped : &kms_sw_dt->mapped;
++   size_t *mapped_sz_ptr =
++      (flags == PIPE_MAP_READ) ? &kms_sw_dt->ro_mapped_size : &kms_sw_dt->mapped_size;
+    if (*ptr == MAP_FAILED) {
+-      void *tmp = mmap(0, kms_sw_dt->size, prot, MAP_SHARED,
++      long sc_page = sysconf(_SC_PAGESIZE);
++      size_t page_size = (sc_page > 0) ? (size_t)sc_page : 4096u;
++      size_t bo_size = (size_t)kms_sw_dt->size;
++      size_t safe_size = kms_sw_compute_safe_map_size(kms_sw_dt);
++      void *tmp = MAP_FAILED;
++
++      if (bo_size > 0 && (bo_size % page_size) == 0 && safe_size > bo_size) {
++         void *reserve = mmap(0, safe_size, prot, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
++         if (reserve != MAP_FAILED) {
++            tmp = mmap(reserve, bo_size, prot, MAP_SHARED | MAP_FIXED,
+                        kms_sw->fd, map_req.offset);
+-      if (tmp == MAP_FAILED)
+-         goto fail_locked;
+-      *ptr = tmp;
++            if (tmp == MAP_FAILED) {
++               munmap(reserve, safe_size);
++            } else {
++               (void)getenv("KMS_QEMU_GUARD_MAP_V1");
++               *ptr = reserve;
++               *mapped_sz_ptr = safe_size;
++            }
++         }
++      }
++      if (*ptr == MAP_FAILED) {
++         tmp = mmap(0, bo_size, prot, MAP_SHARED,
++                    kms_sw->fd, map_req.offset);
++         if (tmp == MAP_FAILED)
++            goto fail_locked;
++         *ptr = tmp;
++         *mapped_sz_ptr = bo_size;
++      }
+    }
+ 
+    DEBUG_PRINT("KMS-DEBUG: mapped buffer %u (size %u) at %p\n",
+@@ -409,12 +471,16 @@ kms_sw_displaytarget_unmap(struct sw_winsys *ws,
+    DEBUG_PRINT("KMS-DEBUG: unmapped buffer %u (was %p)\n", kms_sw_dt->handle, kms_sw_dt->ro_mapped);
+ 
+    if (kms_sw_dt->mapped != MAP_FAILED) {
+-      munmap(kms_sw_dt->mapped, kms_sw_dt->size);
++      munmap(kms_sw_dt->mapped,
++             kms_sw_dt->mapped_size ? kms_sw_dt->mapped_size : kms_sw_dt->size);
+       kms_sw_dt->mapped = MAP_FAILED;
++      kms_sw_dt->mapped_size = 0;
+    }
+    if (kms_sw_dt->ro_mapped != MAP_FAILED) {
+-      munmap(kms_sw_dt->ro_mapped, kms_sw_dt->size);
++      munmap(kms_sw_dt->ro_mapped,
++             kms_sw_dt->ro_mapped_size ? kms_sw_dt->ro_mapped_size : kms_sw_dt->size);
+       kms_sw_dt->ro_mapped = MAP_FAILED;
++      kms_sw_dt->ro_mapped_size = 0;
+    }
+    mtx_unlock(&kms_sw_dt->map_lock);
+ }

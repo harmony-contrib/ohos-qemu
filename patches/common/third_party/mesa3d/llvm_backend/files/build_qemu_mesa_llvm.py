@@ -286,11 +286,18 @@ def build(out_dir: Path) -> None:
         "apply_mesa_build_id.py",
         "0001-bound-ELF-note-payloads-before-reading-or-advancing.patch",
     )}
+    bounds_and_guard = here / "qemu_bounds_and_guard"
+    bounds_and_guard_inputs = {name: digest(bounds_and_guard / name) for name in (
+        "apply_mesa_bounds_and_guard.py",
+        "0001-clip-llvmpipe-partial-4x4-edge-stamps.patch",
+        "0002-reserve-kms-dumb-bo-tail-guard-vma.patch",
+    )}
     cache_identity = {
         "root": str(root), "product": product, "builder": digest(Path(__file__)),
         "base_builder": base_sha, "mapping": digest(mapping),
         "llvm_manifest": digest(dependency / "manifest.json"),
         "build_id_backport": build_id_inputs,
+        "bounds_and_guard_backport": bounds_and_guard_inputs,
     }
     cache_key = hashlib.sha256(json.dumps(cache_identity, sort_keys=True).encode()).hexdigest()
     mesa_repo = root / "third_party/mesa3d"
@@ -326,8 +333,12 @@ def build(out_dir: Path) -> None:
             raise ValueError("unexpected Mesa gallivm native disassembler initialization")
         lp_misc.write_text(lp_misc_text.replace(disasm_call, guarded_disasm_call, 1))
     patch_qemu_mesa_runtime_fixes(source)
+    subprocess.run([sys.executable, str(bounds_and_guard / "apply_mesa_bounds_and_guard.py"),
+                    "--source-root", str(source), "--rewind"], check=True)
     subprocess.run([sys.executable, str(mapping), "--source-root", str(source)], check=True)
     subprocess.run([sys.executable, str(build_id / "apply_mesa_build_id.py"),
+                    "--source-root", str(source)], check=True)
+    subprocess.run([sys.executable, str(bounds_and_guard / "apply_mesa_bounds_and_guard.py"),
                     "--source-root", str(source)], check=True)
     cross = work / "cross.txt"
     sysroot = out_dir / "obj/third_party/musl"
