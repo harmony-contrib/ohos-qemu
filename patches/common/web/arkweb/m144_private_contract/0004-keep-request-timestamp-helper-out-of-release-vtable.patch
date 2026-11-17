@@ -1,0 +1,13 @@
+diff --git a/src/arkweb/chromium_ext/media/base/ohos/buffer_request_config_adapter_impl.h b/src/arkweb/chromium_ext/media/base/ohos/buffer_request_config_adapter_impl.h
+--- a/src/arkweb/chromium_ext/media/base/ohos/buffer_request_config_adapter_impl.h
++++ b/src/arkweb/chromium_ext/media/base/ohos/buffer_request_config_adapter_impl.h
+@@ -29,7 +29,8 @@
+ 
+   TransformTypeAdapter GetTransformType() override;
+ 
+-  int64_t GetTimestamp() override;
++  // The release request interface has no timestamp slot; flush carries PTS.
++  int64_t GetTimestamp();
+ 
+   void SetWidth(int32_t);
+ 

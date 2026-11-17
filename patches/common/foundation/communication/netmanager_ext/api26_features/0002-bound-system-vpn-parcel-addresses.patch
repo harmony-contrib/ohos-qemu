@@ -1,0 +1,39 @@
+diff --git a/foundation/communication/netmanager_ext/frameworks/native/netvpnclient/src/sysvpn_config.cpp b/foundation/communication/netmanager_ext/frameworks/native/netvpnclient/src/sysvpn_config.cpp
+--- a/foundation/communication/netmanager_ext/frameworks/native/netvpnclient/src/sysvpn_config.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/native/netvpnclient/src/sysvpn_config.cpp
+@@ -23,5 +23,6 @@
+ namespace NetManagerStandard {
+ static constexpr const uint8_t MAX_REMOTE_ADDR_SIZE = 2;
++static constexpr const uint32_t MAX_LOCAL_ADDR_SIZE = 2000; // Match VpnConfig's address limit.
+ 
+ bool SysVpnConfig::Marshalling(Parcel &parcel) const
+ {
+@@ -44,6 +45,9 @@
+         allOK = allOK && parcel.WriteUint8(byte);
+     }
+ 
++    if (localAddresses_.size() > MAX_LOCAL_ADDR_SIZE) {
++        return false;
++    }
+     allOK = allOK && parcel.WriteInt32(static_cast<int32_t>(localAddresses_.size()));
+     for (auto addr : localAddresses_) {
+         // LCOV_EXCL_START
+@@ -102,6 +106,6 @@
+     uint8_t data = 0;
+     allOK = allOK && parcel.ReadInt32(pkcs12FileDataSize);
+-    if (pkcs12FileDataSize > MAX_LEN_CERTIFICATE_CHAIN) {
++    if (!allOK || pkcs12FileDataSize < 0 || pkcs12FileDataSize > MAX_LEN_CERTIFICATE_CHAIN) {
+         NETMGR_EXT_LOG_E("pkcs12FileDataSize is too large");
+         return false;
+     }
+@@ -111,9 +115,9 @@
+     }
+ 
+     int32_t localAddrSize = 0;
+     allOK = allOK && parcel.ReadInt32(localAddrSize);
+     // LCOV_EXCL_START
+-    if (localAddrSize > MAX_LOCAL_ADDR_SIZE) {
++    if (!allOK || localAddrSize < 0 || localAddrSize > static_cast<int32_t>(MAX_LOCAL_ADDR_SIZE)) {
+         NETMGR_EXT_LOG_E("localAddrSize is too large");
+         return false;
+     }

@@ -1,0 +1,20 @@
+diff --git a/foundation/graphic/graphic_2d/rosen/modules/render_service/composer/composer_service/external_depend/engine/rs_base_render_engine.cpp b/foundation/graphic/graphic_2d/rosen/modules/render_service/composer/composer_service/external_depend/engine/rs_base_render_engine.cpp
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/composer/composer_service/external_depend/engine/rs_base_render_engine.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/composer/composer_service/external_depend/engine/rs_base_render_engine.cpp
+@@ -769,5 +769,16 @@ std::shared_ptr<Drawing::Image> RSBaseRenderEngine::CreateImageFromBuffer(
+ 
+ void RSBaseRenderEngine::DrawImage(RSPaintFilterCanvas& canvas, BufferDrawParam& params)
+ {
++    // QEMU's OHOS EGL dma-buf importer does not support NV12/NV21. Camera and
++    // video surfaces are valid CPU-accessible YUV buffers, so convert only
++    // these layers using the existing RS YUV-to-RGBA path. Keep RGB layers on
++    // the GPU path and do not change the public SurfaceBuffer format.
++    if (params.buffer != nullptr) {
++        const auto format = params.buffer->GetFormat();
++        if (format == GRAPHIC_PIXEL_FMT_YCRCB_420_SP || format == GRAPHIC_PIXEL_FMT_YCBCR_420_SP) {
++            DrawBuffer(canvas, params);
++            return;
++        }
++    }
+     RS_TRACE_NAME_FMT("RSBaseRenderEngine::DrawImage(GPU) targetColorGamut=%d", params.targetColorGamut);
+     LayerComposeCollection::GetInstance().UpdateDrawImageNumberForDFX();

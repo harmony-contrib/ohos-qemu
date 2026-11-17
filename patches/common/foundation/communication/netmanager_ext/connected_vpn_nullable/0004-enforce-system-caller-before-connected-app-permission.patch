@@ -1,0 +1,16 @@
+diff --git a/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp b/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
+--- a/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
++++ b/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
+@@ -1641,9 +1641,9 @@
+ int32_t NetworkVpnService::GetConnectedVpnAppInfo(std::vector<std::string> &bundleNameList)
+ {
+     bundleNameList.clear();
+-    std::string vpnBundleName = GetBundleName();
+-    if (!CheckVpnPermission(vpnBundleName)) {
+-        return NETMANAGER_EXT_ERR_PERMISSION_DENIED;
++    int32_t checkPermission = CheckIpcPermission(std::string(Permission::MANAGE_VPN));
++    if (checkPermission != NETMANAGER_SUCCESS) {
++        return checkPermission;
+     }
+     int32_t userId = AppExecFwk::Constants::UNSPECIFIED_USERID;
+     std::vector<int32_t> activeUserIds;

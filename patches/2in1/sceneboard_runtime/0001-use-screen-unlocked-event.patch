@@ -1,0 +1,12 @@
+diff --git a/staticcommon/screenlockcommon/src/main/ets/services/ScreenLockUnLockService.ets b/staticcommon/screenlockcommon/src/main/ets/services/ScreenLockUnLockService.ets
+index c35cd4e..ff17b9a 100644
+--- a/staticcommon/screenlockcommon/src/main/ets/services/ScreenLockUnLockService.ets
++++ b/staticcommon/screenlockcommon/src/main/ets/services/ScreenLockUnLockService.ets
+@@ -68,7 +68,7 @@ const SCREEN_LOCK_BOOT: string = 'ScreenLock_VoteDevice_Boot_Completed';
+  */
+ enum EventName {
+   LOCK_SCREEN = 'common.event.LOCK_SCREEN',
+-  UNLOCK_SCREEN = 'common.event.UNLOCK_SCREEN',
++  UNLOCK_SCREEN = 'usual.event.SCREEN_UNLOCKED',
+   SCREEN_LOCK_BOOT_COMPLETED = 'common.event.SCREENLOCK_BOOT_COMPLETED',
+ }

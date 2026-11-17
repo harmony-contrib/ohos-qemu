@@ -1,0 +1,276 @@
+diff --git a/third_party/libjpeg-turbo/jconfig.h b/third_party/libjpeg-turbo/jconfig.h
+--- a/third_party/libjpeg-turbo/jconfig.h
++++ b/third_party/libjpeg-turbo/jconfig.h
+@@ -1,56 +1,56 @@
+-/*
+- * Copyright (c) 2023 Huawei Device Co., Ltd.
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#ifndef THIRD_PARTY_LIBJPEG_TURBO_JCONFIG_H
+-#define THIRD_PARTY_LIBJPEG_TURBO_JCONFIG_H
+-
+-/* Version ID for the JPEG library.
+- * Might be useful for tests like "#if JPEG_LIB_VERSION >= 60".
+- */
+-#define JPEG_LIB_VERSION  62
+-
+-/* libjpeg-turbo version */
+-#define LIBJPEG_TURBO_VERSION  2.1.4
+-
+-/* libjpeg-turbo version in integer form */
+-#define LIBJPEG_TURBO_VERSION_NUMBER  2001004
+-
+-/* Support arithmetic encoding */
+-/* #undef C_ARITH_CODING_SUPPORTED */
+-
+-/* Support arithmetic decoding */
+-/* #undef D_ARITH_CODING_SUPPORTED */
+-
+-/* Support in-memory source/destination managers */
+-#define MEM_SRCDST_SUPPORTED 1
+-
+-/* Use accelerated SIMD routines. */
+-#define WITH_SIMD 1
+-
+-/*
+- * Define BITS_IN_JSAMPLE as either
+- *   8   for 8-bit sample values (the usual setting)
+- *   12  for 12-bit sample values
+- * Only 8 and 12 are legal data precisions for lossy JPEG according to the
+- * JPEG standard, and the IJG code does not support anything else!
+- * We do not support run-time selection of data precision, sorry.
+- */
+-
+-#define BITS_IN_JSAMPLE  8      /* use 8 or 12 */
+-
+-/* Define if your (broken) compiler shifts signed values as if they were
+-   unsigned. */
+-/* #undef RIGHT_SHIFT_IS_UNSIGNED */
+-#endif
+\ No newline at end of file
++/*
++ * Copyright (c) 2023 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef THIRD_PARTY_LIBJPEG_TURBO_JCONFIG_H
++#define THIRD_PARTY_LIBJPEG_TURBO_JCONFIG_H
++
++/* Version ID for the JPEG library.
++ * Might be useful for tests like "#if JPEG_LIB_VERSION >= 60".
++ */
++#define JPEG_LIB_VERSION  62
++
++/* libjpeg-turbo version */
++#define LIBJPEG_TURBO_VERSION  3.1.0
++
++/* libjpeg-turbo version in integer form */
++#define LIBJPEG_TURBO_VERSION_NUMBER  3001000
++
++/* Support arithmetic encoding */
++/* #undef C_ARITH_CODING_SUPPORTED */
++
++/* Support arithmetic decoding */
++/* #undef D_ARITH_CODING_SUPPORTED */
++
++/* Support in-memory source/destination managers */
++#define MEM_SRCDST_SUPPORTED 1
++
++/* Use accelerated SIMD routines. */
++#define WITH_SIMD 1
++
++/*
++ * Define BITS_IN_JSAMPLE as either
++ *   8   for 8-bit sample values (the usual setting)
++ *   12  for 12-bit sample values
++ * Only 8 and 12 are legal data precisions for lossy JPEG according to the
++ * JPEG standard, and the IJG code does not support anything else!
++ * We do not support run-time selection of data precision, sorry.
++ */
++
++#define BITS_IN_JSAMPLE  8      /* use 8 or 12 */
++
++/* Define if your (broken) compiler shifts signed values as if they were
++   unsigned. */
++/* #undef RIGHT_SHIFT_IS_UNSIGNED */
++#endif
+\ No newline at end of file
+diff --git a/third_party/libjpeg-turbo/jconfigint.h b/third_party/libjpeg-turbo/jconfigint.h
+--- a/third_party/libjpeg-turbo/jconfigint.h
++++ b/third_party/libjpeg-turbo/jconfigint.h
+@@ -1,75 +1,79 @@
+-/*
+- * Copyright (c) 2023 Huawei Device Co., Ltd.
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#ifndef THIRD_PARTY_LIBJPEG_TURBO_JCONFIGINT_H
+-#define THIRD_PARTY_LIBJPEG_TURBO_JCONFIGINT_H
+-
+-
+-/* libjpeg-turbo build number */
+-#define BUILD  "20230329"
+-
+-/* Compiler's inline keyword */
+-#undef inline
+-
+-/* How to obtain function inlining. */
+-#ifdef _MSC_VER
+-#define INLINE __forceinline
+-#else
+-#define INLINE  __inline__ __attribute__((always_inline))
+-#endif
+-
+-/* How to obtain thread-local storage */
+-#define THREAD_LOCAL  
+-
+-/* Define to the full name of this package. */
+-#define PACKAGE_NAME  "libjpeg-turbo"
+-
+-/* Version number of package */
+-#define VERSION  "2.1.4"
+-
+-/* The size of `size_t', as computed by sizeof. */
+-#ifdef __SIZEOF_SIZE_T__
+-#define SIZEOF_SIZE_T __SIZEOF_SIZE_T__
+-#elif __WORDSIZE==64 || defined(_WIN64)
+-#define SIZEOF_SIZE_T 8
+-#else
+-#define SIZEOF_SIZE_T 4
+-#endif
+-
+-/* Define if your compiler has __builtin_ctzl() and sizeof(unsigned long) == sizeof(size_t). */
+-#define HAVE_BUILTIN_CTZL
+-
+-/* Define to 1 if you have the <intrin.h> header file. */
+-/* #undef HAVE_INTRIN_H */
+-
+-#if defined(_MSC_VER) && defined(HAVE_INTRIN_H)
+-#if (SIZEOF_SIZE_T == 8)
+-#define HAVE_BITSCANFORWARD64
+-#elif (SIZEOF_SIZE_T == 4)
+-#define HAVE_BITSCANFORWARD
+-#endif
+-#endif
+-
+-#if defined(__has_attribute)
+-#if __has_attribute(fallthrough)
+-#define FALLTHROUGH  __attribute__((fallthrough));
+-#else
+-#define FALLTHROUGH
+-#endif
+-#else
+-#define FALLTHROUGH
+-#endif
+-
+-#endif
++/*
++ * Copyright (c) 2023 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef THIRD_PARTY_LIBJPEG_TURBO_JCONFIGINT_H
++#define THIRD_PARTY_LIBJPEG_TURBO_JCONFIGINT_H
++
++
++/* libjpeg-turbo build number */
++#define BUILD  "20230329"
++
++/* Compiler's inline keyword */
++#undef inline
++
++/* How to obtain function inlining. */
++#ifdef _MSC_VER
++#define INLINE __forceinline
++#else
++#define INLINE  __inline__ __attribute__((always_inline))
++#endif
++
++/* How to obtain thread-local storage */
++#if defined(_MSC_VER)
++#define THREAD_LOCAL __declspec(thread)
++#else
++#define THREAD_LOCAL __thread
++#endif
++
++/* Define to the full name of this package. */
++#define PACKAGE_NAME  "libjpeg-turbo"
++
++/* Version number of package */
++#define VERSION  "3.1.0"
++
++/* The size of `size_t', as computed by sizeof. */
++#ifdef __SIZEOF_SIZE_T__
++#define SIZEOF_SIZE_T __SIZEOF_SIZE_T__
++#elif __WORDSIZE==64 || defined(_WIN64)
++#define SIZEOF_SIZE_T 8
++#else
++#define SIZEOF_SIZE_T 4
++#endif
++
++/* Define if your compiler has __builtin_ctzl() and sizeof(unsigned long) == sizeof(size_t). */
++#define HAVE_BUILTIN_CTZL
++
++/* Define to 1 if you have the <intrin.h> header file. */
++/* #undef HAVE_INTRIN_H */
++
++#if defined(_MSC_VER) && defined(HAVE_INTRIN_H)
++#if (SIZEOF_SIZE_T == 8)
++#define HAVE_BITSCANFORWARD64
++#elif (SIZEOF_SIZE_T == 4)
++#define HAVE_BITSCANFORWARD
++#endif
++#endif
++
++#if defined(__has_attribute)
++#if __has_attribute(fallthrough)
++#define FALLTHROUGH  __attribute__((fallthrough));
++#else
++#define FALLTHROUGH
++#endif
++#else
++#define FALLTHROUGH
++#endif
++
++#endif

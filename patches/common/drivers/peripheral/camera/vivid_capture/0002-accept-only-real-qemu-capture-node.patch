@@ -1,0 +1,23 @@
+diff --git a/drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/driver_adapter/src/v4l2_uvc.cpp b/drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/driver_adapter/src/v4l2_uvc.cpp
+--- a/drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/driver_adapter/src/v4l2_uvc.cpp
++++ b/drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/driver_adapter/src/v4l2_uvc.cpp
+@@ -23,3 +23,4 @@
+ #include "usb_device_filter.h"
++#include "qemu_v4l2_capture.h"
+ 
+ constexpr int NAME_START_POS = 2;
+@@ -204,3 +205,3 @@
+-    if (!((cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) && (cap.capabilities & V4L2_CAP_STREAMING))) {
++    if (!QemuStreamingCapture(cap) || !QemuCaptureDriverMatches(cap, "uvcvideo")) {
+         return RC_ERROR;
+     }
+@@ -221,3 +222,3 @@
+-    if (!((capability.capabilities & V4L2_CAP_VIDEO_CAPTURE) && (capability.capabilities & V4L2_CAP_STREAMING))) {
++    if (!QemuStreamingCapture(capability)) {
+         return RC_ERROR;
+     }
+@@ -225,3 +226,3 @@
+-    if (cameraId != std::string(reinterpret_cast<char*>(capability.driver))) {
++    if (!QemuCaptureDriverMatches(capability, cameraId)) {
+         return RC_ERROR;
+     }

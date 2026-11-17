@@ -1,0 +1,108 @@
+diff --git a/base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp b/base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp
+--- a/base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp
++++ b/base/telephony/call_manager/frameworks/js/napi/src/napi_call_manager.cpp
+@@ -43,6 +43,94 @@
+ int32_t NapiCallManager::registerStatus_ = TELEPHONY_ERROR;
+ constexpr int32_t INVALID_ACCOUNT_ID = -1;
+ constexpr int32_t MAX_ACCOUNT_ID = 1;
+ 
++struct PublicCallEnumMember {
++    const char *name;
++    int32_t value;
++};
++
++template<size_t Count>
++static napi_status RegisterPublicCallEnum(napi_env env, napi_value exports, const char *name,
++    const PublicCallEnumMember (&members)[Count])
++{
++    napi_value enumeration = nullptr;
++    napi_status status = napi_create_object(env, &enumeration);
++    if (status != napi_ok) {
++        return status;
++    }
++    for (const auto &member : members) {
++        napi_value value = nullptr;
++        status = napi_create_int32(env, member.value, &value);
++        if (status != napi_ok) {
++            return status;
++        }
++        status = napi_set_named_property(env, enumeration, member.name, value);
++        if (status != napi_ok) {
++            return status;
++        }
++    }
++    return napi_set_named_property(env, exports, name, enumeration);
++}
++
++static napi_value RegisterPublicCallEnums(napi_env env, napi_value exports)
++{
++    const PublicCallEnumMember detailed[] = {
++        {"CCALL_STATE_UNKNOWN", static_cast<int32_t>(TelCallState::CALL_STATUS_UNKNOWN)},
++        {"CCALL_STATE_ACTIVE", static_cast<int32_t>(TelCallState::CALL_STATUS_ACTIVE)},
++        {"CCALL_STATE_HOLDING", static_cast<int32_t>(TelCallState::CALL_STATUS_HOLDING)},
++        {"CCALL_STATE_DIALING", static_cast<int32_t>(TelCallState::CALL_STATUS_DIALING)},
++        {"CCALL_STATE_ALERTING", static_cast<int32_t>(TelCallState::CALL_STATUS_ALERTING)},
++        {"CCALL_STATE_INCOMING", static_cast<int32_t>(TelCallState::CALL_STATUS_INCOMING)},
++        {"CCALL_STATE_WAITING", static_cast<int32_t>(TelCallState::CALL_STATUS_WAITING)},
++        {"CCALL_STATE_DISCONNECTED", static_cast<int32_t>(TelCallState::CALL_STATUS_DISCONNECTED)},
++        {"CCALL_STATE_DISCONNECTING", static_cast<int32_t>(TelCallState::CALL_STATUS_DISCONNECTING)},
++        {"CCALL_STATE_IDLE", static_cast<int32_t>(TelCallState::CALL_STATUS_IDLE)},
++        {"CCALL_STATE_ANSWERED", static_cast<int32_t>(TelCallState::CALL_STATUS_ANSWERED)},
++    };
++    const PublicCallEnumMember state[] = {
++        {"TEL_CALL_STATE_UNKNOWN", static_cast<int32_t>(CallStateToApp::CALL_STATE_UNKNOWN)},
++        {"TEL_CALL_STATE_IDLE", static_cast<int32_t>(CallStateToApp::CALL_STATE_IDLE)},
++        {"TEL_CALL_STATE_RINGING", static_cast<int32_t>(CallStateToApp::CALL_STATE_RINGING)},
++        {"TEL_CALL_STATE_OFFHOOK", static_cast<int32_t>(CallStateToApp::CALL_STATE_OFFHOOK)},
++        {"TEL_CALL_STATE_ANSWERED", static_cast<int32_t>(CallStateToApp::CALL_STATE_ANSWERED)},
++        // Public API 26 value. Defining this constant does not synthesize a
++        // connection event or alter the service's older native state machine.
++        {"TEL_CALL_STATE_CONNECTED", 4},
++    };
++    const PublicCallEnumMember rtt[] = {
++        {"RTT_STATE_NO", static_cast<int32_t>(RttCallState::RTT_STATE_NO)},
++        {"RTT_STATE_YES", static_cast<int32_t>(RttCallState::RTT_STATE_YES)},
++        {"RTT_STATE_REMOTE_TTY", static_cast<int32_t>(RttCallState::RTT_STATE_REMOTE_TTY)},
++        {"RTT_STATE_REMOTE_NOT_SUPPORT", static_cast<int32_t>(RttCallState::RTT_STATE_REMOTE_NOT_SUPPORT)},
++    };
++    // These are public protocol constants even on products without RTT. The
++    // optional feature chooses real RTT methods/service code, not enum values.
++    const PublicCallEnumMember mode[] = {
++        {"LOCAL_REQUEST_UPGRADE", 0},
++        {"LOCAL_REQUEST_DOWNGRADE", 1},
++        {"REMOTE_REQUEST_UPGRADE_LOCAL_ACCEPT", 2},
++        {"REMOTE_REQUEST_UPGRADE_LOCAL_REJECT", 3},
++    };
++#ifdef SUPPORT_RTT_CALL
++    static_assert(static_cast<int32_t>(ImsRTTCallMode::LOCAL_REQUEST_UPGRADE) == 0);
++    static_assert(static_cast<int32_t>(ImsRTTCallMode::LOCAL_REQUEST_DOWNGRADE) == 1);
++    static_assert(static_cast<int32_t>(ImsRTTCallMode::REMOTE_REQUEST_UPGRADE_LOCAL_ACCEPT) == 2);
++    static_assert(static_cast<int32_t>(ImsRTTCallMode::REMOTE_REQUEST_UPGRADE_LOCAL_REJECT) == 3);
++#endif
++    const PublicCallEnumMember extended[] = {
++        {"XCALL_ECALL_TYPE", 0},
++        {"XCALL_BCALL_TYPE", 1},
++        {"XCALL_ICALL_TYPE", 2},
++    };
++    if (RegisterPublicCallEnum(env, exports, "CCallState", detailed) != napi_ok ||
++        RegisterPublicCallEnum(env, exports, "TelCallState", state) != napi_ok ||
++        RegisterPublicCallEnum(env, exports, "RttState", rtt) != napi_ok ||
++        RegisterPublicCallEnum(env, exports, "ImsRttMode", mode) != napi_ok ||
++        RegisterPublicCallEnum(env, exports, "XCallType", extended) != napi_ok) {
++        return nullptr;
++    }
++    return exports;
++}
++
+ NapiCallManager::NapiCallManager() {}
+ 
+@@ -1162,6 +1250,9 @@ napi_value NapiCallManager::RegisterCallManagerFunc(napi_env env, napi_value exports)
+     DeclareMmiCodeResultEnum(env, exports);
+     DeclareDisconnectedReasonEnum(env, exports);
+     DeclareMarkTypeEnum(env, exports);
++    if (RegisterPublicCallEnums(env, exports) == nullptr) {
++        return nullptr;
++    }
+     Init();
+     RegisterCallBack();
+     return exports;

@@ -1,0 +1,21 @@
+diff --git a/drivers/peripheral/camera/vdi_base/usb_camera/device_manager/BUILD.gn b/drivers/peripheral/camera/vdi_base/usb_camera/device_manager/BUILD.gn
+--- a/drivers/peripheral/camera/vdi_base/usb_camera/device_manager/BUILD.gn
++++ b/drivers/peripheral/camera/vdi_base/usb_camera/device_manager/BUILD.gn
+@@ -11,11 +11,17 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ import("//build/ohos.gni")
++import("../../../camera.gni")
+ import("../camera_usb.gni")
+ 
+ config("device_manager_config") {
+   visibility = [ ":*" ]
+ 
++  defines = []
++  if (drivers_peripheral_camera_qemu_vivid_capture) {
++    defines += [ "QEMU_VIVID_CAPTURE_ENABLED" ]
++  }
++
+   cflags_cc = [
+     "-Wall",
+     "-Wextra",

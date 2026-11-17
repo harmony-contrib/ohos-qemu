@@ -1,0 +1,38 @@
+diff --git a/foundation/window/window_manager/window_scene/screen_session_manager/BUILD.gn b/foundation/window/window_manager/window_scene/screen_session_manager/BUILD.gn
+--- a/foundation/window/window_manager/window_scene/screen_session_manager/BUILD.gn
++++ b/foundation/window/window_manager/window_scene/screen_session_manager/BUILD.gn
+@@ -153,4 +153,8 @@
+   defines = []
++  if (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++      product_name == "x86_64_virt") {
++    defines += [ "WM_QEMU_SOFTWARE_CAPTURE" ]
++  }
+   if (window_manager_feature_subscribe_motion) {
+     if (defined(global_parts_info) && defined(global_parts_info.msdp_motion)) {
+       defines += [ "WM_SUBSCRIBE_MOTION_ENABLE" ]
+diff --git a/foundation/window/window_manager/window_scene/screen_session_manager/src/screen_session_manager.cpp b/foundation/window/window_manager/window_scene/screen_session_manager/src/screen_session_manager.cpp
+--- a/foundation/window/window_manager/window_scene/screen_session_manager/src/screen_session_manager.cpp
++++ b/foundation/window/window_manager/window_scene/screen_session_manager/src/screen_session_manager.cpp
+@@ -231,7 +231,13 @@
+ const bool IS_SUPPORT_PC_MODE = system::GetBoolParameter("const.window.support_window_pcmode_switch", false);
+ const std::set<std::string> INDIVIDUAL_SCREEN_GROUP_SET = {
+     "CeliaView", "DevEcoViewer", "Cooperation-multi", "HwCast_AppModeDisplay", "HiCar", "SuperLauncher"};
++#ifdef WM_QEMU_SOFTWARE_CAPTURE
++// Software rendering can finish after the hardware deadline while starting an app.
++// Keep a finite budget; do not retry, skip permission checks, or accept a null image.
++const long GET_HDR_PIXELMAP_TIMEOUT = 10000;
++#else
+ const long GET_HDR_PIXELMAP_TIMEOUT = 2000;
++#endif
+ const int32_t CV_WAIT_UPDATE_AVAILABLE_MS = 500;
+ const static uint32_t PIXMAP_VECTOR_SIZE = 2;
+ static const uint32_t SDR_PIXMAP = 0;
+@@ -10321,7 +10327,7 @@
+         TLOGNFE(WmsLogTag::DMS, "TakeSurfaceCapture failed");
+         return nullptr;
+     }
+-    std::shared_ptr<Media::PixelMap> screenshot = callback->GetResult(GET_HDR_PIXELMAP_TIMEOUT);  // wait for <= 2000ms
++    std::shared_ptr<Media::PixelMap> screenshot = callback->GetResult(GET_HDR_PIXELMAP_TIMEOUT);
+     if (screenshot == nullptr) {
+         TLOGNFE(WmsLogTag::DMS, "Failed to get pixelmap from RS, return nullptr!");
+     } else {

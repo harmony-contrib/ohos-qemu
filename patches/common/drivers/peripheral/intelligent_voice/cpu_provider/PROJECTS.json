@@ -1,0 +1,158 @@
+{
+  "schema": "media579-actual-project-head-vector/v1",
+  "projects": {
+    "drivers/peripheral": "69094b77aa2200160207b1b06b3c0b586ae2157c",
+    "foundation/multimedia/audio_framework": "6932fa64335b8272ca4a59de7808ab0d6c9eae7a",
+    "foundation/ai/intelligent_voice_framework": "44488fa30c8c3778660b7c43af80f070b6a0cb76",
+    "base/security/selinux_adapter": "cfc1d5b31a7438dbc87763f9222f00337221cf21"
+  },
+  "actual_readonly_facts": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-product-heads579-19/actual-heads19/FACTS579.json",
+    "sha256": "36e3defe1c3306d982daaf799928bf24cca541adfca71a7a550c64376ddc1596",
+    "bytes": 4991
+  },
+  "commands": [
+    {
+      "original": {
+        "project": "drivers/peripheral",
+        "argv": [
+          "git",
+          "-c",
+          "safe.directory=/ohos/drivers/peripheral",
+          "-C",
+          "/ohos/drivers/peripheral",
+          "rev-parse",
+          "HEAD"
+        ],
+        "exit_code": 0,
+        "stdout": {
+          "path": "/evidence/actual-heads19/1.stdout",
+          "sha256": "19d3f4706f8b8aff772a771bda5a238e2c0125f5e2ce1dc0f5fe7a12051b1664",
+          "bytes": 41
+        },
+        "stderr": {
+          "path": "/evidence/actual-heads19/1.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "host_stdout": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-product-heads579-19/actual-heads19/1.stdout",
+        "sha256": "19d3f4706f8b8aff772a771bda5a238e2c0125f5e2ce1dc0f5fe7a12051b1664",
+        "bytes": 41
+      },
+      "host_stderr": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-product-heads579-19/actual-heads19/1.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "original": {
+        "project": "foundation/multimedia/audio_framework",
+        "argv": [
+          "git",
+          "-c",
+          "safe.directory=/ohos/foundation/multimedia/audio_framework",
+          "-C",
+          "/ohos/foundation/multimedia/audio_framework",
+          "rev-parse",
+          "HEAD"
+        ],
+        "exit_code": 0,
+        "stdout": {
+          "path": "/evidence/actual-heads19/2.stdout",
+          "sha256": "c37cc18671c1da8dfad0a2e39fe713d0484e44a7d51ab7cd26bdbbc60e838964",
+          "bytes": 41
+        },
+        "stderr": {
+          "path": "/evidence/actual-heads19/2.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "host_stdout": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-product-heads579-19/actual-heads19/2.stdout",
+        "sha256": "c37cc18671c1da8dfad0a2e39fe713d0484e44a7d51ab7cd26bdbbc60e838964",
+        "bytes": 41
+      },
+      "host_stderr": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-product-heads579-19/actual-heads19/2.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "original": {
+        "project": "foundation/ai/intelligent_voice_framework",
+        "argv": [
+          "git",
+          "-c",
+          "safe.directory=/ohos/foundation/ai/intelligent_voice_framework",
+          "-C",
+          "/ohos/foundation/ai/intelligent_voice_framework",
+          "rev-parse",
+          "HEAD"
+        ],
+        "exit_code": 0,
+        "stdout": {
+          "path": "/evidence/actual-heads19/3.stdout",
+          "sha256": "f252babd26912bc3a523e526f99934c000777f85fcfb7f0599b319d5885531f7",
+          "bytes": 41
+        },
+        "stderr": {
+          "path": "/evidence/actual-heads19/3.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "host_stdout": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-product-heads579-19/actual-heads19/3.stdout",
+        "sha256": "f252babd26912bc3a523e526f99934c000777f85fcfb7f0599b319d5885531f7",
+        "bytes": 41
+      },
+      "host_stderr": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-product-heads579-19/actual-heads19/3.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "original": {
+        "project": "base/security/selinux_adapter",
+        "argv": [
+          "git",
+          "-c",
+          "safe.directory=/ohos/base/security/selinux_adapter",
+          "-C",
+          "/ohos/base/security/selinux_adapter",
+          "rev-parse",
+          "HEAD"
+        ],
+        "exit_code": 0,
+        "stdout": {
+          "path": "/evidence/actual-heads19/4.stdout",
+          "sha256": "c1ed327b1bbe21939aead51e00e6842b9d3c331812d87c62c381a5297dc00a95",
+          "bytes": 41
+        },
+        "stderr": {
+          "path": "/evidence/actual-heads19/4.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      },
+      "host_stdout": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-product-heads579-19/actual-heads19/4.stdout",
+        "sha256": "c1ed327b1bbe21939aead51e00e6842b9d3c331812d87c62c381a5297dc00a95",
+        "bytes": 41
+      },
+      "host_stderr": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-product-heads579-19/actual-heads19/4.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    }
+  ],
+  "source_only": true,
+  "runtime_pass": false
+}

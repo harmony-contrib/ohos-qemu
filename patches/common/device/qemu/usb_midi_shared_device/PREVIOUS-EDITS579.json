@@ -1,0 +1,271 @@
+{
+  "schema": "qemu-standard-usb-midi-mtp-source-edits/v1",
+  "edits": [
+    {
+      "path": "device/qemu/common/virt_full/kernel/arm64_virt_defconfig",
+      "cuts": [
+        {
+          "before": "# CONFIG_USB_CONFIGFS_F_MIDI is not set\n",
+          "after": "CONFIG_USB_CONFIGFS_F_MIDI=y\n"
+        },
+        {
+          "before": "# CONFIG_USB_DUMMY_HCD is not set\n",
+          "after": "CONFIG_USB_DUMMY_HCD=y\n"
+        },
+        {
+          "before": "# CONFIG_SND_USB_AUDIO is not set\n",
+          "after": "CONFIG_SND_USB_AUDIO=y\n"
+        }
+      ]
+    },
+    {
+      "path": "device/qemu/common/virt_full/kernel/arm_virt_defconfig",
+      "cuts": [
+        {
+          "before": "# CONFIG_USB_GADGET is not set\n",
+          "after": "CONFIG_USB_GADGET=y\n"
+        },
+        {
+          "before": "# CONFIG_SND_USB_AUDIO is not set\n",
+          "after": "CONFIG_SND_USB_AUDIO=y\n"
+        },
+        {
+          "before": "CONFIG_USB_GADGET=y\n",
+          "after": "CONFIG_USB_GADGET=y\nCONFIG_USB_LIBCOMPOSITE=y\nCONFIG_USB_CONFIGFS=y\nCONFIG_USB_CONFIGFS_F_FS=y\nCONFIG_USB_CONFIGFS_F_MIDI=y\nCONFIG_USB_DUMMY_HCD=y\n"
+        }
+      ]
+    },
+    {
+      "path": "device/qemu/common/virt_full/kernel/x86_64_virt_defconfig",
+      "cuts": [
+        {
+          "before": "# CONFIG_USB_CONFIGFS_F_MIDI is not set\n",
+          "after": "CONFIG_USB_CONFIGFS_F_MIDI=y\n"
+        },
+        {
+          "before": "# CONFIG_USB_DUMMY_HCD is not set\n",
+          "after": "CONFIG_USB_DUMMY_HCD=y\n"
+        },
+        {
+          "before": "# CONFIG_SND_USB_AUDIO is not set\n",
+          "after": "CONFIG_SND_USB_AUDIO=y\n"
+        }
+      ]
+    },
+    {
+      "path": "drivers/peripheral/usb/usb.gni",
+      "cuts": [
+        {
+          "before": "declare_args() {\n  drivers_peripheral_usb_feature_linux_native_model = false\n  drivers_peripheral_usb_feature_emulator_mode = false\n  drivers_peripheral_usb_feature_ddk_service = true\n\n  usb_hisysevent_enable = true\n",
+          "after": "declare_args() {\n  drivers_peripheral_usb_feature_linux_native_model = false\n  drivers_peripheral_usb_feature_emulator_mode = false\n  drivers_peripheral_usb_feature_qemu_standard_functionfs = false\n  drivers_peripheral_usb_feature_ddk_service = true\n\n  usb_hisysevent_enable = true\n"
+        }
+      ]
+    },
+    {
+      "path": "drivers/peripheral/usb/bundle.json",
+      "cuts": [
+        {
+          "before": "        \"features\": [\n            \"drivers_peripheral_usb_feature_linux_native_model\",\n            \"drivers_peripheral_usb_feature_ddk_service\",\n            \"drivers_peripheral_usb_feature_emulator_mode\"\n        ],\n        \"hisysevent_config\": [\n            \"//drivers/peripheral/usb/hisysevent.yaml\"\n",
+          "after": "        \"features\": [\n            \"drivers_peripheral_usb_feature_linux_native_model\",\n            \"drivers_peripheral_usb_feature_ddk_service\",\n            \"drivers_peripheral_usb_feature_emulator_mode\",\n            \"drivers_peripheral_usb_feature_qemu_standard_functionfs\"\n        ],\n        \"hisysevent_config\": [\n            \"//drivers/peripheral/usb/hisysevent.yaml\"\n"
+        }
+      ]
+    },
+    {
+      "path": "drivers/peripheral/usb/gadget/function/mtp/BUILD.gn",
+      "cuts": [
+        {
+          "before": "  branch_protector_ret = \"pac_ret\"\n\n  sources = [ \"src/usbfn_mtp_impl.cpp\" ]\n\n  include_dirs = [\n    \"./../../../interfaces/ddk/device\",\n",
+          "after": "  branch_protector_ret = \"pac_ret\"\n\n  sources = [ \"src/usbfn_mtp_impl.cpp\" ]\n  if (drivers_peripheral_usb_feature_qemu_standard_functionfs) {\n    sources += [ \"src/qemu_mtp_functionfs.cpp\" ]\n    defines = [ \"USB_QEMU_STANDARD_FUNCTIONFS\" ]\n  }\n\n  include_dirs = [\n    \"./../../../interfaces/ddk/device\",\n"
+        }
+      ]
+    },
+    {
+      "path": "drivers/peripheral/usb/gadget/function/mtp/src/usbfn_mtp_impl.cpp",
+      "cuts": [
+        {
+          "before": " */\n\n#include \"usbfn_mtp_impl.h\"\n#include <unistd.h>\n#include <cinttypes>\n#include <string>\n",
+          "after": " */\n\n#include \"usbfn_mtp_impl.h\"\n#ifdef USB_QEMU_STANDARD_FUNCTIONFS\n#include \"qemu_mtp_functionfs.h\"\n#endif\n#include <unistd.h>\n#include <cinttypes>\n#include <string>\n"
+        },
+        {
+          "before": "{\n    std::lock_guard<std::mutex> guard(g_instanceLock);\n    if (g_instance == nullptr) {\n        sptr<IUsbfnMtpInterface> tmp(new (std::nothrow) UsbfnMtpImpl);\n        g_instance = tmp;\n    }\n\n",
+          "after": "{\n    std::lock_guard<std::mutex> guard(g_instanceLock);\n    if (g_instance == nullptr) {\n#ifdef USB_QEMU_STANDARD_FUNCTIONFS\n        sptr<IUsbfnMtpInterface> tmp(new (std::nothrow) QemuMtpFunctionFS);\n#else\n        sptr<IUsbfnMtpInterface> tmp(new (std::nothrow) UsbfnMtpImpl);\n#endif\n        g_instance = tmp;\n    }\n\n"
+        }
+      ]
+    },
+    {
+      "path": "foundation/multimedia/media_library/media_library.gni",
+      "cuts": [
+        {
+          "before": "  }\n\n  media_library_feature_mtp = true\n  media_library_feature_back_up = true\n  media_library_feature_cloud_enhancement = true\n  media_library_feature_device_manager = false\n",
+          "after": "  }\n\n  media_library_feature_mtp = true\n  media_library_feature_qemu_standard_functionfs = false\n  media_library_feature_back_up = true\n  media_library_feature_cloud_enhancement = true\n  media_library_feature_device_manager = false\n"
+        }
+      ]
+    },
+    {
+      "path": "foundation/multimedia/media_library/bundle.json",
+      "cuts": [
+        {
+          "before": "      \"features\": [\n        \"media_library_link_opt\",\n        \"media_library_feature_mtp\",\n        \"media_library_feature_back_up\",\n        \"media_library_feature_cloud_enhancement\",\n        \"media_library_feature_cloud_download\",\n",
+          "after": "      \"features\": [\n        \"media_library_link_opt\",\n        \"media_library_feature_mtp\",\n        \"media_library_feature_qemu_standard_functionfs\",\n        \"media_library_feature_back_up\",\n        \"media_library_feature_cloud_enhancement\",\n        \"media_library_feature_cloud_download\",\n"
+        }
+      ]
+    },
+    {
+      "path": "foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/BUILD.gn",
+      "cuts": [
+        {
+          "before": "    external_deps += [ \"dfs_service:cloudsync_kit_inner\" ]\n  }\n  defines += [ \"MEDIALIBRARY_COMPATIBILITY=1\" ]\n  if (media_library_feature_mtp) {\n    defines += [ \"MEDIALIBRARY_MTP_ENABLE=1\" ]\n  }\n",
+          "after": "    external_deps += [ \"dfs_service:cloudsync_kit_inner\" ]\n  }\n  defines += [ \"MEDIALIBRARY_COMPATIBILITY=1\" ]\n  if (media_library_feature_qemu_standard_functionfs) {\n    assert(media_library_feature_mtp)\n    defines += [ \"MEDIA_QEMU_STANDARD_FUNCTIONFS\" ]\n  }\n  if (media_library_feature_mtp) {\n    defines += [ \"MEDIALIBRARY_MTP_ENABLE=1\" ]\n  }\n"
+        }
+      ]
+    },
+    {
+      "path": "foundation/multimedia/media_library/services/media_mtp_service/src/media_mtp_manager.cpp",
+      "cuts": [
+        {
+          "before": "#include <thread>\n\n#include \"media_mtp_manager.h\"\n#include \"media_log.h\"\n#include \"media_mtp_service_manager.h\"\n#include \"media_mtp_subscriber.h\"\n",
+          "after": "#include <thread>\n\n#include \"media_mtp_manager.h\"\n#ifdef MEDIA_QEMU_STANDARD_FUNCTIONFS\n#include \"qemu_mtp_mount_watcher.h\"\n#endif\n#include \"media_log.h\"\n#include \"media_mtp_service_manager.h\"\n#include \"media_mtp_subscriber.h\"\n"
+        },
+        {
+          "before": "        MEDIA_INFO_LOG(\"MediaMtpManager Subscribe result = %{public}d\", result);\n        // param 监听注册\n        MediaMtpManager::GetInstance().RegisterMtpParamListener();\n\n        int32_t funcs = 0;\n        int ret = OHOS::USB::UsbSrvClient::GetInstance().GetCurrentFunctions(funcs);\n",
+          "after": "        MEDIA_INFO_LOG(\"MediaMtpManager Subscribe result = %{public}d\", result);\n        // param 监听注册\n        MediaMtpManager::GetInstance().RegisterMtpParamListener();\n#ifdef MEDIA_QEMU_STANDARD_FUNCTIONFS\n        // This product has an independent standard FunctionFS device. Do not\n        // switch the unrelated physical/HDC gadget's current functions.\n        QemuMtpMountWatcher::Instance().Start();\n        return;\n#endif\n\n        int32_t funcs = 0;\n        int ret = OHOS::USB::UsbSrvClient::GetInstance().GetCurrentFunctions(funcs);\n"
+        },
+        {
+          "before": "\nvoid MediaMtpManager::Stop()\n{\n    MediaMtpManager::GetInstance().RemoveMtpParamListener();\n}\n\n",
+          "after": "\nvoid MediaMtpManager::Stop()\n{\n#ifdef MEDIA_QEMU_STANDARD_FUNCTIONFS\n    QemuMtpMountWatcher::Instance().Stop();\n#endif\n    MediaMtpManager::GetInstance().RemoveMtpParamListener();\n}\n\n"
+        },
+        {
+          "before": "    CHECK_AND_RETURN_INFO_LOG(strcmp(key, MTP_SERVER_DISABLE) == 0, \"event key mismatch\");\n    std::string param(MTP_SERVER_DISABLE);\n    bool mtpDisable = system::GetBoolParameter(param, false);\n    if (!mtpDisable) {\n        int32_t funcs = 0;\n        int ret = OHOS::USB::UsbSrvClient::GetInstance().GetCurrentFunctions(funcs);\n",
+          "after": "    CHECK_AND_RETURN_INFO_LOG(strcmp(key, MTP_SERVER_DISABLE) == 0, \"event key mismatch\");\n    std::string param(MTP_SERVER_DISABLE);\n    bool mtpDisable = system::GetBoolParameter(param, false);\n#ifdef MEDIA_QEMU_STANDARD_FUNCTIONFS\n    // The joined worker observes the same genuine EDM policy and stops/restarts\n    // the existing service. No change to g1/HDC is needed for this other UDC.\n    return;\n#endif\n    if (!mtpDisable) {\n        int32_t funcs = 0;\n        int ret = OHOS::USB::UsbSrvClient::GetInstance().GetCurrentFunctions(funcs);\n"
+        }
+      ]
+    },
+    {
+      "path": "foundation/multimedia/media_library/services/media_mtp/BUILD.gn",
+      "cuts": [
+        {
+          "before": "  ]\n\n  defines = []\n  if (media_library_feature_mtp) {\n    defines += [ \"MEDIALIBRARY_MTP_ENABLE=1\" ]\n  }\n",
+          "after": "  ]\n\n  defines = []\n  if (media_library_feature_qemu_standard_functionfs) {\n    defines += [ \"MEDIA_QEMU_STANDARD_FUNCTIONFS\" ]\n  }\n  if (media_library_feature_mtp) {\n    defines += [ \"MEDIALIBRARY_MTP_ENABLE=1\" ]\n  }\n"
+        }
+      ]
+    },
+    {
+      "path": "foundation/multimedia/media_library/services/media_mtp/src/mtp_driver.cpp",
+      "cuts": [
+        {
+          "before": "\nint MtpDriver::CloseDriver()\n{\n    usbOpenFlag = false;\n    usbfnMtpInterface = nullptr;\n    return MTP_SUCCESS;\n",
+          "after": "\nint MtpDriver::CloseDriver()\n{\n#ifdef MEDIA_QEMU_STANDARD_FUNCTIONFS\n    if (usbfnMtpInterface != nullptr) {\n        const int result = usbfnMtpInterface->Stop();\n        if (result != 0) {\n            return result;\n        }\n    }\n#endif\n    usbOpenFlag = false;\n    usbfnMtpInterface = nullptr;\n    return MTP_SUCCESS;\n"
+        }
+      ]
+    },
+    {
+      "path": "vendor/ohemu/qemu_arm64_linux_full/config.json",
+      "cuts": [
+        {
+          "before": "    \"vendor/ohemu/virt/virt_phone_contract_arm64_virt.json\"\n  ],\n  \"subsystems\": [\n    {\n      \"subsystem\": \"thirdparty\",\n      \"components\": [\n",
+          "after": "    \"vendor/ohemu/virt/virt_phone_contract_arm64_virt.json\"\n  ],\n  \"subsystems\": [\n    {\n      \"subsystem\": \"multimedia\",\n      \"components\": [\n        {\n          \"component\": \"media_library\",\n          \"features\": [\n            \"media_library_feature_qemu_standard_functionfs=true\",\n            \"media_library_feature_mtp=true\"\n          ]\n        }\n      ]\n    },\n    {\n      \"subsystem\": \"thirdparty\",\n      \"components\": [\n"
+        },
+        {
+          "before": "      \"subsystem\": \"hdf\",\n      \"components\": [\n        {\n          \"component\": \"drivers_tools\",\n          \"features\": []\n        },\n",
+          "after": "      \"subsystem\": \"hdf\",\n      \"components\": [\n        {\n          \"component\": \"drivers_peripheral_usb\",\n          \"features\": [\n            \"drivers_peripheral_usb_feature_qemu_standard_functionfs=true\"\n          ]\n        },\n        {\n          \"component\": \"drivers_tools\",\n          \"features\": []\n        },\n"
+        }
+      ]
+    },
+    {
+      "path": "vendor/ohemu/qemu_armv7a_linux_full/config.json",
+      "cuts": [
+        {
+          "before": "    \"vendor/ohemu/virt/virt_common_armv7a.json\"\n  ],\n  \"subsystems\": [\n    {\n      \"subsystem\": \"thirdparty\",\n      \"components\": [\n",
+          "after": "    \"vendor/ohemu/virt/virt_common_armv7a.json\"\n  ],\n  \"subsystems\": [\n    {\n      \"subsystem\": \"multimedia\",\n      \"components\": [\n        {\n          \"component\": \"media_library\",\n          \"features\": [\n            \"media_library_feature_qemu_standard_functionfs=true\",\n            \"media_library_feature_mtp=true\"\n          ]\n        }\n      ]\n    },\n    {\n      \"subsystem\": \"thirdparty\",\n      \"components\": [\n"
+        },
+        {
+          "before": "      \"subsystem\": \"hdf\",\n      \"components\": [\n        {\n          \"component\": \"drivers_tools\",\n          \"features\": []\n        },\n",
+          "after": "      \"subsystem\": \"hdf\",\n      \"components\": [\n        {\n          \"component\": \"drivers_peripheral_usb\",\n          \"features\": [\n            \"drivers_peripheral_usb_feature_qemu_standard_functionfs=true\"\n          ]\n        },\n        {\n          \"component\": \"drivers_tools\",\n          \"features\": []\n        },\n"
+        }
+      ]
+    },
+    {
+      "path": "vendor/ohemu/qemu_x86_64_linux_full/config.json",
+      "cuts": [
+        {
+          "before": "    \"vendor/ohemu/virt/virt_common_x86_64.json\"\n  ],\n  \"subsystems\": [\n    {\n      \"subsystem\": \"thirdparty\",\n      \"components\": [\n",
+          "after": "    \"vendor/ohemu/virt/virt_common_x86_64.json\"\n  ],\n  \"subsystems\": [\n    {\n      \"subsystem\": \"multimedia\",\n      \"components\": [\n        {\n          \"component\": \"media_library\",\n          \"features\": [\n            \"media_library_feature_qemu_standard_functionfs=true\",\n            \"media_library_feature_mtp=true\"\n          ]\n        }\n      ]\n    },\n    {\n      \"subsystem\": \"thirdparty\",\n      \"components\": [\n"
+        },
+        {
+          "before": "      \"subsystem\": \"hdf\",\n      \"components\": [\n        {\n          \"component\": \"drivers_tools\",\n          \"features\": []\n        },\n",
+          "after": "      \"subsystem\": \"hdf\",\n      \"components\": [\n        {\n          \"component\": \"drivers_peripheral_usb\",\n          \"features\": [\n            \"drivers_peripheral_usb_feature_qemu_standard_functionfs=true\"\n          ]\n        },\n        {\n          \"component\": \"drivers_tools\",\n          \"features\": []\n        },\n"
+        }
+      ]
+    },
+    {
+      "path": "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/usb/vendor/usb_host.te",
+      "cuts": [
+        {
+          "before": "allow usb_host dev_bus_usb_file:dir { search };\nallow usb_host dev_functionfs_file:chr_file { ioctl map open read write getattr };\nallow usb_host dev_functionfs_file:dir { search };\nallow usb_host dev_hdf_kevent:chr_file { getattr ioctl open read write };\nallow usb_host dev_hdf_usb_pnp:chr_file { getattr ioctl open read write };\nallow usb_host dev_usbfn_file:chr_file { getattr ioctl read write open map };\n",
+          "after": "allow usb_host dev_bus_usb_file:dir { search };\nallow usb_host dev_functionfs_file:chr_file { ioctl map open read write getattr };\nallow usb_host dev_functionfs_file:dir { search };\n# Standard upstream FunctionFS used by the QEMU UDC, independent of UsbFn epfs.\n# No ordinary application receives gadget endpoint access.\nallow usb_host dev_usb_ffs:dir { search getattr };\nallow usb_host qemu_usb_functionfs:dir { search getattr open read };\nallow usb_host qemu_usb_functionfs:file { getattr open read write ioctl };\nallowxperm usb_host qemu_usb_functionfs:file ioctl { 0x6701 0x6702 0x6703 0x6782 };\nallow usb_host dev_hdf_kevent:chr_file { getattr ioctl open read write };\nallow usb_host dev_hdf_usb_pnp:chr_file { getattr ioctl open read write };\nallow usb_host dev_usbfn_file:chr_file { getattr ioctl read write open map };\n"
+        },
+        {
+          "before": "allow usb_host sys_file:dir { open read search };\nallow usb_host hdf_usb_device_interface_service:hdf_devmgr_class { add };\nallow usb_host hdf_usb_port_interface_service:hdf_devmgr_class { add };\n",
+          "after": "allow usb_host sys_file:dir { open read search };\nallow usb_host hdf_usb_device_interface_service:hdf_devmgr_class { add };\nallow usb_host hdf_usb_port_interface_service:hdf_devmgr_class { add };\n\n# The existing HDC policy transitions hdcd + sh_exec to sh only under\n# developer_only. Existing sh data_local_tmp execute_no_trans preserves sh.\n# Runtime records the actual shell and peer attr/current; UID 0 is not a domain.\n# No additional su transition, application gadget access or enforcement change.\ndeveloper_only(`\n    allow sh qemu_usb_configfs:dir { search getattr open read write add_name remove_name };\n    allow sh qemu_usb_configfs:file { getattr open read write };\n    allow sh qemu_usb_configfs:lnk_file { getattr read create unlink };\n    allow sh dev_usb_ffs:dir { search getattr };\n    allow sh qemu_usb_functionfs:dir { search getattr open read };\n    allow sh qemu_usb_functionfs:file { getattr open read write ioctl };\n    allowxperm sh qemu_usb_functionfs:file ioctl { 0x6701 0x6702 0x6703 0x6782 };\n')\n"
+        }
+      ]
+    },
+    {
+      "path": "base/security/selinux_adapter/sepolicy/ohos_policy/multimedia/media_library/system/medialibrary_hap.te",
+      "cuts": [
+        {
+          "before": "\n# avc:  denied  { get } for service=usbfn_mtp_interface_service sid=u:r:medialibrary_hap:s0 scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:hdf_usbfn_mtp_interface_service:s0 tclass=hdf_devmgr_class permissive=0\nallow medialibrary_hap hdf_usbfn_mtp_interface_service:hdf_devmgr_class { get };\n\n# avc: denied { read write } for pid=3641, comm=\"/system/bin/appspawn\" path=\"/dev/fuse\" dev=\"\" ino=15 scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:dev_fuse_file:s0 tclass=chr_file permissive=1\nallow medialibrary_hap dev_fuse_file:chr_file { read write };\n",
+          "after": "\n# avc:  denied  { get } for service=usbfn_mtp_interface_service sid=u:r:medialibrary_hap:s0 scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:hdf_usbfn_mtp_interface_service:s0 tclass=hdf_devmgr_class permissive=0\nallow medialibrary_hap hdf_usbfn_mtp_interface_service:hdf_devmgr_class { get };\n# The normal service observes only mount readiness. HDI alone opens endpoints.\nallow medialibrary_hap dev_usb_ffs:dir { search getattr };\nallow medialibrary_hap qemu_usb_functionfs:dir { search getattr };\n\n# avc: denied { read write } for pid=3641, comm=\"/system/bin/appspawn\" path=\"/dev/fuse\" dev=\"\" ino=15 scontext=u:r:medialibrary_hap:s0 tcontext=u:object_r:dev_fuse_file:s0 tclass=chr_file permissive=1\nallow medialibrary_hap dev_fuse_file:chr_file { read write };\n"
+        }
+      ]
+    },
+    {
+      "path": "device/qemu/common/virt_full/cfg/init.virt.usb.cfg",
+      "cuts": [
+        {
+          "before": "    \"jobs\" : [{\n            \"name\" : \"boot\",\n            \"cmds\" : [\n                \"mkdir /dev/usb-ffs 0770 shell shell\",\n                \"mkdir /dev/usb-ffs/hdc 0770 shell shell\",\n                \"mount configfs none /config\",\n                \"mkdir /config/usb_gadget/g1 0770 shell shell\",\n",
+          "after": "    \"jobs\" : [{\n            \"name\" : \"boot\",\n            \"cmds\" : [\n                \"mkdir /dev/usb-ffs 0755 root root\",\n                \"mkdir /dev/usb-ffs/hdc 0770 shell shell\",\n                \"mount configfs none /config\",\n                \"mkdir /config/usb_gadget/g1 0770 shell shell\",\n"
+        },
+        {
+          "before": "                \"symlink /config/usb_gadget/g1/configs/b.1 /config/usb_gadget/g1/os_desc/b.1\",\n                \"mount functionfs hdc /dev/usb-ffs/hdc uid=2000,gid=2000\",\n                \"setparam sys.usb.configfs 1\",\n                \"setparam sys.usb.controller 50480000.dwc3\"\n            ]\n        }, {\n            \"name\" : \"param:sys.usb.config=none && param:sys.usb.configfs=1\",\n",
+          "after": "                \"symlink /config/usb_gadget/g1/configs/b.1 /config/usb_gadget/g1/os_desc/b.1\",\n                \"mount functionfs hdc /dev/usb-ffs/hdc uid=2000,gid=2000\",\n                \"setparam sys.usb.configfs 1\",\n                \"setparam sys.usb.controller 50480000.dwc3\",\n                \"mkdir /config/usb_gadget/qemu_shared 0700 root root\",\n                \"write /config/usb_gadget/qemu_shared/idVendor 0x1d6b\",\n                \"write /config/usb_gadget/qemu_shared/idProduct 0x0104\",\n                \"write /config/usb_gadget/qemu_shared/bcdUSB 0x0200\",\n                \"write /config/usb_gadget/qemu_shared/bcdDevice 0x0100\",\n                \"mkdir /config/usb_gadget/qemu_shared/strings/0x409 0700 root root\",\n                \"write /config/usb_gadget/qemu_shared/strings/0x409/serialnumber QEMU_SHARED_UNBOUND\",\n                \"write /config/usb_gadget/qemu_shared/strings/0x409/manufacturer OpenHarmony\",\n                \"write /config/usb_gadget/qemu_shared/strings/0x409/product QEMU-USB-MIDI-MTP\",\n                \"mkdir /config/usb_gadget/qemu_shared/configs/c.1 0700 root root\",\n                \"write /config/usb_gadget/qemu_shared/configs/c.1/MaxPower 250\",\n                \"mkdir /config/usb_gadget/qemu_shared/configs/c.1/strings/0x409 0700 root root\",\n                \"write /config/usb_gadget/qemu_shared/configs/c.1/strings/0x409/configuration QEMU-shared-device\",\n                \"mkdir /config/usb_gadget/qemu_shared/functions/ffs.usb579\",\n                \"mkdir /config/usb_gadget/qemu_shared/functions/ffs.mtp\",\n                \"mkdir /config/usb_gadget/qemu_shared/functions/midi.usb579\",\n                \"write /config/usb_gadget/qemu_shared/functions/midi.usb579/in_ports 1\",\n                \"write /config/usb_gadget/qemu_shared/functions/midi.usb579/out_ports 1\",\n                \"write /config/usb_gadget/qemu_shared/functions/midi.usb579/id QEMU_MIDI\",\n                \"mkdir /dev/usb-ffs/usb579 0755 root root\",\n                \"mkdir /dev/usb-ffs/mtp 0755 root root\",\n                \"mount functionfs usb579 /dev/usb-ffs/usb579 uid=0,gid=0,rmode=0555,fmode=0600,context=u:object_r:qemu_usb_functionfs:s0\",\n                \"mount functionfs mtp /dev/usb-ffs/mtp uid=0,gid=0,rmode=0555,fmode=0600,context=u:object_r:qemu_usb_functionfs:s0\"\n            ]\n        }, {\n            \"name\" : \"param:sys.usb.config=none && param:sys.usb.configfs=1\",\n"
+        }
+      ]
+    },
+    {
+      "path": "base/security/selinux_adapter/sepolicy/ohos_policy/drivers/peripheral/usb/public/file.te",
+      "cuts": [
+        {
+          "before": "\n# Filesystem types\ntype dev_usb_accessory_file, dev_attr;\n",
+          "after": "\n# Filesystem types\ntype dev_usb_accessory_file, dev_attr;\n# Independent normal QEMU UDC config and its two FunctionFS mounts.\ntype qemu_usb_configfs, fs_attr;\ntype qemu_usb_functionfs, fs_attr;\n"
+        }
+      ]
+    },
+    {
+      "path": "base/security/selinux_adapter/sepolicy/base/system/virtfs_contexts",
+      "cuts": [
+        {
+          "before": "\ngenfscon configfs / u:object_r:configfs:s0\ngenfscon configfs /usb_gadget  u:object_r:config_usb_gadget:s0\n\ngenfscon cgroup / u:object_r:cgroup:s0\ngenfscon functionfs / u:object_r:functionfs:s0\n",
+          "after": "\ngenfscon configfs / u:object_r:configfs:s0\ngenfscon configfs /usb_gadget  u:object_r:config_usb_gadget:s0\ngenfscon configfs /usb_gadget/qemu_shared u:object_r:qemu_usb_configfs:s0\n\ngenfscon cgroup / u:object_r:cgroup:s0\ngenfscon functionfs / u:object_r:functionfs:s0\n"
+        }
+      ]
+    }
+  ],
+  "new_files": [
+    {
+      "path": "drivers/peripheral/usb/gadget/function/mtp/include/qemu_mtp_functionfs.h",
+      "source": "sources/drivers/peripheral/usb/gadget/function/mtp/include/qemu_mtp_functionfs.h",
+      "sha256": "5101d4822411678d8d97fae82bb8694de49b357328efda65ee4fa7d6c2fb3f36"
+    },
+    {
+      "path": "drivers/peripheral/usb/gadget/function/mtp/src/qemu_mtp_functionfs.cpp",
+      "source": "sources/drivers/peripheral/usb/gadget/function/mtp/src/qemu_mtp_functionfs.cpp",
+      "sha256": "c9bae4d9325a7149661a23ba6eeb5218397d683fd1ecb19f70935e4f363f30c7"
+    },
+    {
+      "path": "foundation/multimedia/media_library/services/media_mtp_service/include/qemu_mtp_mount_watcher.h",
+      "source": "sources/foundation/multimedia/media_library/services/media_mtp_service/include/qemu_mtp_mount_watcher.h",
+      "sha256": "50dc377981976126af72698854ee924b64596f7e25096ae676e55652a004988a"
+    }
+  ]
+}

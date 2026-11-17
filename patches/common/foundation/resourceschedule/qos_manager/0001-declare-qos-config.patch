@@ -1,0 +1,11 @@
+diff --git a/device/qemu/common/virt_full/kernel/build_kernel.sh b/device/qemu/common/virt_full/kernel/build_kernel.sh
+--- a/device/qemu/common/virt_full/kernel/build_kernel.sh
++++ b/device/qemu/common/virt_full/kernel/build_kernel.sh
+@@ -16,6 +16,7 @@ export KERNEL_SOURCE_DIR=${4}
+ export KERNEL_PATCH_PATH=${5}
+ export KERNEL_CONFIG_NAME=${6}_virt_defconfig
+ export KERNEL_MODULES_OUT=$(realpath -m ${ACTION_ROOT}/${7})
++export QEMU_QOS_CONFIG=${KERNEL_PATCH_PATH}/qos.config
+ 
+ export OUT_DIR=${OHOS_SOURCE_ROOT}/out
+ 

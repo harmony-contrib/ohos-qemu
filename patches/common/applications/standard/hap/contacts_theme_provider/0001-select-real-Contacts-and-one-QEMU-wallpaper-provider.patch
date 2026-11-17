@@ -1,0 +1,59 @@
+diff --git a/applications/standard/hap/BUILD.gn b/applications/standard/hap/BUILD.gn
+--- a/applications/standard/hap/BUILD.gn
++++ b/applications/standard/hap/BUILD.gn
+@@ -233,11 +233,34 @@
+   }
+ }
+
+-ohos_prebuilt_etc("contacts_hap") {
+-  source = hap_src_dir + "Contacts.hap"
+-  module_install_dir = "app/com.ohos.contacts"
+-  part_name = "prebuilt_hap"
+-  subsystem_name = "applications"
++if (defined(product_name) &&
++    (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++     product_name == "x86_64_virt")) {
++  group("contacts_hap") {
++    deps = [ "//applications/standard/contacts:contacts_hap" ]
++  }
++} else {
++  ohos_prebuilt_etc("contacts_hap") {
++    source = hap_src_dir + "Contacts.hap"
++    module_install_dir = "app/com.ohos.contacts"
++    part_name = "prebuilt_hap"
++    subsystem_name = "applications"
++  }
++}
++
++# One real renderer module per QEMU device profile. Other products retain their
++# existing providers and receive an empty dependency group here.
++group("wallpaper_hap") {
++  deps = []
++  if (defined(product_name) &&
++    (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++     product_name == "x86_64_virt")) {
++    if (defined(device_type) && device_type == "2in1") {
++      deps = [ "//applications/standard/theme:wallpaper_pad_hap" ]
++    } else {
++      deps = [ "//applications/standard/theme:wallpaper_phone_hap" ]
++    }
++  }
+ }
+
+ ohos_prebuilt_etc("settings_faceauth_hap") {
+@@ -407,6 +430,7 @@
+     "//applications/standard/hap:capture.ogg",
+     "//applications/standard/hap:clock_demo_hap",
+     "//applications/standard/hap:contacts_hap",
++    "//applications/standard/hap:wallpaper_hap",
+     "//applications/standard/hap:demo.wav",
+     "//applications/standard/hap:dropdownPanel_hap",
+     "//applications/standard/hap:dynamic.wav",
+@@ -468,6 +492,7 @@
+       "//applications/standard/hap:camera_hap",
+       "//applications/standard/hap:capture.ogg",
+       "//applications/standard/hap:contacts_hap",
++      "//applications/standard/hap:wallpaper_hap",
+       "//applications/standard/hap:demo.wav",
+       "//applications/standard/hap:dropdownPanel_hap",
+       "//applications/standard/hap:dynamic.wav",

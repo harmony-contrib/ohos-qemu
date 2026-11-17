@@ -1,0 +1,11 @@
+--- a/foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/src/media_datashare_ext_ability.cpp
++++ b/foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/src/media_datashare_ext_ability.cpp
+@@ -1022,7 +1022,7 @@
+         }
+         // Reuse the same real RDB/DataShare bridge as MediaLibraryDataManager.
+         // No explicit service pre-count or preload; the client checks the bounded count.
+-        auto bridge = RdbUtils::ToResultSetBridge(result);
++        auto bridge = OHOS::RdbDataShareAdapter::RdbUtils::ToResultSetBridge(result);
+         if (bridge == nullptr) {
+             result->Close(); businessError.SetCode(23800301); return nullptr;
+         }

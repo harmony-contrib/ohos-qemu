@@ -1,0 +1,17 @@
+diff --git a/drivers/peripheral/thermal/interfaces/hdi_service/profile/qemu_thermal_hdi_config.xml b/drivers/peripheral/thermal/interfaces/hdi_service/profile/qemu_thermal_hdi_config.xml
+new file mode 100644
+--- /dev/null
++++ b/drivers/peripheral/thermal/interfaces/hdi_service/profile/qemu_thermal_hdi_config.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!-- SPDX-License-Identifier: Apache-2.0 -->
++<thermal version="0.01" product="qemu">
++    <base>
++        <item tag="sim_tz" value="0"/>
++    </base>
++    <polling name="thermal">
++        <group name="actual" interval="1000">
++            <thermal_zone type="test_battery" replace="battery"/>
++        </group>
++    </polling>
++</thermal>

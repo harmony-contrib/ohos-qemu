@@ -1,0 +1,31 @@
+diff --git a/base/global/i18n/interfaces/js/kits/src/i18n_system_addon.cpp b/base/global/i18n/interfaces/js/kits/src/i18n_system_addon.cpp
+--- a/base/global/i18n/interfaces/js/kits/src/i18n_system_addon.cpp
++++ b/base/global/i18n/interfaces/js/kits/src/i18n_system_addon.cpp
+@@ -641,5 +641,6 @@
+     if (code != 0) {
+         HILOG_ERROR_I18N("SetSystemLanguageImpl: Get language failed.");
++        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, "language", "string", throwError);
+         return nullptr;
+     }
+     I18nErrorCode err = I18nServiceAbilityClient::SetSystemLanguage(language);
+@@ -685,5 +686,6 @@
+     if (code != 0) {
+         HILOG_ERROR_I18N("SetSystemRegionImpl: Get argv[0] failed.");
++        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, "region", "string", throwError);
+         return nullptr;
+     }
+     I18nErrorCode err = I18nServiceAbilityClient::SetSystemRegion(regionBuf.data());
+@@ -729,5 +731,6 @@
+     if (code != 0) {
+         HILOG_ERROR_I18N("SetSystemLocaleImpl: Get argv[0] failed.");
++        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, "locale", "string", throwError);
+         return nullptr;
+     }
+     I18nErrorCode err = I18nServiceAbilityClient::SetSystemLocale(localeBuf.data());
+@@ -774,5 +777,6 @@
+     if (status != napi_ok) {
+         HILOG_ERROR_I18N("Set24HourClockImpl: Failed to get boolean item");
++        ErrorUtil::NapiThrow(env, I18N_NOT_FOUND, "option", "boolean", throwError);
+         return nullptr;
+     }
+     std::string optionStr = option ? "true" : "false";

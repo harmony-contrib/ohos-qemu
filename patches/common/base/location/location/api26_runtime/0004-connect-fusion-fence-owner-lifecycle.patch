@@ -1,0 +1,1799 @@
+--- a/base/location/location/frameworks/base_module/source/request_config.cpp
++++ b/base/location/location/frameworks/base_module/source/request_config.cpp
+@@ -52,6 +52,7 @@
+
+ void RequestConfig::Set(RequestConfig& requestConfig)
+ {
++    needsFinePermission_ = requestConfig.NeedsFinePermission();
+     sportsType_ = requestConfig.GetSportsType();
+     scenario_ = requestConfig.GetScenario();
+     priority_ = requestConfig.GetPriority();
+@@ -68,7 +69,8 @@
+
+ bool RequestConfig::IsSame(RequestConfig& requestConfig)
+ {
+-    if (sportsType_ != requestConfig.GetSportsType() ||
++    if (needsFinePermission_ != requestConfig.NeedsFinePermission() ||
++        sportsType_ != requestConfig.GetSportsType() ||
+         locationSourceType_ != requestConfig.GetLocationSourceType()) {
+         return false;
+     }
+@@ -83,6 +85,7 @@
+
+ void RequestConfig::ReadFromParcel(Parcel& parcel)
+ {
++    needsFinePermission_ = false;
+     sportsType_ = 0; // Old parcels never contain the separate sports-mode argument.
+     scenario_ = parcel.ReadInt32();
+     priority_ = parcel.ReadInt32();
+--- a/base/location/location/frameworks/js/napi/include/location_napi_adapter.h
++++ b/base/location/location/frameworks/js/napi/include/location_napi_adapter.h
+@@ -30,6 +30,9 @@
+ namespace Location {
+ napi_value StartBluetoothSearch(napi_env env, napi_callback_info info);
+ napi_value StopBluetoothSearch(napi_env env, napi_callback_info info);
++napi_value AddFusionFence(napi_env env, napi_callback_info info);
++napi_value RemoveFusionFence(napi_env env, napi_callback_info info);
++napi_value IsFusionFenceSupported(napi_env env, napi_callback_info info);
+ napi_value GetCurrentDistrict(napi_env env, napi_callback_info info);
+ napi_value GetPostProcessingTrack(napi_env env, napi_callback_info info);
+ napi_value GetLocationIconStatus(napi_env env, napi_callback_info info);
+--- a/base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp
++++ b/base/location/location/frameworks/js/napi/source/location_napi_adapter.cpp
+@@ -15,12 +15,18 @@
+
+ #include "location_napi_adapter.h"
+
++#include <algorithm>
+ #include <atomic>
++#include "ipc_object_stub.h"
++#include "message_parcel.h"
++#include "message_option.h"
++#include "fusion_fence_request.h"
+ #include <cmath>
+ #include <limits>
+ #include <memory>
+ #include <mutex>
+ #include <string>
++#include <utility>
+ #include <vector>
+ #include "bluetooth_scan_result_callback_napi.h"
+ #include "napi/native_node_api.h"
+@@ -243,6 +249,388 @@
+     return UndefinedNapiValue(env);
+ }
+
++namespace {
++const std::u16string FUSION_NAPI_DESCRIPTOR = u"location.IFusionFenceCallback";
++class FusionFenceCallbackNapi final : public IPCObjectStub {
++public:
++    explicit FusionFenceCallbackNapi(napi_env env, napi_ref callback) : env_(env), callback_(callback) {}
++    int OnRemoteRequest(uint32_t code, MessageParcel& data, MessageParcel& reply, MessageOption& option) override
++    {
++        if (code != 1 || data.ReadInterfaceToken() != FUSION_NAPI_DESCRIPTOR) { return -1; }
++        std::string id;
++        int32_t scene = 0;
++        int32_t event = 0;
++        if (!data.ReadString(id) || !data.ReadInt32(scene) || !data.ReadInt32(event) ||
++            scene < 1 || scene > 4 || (event != 1 && event != 2 && event != 4 && event != 8 &&
++                event != 16 && event != 32)) { return -1; }
++        std::lock_guard<std::mutex> guard(mutex_);
++        if (env_ == nullptr || callback_ == nullptr) { return 0; }
++        sptr<FusionFenceCallbackNapi> self(this);
++        napi_send_event(env_, [self, id, scene, event]() { self->Dispatch(id, scene, event); }, napi_eprio_immediate);
++        return 0;
++    }
++    void Close()
++    {
++        std::lock_guard<std::mutex> guard(mutex_);
++        if (env_ != nullptr && callback_ != nullptr) { napi_delete_reference(env_, callback_); }
++        callback_ = nullptr;
++        env_ = nullptr;
++    }
++private:
++    void Dispatch(const std::string& id, int32_t scene, int32_t transition)
++    {
++        std::unique_lock<std::mutex> guard(mutex_);
++        if (env_ == nullptr || callback_ == nullptr) { return; }
++        auto env = env_;
++        napi_handle_scope scope = nullptr;
++        if (napi_open_handle_scope(env, &scope) != napi_ok || scope == nullptr) { return; }
++        napi_value handler = nullptr;
++        napi_value payload = nullptr;
++        napi_value receiver = nullptr;
++        if (napi_get_reference_value(env, callback_, &handler) == napi_ok && handler != nullptr &&
++            napi_create_object(env, &payload) == napi_ok && napi_get_undefined(env, &receiver) == napi_ok) {
++            SetValueUtf8String(env, "identifier", id.c_str(), payload);
++            SetValueInt32(env, "scene", scene, payload);
++            SetValueInt32(env, "transitionEvent", transition, payload);
++            guard.unlock();
++            napi_value result = nullptr;
++            napi_call_function(env, receiver, handler, 1, &payload, &result);
++        }
++        napi_close_handle_scope(env, scope);
++    }
++    std::mutex mutex_;
++    napi_env env_ = nullptr;
++    napi_ref callback_ = nullptr;
++};
++struct FusionFenceRegistration {
++    napi_env env = nullptr;
++    std::string identifier;
++    sptr<FusionFenceCallbackNapi> callback;
++    std::shared_ptr<LocatorImpl> client;
++    std::atomic<bool> cancelled {false};
++    std::shared_ptr<FusionFenceRegistration>* cleanupData = nullptr;
++};
++std::mutex g_fusionFenceMutex;
++std::vector<std::shared_ptr<FusionFenceRegistration>> g_fusionFenceRegistrations;
++void CleanupFusionFence(void* data)
++{
++    std::unique_ptr<std::shared_ptr<FusionFenceRegistration>> holder(
++        static_cast<std::shared_ptr<FusionFenceRegistration>*>(data));
++    auto registration = *holder;
++    registration->cancelled.store(true);
++    registration->cleanupData = nullptr;
++    registration->callback->Close();
++    if (registration->client != nullptr) { registration->client->ReleaseFusionFenceV9(registration->identifier, registration->callback); }
++    std::lock_guard<std::mutex> guard(g_fusionFenceMutex);
++    g_fusionFenceRegistrations.erase(std::remove(g_fusionFenceRegistrations.begin(),
++        g_fusionFenceRegistrations.end(), registration), g_fusionFenceRegistrations.end());
++}
++void CloseFusionRegistration(const std::shared_ptr<FusionFenceRegistration>& registration)
++{
++    registration->cancelled.store(true);
++    registration->callback->Close();
++    auto* holder = registration->cleanupData;
++    if (holder != nullptr && napi_remove_env_cleanup_hook(registration->env, CleanupFusionFence, holder) == napi_ok) {
++        registration->cleanupData = nullptr;
++        delete holder;
++    }
++    std::lock_guard<std::mutex> guard(g_fusionFenceMutex);
++    g_fusionFenceRegistrations.erase(std::remove(g_fusionFenceRegistrations.begin(),
++        g_fusionFenceRegistrations.end(), registration), g_fusionFenceRegistrations.end());
++}
++bool FusionJsProperty(napi_env env, napi_value object, const char* name, napi_value& value)
++{
++    return napi_get_named_property(env, object, name, &value) == napi_ok;
++}
++bool FusionJsNumber(napi_env env, napi_value value, double& number)
++{
++    napi_valuetype type = napi_undefined;
++    return napi_typeof(env, value, &type) == napi_ok && type == napi_number &&
++        napi_get_value_double(env, value, &number) == napi_ok && std::isfinite(number);
++}
++bool FusionJsInt(napi_env env, napi_value object, const char* name, int32_t& out)
++{
++    napi_value value = nullptr;
++    double number = 0;
++    if (!FusionJsProperty(env, object, name, value) || !FusionJsNumber(env, value, number) ||
++        std::trunc(number) != number || number < std::numeric_limits<int32_t>::min() ||
++        number > std::numeric_limits<int32_t>::max()) { return false; }
++    out = static_cast<int32_t>(number);
++    return true;
++}
++bool FusionJsDouble(napi_env env, napi_value object, const char* name, double& out)
++{
++    napi_value value = nullptr;
++    return FusionJsProperty(env, object, name, value) && FusionJsNumber(env, value, out);
++}
++bool FusionJsText(napi_env env, napi_value value, std::string& out)
++{
++    napi_valuetype type = napi_undefined;
++    size_t size = 0;
++    if (napi_typeof(env, value, &type) != napi_ok || type != napi_string ||
++        napi_get_value_string_utf8(env, value, nullptr, 0, &size) != napi_ok || size > FusionFenceRequest::MAX_TEXT) {
++        return false;
++    }
++    std::vector<char> buffer(size + 1);
++    if (napi_get_value_string_utf8(env, value, buffer.data(), buffer.size(), &size) != napi_ok) { return false; }
++    out.assign(buffer.data(), size);
++    return out.find('\0') == std::string::npos;
++}
++bool FusionJsOptional(napi_env env, napi_value object, const char* name, napi_value& out)
++{
++    bool present = false;
++    napi_valuetype type = napi_undefined;
++    out = nullptr;
++    if (napi_has_named_property(env, object, name, &present) != napi_ok) { return false; }
++    if (!present) { return true; }
++    if (!FusionJsProperty(env, object, name, out) || napi_typeof(env, out, &type) != napi_ok) { return false; }
++    if (type == napi_undefined) { out = nullptr; }
++    return true;
++}
++bool FusionJsPoint(napi_env env, napi_value value, FusionPoint& point)
++{
++    return FusionJsDouble(env, value, "latitude", point.latitude) &&
++        FusionJsDouble(env, value, "longitude", point.longitude) && point.Valid();
++}
++template<class T, class Reader>
++bool FusionJsArray(napi_env env, napi_value value, std::vector<T>& result, Reader reader)
++{
++    bool array = false;
++    uint32_t count = 0;
++    if (napi_is_array(env, value, &array) != napi_ok || !array ||
++        napi_get_array_length(env, value, &count) != napi_ok || count > FusionFenceRequest::MAX_ITEMS) { return false; }
++    result.resize(count);
++    for (uint32_t i = 0; i < count; ++i) {
++        napi_value item = nullptr;
++        if (napi_get_element(env, value, i, &item) != napi_ok || !reader(item, result[i])) { return false; }
++    }
++    return true;
++}
++bool ReadFusionFenceRequest(napi_env env, napi_value value, FusionFenceRequest& request, napi_value& callback)
++{
++    napi_value item = nullptr;
++    napi_valuetype type = napi_undefined;
++    if (!FusionJsProperty(env, value, "identifier", item) || !FusionJsText(env, item, request.identifier) ||
++        !FusionJsInt(env, value, "scene", request.scene) || !FusionJsInt(env, value, "fenceType", request.fenceType) ||
++        !FusionJsProperty(env, value, "poiLocation", item) || !FusionJsPoint(env, item, request.poi) ||
++        !FusionJsInt(env, value, "monitorTransitionEvents", request.events) ||
++        !FusionJsInt(env, value, "loiterTimeMs", request.loiterMs) ||
++        !FusionJsDouble(env, value, "expirationMs", request.expirationMs) ||
++        !FusionJsProperty(env, value, "fenceTransitionCallback", callback) ||
++        napi_typeof(env, callback, &type) != napi_ok || type != napi_function) { return false; }
++    if (!FusionJsOptional(env, value, "poiType", item) ||
++        (item != nullptr && !FusionJsText(env, item, request.poiType))) { return false; }
++    if (!FusionJsOptional(env, value, "gnssFences", item)) { return false; }
++    if (item != nullptr && !FusionJsArray(env, item, request.gnss, [env](napi_value v, auto& shape) {
++        napi_value geometry = nullptr;
++        if (!FusionJsInt(env, v, "gnssFenceType", shape.type)) { return false; }
++        if (shape.type == 2) {
++            if (!FusionJsProperty(env, v, "circularFence", geometry) || !FusionJsPoint(env, geometry, shape.center) ||
++                !FusionJsDouble(env, geometry, "radius", shape.radius) ||
++                !FusionJsDouble(env, geometry, "expiration", shape.expirationMs)) { return false; }
++            napi_value coordinates = nullptr;
++            if (!FusionJsOptional(env, geometry, "coordinateSystemType", coordinates)) { return false; }
++            if (coordinates != nullptr && !FusionJsInt(env, geometry, "coordinateSystemType", shape.coordinateSystem)) {
++                return false;
++            }
++            return true;
++        }
++        return shape.type == 1 && FusionJsProperty(env, v, "polygon", geometry) &&
++            FusionJsArray(env, geometry, shape.polygon, [env](auto p, auto& point) { return FusionJsPoint(env, p, point); });
++    })) { return false; }
++    if (!FusionJsOptional(env, value, "cellFences", item)) { return false; }
++    if (item != nullptr && !FusionJsArray(env, item, request.cells, [env](auto v, auto& group) {
++        napi_value array = nullptr;
++        return FusionJsProperty(env, v, "cellInfos", array) && FusionJsArray(env, array, group, [env](auto c, auto& cell) {
++            napi_value id = nullptr;
++            double number = 0;
++            if (!FusionJsProperty(env, c, "cellId", id) || !FusionJsNumber(env, id, number) ||
++                std::trunc(number) != number || number < 0 || number > 9007199254740991.0) { return false; }
++            cell.cellId = static_cast<int64_t>(number);
++            napi_value tac = nullptr;
++            if (!FusionJsOptional(env, c, "tac", tac)) { return false; }
++            cell.hasTac = tac != nullptr;
++            if (cell.hasTac && !FusionJsInt(env, c, "tac", cell.tac)) { return false; }
++            return FusionJsInt(env, c, "lac", cell.lac) && FusionJsInt(env, c, "mcc", cell.mcc) &&
++                FusionJsInt(env, c, "mnc", cell.mnc) && FusionJsInt(env, c, "rat", cell.rat) &&
++                FusionJsInt(env, c, "pci", cell.pci);
++        });
++    })) { return false; }
++    if (!FusionJsOptional(env, value, "wifiFences", item)) { return false; }
++    if (item != nullptr && !FusionJsArray(env, item, request.wifi, [env](auto v, auto& group) {
++        napi_value array = nullptr;
++        return FusionJsInt(env, v, "type", group.type) && FusionJsProperty(env, v, "wifiFeatures", array) &&
++            FusionJsArray(env, array, group.features, [env](auto f, auto& feature) {
++                napi_value macs = nullptr;
++                return FusionJsInt(env, f, "rssiAvg", feature.average) &&
++                    FusionJsDouble(env, f, "rssiStandardDeviation", feature.deviation) &&
++                    FusionJsProperty(env, f, "mac", macs) && FusionJsArray(env, macs, feature.macs,
++                        [env](auto mac, auto& text) { return FusionJsText(env, mac, text); });
++            });
++    })) { return false; }
++    return request.Valid();
++}
++struct FusionFenceAsyncContext final : AsyncContext {
++    explicit FusionFenceAsyncContext(napi_env env) : AsyncContext(env) {}
++    ~FusionFenceAsyncContext() override
++    {
++        if (registration != nullptr && !isAsyncWorkAddToQueue && !registration->cancelled.load()) {
++            CloseFusionRegistration(registration);
++        }
++    }
++    FusionFenceRequest request;
++    std::shared_ptr<FusionFenceRegistration> registration;
++    std::shared_ptr<LocatorImpl> client;
++    std::string identifier;
++    std::vector<std::shared_ptr<FusionFenceRegistration>> removals;
++};
++} // namespace
++
++// A dedicated Promise path retains the registration until work completes and
++// rejects queue/cancellation failures instead of leaving a registered callback
++// behind an unresolved Promise.
++static napi_value RunFusionFencePromise(napi_env env, std::unique_ptr<FusionFenceAsyncContext> context)
++{
++    napi_value promise = nullptr;
++    if (napi_create_promise(env, &context->deferred, &promise) != napi_ok) { return nullptr; }
++    auto fail = [&]() {
++        context->errCode = ERRCODE_SERVICE_UNAVAILABLE;
++        context->completeFunc(context.get());
++        napi_value error = GetErrorObject(env, context->errCode, "The location service is unavailable.");
++        napi_reject_deferred(env, context->deferred, error);
++        if (context->work != nullptr) { napi_delete_async_work(env, context->work); }
++        return promise;
++    };
++    if (napi_create_async_work(env, nullptr, context->resourceName,
++        [](napi_env env, void* data) {
++            auto* context = static_cast<FusionFenceAsyncContext*>(data);
++            context->executeFunc(context);
++        },
++        [](napi_env env, napi_status status, void* data) {
++            std::unique_ptr<FusionFenceAsyncContext> context(static_cast<FusionFenceAsyncContext*>(data));
++            if (status != napi_ok) { context->errCode = ERRCODE_SERVICE_UNAVAILABLE; }
++            context->completeFunc(context.get());
++            if (context->errCode == ERRCODE_SUCCESS) {
++                napi_resolve_deferred(env, context->deferred, context->result[PARAM1]);
++            } else {
++                napi_value error = GetErrorObject(env, context->errCode, CommonUtils::GetErrorMsgByCode(context->errCode));
++                napi_reject_deferred(env, context->deferred, error);
++            }
++            napi_delete_async_work(env, context->work);
++        }, context.get(), &context->work) != napi_ok) { return fail(); }
++    if (napi_queue_async_work(env, context->work) != napi_ok) { return fail(); }
++    context->isAsyncWorkAddToQueue = true;
++    context.release();
++    return promise;
++}
++
++napi_value AddFusionFence(napi_env env, napi_callback_info info)
++{
++    size_t argc = 2;
++    napi_value argv[2] = {nullptr};
++    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
++    auto context = std::make_unique<FusionFenceAsyncContext>(env);
++    napi_value callback = nullptr;
++    if (argc != 1 || !ReadFusionFenceRequest(env, argv[0], context->request, callback)) {
++        HandleSyncErrCode(env, ERRCODE_INVALID_PARAM);
++        return nullptr;
++    }
++    auto registration = std::make_shared<FusionFenceRegistration>();
++    registration->env = env;
++    registration->identifier = context->request.identifier;
++    registration->client = Locator::GetInstance();
++    napi_ref reference = nullptr;
++    NAPI_CALL(env, napi_create_reference(env, callback, 1, &reference));
++    registration->callback = new (std::nothrow) FusionFenceCallbackNapi(env, reference);
++    if (registration->callback == nullptr) {
++        napi_delete_reference(env, reference);
++        HandleSyncErrCode(env, ERRCODE_SERVICE_UNAVAILABLE);
++        return nullptr;
++    }
++    auto holder = std::make_unique<std::shared_ptr<FusionFenceRegistration>>(registration);
++    if (napi_add_env_cleanup_hook(env, CleanupFusionFence, holder.get()) != napi_ok) {
++        registration->callback->Close();
++        HandleSyncErrCode(env, ERRCODE_SERVICE_UNAVAILABLE);
++        return nullptr;
++    }
++    registration->cleanupData = holder.release();
++    {
++        std::lock_guard<std::mutex> guard(g_fusionFenceMutex);
++        g_fusionFenceRegistrations.push_back(registration);
++    }
++    context->registration = registration;
++    NAPI_CALL(env, napi_create_string_utf8(env, "addFusionFence", NAPI_AUTO_LENGTH, &context->resourceName));
++    context->executeFunc = [](void* data) {
++        auto context = static_cast<FusionFenceAsyncContext*>(data);
++        auto registration = context->registration;
++        context->errCode = registration->client == nullptr ? ERRCODE_SERVICE_UNAVAILABLE :
++            registration->client->AddFusionFenceV9(context->request, registration->callback);
++        if (registration->cancelled.load() && context->errCode == ERRCODE_SUCCESS) {
++            registration->client->ReleaseFusionFenceV9(registration->identifier, registration->callback);
++            context->errCode = ERRCODE_SERVICE_UNAVAILABLE;
++        }
++    };
++    context->completeFunc = [](void* data) {
++        auto context = static_cast<FusionFenceAsyncContext*>(data);
++        if (context->errCode != ERRCODE_SUCCESS) {
++            // A cancellation/completion failure can follow a successful worker.
++            // Callback identity makes this compensating release safe even for
++            // duplicate requests or a later same-identifier registration.
++            auto registration = context->registration;
++            if (registration->client != nullptr) {
++                registration->client->ReleaseFusionFenceV9(registration->identifier, registration->callback);
++            }
++            CloseFusionRegistration(registration);
++        }
++        napi_get_undefined(context->env, &context->result[PARAM1]);
++    };
++    return RunFusionFencePromise(env, std::move(context));
++}
++
++napi_value RemoveFusionFence(napi_env env, napi_callback_info info)
++{
++    size_t argc = 2;
++    napi_value argv[2] = {nullptr};
++    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr));
++    auto context = std::make_unique<FusionFenceAsyncContext>(env);
++    if (argc != 1 || !FusionJsText(env, argv[0], context->identifier) || context->identifier.empty()) {
++        HandleSyncErrCode(env, ERRCODE_INVALID_PARAM);
++        return nullptr;
++    }
++    context->client = Locator::GetInstance();
++    {
++        std::lock_guard<std::mutex> guard(g_fusionFenceMutex);
++        for (const auto& item : g_fusionFenceRegistrations) {
++            if (item->env == env && item->identifier == context->identifier) { context->removals.push_back(item); }
++        }
++    }
++    NAPI_CALL(env, napi_create_string_utf8(env, "removeFusionFence", NAPI_AUTO_LENGTH, &context->resourceName));
++    context->executeFunc = [](void* data) {
++        auto context = static_cast<FusionFenceAsyncContext*>(data);
++        context->errCode = context->client == nullptr ? ERRCODE_SERVICE_UNAVAILABLE :
++            context->client->RemoveFusionFenceV9(context->identifier);
++    };
++    context->completeFunc = [](void* data) {
++        auto context = static_cast<FusionFenceAsyncContext*>(data);
++        if (context->errCode == ERRCODE_SUCCESS || context->errCode == 3301602) {
++            for (const auto& item : context->removals) { CloseFusionRegistration(item); }
++        }
++        napi_get_undefined(context->env, &context->result[PARAM1]);
++    };
++    return RunFusionFencePromise(env, std::move(context));
++}
++
++napi_value IsFusionFenceSupported(napi_env env, napi_callback_info info)
++{
++    auto client = Locator::GetInstance();
++    bool supported = false;
++    auto error = client == nullptr ? ERRCODE_SERVICE_UNAVAILABLE : client->IsFusionFenceSupportedV9(supported);
++    if (error != ERRCODE_SUCCESS) { HandleSyncErrCode(env, error); return nullptr; }
++    napi_value result = nullptr;
++    NAPI_CALL(env, napi_get_boolean(env, supported, &result));
++    return result;
++}
++
+ struct DistrictAsyncContext final : AsyncContext {
+     explicit DistrictAsyncContext(napi_env env) : AsyncContext(env) {}
+     std::shared_ptr<LocatorImpl> client;
+@@ -289,7 +677,7 @@
+         if (std::string(name) == "locale") {
+             size_t length = 0;
+             if (type != napi_string || napi_get_value_string_utf8(env, value, nullptr, 0, &length) != napi_ok ||
+-                length > MAX_BUF_LEN) {
++                length > 100) {
+                 return false;
+             }
+             std::vector<char> buffer(length + 1);
+--- a/base/location/location/frameworks/js/napi/source/location_napi_entry.cpp
++++ b/base/location/location/frameworks/js/napi/source/location_napi_entry.cpp
+@@ -414,6 +414,9 @@
+         DECLARE_NAPI_FUNCTION("isBeaconFenceSupported", IsBeaconFenceSupported),
+         DECLARE_NAPI_FUNCTION("getActiveGeoFences", GetActiveGeoFences),
+         DECLARE_WRITABLE_NAPI_FUNCTION("getCurrentDistrict", GetCurrentDistrict),
++        DECLARE_WRITABLE_NAPI_FUNCTION("addFusionFence", AddFusionFence),
++        DECLARE_WRITABLE_NAPI_FUNCTION("removeFusionFence", RemoveFusionFence),
++        DECLARE_WRITABLE_NAPI_FUNCTION("isFusionFenceSupported", IsFusionFenceSupported),
+         DECLARE_WRITABLE_NAPI_FUNCTION("getPostProcessingTrack", GetPostProcessingTrack),
+         DECLARE_NAPI_FUNCTION("getLocationIconStatus", GetLocationIconStatus),
+         DECLARE_WRITABLE_NAPI_FUNCTION("startBluetoothSearch", StartBluetoothSearch),
+--- a/base/location/location/frameworks/native/locator_sdk/ILocatorService.idl
++++ b/base/location/location/frameworks/native/locator_sdk/ILocatorService.idl
+@@ -27,6 +27,7 @@
+ sequenceable OHOS.Location.BeaconFenceRequest;
+ sequenceable OHOS.Location.BeaconFence;
+ sequenceable OHOS.Location.Geofence;
++sequenceable OHOS.Location.FusionFenceRequest;
+
+ interface OHOS.Location.ILocatorCallback;
+ interface OHOS.Location.ICachedLocationsCallback;
+@@ -95,4 +96,8 @@
+     [ipccode 69] void StartLocatingWithSportsType([in] RequestConfig requestConfig, [in] int sportsType, [in] ILocatorCallback cb);
+     [ipccode 70] void GetPostProcessingTrack([in] int sportsType, [out] List<Location> track);
+     [ipccode 71] void CheckDistrictAccess();
++    [ipccode 72] void AddFusionFence([in] FusionFenceRequest request, [in] IRemoteObject cb);
++    [ipccode 73] void RemoveFusionFence([in] String identifier);
++    [ipccode 74] void IsFusionFenceSupported([out] boolean supported);
++    [ipccode 75] void ReleaseFusionFence([in] String identifier, [in] IRemoteObject cb);
+ }
+\ No newline at end of file
+--- a/base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp
++++ b/base/location/location/frameworks/native/locator_sdk/source/locator_impl.cpp
+@@ -1963,6 +1963,42 @@
+     return LocationRuntimeErrCode(proxy->StopBluetoothSearch(callback));
+ }
+
++LocationErrCode LocatorImpl::AddFusionFenceV9(const FusionFenceRequest& request, const sptr<IRemoteObject>& callback)
++{
++    if (!SaLoadWithStatistic::InitLocationSa(LOCATION_LOCATOR_SA_ID)) { return ERRCODE_SERVICE_UNAVAILABLE; }
++    auto proxy = GetProxy();
++    if (proxy == nullptr) { return ERRCODE_SERVICE_UNAVAILABLE; }
++    auto error = proxy->AddFusionFence(request, callback);
++    if (error == 3501603 || error == 3301601) { return static_cast<LocationErrCode>(error); }
++    return LocationRuntimeErrCode(error);
++}
++
++LocationErrCode LocatorImpl::RemoveFusionFenceV9(const std::string& identifier)
++{
++    if (!SaLoadWithStatistic::InitLocationSa(LOCATION_LOCATOR_SA_ID)) { return ERRCODE_SERVICE_UNAVAILABLE; }
++    auto proxy = GetProxy();
++    if (proxy == nullptr) { return ERRCODE_SERVICE_UNAVAILABLE; }
++    auto error = proxy->RemoveFusionFence(identifier);
++    return error == 3301602 ? static_cast<LocationErrCode>(error) : LocationRuntimeErrCode(error);
++}
++
++LocationErrCode LocatorImpl::ReleaseFusionFenceV9(const std::string& identifier, const sptr<IRemoteObject>& cb)
++{
++    if (!SaLoadWithStatistic::InitLocationSa(LOCATION_LOCATOR_SA_ID)) { return ERRCODE_SERVICE_UNAVAILABLE; }
++    auto proxy = GetProxy();
++    if (proxy == nullptr) { return ERRCODE_SERVICE_UNAVAILABLE; }
++    auto error = proxy->ReleaseFusionFence(identifier, cb);
++    return error == 3301602 ? static_cast<LocationErrCode>(error) : LocationRuntimeErrCode(error);
++}
++
++LocationErrCode LocatorImpl::IsFusionFenceSupportedV9(bool& supported)
++{
++    supported = false;
++    if (!SaLoadWithStatistic::InitLocationSa(LOCATION_LOCATOR_SA_ID)) { return ERRCODE_SERVICE_UNAVAILABLE; }
++    auto proxy = GetProxy();
++    return proxy == nullptr ? ERRCODE_SERVICE_UNAVAILABLE : LocationRuntimeErrCode(proxy->IsFusionFenceSupported(supported));
++}
++
+ namespace {
+ using DistrictDeadline = std::chrono::steady_clock::time_point;
+
+diff --git a/base/location/location/interfaces/inner_api/include/fusion_fence_request.h b/base/location/location/interfaces/inner_api/include/fusion_fence_request.h
+new file mode 100644
+--- /dev/null
++++ b/base/location/location/interfaces/inner_api/include/fusion_fence_request.h
+@@ -0,0 +1,209 @@
++/*
++ * Copyright (C) 2026 Huawei Device Co., Ltd.
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ * http://www.apache.org/licenses/LICENSE-2.0
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#ifndef LOCATION_FUSION_FENCE_REQUEST_H
++#define LOCATION_FUSION_FENCE_REQUEST_H
++
++#include <algorithm>
++#include <cmath>
++#include <cstdint>
++#include <limits>
++#include <memory>
++#include <string>
++#include <vector>
++#include <parcel.h>
++
++namespace OHOS {
++namespace Location {
++struct FusionPoint {
++    double latitude = 0;
++    double longitude = 0;
++    bool Valid() const
++    {
++        return std::isfinite(latitude) && std::abs(latitude) <= 90 &&
++            std::isfinite(longitude) && std::abs(longitude) <= 180;
++    }
++};
++struct FusionGnssFence {
++    int32_t type = 0;
++    FusionPoint center;
++    double radius = 0;
++    double expirationMs = 0;
++    int32_t coordinateSystem = 1;
++    std::vector<FusionPoint> polygon;
++};
++struct FusionCell {
++    int64_t cellId = 0;
++    int32_t lac = 0;
++    int32_t mcc = 0;
++    int32_t mnc = 0;
++    int32_t rat = 0;
++    int32_t pci = 0;
++    bool hasTac = false;
++    int32_t tac = 0;
++};
++struct FusionWifiFeature {
++    int32_t average = 0;
++    double deviation = 0;
++    std::vector<std::string> macs;
++};
++struct FusionWifiFence {
++    int32_t type = 0;
++    std::vector<FusionWifiFeature> features;
++};
++// New IPC payload; no field is appended to any legacy parcelable.
++class FusionFenceRequest : public Parcelable {
++public:
++    static constexpr size_t MAX_ITEMS = 64;
++    static constexpr size_t MAX_TEXT = 1024;
++    static constexpr int64_t NS_PER_MS = 1000000;
++    std::string identifier;
++    std::string poiType;
++    int32_t scene = 0;
++    int32_t fenceType = 0;
++    FusionPoint poi;
++    int32_t events = 0;
++    int32_t loiterMs = 0;
++    double expirationMs = 0;
++    std::vector<FusionGnssFence> gnss;
++    std::vector<std::vector<FusionCell>> cells;
++    std::vector<FusionWifiFence> wifi;
++
++    bool Valid() const
++    {
++        if (identifier.empty() || identifier.size() > MAX_TEXT || poiType.size() > MAX_TEXT ||
++            identifier.find('\0') != std::string::npos || scene < 1 || scene > 4 || !poi.Valid() ||
++            fenceType <= 0 || (fenceType & ~15) != 0 || events <= 0 || (events & ~63) != 0 ||
++            loiterMs < 0 || !std::isfinite(expirationMs) || expirationMs <= 0 ||
++            expirationMs > static_cast<double>(std::numeric_limits<int64_t>::max() / NS_PER_MS) ||
++            gnss.size() > MAX_ITEMS || cells.size() > MAX_ITEMS || wifi.size() > MAX_ITEMS ||
++            ((fenceType & 1) != 0) != !gnss.empty() || ((fenceType & 2) != 0) != !cells.empty() ||
++            ((fenceType & 4) != 0) != !wifi.empty()) {
++            return false;
++        }
++        for (const auto& shape : gnss) {
++            if ((shape.type != 1 && shape.type != 2) || (shape.type == 2 &&
++                (!shape.center.Valid() || !std::isfinite(shape.radius) || shape.radius <= 0 ||
++                !std::isfinite(shape.expirationMs) || shape.expirationMs <= 0)) ||
++                (shape.type == 1 && (shape.polygon.size() < 3 || shape.polygon.size() > MAX_ITEMS)) ||
++                !std::all_of(shape.polygon.begin(), shape.polygon.end(), [](const auto& p) { return p.Valid(); })) {
++                return false;
++            }
++        }
++        for (const auto& group : cells) {
++            if (group.empty() || group.size() > MAX_ITEMS) { return false; }
++            for (const auto& c : group) {
++                if (c.cellId < 0 || c.mcc < 0 || c.mcc > 999 || c.mnc < 0 || c.mnc > 999 || c.rat < 0) {
++                    return false;
++                }
++            }
++        }
++        for (const auto& group : wifi) {
++            if ((group.type != 1 && group.type != 2) || group.features.empty() || group.features.size() > MAX_ITEMS) {
++                return false;
++            }
++            for (const auto& f : group.features) {
++                if (!std::isfinite(f.deviation) || f.deviation < 0 || f.macs.empty() || f.macs.size() > MAX_ITEMS ||
++                    !std::all_of(f.macs.begin(), f.macs.end(), [](const auto& mac) { return ValidMac(mac); })) {
++                    return false;
++                }
++            }
++        }
++        return true;
++    }
++
++    static bool ValidMac(const std::string& mac)
++    {
++        if (mac.size() != 17) { return false; }
++        for (size_t i = 0; i < mac.size(); ++i) {
++            if (i % 3 == 2 ? mac[i] != ':' : !((mac[i] >= '0' && mac[i] <= '9') ||
++                (mac[i] >= 'a' && mac[i] <= 'f') || (mac[i] >= 'A' && mac[i] <= 'F'))) { return false; }
++        }
++        return true;
++    }
++
++    bool Marshalling(Parcel& p) const override
++    {
++        if (!Valid() || !p.WriteString(identifier) || !p.WriteString(poiType) || !p.WriteInt32(scene) ||
++            !p.WriteInt32(fenceType) || !WritePoint(p, poi) || !p.WriteInt32(events) ||
++            !p.WriteInt32(loiterMs) || !p.WriteDouble(expirationMs) || !p.WriteInt32(gnss.size())) { return false; }
++        for (const auto& s : gnss) {
++            if (!p.WriteInt32(s.type) || !WritePoint(p, s.center) || !p.WriteDouble(s.radius) ||
++                !p.WriteDouble(s.expirationMs) || !p.WriteInt32(s.coordinateSystem) || !p.WriteInt32(s.polygon.size())) { return false; }
++            for (const auto& point : s.polygon) { if (!WritePoint(p, point)) { return false; } }
++        }
++        if (!p.WriteInt32(cells.size())) { return false; }
++        for (const auto& group : cells) {
++            if (!p.WriteInt32(group.size())) { return false; }
++            for (const auto& c : group) {
++                if (!p.WriteInt64(c.cellId) || !p.WriteInt32(c.lac) || !p.WriteInt32(c.mcc) ||
++                    !p.WriteInt32(c.mnc) || !p.WriteInt32(c.rat) || !p.WriteInt32(c.pci) ||
++                    !p.WriteBool(c.hasTac) || !p.WriteInt32(c.tac)) { return false; }
++            }
++        }
++        if (!p.WriteInt32(wifi.size())) { return false; }
++        for (const auto& group : wifi) {
++            if (!p.WriteInt32(group.type) || !p.WriteInt32(group.features.size())) { return false; }
++            for (const auto& f : group.features) {
++                if (!p.WriteInt32(f.average) || !p.WriteDouble(f.deviation) || !p.WriteInt32(f.macs.size())) {
++                    return false;
++                }
++                for (const auto& mac : f.macs) { if (!p.WriteString(mac)) { return false; } }
++            }
++        }
++        return true;
++    }
++
++    static FusionFenceRequest* Unmarshalling(Parcel& p)
++    {
++        auto r = std::make_unique<FusionFenceRequest>();
++        if (!r->Read(p) || !r->Valid()) { return nullptr; }
++        return r.release();
++    }
++private:
++    static bool WritePoint(Parcel& p, const FusionPoint& point)
++    { return p.WriteDouble(point.latitude) && p.WriteDouble(point.longitude); }
++    static bool ReadPoint(Parcel& p, FusionPoint& point)
++    { return p.ReadDouble(point.latitude) && p.ReadDouble(point.longitude); }
++    template<class T, class Reader>
++    static bool ReadItems(Parcel& p, std::vector<T>& out, Reader reader)
++    {
++        int32_t count = 0;
++        if (!p.ReadInt32(count) || count < 0 || count > static_cast<int32_t>(MAX_ITEMS)) { return false; }
++        out.resize(count);
++        for (auto& item : out) { if (!reader(item)) { return false; } }
++        return true;
++    }
++    bool Read(Parcel& p)
++    {
++        return p.ReadString(identifier) && p.ReadString(poiType) && p.ReadInt32(scene) &&
++            p.ReadInt32(fenceType) && ReadPoint(p, poi) && p.ReadInt32(events) && p.ReadInt32(loiterMs) &&
++            p.ReadDouble(expirationMs) && ReadItems(p, gnss, [&p](auto& s) {
++                return p.ReadInt32(s.type) && ReadPoint(p, s.center) && p.ReadDouble(s.radius) &&
++                    p.ReadDouble(s.expirationMs) && p.ReadInt32(s.coordinateSystem) && ReadItems(p, s.polygon, [&p](auto& pt) { return ReadPoint(p, pt); });
++            }) && ReadItems(p, cells, [&p](auto& group) {
++                return ReadItems(p, group, [&p](auto& c) {
++                    return p.ReadInt64(c.cellId) && p.ReadInt32(c.lac) && p.ReadInt32(c.mcc) &&
++                        p.ReadInt32(c.mnc) && p.ReadInt32(c.rat) && p.ReadInt32(c.pci) &&
++                        p.ReadBool(c.hasTac) && p.ReadInt32(c.tac);
++                });
++            }) && ReadItems(p, wifi, [&p](auto& group) {
++                return p.ReadInt32(group.type) && ReadItems(p, group.features, [&p](auto& f) {
++                    return p.ReadInt32(f.average) && p.ReadDouble(f.deviation) &&
++                        ReadItems(p, f.macs, [&p](auto& mac) { return p.ReadString(mac); });
++                });
++            });
++    }
++};
++} // namespace Location
++} // namespace OHOS
++#endif // LOCATION_FUSION_FENCE_REQUEST_H
+--- a/base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h
++++ b/base/location/location/interfaces/inner_api/include/locationhub_ipc_interface_code.h
+@@ -86,7 +86,11 @@
+     START_DISTRICT_LOCATING = 68,
+     START_LOCATING_WITH_SPORTS_TYPE = 69,
+     GET_POST_PROCESSING_TRACK = 70,
+-    CHECK_DISTRICT_ACCESS = 71
++    CHECK_DISTRICT_ACCESS = 71,
++    ADD_FUSION_FENCE = 72,
++    REMOVE_FUSION_FENCE = 73,
++    IS_FUSION_FENCE_SUPPORTED = 74,
++    RELEASE_FUSION_FENCE = 75,
+ };
+
+ enum class GeoConvertInterfaceCode {
+--- a/base/location/location/interfaces/inner_api/include/locator_impl.h
++++ b/base/location/location/interfaces/inner_api/include/locator_impl.h
+@@ -30,6 +30,7 @@
+ #include "locating_required_data_config.h"
+ #include "location_data_manager.h"
+ #include "request_config.h"
++#include "fusion_fence_request.h"
+ #include "system_ability_status_change_stub.h"
+ #include "locationhub_ipc_interface_code.h"
+ #include "ibluetooth_scan_result_callback.h"
+@@ -731,6 +732,10 @@
+      * @return Returns ERRCODE_SUCCESS if Get perform locating app list.
+      */
+     LocationErrCode GetLocationIconStatus(int32_t& status);
++    LocationErrCode AddFusionFenceV9(const FusionFenceRequest& request, const sptr<IRemoteObject>& callback);
++    LocationErrCode RemoveFusionFenceV9(const std::string& identifier);
++    LocationErrCode IsFusionFenceSupportedV9(bool& supported);
++    LocationErrCode ReleaseFusionFenceV9(const std::string& identifier, const sptr<IRemoteObject>& cb);
+     LocationErrCode GetCurrentDistrictV9(const std::string& locale, int32_t timeoutMs,
+         std::shared_ptr<GeoAddress>& address);
+     LocationErrCode GetPostProcessingTrackV9(int32_t sportsType, std::vector<Location>& track);
+--- a/base/location/location/interfaces/inner_api/include/request_config.h
++++ b/base/location/location/interfaces/inner_api/include/request_config.h
+@@ -142,6 +142,10 @@
+     inline int32_t GetSportsType() const { return sportsType_; }
+     inline void SetSportsType(int32_t sportsType) { sportsType_ = sportsType; }
+
++    // Service-internal precise consumer; never accepted from legacy IPC parcels.
++    bool NeedsFinePermission() const { return needsFinePermission_; }
++    void SetNeedsFinePermission(bool value) { needsFinePermission_ = value; }
++
+     void ReadFromParcel(Parcel& parcel);
+     bool Marshalling(Parcel& parcel) const override;
+     std::string ToString() const;
+@@ -162,6 +166,7 @@
+     bool isNeedLocation_;
+     int32_t locationSourceType_;
+     int32_t sportsType_ = 0;
++    bool needsFinePermission_ = false;
+ };
+ } // namespace Location
+ } // namespace OHOS
+--- a/base/location/location/services/location_locator/locator/BUILD.gn
++++ b/base/location/location/services/location_locator/locator/BUILD.gn
+@@ -113,6 +113,11 @@
+     "-Os",
+   ]
+
++  if (telephony_core_service_enable) {
++    external_deps += [ "core_service:tel_core_service_api" ]
++    defines += [ "TEL_CORE_SERVICE_ENABLE" ]
++  }
++
+   if (communication_wifi_enable) {
+     external_deps += [ "wifi:wifi_sdk" ]
+     defines += [ "WIFI_ENABLE" ]
+--- a/base/location/location/services/location_locator/locator/include/locator_ability.h
++++ b/base/location/location/services/location_locator/locator/include/locator_ability.h
+@@ -16,7 +16,10 @@
+ #ifndef LOCATOR_ABILITY_H
+ #define LOCATOR_ABILITY_H
+
++#include <cstdint>
+ #include <map>
++#include <memory>
++#include <vector>
+ #include <mutex>
+ #include <atomic>
+ #include <singleton.h>
+@@ -35,6 +38,7 @@
+ #include "locator_service_stub.h"
+ #include "permission_status_change_cb.h"
+ #include "request.h"
++#include "fusion_fence_request.h"
+ #include "request_manager.h"
+ #include "report_manager.h"
+ #include "want_agent_helper.h"
+@@ -54,6 +58,8 @@
+
+ namespace OHOS {
+ namespace Location {
++struct FusionFenceRecord;
++
+ class ScanCallbackDeathRecipient : public IRemoteObject::DeathRecipient {
+ public:
+     void OnRemoteDied(const wptr<IRemoteObject> &remote) override;
+@@ -164,6 +170,15 @@
+     ErrCode StartLocating(const RequestConfig& requestConfig, const sptr<ILocatorCallback>& cb) override;
+     ErrCode StartDistrictLocating(const RequestConfig& requestConfig, const sptr<ILocatorCallback>& cb) override;
+     ErrCode CheckDistrictAccess() override;
++    ErrCode AddFusionFence(const FusionFenceRequest& request, const sptr<IRemoteObject>& cb) override;
++    ErrCode RemoveFusionFence(const std::string& identifier) override;
++    ErrCode IsFusionFenceSupported(bool& supported) override;
++    ErrCode ReleaseFusionFence(const std::string& identifier, const sptr<IRemoteObject>& cb) override;
++    void OnFusionFenceLocation(const std::shared_ptr<FusionFenceRecord>& record,
++        const std::unique_ptr<Location>& location);
++    void OnFusionFenceWifi(const std::shared_ptr<FusionFenceRecord>& record,
++        const std::vector<std::shared_ptr<LocatingRequiredData>>& result);
++    void RemoveFusionFenceRecord(const std::shared_ptr<FusionFenceRecord>& record);
+     ErrCode StartLocatingWithSportsType(const RequestConfig& requestConfig, int32_t sportsType,
+         const sptr<ILocatorCallback>& cb) override;
+     ErrCode GetPostProcessingTrack(int32_t sportsType, std::vector<Location>& track) override;
+@@ -259,6 +274,22 @@
+     bool IsDeveloperMode();
+
+ private:
++    void ScheduleFusionFenceCheck();
++    void CheckFusionFences();
++    void ClearFusionFences();
++    void UpdateFusionFenceCells(const std::shared_ptr<FusionFenceRecord>& record,
++        const std::vector<std::shared_ptr<CellularInfo>>& cells);
++    void EvaluateFusionFence(const std::shared_ptr<FusionFenceRecord>& record);
++    bool HasFusionFences();
++    bool IsFusionFenceLocatingInCurrentAccount();
++    std::mutex fusionFenceMutex_;
++    std::vector<std::shared_ptr<FusionFenceRecord>> fusionFences_;
++    std::vector<std::shared_ptr<FusionFenceRecord>> stoppedFusionFences_;
++    uint64_t fusionFenceSequence_ = 0;
++    int64_t lastFusionWifiScanNs_ = 0;
++    bool fusionCheckScheduled_ = false;
++    bool fusionStopping_ = false;
++
+     bool Init();
+     bool CheckSaValid();
+ #ifdef FEATURE_GNSS_SUPPORT
+--- a/base/location/location/services/location_locator/locator/include/locator_required_data_manager.h
++++ b/base/location/location/services/location_locator/locator/include/locator_required_data_manager.h
+@@ -271,6 +271,8 @@
+     bool IsWifiConnecting();
+     bool IsBluetoothConnecting();
+     static LocatorRequiredDataManager* GetInstance();
++    LocationErrCode RequestFusionWifiScan();
++    LocationErrCode QueryFusionCells(std::vector<std::shared_ptr<CellularInfo>>& result);
+     void SyncStillMovementState(bool state);
+     void SendStartBluetoothScanEvent();
+     void SendStopBluetoothScanEvent();
+--- a/base/location/location/services/location_locator/locator/include/request_manager.h
++++ b/base/location/location/services/location_locator/locator/include/request_manager.h
+@@ -75,6 +75,7 @@
+     static RequestManager* GetInstance();
+     void IsStandby();
+     bool IsLocatingInCurrentAccount();
++    bool IsFinePermissionInUse(const std::shared_ptr<Request>& request);
+     bool IsSkiingRequestActive(const std::shared_ptr<Request>& request);
+     void UpdateLocationError(std::shared_ptr<Request> request);
+
+--- a/base/location/location/services/location_locator/locator/source/locator_ability.cpp
++++ b/base/location/location/services/location_locator/locator/source/locator_ability.cpp
+@@ -14,6 +14,18 @@
+  */
+
+ #include "locator_ability.h"
++
++#include <algorithm>
++#include <array>
++#include <cmath>
++#include <limits>
++#include <memory>
++#include <mutex>
++#include <vector>
++#include "iremote_stub.h"
++#include "message_option.h"
++#include "message_parcel.h"
++#include "i_locating_required_data_callback.h"
+
+ #include "accesstoken_kit.h"
+ #include "event_runner.h"
+@@ -191,6 +203,11 @@
+         return;
+     }
+     state_ = ServiceRunningState::STATE_RUNNING;
++    {
++        std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++        fusionStopping_ = false;
++    }
++    ScheduleFusionFenceCheck();
+     AddSystemAbilityListener(COMMON_EVENT_SERVICE_ID);
+     if (locatorHandler_ != nullptr) {
+         locatorHandler_->SendHighPriorityEvent(EVENT_SET_LOCATION_WORKING_STATE, 0, 0);
+@@ -202,6 +219,7 @@
+
+ void LocatorAbility::OnStop()
+ {
++    ClearFusionFences();
+     state_ = ServiceRunningState::STATE_NOT_START;
+     registerToAbility_ = false;
+     if (!LocationDataRdbManager::SetLocationWorkingState(0)) {
+@@ -537,7 +555,7 @@
+
+ bool LocatorAbility::CheckIfLocatorConnecting()
+ {
+-    return LocatorRequiredDataManager::GetInstance()->IsWifiConnecting() ||
++    return HasFusionFences() || LocatorRequiredDataManager::GetInstance()->IsWifiConnecting() ||
+         LocatorRequiredDataManager::GetInstance()->IsBluetoothConnecting() || GetActiveRequestNum() > 0;
+ }
+
+@@ -1442,6 +1460,649 @@
+     }
+     return ProcessLocationMockMsg(timeInterval, sharedLocations,
+         static_cast<int>(LocatorInterfaceCode::SET_MOCKED_LOCATIONS));
++}
++
++namespace {
++constexpr int64_t FUSION_GNSS_FRESH_NS = 30LL * 1000000000;
++constexpr int64_t FUSION_CELL_FRESH_NS = 30LL * 1000000000;
++constexpr int64_t FUSION_WIFI_FRESH_NS = 10LL * 1000000000;
++constexpr double FUSION_EARTH_RADIUS = 6371008.8;
++constexpr double FUSION_PI = 3.14159265358979323846;
++constexpr char FUSION_CHECK_TASK[] = "location-fusion-fence-check";
++const std::u16string FUSION_CALLBACK_DESCRIPTOR = u"location.IFusionFenceCallback";
++using SphereVector = std::array<double, 3>;
++SphereVector FusionUnit(const FusionPoint& p)
++{
++    double lat = p.latitude * FUSION_PI / 180;
++    double lon = p.longitude * FUSION_PI / 180;
++    return {std::cos(lat) * std::cos(lon), std::cos(lat) * std::sin(lon), std::sin(lat)};
++}
++double FusionDot(const SphereVector& a, const SphereVector& b)
++{ return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
++SphereVector FusionCross(const SphereVector& a, const SphereVector& b)
++{ return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]}; }
++double FusionNorm(const SphereVector& a) { return std::sqrt(FusionDot(a, a)); }
++double FusionAngle(const SphereVector& a, const SphereVector& b)
++{ return std::atan2(FusionNorm(FusionCross(a, b)), std::clamp(FusionDot(a, b), -1.0, 1.0)); }
++// Signed distance is negative inside. Spherical geometry also covers the antimeridian.
++double FusionShapeDistance(const FusionGnssFence& shape, const FusionPoint& p)
++{
++    const auto point = FusionUnit(p);
++    if (shape.type == 2) {
++        return FusionAngle(point, FusionUnit(shape.center)) * FUSION_EARTH_RADIUS - shape.radius;
++    }
++    double winding = 0;
++    double nearest = FUSION_PI;
++    SphereVector normalSum {0, 0, 0};
++    SphereVector centroidSum {0, 0, 0};
++    for (size_t i = 0; i < shape.polygon.size(); ++i) {
++        auto a = FusionUnit(shape.polygon[i]);
++        auto b = FusionUnit(shape.polygon[(i + 1) % shape.polygon.size()]);
++        auto normal = FusionCross(a, b);
++        for (size_t j = 0; j < 3; ++j) { normalSum[j] += normal[j]; centroidSum[j] += a[j]; }
++        double norm = FusionNorm(normal);
++        if (norm < 1e-12) { return std::numeric_limits<double>::quiet_NaN(); }
++        for (auto& value : normal) { value /= norm; }
++        double height = std::clamp(FusionDot(point, normal), -1.0, 1.0);
++        SphereVector foot;
++        for (size_t j = 0; j < 3; ++j) { foot[j] = point[j] - height * normal[j]; }
++        double footNorm = FusionNorm(foot);
++        double edgeDistance = std::min(FusionAngle(point, a), FusionAngle(point, b));
++        if (footNorm > 1e-12) {
++            for (auto& value : foot) { value /= footNorm; }
++            if (FusionAngle(a, foot) + FusionAngle(foot, b) <= FusionAngle(a, b) + 1e-8) {
++                edgeDistance = std::min(edgeDistance, std::asin(std::abs(height)));
++            }
++        }
++        nearest = std::min(nearest, edgeDistance);
++        winding += std::atan2(FusionDot(point, FusionCross(a, b)),
++            FusionDot(a, b) - FusionDot(point, a) * FusionDot(point, b));
++    }
++    double orientation = FusionDot(normalSum, centroidSum);
++    if (std::abs(orientation) < 1e-12) { return std::numeric_limits<double>::quiet_NaN(); }
++    return (std::abs(winding) > FUSION_PI && winding * orientation > 0 ? -nearest : nearest) * FUSION_EARTH_RADIUS;
++}
++bool FusionOwnerAvailable(const AppIdentity& identity)
++{
++    return PermissionManager::CheckLocationPermission(identity.GetTokenId(), identity.GetFirstTokenId()) &&
++        PermissionManager::CheckSystemPermission(identity.GetTokenId(), identity.GetTokenIdEx()) &&
++        CommonUtils::IsAppBelongCurrentAccount(identity) &&
++        LocationDataRdbManager::QuerySwitchStateWithUid(identity.GetUid()) == ENABLED &&
++        (!ReportManager::GetInstance()->IsAppBackground(identity.GetBundleName(), identity.GetTokenId(),
++            identity.GetTokenIdEx(), identity.GetUid(), identity.GetPid()) ||
++        PermissionManager::CheckBackgroundPermission(identity.GetTokenId(), identity.GetFirstTokenId()));
++}
++class FusionLocationCallback final : public IRemoteStub<ILocatorCallback> {
++public:
++    explicit FusionLocationCallback(std::weak_ptr<FusionFenceRecord> record) : record_(std::move(record)) {}
++    void OnLocationReport(const std::unique_ptr<Location>& location) override
++    {
++        if (auto record = record_.lock()) { LocatorAbility::GetInstance()->OnFusionFenceLocation(record, location); }
++    }
++    void OnLocatingStatusChange(int status) override {}
++    void OnErrorReport(int error) override {}
++private:
++    std::weak_ptr<FusionFenceRecord> record_;
++};
++class FusionWifiCallback final : public IRemoteStub<ILocatingRequiredDataCallback> {
++public:
++    explicit FusionWifiCallback(std::weak_ptr<FusionFenceRecord> record) : record_(std::move(record)) {}
++    void OnLocatingDataChange(const std::vector<std::shared_ptr<LocatingRequiredData>>& result) override
++    {
++        if (auto record = record_.lock()) { LocatorAbility::GetInstance()->OnFusionFenceWifi(record, result); }
++    }
++    void OnMatchingWlanInfoChange(const std::vector<MatchingWlanInfo>& info) override {}
++private:
++    std::weak_ptr<FusionFenceRecord> record_;
++};
++class FusionCallbackDeath final : public IRemoteObject::DeathRecipient {
++public:
++    explicit FusionCallbackDeath(std::weak_ptr<FusionFenceRecord> record) : record_(std::move(record)) {}
++    void OnRemoteDied(const wptr<IRemoteObject>& remote) override
++    {
++        if (auto record = record_.lock()) { LocatorAbility::GetInstance()->RemoveFusionFenceRecord(record); }
++    }
++private:
++    std::weak_ptr<FusionFenceRecord> record_;
++};
++bool FusionSameOwner(const AppIdentity& a, const AppIdentity& b)
++{
++    return a.GetUid() == b.GetUid() && a.GetTokenId() == b.GetTokenId() &&
++        a.GetFirstTokenId() == b.GetFirstTokenId();
++}
++std::string FusionLowerMac(std::string value)
++{
++    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
++        return c >= 'A' && c <= 'F' ? c - 'A' + 'a' : c;
++    });
++    return value;
++}
++bool FusionWifiMatches(const FusionFenceRequest& request, const std::map<std::string, int32_t>& scanned)
++{
++    for (const auto& fence : request.wifi) {
++        bool matches = true;
++        for (const auto& feature : fence.features) {
++            bool found = false;
++            for (const auto& mac : feature.macs) {
++                auto item = scanned.find(FusionLowerMac(mac));
++                if (item != scanned.end() && std::abs(static_cast<double>(item->second) - feature.average) <=
++                    std::max(1.0, 2 * feature.deviation)) { found = true; break; }
++            }
++            if (!found) { matches = false; break; }
++        }
++        if (matches) { return true; }
++    }
++    return false;
++}
++} // namespace
++
++struct FusionFenceRecord {
++    FusionFenceRequest params;
++    AppIdentity owner;
++    sptr<IRemoteObject> callback;
++    sptr<IRemoteObject::DeathRecipient> death;
++    sptr<ILocatorCallback> locationCallback;
++    sptr<ILocatingRequiredDataCallback> wifiCallback;
++    std::shared_ptr<Request> permissionRequest;
++    // Only producer start/stop operations take this lock. Data callbacks never do.
++    std::mutex producerMutex;
++    uint64_t generation = 0;
++    uint64_t shapeMask = 0;
++    int64_t created = 0;
++    int64_t expires = 0;
++    bool active = false;
++    bool cancelled = false;
++    bool gnssStarted = false;
++    bool wifiStarted = false;
++    bool knownState = false;
++    bool inside = false;
++    bool dwellReported = false;
++    bool cellInside = false;
++    int64_t cellTime = 0;
++    bool wifiInside = false;
++    int64_t wifiTime = 0;
++    double gnssDistance = 0;
++    double accuracy = 0;
++    int64_t gnssTime = 0;
++    int64_t evaluatedGnssTime = 0;
++    int64_t insideSince = 0;
++    double lastDistance = 0;
++    int lastDirection = 0;
++    int directionChanges = 0;
++    int64_t nearSince = 0;
++};
++
++ErrCode LocatorAbility::IsFusionFenceSupported(bool& supported)
++{
++    supported = false;
++    AppIdentity identity;
++    GetAppIdentityInfo(identity);
++    if (!PermissionManager::CheckSystemPermission(identity.GetTokenId(), identity.GetTokenIdEx())) {
++        return LOCATION_ERRCODE_SYSTEM_PERMISSION_DENIED;
++    }
++#if defined(FEATURE_GNSS_SUPPORT) || defined(WIFI_ENABLE) || defined(TEL_CORE_SERVICE_ENABLE)
++    supported = true;
++#endif
++    return ERRCODE_SUCCESS;
++}
++
++ErrCode LocatorAbility::AddFusionFence(const FusionFenceRequest& params, const sptr<IRemoteObject>& callback)
++{
++    AppIdentity identity;
++    GetAppIdentityInfo(identity);
++    if (!PermissionManager::CheckSystemPermission(identity.GetTokenId(), identity.GetTokenIdEx())) {
++        return LOCATION_ERRCODE_SYSTEM_PERMISSION_DENIED;
++    }
++    if (!CheckRequestAvailable(LocatorInterfaceCode::ADD_FUSION_FENCE, identity) ||
++        !PermissionManager::CheckLocationPermission(identity.GetTokenId(), identity.GetFirstTokenId())) {
++        return LOCATION_ERRCODE_PERMISSION_DENIED;
++    }
++    if (!params.Valid() || callback == nullptr) { return ERRCODE_INVALID_PARAM; }
++    if (LocationDataRdbManager::QuerySwitchStateWithUid(identity.GetUid()) != ENABLED) { return ERRCODE_SWITCH_OFF; }
++    // API 26 provides no BLE matching payload. Never accept that bitmap as
++    // a successful fence whose backend cannot evaluate its input.
++    if ((params.fenceType & 8) != 0 || ((params.events & (8 | 16 | 32)) != 0 &&
++        (params.fenceType & 1) == 0)) { return ERRCODE_NOT_SUPPORTED; }
++#ifndef FEATURE_GNSS_SUPPORT
++    if ((params.fenceType & 1) != 0) { return ERRCODE_NOT_SUPPORTED; }
++#endif
++#ifndef TEL_CORE_SERVICE_ENABLE
++    if ((params.fenceType & 2) != 0) { return ERRCODE_NOT_SUPPORTED; }
++#endif
++#ifndef WIFI_ENABLE
++    if ((params.fenceType & 4) != 0) { return ERRCODE_NOT_SUPPORTED; }
++#endif
++    for (const auto& shape : params.gnss) {
++        if (shape.type == 2 && shape.coordinateSystem != WGS84) { return ERRCODE_NOT_SUPPORTED; }
++        if (shape.type == 1 && !std::isfinite(FusionShapeDistance(shape, params.poi))) {
++            return ERRCODE_INVALID_PARAM;
++        }
++    }
++    std::vector<std::shared_ptr<CellularInfo>> initialCells;
++    if ((params.fenceType & 2) != 0) {
++        auto error = LocatorRequiredDataManager::GetInstance()->QueryFusionCells(initialCells);
++        if (error != ERRCODE_SUCCESS) { return error; }
++    }
++    if (!FusionOwnerAvailable(identity)) { return LOCATION_ERRCODE_PERMISSION_DENIED; }
++    if ((params.fenceType & 4) != 0 && LocatorRequiredDataManager::GetInstance()->RequestFusionWifiScan() != ERRCODE_SUCCESS) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
++    if (locatorHandler_ == nullptr || requestManager_ == nullptr) { return ERRCODE_SERVICE_UNAVAILABLE; }
++    auto record = std::make_shared<FusionFenceRecord>();
++    record->params = params;
++    record->shapeMask = params.gnss.size() == 64 ? std::numeric_limits<uint64_t>::max() :
++        (uint64_t(1) << params.gnss.size()) - 1;
++    record->owner = identity;
++    record->callback = callback;
++    int64_t now = CommonUtils::GetSinceBootTime();
++    const long double durationNs = static_cast<long double>(params.expirationMs) * FusionFenceRequest::NS_PER_MS;
++    if (durationNs < 1 || durationNs >= std::numeric_limits<int64_t>::max() - now) { return ERRCODE_INVALID_PARAM; }
++    record->created = now;
++    record->expires = now + static_cast<int64_t>(durationNs);
++    {
++        std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++        size_t count = 0;
++        for (const auto& item : fusionFences_) {
++            if (FusionSameOwner(item->owner, identity)) {
++                if (item->params.identifier == params.identifier) { return static_cast<ErrCode>(3501603); }
++                ++count;
++            }
++        }
++        if (count >= 64 || fusionFences_.size() >= 1024) { return static_cast<ErrCode>(3301601); }
++        record->generation = ++fusionFenceSequence_;
++        fusionFences_.push_back(record);
++    }
++    ErrCode error = ERRCODE_SUCCESS;
++    {
++        std::lock_guard<std::mutex> producer(record->producerMutex);
++        record->death = new (std::nothrow) FusionCallbackDeath(record);
++        if (record->death == nullptr || (callback->IsProxyObject() && !callback->AddDeathRecipient(record->death))) {
++            error = ERRCODE_SERVICE_UNAVAILABLE;
++        }
++        auto config = std::make_unique<RequestConfig>();
++        config->SetPriority(PRIORITY_ACCURACY);
++        config->SetLocationSourceType(GNSS_TYPE);
++        config->SetNeedsFinePermission(true);
++        config->SetFixNumber(0);
++        config->SetTimeInterval(1);
++        record->locationCallback = new (std::nothrow) FusionLocationCallback(record);
++        record->permissionRequest = std::make_shared<Request>(config, record->locationCallback, identity);
++        record->permissionRequest->SetPermUsedType(static_cast<int>(
++            Security::AccessToken::AccessTokenKit::GetPermissionUsedType(identity.GetTokenId(), ACCESS_LOCATION)));
++        if (error == ERRCODE_SUCCESS && !requestManager_->UpdateUsingPermission(record->permissionRequest, true)) {
++            error = LOCATION_ERRCODE_PERMISSION_DENIED;
++        }
++        if (error == ERRCODE_SUCCESS && (params.fenceType & 1) != 0) {
++            requestManager_->HandleStartLocating(record->permissionRequest);
++            record->gnssStarted = true;
++        }
++        if (error == ERRCODE_SUCCESS && (params.fenceType & 4) != 0) {
++            auto scan = std::make_shared<LocatingRequiredDataConfig>();
++            scan->SetType(LocatingRequiredDataType::WIFI);
++            scan->SetNeedStartScan(true);
++            scan->SetScanIntervalMs(1000);
++            scan->SetFixNumber(0);
++            record->wifiCallback = new (std::nothrow) FusionWifiCallback(record);
++            if (record->wifiCallback == nullptr) { error = ERRCODE_SERVICE_UNAVAILABLE; }
++            else {
++                error = LocatorRequiredDataManager::GetInstance()->RegisterCallback(identity, scan,
++                    record->wifiCallback->AsObject());
++                record->wifiStarted = error == ERRCODE_SUCCESS;
++            }
++        }
++        {
++            std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++            record->active = error == ERRCODE_SUCCESS && !record->cancelled;
++            if (record->cancelled) { error = ERRCODE_SERVICE_UNAVAILABLE; }
++        }
++    }
++    if (error != ERRCODE_SUCCESS) {
++        RemoveFusionFenceRecord(record);
++        if (error != LOCATION_ERRCODE_PERMISSION_DENIED) { error = ERRCODE_SERVICE_UNAVAILABLE; }
++    }
++    else if ((params.fenceType & 2) != 0) { UpdateFusionFenceCells(record, initialCells); }
++    // Expiry/revocation maintenance is independent of a silent GNSS provider.
++    ScheduleFusionFenceCheck();
++    return error;
++}
++
++ErrCode LocatorAbility::RemoveFusionFence(const std::string& identifier)
++{
++    AppIdentity identity;
++    GetAppIdentityInfo(identity);
++    if (!PermissionManager::CheckSystemPermission(identity.GetTokenId(), identity.GetTokenIdEx())) {
++        return LOCATION_ERRCODE_SYSTEM_PERMISSION_DENIED;
++    }
++    std::shared_ptr<FusionFenceRecord> target;
++    {
++        std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++        for (const auto& item : fusionFences_) {
++            if (item->params.identifier == identifier && FusionSameOwner(item->owner, identity)) { target = item; break; }
++        }
++    }
++    if (target == nullptr) { return static_cast<ErrCode>(3301602); }
++    RemoveFusionFenceRecord(target);
++    return ERRCODE_SUCCESS;
++}
++
++ErrCode LocatorAbility::ReleaseFusionFence(const std::string& identifier, const sptr<IRemoteObject>& callback)
++{
++    AppIdentity identity;
++    GetAppIdentityInfo(identity);
++    if (!PermissionManager::CheckSystemPermission(identity.GetTokenId(), identity.GetTokenIdEx())) {
++        return LOCATION_ERRCODE_SYSTEM_PERMISSION_DENIED;
++    }
++    std::shared_ptr<FusionFenceRecord> target;
++    {
++        std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++        for (const auto& item : fusionFences_) {
++            if (item->params.identifier == identifier && item->callback == callback &&
++                FusionSameOwner(item->owner, identity)) { target = item; break; }
++        }
++    }
++    if (target == nullptr) { return static_cast<ErrCode>(3301602); }
++    RemoveFusionFenceRecord(target);
++    return ERRCODE_SUCCESS;
++}
++
++void LocatorAbility::RemoveFusionFenceRecord(const std::shared_ptr<FusionFenceRecord>& record)
++{
++    if (record == nullptr) { return; }
++    {
++        std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++        if (record->cancelled) { return; }
++        record->cancelled = true;
++        record->active = false;
++        fusionFences_.erase(std::remove(fusionFences_.begin(), fusionFences_.end(), record), fusionFences_.end());
++        stoppedFusionFences_.push_back(record);
++    }
++    std::lock_guard<std::mutex> producer(record->producerMutex);
++    if (record->callback != nullptr && record->death != nullptr) { record->callback->RemoveDeathRecipient(record->death); }
++    if (record->wifiStarted) {
++        LocatorRequiredDataManager::GetInstance()->UnregisterCallback(record->wifiCallback->AsObject());
++        record->wifiStarted = false;
++    }
++    if (record->gnssStarted) {
++        requestManager_->HandleStopLocating(record->locationCallback);
++        record->gnssStarted = false;
++    }
++    // The retired record retains ownership for a failed PrivacyKit stop. Tick
++    // retries the same request; a new fence cannot steal its reference count.
++    requestManager_->UpdateUsingPermission(record->permissionRequest, false);
++}
++
++void LocatorAbility::CheckFusionFences()
++{
++    {
++        std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++        fusionCheckScheduled_ = false;
++        if (fusionStopping_) { return; }
++    }
++    std::vector<std::shared_ptr<FusionFenceRecord>> active;
++    std::vector<std::shared_ptr<FusionFenceRecord>> retired;
++    {
++        std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++        active = fusionFences_;
++        retired = stoppedFusionFences_;
++    }
++    std::vector<std::shared_ptr<CellularInfo>> cells;
++    bool needsCells = std::any_of(active.begin(), active.end(), [](const auto& item) {
++        return (item->params.fenceType & 2) != 0;
++    });
++    bool cellsAvailable = needsCells && LocatorRequiredDataManager::GetInstance()->QueryFusionCells(cells) == ERRCODE_SUCCESS;
++    bool scanWifi = false;
++    {
++        std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++        int64_t now = CommonUtils::GetSinceBootTime();
++        if (now - lastFusionWifiScanNs_ >= 5LL * 1000000000 && std::any_of(active.begin(), active.end(),
++            [](const auto& record) { return (record->params.fenceType & 4) != 0 && record->active; })) {
++            lastFusionWifiScanNs_ = now;
++            scanWifi = true;
++        }
++    }
++    if (scanWifi) { LocatorRequiredDataManager::GetInstance()->RequestFusionWifiScan(); }
++    for (const auto& record : active) {
++        if ((record->params.fenceType & 2) != 0) { UpdateFusionFenceCells(record, cellsAvailable ? cells :
++            std::vector<std::shared_ptr<CellularInfo>>{}); }
++        const auto now = CommonUtils::GetSinceBootTime();
++        bool shapesExpired = record->params.fenceType == 1 && std::none_of(record->params.gnss.begin(),
++            record->params.gnss.end(), [&](const auto& shape) {
++                return shape.type == 1 || static_cast<long double>(now - record->created) <
++                    static_cast<long double>(shape.expirationMs) * FusionFenceRequest::NS_PER_MS;
++            });
++        if (now >= record->expires || shapesExpired || !FusionOwnerAvailable(record->owner)) {
++            RemoveFusionFenceRecord(record);
++        } else { EvaluateFusionFence(record); }
++    }
++    for (const auto& record : retired) {
++        std::lock_guard<std::mutex> producer(record->producerMutex);
++        if (requestManager_->UpdateUsingPermission(record->permissionRequest, false)) {
++            std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++            stoppedFusionFences_.erase(std::remove(stoppedFusionFences_.begin(), stoppedFusionFences_.end(), record),
++                stoppedFusionFences_.end());
++        }
++    }
++    ScheduleFusionFenceCheck();
++}
++
++void LocatorAbility::ScheduleFusionFenceCheck()
++{
++    std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++    if (fusionCheckScheduled_ || fusionStopping_ || locatorHandler_ == nullptr ||
++        (fusionFences_.empty() && stoppedFusionFences_.empty())) { return; }
++    fusionCheckScheduled_ = locatorHandler_->PostTask([this]() { CheckFusionFences(); }, FUSION_CHECK_TASK, 1000);
++}
++
++bool LocatorAbility::IsFusionFenceLocatingInCurrentAccount()
++{
++    std::vector<std::shared_ptr<FusionFenceRecord>> active;
++    {
++        std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++        for (const auto& record : fusionFences_) {
++            if (record->active && !record->cancelled && CommonUtils::GetSinceBootTime() < record->expires) {
++                active.push_back(record);
++            }
++        }
++    }
++    // No fence lock is held across RequestManager, permission or account APIs.
++    for (const auto& record : active) {
++        if (FusionOwnerAvailable(record->owner) && requestManager_->IsFinePermissionInUse(record->permissionRequest)) {
++            return true;
++        }
++    }
++    return false;
++}
++
++bool LocatorAbility::HasFusionFences()
++{
++    std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++    return !fusionFences_.empty() || !stoppedFusionFences_.empty();
++}
++
++void LocatorAbility::ClearFusionFences()
++{
++    std::vector<std::shared_ptr<FusionFenceRecord>> records;
++    {
++        std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++        records = fusionFences_;
++        fusionStopping_ = true;
++        fusionCheckScheduled_ = false;
++    }
++    for (const auto& record : records) { RemoveFusionFenceRecord(record); }
++    if (locatorHandler_ != nullptr) { locatorHandler_->RemoveTask(FUSION_CHECK_TASK); }
++    // Keep failed stop records for retry if this singleton restarts.
++}
++
++void LocatorAbility::OnFusionFenceLocation(const std::shared_ptr<FusionFenceRecord>& record,
++    const std::unique_ptr<Location>& location)
++{
++    if (location == nullptr || location->GetIsFromMock() ||
++        (location->GetLocationSourceType() != GNSS_TYPE && location->GetLocationSourceType() != RTK_TYPE) ||
++        !std::isfinite(location->GetAccuracy()) || location->GetAccuracy() < 0) { return; }
++    FusionPoint point {location->GetLatitude(), location->GetLongitude()};
++    int64_t now = CommonUtils::GetSinceBootTime();
++    int64_t time = location->GetTimeSinceBoot();
++    if (!point.Valid() || time <= 0 || time > now || now - time > FUSION_GNSS_FRESH_NS) { return; }
++    double distance = std::numeric_limits<double>::infinity();
++    for (const auto& shape : record->params.gnss) {
++        if (shape.type == 1 || static_cast<long double>(now - record->created) <
++            static_cast<long double>(shape.expirationMs) * FusionFenceRequest::NS_PER_MS) {
++            distance = std::min(distance, FusionShapeDistance(shape, point));
++        }
++    }
++    if (!std::isfinite(distance)) { return; }
++    {
++        std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++        if (!record->active || record->cancelled || time <= record->gnssTime) { return; }
++        record->gnssDistance = distance;
++        record->accuracy = location->GetAccuracy();
++        record->gnssTime = time;
++    }
++    EvaluateFusionFence(record);
++}
++
++void LocatorAbility::OnFusionFenceWifi(const std::shared_ptr<FusionFenceRecord>& record,
++    const std::vector<std::shared_ptr<LocatingRequiredData>>& result)
++{
++    const int64_t now = CommonUtils::GetSinceBootTime();
++    const int64_t scanTime = LocatorRequiredDataManager::GetInstance()->GetWifiScanCompleteTimestamp();
++    if (scanTime < record->created || scanTime > now || now - scanTime > FUSION_WIFI_FRESH_NS) { return; }
++    int64_t evidenceTime = scanTime;
++    std::map<std::string, int32_t> scanned;
++    for (const auto& item : result) {
++        if (item != nullptr && item->GetType() == LocatingRequiredDataType::WIFI && item->GetWifiScanInfo() != nullptr &&
++            FusionFenceRequest::ValidMac(item->GetWifiScanInfo()->GetBssid())) {
++            auto stampUs = item->GetWifiScanInfo()->GetTimestamp();
++            if (stampUs <= 0 || stampUs > now / 1000 || now / 1000 - stampUs > FUSION_WIFI_FRESH_NS / 1000) { continue; }
++            evidenceTime = std::min(evidenceTime, stampUs * 1000);
++            scanned[FusionLowerMac(item->GetWifiScanInfo()->GetBssid())] = item->GetWifiScanInfo()->GetRssi();
++        }
++    }
++    // Empty/failing scan results do not prove an exit.
++    if (scanned.empty()) { return; }
++    {
++        std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++        if (!record->active || record->cancelled) { return; }
++        record->wifiInside = FusionWifiMatches(record->params, scanned);
++        record->wifiTime = evidenceTime;
++    }
++    EvaluateFusionFence(record);
++}
++
++void LocatorAbility::UpdateFusionFenceCells(const std::shared_ptr<FusionFenceRecord>& record,
++    const std::vector<std::shared_ptr<CellularInfo>>& cells)
++{
++    bool inside = false;
++    int64_t oldest = CommonUtils::GetSinceBootTime();
++    for (const auto& source : cells) {
++        if (source == nullptr) { continue; }
++        oldest = std::min(oldest, source->GetTimeSinceBoot());
++        for (const auto& group : record->params.cells) {
++            for (const auto& expected : group) {
++                if (expected.cellId == source->GetCellId() && expected.mcc == source->GetMcc() &&
++                    expected.mnc == source->GetMnc() && expected.rat == source->GetRat() &&
++                    (expected.hasTac ? expected.tac : expected.lac) == source->GetLac() && expected.pci == source->GetPci()) { inside = true; }
++            }
++        }
++    }
++    std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++    if (record->cancelled || !record->active) { return; }
++    record->cellInside = inside;
++    record->cellTime = cells.empty() ? 0 : oldest;
++}
++
++void LocatorAbility::EvaluateFusionFence(const std::shared_ptr<FusionFenceRecord>& record)
++{
++    if (!FusionOwnerAvailable(record->owner)) { RemoveFusionFenceRecord(record); return; }
++    bool frozen = ProxyFreezeManager::GetInstance()->IsProxyPid(record->owner.GetPid());
++    std::vector<int32_t> events;
++    {
++        std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++        int64_t now = CommonUtils::GetSinceBootTime();
++        if (!record->active || record->cancelled || now >= record->expires) { return; }
++        uint64_t mask = 0;
++        for (size_t index = 0; index < record->params.gnss.size(); ++index) {
++            const auto& shape = record->params.gnss[index];
++            if (shape.type == 1 || static_cast<long double>(now - record->created) <
++                static_cast<long double>(shape.expirationMs) * FusionFenceRequest::NS_PER_MS) { mask |= uint64_t(1) << index; }
++        }
++        if (mask != record->shapeMask) {
++            // Expiring a shape changes the set being monitored; it is not a
++            // physical boundary crossing. Require fresh evidence for that set.
++            record->shapeMask = mask;
++            record->knownState = false;
++            record->insideSince = 0;
++            record->gnssTime = 0;
++            record->dwellReported = false;
++        }
++        bool activeGnss = mask != 0;
++        bool gnssKnown = !activeGnss || (record->gnssTime > 0 &&
++            now - record->gnssTime <= FUSION_GNSS_FRESH_NS && std::abs(record->gnssDistance) > record->accuracy);
++        bool cellKnown = (record->params.fenceType & 2) == 0 || (record->cellTime > 0 &&
++            now - record->cellTime <= FUSION_CELL_FRESH_NS);
++        bool wifiKnown = (record->params.fenceType & 4) == 0 || (record->wifiTime > 0 &&
++            now - record->wifiTime <= FUSION_WIFI_FRESH_NS);
++        bool inside = (activeGnss && gnssKnown && record->gnssDistance < 0) ||
++            ((record->params.fenceType & 4) != 0 && wifiKnown && record->wifiInside) ||
++            ((record->params.fenceType & 2) != 0 && cellKnown && record->cellInside);
++        if (frozen || (!inside && (!gnssKnown || !wifiKnown || !cellKnown))) {
++            record->insideSince = 0;
++            record->dwellReported = false;
++            record->nearSince = 0;
++            return;
++        }
++        if (!record->knownState || record->inside != inside) {
++            if (inside) { events.push_back(1); }
++            else if (record->knownState) { events.push_back(2); }
++            record->knownState = true;
++            record->inside = inside;
++            record->insideSince = inside ? now : 0;
++            record->dwellReported = false;
++        }
++        if (inside && record->insideSince == 0) { record->insideSince = now; }
++        if (inside && !record->dwellReported && now - record->insideSince >=
++            static_cast<int64_t>(record->params.loiterMs) * FusionFenceRequest::NS_PER_MS) {
++            events.push_back(4);
++            record->dwellReported = true;
++        }
++        if (activeGnss && gnssKnown && record->gnssTime > record->evaluatedGnssTime) {
++            if (!inside && record->evaluatedGnssTime > 0) {
++                double delta = record->gnssDistance - record->lastDistance;
++                int direction = delta > record->accuracy ? 1 : delta < -record->accuracy ? -1 : 0;
++                if (direction != 0) {
++                    events.push_back(direction < 0 ? 8 : 16);
++                    if (record->lastDirection != 0 && record->lastDirection != direction) { ++record->directionChanges; }
++                    record->lastDirection = direction;
++                }
++            }
++            if (std::abs(record->gnssDistance) <= std::max(1.0, 2 * record->accuracy)) {
++                if (record->nearSince == 0) { record->nearSince = now; }
++                if (record->directionChanges >= 2 && now - record->nearSince >=
++                    static_cast<int64_t>(record->params.loiterMs) * FusionFenceRequest::NS_PER_MS) {
++                    events.push_back(32);
++                    record->directionChanges = 0;
++                    record->nearSince = now;
++                }
++            } else { record->nearSince = 0; record->directionChanges = 0; }
++            record->lastDistance = record->gnssDistance;
++            record->evaluatedGnssTime = record->gnssTime;
++        }
++    }
++    for (int32_t event : events) {
++        if ((record->params.events & event) == 0) { continue; }
++        // Revalidate after waiting for the state lock and before IPC dispatch.
++        if (!FusionOwnerAvailable(record->owner)) { RemoveFusionFenceRecord(record); return; }
++        {
++            std::lock_guard<std::mutex> lock(fusionFenceMutex_);
++            if (record->cancelled || !record->active || CommonUtils::GetSinceBootTime() >= record->expires) { return; }
++        }
++        MessageParcel data;
++        MessageParcel reply;
++        MessageOption option(MessageOption::TF_ASYNC);
++        if (!data.WriteInterfaceToken(FUSION_CALLBACK_DESCRIPTOR) || !data.WriteString(record->params.identifier) ||
++            !data.WriteInt32(record->params.scene) || !data.WriteInt32(event)) { continue; }
++        record->callback->SendRequest(1, data, reply, option);
++    }
+ }
+
+ ErrCode LocatorAbility::StartDistrictLocating(const RequestConfig& requestConfig, const sptr<ILocatorCallback>& cb)
+@@ -2371,7 +3032,8 @@
+     }
+     // This source has normal GNSS/network providers, with no HD provider state.
+     // Never infer HD from an accuracy number or a requested priority.
+-    status = RequestManager::GetInstance()->IsLocatingInCurrentAccount() ? 1 : 0;
++    status = (RequestManager::GetInstance()->IsLocatingInCurrentAccount() ||
++        IsFusionFenceLocatingInCurrentAccount()) ? 1 : 0;
+     return ERRCODE_SUCCESS;
+ }
+
+--- a/base/location/location/services/location_locator/locator/source/locator_required_data_manager.cpp
++++ b/base/location/location/services/location_locator/locator/source/locator_required_data_manager.cpp
+@@ -16,6 +16,13 @@
+
+ #include <algorithm>
+ #include <cctype>
++#include "fusion_fence_request.h"
++#include "ipc_skeleton.h"
++#ifdef TEL_CORE_SERVICE_ENABLE
++#include "core_service_client.h"
++#include "cell_information.h"
++#include "telephony_errors.h"
++#endif
+ #include "location_log.h"
+ #include "matching_wlan_info.h"
+ #include <algorithm>
+@@ -219,7 +226,6 @@
+
+ LocationErrCode LocatorRequiredDataManager::UnregisterCallback(const sptr<IRemoteObject>& callback)
+ {
+-#ifdef WIFI_ENABLE
+     std::unique_lock<std::mutex> lock(mutex_);
+     auto iter = callbacksMap_.find(callback);
+     if (iter != callbacksMap_.end()) {
+@@ -227,7 +233,6 @@
+     }
+     LBSLOGD(LOCATOR, "after UnregisterCallback,  callback size:%{public}s",
+         std::to_string(callbacksMap_.size()).c_str());
+-#endif
+     return ERRCODE_SUCCESS;
+ }
+
+@@ -602,6 +607,102 @@
+ #endif
+
+
++LocationErrCode LocatorRequiredDataManager::RequestFusionWifiScan()
++{
++#ifndef WIFI_ENABLE
++    return ERRCODE_NOT_SUPPORTED;
++#else
++    struct CallingIdentityGuard {
++        std::string saved = IPCSkeleton::ResetCallingIdentity();
++        ~CallingIdentityGuard() { IPCSkeleton::SetCallingIdentity(saved); }
++    } identityGuard;
++    return TriggerWifiScan() == Wifi::WIFI_OPT_SUCCESS ? ERRCODE_SUCCESS : ERRCODE_SERVICE_UNAVAILABLE;
++#endif
++}
++
++LocationErrCode LocatorRequiredDataManager::QueryFusionCells(std::vector<std::shared_ptr<CellularInfo>>& result)
++{
++    result.clear();
++#ifndef TEL_CORE_SERVICE_ENABLE
++    return ERRCODE_NOT_SUPPORTED;
++#else
++    auto& client = DelayedRefSingleton<Telephony::CoreServiceClient>::GetInstance();
++    // Query as the native location service, after the fence has checked its
++    // original owner. Never forward an untrusted binder identity to core_service.
++    struct CallingIdentityGuard {
++        std::string saved = IPCSkeleton::ResetCallingIdentity();
++        ~CallingIdentityGuard() { IPCSkeleton::SetCallingIdentity(saved); }
++    } identityGuard;
++    int32_t slots = client.GetMaxSimCount();
++    if (slots <= 0 || slots > 8) { return ERRCODE_SERVICE_UNAVAILABLE; }
++    int64_t nowNs = CommonUtils::GetSinceBootTime();
++    int64_t nowMs = nowNs / FusionFenceRequest::NS_PER_MS;
++    for (int32_t slot = 0; slot < slots; ++slot) {
++        std::vector<sptr<Telephony::CellInformation>> cells;
++        if (client.GetCellInfoList(slot, cells) != Telephony::TELEPHONY_SUCCESS) {
++            result.clear();
++            return ERRCODE_SERVICE_UNAVAILABLE;
++        }
++        for (const auto& source : cells) {
++            if (source == nullptr || source->GetTimeStamp() == 0 || source->GetTimeStamp() > static_cast<uint64_t>(nowMs) ||
++                nowNs - static_cast<int64_t>(source->GetTimeStamp()) * FusionFenceRequest::NS_PER_MS >
++                    30LL * 1000000000) { continue; }
++            auto cell = std::make_shared<CellularInfo>();
++            auto parsePlmn = [](const std::string& value, int32_t& number) {
++                if (value.empty() || value.size() > 3) { return false; }
++                number = 0;
++                for (char digit : value) {
++                    if (digit < '0' || digit > '9') { return false; }
++                    number = number * 10 + digit - '0';
++                }
++                return true;
++            };
++            int32_t mcc = 0;
++            int32_t mnc = 0;
++            if (!parsePlmn(source->GetMcc(), mcc) || !parsePlmn(source->GetMnc(), mnc)) { continue; }
++            cell->SetMcc(mcc);
++            cell->SetMnc(mnc);
++            cell->SetCellId(source->GetCellId());
++            cell->SetRat(static_cast<int32_t>(source->GetNetworkType()));
++            cell->SetSignalIntensity(source->GetSignalIntensity());
++            // CellInformation stamps are boot milliseconds in its actual Init/
++            // Set* producer. Preserve that age rather than relabel cached data.
++            cell->SetTimeSinceBoot(static_cast<int64_t>(source->GetTimeStamp()) * FusionFenceRequest::NS_PER_MS);
++            using CellType = Telephony::CellInformation::CellType;
++            switch (source->GetNetworkType()) {
++                case CellType::CELL_TYPE_GSM: {
++                    auto value = static_cast<Telephony::GsmCellInformation*>(source.GetRefPtr());
++                    cell->SetLac(value->GetLac()); cell->SetArfcn(value->GetArfcn()); break;
++                }
++                case CellType::CELL_TYPE_LTE: {
++                    auto value = static_cast<Telephony::LteCellInformation*>(source.GetRefPtr());
++                    cell->SetLac(value->GetTac()); cell->SetPci(value->GetPci());
++                    cell->SetArfcn(value->GetArfcn()); break;
++                }
++                case CellType::CELL_TYPE_NR: {
++                    auto value = static_cast<Telephony::NrCellInformation*>(source.GetRefPtr());
++                    cell->SetCellId(value->GetNci()); cell->SetLac(value->GetTac());
++                    cell->SetPci(value->GetPci()); cell->SetArfcn(value->GetArfcn()); break;
++                }
++                case CellType::CELL_TYPE_WCDMA: {
++                    auto value = static_cast<Telephony::WcdmaCellInformation*>(source.GetRefPtr());
++                    cell->SetLac(value->GetLac()); cell->SetPci(value->GetPsc());
++                    cell->SetArfcn(value->GetArfcn()); break;
++                }
++                case CellType::CELL_TYPE_TDSCDMA: {
++                    auto value = static_cast<Telephony::TdscdmaCellInformation*>(source.GetRefPtr());
++                    cell->SetLac(value->GetLac()); cell->SetArfcn(value->GetArfcn()); break;
++                }
++                // The SDK cell key cannot faithfully carry CDMA SID/NID/BID.
++                default: continue;
++            }
++            if (cell->GetCellId() >= 0) { result.push_back(cell); }
++        }
++    }
++    return result.empty() ? ERRCODE_SERVICE_UNAVAILABLE : ERRCODE_SUCCESS;
++#endif
++}
++
+ void LocatorCellScanInfoCallback::OnCellScanInfoReceived(std::vector<std::shared_ptr<LocatingRequiredData>> result)
+ {
+     auto dataManager = LocatorRequiredDataManager::GetInstance();
+@@ -610,8 +711,12 @@
+
+ void LocatorRequiredDataManager::ReportData(const std::vector<std::shared_ptr<LocatingRequiredData>>& result, int type)
+ {
+-    std::unique_lock<std::mutex> lock(mutex_);
+-    for (const auto& pair : callbacksMap_) {
++    decltype(callbacksMap_) callbacks;
++    {
++        std::unique_lock<std::mutex> lock(mutex_);
++        callbacks = callbacksMap_;
++    }
++    for (const auto& pair : callbacks) {
+         auto callback = pair.first;
+         sptr<ILocatingRequiredDataCallback> locatingRequiredDataCallback =
+             iface_cast<ILocatingRequiredDataCallback>(callback);
+--- a/base/location/location/services/location_locator/locator/source/request_manager.cpp
++++ b/base/location/location/services/location_locator/locator/source/request_manager.cpp
+@@ -101,8 +101,10 @@
+     auto tokenId = request->GetTokenId();
+     auto firstTokenId = request->GetFirstTokenId();
+     auto config = request->GetRequestConfig();
+-    if (config != nullptr && config->GetSportsType() == SKIING &&
+-        PermissionManager::CheckLocationPermission(tokenId, firstTokenId)) {
++    if (config != nullptr && (config->GetSportsType() == SKIING || config->NeedsFinePermission())) {
++        if (!PermissionManager::CheckLocationPermission(tokenId, firstTokenId)) {
++            return false;
++        }
+         return UpdateUsingApproximatelyPermission(request, false) && UpdateUsingFinePermission(request, true);
+     }
+     if (PermissionManager::CheckApproximatelyPermission(tokenId, firstTokenId)) {
+@@ -549,6 +551,12 @@
+         return false;
+     }
+     return true;
++}
++
++bool RequestManager::IsFinePermissionInUse(const std::shared_ptr<Request>& request)
++{
++    std::unique_lock<ffrt::mutex> lock(permissionRecordMutex_);
++    return request != nullptr && request->GetLocationPermState();
+ }
+
+ bool RequestManager::IsSkiingRequestActive(const std::shared_ptr<Request>& request)

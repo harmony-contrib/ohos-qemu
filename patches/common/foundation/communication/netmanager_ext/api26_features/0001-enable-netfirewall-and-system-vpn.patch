@@ -1,0 +1,14 @@
+diff --git a/foundation/communication/netmanager_ext/netmanager_ext_config.gni b/foundation/communication/netmanager_ext/netmanager_ext_config.gni
+--- a/foundation/communication/netmanager_ext/netmanager_ext_config.gni
++++ b/foundation/communication/netmanager_ext/netmanager_ext_config.gni
+@@ -62,8 +62,8 @@
+   netmanager_ext_feature_ethernet = true
+   netmanager_ext_feature_share = true
+   netmanager_ext_feature_mdns = true
+-  netmanager_ext_feature_net_firewall = false
++  netmanager_ext_feature_net_firewall = true
+-  netmanager_ext_feature_sysvpn = false
++  netmanager_ext_feature_sysvpn = true
+   netmanager_ext_feature_vpn = true
+   netmanager_ext_feature_vpn_for_user0 = false
+   netmanager_ext_feature_vpnext = true

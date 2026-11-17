@@ -1,0 +1,2 @@
+ohos.servicectrl.start.qemu_openvpn    u:object_r:qemu_openvpn_control_param:s0
+ohos.servicectrl.stop.qemu_openvpn    u:object_r:qemu_openvpn_control_param:s0

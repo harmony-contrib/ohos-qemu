@@ -1,0 +1,170 @@
+diff --git a/third_party/mesa3d/ohos/BUILD.gn b/third_party/mesa3d/ohos/BUILD.gn
+index 79f02ec2087..ea9d0df47ac 100755
+--- a/third_party/mesa3d/ohos/BUILD.gn
++++ b/third_party/mesa3d/ohos/BUILD.gn
+@@ -22,16 +22,68 @@ import("//build/config/clang/clang.gni")
+ import("//build/ohos.gni")
+ mesa3d_libs_dir = "$root_build_dir/packages/phone/mesa3d"
+ 
+-mesa3d_gallium_symlinks = [ "panfrost_dri.so" ]
++if (product_name == "armv7a_virt") {
++  mesa3d_egl_name = "libEGL.so.1.0.0"
++  mesa3d_egl_symlinks = [ "libEGL_impl.so" ]
++  mesa3d_gles1_symlinks = [ "libGLESv1_impl.so" ]
++  mesa3d_gles2_symlinks = [
++    "libGLESv2_impl.so",
++    "libGLESv3_impl.so",
++  ]
++  mesa3d_gallium_name = "kms_swrast_dri.so"
++  mesa3d_gallium_symlinks = [
++    "swrast_dri.so",
++    "virtio_gpu_dri.so",
++  ]
++  mesa3d_optional_lib_items = [
++    [
++      "libglapi.so.0.0.0",
++      [
++        "libglapi.so",
++        "libglapi.so.0",
++      ],
++    ],
++  ]
++  mesa3d_subsystem_name = "device_armv7a_virt"
++  mesa3d_part_name = "qemu_virt_full_armv7a"
++} else {
++  mesa3d_egl_name = "libEGL.so.1.0.0"
++  mesa3d_egl_symlinks = [
++    "libEGL.so",
++    "libEGL.so.1",
++    "libEGL_impl.so",
++  ]
++  mesa3d_gles1_symlinks = [
++    "libGLESv1_CM.so",
++    "libGLESv1_CM.so.1",
++    "libGLESv1_impl.so",
++  ]
++  mesa3d_gles2_symlinks = [
++    "libGLESv2.so",
++    "libGLESv2.so.2",
++    "libGLESv3.so",
++    "libGLESv2_impl.so",
++    "libGLESv3_impl.so",
++  ]
++  mesa3d_gallium_name = "libgallium_dri.so"
++  mesa3d_gallium_symlinks = [ "panfrost_dri.so" ]
++  mesa3d_optional_lib_items = [
++    [
++      "libglapi.so.0.0.0",
++      [
++        "libglapi.so",
++        "libglapi.so.0",
++      ],
++    ],
++  ]
++  mesa3d_subsystem_name = "rockchip_products"
++  mesa3d_part_name = "rockchip_products"
++}
+ 
+ mesa3d_all_lib_items = [
+   [
+-    "libEGL.so.1.0.0",
+-    [
+-      "libEGL.so",
+-      "libEGL.so.1",
+-      "libEGL_impl.so",
+-    ],
++    mesa3d_egl_name,
++    mesa3d_egl_symlinks,
+   ],
+   [
+     "libgbm.so.1.0.0",
+@@ -40,47 +92,37 @@ mesa3d_all_lib_items = [
+       "libgbm.so.1",
+     ],
+   ],
+-  [
+-    "libglapi.so.0.0.0",
+-    [
+-      "libglapi.so",
+-      "libglapi.so.0",
+-    ],
+-  ],
++] + mesa3d_optional_lib_items + [
+   [
+     "libGLESv1_CM.so.1.1.0",
+-    [
+-      "libGLESv1_CM.so",
+-      "libGLESv1_CM.so.1",
+-      "libGLESv1_impl.so",
+-    ],
++    mesa3d_gles1_symlinks,
+   ],
+   [
+     "libGLESv2.so.2.0.0",
+-    [
+-      "libGLESv2.so",
+-      "libGLESv2.so.2",
+-      "libGLESv3.so",
+-      "libGLESv2_impl.so",
+-      "libGLESv3_impl.so",
+-    ],
++    mesa3d_gles2_symlinks,
+   ],
+   [
+-    "libgallium_dri.so",
++    mesa3d_gallium_name,
+     mesa3d_gallium_symlinks,
+   ],
+ ]
+-
+ action("mesa3d_build") {
+   script = "build_mesa3d.py"
+-  deps = [
+-    "//foundation/graphic/graphic_2d:libsurface",
+-    "//third_party/expat:expat",
+-  ]
++  deps = [ "//third_party/expat:expat" ]
++  if (product_name != "armv7a_virt") {
++    deps += [ "//foundation/graphic/graphic_2d:libsurface" ]
++  }
++  if (product_name == "armv7a_virt") {
++    script = "//device/qemu/arm_virt/linux_full_armv7a/build_armv7a_mesa.py"
++    deps += [ "//third_party/libdrm:libdrm" ]
++    external_deps = [
++      "graphic_surface:surface",
++      "hilog:libhilog",
++    ]
++  }
+   outputs = []
+   foreach(item, mesa3d_all_lib_items) {
+-    name = item[0]
+-    outputs += [ "$mesa3d_libs_dir/$name" ]
++    outputs += [ "$mesa3d_libs_dir/${item[0]}" ]
+   }
+   args = [ rebase_path(root_build_dir) ]
+ }
+@@ -92,11 +134,16 @@ foreach(item, mesa3d_all_lib_items) {
+   ohos_prebuilt_shared_library(name) {
+     source = "$mesa3d_libs_dir/$name"
+     deps = [ ":mesa3d_build" ]
+-    symlink_target_name = item[1]
++    if (item[1] != []) {
++      symlink_target_name = item[1]
++    }
+     install_enable = true
+     install_images = [ system_base_dir ]
+-    subsystem_name = "rockchip_products"
+-    part_name = "rockchip_products"
++    subsystem_name = mesa3d_subsystem_name
++    part_name = mesa3d_part_name
++    if (product_name == "armv7a_virt") {
++      module_install_dir = "lib"
++    }
+   }
+   mesa3d_all_lib_deps += [ ":$name" ]
+ }
+@@ -104,3 +151,4 @@ foreach(item, mesa3d_all_lib_items) {
+ group("mesa3d_all_libs") {
+   deps = mesa3d_all_lib_deps
+ }
++

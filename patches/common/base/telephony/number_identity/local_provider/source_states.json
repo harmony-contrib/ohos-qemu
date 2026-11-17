@@ -1,0 +1,22 @@
+{
+  "schema": "number-identity-local-source375/v1",
+  "project": "base/telephony/number_identity",
+  "revision": "50e1330646432ce166e7981c577f25f46c90e7ac",
+  "files": [
+    [
+      "BUILD.gn",
+      "8de0e4476dfd172ab9ea355c91785595216cc8c9b95606d922d72cb983750a79",
+      "90c9c001e6981a35e945732ce5439ea69a6b345d89d7420d2fc7eb8516012871"
+    ],
+    [
+      "number_mark/src/number_mark_ability.cpp",
+      "8b55f6d0c5a2e5951063fad29070c94094f7d181011a89b5df7f307e2cc77a72",
+      "781f7bb3b699ee933d32f1c9c790bcc4c9824a8375c5c5e1ac1472f273d52bb8"
+    ]
+  ],
+  "patch": "0001-use-repository-profile-and-safe-local-mark-diagnostics.patch",
+  "patch_sha256": "e9af243e763df3a567d366ab13fee9f41c002df6c769da33dabf5f93bd0e2116",
+  "capability_scope": "local user marks and supplied finite datasets only; not SpamShield/HSDR aggregate",
+  "source_only": true,
+  "build_or_guest_pass": false
+}

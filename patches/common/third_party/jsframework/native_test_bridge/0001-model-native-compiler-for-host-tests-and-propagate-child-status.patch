@@ -1,0 +1,59 @@
+--- a/third_party/jsframework/test/lib.ts
++++ b/third_party/jsframework/test/lib.ts
+@@ -23,3 +23,14 @@
+ declare var compileAndRunBundle;
+ declare var i18nPluralRules;
+ declare var language;
++
++// Node unit tests model the native compiler boundary with the real VM compiler.
++// Product runtime code and its native-only execution policy are unchanged.
++if (typeof global.compileAndRunBundle === 'undefined') {
++  global.compileAndRunBundle = function(bundle, file) {
++    const Script = require('vm').Script;
++    return new Script(bundle, { filename: file }).runInThisContext();
++  };
++} else if (typeof global.compileAndRunBundle !== 'function') {
++  throw new TypeError('compileAndRunBundle must be a function in the unit-test host');
++}
+--- a/third_party/jsframework/js_framework_build.sh
++++ b/third_party/jsframework/js_framework_build.sh
+@@ -62,15 +62,33 @@
+   ln -s $link_path "$8/current"
+   cd $8
+   if [ "${10}" == 'true' ];then
+-    ./current/bin/node build_strip_native_min.js || exit 1 &
++    ./current/bin/node build_strip_native_min.js &
++    snapshot_pid=$!
+     # run unit test
+-    ./current/bin/node node_modules/.bin/mocha -r ts-node/register test/lib.ts test/ut/**/*.ts test/ut/*.ts || exit 1 &
+-    wait
++    ./current/bin/node node_modules/.bin/mocha -r ts-node/register test/lib.ts test/ut/**/*.ts test/ut/*.ts &
++    unit_pid=$!
++    snapshot_status=0
++    unit_status=0
++    wait "$snapshot_pid" || snapshot_status=$?
++    wait "$unit_pid" || unit_status=$?
++    printf 'jsframework child status: snapshot=%s unit=%s\n' "$snapshot_status" "$unit_status"
++    if [ "$snapshot_status" -ne 0 ] || [ "$unit_status" -ne 0 ]; then
++      exit 1
++    fi
+   else
+-    ./current/bin/node build_strip_native_min.js || exit 1 &
++    ./current/bin/node build_strip_native_min.js &
++    snapshot_pid=$!
+     # run unit test
+-    ./current/bin/node node_modules/.bin/mocha -r ts-node/register test/lib.ts test/ut/**/*.ts test/ut/*.ts || exit 1&
+-    wait
++    ./current/bin/node node_modules/.bin/mocha -r ts-node/register test/lib.ts test/ut/**/*.ts test/ut/*.ts &
++    unit_pid=$!
++    snapshot_status=0
++    unit_status=0
++    wait "$snapshot_pid" || snapshot_status=$?
++    wait "$unit_pid" || unit_status=$?
++    printf 'jsframework child status: snapshot=%s unit=%s\n' "$snapshot_status" "$unit_status"
++    if [ "$snapshot_status" -ne 0 ] || [ "$unit_status" -ne 0 ]; then
++      exit 1
++    fi
+   fi
+ else
+   npm run build

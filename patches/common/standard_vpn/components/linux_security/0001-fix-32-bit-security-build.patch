@@ -1,0 +1,60 @@
+diff --git a/kernel/linux/linux-6.6/fs/verity/enable.c b/kernel/linux/linux-6.6/fs/verity/enable.c
+index 041ea14a9..6e22cc277 100644
+--- a/kernel/linux/linux-6.6/fs/verity/enable.c
++++ b/kernel/linux/linux-6.6/fs/verity/enable.c
+@@ -8,6 +8,7 @@
+ #include "fsverity_private.h"
+ 
+ #include <crypto/hash.h>
++#include <linux/math64.h>
+ #include <linux/mount.h>
+ #include <linux/sched/signal.h>
+ #include <linux/uaccess.h>
+@@ -508,18 +509,18 @@ static int code_sign_copy_merkle_tree(struct file *filp,
+ 		if (bytes_read < 0) {
+ 			err = bytes_read;
+ 			fsverity_err(inode, "Error %d reading Merkle tree block %llu", 
+-						err, offset / params->block_size);
++						err, div_u64(offset, params->block_size));
+ 			goto out;
+ 		}
+ 		if (bytes_read != params->block_size) {
+ 			err = -EINVAL;
+ 			fsverity_err(inode, "Short read of Merkle tree block %llu",
+-						offset / params->block_size);
++						div_u64(offset, params->block_size));
+ 			goto out;
+ 		}
+ 
+ 		err = write_merkle_tree_block(inode, buffer.data,
+-				(offset - tree_offset) / params->block_size,
++				div_u64(offset - tree_offset, params->block_size),
+ 				params);
+ 		if (err) 
+ 			goto out;
+@@ -598,10 +599,10 @@ int fsverity_ioctl_enable_code_sign(struct file *filp, const void __user *uarg)
+ 	if (arg.data_size > inode->i_size)
+ 		return -EINVAL;
+ 
+-	if (arg.tree_offset % arg.block_size != 0)
++	if (!is_power_of_2(arg.block_size))
+ 		return -EINVAL;
+ 
+-	if (!is_power_of_2(arg.block_size))
++	if (arg.tree_offset & (arg.block_size - 1))
+ 		return -EINVAL;
+ 
+ 	if (arg.salt_size > sizeof_field(struct code_sign_descriptor, salt))
+diff --git a/kernel/linux/linux-6.6/mm/mprotect.c b/kernel/linux/linux-6.6/mm/mprotect.c
+index efe332f3c..f265b59eb 100644
+--- a/kernel/linux/linux-6.6/mm/mprotect.c
++++ b/kernel/linux/linux-6.6/mm/mprotect.c
+@@ -693,7 +693,7 @@ static int do_mprotect_pkey(unsigned long start, size_t len,
+ {
+ 	unsigned long nstart, end, tmp, reqprot;
+ 	struct vm_area_struct *vma, *prev;
+-	int error;
++	int error = 0;
+ 	const int grows = prot & (PROT_GROWSDOWN|PROT_GROWSUP);
+ 	const bool rier = (current->personality & READ_IMPLIES_EXEC) &&
+ 				(prot & PROT_READ);

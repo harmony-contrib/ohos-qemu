@@ -1,0 +1,56 @@
+diff --git a/foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/ui_effect/src/native_module_ohos_ui_effect.cpp b/foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/ui_effect/src/native_module_ohos_ui_effect.cpp
+--- a/foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/ui_effect/src/native_module_ohos_ui_effect.cpp
++++ b/foundation/graphic/graphic_2d/interfaces/kits/napi/graphic/ui_effect/src/native_module_ohos_ui_effect.cpp
+@@ -19,9 +19,52 @@
+ namespace OHOS {
+ namespace Rosen {
++static napi_status RegisterPublicFilterModes(napi_env env, napi_value exports)
++{
++    // Public protocol values consumed by the existing native Filter methods.
++    // These do not fabricate an effect, scene, device or renderer capability.
++    struct Member { const char *name; int32_t value; };
++    static const Member fly[] = {{"BOTTOM", 0}, {"TOP", 1}};
++    static const Member ripple[] = {
++        {"SMALL2MEDIUM_RECV", 0}, {"SMALL2MEDIUM_SEND", 1},
++        {"SMALL2SMALL", 2}, {"MINI_RECV", 3},
++    };
++    struct Enum { const char *name; const Member *members; size_t count; };
++    static const Enum enums[] = {
++        {"FlyMode", fly, sizeof(fly) / sizeof(fly[0])},
++        {"WaterRippleMode", ripple, sizeof(ripple) / sizeof(ripple[0])},
++    };
++    for (const auto &entry : enums) {
++        napi_value object = nullptr;
++        napi_status status = napi_create_object(env, &object);
++        if (status != napi_ok) {
++            return status;
++        }
++        for (size_t index = 0; index < entry.count; ++index) {
++            napi_value value = nullptr;
++            status = napi_create_int32(env, entry.members[index].value, &value);
++            if (status != napi_ok) {
++                return status;
++            }
++            status = napi_set_named_property(env, object, entry.members[index].name, value);
++            if (status != napi_ok) {
++                return status;
++            }
++        }
++        status = napi_set_named_property(env, exports, entry.name, object);
++        if (status != napi_ok) {
++            return status;
++        }
++    }
++    return napi_ok;
++}
++
+ /*
+  * Function registering all props and functions of ohos.effectlibrary module
+  */
+ static napi_value Export(napi_env env, napi_value exports)
+ {
++    if (RegisterPublicFilterModes(env, exports) != napi_ok) {
++        return nullptr;
++    }
+     FilterNapi::Init(env, exports);
+     EffectNapi::Init(env, exports);

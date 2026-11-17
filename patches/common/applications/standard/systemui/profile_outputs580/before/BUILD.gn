@@ -1,0 +1,60 @@
+# Copyright (c) 2026 Harmony Contrib
+# SPDX-License-Identifier: Apache-2.0
+import("//build/ohos.gni")
+
+# One action compiles all selected real modules; never concurrent Hvigor writes
+# to this project. Existing independent ScreenLock stays in the HAP graph.
+ohos_app("systemui_hap") {
+  deps = []
+  certificate_profile = "signature/systemui.p7b"
+  hap_name = "SystemUI"
+  part_name = "prebuilt_hap"
+  subsystem_name = "applications"
+  module_install_dir = "app/com.ohos.systemui"
+  sdk_home = "//prebuilts/ohos-sdk/linux"
+  sdk_type_name = [ "sdk.dir" ]
+  assemble_type = "assembleHap"
+  build_level = "module"
+  js_build_mode = "release"
+  if (defined(device_type) && device_type == "2in1") {
+    build_modules = [
+      "pc_entry",
+      "default_navigationBar",
+      "default_notificationmanagement",
+      "default_volumepanel",
+      "default_dialog",
+      "pc_controlpanel",
+      "pc_notificationpanel",
+      "pc_statusbar",
+    ]
+    hap_list = [
+      "SystemUI-pc_entry-default-unsigned:SystemUI",
+      "SystemUI-default_navigationBar-default-unsigned:SystemUI-NavigationBar",
+      "SystemUI-default_notificationmanagement-default-unsigned:SystemUI-NotificationManagement",
+      "SystemUI-default_volumepanel-default-unsigned:SystemUI-VolumePanel",
+      "SystemUI-default_dialog-default-unsigned:SystemUI-SystemDialog",
+      "SystemUI-pc_controlpanel-default-unsigned:SystemUI-ControlPanel",
+      "SystemUI-pc_notificationpanel-default-unsigned:SystemUI-NotificationPanel",
+      "SystemUI-pc_statusbar-default-unsigned:SystemUI-StatusBar",
+    ]
+  } else {
+    build_modules = [
+      "phone_entry",
+      "default_navigationBar",
+      "default_notificationmanagement",
+      "default_volumepanel",
+      "default_dialog",
+      "phone_dropdownpanel",
+      "phone_statusbar",
+    ]
+    hap_list = [
+      "SystemUI-phone_entry-default-unsigned:SystemUI",
+      "SystemUI-default_navigationBar-default-unsigned:SystemUI-NavigationBar",
+      "SystemUI-default_notificationmanagement-default-unsigned:SystemUI-NotificationManagement",
+      "SystemUI-default_volumepanel-default-unsigned:SystemUI-VolumePanel",
+      "SystemUI-default_dialog-default-unsigned:SystemUI-SystemDialog",
+      "SystemUI-phone_dropdownpanel-default-unsigned:SystemUI-DropdownPanel",
+      "SystemUI-phone_statusbar-default-unsigned:SystemUI-StatusBar",
+    ]
+  }
+}

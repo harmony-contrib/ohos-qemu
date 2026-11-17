@@ -1,0 +1,13 @@
+diff --git a/drivers/peripheral/audio/bundle.json b/drivers/peripheral/audio/bundle.json
+index 4262ea1..9dd89a0 100644
+--- a/drivers/peripheral/audio/bundle.json
++++ b/drivers/peripheral/audio/bundle.json
+@@ -32,6 +32,7 @@
+             "drivers_peripheral_audio_feature_hisysevent_enable",
+ 			"drivers_peripheral_audio_feature_frame_ec",
+-            "drivers_peripheral_audio_feature_reclaim_memory"
++            "drivers_peripheral_audio_feature_reclaim_memory",
++            "drivers_peripheral_audio_vendor_alsa_path"
+         ],
+         "adapted_system_type": ["standard", "small"],
+         "rom": "1035KB",

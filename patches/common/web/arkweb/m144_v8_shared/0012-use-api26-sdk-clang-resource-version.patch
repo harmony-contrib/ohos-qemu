@@ -1,0 +1,28 @@
+diff --git a/src/build/toolchain/toolchain.gni b/src/build/toolchain/toolchain.gni
+--- a/src/build/toolchain/toolchain.gni
++++ b/src/build/toolchain/toolchain.gni
+@@ -45,7 +45,7 @@ declare_args() {
+   if (llvm_ohos_mainline) {
+     clang_version = "22"
+   } else {
+-    clang_version = "22"
++    clang_version = "15.0.4"
+   }
+ }
+ 
+diff --git a/src/build/config/clang/BUILD.gn b/src/build/config/clang/BUILD.gn
+--- a/src/build/config/clang/BUILD.gn
++++ b/src/build/config/clang/BUILD.gn
+@@ -221,7 +221,11 @@ template("clang_lib") {
+           assert(false)  # Unhandled cpu type
+         }
+       } else if (is_ohos) {
+-        clang_version = "22"
++        if (llvm_ohos_mainline) {
++          clang_version = "22"
++        } else {
++          clang_version = "15.0.4"
++        }
+         if (current_cpu == "x64") {
+           _dir = "x86_64-linux-ohos"
+         }  else if (current_cpu == "arm") {

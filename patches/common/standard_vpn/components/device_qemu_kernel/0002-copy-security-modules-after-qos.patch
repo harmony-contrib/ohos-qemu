@@ -1,0 +1,9 @@
+diff --git a/device/qemu/common/virt_full/kernel/build_kernel.sh b/device/qemu/common/virt_full/kernel/build_kernel.sh
+--- a/device/qemu/common/virt_full/kernel/build_kernel.sh
++++ b/device/qemu/common/virt_full/kernel/build_kernel.sh
+@@ -81,3 +81,5 @@
+     cp -arfL  $OHOS_SOURCE_ROOT/kernel/linux/common_modules/memory_security ${KERNEL_BUILD_ROOT}/fs/proc
+     cp -arfL  $OHOS_SOURCE_ROOT/kernel/linux/common_modules/code_sign ${KERNEL_BUILD_ROOT}/fs
++    cp -arfL  $OHOS_SOURCE_ROOT/kernel/linux/common_modules/xpm ${KERNEL_BUILD_ROOT}/security
++    cp $OHOS_SOURCE_ROOT/kernel/linux/linux-5.10/scripts/ohos-check-dir.sh ${KERNEL_BUILD_ROOT}/scripts/
+     cp -arfL  $OHOS_SOURCE_ROOT/kernel/linux/common_modules/dec ${KERNEL_BUILD_ROOT}/fs

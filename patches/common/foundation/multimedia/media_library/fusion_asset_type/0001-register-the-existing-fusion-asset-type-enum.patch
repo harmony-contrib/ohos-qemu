@@ -1,0 +1,28 @@
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp b/foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp
+--- a/foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp
++++ b/foundation/multimedia/media_library/frameworks/js/src/media_library_napi.cpp
+@@ -529,6 +529,16 @@ napi_value MediaLibraryNapi::UserFileMgrInit(napi_env env, napi_value exports)
+     return exports;
+ }
+ 
++static napi_value CreateFusionAssetTypeEnum(napi_env env)
++{
++    napi_value result = nullptr;
++    napi_value compatible = nullptr;
++    NAPI_CALL(env, napi_create_object(env, &result));
++    NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(FusionAssetType::COMPATIBLE_ASSET), &compatible));
++    NAPI_CALL(env, napi_set_named_property(env, result, "COMPATIBLE_ASSET", compatible));
++    return result;
++}
++
+ napi_value MediaLibraryNapi::PhotoAccessHelperInit(napi_env env, napi_value exports)
+ {
+     NapiClassInfo info = { PHOTOACCESSHELPER_NAPI_CLASS_NAME, &photoAccessHelperConstructor_,
+@@ -639,6 +649,7 @@ napi_value MediaLibraryNapi::PhotoAccessHelperInit(napi_env env, napi_value exports)
+         DECLARE_NAPI_PROPERTY("ThumbnailType", CreateKeyFrameThumbnailTypeEnum(env)),
+         DECLARE_NAPI_STATIC_FUNCTION("requestPhotoUrisReadPermission", RequestPhotoUrisReadPermission),
+         DECLARE_NAPI_STATIC_FUNCTION("requestPhotoUrisReadPermissionEx", RequestPhotoUrisReadPermissionEx),
++        DECLARE_NAPI_PROPERTY("FusionAssetType", CreateFusionAssetTypeEnum(env)),
+         DECLARE_NAPI_PROPERTY("PhotoType", CreateMediaTypeUserFileEnum(env)),
+         DECLARE_NAPI_PROPERTY("AlbumKeys", CreateAlbumKeyEnum(env)),
+         DECLARE_NAPI_PROPERTY("AlbumType", CreateAlbumTypeEnum(env)),

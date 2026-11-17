@@ -1,0 +1,14 @@
+diff --git a/device/qemu/arm_virt/linux_full_armv7a/build_armv7a_mesa.py b/device/qemu/arm_virt/linux_full_armv7a/build_armv7a_mesa.py
+--- a/device/qemu/arm_virt/linux_full_armv7a/build_armv7a_mesa.py
++++ b/device/qemu/arm_virt/linux_full_armv7a/build_armv7a_mesa.py
+@@ -288,6 +288,10 @@
+ 
+     prepare_qemu_mesa_source(mesa_repo, source_dir)
+     backport_ohos_logger_fixes(source_dir)
++    subprocess.run(
++        [sys.executable, str(root / "device/qemu/common/virt_full/hardware/gpu/mesa_kms_mapping/apply_mesa_kms_mapping.py"),
++         "--source-root", str(source_dir)], check=True,
++    )
+     write_cross_file(cross_file, root, sysroot)
+     # Historical Mesa sources use dependency paths that predate the current
+     # OpenHarmony tree. Use the current OHOS pkg-config templates so headers

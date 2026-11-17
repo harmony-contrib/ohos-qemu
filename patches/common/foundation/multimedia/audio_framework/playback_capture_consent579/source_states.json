@@ -1,0 +1,38 @@
+{
+  "schema": "guarded-product-source-vector579/v1",
+  "scope": "ordinary product preparation; public capturer header isolates private Ability UI dependency; QEMU runtime not accepted",
+  "projects": {
+    "foundation/multimedia/audio_framework": "6932fa64335b8272ca4a59de7808ab0d6c9eae7a"
+  },
+  "files": {
+    "foundation/multimedia/audio_framework/services/audio_service/client/src/capturer_in_client.cpp": [
+      "d32b7e7f0bbdb508703b7d4fd52f075cf8166b360d8cbb697fbb53f68508d656",
+      "8b3810a3c40b48199480e9f329887ee9dfd22948d382e0eed1839cdbbbf83650"
+    ],
+    "foundation/multimedia/audio_framework/services/audio_service/server/include/audio_privacy_ui_ext_connection.h": [
+      "420329637b488a71f5fce96853976b1ea3b8805526cbec3e1397ee19a58c55a9",
+      "d192618c39fb8d2303eebbc95f5b7588d7170336d9195d0e06ec2191456bcb54"
+    ],
+    "foundation/multimedia/audio_framework/services/audio_service/server/include/capturer_in_server.h": [
+      "f14aba93ee5dca2bb66295366e876db4fd5b3b86e590c67ea274caf855429ba5",
+      "5e29266d8e33b70ac00f49336bdea337da7acb76a568a3043d07eef57ff25779"
+    ],
+    "foundation/multimedia/audio_framework/services/audio_service/server/src/audio_server.cpp": [
+      "da58b89251fd2cd84a4eb2bcc603f28eb7c583484218c7601128dad01087a7bc",
+      "39d3f7f33214dca9dfb2cf6c2eccda7af77aaee8d233db63376672a6881ffce0"
+    ],
+    "foundation/multimedia/audio_framework/services/audio_service/server/src/capturer_in_server.cpp": [
+      "ca05dd23c4463c7aaa2173ebd216fd4cf4ac26c70ccb2e84f9ea48335a02dade",
+      "1a8404ebe051f199e6a3f0dc54e99bae9d0b34512d58853c723a34c76f22ebc0"
+    ]
+  },
+  "previous_privacy_final": {
+    "foundation/multimedia/audio_framework/services/audio_service/client/src/capturer_in_client.cpp": "8b3810a3c40b48199480e9f329887ee9dfd22948d382e0eed1839cdbbbf83650",
+    "foundation/multimedia/audio_framework/services/audio_service/server/include/audio_privacy_ui_ext_connection.h": "d192618c39fb8d2303eebbc95f5b7588d7170336d9195d0e06ec2191456bcb54",
+    "foundation/multimedia/audio_framework/services/audio_service/server/include/capturer_in_server.h": "df49c7ff8aee3da79b4db18bd4a7f293e42d6702ddd8c2235acd352d826d4e3d",
+    "foundation/multimedia/audio_framework/services/audio_service/server/src/audio_server.cpp": "39d3f7f33214dca9dfb2cf6c2eccda7af77aaee8d233db63376672a6881ffce0",
+    "foundation/multimedia/audio_framework/services/audio_service/server/src/capturer_in_server.cpp": "3d03a0bec29d5c5c664d491ebe5569799aca9cd95e8fc34b9f389cc282f3a500"
+  },
+  "previous_privacy_patch": "0000-legacy-product-source.patch",
+  "migration": "only complete previous five-file final can rewind via its immutable original patch and apply new complete five-file final; unknown/mixed vectors rejected"
+}

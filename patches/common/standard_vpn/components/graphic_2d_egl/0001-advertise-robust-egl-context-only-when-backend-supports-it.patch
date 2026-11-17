@@ -1,0 +1,25 @@
+diff --git a/foundation/graphic/graphic_2d/frameworks/opengl_wrapper/src/EGL/egl_wrapper_display.cpp b/foundation/graphic/graphic_2d/frameworks/opengl_wrapper/src/EGL/egl_wrapper_display.cpp
+--- a/foundation/graphic/graphic_2d/frameworks/opengl_wrapper/src/EGL/egl_wrapper_display.cpp
++++ b/foundation/graphic/graphic_2d/frameworks/opengl_wrapper/src/EGL/egl_wrapper_display.cpp
+@@ -143,4 +143,21 @@ void EglWrapperDisplay::UpdateQueryValue(EGLint *major, EGLint *minor)
+     if (hasColorSpaceSupport_ && hasWideColorAndHdrSupport_) {
+         extensionValue_ = extensionValue_ + std::string(WIDE_COLOR_AND_HDR_EXTENSIONS);
+     }
++
++    // The wrapper must not advertise robustness when the loaded implementation
++    // cannot create a context with EGL_CONTEXT_OPENGL_ROBUST_ACCESS_EXT. QEMU's
++    // kms_swrast DRI screen has no DRI_Robustness extension, and ArkWeb trusts
++    // this extension string when selecting its EGL context attributes.
++    EglWrapperDispatchTablePtr table = &gWrapperHook;
++    const char *backendExtensions = (table->isLoad && table->egl.eglQueryString) ?
++        table->egl.eglQueryString(disp_, EGL_EXTENSIONS) : nullptr;
++    if (backendExtensions == nullptr ||
++        strstr(backendExtensions, "EGL_EXT_create_context_robustness") == nullptr) {
++        const std::string robustnessExtension = "EGL_EXT_create_context_robustness ";
++        size_t position = extensionValue_.find(robustnessExtension);
++        while (position != std::string::npos) {
++            extensionValue_.erase(position, robustnessExtension.size());
++            position = extensionValue_.find(robustnessExtension);
++        }
++    }
+ }

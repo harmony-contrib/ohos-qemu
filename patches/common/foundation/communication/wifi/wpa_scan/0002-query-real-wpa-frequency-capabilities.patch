@@ -1,0 +1,127 @@
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/client/hdi_client/wifi_hdi_wpa_client.cpp b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/client/hdi_client/wifi_hdi_wpa_client.cpp
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/client/hdi_client/wifi_hdi_wpa_client.cpp
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/client/hdi_client/wifi_hdi_wpa_client.cpp
+@@ -20,3 +20,5 @@
+ #include <fstream>
+ #include <iostream>
++#include <algorithm>
++#include <sstream>
+ #include <locale>
+@@ -117,7 +119,100 @@
+ }
+ 
++// WPA omits disabled channels and marks passive-only/DFS channels. This API
++// returns scan frequencies, not permission to initiate radiation or run an AP;
++// supplicant and cfg80211 remain authoritative for NO_IR and regulatory rules.
++static bool ParseWpaScanFrequencies(const std::string &reply, int band, std::vector<int> &frequencies)
++{
++    if (reply.size() < 2 || reply.compare(reply.size() - 2, 2, "\n\n") != 0) {
++        return false;
++    }
++    std::istringstream document(reply);
++    std::string line;
++    std::string mode;
++    bool inBlock = false;
++    bool sawMode = false;
++    size_t count = 0;
++    std::vector<int> parsed;
++    while (std::getline(document, line)) {
++        if (++count > 512) {
++            return false;
++        }
++        if (line.empty()) {
++            inBlock = false;
++            continue;
++        }
++        if (line == "Mode[A] Channels:" || line == "Mode[B] Channels:" ||
++            line == "Mode[G] Channels:" || line == "Mode[AD] Channels:") {
++            if (inBlock) {
++                return false;
++            }
++            mode = line;
++            inBlock = true;
++            sawMode = true;
++            continue;
++        }
++        if (!inBlock || line.front() != ' ') {
++            return false;
++        }
++        std::istringstream row(line);
++        int channel = 0;
++        int frequency = 0;
++        std::string equals;
++        std::string unit;
++        if (!(row >> channel >> equals >> frequency >> unit) || equals != "=" || unit != "MHz" ||
++            channel <= 0 || channel > 4096 || frequency <= 0 || frequency > 100000) {
++            return false;
++        }
++        std::string flag;
++        bool noIr = false;
++        bool dfs = false;
++        while (row >> flag) {
++            if (flag == "(NO_IR)" && !noIr && !dfs) {
++                noIr = true;
++            } else if (flag == "(DFS)" && !dfs) {
++                dfs = true;
++            } else {
++                return false;
++            }
++        }
++        const bool is24 = frequency >= 2400 && frequency < 2500;
++        const bool is5 = frequency >= 4900 && frequency < 5925;
++        if ((mode == "Mode[B] Channels:" || mode == "Mode[G] Channels:") && (!is24 || dfs)) {
++            return false;
++        }
++        if ((is24 && mode != "Mode[B] Channels:" && mode != "Mode[G] Channels:") ||
++            (is5 && mode != "Mode[A] Channels:")) {
++            return false;
++        }
++        // In particular a 6 GHz Mode[A] block must never become a 5 GHz list.
++        if ((is24 && (band & 1)) || (is5 && ((dfs && (band & 4)) || (!dfs && (band & 2))))) {
++            parsed.push_back(frequency);
++        }
++    }
++    if (!sawMode || inBlock) {
++        return false;
++    }
++    std::sort(parsed.begin(), parsed.end());
++    parsed.erase(std::unique(parsed.begin(), parsed.end()), parsed.end());
++    frequencies = std::move(parsed);
++    return true;
++}
++
+ WifiErrorNo WifiHdiWpaClient::GetSupportFrequencies(int band, std::vector<int> &frequencies)
+ {
+-    return WIFI_HAL_OPT_NOT_SUPPORT;
++    // ScanBandType's six defined non-empty combinations; 0 is unspecified.
++    if (band != 1 && band != 2 && band != 3 && band != 4 && band != 6 && band != 7) {
++        return WIFI_HAL_OPT_INVALID_PARAM;
++    }
++    char reply[2048] = {0};
++    if (HdiWpaGetMloLinkedInfo(GetHdiStaIfaceName(INSTID_WLAN0), "GET_CAPABILITY freq",
++        reply, sizeof(reply)) != WIFI_HAL_OPT_OK) {
++        return WIFI_HAL_OPT_FAILED;
++    }
++    const size_t length = strnlen(reply, sizeof(reply));
++    if (length >= sizeof(reply) - 1 || !ParseWpaScanFrequencies(std::string(reply, length), band, frequencies)) {
++        return WIFI_HAL_OPT_FAILED;
++    }
++    return WIFI_HAL_OPT_OK;
+ }
+ 
+diff --git a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_sta_hal_interface.cpp b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_sta_hal_interface.cpp
+--- a/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_sta_hal_interface.cpp
++++ b/foundation/communication/wifi/wifi/services/wifi_standard/wifi_framework/wifi_manage/wifi_native/wifi_hal_interface/wifi_sta_hal_interface.cpp
+@@ -151,6 +151,12 @@
+     if (!HalDeviceManager::GetInstance().GetFrequenciesByBand(ifaceName, band, frequencies)) {
+         return WIFI_HAL_OPT_FAILED;
+     }
+     return WIFI_HAL_OPT_OK;
++#elif defined(HDI_WPA_INTERFACE_SUPPORT)
++    CHECK_NULL_AND_RETURN(mHdiWpaClient, WIFI_HAL_OPT_FAILED);
++    if (ifaceName != WifiConfigCenter::GetInstance().GetStaIfaceName(INSTID_WLAN0)) {
++        return WIFI_HAL_OPT_NOT_SUPPORT;
++    }
++    return mHdiWpaClient->GetSupportFrequencies(band, frequencies);
+ #endif
+     return WIFI_HAL_OPT_FAILED;

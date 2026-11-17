@@ -1,0 +1,186 @@
+diff --git a/device/qemu/common/virt_full/hardware/gpu/BUILD.gn b/device/qemu/common/virt_full/hardware/gpu/BUILD.gn
+index 0728015..bcd1b6f 100755
+--- a/device/qemu/common/virt_full/hardware/gpu/BUILD.gn
++++ b/device/qemu/common/virt_full/hardware/gpu/BUILD.gn
+@@ -18,11 +18,37 @@ import("//device/qemu/common/virt_full/device.gni")
+ assert(target_cpu == "arm64" || target_cpu == "x86_64",
+        "device/qemu/common/virt_full/hardware/gpu only supports arm64 and x86_64")
+ 
+-virt_gpu_prebuilt_dir = target_cpu
+ virt_lib = "lib64"
+ 
++qemu_mesa_libs_dir = "$root_build_dir/packages/phone/qemu_mesa"
++
++# Build the portable QEMU GL stack from the historical OHOS Mesa baseline
++# with the upstream va_list logger fix.  The checked-in 64-bit driver predates
++# that fix and crashes RenderService while eglInitialize() selects virtio_gpu.
++action("qemu_mesa_build") {
++  script = "build_qemu_mesa.py"
++  deps = [
++    "//third_party/expat:expat",
++    "//third_party/libdrm:libdrm",
++  ]
++  external_deps = [
++    "graphic_surface:surface",
++    "hilog:libhilog",
++  ]
++  outputs = [
++    "$qemu_mesa_libs_dir/libEGL.so.1.0.0",
++    "$qemu_mesa_libs_dir/libgbm.so.1.0.0",
++    "$qemu_mesa_libs_dir/libGLESv1_CM.so.1.1.0",
++    "$qemu_mesa_libs_dir/libGLESv2.so.2.0.0",
++    "$qemu_mesa_libs_dir/libglapi.so.0.0.0",
++    "$qemu_mesa_libs_dir/kms_swrast_dri.so",
++  ]
++  args = [ rebase_path(root_build_dir) ]
++}
++
+ ohos_prebuilt_shared_library("libglapi.so.0.0.0") {
+-  source = "${virt_gpu_prebuilt_dir}/libglapi.so.0.0.0"
++  source = "$qemu_mesa_libs_dir/libglapi.so.0.0.0"
++  deps = [ ":qemu_mesa_build" ]
+   install_images = [ "system" ]
+   module_install_dir = "$virt_lib"
+   subsystem_name = virt_subsystem_name
+@@ -35,7 +61,8 @@ ohos_prebuilt_shared_library("libglapi.so.0.0.0") {
+ }
+ 
+ ohos_prebuilt_shared_library("libEGL.so.1.0.0") {
+-  source = "${virt_gpu_prebuilt_dir}/libEGL.so.1.0.0"
++  source = "$qemu_mesa_libs_dir/libEGL.so.1.0.0"
++  deps = [ ":qemu_mesa_build" ]
+   install_images = [ "system" ]
+   module_install_dir = "$virt_lib"
+   subsystem_name = virt_subsystem_name
+@@ -47,7 +74,8 @@ ohos_prebuilt_shared_library("libEGL.so.1.0.0") {
+ }
+ 
+ ohos_prebuilt_shared_library("libgbm.so.1.0.0") {
+-  source = "${virt_gpu_prebuilt_dir}/libgbm.so.1.0.0"
++  source = "$qemu_mesa_libs_dir/libgbm.so.1.0.0"
++  deps = [ ":qemu_mesa_build" ]
+   install_images = [ "system" ]
+   module_install_dir = "$virt_lib"
+   subsystem_name = virt_subsystem_name
+@@ -60,21 +88,22 @@ ohos_prebuilt_shared_library("libgbm.so.1.0.0") {
+ }
+ 
+ ohos_prebuilt_shared_library("kms_swrast_dri.so") {
+-  source = "${virt_gpu_prebuilt_dir}/kms_swrast_dri.so"
++  source = "$qemu_mesa_libs_dir/kms_swrast_dri.so"
++  deps = [ ":qemu_mesa_build" ]
+   install_images = [ "system" ]
+   module_install_dir = "$virt_lib"
+   subsystem_name = virt_subsystem_name
+   part_name = virt_part_name
+   install_enable = true
+-  if (target_cpu != "x86_64") {
+-    symlink_target_name = [
+-      "swrast_dri.so",
+-    ]
+-  }
++  symlink_target_name = [
++    "swrast_dri.so",
++    "virtio_gpu_dri.so",
++  ]
+ }
+ 
+ ohos_prebuilt_shared_library("libGLESv1_CM.so.1.1.0") {
+-  source = "${virt_gpu_prebuilt_dir}/libGLESv1_CM.so.1.1.0"
++  source = "$qemu_mesa_libs_dir/libGLESv1_CM.so.1.1.0"
++  deps = [ ":qemu_mesa_build" ]
+   install_images = [ "system" ]
+   module_install_dir = "$virt_lib"
+   subsystem_name = virt_subsystem_name
+@@ -86,7 +115,8 @@ ohos_prebuilt_shared_library("libGLESv1_CM.so.1.1.0") {
+ }
+ 
+ ohos_prebuilt_shared_library("libGLESv2.so.2.0.0") {
+-  source = "${virt_gpu_prebuilt_dir}/libGLESv2.so.2.0.0"
++  source = "$qemu_mesa_libs_dir/libGLESv2.so.2.0.0"
++  deps = [ ":qemu_mesa_build" ]
+   install_images = [ "system" ]
+   module_install_dir = "$virt_lib"
+   subsystem_name = virt_subsystem_name
+@@ -103,7 +133,8 @@ if (target_cpu == "x86_64") {
+   # The regular prebuilt symlink metadata is not materializing into the
+   # final image, so install explicit compatibility copies here.
+   ohos_copy("libEGL_impl_compat") {
+-    sources = [ "${virt_gpu_prebuilt_dir}/libEGL.so.1.0.0" ]
++    sources = [ "$qemu_mesa_libs_dir/libEGL.so.1.0.0" ]
++    deps = [ ":qemu_mesa_build" ]
+     outputs = [ "${target_out_dir}/libEGL_impl.so" ]
+     module_install_name = "libEGL_impl.so"
+     module_type = "lib"
+@@ -118,7 +149,8 @@ if (target_cpu == "x86_64") {
+   }
+ 
+   ohos_copy("libGLESv3_impl_compat") {
+-    sources = [ "${virt_gpu_prebuilt_dir}/libGLESv2.so.2.0.0" ]
++    sources = [ "$qemu_mesa_libs_dir/libGLESv2.so.2.0.0" ]
++    deps = [ ":qemu_mesa_build" ]
+     outputs = [ "${target_out_dir}/libGLESv3_impl.so" ]
+     module_install_name = "libGLESv3_impl.so"
+     module_type = "lib"
+@@ -135,7 +167,7 @@ if (target_cpu == "x86_64") {
+   # virtio_gpu_dri.so disabled due to render_service SIGSEGV crash
+   # The driver contains a bug in ohos_logger that causes crashes
+   # ohos_prebuilt_shared_library("virtio_gpu_dri.so") {
+-  #   source = "${virt_gpu_prebuilt_dir}/virtio_gpu_dri.so"
++  #   source = "${target_cpu}/virtio_gpu_dri.so"
+   #   install_images = [ "system" ]
+   #   module_install_dir = "$virt_lib"
+   #   subsystem_name = virt_subsystem_name
+@@ -144,7 +176,7 @@ if (target_cpu == "x86_64") {
+   # }
+ 
+   ohos_prebuilt_shared_library("swrast_dri.so") {
+-    source = "${virt_gpu_prebuilt_dir}/swrast_dri.so"
++    source = "${target_cpu}/swrast_dri.so"
+     install_images = [ "system" ]
+     module_install_dir = "$virt_lib"
+     subsystem_name = virt_subsystem_name
+@@ -153,7 +185,7 @@ if (target_cpu == "x86_64") {
+   }
+ 
+   ohos_prebuilt_shared_library("libVkLayer_MESA_overlay.so") {
+-    source = "${virt_gpu_prebuilt_dir}/libVkLayer_MESA_overlay.so"
++    source = "${target_cpu}/libVkLayer_MESA_overlay.so"
+     install_images = [ "system" ]
+     module_install_dir = "$virt_lib"
+     subsystem_name = virt_subsystem_name
+@@ -162,7 +194,7 @@ if (target_cpu == "x86_64") {
+   }
+ 
+   ohos_prebuilt_shared_library("libVkLayer_MESA_device_select.so") {
+-    source = "${virt_gpu_prebuilt_dir}/libVkLayer_MESA_device_select.so"
++    source = "${target_cpu}/libVkLayer_MESA_device_select.so"
+     install_images = [ "system" ]
+     module_install_dir = "$virt_lib"
+     subsystem_name = virt_subsystem_name
+@@ -171,7 +203,7 @@ if (target_cpu == "x86_64") {
+   }
+ 
+   ohos_prebuilt_shared_library("libvulkan_virtio.so") {
+-    source = "${virt_gpu_prebuilt_dir}/libvulkan_virtio.so"
++    source = "${target_cpu}/libvulkan_virtio.so"
+     install_images = [ "system" ]
+     module_install_dir = "$virt_lib"
+     subsystem_name = virt_subsystem_name
+@@ -237,16 +269,8 @@ group("virtio") {
+   ]
+   if (target_cpu == "x86_64") {
+     deps += [
+-      ":IMG.icd",
+-      ":VkLayer_MESA_device_select.json",
+-      ":VkLayer_MESA_overlay.json",
+-      ":icdconf.json",
+       ":libEGL_impl_compat",
+       ":libGLESv3_impl_compat",
+-      ":libVkLayer_MESA_device_select.so",
+-      ":libVkLayer_MESA_overlay.so",
+-      ":libvulkan_virtio.so",
+-      ":swrast_dri.so",
+       # ":virtio_gpu_dri.so",  # disabled due to render_service crashes
+     ]
+   }

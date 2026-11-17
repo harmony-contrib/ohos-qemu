@@ -5,8 +5,9 @@ commits and default branches have been read back from GitHub, and all 186 daily
 mirrors have completed production verification records. Component source changes
 and adaptation inputs are published and verified; the manifest lock is complete.
 Package builds and runtime validation remain deferred by user instruction. The
-historical patch tree and 77 source helpers in this checkout link to generated
-component inputs, with the original files preserved locally.
+tracked `patches/` tree and 77 `scripts/` source helpers remain committed as
+regular files in this repository alongside their verified copies in the owning
+component repositories.
 
 ## Ownership and branches
 
@@ -160,9 +161,9 @@ python3 scripts/prepare_component_inputs.py --manifest .qemu/manifest
 
 The retriever requires committed manifest documents and the exact locked component
 SHAs. It verifies the component-owned materializer and all reconstructed hashes
-and file modes. Generated files live under ignored `.qemu/component-inputs/`;
-`patches` and the transferred helper paths are compatibility links. Keep changes
-in the owning component repositories instead of editing this generated tree.
+and file modes. Generated files live under ignored `.qemu/component-inputs/` (or a custom
+`--output` directory), while the repository root retains the tracked `patches/`
+tree and `scripts/` source helpers directly.
 
 The retrieval command has been validated against the committed complete lock in
 an independent output directory. Its

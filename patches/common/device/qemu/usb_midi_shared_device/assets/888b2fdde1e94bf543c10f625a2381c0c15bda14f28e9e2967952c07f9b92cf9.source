@@ -1,0 +1,150 @@
+# Copyright (c) 2022-2023 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+allow usb_host dev_console_file:chr_file { read write };
+allow usb_host sa_usb_service:samgr_class { add };
+allow usb_host data_service_file:dir { search };
+allow usb_host data_chipset_file:dir { search };
+allow usb_host data_chipset_el1_file:dir { search add_name write};
+allow usb_host data_chipset_el1_file:file { open read write create map};
+allow usb_host hdf_usbhost_acm_pnp_service:hdf_devmgr_class { add };
+allow usb_host hdf_usbhost_acm_rawapi_service:hdf_devmgr_class { add };
+allow usb_host hdf_usbhost_ecm_pnp_service:hdf_devmgr_class { add };
+allow usb_host hiview:unix_dgram_socket { sendto };
+allow usb_host usb_host:unix_dgram_socket { getopt };
+allow usb_host usb_host:unix_dgram_socket { setopt };
+allow usb_host musl_param:file { map };
+allow usb_host musl_param:file { open };
+allow usb_host musl_param:file { read };
+allow usb_host param_watcher:binder { call };
+allow usb_host param_watcher:binder { transfer };
+allow usb_host sa_param_watcher:samgr_class { get };
+allow usb_host tracefs:dir { search };
+allow usb_host tracefs_trace_marker_file:file { open };
+allow usb_host tracefs_trace_marker_file:file { write };
+allow usb_host musl_param:file { open read };
+allow usb_host bootevent_samgr_param:file { map open read };
+allow usb_host build_version_param:file { map open read };
+allow usb_host const_allow_param:file { map open read };
+allow usb_host const_build_param:file { map open read };
+allow usb_host const_param:file { map open read };
+allow usb_host const_postinstall_param:file { map open read };
+allow usb_host const_product_param:file { map open read };
+allow usb_host debug_param:file { map open read };
+allow usb_host distributedsche_param:file { map open read };
+allow usb_host hilog_param:file { map open read };
+allow usb_host hw_sc_build_os_param:file { map open read };
+allow usb_host hw_sc_build_param:file { map open read };
+allow usb_host hw_sc_param:file { map open read };
+allow usb_host init_param:file { map open read };
+allow usb_host init_svc_param:file { map open read };
+allow usb_host net_param:file { map open read };
+allow usb_host ohos_boot_param:file { map open read };
+allow usb_host ohos_param:file { map open read };
+allow usb_host startup_param:file { map open read };
+allow usb_host sys_usb_param:file { map open read };
+allow usb_host hdf_usbfn_cdcacm:hdf_devmgr_class { add };
+allow usb_host hdf_usbfn_cdcecm:hdf_devmgr_class { add };
+allow usb_host hdf_usbfn:hdf_devmgr_class { add };
+allow usb_host hdf_usb_pnp_manager:hdf_devmgr_class { add };
+allow usb_host usb_host:capability { dac_override };
+allow usb_host chip_prod_file:dir { search };
+allow usb_host chip_prod_file:file { getattr open read };
+allow usb_host configfs:dir { add_name create open read search write remove_name rmdir };
+allow usb_host configfs:file { create ioctl open read write getattr };
+allow usb_host configfs:lnk_file { create unlink };
+debug_only(`
+    allow usb_host console:binder { call };
+    allow usb_host console:fd { use };
+    allow usb_host sh:binder { call };
+')
+allow usb_host data_file:dir { search };
+allow usb_host data_init_agent:dir { search };
+allow usb_host data_init_agent:file { ioctl open read append };
+allow usb_host data_log:file { read write };
+allow usb_host debugfs_usb:dir { search };
+allow usb_host debugfs_usb:file { open write };
+allow usb_host dev_bus:dir { search };
+allow usb_host dev_bus_usb_file:chr_file { ioctl map open read write getattr};
+allow usb_host dev_bus_usb_file:dir { search };
+allow usb_host dev_functionfs_file:chr_file { ioctl map open read write getattr };
+allow usb_host dev_functionfs_file:dir { search };
+allow usb_host dev_hdf_kevent:chr_file { getattr ioctl open read write };
+allow usb_host dev_hdf_usb_pnp:chr_file { getattr ioctl open read write };
+allow usb_host dev_usbfn_file:chr_file { getattr ioctl read write open map };
+allow usb_host dev_usbfn_file:dir { search };
+allow usb_host dev_unix_socket:dir { search };
+allow usb_host dev_unix_socket:sock_file { write };
+allow usb_host faultloggerd:fd { use };
+allow usb_host faultloggerd:unix_stream_socket { connectto };
+allow usb_host faultloggerd_socket:sock_file { write };
+allow usb_host hdf_device_manager:hdf_devmgr_class { get };
+allow usb_host hdf_devmgr:binder { call transfer };
+allow usb_host hdf_usb_interface_service:hdf_devmgr_class { add };
+allow usb_host hdf_usbfn_mtp_interface_service:hdf_devmgr_class { add };
+allow usb_host hdf_usb_pnp_manager:hdf_devmgr_class { add };
+allow usb_host hdf_usbd:hdf_devmgr_class { add };
+allow usb_host hdf_usbfn_cdcacm:hdf_devmgr_class { add get };
+allow usb_host hdf_usbfn_cdcecm:hdf_devmgr_class { add get };
+allow usb_host hdf_usbfn:hdf_devmgr_class { add get };
+allow usb_host hdf_usb_ddk_service:hdf_devmgr_class { add };
+allow usb_host hdf_usb_serial_ddk_service:hdf_devmgr_class { add };
+allow usb_host hdf_scsi_peripheral_ddk_service:hdf_devmgr_class { add };
+allow usb_host hiview:binder { call };
+allow usb_host kernel:unix_stream_socket { connectto };
+allow usb_host paramservice_socket:sock_file { write };
+allow usb_host rootfs:chr_file { read write };
+allow usb_host sa_device_service_manager:samgr_class { get };
+allow usb_host samgr:binder { call };
+allow usb_host tty_device:chr_file { open read write getattr ioctl };
+allowxperm usb_host tty_device:chr_file ioctl { 0x5401 0x5402 0x5403 0x5404 0x5408 0x5409 0x540a 0x540b };
+allow usb_host usb_service:binder { call };
+allow usb_host vendor_bin_file:file { entrypoint execute map read };
+allow usb_host hdf_devhost_exec:file { entrypoint execute map read };
+allow usb_host vendor_etc_file:dir { search };
+allow usb_host vendor_etc_file:file { getattr open read };
+allow usb_host vendor_lib_file:dir { search };
+allow usb_host vendor_lib_file:file { execute getattr map open read };
+allow usb_host samgr:binder { transfer };
+allow usb_host sa_usb_service:samgr_class { get };
+allowxperm usb_host configfs:file ioctl { 0x5413 };
+allowxperm usb_host data_init_agent:file ioctl { 0x5413 };
+allowxperm usb_host dev_bus_usb_file:chr_file ioctl { 0x5500 0x5504 0x5508 0x550b 0x550c 0x550d 0x550f 0x5510 0x550a 0x5512 0x5514 0x5515 0x5516 0x551a 0x551b 0x551f };
+allowxperm usb_host dev_file:chr_file ioctl { 0x6201 0x6202 0x6203 0x6731 0x6732 0x6734 0x673c 0x6782 0x6736 0x673d 0x6735 0x6738 };
+allowxperm usb_host dev_hdf_kevent:chr_file ioctl { 0x6202 0x6201 0x6203 };
+allowxperm usb_host dev_hdf_usb_pnp:chr_file ioctl { 0x6201 0x6202 0x6203 0x6206 };
+# avc:  denied  { add } for service=5110 pid=512 scontext=u:r:usb_host:s0 tcontext=u:object_r:sa_hdf_ext_devmgr:s0 tclass=samgr_class permissive=1
+# avc:  denied  { get } for service=5110 pid=512 scontext=u:r:usb_host:s0 tcontext=u:object_r:sa_hdf_ext_devmgr:s0 tclass=samgr_class permissive=1
+allow usb_host sa_hdf_ext_devmgr:samgr_class { add get };
+allow usb_host hdf_ext_devmgr:binder { call };
+allow usb_host sys_usb_param:parameter_service { set };
+allow usb_host normal_hap_attr:fd { use };
+allow usb_host hmdfs:file { read write };
+allow usb_host data_user_file:file { read write};
+allow usb_host dev_usb_accessory_file:chr_file { open ioctl read write };
+#avc:  denied  { ioctl } for  pid=245 comm="/vendor/bin/hdf_devhost" path="/dev/usb_accessory" dev="" ino=199 ioctlcmd=0x4dc4 scontext=u:r:usb_host:s0 tcontext=u:object_r:dev_usb_accessory_file:s0 tclass=chr_file permissive=0
+allowxperm usb_host dev_usb_accessory_file:chr_file ioctl { 0x4d01 0x4d02 0x4d03 0x4d04 0x4d06 0x4dc0 0x4dc4};
+allow usb_host sa_accesstoken_manager_service:samgr_class { get };
+allow usb_host accesstoken_service:binder { call };
+allow usb_host ntfs:file { read write };
+allow usb_host exfat:file { read write };
+allow usb_host vfat:file { read write };
+allow usb_host dev_bus_usb_file:dir { open read };
+allow usb_host dev_file:dir { open read };
+allow usb_host usb_host:netlink_kobject_uevent_socket { bind create setopt read };
+allow usb_host dev_sg_file:chr_file { open read write ioctl };
+allowxperm usb_host dev_sg_file:chr_file ioctl { 0x2285 };
+allow usb_host sys_file:file { open read write };
+allow usb_host sys_file:dir { open read search };
+allow usb_host hdf_usb_device_interface_service:hdf_devmgr_class { add };
+allow usb_host hdf_usb_port_interface_service:hdf_devmgr_class { add };

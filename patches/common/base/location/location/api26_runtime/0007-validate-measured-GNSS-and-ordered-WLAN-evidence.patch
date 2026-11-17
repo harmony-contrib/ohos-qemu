@@ -1,0 +1,98 @@
+diff --git a/base/location/location/interfaces/inner_api/include/constant_definition.h b/base/location/location/interfaces/inner_api/include/constant_definition.h
+--- a/base/location/location/interfaces/inner_api/include/constant_definition.h
++++ b/base/location/location/interfaces/inner_api/include/constant_definition.h
+@@ -40,6 +40,8 @@
+ const int DEFAULT_TIMEOUT_30S = 30000;
+ const int DEFAULT_TIMEOUT_5S = 5000;
+ const double DEFAULT_APPROXIMATELY_ACCURACY = 50.0;
++// Existing HDI GNSS V2_0 field-validity bit carried unchanged by Location.
++constexpr int32_t LOCATION_FIELD_HORIZONTAL_ACCURACY_VALID = 1 << 5;
+ const int STATE_OPEN = 1;
+ const int STATE_CLOSE = 0;
+ const int PRIVACY_TYPE_OTHERS = 0;
+diff --git a/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp b/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp
+--- a/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp
++++ b/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp
+@@ -15,6 +15,7 @@
+ 
+ #ifdef FEATURE_GNSS_SUPPORT
+ #include "gnss_event_callback.h"
++#include <cmath>
+ #include <singleton.h>
+ #include <sys/time.h>
+ #include "ipc_skeleton.h"
+@@ -47,6 +48,16 @@
+ 
+ int32_t GnssEventCallback::ReportLocation(const LocationInfo& location)
+ {
++    // An HDI report with unmeasured/default coordinates is not a location fix.
++    using GnssValidity = HDI::Location::Gnss::V2_0::GnssLocationValidity;
++    constexpr uint32_t requiredFields = GnssValidity::GNSS_LOCATION_LAT_VALID | GnssValidity::GNSS_LOCATION_LONG_VALID;
++    if ((location.fieldValidity & requiredFields) != requiredFields ||
++        !std::isfinite(location.latitude) || std::abs(location.latitude) > 90 ||
++        !std::isfinite(location.longitude) || std::abs(location.longitude) > 180 ||
++        ((location.fieldValidity & GnssValidity::GNSS_LOCATION_HORIZONTAL_ACCURACY_VALID) != 0 &&
++        (!std::isfinite(location.horizontalAccuracy) || location.horizontalAccuracy < 0))) {
++        return ERR_INVALID_VALUE;
++    }
+     auto gnssAbility = GnssAbility::GetInstance();
+     std::string identity = IPCSkeleton::ResetCallingIdentity();
+     std::shared_ptr<Location> locationNew = std::make_shared<Location>();
+@@ -80,7 +91,11 @@
+         "latitude", std::to_string(location.latitude),
+         "longitude", std::to_string(location.longitude)});
+     gnssAbility->ReportLocationInfo(GNSS_ABILITY, locationNew);
+-    SetGpsTime(locationNew->GetTimeStamp());
++    // UTC is optional independently of the measured position. Never discipline
++    // the system clock from a missing or invalid UTC field.
++    if ((location.fieldValidity & GnssValidity::GNSS_LOCATION_TIME_VALID) != 0 && location.timeForFix > 0) {
++        SetGpsTime(location.timeForFix);
++    }
+     IPCSkeleton::SetCallingIdentity(identity);
+     return ERR_OK;
+ }
+diff --git a/base/location/location/services/location_locator/locator/source/report_manager.cpp b/base/location/location/services/location_locator/locator/source/report_manager.cpp
+--- a/base/location/location/services/location_locator/locator/source/report_manager.cpp
++++ b/base/location/location/services/location_locator/locator/source/report_manager.cpp
+@@ -236,6 +236,7 @@
+ {
+     if (location == nullptr || !RequestManager::GetInstance()->IsSkiingRequestActive(request) ||
+         location->GetIsFromMock() ||
++        (location->GetFieldValidity() & LOCATION_FIELD_HORIZONTAL_ACCURACY_VALID) == 0 ||
+         (location->GetLocationSourceType() != GNSS_TYPE && location->GetLocationSourceType() != RTK_TYPE) ||
+         !PermissionManager::CheckLocationPermission(request->GetTokenId(), request->GetFirstTokenId())) {
+         return;
+diff --git a/base/location/location/services/location_locator/locator/source/locator_ability.cpp b/base/location/location/services/location_locator/locator/source/locator_ability.cpp
+--- a/base/location/location/services/location_locator/locator/source/locator_ability.cpp
++++ b/base/location/location/services/location_locator/locator/source/locator_ability.cpp
+@@ -1624,6 +1624,7 @@
+     int64_t cellTime = 0;
+     bool wifiInside = false;
+     int64_t wifiTime = 0;
++    int64_t wifiScanTime = 0;
+     double gnssDistance = 0;
+     double accuracy = 0;
+     int64_t gnssTime = 0;
+@@ -1940,6 +1941,7 @@
+     const std::unique_ptr<Location>& location)
+ {
+     if (location == nullptr || location->GetIsFromMock() ||
++        (location->GetFieldValidity() & LOCATION_FIELD_HORIZONTAL_ACCURACY_VALID) == 0 ||
+         (location->GetLocationSourceType() != GNSS_TYPE && location->GetLocationSourceType() != RTK_TYPE) ||
+         !std::isfinite(location->GetAccuracy()) || location->GetAccuracy() < 0) { return; }
+     FusionPoint point {location->GetLatitude(), location->GetLongitude()};
+@@ -1985,9 +1987,13 @@
+     if (scanned.empty()) { return; }
+     {
+         std::lock_guard<std::mutex> lock(fusionFenceMutex_);
+-        if (!record->active || record->cancelled) { return; }
++        // Completion time orders whole scans; an unchanged AP timestamp may
++        // legitimately appear in a later scan. Replayed/older completions cannot
++        // overwrite a newer scan and manufacture a physical boundary crossing.
++        if (!record->active || record->cancelled || scanTime <= record->wifiScanTime) { return; }
+         record->wifiInside = FusionWifiMatches(record->params, scanned);
+         record->wifiTime = evidenceTime;
++        record->wifiScanTime = scanTime;
+     }
+     EvaluateFusionFence(record);
+ }

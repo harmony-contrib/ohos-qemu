@@ -1,0 +1,103 @@
+diff --git a/foundation/communication/netmanager_ext/interfaces/innerkits/netvpnclient/INetworkVpnService.idl b/foundation/communication/netmanager_ext/interfaces/innerkits/netvpnclient/INetworkVpnService.idl
+--- a/foundation/communication/netmanager_ext/interfaces/innerkits/netvpnclient/INetworkVpnService.idl
++++ b/foundation/communication/netmanager_ext/interfaces/innerkits/netvpnclient/INetworkVpnService.idl
+@@ -37,7 +37,7 @@
+     [macrodef SUPPORT_SYSVPN] void GetConnectedVpnAppInfo([out]List<String> bundleNameList);
+     [macrodef SUPPORT_SYSVPN] void GetSysVpnConfigList([out] List<sptr<SysVpnConfig>> vpnList);
+     [macrodef SUPPORT_SYSVPN] void GetSysVpnConfig([out] sptr<SysVpnConfig> config, [in] String vpnId);
+-    [macrodef SUPPORT_SYSVPN] void GetConnectedSysVpnConfig([out] sptr<SysVpnConfig> config);
++    [macrodef SUPPORT_SYSVPN] void GetConnectedSysVpnConfig([out] List<sptr<SysVpnConfig>> configs);
+     [macrodef SUPPORT_SYSVPN] void NotifyConnectStage([in] String stage, [in] int resultIpc);
+     [macrodef SUPPORT_SYSVPN] void GetSysVpnCertUri([in] int certType, [out] String certUri);
+     [macrodef SUPPORT_SYSVPN] void DestroyVpn([in] String vpnId);
+diff --git a/foundation/communication/netmanager_ext/frameworks/native/netvpnclient/src/networkvpn_client.cpp b/foundation/communication/netmanager_ext/frameworks/native/netvpnclient/src/networkvpn_client.cpp
+--- a/foundation/communication/netmanager_ext/frameworks/native/netvpnclient/src/networkvpn_client.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/native/netvpnclient/src/networkvpn_client.cpp
+@@ -427,7 +427,21 @@
+         NETMGR_EXT_LOG_E("GetConnectedSysVpnConfig proxy is nullptr");
+         return NETMANAGER_EXT_ERR_GET_PROXY_FAIL;
+     }
+-    return proxy->GetConnectedSysVpnConfig(config);
++    // A zero-or-one private IPC list preserves the service's legal no-VPN
++    // result without confusing a null Parcelable with a decoding failure.
++    config = nullptr;
++    std::vector<sptr<SysVpnConfig>> configs;
++    int32_t result = proxy->GetConnectedSysVpnConfig(configs);
++    if (result != NETMANAGER_EXT_SUCCESS) {
++        return result;
++    }
++    if (configs.size() > 1 || (!configs.empty() && configs.front() == nullptr)) {
++        return NETMANAGER_EXT_ERR_INTERNAL;
++    }
++    if (!configs.empty()) {
++        config = configs.front();
++    }
++    return NETMANAGER_EXT_SUCCESS;
+ }
+ 
+ int32_t NetworkVpnClient::NotifyConnectStage(const std::string &stage, const int32_t &result)
+diff --git a/foundation/communication/netmanager_ext/services/vpnmanager/include/networkvpn_service.h b/foundation/communication/netmanager_ext/services/vpnmanager/include/networkvpn_service.h
+--- a/foundation/communication/netmanager_ext/services/vpnmanager/include/networkvpn_service.h
++++ b/foundation/communication/netmanager_ext/services/vpnmanager/include/networkvpn_service.h
+@@ -209,7 +209,7 @@
+     /**
+      * get the vpn connection state
+      */
+-    int32_t GetConnectedSysVpnConfig(sptr<SysVpnConfig> &config) override;
++    int32_t GetConnectedSysVpnConfig(std::vector<sptr<SysVpnConfig>> &configs) override;
+ 
+     /**
+      * notify the vpn connection stage and result
+diff --git a/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp b/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
+--- a/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
++++ b/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
+@@ -1718,8 +1718,9 @@
+     return NETMANAGER_EXT_SUCCESS;
+ }
+ 
+-int32_t NetworkVpnService::GetConnectedSysVpnConfig(sptr<SysVpnConfig> &config)
+-{
++int32_t NetworkVpnService::GetConnectedSysVpnConfig(std::vector<sptr<SysVpnConfig>> &configs)
++{
++    configs.clear();
+     int32_t checkPermission = CheckIpcPermission(std::string(Permission::MANAGE_VPN));
+     if (checkPermission != NETMANAGER_SUCCESS)
+         return checkPermission;
+@@ -1737,7 +1738,12 @@
+         return NETMANAGER_EXT_SUCCESS;
+     }
+     NETMGR_EXT_LOG_I("SystemVpn GetConnectedSysVpnConfig");
+-    return vpnObj_->GetConnectedSysVpnConfig(config);
++    sptr<SysVpnConfig> config;
++    int32_t result = vpnObj_->GetConnectedSysVpnConfig(config);
++    if (result == NETMANAGER_EXT_SUCCESS && config != nullptr) {
++        configs.push_back(config);
++    }
++    return result;
+ }
+ 
+ // LCOV_EXCL_START
+diff --git a/foundation/communication/netmanager_ext/test/netmanager_ext_mock_test/mock_i_network_vpn_service.h b/foundation/communication/netmanager_ext/test/netmanager_ext_mock_test/mock_i_network_vpn_service.h
+--- a/foundation/communication/netmanager_ext/test/netmanager_ext_mock_test/mock_i_network_vpn_service.h
++++ b/foundation/communication/netmanager_ext/test/netmanager_ext_mock_test/mock_i_network_vpn_service.h
+@@ -49,7 +49,7 @@
+     MOCK_METHOD(int32_t, GetConnectedVpnAppInfo, (std::vector<std::string> &bundleNameList), (override));
+     MOCK_METHOD(int32_t, GetSysVpnConfigList, (std::vector<sptr<SysVpnConfig>> &vpnList), (override));
+     MOCK_METHOD(int32_t, GetSysVpnConfig, (sptr<SysVpnConfig> &config, const std::string &vpnId), (override));
+-    MOCK_METHOD(int32_t, GetConnectedSysVpnConfig, (sptr<SysVpnConfig> &config), (override));
++    MOCK_METHOD(int32_t, GetConnectedSysVpnConfig, (std::vector<sptr<SysVpnConfig>> &configs), (override));
+     MOCK_METHOD(int32_t, NotifyConnectStage, (const std::string &stage, const int32_t resultIpc), (override));
+     MOCK_METHOD(int32_t, GetSysVpnCertUri, (const int32_t certType, std::string &certUri), (override));
+     MOCK_METHOD(int32_t, DestroyVpn, (const std::string &vpnId), (override));
+diff --git a/foundation/communication/netmanager_ext/test/netmanager_ext_mock_test/mock_networkvpn_service_stub_test.h b/foundation/communication/netmanager_ext/test/netmanager_ext_mock_test/mock_networkvpn_service_stub_test.h
+--- a/foundation/communication/netmanager_ext/test/netmanager_ext_mock_test/mock_networkvpn_service_stub_test.h
++++ b/foundation/communication/netmanager_ext/test/netmanager_ext_mock_test/mock_networkvpn_service_stub_test.h
+@@ -75,7 +75,7 @@
+         return 0;
+     }
+ 
+-    int32_t GetConnectedSysVpnConfig(sptr<SysVpnConfig> &config) override
++    int32_t GetConnectedSysVpnConfig(std::vector<sptr<SysVpnConfig>> &configs) override
+     {
+         return 0;
+     }

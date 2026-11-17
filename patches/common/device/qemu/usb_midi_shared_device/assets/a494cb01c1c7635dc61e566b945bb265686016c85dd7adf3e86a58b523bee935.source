@@ -1,0 +1,73 @@
+{
+    "name": "@ohos/drivers_peripheral_usb",
+    "description": "usb device driver",
+    "version": "3.1",
+    "license": "Apache License 2.0",
+    "publishAs": "code-segment",
+    "segment": {
+        "destPath": "drivers/peripheral/usb"
+    },
+    "dirs": {},
+    "scripts": {},
+    "component": {
+        "name": "drivers_peripheral_usb",
+        "subsystem": "hdf",
+        "features": [
+            "drivers_peripheral_usb_feature_linux_native_model",
+            "drivers_peripheral_usb_feature_ddk_service",
+            "drivers_peripheral_usb_feature_emulator_mode"
+        ],
+        "hisysevent_config": [
+            "//drivers/peripheral/usb/hisysevent.yaml"
+        ],
+        "syscap": [],
+        "adapted_system_type": [
+            "standard",
+            "small"
+        ],
+        "rom": "1800KB",
+        "ram": "1200KB",
+        "deps": {
+            "components": [
+                "ipc",
+                "hdf_core",
+                "hilog",
+                "samgr",
+                "init",
+                "hitrace",
+                "c_utils",
+                "drivers_interface_usb",
+                "hisysevent",
+                "access_token",
+                "libusb",
+                "bounds_checking_function"
+            ],
+            "third_party": []
+        },
+        "build": {
+            "sub_component": [
+                "//drivers/peripheral/usb:usb_entry"
+            ],
+            "test": [
+                "//drivers/peripheral/usb/test:hdf_test_usb"
+            ],
+            "inner_kits": [
+                {
+                    "name":"//drivers/peripheral/usb/hdi_service:libusb_interface_service_1.2"
+                },
+                {
+                    "name":"//drivers/peripheral/usb/ddk:libusb_pnp_manager"
+                },
+                {
+                    "name":"//drivers/peripheral/usb/serial:libserial_interface_service_1.0"
+                },
+                {
+                    "name":"//drivers/peripheral/usb/hdi_service:libusb_device_interface_service_2.1"
+                },
+                {
+                    "name":"//drivers/peripheral/usb/hdi_service:libusb_port_interface_service_2.0"
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "systemui580-profile-output-vector/v1",
+  "scope": "Exact one-file profile-isolated SystemUI publication; actual new package and QEMU behavior pending",
+  "projects": {
+    "applications/standard/systemui": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01"
+  },
+  "files": {
+    "applications/standard/systemui/BUILD.gn": [
+      "2c4f623b726b7555c8207e562c8c293c3b0281ea1075e1bac7f460ec55325bcd",
+      "7822ece692807e3b4868af02c34854254d6c195e086b963515140a6dab965370"
+    ]
+  }
+}

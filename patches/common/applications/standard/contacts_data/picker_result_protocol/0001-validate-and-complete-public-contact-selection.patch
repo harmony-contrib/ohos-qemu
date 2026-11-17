@@ -1,0 +1,692 @@
+diff --git a/applications/standard/contacts_data/contacts/src/contact.js b/applications/standard/contacts_data/contacts/src/contact.js
+--- a/applications/standard/contacts_data/contacts/src/contact.js
++++ b/applications/standard/contacts_data/contacts/src/contact.js
+@@ -120,7 +120,7 @@
+   gContext = context;
+   let helper;
+   if (type === 'select') {
+-    helper = contact.startContactsPicker(gContext, config);
++    helper = contact.startContactsPicker(context, config);
+     console.log('[picker] selectContactsPicker');
+     if (helper === undefined) {
+       console.error('[picker] contact startContactsPicker helper is undefined');
+@@ -175,6 +175,9 @@
+       config.parameters.isDisplayByName = option.isDisplayedByName;
+     } else if (option.isDisplayByName !== undefined) {
+       config.parameters.isDisplayByName = option.isDisplayByName;
++    }
++    if (option.isAutoDismissOnNavigation !== undefined) {
++      config.parameters.isAutoDismissOnNavigation = option.isAutoDismissOnNavigation;
+     }
+     if (option.filter !== undefined) {
+       config.parameters.filter = option.filter;
+@@ -480,71 +483,72 @@
+ }
+ 
+ function checkSelectParameter(config) {
+-  console.warn('[picker] checkSelectParameter config.parameters.selectLimit ' + config.parameters.selectLimit);
+-  if (config.parameters.selectLimit === undefined || config.parameters.selectLimit > 0) {
+-    return true;
+-  }
+-  return false;
++  const params = config.parameters;
++  if (params.selectLimit !== undefined && (!Number.isInteger(params.selectLimit) || params.selectLimit <= 0)) {
++    return false;
++  }
++  for (const key of ['isContactMultiSelect', 'isDisplayByName', 'isAutoDismissOnNavigation']) {
++    if (params[key] !== undefined && typeof params[key] !== 'boolean') { return false; }
++  }
++  if (params.filter !== undefined && (params.filter === null || typeof params.filter !== 'object' ||
++      Array.isArray(params.filter))) { return false; }
++  if (params.selectLimit > 10000) { params.selectLimit = 10000; }
++  return true;
++}
++
++function selectionError(error) {
++  const code = error && typeof error.code === 'number' ? error.code : error;
++  if ([201, 202, 401, 801, ERROR_SYSTEM, ERROR_QUERY_VALUE_FAILED, ERROR_INVALID_PARAMETER,
++    ERROR_OVER_LIMIT].includes(code)) { return new BusinessError(code); }
++  return new BusinessError(ERROR_SYSTEM);
+ }
+ 
+ function parseContacts(result) {
+-  let pickerData = result.pickerData;
+-  let contacts = [];
+-  try {
+-    contacts = JSON.parse(pickerData);
+-  } catch (Error) {
+-    console.error(`[picker] JSON.parse Error: ${Error}`);
+-  }
+-  if (contacts.length !== result.total) {
+-    console.error(`[picker] contacts.length : ${contacts.length} is not equal to total : ${result.total}`);
+-  }
+-  console.warn(`[picker] contacts.length : ${contacts.length}`);
++  if (!result || typeof result.pickerData !== 'string' || !Number.isInteger(result.total) ||
++      result.total < 0 || result.total > 10000) { throw new BusinessError(ERROR_SYSTEM); }
++  let contacts;
++  try { contacts = JSON.parse(result.pickerData); }
++  catch (_) { throw new BusinessError(ERROR_SYSTEM); }
++  if (!Array.isArray(contacts) || contacts.length !== result.total ||
++      contacts.some(item => item === null || typeof item !== 'object' || Array.isArray(item))) {
++    throw new BusinessError(ERROR_SYSTEM);
++  }
++  if (result.resultCode === 1 && contacts.length !== 0) { throw new BusinessError(ERROR_SYSTEM); }
+   return contacts;
+ }
+ 
+-async function contactsPickerSelect(...args) {
+-  console.log('[picker] contactsPickerSelect START');
+-  if (arguments.length === ARGUMENTS_LEN_TWO && typeof arguments[1] !== 'function') {
+-    console.error('[picker] contactsPickerSelect callback invalid');
+-    throw Error('invalid callback');
+-  }
+-  const config = parseContactsPickerSelectOption(arguments);
++function contactsPickerSelect(...args) {
++  let callback;
++  if (args.length > 2 || (args.length === 2 && typeof args[1] !== 'function') ||
++      (args.length > 0 && typeof args[0] !== 'function' &&
++        (args[0] === null || typeof args[0] !== 'object' || Array.isArray(args[0])))) {
++    throw new BusinessError(ERROR_CODE_INVALID_PARAM, ERROR_MSG_SELECT_INVALID_PARAM);
++  }
++  if (args.length === 2 && typeof args[0] === 'function') {
++    throw new BusinessError(ERROR_CODE_INVALID_PARAM, ERROR_MSG_SELECT_INVALID_PARAM);
++  }
++  if (typeof args[args.length - 1] === 'function') { callback = args[args.length - 1]; }
++  const config = parseContactsPickerSelectOption(args);
+   if (!checkSelectParameter(config)) {
+-    if (arguments.length === ARGUMENTS_LEN_TWO) {
+-      return args[1](new BusinessError(ERROR_CODE_INVALID_PARAM, ERROR_MSG_SELECT_INVALID_PARAM), undefined);
+-    } else if (arguments.length === ARGUMENTS_LEN_ONE) {
+-      throw new BusinessError(ERROR_CODE_INVALID_PARAM, ERROR_MSG_SELECT_INVALID_PARAM);
+-    }
+-  }
+-  try {
+-    let context = getContext(this);
+-    let pickerType = 'select';
+-    let result = await startContactsPicker(context, config, pickerType);
+-    let contacts = parseContacts(result);
+-    if (arguments.length === ARGUMENTS_LEN_TWO && typeof arguments[1] === 'function') {
+-      if (result.resultCode === 0 || result.resultCode === 1) {
+-        return args[1](undefined, contacts);
+-      } else {
+-        return args[1](result.resultCode, undefined);
++    throw new BusinessError(ERROR_CODE_INVALID_PARAM, ERROR_MSG_SELECT_INVALID_PARAM);
++  }
++  const operation = (async () => {
++    try {
++      const context = getContext(this);
++      const result = await startContactsPicker(context, config, 'select');
++      if (!result || (result.resultCode !== 0 && result.resultCode !== 1)) {
++        throw selectionError(result ? result.resultCode : ERROR_SYSTEM);
+       }
+-    } else if (arguments.length === 1 && typeof arguments[0] === 'function') {
+-      if (result.resultCode === 0 || result.resultCode === 1) {
+-        return args[0](undefined, contacts);
+-      } else {
+-        return args[0](result.resultCode, undefined);
+-      }
+-    }
+-    return new Promise((resolve, reject) => {
+-      if (result.resultCode === 0 || result.resultCode === 1) {
+-        resolve(contacts);
+-      } else {
+-        reject(result.resultCode);
+-      }
+-    });
+-  } catch (error) {
+-    console.error('[picker] contactsPickerSelect error: ' + error);
++      return parseContacts(result);
++    } catch (error) { throw selectionError(error); }
++  })();
++  if (callback !== undefined) {
++    // Only this pair settles the public callback; an exception thrown by the
++    // caller's callback must never cause a second callback invocation.
++    operation.then(contacts => callback(undefined, contacts), error => callback(error, undefined));
+     return undefined;
+   }
++  return operation;
+ }
+ 
+ export default {
+diff --git a/applications/standard/contacts_data/contacts/src/contacts_api.cpp b/applications/standard/contacts_data/contacts/src/contacts_api.cpp
+--- a/applications/standard/contacts_data/contacts/src/contacts_api.cpp
++++ b/applications/standard/contacts_data/contacts/src/contacts_api.cpp
+@@ -2164,56 +2164,37 @@
+ 
+ napi_value ContactsPickerSelect(napi_env env, napi_callback_info info)
+ {
+-    HILOG_WARN("[ContactsPicker] ContactsPickerSelect start");
+     size_t argc = MAX_PARAMS;
+     napi_value argv[MAX_PARAMS] = {0};
+-    napi_value thisVar = nullptr;
+-    napi_value result = nullptr;
+-    void *data;
+-    // 获取JS接口传入的参数
+-    napi_get_cb_info(env, info, &argc, &(argv[0]), &thisVar, &data);
+-    bool isStageMode = false;
+-    OHOS::AbilityRuntime::IsStageContext(env, argv[0], isStageMode);
+-    if (isStageMode) {
+-        napi_value errorCode = ContactsNapiUtils::CreateError(env, PARAMETER_ERROR);
+-        switch (argc) {
+-            case ARGS_TWO:
+-                if (!ContactsNapiUtils::MatchParameters(env, argv, { napi_object, napi_object })) {
+-                    napi_throw(env, errorCode);
+-                }
+-                break;
+-            case ARGS_THREE:
+-                if (!ContactsNapiUtils::MatchParameters(env, argv, { napi_object, napi_object, napi_function })) {
+-                    napi_throw(env, errorCode);
+-                }
+-                break;
+-            default:
+-                napi_throw(env, errorCode);
+-                break;
+-        }
+-    }
+-    // init request of Want，构建 want 请求
+-    OHOS::AAFwk::Want request;
+-    AppExecFwk::UnwrapWant(env, argv[1], request);
+-    request.SetElementName(CONTACT_PACKAGE_NAME, CONTACT_UI_EXT_ABILITY_NAME); // 设置包名 和 ability name
+-    std::string targetType = CONTACT_UI_EXT_TYPE;
+-    std::string targetUrl = "BatchSelectContactsPage";
+-    request.SetParam(UI_EXT_TYPE, targetType);
+-    request.SetParam(UI_EXT_TARGETURL, targetUrl);
+-    // init request Context，第一个参数是Context，解析参数，转成AbilityContext或者UIExtensionContext
+-    auto asyncContext = std::make_unique<OHOS::ContactsApi::BaseContext>();
+-    asyncContext->env = env;
+-    if (!ParseAbilityContextReq(env, argv[0],
+-        asyncContext->context, asyncContext->uiExtensionContext)) {
+-        HILOG_ERROR("[ContactsPicker] ParseAbilityContextReq failed");
+-        return result;
+-    }
+-    NAPI_CALL(env, ContactsNapiUtils::GetParamCallback(env, asyncContext, argc, argv)); // 解析Promise对象，用于返回JS结果
+-    // start UIExtension Ability，启动UIExtensionAbility
+-    StartUIExtensionAbility(request, asyncContext);
+-    HILOG_INFO("[ContactsPicker] ContactsPickerSelect end");
+-    return ContactsNapiUtils::NapiCreateAsyncWork(env, asyncContext, "ContactsPickerSelect",
+-        StartContactsPickerExecute, StartContactsPickerAsyncCallbackComplete);
++    if (napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr) != napi_ok) { return nullptr; }
++    const bool valid = (argc == ARGS_TWO &&
++        ContactsNapiUtils::MatchParameters(env, argv, { napi_object, napi_object })) ||
++        (argc == ARGS_THREE &&
++        ContactsNapiUtils::MatchParameters(env, argv, { napi_object, napi_object, napi_function }));
++    if (!valid) {
++        napi_throw(env, ContactsNapiUtils::CreateError(env, PARAMETER_ERROR));
++        return nullptr;
++    }
++    auto context = std::make_unique<OHOS::ContactsApi::BaseContext>();
++    context->env = env;
++    if (!ParseAbilityContextReq(env, argv[0], context->context, context->uiExtensionContext)) {
++        napi_throw(env, ContactsNapiUtils::CreateError(env, PARAMETER_ERROR));
++        return nullptr;
++    }
++    OHOS::AAFwk::Want want;
++    if (!AppExecFwk::UnwrapWant(env, argv[1], want)) {
++        napi_throw(env, ContactsNapiUtils::CreateError(env, PARAMETER_ERROR));
++        return nullptr;
++    }
++    want.SetElementName(CONTACT_PACKAGE_NAME, CONTACT_UI_EXT_ABILITY_NAME);
++    want.SetParam(UI_EXT_TYPE, std::string(CONTACT_UI_EXT_TYPE));
++    want.SetParam(UI_EXT_TARGETURL, std::string("BatchSelectContactsPage"));
++    NAPI_CALL(env, ContactsNapiUtils::GetParamCallback(env, context, argc, argv));
++    // Transfer the optional native callback reference exactly once. Public JS
++    // uses this Promise and dispatches its own callback overloads consistently.
++    napi_ref callback = context->callbackRef;
++    context->callbackRef = nullptr;
++    return ContactsNapiUtils::StartContactSelection(env, context->context, context->uiExtensionContext, want, callback);
+ }
+ 
+ napi_value ContactsPickerSave(napi_env env, napi_callback_info info)
+diff --git a/applications/standard/contacts_data/contacts/src/contacts_napi_utils.cpp b/applications/standard/contacts_data/contacts/src/contacts_napi_utils.cpp
+--- a/applications/standard/contacts_data/contacts/src/contacts_napi_utils.cpp
++++ b/applications/standard/contacts_data/contacts/src/contacts_napi_utils.cpp
+@@ -21,6 +21,11 @@
+ #include "ui_content.h"
+ #include "ui_extension_context.h"
+ #include "want.h"
++#include "contact_picker_protocol.h"
++#include "int_wrapper.h"
++#include "string_wrapper.h"
++#include "modal_ui_extension_config.h"
++#include <uv.h>
+ 
+ namespace OHOS {
+ namespace ContactsApi {
+@@ -232,6 +237,263 @@
+     HILOG_ERROR("{%{public}s:%d} ThrowError errCode:%{public}d errMsg:%{public}s", funcName, line,
+         err, message.c_str());
+     NAPI_CALL_RETURN_VOID(env, napi_throw_error(env, std::to_string(err).c_str(), message.c_str()));
++}
++
++namespace {
++struct SelectionRequest {
++    std::mutex mutex;
++    ContactPickerProtocol protocol;
++    napi_env env = nullptr;
++    napi_deferred deferred = nullptr;
++    napi_ref callback = nullptr;
++    std::weak_ptr<AbilityRuntime::AbilityContext> ability;
++    std::weak_ptr<AbilityRuntime::UIExtensionContext> extension;
++    Ace::UIContent *content = nullptr; // identity only; never dereference after onDestroy
++    int32_t session = 0;
++    bool alive = true;
++    bool settled = false;
++    bool closed = false;
++    uv_async_t *delivery = nullptr;
++    uv_timer_t *deadline = nullptr;
++    std::weak_ptr<SelectionRequest> *cleanup = nullptr;
++};
++using Selection = std::shared_ptr<SelectionRequest>;
++constexpr uint64_t SELECTION_TIMEOUT_MS = 10 * 60 * 1000;
++
++void CloseSelection(const Selection &state)
++{
++    std::lock_guard<std::mutex> lock(state->mutex);
++    if (state->closed || state->content == nullptr || state->session <= 0) { return; }
++    state->closed = true;
++    auto ability = state->ability.lock();
++    auto extension = state->extension.lock();
++    auto content = ability != nullptr ? ability->GetUIContent() :
++        (extension != nullptr ? extension->GetUIContent() : nullptr);
++    if (content != nullptr && content == state->content) {
++        // UIContentImpl posts a native session-id task. onDestroy invalidates
++        // this identity under the same lock before any later close can use it.
++        content->CloseModalUIExtension(state->session);
++    }
++}
++
++void CloseSelectionHandles(const Selection &state)
++{
++    // Only invoked on the env's loop (completion or cleanup), never from UI.
++    std::lock_guard<std::mutex> lock(state->mutex);
++    if (state->deadline != nullptr) {
++        uv_timer_stop(state->deadline);
++        uv_close(reinterpret_cast<uv_handle_t *>(state->deadline), [](uv_handle_t *handle) {
++            delete static_cast<Selection *>(handle->data);
++            delete reinterpret_cast<uv_timer_t *>(handle);
++        });
++        state->deadline = nullptr;
++    }
++    if (state->delivery != nullptr) {
++        uv_close(reinterpret_cast<uv_handle_t *>(state->delivery), [](uv_handle_t *handle) {
++            delete static_cast<Selection *>(handle->data);
++            delete reinterpret_cast<uv_async_t *>(handle);
++        });
++        state->delivery = nullptr;
++    }
++}
++
++void CleanupSelection(void *data)
++{
++    std::unique_ptr<std::weak_ptr<SelectionRequest>> cleanup(static_cast<std::weak_ptr<SelectionRequest> *>(data));
++    auto state = cleanup->lock();
++    if (state == nullptr) { return; }
++    {
++        std::lock_guard<std::mutex> lock(state->mutex);
++        state->alive = false;
++        state->env = nullptr;
++        state->deferred = nullptr;
++        state->callback = nullptr; // env now owns disposal of its references
++        state->cleanup = nullptr;
++    }
++    state->protocol.Fail();
++    CloseSelection(state);
++    {
++        std::lock_guard<std::mutex> lock(state->mutex);
++        state->content = nullptr;
++        state->closed = true;
++    }
++    CloseSelectionHandles(state);
++}
++
++void CompleteSelection(const Selection &state)
++{
++    const auto result = state->protocol.Snapshot();
++    if (!result.ready) { return; }
++    napi_env env;
++    napi_deferred deferred;
++    napi_ref callback;
++    std::weak_ptr<SelectionRequest> *cleanup;
++    {
++        std::lock_guard<std::mutex> lock(state->mutex);
++        if (!state->alive || state->settled) { return; }
++        state->settled = true;
++        env = state->env;
++        deferred = state->deferred;
++        callback = state->callback;
++        cleanup = state->cleanup;
++        state->deferred = nullptr;
++        state->callback = nullptr;
++    }
++    CloseSelectionHandles(state);
++    if (cleanup != nullptr && napi_remove_env_cleanup_hook(env, CleanupSelection, cleanup) == napi_ok) {
++        {
++            std::lock_guard<std::mutex> lock(state->mutex);
++            state->cleanup = nullptr;
++        }
++        delete cleanup;
++    }
++    CloseSelection(state);
++    napi_handle_scope scope = nullptr;
++    if (napi_open_handle_scope(env, &scope) != napi_ok) {
++        if (callback != nullptr) { napi_delete_reference(env, callback); }
++        HILOG_ERROR("Cannot open contact picker result scope");
++        return;
++    }
++    napi_value value = nullptr;
++    napi_value error = nullptr;
++    napi_get_undefined(env, &error);
++    napi_get_undefined(env, &value);
++    // The internal result remains explicit even for failures. The public JS
++    // wrapper maps it to a BusinessError, never to a partial successful array.
++    napi_value code = nullptr;
++    napi_value total = nullptr;
++    napi_value json = nullptr;
++    napi_create_object(env, &value);
++    napi_create_int32(env, result.code, &code);
++    napi_create_int32(env, result.total, &total);
++    napi_create_string_utf8(env, result.data.c_str(), result.data.size(), &json);
++    napi_set_named_property(env, value, "resultCode", code);
++    napi_set_named_property(env, value, "total", total);
++    napi_set_named_property(env, value, "pickerData", json);
++    if (deferred != nullptr) {
++        napi_resolve_deferred(env, deferred, value);
++    } else if (callback != nullptr) {
++        napi_value function = nullptr;
++        napi_value receiver = nullptr;
++        napi_value ignored = nullptr;
++        napi_get_reference_value(env, callback, &function);
++        napi_get_undefined(env, &receiver);
++        napi_value args[] = { error, value };
++        napi_call_function(env, receiver, function, 2, args, &ignored);
++        napi_delete_reference(env, callback);
++    }
++    napi_close_handle_scope(env, scope);
++}
++
++void NotifySelection(const Selection &state)
++{
++    std::lock_guard<std::mutex> lock(state->mutex);
++    if (state->alive && !state->settled && state->delivery != nullptr) {
++        // uv_async_send is thread safe; all NAPI work happens on this env's loop.
++        // A pending notification is coalesced, and the terminal result is immutable.
++        if (uv_async_send(state->delivery) != 0) { HILOG_ERROR("Contact picker result delivery unavailable"); }
++    }
++}
++} // namespace
++
++napi_value ContactsNapiUtils::StartContactSelection(napi_env env,
++    const std::shared_ptr<AbilityRuntime::AbilityContext> &ability,
++    const std::shared_ptr<AbilityRuntime::UIExtensionContext> &extension,
++    const AAFwk::Want &want, napi_ref callback)
++{
++    auto state = std::make_shared<SelectionRequest>();
++    state->env = env;
++    state->ability = ability;
++    state->extension = extension;
++    state->callback = callback;
++    napi_value promise = nullptr;
++    napi_get_undefined(env, &promise);
++    if (callback == nullptr && napi_create_promise(env, &state->deferred, &promise) != napi_ok) {
++        napi_throw_error(env, nullptr, "Cannot create contact picker promise");
++        return nullptr;
++    }
++    state->cleanup = new std::weak_ptr<SelectionRequest>(state);
++    if (napi_add_env_cleanup_hook(env, CleanupSelection, state->cleanup) != napi_ok) {
++        delete state->cleanup;
++        state->cleanup = nullptr;
++        state->protocol.Fail();
++        CompleteSelection(state);
++        return promise;
++    }
++    uv_loop_t *loop = nullptr;
++    if (napi_get_uv_event_loop(env, &loop) != napi_ok || loop == nullptr) {
++        state->protocol.Fail(); CompleteSelection(state); return promise;
++    }
++    auto delivery = new uv_async_t {};
++    if (uv_async_init(loop, delivery, [](uv_async_t *handle) {
++        auto state = *static_cast<Selection *>(handle->data);
++        CompleteSelection(state);
++    }) != 0) {
++        delete delivery;
++        state->protocol.Fail(); CompleteSelection(state); return promise;
++    }
++    delivery->data = new Selection(state);
++    state->delivery = delivery;
++    uv_unref(reinterpret_cast<uv_handle_t *>(delivery));
++    auto deadline = new uv_timer_t {};
++    if (uv_timer_init(loop, deadline) != 0) {
++        delete deadline;
++        state->protocol.Fail(); CompleteSelection(state); return promise;
++    }
++    deadline->data = new Selection(state);
++    state->deadline = deadline;
++    uv_unref(reinterpret_cast<uv_handle_t *>(deadline));
++    if (uv_timer_start(deadline, [](uv_timer_t *handle) {
++        auto state = *static_cast<Selection *>(handle->data);
++        state->protocol.Fail();
++        CompleteSelection(state);
++    }, SELECTION_TIMEOUT_MS, 0) != 0) {
++        state->protocol.Fail(); CompleteSelection(state); return promise;
++    }
++    state->content = ability != nullptr ? ability->GetUIContent() :
++        (extension != nullptr ? extension->GetUIContent() : nullptr);
++    if (state->content == nullptr) {
++        state->protocol.Fail(); CompleteSelection(state); return promise;
++    }
++    Ace::ModalUIExtensionCallbacks callbacks {
++        .onRelease = [state](int32_t) { state->protocol.Fail(); NotifySelection(state); },
++        .onResult = [state](int32_t code, const AAFwk::Want &) {
++            state->protocol.Finish(code); NotifySelection(state);
++        },
++        .onReceive = [state](const AAFwk::WantParams &params) {
++            const bool valid = AAFwk::IInteger::Query(params.GetParam("index")) != nullptr &&
++                AAFwk::IInteger::Query(params.GetParam("total")) != nullptr &&
++                AAFwk::IString::Query(params.GetParam("pickerData")) != nullptr;
++            if (state->protocol.Receive(valid, params.GetIntParam("index", -1),
++                params.GetIntParam("total", -1), valid ? params.GetStringParam("pickerData") : "")) {
++                NotifySelection(state);
++            }
++        },
++        .onError = [state](int32_t, const std::string &, const std::string &) {
++            state->protocol.Fail(); NotifySelection(state);
++        },
++        .onRemoteReady = [](const std::shared_ptr<Ace::ModalUIExtensionProxy> &) {},
++        .onDestroy = [state] {
++            {
++                std::lock_guard<std::mutex> lock(state->mutex);
++                state->content = nullptr;
++                state->closed = true;
++            }
++            state->protocol.Fail(); NotifySelection(state);
++        },
++    };
++    Ace::ModalUIExtensionConfig config;
++    config.isProhibitBack = true;
++    const bool dismiss = want.GetBoolParam("isAutoDismissOnNavigation", false);
++    config.prohibitedRemoveByRouter = !dismiss;
++    config.prohibitedRemoveByNavigation = !dismiss;
++    const int32_t session = state->content->CreateModalUIExtension(want, callbacks, config);
++    {
++        std::lock_guard<std::mutex> lock(state->mutex);
++        state->session = session;
++    }
++    if (session <= 0) { state->protocol.Fail(); NotifySelection(state); }
++    return promise;
+ }
+ 
+ ModalUICallback::ModalUICallback(Ace::UIContent* uiContent,
+diff --git a/applications/standard/contacts_data/contacts/include/contacts_napi_utils.h b/applications/standard/contacts_data/contacts/include/contacts_napi_utils.h
+--- a/applications/standard/contacts_data/contacts/include/contacts_napi_utils.h
++++ b/applications/standard/contacts_data/contacts/include/contacts_napi_utils.h
+@@ -179,6 +179,10 @@
+ 
+ class ContactsNapiUtils {
+ public:
++    static napi_value StartContactSelection(napi_env env,
++        const std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> &ability,
++        const std::shared_ptr<OHOS::AbilityRuntime::UIExtensionContext> &extension,
++        const OHOS::AAFwk::Want &want, napi_ref callback);
+     static napi_value ToInt32Value(napi_env env, int32_t value);
+     static napi_value CreateClassConstructor(napi_env env, napi_callback_info info);
+     static bool MatchValueType(napi_env env, napi_value value, napi_valuetype targetType);
+diff --git a/applications/standard/contacts_data/contacts/include/contact_picker_protocol.h b/applications/standard/contacts_data/contacts/include/contact_picker_protocol.h
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/contacts_data/contacts/include/contact_picker_protocol.h
+@@ -0,0 +1,155 @@
++/* Copyright (c) 2026 Harmony Contrib
++ * SPDX-License-Identifier: Apache-2.0 */
++#ifndef OHOS_CONTACT_PICKER_PROTOCOL_H
++#define OHOS_CONTACT_PICKER_PROTOCOL_H
++
++#include <algorithm>
++#include <array>
++#include <cstdint>
++#include <mutex>
++#include <string>
++#include "nlohmann/json.hpp"
++
++namespace OHOS::ContactsApi {
++// A result is published only after a terminal frame and a complete, consistent
++// set of data frames. This class owns no NAPI values, windows or caller context.
++class ContactPickerProtocol {
++public:
++    static constexpr int32_t SYSTEM_ERROR = 16700001;
++    static constexpr int32_t MAX_CONTACTS = 10000;
++    static constexpr int32_t CONTACTS_PER_FRAME = 100;
++    static constexpr int32_t MAX_FRAMES = MAX_CONTACTS / CONTACTS_PER_FRAME;
++    static constexpr size_t MAX_FRAME_BYTES = 16 * 1024 * 1024;
++    static constexpr size_t MAX_RESULT_BYTES = 128 * 1024 * 1024;
++    struct Result {
++        bool ready = false;
++        int32_t code = SYSTEM_ERROR;
++        int32_t total = 0;
++        std::string data = "[]";
++    };
++
++    bool Receive(bool validTypes, int32_t index, int32_t total, const std::string &data)
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        if (result_.ready) { return false; }
++        // Check types and every bound BEFORE accessing a frame or parsing JSON.
++        if (!validTypes || total < 0 || total > MAX_CONTACTS || index < 0 || index >= MAX_FRAMES) {
++            return FailLocked(SYSTEM_ERROR);
++        }
++        const int32_t count = total == 0 ? 1 : (total + CONTACTS_PER_FRAME - 1) / CONTACTS_PER_FRAME;
++        if (index >= count || seen_[index] || (total_ >= 0 && total_ != total) ||
++            data.size() > MAX_FRAME_BYTES || bytes_ > MAX_RESULT_BYTES - data.size() || !BoundedDepth(data)) {
++            return FailLocked(SYSTEM_ERROR);
++        }
++        auto frame = nlohmann::json::parse(data, nullptr, false);
++        const int32_t expected = total == 0 ? 0 : std::min(CONTACTS_PER_FRAME, total - index * CONTACTS_PER_FRAME);
++        if (!frame.is_array() || frame.size() != static_cast<size_t>(expected)) {
++            return FailLocked(SYSTEM_ERROR);
++        }
++        for (const auto &contact : frame) {
++            if (!contact.is_object()) { return FailLocked(SYSTEM_ERROR); }
++        }
++        frames_[index] = std::move(frame);
++        seen_[index] = true;
++        ++received_;
++        total_ = total;
++        bytes_ += data.size();
++        return false;
++    }
++
++    bool Finish(int32_t code)
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        if (result_.ready) { return false; }
++        if (code == 1 && received_ == 0) {
++            result_.code = 1;
++            result_.ready = true;
++            return true;
++        }
++        if (code != 0) { return FailLocked(NormalizeError(code)); }
++        const int32_t count = total_ == 0 ? 1 : (total_ + CONTACTS_PER_FRAME - 1) / CONTACTS_PER_FRAME;
++        if (total_ < 0 || received_ != count) { return FailLocked(SYSTEM_ERROR); }
++        auto contacts = nlohmann::json::array();
++        for (int32_t i = 0; i < count; ++i) {
++            if (!seen_[i]) { return FailLocked(SYSTEM_ERROR); }
++            for (auto &contact : frames_[i]) { contacts.push_back(std::move(contact)); }
++        }
++        if (contacts.size() != static_cast<size_t>(total_)) { return FailLocked(SYSTEM_ERROR); }
++        result_.data = contacts.dump();
++        if (result_.data.size() > MAX_RESULT_BYTES) { return FailLocked(SYSTEM_ERROR); }
++        result_.code = 0;
++        result_.total = total_;
++        result_.ready = true;
++        ClearFrames();
++        return true;
++    }
++
++    bool Fail(int32_t code = SYSTEM_ERROR)
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        return result_.ready ? false : FailLocked(NormalizeError(code));
++    }
++
++    Result Snapshot() const
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        return result_;
++    }
++
++private:
++    static int32_t NormalizeError(int32_t code)
++    {
++        switch (code) {
++            case 201:
++            case 202:
++            case 401:
++            case 801:
++            case SYSTEM_ERROR:
++            case 16700002:
++            case 16700004:
++            case 16700101:
++                return code;
++            default:
++                return SYSTEM_ERROR;
++        }
++    }
++
++    static bool BoundedDepth(const std::string &text)
++    {
++        int depth = 0;
++        bool quoted = false;
++        bool escaped = false;
++        for (char c : text) {
++            if (quoted) {
++                if (escaped) { escaped = false; }
++                else if (c == '\\') { escaped = true; }
++                else if (c == '"') { quoted = false; }
++            } else if (c == '"') { quoted = true; }
++            else if (c == '[' || c == '{') { if (++depth > 64) { return false; } }
++            else if (c == ']' || c == '}') { if (--depth < 0) { return false; } }
++        }
++        return !quoted && depth == 0;
++    }
++
++    void ClearFrames()
++    {
++        for (auto &frame : frames_) { frame = nullptr; }
++    }
++
++    bool FailLocked(int32_t code)
++    {
++        result_ = { true, code, 0, "[]" };
++        ClearFrames();
++        return true;
++    }
++
++    mutable std::mutex mutex_;
++    Result result_;
++    std::array<nlohmann::json, MAX_FRAMES> frames_;
++    std::array<bool, MAX_FRAMES> seen_ {};
++    int32_t total_ = -1;
++    int32_t received_ = 0;
++    size_t bytes_ = 0;
++};
++} // namespace OHOS::ContactsApi
++#endif

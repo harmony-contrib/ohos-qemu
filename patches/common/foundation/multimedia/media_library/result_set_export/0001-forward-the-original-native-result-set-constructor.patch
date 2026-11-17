@@ -1,0 +1,11 @@
+diff --git a/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js b/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
+--- a/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
++++ b/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
+@@ -1566,6 +1566,7 @@
+   getPhotoAccessHelper,
+   startPhotoPicker,
+   getPhotoAccessHelperAsync,
++  ResultSet: photoAccessHelper.ResultSet,
+   FusionAssetType: photoAccessHelper.FusionAssetType,
+   PhotoType: photoAccessHelper.PhotoType,
+   ThumbnailType: photoAccessHelper.ThumbnailType,

@@ -1,0 +1,45 @@
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp b/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp
+--- a/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/vpn/src/vpn_config_utils.cpp
+@@ -341,29 +341,40 @@
+ bool ParseDestination(napi_env env, napi_value jsRoute, struct INetAddr &iNetAddr)
+ {
+     napi_value destination = NapiUtils::GetNamedProperty(env, jsRoute, NET_DESTINATION);
+     if (NapiUtils::GetValueType(env, destination) != napi_object) {
+         NETMGR_EXT_LOG_E("param destination type is mismatch");
+         return false;
+     }
+ 
+     napi_value netAddress = NapiUtils::GetNamedProperty(env, destination, NET_ADDRESS);
+     if (NapiUtils::GetValueType(env, netAddress) != napi_object) {
+         NETMGR_EXT_LOG_E("param address type is mismatch");
+         return false;
+     }
+ 
+     if (!GetStringFromJsMandatoryItem(env, netAddress, NET_ADDRESS, iNetAddr.address_)) {
+         NETMGR_EXT_LOG_E("get destination-address failed");
+         return false;
+     }
+ 
+     if (!CommonUtils::IsValidIPV4(iNetAddr.address_) && !CommonUtils::IsValidIPV6(iNetAddr.address_)) {
+         NETMGR_EXT_LOG_E("invalid ip address");
+         return false;
+     }
+ 
+     GetUint8FromJsOptionItem(env, netAddress, NET_FAMILY, iNetAddr.family_);
+     GetUint8FromJsOptionItem(env, netAddress, NET_PORT, iNetAddr.port_);
+-    GetUint8FromJsOptionItem(env, destination, NET_PREFIXLENGTH, iNetAddr.prefixlen_);
++    napi_value prefix = NapiUtils::GetNamedProperty(env, destination, NET_PREFIXLENGTH);
++    double requestedPrefix = 0;
++    const int32_t maxPrefix = CommonUtils::IsValidIPV6(iNetAddr.address_)
++        ? IPV6_NET_PREFIX_MAX_LENGTH : NET_MASK_MAX_LENGTH;
++    if (NapiUtils::GetValueType(env, prefix) != napi_number ||
++        napi_get_value_double(env, prefix, &requestedPrefix) != napi_ok ||
++        !std::isfinite(requestedPrefix) || std::trunc(requestedPrefix) != requestedPrefix ||
++        requestedPrefix < 0 || requestedPrefix > maxPrefix) {
++        NETMGR_EXT_LOG_E("invalid route prefixLength");
++        return false;
++    }
++    iNetAddr.prefixlen_ = static_cast<uint8_t>(requestedPrefix);
+     return true;
+ }

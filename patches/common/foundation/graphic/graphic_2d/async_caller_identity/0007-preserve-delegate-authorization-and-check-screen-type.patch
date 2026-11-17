@@ -1,0 +1,55 @@
+diff --git a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
+@@ -1918,6 +1918,13 @@
+                 RS_LOGE("DelegateModeDebugTag: REGISTER_SURFACE_TRANSACTION_LISTENER: ReadUint64 fail, pid/tid");
+                 return ERR_INVALID_REPLY;
+             }
++            // pid/tid are routing metadata, never authority to change the caller.
++            const pid_t listenerCaller = GetCallingPid();
++            if ((option.GetFlags() & MessageOption::TF_ASYNC) != 0 || listenerCaller <= 0 ||
++                pid != listenerCaller || tid == 0 || tid > INT32_MAX ||
++                (listenerId >> 48) != (static_cast<uint64_t>(listenerCaller) & 0xFFFF)) {
++                return ERR_INVALID_STATE;
++            }
+             sptr<RSISurfaceTransactionListener> listener = iface_cast<RSISurfaceTransactionListener>(listenerObject);
+             if (listener == nullptr) {
+                 RS_LOGE("DelegateModeDebugTag: REGISTER_SURFACE_TRANSACTION_LISTENER: iface_cast fail");
+diff --git a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/rs_render_pipeline_agent.cpp b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/rs_render_pipeline_agent.cpp
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/rs_render_pipeline_agent.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/rs_render_pipeline_agent.cpp
+@@ -726,7 +726,7 @@
+         auto displayNode = RSBaseRenderNode::ReinterpretCast<RSLogicalDisplayRenderNode>(
+             renderPipeline->GetMainThread()->GetContext().GetNodeMap().GetRenderNode(id));
+         auto screenNode = displayNode == nullptr ? nullptr :
+-            std::static_pointer_cast<RSScreenRenderNode>(displayNode->GetParent().lock());
++            RSBaseRenderNode::ReinterpretCast<RSScreenRenderNode>(displayNode->GetParent().lock());
+         if (!screenNode) {
+             RS_LOGE("%{public}s failed, screenNode is nullptr", __func__);
+             return;
+diff --git a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/feature/delegate_composite/rs_delegate_composite_callback_manager.cpp b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/feature/delegate_composite/rs_delegate_composite_callback_manager.cpp
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/feature/delegate_composite/rs_delegate_composite_callback_manager.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/feature/delegate_composite/rs_delegate_composite_callback_manager.cpp
+@@ -448,7 +448,7 @@
+     while (!cmdqueue.empty()) {
+         std::unique_ptr<RSCommand> cmd = std::move(cmdqueue.front());
+         cmdqueue.pop();
+-        if (cmd) {
++        if (cmd && cmd->IsCallingPidValid()) {
+             cmd->Process(context);
+         }
+     }
+@@ -467,10 +467,11 @@
+     std::queue<std::unique_ptr<RSCommand>> cmdQueue;
+     for (auto it = processPayload.begin(); it != processPayload.end();) {
+         auto& command = std::get<2>(*it);
+-        if (!command) {
++        // A delegate listener is not a privilege or node-ownership grant.
++        if (!command || !command->IsCallingPidValid()) {
++            ++it;
+             continue;
+         }
+-        command->SetCallingPidValid(true);
+         cmdQueue.push(std::move(command));
+         it = processPayload.erase(it);
+         if (cmdQueue.size() >= MAX_MAP_SIZE) {

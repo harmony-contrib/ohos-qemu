@@ -1,0 +1,9 @@
+diff --git a/drivers/peripheral/camera/vdi_base/common/adapter/platform/v4l2/src/driver_adapter/BUILD.gn b/drivers/peripheral/camera/vdi_base/common/adapter/platform/v4l2/src/driver_adapter/BUILD.gn
+--- a/drivers/peripheral/camera/vdi_base/common/adapter/platform/v4l2/src/driver_adapter/BUILD.gn
++++ b/drivers/peripheral/camera/vdi_base/common/adapter/platform/v4l2/src/driver_adapter/BUILD.gn
+@@ -63,4 +63,4 @@
+ ohos_shared_library("peripheral_camera_v4l2_adapter") {
+-  if (!is_emulator) {
++  if (!is_emulator || !defined(defines)) {
+     defines = []
+   }

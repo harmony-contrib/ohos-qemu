@@ -1,0 +1,63 @@
+diff --git a/applications/standard/theme/BUILD.gn b/applications/standard/theme/BUILD.gn
+--- a/applications/standard/theme/BUILD.gn
++++ b/applications/standard/theme/BUILD.gn
+@@ -15,7 +15,7 @@
+   sdk_type_name = [ "sdk.dir" ]
+   assemble_type = "assembleHap"
+   build_level = "module"
+-  build_modules = [ "phone-wallpaper" ]
++  build_modules = [ "phone_wallpaper" ]
+   js_build_mode = "release"
+ }
+
+@@ -30,6 +30,6 @@
+   sdk_type_name = [ "sdk.dir" ]
+   assemble_type = "assembleHap"
+   build_level = "module"
+-  build_modules = [ "pad-wallpaper" ]
++  build_modules = [ "pad_wallpaper" ]
+   js_build_mode = "release"
+ }
+diff --git a/applications/standard/theme/build-profile.json5 b/applications/standard/theme/build-profile.json5
+--- a/applications/standard/theme/build-profile.json5
++++ b/applications/standard/theme/build-profile.json5
+@@ -12,7 +12,7 @@
+   },
+   "modules": [
+     {
+-      "name": "phone-wallpaper",
++      "name": "phone_wallpaper",
+       "srcPath": "./product/phone",
+       "targets": [
+         {
+@@ -24,7 +24,7 @@
+       ]
+     },
+     {
+-      "name": "pad-wallpaper",
++      "name": "pad_wallpaper",
+       "srcPath": "./product/pad",
+       "targets": [
+         {
+diff --git a/applications/standard/theme/product/phone/src/main/module.json5 b/applications/standard/theme/product/phone/src/main/module.json5
+--- a/applications/standard/theme/product/phone/src/main/module.json5
++++ b/applications/standard/theme/product/phone/src/main/module.json5
+@@ -1,6 +1,6 @@
+ {
+   "module": {
+-    "name": "phone-wallpaper",
++    "name": "phone_wallpaper",
+     "type": "feature",
+     "srcEntrance": "./ets/Application/AbilityStage.ts",
+     "description": "$string:myapplication_desc",
+diff --git a/applications/standard/theme/product/pad/src/main/module.json5 b/applications/standard/theme/product/pad/src/main/module.json5
+--- a/applications/standard/theme/product/pad/src/main/module.json5
++++ b/applications/standard/theme/product/pad/src/main/module.json5
+@@ -1,6 +1,6 @@
+ {
+   "module": {
+-    "name": "pad-wallpaper",
++    "name": "pad_wallpaper",
+     "type": "feature",
+     "srcEntrance": "./ets/Application/AbilityStage.ts",
+     "description": "$string:myapplication_desc",

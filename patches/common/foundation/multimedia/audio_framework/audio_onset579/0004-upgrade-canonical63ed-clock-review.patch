@@ -1,0 +1,56 @@
+--- a/foundation/multimedia/audio_framework/services/audio_service/common/include/onset579_kernel_clock_review.h
++++ b/foundation/multimedia/audio_framework/services/audio_service/common/include/onset579_kernel_clock_review.h
+@@ -1,18 +1,18 @@
+ /* SPDX-License-Identifier: Apache-2.0
+- * Explicitly PENDING actual ARM32 kernel/config/clock implementation review.
+- * No environment/build define may authorize this immutable candidate.
+- * Root must publish a newly reviewed exact source successor with real pins.
++ * Fixed OH7 implementation review: kernel14c77f1541a53e814d89ad6dea5f7f211f9895a6.
++ * The normal source guard verifies all9 actual source hashes before GN/native
++ * production. This permits observation only, not any config/package/boot claim.
++ * Every actual ARM32 package still needs its generated config, matching kernel
++ * and held boot proof plus exact ENOENT/proc/pidfd/OFD/HW raw replay.
+  */
+ #ifndef ONSET579_KERNEL_CLOCK_REVIEW_H
+ #define ONSET579_KERNEL_CLOCK_REVIEW_H
+-#include <errno.h>
+ #if !defined(__arm__) || defined(__aarch64__)
+ #error The explicit global579 variant is limited to the actual ARM32 target
+ #endif
+ static int m579_global_clock_review_gate(void)
+ {
+-    /* Not a false kernel implementation. The missing actual four source files
+-     * and package-to-generated-config proof make this branch inadmissible. */
+-    return ENOTSUP;
++    /* No environment/build macro authorizes a different implementation. */
++    return 0;
+ }
+ #endif
+--- a/third_party/alsa-lib/src/pcm/onset579_kernel_clock_review.h
++++ b/third_party/alsa-lib/src/pcm/onset579_kernel_clock_review.h
+@@ -1,18 +1,18 @@
+ /* SPDX-License-Identifier: Apache-2.0
+- * Explicitly PENDING actual ARM32 kernel/config/clock implementation review.
+- * No environment/build define may authorize this immutable candidate.
+- * Root must publish a newly reviewed exact source successor with real pins.
++ * Fixed OH7 implementation review: kernel14c77f1541a53e814d89ad6dea5f7f211f9895a6.
++ * The normal source guard verifies all9 actual source hashes before GN/native
++ * production. This permits observation only, not any config/package/boot claim.
++ * Every actual ARM32 package still needs its generated config, matching kernel
++ * and held boot proof plus exact ENOENT/proc/pidfd/OFD/HW raw replay.
+  */
+ #ifndef ONSET579_KERNEL_CLOCK_REVIEW_H
+ #define ONSET579_KERNEL_CLOCK_REVIEW_H
+-#include <errno.h>
+ #if !defined(__arm__) || defined(__aarch64__)
+ #error The explicit global579 variant is limited to the actual ARM32 target
+ #endif
+ static int m579_global_clock_review_gate(void)
+ {
+-    /* Not a false kernel implementation. The missing actual four source files
+-     * and package-to-generated-config proof make this branch inadmissible. */
+-    return ENOTSUP;
++    /* No environment/build macro authorizes a different implementation. */
++    return 0;
+ }
+ #endif

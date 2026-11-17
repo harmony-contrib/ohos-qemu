@@ -1,0 +1,255 @@
+/*
+ * Copyright (c) 2021 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "interfaces/inner_api/ace/ui_content.h"
+#include <string>
+
+#include "arkui_log.h"
+#include "constants.h"
+#include "utils.h"
+#include "ace_forward_compatibility.h"
+
+#ifdef UICAST_COMPONENT_SUPPORTED
+#include "interfaces/inner_api/ace/uicast/uicast_subscriber.h"
+#endif
+
+namespace OHOS::Ace {
+
+using CreateCardFunc = UIContent* (*)(void*, void*, bool);
+using CreateFunc = UIContent* (*)(void*, void*, int32_t);
+using CreateFunction = UIContent* (*)(void*);
+using GetUIContentFunc = UIContent* (*)(int32_t);
+using GetCurrentUIStackInfoFunction = char* (*)();
+using  GetWindowIdFuction = int32_t (*)(int32_t);
+constexpr char UI_CONTENT_CREATE_FUNC[] = "OHOS_ACE_CreateUIContent";
+constexpr char Card_CREATE_FUNC[] = "OHOS_ACE_CreateFormContent";
+constexpr char SUB_WINDOW_UI_CONTENT_CREATE_FUNC[] = "OHOS_ACE_CreateSubWindowUIContent";
+constexpr char GET_UI_CONTENT_CREATE_FUNC[] = "OHOS_ACE_GetUIContent";
+constexpr char OHOS_ACE_GET_UI_CONTENT_WINDOW_ID[] = "OHOS_ACE_GetUIContentWindowID";
+
+OHOS::AbilityRuntime::Context* context_ = nullptr;
+std::atomic<bool> UIContent::successFlag_{false};
+std::mutex UIContent::mtx_;
+std::string UIContent::angleConfigJson_ = "";
+std::atomic<bool> UIContent::setUICorrectionConfigSuccessFlag_{false};
+std::mutex UIContent::setUICorrectionConfigMutex_;
+std::string UIContent::uiCorrectionConfigJson_ = "";
+
+UIContent* CreateUIContent(void* context, void* runtime, bool isFormRender)
+{
+    LIBHANDLE handle = LOADLIB(AceForwardCompatibility::GetAceLibName());
+    if (handle == nullptr) {
+        return nullptr;
+    }
+
+    auto entry = reinterpret_cast<CreateCardFunc>(LOADSYM(handle, Card_CREATE_FUNC));
+    if (entry == nullptr) {
+        FREELIB(handle);
+        return nullptr;
+    }
+
+    auto content = entry(context, runtime, isFormRender);
+    return content;
+}
+
+UIContent* CreateUIContent(void* context, void* runtime, VMType vmType)
+{
+    LIBHANDLE handle = LOADLIB(AceForwardCompatibility::GetAceLibName());
+    if (handle == nullptr) {
+        return nullptr;
+    }
+
+    auto entry = reinterpret_cast<CreateFunc>(LOADSYM(handle, UI_CONTENT_CREATE_FUNC));
+    if (entry == nullptr) {
+        FREELIB(handle);
+        return nullptr;
+    }
+
+    auto content = entry(context, runtime, static_cast<int32_t>(vmType));
+#ifdef UICAST_COMPONENT_SUPPORTED
+    UICastEventSubscribeProxy::GetInstance()->SubscribeStartEvent(content);
+#endif
+
+    return content;
+}
+
+UIContent* CreateUIContent(void* ability)
+{
+    LIBHANDLE handle = LOADLIB(AceForwardCompatibility::GetAceLibName());
+    if (handle == nullptr) {
+        return nullptr;
+    }
+
+    auto entry = reinterpret_cast<CreateFunction>(LOADSYM(handle, SUB_WINDOW_UI_CONTENT_CREATE_FUNC));
+    if (entry == nullptr) {
+        FREELIB(handle);
+        return nullptr;
+    }
+
+    auto content = entry(ability);
+#ifdef UICAST_COMPONENT_SUPPORTED
+    UICastEventSubscribeProxy::GetInstance()->SubscribeStartEvent(content);
+#endif
+
+    return content;
+}
+
+std::unique_ptr<UIContent> UIContent::Create(OHOS::AbilityRuntime::Context* context, NativeEngine* runtime)
+{
+    return UIContent::CreateWithAnyRuntime(context, reinterpret_cast<void*>(runtime));
+}
+
+std::unique_ptr<UIContent> UIContent::CreateWithAnyRuntime(OHOS::AbilityRuntime::Context* context, void* runtime)
+{
+    std::unique_ptr<UIContent> content;
+    content.reset(CreateUIContent(reinterpret_cast<void*>(context), reinterpret_cast<void*>(runtime), VMType::NORMAL));
+    return content;
+}
+
+std::unique_ptr<UIContent> UIContent::Create(
+    OHOS::AbilityRuntime::Context* context, NativeEngine* runtime, bool isFormRender)
+{
+    std::unique_ptr<UIContent> content;
+    content.reset(CreateUIContent(reinterpret_cast<void*>(context), reinterpret_cast<void*>(runtime), isFormRender));
+    return content;
+}
+
+std::unique_ptr<UIContent> UIContent::Create(OHOS::AppExecFwk::Ability* ability)
+{
+    std::unique_ptr<UIContent> content;
+    content.reset(CreateUIContent(reinterpret_cast<void*>(ability)));
+    return content;
+}
+
+std::unique_ptr<UIContent> UIContent::CreateWithAniEnv(OHOS::AbilityRuntime::Context* context, ani_env* env)
+{
+    std::unique_ptr<UIContent> content;
+    content.reset(CreateUIContent(reinterpret_cast<void*>(context), reinterpret_cast<void*>(env), VMType::ARK_NATIVE));
+    return content;
+}
+
+
+void UIContent::ShowDumpHelp(std::vector<std::string>& info)
+{
+    info.emplace_back(" -element                       |show element tree");
+    info.emplace_back(" -render                        |show render tree");
+    info.emplace_back(" -inspector                     |show inspector tree");
+    info.emplace_back(" -frontend                      |show path and components count of current page");
+    info.emplace_back(" -navigation                    |show navigation path stack");
+}
+
+UIContent* UIContent::GetUIContent(int32_t instanceId)
+{
+    LIBHANDLE handle = LOADLIB(AceForwardCompatibility::GetAceLibName());
+    if (handle == nullptr) {
+        return nullptr;
+    }
+
+    auto entry = reinterpret_cast<GetUIContentFunc>(LOADSYM(handle, GET_UI_CONTENT_CREATE_FUNC));
+    if (entry == nullptr) {
+        FREELIB(handle);
+        return nullptr;
+    }
+
+    auto content = entry(instanceId);
+    return content;
+}
+
+int32_t UIContent::GetUIContentWindowID(int32_t instanceId)
+{
+    LIBHANDLE handle = LOADLIB(AceForwardCompatibility::GetAceLibName());
+    if (handle == nullptr) {
+        return -1;
+    }
+    auto entry = reinterpret_cast<GetWindowIdFuction>(LOADSYM(handle, OHOS_ACE_GET_UI_CONTENT_WINDOW_ID));
+    if (entry == nullptr) {
+        FREELIB(handle);
+        return -1;
+    }
+    auto windowId = entry(instanceId);
+    return windowId;
+}
+
+bool UIContent::SetXComponentCompensationAngle(const std::string& configStr)
+{
+    if (successFlag_.load(std::memory_order_acquire)) {
+        LOGI("UIContent set compensasion angle has successed!");
+        return true;
+    }
+        
+    std::lock_guard<std::mutex> lock(mtx_);
+    if (successFlag_.load(std::memory_order_relaxed)) {
+        return true;
+    }
+    if (configStr.empty()) {
+        LOGE("can not set empty compensasion angle!");
+        return false;
+    }
+    UIContent::angleConfigJson_ = configStr;
+    LOGI("get angle info: %{public}s", configStr.c_str());
+    successFlag_.store(true, std::memory_order_release);
+    return true;
+}
+
+const std::string& UIContent::GetXComponentCompensationAngle()
+{
+    return UIContent::angleConfigJson_;
+}
+
+std::string UIContent::GetCurrentUIStackInfo()
+{
+    LIBHANDLE handle = LOADLIB(AceForwardCompatibility::GetAceLibName());
+    if (handle == nullptr) {
+        return std::string();
+    }
+
+    auto entry = reinterpret_cast<GetCurrentUIStackInfoFunction>(LOADSYM(handle, "OHOS_ACE_GetCurrentUIStackInfo"));
+    if (entry == nullptr) {
+        FREELIB(handle);
+        return std::string();
+    }
+
+    auto content = entry();
+    if (content == nullptr) {
+        return std::string();
+    }
+
+    return content;
+}
+
+bool UIContent::SetUICorrectionConfig(const std::string& configStr)
+{
+    if (setUICorrectionConfigSuccessFlag_.load(std::memory_order_acquire)) {
+        LOGI("UIContent set ui correction config has successed!");
+        return true;
+    }
+    std::lock_guard<std::mutex> lock(setUICorrectionConfigMutex_);
+    if (setUICorrectionConfigSuccessFlag_.load(std::memory_order_relaxed)) {
+        return true;
+    }
+    if (configStr.empty()) {
+        LOGE("UIContent Can not set empty ui correction config!");
+        return false;
+    }
+    UIContent::uiCorrectionConfigJson_ = configStr;
+    setUICorrectionConfigSuccessFlag_.store(true, std::memory_order_release);
+    return true;
+}
+
+const std::string& UIContent::GetUICorrectionConfig()
+{
+    return UIContent::uiCorrectionConfigJson_;
+}
+} // namespace OHOS::Ace

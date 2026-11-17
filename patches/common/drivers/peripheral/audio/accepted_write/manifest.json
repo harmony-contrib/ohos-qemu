@@ -1,0 +1,56 @@
+{
+  "schema": "alsa-accepted-write511/v1",
+  "scope": "software accepted-byte prefix only; default ALSA writei; no hardware playback or onset proof",
+  "files": {
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_snd_render.c": {
+      "before_sha256": "fe63587071149af231fca478de1e13802be1fb854da392e204fbbfc413a47dff",
+      "after_sha256": "84df61e94415a48ebfd08837bec4e6849b548615233f1aecd3501391e316be7b",
+      "before_bytes": 33691,
+      "after_bytes": 35754,
+      "mode": 420
+    },
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/alsa_lib_render.c": {
+      "before_sha256": "0ee7c69aa7aa7d0833e5c9118c943345e112483bb60e2fb57a610174975efdc2",
+      "after_sha256": "fd7c4a1f46acfc291cd73e2e174dae02cec49cab45f930cd2ef181f3c60ea91a",
+      "before_bytes": 23752,
+      "after_bytes": 24502,
+      "mode": 420
+    },
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_snd_render.h": {
+      "before_sha256": "5205878060ce7842866bb0d516d3edd6bbc93e05ccd9c1eb20332aaa1606d794",
+      "after_sha256": "06022554bdb6fbec3d65971f15ac158039c6125a12d1ee47596e2dd8cce70e06",
+      "before_bytes": 3598,
+      "after_bytes": 3940,
+      "mode": 420
+    },
+    "drivers/peripheral/audio/hdi_service/primary_impl/src/audio_render.c": {
+      "before_sha256": "48d2264d0767fe8718844c8e4dbbb7337fd860541cf350aa281b3133d611c65c",
+      "after_sha256": "bb694a4c0a3f530ab3b2df2b32f60f5b1cee4777bcae36e4361ea0fcf3835dde",
+      "before_bytes": 48426,
+      "after_bytes": 51924,
+      "mode": 420
+    },
+    "drivers/peripheral/audio/hdi_service/primary_impl/include/audio_internal.h": {
+      "before_sha256": "694419c9714c3f93b45a0184e55d7b7030d810a0f27272729f8e56510de735ee",
+      "after_sha256": "98335b5423de474b62af566490163c0ebb27cbf7de64499652f81174415b7835",
+      "before_bytes": 21574,
+      "after_bytes": 21829,
+      "mode": 420
+    }
+  },
+  "prerequisites": {
+    "drivers/peripheral/audio/hdi_service/supportlibs/BUILD.gn": "9fe63cfce90e6bb9543ced7f41491d0c3ba5524179c71456819d7ca3115cfb41",
+    "drivers/peripheral/audio/hdi_service/primary_impl/BUILD.gn": "f8190789e7434cddcc6fbe0d8e4624ab42105e465dbe97a1c5fdb45b44167dbc",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_lib_render.h": "40a98d7d76c4b856c27f6d4cb7da1fee46719665ca4d3bbd8b1c1d2b586f4e53",
+    "drivers/peripheral/audio/supportlibs/interfaces/include/audio_if_lib_common.h": "e574dd3ac3727a1c37c8a6b4ea1dd46e9e89505bdd4db0a662f3fe0eefcbccfe",
+    "drivers/peripheral/audio/supportlibs/interfaces/include/audio_if_lib_render.h": "206a1b8a8b65705d7b0b14173dab4a834e35cb55535951d7cf751c50ef3478f6",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/include/alsa_soundcard.h": "474018cd5268161667c343d127c0f41a7b7bd493c45d23d69b199394cf634c04",
+    "drivers/peripheral/audio/supportlibs/alsa_adapter/src/vendor_render.c": "c9072e739110acf3dbc0e4532a851c46a856946c13c9081130bdb59020e4bb8d",
+    "device/qemu/common/virt_full/audio_alsa/vendor_render.c": "0a24105c2103939f1cd4d84baf5034c9b05bdf195f195870f3e9d927d5fe2f59"
+  },
+  "patch_sha256": "122c5d353b6f1769ff10755f6d29f2233d60be56bf2017dc0de2a45684736159",
+  "source_commit": null,
+  "source_kit": null,
+  "actual_package": null,
+  "hardware_playback_proven": false
+}

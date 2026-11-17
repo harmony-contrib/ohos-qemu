@@ -1,0 +1,13 @@
+{
+  "schema": "native-ui-extension-identity-source/v1",
+  "role": "arkui",
+  "project": "foundation/arkui/ace_engine",
+  "revision": "e55e178228b9f6388b15d3024e8caf125fa293d7",
+  "relative": "frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/ui_extension_pattern.cpp",
+  "source_path": "foundation/arkui/ace_engine/frameworks/core/components_ng/pattern/ui_extension/ui_extension_component/ui_extension_pattern.cpp",
+  "original_sha256": "7266f8728437bce6b42043f70733829f548aaf63857cf34a4e38cb536db62b6f",
+  "final_sha256": "1e34022836db60588e081edc2fbcc9450cef146bda609365920092d3062e2145",
+  "component": "patches/common/foundation/arkui/ace_engine/ui_extension_identity_diagnostics",
+  "patch": "0001-append-real-session-identity-to-existing-native-dump.patch",
+  "patch_sha256": "67d9b56aa9af38ea267f4c86e0790aea39a18c13d4453344da30a9cae53e9221"
+}

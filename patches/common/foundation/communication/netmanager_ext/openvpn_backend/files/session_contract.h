@@ -1,0 +1,142 @@
+#pragma once
+#include <array>
+#include <cerrno>
+#include <cstdlib>
+#include <fstream>
+#include <fcntl.h>
+#include <signal.h>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <sys/types.h>
+#include <unistd.h>
+
+namespace OhosOpenvpn {
+// Reserved private IPC request. Public signatures and legacy cert types stay
+// unchanged. Config, credentials and generation are read in one service lock.
+constexpr int SESSION_REQUEST = 0x51455631;
+constexpr std::string_view STAGE_PREFIX = "qemu-openvpn ";
+struct SessionConfig { std::string token; std::string profile; std::string password; };
+inline bool Token(std::string_view value)
+{
+    if (value.size() != 32) return false;
+    for (char c : value) if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return false;
+    return true;
+}
+inline bool ValidSession(const SessionConfig &value)
+{
+    return Token(value.token) && !value.profile.empty() && value.profile.size() <= 1024 * 1024 &&
+        value.password.size() <= 4096 && value.profile.find('\0') == std::string::npos &&
+        value.password.find_first_of("\0\r\n", 0, 3) == std::string::npos;
+}
+inline std::string EncodeSession(const SessionConfig &value)
+{
+    if (!ValidSession(value)) return {};
+    return value.token + "\n" + std::to_string(value.profile.size()) + "\n" +
+        std::to_string(value.password.size()) + "\n" + value.profile + value.password;
+}
+inline bool DecodeSession(std::string_view wire, SessionConfig &output)
+{
+    if (wire.size() > 1024 * 1024 + 4200) return false;
+    std::array<std::string_view, 3> fields {};
+    for (auto &field : fields) {
+        const auto end = wire.find('\n');
+        if (end == std::string_view::npos) return false;
+        field = wire.substr(0, end); wire.remove_prefix(end + 1);
+    }
+    std::array<size_t, 2> lengths {};
+    for (size_t i = 0; i < 2; ++i) {
+        if (fields[i + 1].empty() || fields[i + 1].size() > 7) return false;
+        for (char c : fields[i + 1]) {
+            if (c < '0' || c > '9') return false;
+            lengths[i] = lengths[i] * 10 + static_cast<unsigned>(c - '0');
+        }
+    }
+    if (lengths[0] > 1024 * 1024 || lengths[1] > 4096 || lengths[0] + lengths[1] != wire.size()) return false;
+    SessionConfig value {std::string(fields[0]), std::string(wire.substr(0, lengths[0])),
+                         std::string(wire.substr(lengths[0]))};
+    if (!ValidSession(value)) return false;
+    output = std::move(value);
+    return true;
+}
+inline std::string Stage(const std::string &token, const std::string &body)
+{
+    return Token(token) ? std::string(STAGE_PREFIX) + token + " " + body : std::string {};
+}
+inline bool DecodeStage(std::string_view stage, std::string &token, std::string &body)
+{
+    if (stage.substr(0, STAGE_PREFIX.size()) != STAGE_PREFIX || stage.size() > 128 * 1024) return false;
+    stage.remove_prefix(STAGE_PREFIX.size());
+    if (stage.size() < 34 || stage[32] != ' ' || !Token(stage.substr(0, 32))) return false;
+    token = stage.substr(0, 32); body = stage.substr(33);
+    return !body.empty() && body.find('\0') == std::string::npos;
+}
+inline bool Executable(pid_t pid, const char *expected)
+{
+    if (pid <= 1) return false;
+    std::array<char, 512> path {};
+    const std::string link = "/proc/" + std::to_string(pid) + "/exe";
+    const ssize_t size = readlink(link.c_str(), path.data(), path.size());
+    return size > 0 && static_cast<size_t>(size) < path.size() &&
+        std::string_view(path.data(), static_cast<size_t>(size)) == expected;
+}
+inline pid_t Parent(pid_t pid)
+{
+    std::ifstream input("/proc/" + std::to_string(pid) + "/status");
+    std::string line;
+    while (std::getline(input, line)) {
+        if (line.compare(0, 5, "PPid:")) continue;
+        char *end = nullptr; errno = 0;
+        const long value = strtol(line.c_str() + 5, &end, 10);
+        while (end && (*end == ' ' || *end == '\t')) ++end;
+        if (errno || !end || *end || value < 1 || value > 0x7fffffff) return -1;
+        return static_cast<pid_t>(value);
+    }
+    return -1;
+}
+// A PID alone can refer to a later process. Authentication pins Linux's
+// monotonically allocated starttime and rechecks it after the proc reads.
+inline std::string ProcessStart(pid_t pid)
+{
+    if (pid <= 1) return {};
+    std::ifstream input("/proc/" + std::to_string(pid) + "/stat");
+    std::string line;
+    if (!std::getline(input, line) || line.size() > 4096) return {};
+    const auto at = line.rfind(')');
+    if (at == std::string::npos || at + 2 >= line.size()) return {};
+    std::istringstream fields(line.substr(at + 2));
+    std::string value;
+    for (unsigned field = 3; field <= 22; ++field) {
+        if (!(fields >> value) || (field == 3 && (value == "Z" || value == "X"))) return {};
+    }
+    if (value.empty() || value.size() > 20 || value == "0") return {};
+    for (char c : value) if (c < '0' || c > '9') return {};
+    if (kill(pid, 0) != 0 && errno != EPERM) return {};
+    return value;
+}
+inline bool WorkerProcess(pid_t caller)
+{
+    const auto start = ProcessStart(caller);
+    const pid_t broker = Parent(caller);
+    const auto brokerStart = ProcessStart(broker);
+    return !start.empty() && !brokerStart.empty() && Executable(caller, "/system/bin/qemu_openvpn_service") &&
+        Executable(broker, "/system/bin/qemu_openvpn_service") && Parent(broker) == 1 &&
+        ProcessStart(broker) == brokerStart && ProcessStart(caller) == start;
+}
+enum class SessionRole { Invalid, Supervisor, Bridge };
+inline SessionRole CallerRole(pid_t caller, pid_t supervisor, const std::string &expectedStart = {})
+{
+    const auto start = ProcessStart(supervisor);
+    if (supervisor <= 1 || start.empty() || (!expectedStart.empty() && start != expectedStart) ||
+        !Executable(supervisor, "/system/bin/qemu_openvpn_service") || ProcessStart(supervisor) != start) return SessionRole::Invalid;
+    if (caller == supervisor) return SessionRole::Supervisor;
+    if (!Executable(caller, "/system/bin/qemu_openvpn_tun")) return SessionRole::Invalid;
+    const auto bridgeStart = ProcessStart(caller);
+    const pid_t client = Parent(caller);
+    const auto clientStart = ProcessStart(client);
+    return !bridgeStart.empty() && !clientStart.empty() && Executable(client, "/system/bin/qemu_openvpn") &&
+        Parent(client) == supervisor && ProcessStart(client) == clientStart && ProcessStart(caller) == bridgeStart &&
+        ProcessStart(supervisor) == start ?
+        SessionRole::Bridge : SessionRole::Invalid;
+}
+} // namespace OhosOpenvpn

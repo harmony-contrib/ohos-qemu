@@ -1,0 +1,37 @@
+diff --git a/base/telephony/sms_mms/frameworks/js/napi/src/napi_sms.cpp b/base/telephony/sms_mms/frameworks/js/napi/src/napi_sms.cpp
+--- a/base/telephony/sms_mms/frameworks/js/napi/src/napi_sms.cpp
++++ b/base/telephony/sms_mms/frameworks/js/napi/src/napi_sms.cpp
+@@ -1985,6 +1985,23 @@ napi_value DeclareSmsInterface(napi_env env, napi_value exports)
+     return exports;
+ }
+ 
++static napi_value InitEnumSmsShortCodeType(napi_env env, napi_value exports)
++{
++    napi_property_descriptor desc[] = {
++        DECLARE_NAPI_STATIC_PROPERTY("SMS_SHORT_CODE_TYPE_UNKNOWN",
++            NapiUtil::ToInt32Value(env, static_cast<int32_t>(SmsShortCodeType::SMS_SHORT_CODE_TYPE_UNKNOWN))),
++        DECLARE_NAPI_STATIC_PROPERTY("SMS_SHORT_CODE_TYPE_NOT_PREMIUM",
++            NapiUtil::ToInt32Value(env, static_cast<int32_t>(SmsShortCodeType::SMS_SHORT_CODE_TYPE_NOT_PREMIUM))),
++        DECLARE_NAPI_STATIC_PROPERTY("SMS_SHORT_CODE_TYPE_POSSIBLE_PREMIUM",
++            NapiUtil::ToInt32Value(env, static_cast<int32_t>(SmsShortCodeType::SMS_SHORT_CODE_TYPE_POSSIBLE_PREMIUM))),
++    };
++    napi_value type = nullptr;
++    NAPI_CALL(env, napi_create_object(env, &type));
++    NAPI_CALL(env, napi_define_properties(env, type, sizeof(desc) / sizeof(desc[0]), desc));
++    NAPI_CALL(env, napi_set_named_property(env, exports, "SmsShortCodeType", type));
++    return exports;
++}
++
+ EXTERN_C_START
+ napi_value InitNapiSmsRegistry(napi_env env, napi_value exports)
+ {
+@@ -2001,6 +2018,9 @@ napi_value InitNapiSmsRegistry(napi_env env, napi_value exports)
+     InitEnumMessageStatusClass(env, exports);
+     InitEnumRanType(env, exports);
+     InitEnumSmsSegmentsInfo(env, exports);
++    if (InitEnumSmsShortCodeType(env, exports) == nullptr) {
++        return nullptr;
++    }
+     NapiMms::InitEnumMmsCharSets(env, exports);
+     NapiMms::InitEnumMessageType(env, exports);
+     NapiMms::InitEnumPriorityType(env, exports);

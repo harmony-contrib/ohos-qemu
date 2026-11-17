@@ -1,0 +1,15 @@
+diff --git a/src/third_party/swiftshader/src/Vulkan/BUILD.gn b/src/third_party/swiftshader/src/Vulkan/BUILD.gn
+--- a/src/third_party/swiftshader/src/Vulkan/BUILD.gn
++++ b/src/third_party/swiftshader/src/Vulkan/BUILD.gn
+@@ -227,6 +227,11 @@ swiftshader_shared_library("swiftshader_libvulkan") {
+           rebase_path("vk_swiftshader.lds", root_build_dir),
+     ]
+   }
++  if (is_ohos) {
++    # musl retains SwiftShader's C++ atexit callbacks after the Vulkan loader
++    # closes an ICD. Keep the image mapped so exit cannot call unmapped code.
++    ldflags += [ "-Wl,-z,nodelete" ]
++  }
+ 
+   deps = [ ":_swiftshader_libvulkan" ]
+ }

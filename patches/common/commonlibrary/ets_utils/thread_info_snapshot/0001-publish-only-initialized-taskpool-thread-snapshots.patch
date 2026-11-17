@@ -1,0 +1,49 @@
+diff --git a/commonlibrary/ets_utils/js_concurrent_module/taskpool/task_manager.cpp b/commonlibrary/ets_utils/js_concurrent_module/taskpool/task_manager.cpp
+--- a/commonlibrary/ets_utils/js_concurrent_module/taskpool/task_manager.cpp
++++ b/commonlibrary/ets_utils/js_concurrent_module/taskpool/task_manager.cpp
+@@ -191,15 +191,18 @@ napi_value TaskManager::GetThreadInfos(napi_env env)
+     {
+         std::lock_guard<std::recursive_mutex> lock(workersMutex_);
+         for (auto& worker : workers_) {
+-            if (worker->workerEnv_ == nullptr) {
++            if (!worker->threadInfoReady_.load(std::memory_order_acquire) || worker->tid_ <= 0) {
+                 continue;
+             }
+             auto threadInfo = std::make_unique<ThreadInfo>();
+             threadInfo->tid = worker->tid_;
+-            threadInfo->priority = worker->priority_;
+-            for (auto& id : worker->currentTaskId_) {
+-                threadInfo->currentTaskId.emplace_back(id);
++            threadInfo->priority = worker->priority_.load(std::memory_order_relaxed);
++            {
++                std::lock_guard<std::mutex> taskLock(worker->currentTaskIdMutex_);
++                for (auto& id : worker->currentTaskId_) {
++                    threadInfo->currentTaskId.emplace_back(id);
++                }
+             }
+             threadInfoSet.emplace(std::move(threadInfo));
+         }
+     }
+@@ -834,6 +837,9 @@ void TaskManager::NotifyWorkerCreated(Worker* worker)
+
+ void TaskManager::NotifyWorkerCreated(Worker* worker)
+ {
++    // Runtime, tid and handles were initialized on the worker thread. Do not
++    // expose a partially constructed worker through getTaskPoolInfo().
++    worker->threadInfoReady_.store(true, std::memory_order_release);
+     NotifyWorkerIdle(worker);
+     expandingCount_--;
+ }
+diff --git a/commonlibrary/ets_utils/js_concurrent_module/taskpool/worker.h b/commonlibrary/ets_utils/js_concurrent_module/taskpool/worker.h
+--- a/commonlibrary/ets_utils/js_concurrent_module/taskpool/worker.h
++++ b/commonlibrary/ets_utils/js_concurrent_module/taskpool/worker.h
+@@ -220,7 +220,8 @@
+     std::atomic<uint64_t> wakeUpTime_ = ConcurrentHelper::GetMilliseconds();
+     std::atomic<WorkerState> state_ {WorkerState::IDLE};
+     std::atomic<bool> hasExecuted_ = false; // false means this worker hasn't execute any tasks
+-    Priority priority_ {Priority::DEFAULT};
++    std::atomic<Priority> priority_ {Priority::DEFAULT};
++    std::atomic<bool> threadInfoReady_ {false};
+     pid_t tid_ = 0;
+     std::vector<uint32_t> currentTaskId_ {};
+     std::mutex currentTaskIdMutex_;

@@ -1,0 +1,92 @@
+diff --git a/base/hiviewdfx/hicollie/frameworks/native/watchdog_inner.cpp b/base/hiviewdfx/hicollie/frameworks/native/watchdog_inner.cpp
+index 32a8033..85eca41 100644
+--- a/base/hiviewdfx/hicollie/frameworks/native/watchdog_inner.cpp
++++ b/base/hiviewdfx/hicollie/frameworks/native/watchdog_inner.cpp
+@@ -16,6 +16,7 @@
+ #include "watchdog_inner.h"
+ 
+ #include <cerrno>
++#include <algorithm>
+ #include <climits>
+ #include <cstdio>
+ #include <mutex>
+@@ -1755,7 +1756,9 @@ void WatchdogInner::InitFfrtWatchdog()
+ {
+     CreateWatchdogThreadIfNeed();
+     ffrt_task_timeout_set_cb(FfrtCallback);
+-    ffrt_task_timeout_set_threshold(FFRT_CALLBACK_TIME);
++    int32_t ratio = std::clamp(
++        OHOS::system::GetIntParameter<int32_t>("persist.sys.abilityms.timeout_unit_time_ratio", 1), 1, 20);
++    ffrt_task_timeout_set_threshold(FFRT_CALLBACK_TIME * static_cast<uint32_t>(ratio));
+ }
+ 
+ void WatchdogInner::SendFfrtEvent(const FfrtEventParam& param)
+diff --git a/base/hiviewdfx/hicollie/frameworks/native/watchdog_task.cpp b/base/hiviewdfx/hicollie/frameworks/native/watchdog_task.cpp
+index 1c56589..3f31fbb 100644
+--- a/base/hiviewdfx/hicollie/frameworks/native/watchdog_task.cpp
++++ b/base/hiviewdfx/hicollie/frameworks/native/watchdog_task.cpp
+@@ -32,7 +32,9 @@
+ #include "watchdog_inner.h"
+ #include "xcollie_define.h"
+ #include "xcollie_utils.h"
++#include <algorithm>
+ #include "ipc_skeleton.h"
++#include "parameters.h"
+ 
+ namespace OHOS {
+ namespace HiviewDFX {
+@@ -55,6 +57,17 @@ constexpr int64_t BELOW_MEM_SIZE = 500 * 1024;
+ constexpr int SAMPLE_STACK_INTERVAL_DIVISOR = 11;
+ constexpr int SAMPLE_STACK_MAX_COUNT = 10;
+ constexpr int LEFT_TIME_EXIT_ALARM_SECONDS = 11;
++constexpr char TIMEOUT_UNIT_TIME_RATIO[] = "persist.sys.abilityms.timeout_unit_time_ratio";
++constexpr int32_t MAX_TIMEOUT_UNIT_RATIO = 20;
++
++uint64_t GetTimeoutUnitTimeRatio(const std::string& taskName)
++{
++    if (taskName.find("Test") != std::string::npos || taskName.find("BLOCK") != std::string::npos) {
++        return 1;
++    }
++    int32_t ratio = OHOS::system::GetIntParameter<int32_t>(TIMEOUT_UNIT_TIME_RATIO, 1);
++    return static_cast<uint64_t>(std::clamp(ratio, 1, MAX_TIMEOUT_UNIT_RATIO));
++}
+ }
+ 
+ int64_t WatchdogTask::curId = 0;
+@@ -66,7 +79,7 @@ WatchdogTask::WatchdogTask(std::string name, std::shared_ptr<AppExecFwk::EventHa
+ {
+     id = ++curId;
+     checker = std::make_shared<HandlerChecker>(name, handler, priority);
+-    checkInterval = interval;
++    checkInterval = (timeOutCallback == nullptr) ? (interval * GetTimeoutUnitTimeRatio(name)) : interval;
+     nextTickTime = GetCurrentTickMillseconds();
+     isOneshotTask = false;
+ #ifdef SUSPEND_CHECK_ENABLE
+@@ -84,7 +97,7 @@ WatchdogTask::WatchdogTask(uint64_t interval, unsigned int count, IpcFullCallbac
+     id = ++curId;
+     checker = (count > 0) ? nullptr : std::make_shared<HandlerChecker>(IPC_FULL_TASK, nullptr);
+     name = (count > 0) ? ASYNC_BINDER_SPACE_FULL_TASK : IPC_FULL_TASK;
+-    checkInterval = interval;
++    checkInterval = (func == nullptr) ? (interval * GetTimeoutUnitTimeRatio(name)) : interval;
+     nextTickTime = GetCurrentTickMillseconds();
+     isOneshotTask = false;
+     binderSpaceFullCount = count;
+@@ -112,7 +125,8 @@ WatchdogTask::WatchdogTask(std::string name, unsigned int timeout, XCollieCallba
+ {
+     id = ++curId;
+     checkInterval = 0;
+-    nextTickTime = GetCurrentTickMillseconds() + timeout;
++    this->timeout = static_cast<uint64_t>(timeout) * GetTimeoutUnitTimeRatio(name);
++    nextTickTime = GetCurrentTickMillseconds() + this->timeout;
+     isOneshotTask = true;
+     watchdogTid = getproctid();
+ #ifdef SUSPEND_CHECK_ENABLE
+@@ -183,7 +197,7 @@ void WatchdogTask::Run(uint64_t now)
+ #endif
+     constexpr int resetRatio = 2;
+ #ifdef SUSPEND_CHECK_ENABLE
+-    uint64_t blockThresholdMs = 5000;
++    uint64_t blockThresholdMs = std::max<uint64_t>(5000, resetRatio * checkInterval);
+ #else
+     uint64_t blockThresholdMs = resetRatio * checkInterval;
+ #endif

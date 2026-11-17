@@ -1,0 +1,81 @@
+diff --git a/src/arkweb/chromium_ext/ui/gl/ohos/frame_available_listener_impl.h b/src/arkweb/chromium_ext/ui/gl/ohos/frame_available_listener_impl.h
+--- a/src/arkweb/chromium_ext/ui/gl/ohos/frame_available_listener_impl.h
++++ b/src/arkweb/chromium_ext/ui/gl/ohos/frame_available_listener_impl.h
+@@ -16,28 +16,34 @@
+ #ifndef FRAME_AVAILABLE_LISTENER_IMPL_H
+ #define FRAME_AVAILABLE_LISTENER_IMPL_H
+ 
+ #include "arkweb/ohos_adapter_ndk/interfaces/graphic_adapter.h"
+ #include "arkweb/ohos_adapter_ndk/interfaces/ohos_adapter_helper.h"
+ #include "base/memory/scoped_refptr.h"
+ #include "base/memory/weak_ptr.h"
+ #include "base/task/single_thread_task_runner.h"
+ 
+ namespace gl {
+   class OhosNativeImage;
+ }
+ 
+ namespace OHOS::NWeb {
+ 
+ class FrameAvailableListenerImpl : public FrameAvailableListener {
+   public:
+     FrameAvailableListenerImpl(base::RepeatingClosure frame_available_cb);
+ 
+-    void OnFrameAvailableListener() override;
++    void* GetContext() override;
++
++    OnFrameAvailableCb GetOnFrameAvailableCb() override;
+ 
+   private:
++    static void OnFrameAvailable(void* context);
++
++    void OnFrameAvailableListener();
++
+     base::RepeatingClosure frame_available_cb_;  // For immediate signal on callback thread
+ };
+ 
+ }  // namespace OHOS::NWeb
+ 
+ #endif  // FRAME_AVAILABLE_LISTENER_IMPL_H
+diff --git a/src/arkweb/chromium_ext/ui/gl/ohos/frame_available_listener_impl.cc b/src/arkweb/chromium_ext/ui/gl/ohos/frame_available_listener_impl.cc
+--- a/src/arkweb/chromium_ext/ui/gl/ohos/frame_available_listener_impl.cc
++++ b/src/arkweb/chromium_ext/ui/gl/ohos/frame_available_listener_impl.cc
+@@ -16,22 +16,38 @@
+ #include "frame_available_listener_impl.h"
+ 
+ #include "arkweb/chromium_ext/ui/gl/ohos/ohos_native_image.h"
+ 
+ namespace OHOS::NWeb {
+ 
+ FrameAvailableListenerImpl::FrameAvailableListenerImpl(
+         base::RepeatingClosure frame_available_cb)
+         : frame_available_cb_(std::move(frame_available_cb)) {}
+ 
++void* FrameAvailableListenerImpl::GetContext() {
++  // The native adapter keeps the shared listener alive while invoking its callback.
++  return this;
++}
++
++OnFrameAvailableCb FrameAvailableListenerImpl::GetOnFrameAvailableCb() {
++  return &FrameAvailableListenerImpl::OnFrameAvailable;
++}
++
++void FrameAvailableListenerImpl::OnFrameAvailable(void* context) {
++  if (context == nullptr) {
++    return;
++  }
++  static_cast<FrameAvailableListenerImpl*>(context)->OnFrameAvailableListener();
++}
++
+ void FrameAvailableListenerImpl::OnFrameAvailableListener() {
+   // Immediately signal the wait coordinator on the callback thread to avoid timeout.
+   // This is critical for timely wakeup of WaitForFrameAvailable() which has a
+   // short timeout window (5-20ms). Posting to another thread introduces scheduling
+   // delays that can cause timeouts.
+   //
+   // base::WaitableEvent::Signal() is thread-safe and can be called from any thread.
+   if (frame_available_cb_) {
+     frame_available_cb_.Run();
+   }
+ }
+ }  // namespace OHOS::NWeb

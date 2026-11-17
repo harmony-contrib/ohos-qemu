@@ -1,0 +1,24 @@
+diff --git a/src/arkweb/build/build.sh b/src/arkweb/build/build.sh
+--- a/src/arkweb/build/build.sh
++++ b/src/arkweb/build/build.sh
+@@ -378,7 +378,7 @@ if [ ${build_component} -eq 1 ]; then
+ fi
+ 
+ # Extract ohos-sdk.
+-if [ -f "src/ohos_sdk/.install" ]; then
++if [ -f "src/ohos_sdk/.install" ] && [ "${ARKWEB_PREPARED_SDK:-0}" != 1 ]; then
+   bash "src/ohos_sdk/.install"
+   if [ $? -ne 0 ]; then
+     echo "ERROR: Failed to install ohos-sdk, abort!"
+@@ -485,6 +485,11 @@ cd cef/tools
+ bash ./translator.sh
+ cd -
+ 
++# Keep additional build-edge patches after generated Chromium/CEF inputs.
++if [ -n "${ARKWEB_EXTRA_BUILD_PATCH_SCRIPT:-}" ]; then
++  bash "${ARKWEB_EXTRA_BUILD_PATCH_SCRIPT}" --source-root "${ROOT_DIR%/src}"
++fi
++
+ time_start_for_build=$(date +%s)
+ time_start_for_gn=$time_start_for_build
+ 

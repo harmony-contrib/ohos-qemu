@@ -1,0 +1,35 @@
+{
+  "schema": "knowledge-service-namespace-repair141/v1",
+  "scope": "source-only proposal; NOT compiled/tested/new package/runtime",
+  "product_source": "foundation/multimedia/media_library/frameworks/innerkitsimpl/medialibrary_data_extension/src/media_datashare_ext_ability.cpp",
+  "old_sha256": "40f5ac5bbec245a998f504aa1756bd69d5ae87a1a2e4f8a89c11bebd9bbe70ce",
+  "new_sha256": "5559b1867aa256cfe22e64e4369136a9c2875d1909e0ee1dc937f48fd2596996",
+  "parent_vector_origin": "prior F manifest after, all fourteen members required",
+  "parent_commit_reported": "9193a88ecdf311d5e634b5d5fe3ff3b2ea412758",
+  "historical_service_provenance": {
+    "path": "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/service-query-provenance.json",
+    "sha256": "49e6952ea062fade3ca1605a933990940169031fbbf3678b50ade576707c2d4f"
+  },
+  "review_patch": {
+    "path": "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/0003-qualify-real-RDB-DataShare-adapter-namespace.patch",
+    "sha256": "66bc91e93de692c9af3a8a04fd89cd70d99f9172092aedc2452f1e8d9040e1e3"
+  },
+  "unchanged_review_patches": {
+    "0001-index-real-system-holidays-and-bound-knowledge-responses.patch": "0929985d4dbd92814941dc16cd07bb04d9e4ade496ec040cb6503ef76ed0475b",
+    "0002-query-knowledge-through-permission-checked-media-owner.patch": "354bc061ba68131aa56f185230c0fead3c39b615b0843207d6d85a4e8c86584f"
+  },
+  "tests_run": false,
+  "native_compiled": false,
+  "SDK_compiled": false,
+  "guest_validated": false,
+  "delivery_files_sha256": {
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/transforms.py": "f937e14a88edf56b1a35986279a479ee5e949ed777361d4564cb3c8d53abf6a0",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/manifest.json": "c1892035e0266446b891c925ae6a042880fbe0cc5e567776e8eab27792046ddd",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/previous-complete-state.json": "dc4b5e569fc860177dbeee56e46a683ee1dfd0fb9d7ba8dd74f9bfea6df37fe5",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/0003-qualify-real-RDB-DataShare-adapter-namespace.patch": "66bc91e93de692c9af3a8a04fd89cd70d99f9172092aedc2452f1e8d9040e1e3",
+    "patches/common/foundation/multimedia/media_library/knowledge_holiday_index/README.md": "991d18787f257fadf8e322f2eedd53e4da35dc1ed2ef9c52b3c3b6ba007d703b",
+    "ci/capability-audit/fixtures/batch_media/knowledge/holiday/service_harness.cpp": "cde15aa4bf14e948545fd9a78198693c1f57c7b6044f8452dce4085d262e54c9",
+    "ci/capability-audit/test_batch_media_knowledge_service.py": "471352840b1e818a96176d9073673bd0d97e2364a72b080f4d1df248fe287ac5",
+    "ci/capability-audit/test_batch_media_knowledge_holiday_install.py": "ef9d7ca6a48e8a09c7461f03c4c09bb7efe8ac2b794b640a7e593188179b693d"
+  }
+}

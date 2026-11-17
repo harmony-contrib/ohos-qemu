@@ -1,0 +1,13 @@
+{
+  "schema": "guarded-product-source-vector579/v1",
+  "scope": "actual target-token policy removal result only; no authorization or release behavior change; new QEMU runtime required",
+  "projects": {
+    "foundation/ability/ability_runtime": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8"
+  },
+  "files": {
+    "foundation/ability/ability_runtime/services/uripermmgr/src/uri_permission_manager_stub_impl.cpp": [
+      "837f4cf3303f86eced6155945d6c9d6b953ca548e7b07ed41189331f1c07b7e6",
+      "54a6e6042c6aa39a24540aa350226e73c96b82855edc61c6ff622e1f8c36546e"
+    ]
+  }
+}

@@ -1,0 +1,43 @@
+diff --git a/src/arkweb/ohos_adapter_ndk/interfaces/hitrace_adapter.h b/src/arkweb/ohos_adapter_ndk/interfaces/hitrace_adapter.h
+index a24932c..69910e6 100644
+--- a/src/arkweb/ohos_adapter_ndk/interfaces/hitrace_adapter.h
++++ b/src/arkweb/ohos_adapter_ndk/interfaces/hitrace_adapter.h
+@@ -26,8 +26,9 @@ class HiTraceAdapter {
+ public:
+     virtual void StartTrace(const std::string& value, float limit = -1) = 0;
+ 
+-    virtual void StartTraceEx(HiTrace_Output_Level level, const std::string& name,
+-        const std::string& value, float limit = -1) = 0;
++    // Local NDK extension: do not insert a slot into the release adapter vtable.
++    void StartTraceEx(HiTrace_Output_Level level, const std::string& name,
++        const std::string& value, float limit = -1);
+ 
+     virtual void FinishTrace() = 0;
+ 
+diff --git a/src/arkweb/ohos_adapter_ndk/hiviewdfx_adapter/hitrace_adapter_impl.h b/src/arkweb/ohos_adapter_ndk/hiviewdfx_adapter/hitrace_adapter_impl.h
+index 3f17b30..83eeab1 100644
+--- a/src/arkweb/ohos_adapter_ndk/hiviewdfx_adapter/hitrace_adapter_impl.h
++++ b/src/arkweb/ohos_adapter_ndk/hiviewdfx_adapter/hitrace_adapter_impl.h
+@@ -31,9 +31,6 @@ public:
+ 
+     void StartAsyncTrace(const std::string& value, int32_t taskId, float limit = -1) override;
+ 
+-    void StartTraceEx(HiTrace_Output_Level level, const std::string& name,
+-      const std::string& value, float limit = -1) override; 
+-
+     void FinishAsyncTrace(const std::string& value, int32_t taskId) override;
+ 
+     void CountTrace(const std::string& name, int64_t count) override;
+diff --git a/src/arkweb/ohos_adapter_ndk/hiviewdfx_adapter/hitrace_adapter_impl.cpp b/src/arkweb/ohos_adapter_ndk/hiviewdfx_adapter/hitrace_adapter_impl.cpp
+index 09111d7..826b3b7 100644
+--- a/src/arkweb/ohos_adapter_ndk/hiviewdfx_adapter/hitrace_adapter_impl.cpp
++++ b/src/arkweb/ohos_adapter_ndk/hiviewdfx_adapter/hitrace_adapter_impl.cpp
+@@ -66,7 +66,7 @@ void HiTraceAdapterImpl::StartTrace(const std::string& value, float limit)
+     OH_HiTrace_StartTrace(value.c_str());
+ }
+ 
+-void HiTraceAdapterImpl::StartTraceEx(HiTrace_Output_Level level, const std::string& name,
++void HiTraceAdapter::StartTraceEx(HiTrace_Output_Level level, const std::string& name,
+     const std::string& value, float limit)
+ {
+     OH_HiTrace_StartTraceEx(level, name.c_str(), value.c_str());

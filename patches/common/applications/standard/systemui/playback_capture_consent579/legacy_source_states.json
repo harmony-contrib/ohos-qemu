@@ -1,0 +1,41 @@
+{
+  "schema": "guarded-product-source-vector579/v1",
+  "scope": "ordinary product preparation; QEMU runtime not accepted",
+  "projects": {
+    "applications/standard/systemui": "d0f84037f1975dd9bf13ccbd279bd2d9b56e8a01"
+  },
+  "files": {
+    "applications/standard/systemui/product/default/dialog/src/main/ets/ServiceExtAbility/ExtAbility.ts": [
+      "930da12650671e6f89ba43c0e19533fdc368ea1e7689e81767b75f91a9455e55",
+      "7dc74b1fa55e0e911081377a3e46c2773caa8d49f87100f1ea7af4ae0ac3611e"
+    ],
+    "applications/standard/systemui/product/default/dialog/src/main/ets/ServiceExtAbility/PlaybackCaptureConsentExtension.ets": [
+      null,
+      "74376a46989234912550c9e1d837172dc9f6c6f6565576a55c7d0fbe4e965caa"
+    ],
+    "applications/standard/systemui/product/default/dialog/src/main/ets/common/PlaybackCaptureConsent.ets": [
+      null,
+      "b6fe5f08a2cff8988dfa6d1694bcd2b2a36681667dc7b613104087bcaa4f4e7d"
+    ],
+    "applications/standard/systemui/product/default/dialog/src/main/ets/pages/PlaybackCaptureConsentPage.ets": [
+      null,
+      "a29a547f3c9277356c5957f26953955f6203f4b5d90f94f0c6707c213adbee2d"
+    ],
+    "applications/standard/systemui/product/default/dialog/src/main/module.json5": [
+      "a891ed6ed9be15faba65351b8266a391c2fa5782d23a7f28b1e1017f075302d2",
+      "adf36413d8e5f0cdfa037ffc731be2edd5595f3a70de9820b4fff64965d54d49"
+    ],
+    "applications/standard/systemui/product/default/dialog/src/main/resources/base/element/string.json": [
+      "d7cddf68a9795773a42be73929ba03a0b3ab616754e7d1f2b5d30255482126fa",
+      "ce82a1c0c1dd5755cec65533786ddae22a355c3832967d3e7c4bfb44b51bbe5b"
+    ],
+    "applications/standard/systemui/product/default/dialog/src/main/resources/base/profile/main_pages.json": [
+      "cc6af38003c251806421b8b20b1c97c9e10b3f9dce5c52a9e712e447f67d736f",
+      "e726110f24712cf62e3711e66769a36b91921b3e54fe7ebf8a02554c3762c90c"
+    ],
+    "applications/standard/systemui/product/default/dialog/src/main/resources/zh_CN/element/string.json": [
+      "d7cddf68a9795773a42be73929ba03a0b3ab616754e7d1f2b5d30255482126fa",
+      "f46cf4ecb33a6e43c0fd87320b4f6c04197edd69d7f7cb5cea68bf1aa62e71c4"
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "whitelist": [
+    {
+      "name": "execute and execute_no_trans",
+      "user": [
+        "netsysnative qemu_openvpn_exec"
+      ],
+      "developer": []
+    }
+  ]
+}

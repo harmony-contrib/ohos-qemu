@@ -1,0 +1,17 @@
+{
+  "schema": "native-ace-bundle-dependency-upgrade/v1",
+  "project": "foundation/arkui/ace_engine",
+  "revision": "e55e178228b9f6388b15d3024e8caf125fa293d7",
+  "files": [
+    {
+      "relative": "bundle.json",
+      "original_sha256": "a6795d1664a261e761326b3310d8e089e2a88085f5f6e133701674a7d9dbfe2c",
+      "final_sha256": "9e2e83c6709571e8b9a410b6d42c7bbbb5d21f4b2171364f22b102496de87898"
+    }
+  ],
+  "patch": "0001-declare-existing-ACE-secvariant-third-party-dependency.patch",
+  "patch_sha256": "f32d152439ff41b20f9dc0d0227dc43015b0f76f15240fa196bd8391e4dfb58d",
+  "scope": "internal exact one-file upgrade after complete known legacy486 CFI siblings; no checks/CFI/part identity changed",
+  "actual_gn_compile_solink_runtime_pending": true,
+  "first_artifact_behavior_gate_passed": false
+}

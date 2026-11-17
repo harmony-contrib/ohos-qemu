@@ -1,0 +1,40 @@
+--- a/foundation/arkui/ace_engine/build/libace.map
++++ b/foundation/arkui/ace_engine/build/libace.map
+@@ -1,6 +1,37 @@
+ {
+   global:
+     extern "C++" {      
++
++      /* Existing cross-DSO provider ABI used by CJ, NG, compatibility and PA. */
++      "OHOS::Ace::Framework::ViewStackProcessor::GetPageTransitionComponent()";
++      "OHOS::Ace::Framework::ViewStackProcessor::ClearPageTransitionComponent()";
++      "OHOS::Ace::Framework::ViewStackProcessor::GetGestureComponent()";
++      "OHOS::Ace::SingleChildGesture::SetChild(OHOS::Ace::RefPtr<OHOS::Ace::Gesture>)";
++      VTT?for?OHOS::Ace::LongPressGesture;
++      vtable?for?OHOS::Ace::LongPressGesture;
++      VTT?for?OHOS::Ace::PinchGesture;
++      vtable?for?OHOS::Ace::PinchGesture;
++      VTT?for?OHOS::Ace::SwipeGesture;
++      vtable?for?OHOS::Ace::SwipeGesture;
++      VTT?for?OHOS::Ace::RotationGesture;
++      vtable?for?OHOS::Ace::RotationGesture;
++      VTT?for?OHOS::Ace::GestureGroup;
++      vtable?for?OHOS::Ace::GestureGroup;
++      VTT?for?OHOS::Ace::PanGesture;
++      vtable?for?OHOS::Ace::PanGesture;
++      "OHOS::Ace::ShadowConfig::DefaultShadowM";
++      "OHOS::Ace::NG::TextPattern::GetSelectDetectConfig()";
++      "OHOS::Ace::NG::BaseTextSelectOverlay::ConvertToLocalRectWithTransform(OHOS::Ace::NG::RectT<float> const&)";
++      "OHOS::Ace::RenderNode::GetTransitionGlobalOffset() const";
++      "OHOS::Ace::Singleton<OHOS::Ace::TextInputProxy>::GetInstance()";
++      vtable?for?OHOS::Ace::LengthLimitingFormatter;
++      "OHOS::Ace::SingleLineFormatter::SingleLineFormatter()";
++      "OHOS::Ace::NumberFormatter::NumberFormatter()";
++      "OHOS::Ace::PhoneNumberFormatter::PhoneNumberFormatter()";
++      "OHOS::Ace::EmailFormatter::EmailFormatter()";
++      "OHOS::Ace::UriFormatter::UriFormatter()";
++      "OHOS::Ace::Framework::RevSourceMap::GetOriginalNames(std::__h::basic_string<char, std::__h::char_traits<char>, std::__h::allocator<char>> const&, unsigned int&) const";
++      "OHOS::Ace::Framework::RevSourceMap::Find(int, int, bool)";
+       "bool OHOS::Ace::NG::ArkTSUtils::ConvertFromJSValue<OHOS::Ace::CalcDimension>(panda::ecmascript::EcmaVM const*, panda::Local<panda::JSValueRef> const&, OHOS::Ace::CalcDimension&, OHOS::Ace::RefPtr<OHOS::Ace::ResourceObject>&)";
+       "bool OHOS::Ace::NG::ArkTSUtils::ConvertFromJSValue<OHOS::Ace::Color>(panda::ecmascript::EcmaVM const*, panda::Local<panda::JSValueRef> const&, OHOS::Ace::Color&, OHOS::Ace::RefPtr<OHOS::Ace::ResourceObject>&)";
+       "bool OHOS::Ace::NG::ArkTSUtils::ConvertFromJSValueNG<OHOS::Ace::Dimension>(panda::ecmascript::EcmaVM const*, panda::Local<panda::JSValueRef> const&, OHOS::Ace::Dimension&, OHOS::Ace::RefPtr<OHOS::Ace::ResourceObject>&)";

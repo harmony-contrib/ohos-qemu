@@ -1,0 +1,13 @@
+diff --git a/kernel/linux/linux-6.6/drivers/android/binder.c b/kernel/linux/linux-6.6/drivers/android/binder.c
+--- a/kernel/linux/linux-6.6/drivers/android/binder.c
++++ b/kernel/linux/linux-6.6/drivers/android/binder.c
+@@ -2872,6 +2872,9 @@
+ 		trace_binder_transaction_update_buffer_release(buffer);
+ 		binder_release_entire_buffer(proc, NULL, buffer, false);
+ 		binder_alloc_free_buf(&proc->alloc, buffer);
++#ifdef CONFIG_BINDER_SENDER_INFO
++		put_pid(t_outdated->async_sender_pid);
++#endif
+ 		kfree(t_outdated);
+ 		binder_stats_deleted(BINDER_STAT_TRANSACTION);
+ 	}

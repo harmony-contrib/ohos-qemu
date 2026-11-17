@@ -1,0 +1,31 @@
+diff --git a/foundation/multimedia/audio_framework/services/audio_suite/BUILD.gn b/foundation/multimedia/audio_framework/services/audio_suite/BUILD.gn
+--- a/foundation/multimedia/audio_framework/services/audio_suite/BUILD.gn
++++ b/foundation/multimedia/audio_framework/services/audio_suite/BUILD.gn
+@@ -21,6 +21,7 @@ group("audio_suite_packages") {
+     ":audio_pcm_process",
+     ":audio_suite",
+     ":audio_suite_capabilities",
++    "qemu_dsp:package",
+   ]
+ 
+   if (audio_framework_feature_audiosuite_support) {
+diff --git a/foundation/multimedia/audio_framework/services/audio_suite/client/config/file/audio_suite_capabilities.xml b/foundation/multimedia/audio_framework/services/audio_suite/client/config/file/audio_suite_capabilities.xml
+--- a/foundation/multimedia/audio_framework/services/audio_suite/client/config/file/audio_suite_capabilities.xml
++++ b/foundation/multimedia/audio_framework/services/audio_suite/client/config/file/audio_suite_capabilities.xml
+@@ -15,13 +15,13 @@
+ -->
+ <audioSuiteCapabilities version="1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+     <nodeCapability>
+-        <nodeType name="EQUALIZER" soName="libimedia_sws.z.so" soPath="/system/lib64/" general="yes" realtimeFactor="0.15" frameLen="480"/>
++        <nodeType name="EQUALIZER" soName="libqemu_audio_suite_dsp.z.so" soPath="/system/lib64/" general="yes" realtimeFactor="0.15" frameLen="480"/>
+         <nodeType name="NOISE_REDUCTION" soName="libimedia_vqe_ainr.z.so" soPath="/system/lib64/" general="yes" realtimeFactor="0.3" frameLen="160"/>
+-        <nodeType name="SOUND_FIELD" soName="libimedia_sws.z.so" soPath="/system/lib64/" general="yes" realtimeFactor="0.2" frameLen="480"/>
++        <nodeType name="SOUND_FIELD" soName="libqemu_audio_suite_dsp.z.so" soPath="/system/lib64/" general="yes" realtimeFactor="0.2" frameLen="480"/>
+         <nodeType name="AUDIO_SEPARATION" soName="libaudio_aiss_intergration.z.so" soPath="/system/lib64/" general="no" realtimeFactor="0.4" frameLen="960"/>
+         <nodeType name="AUDIO_MIXER" soName="" soPath="" general="yes" realtimeFactor="0.15" frameLen="0"/>
+         <nodeType name="VOICE_BEAUTIFIER" soName="libaudio_voice_morph_bgm.z.so" soPath="/system/lib64/" general="yes" realtimeFactor="0.15" frameLen="960"/>
+-        <nodeType name="ENVIRONMENT_EFFECT" soName="libimedia_sws.z.so" soPath="/system/lib64/" general="yes" realtimeFactor="0.15" frameLen="480"/>
++        <nodeType name="ENVIRONMENT_EFFECT" soName="libqemu_audio_suite_dsp.z.so" soPath="/system/lib64/" general="yes" realtimeFactor="0.15" frameLen="480"/>
+         <nodeType name="PURE_CHANGE" soName="libaudio_voice_morph.z.so" soPath="/system/lib64/" general="yes" realtimeFactor="0.15" frameLen="640"/>
+         <nodeType name="GENERAL_CHANGE" soName="libaudio_voice_morph_bgm.z.so" soPath="/system/lib64/" general="yes" realtimeFactor="0.15" frameLen="960"/>
+         <nodeType name="TEMPO_PITCH" soName="libaudio_variable_speed.z.so,libaudio_pitch_change.z.so" soPath="/system/lib64/" general="yes" realtimeFactor="0.2" frameLen="960"/>

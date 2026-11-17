@@ -1,0 +1,36 @@
+diff --git a/vendor/ohemu/qemu_arm64_linux_full/qemu_run.sh b/vendor/ohemu/qemu_arm64_linux_full/qemu_run.sh
+--- a/vendor/ohemu/qemu_arm64_linux_full/qemu_run.sh
++++ b/vendor/ohemu/qemu_arm64_linux_full/qemu_run.sh
+@@ -126,6 +126,8 @@ QEMU_CMD="${SUDO} qemu-system-aarch64 ${ACCEL_ARGS} \
+ -m 4096 \
+ -kernel ${OHOS_IMG}/Image \
+ -initrd ${OHOS_IMG}/ramdisk.img \
++-audiodev none,id=ohos_audio \
++-device es1370,audiodev=ohos_audio \
+ ${DISPLAY_ARGS} \
+ -device virtio-mouse-pci \
+ -device virtio-keyboard-pci \
+diff --git a/vendor/ohemu/qemu_armv7a_linux_full/qemu_run.sh b/vendor/ohemu/qemu_armv7a_linux_full/qemu_run.sh
+--- a/vendor/ohemu/qemu_armv7a_linux_full/qemu_run.sh
++++ b/vendor/ohemu/qemu_armv7a_linux_full/qemu_run.sh
+@@ -42,6 +42,8 @@ QEMU_CMD="qemu-system-arm ${ACCEL_ARGS} \
+ -m 3072 \
+ -kernel ${OHOS_IMG}/zImage \
+ -initrd ${OHOS_IMG}/ramdisk.img \
++-audiodev none,id=ohos_audio \
++-device es1370,audiodev=ohos_audio \
+ ${DISPLAY_ARGS} \
+ -device virtio-mouse-pci \
+ -device virtio-keyboard-pci \
+diff --git a/vendor/ohemu/qemu_x86_64_linux_full/qemu_run.sh b/vendor/ohemu/qemu_x86_64_linux_full/qemu_run.sh
+--- a/vendor/ohemu/qemu_x86_64_linux_full/qemu_run.sh
++++ b/vendor/ohemu/qemu_x86_64_linux_full/qemu_run.sh
+@@ -68,6 +68,8 @@ exec qemu-system-x86_64 \
+     -m 4096 \
+     -kernel "${OHOS_IMG}/bzImage" \
+     -initrd "${OHOS_IMG}/ramdisk.img" \
++    -audiodev none,id=ohos_audio \
++    -device es1370,audiodev=ohos_audio \
+     "${DISPLAY_ARGS[@]}" \
+     -device virtio-mouse-pci \
+     -device virtio-keyboard-pci \

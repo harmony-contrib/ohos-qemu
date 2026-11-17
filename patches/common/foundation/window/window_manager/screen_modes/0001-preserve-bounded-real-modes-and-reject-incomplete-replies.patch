@@ -1,0 +1,89 @@
+diff --git a/foundation/window/window_manager/utils/include/screen_info.h b/foundation/window/window_manager/utils/include/screen_info.h
+--- a/foundation/window/window_manager/utils/include/screen_info.h
++++ b/foundation/window/window_manager/utils/include/screen_info.h
+@@ -59,7 +59,8 @@
+     DEFINE_VAR_DEFAULT_FUNC_GET_SET(ScreenId, RsId, rsId, SCREEN_ID_INVALID);
+     DEFINE_VAR_FUNC_GET(std::vector<sptr<SupportedScreenModes>>, Modes, modes);
+ protected:
+-    const static uint32_t MAX_SUPPORTED_SCREEN_MODES_SIZE = 20;
++    // QEMU/DRM may report more than 20 real modes. Keep a finite IPC bound.
++    const static uint32_t MAX_SUPPORTED_SCREEN_MODES_SIZE = 256;
+     bool InnerUnmarshalling(Parcel& parcel);
+ };
+ } // namespace OHOS::Rosen
+diff --git a/foundation/window/window_manager/utils/src/screen_info.cpp b/foundation/window/window_manager/utils/src/screen_info.cpp
+--- a/foundation/window/window_manager/utils/src/screen_info.cpp
++++ b/foundation/window/window_manager/utils/src/screen_info.cpp
+@@ -18,6 +18,14 @@
+ namespace OHOS::Rosen {
+ bool ScreenInfo::Marshalling(Parcel &parcel) const
+ {
++    if (modes_.size() > MAX_SUPPORTED_SCREEN_MODES_SIZE) {
++        return false;
++    }
++    for (const auto& mode : modes_) {
++        if (mode == nullptr) {
++            return false;
++        }
++    }
+     bool res = parcel.WriteString(name_) && parcel.WriteUint64(id_) &&
+         parcel.WriteUint32(virtualWidth_) && parcel.WriteUint32(virtualHeight_) &&
+         parcel.WriteFloat(virtualPixelRatio_) && parcel.WriteUint64(lastParent_) && parcel.WriteUint64(parent_) &&
+@@ -29,9 +37,6 @@
+         parcel.WriteBool(isExtend_) && parcel.WriteString(serialNumber_) && parcel.WriteUint64(rsId_) &&
+         parcel.WriteUint32(mirrorWidth_) && parcel.WriteUint32(mirrorHeight_);
+     if (!res) {
+-        return false;
+-    }
+-    if (modes_.size() > MAX_SUPPORTED_SCREEN_MODES_SIZE) {
+         return false;
+     }
+     for (uint32_t modeIndex = 0; modeIndex < modes_.size(); modeIndex++) {
+@@ -79,7 +84,8 @@
+     if (!res1) {
+         return false;
+     }
+-    if (size > MAX_SUPPORTED_SCREEN_MODES_SIZE) {
++    constexpr size_t MODE_BYTES = 4 * sizeof(uint32_t);
++    if (size > MAX_SUPPORTED_SCREEN_MODES_SIZE || size > parcel.GetReadableBytes() / MODE_BYTES) {
+         return false;
+     }
+     modes_.clear();
+diff --git a/foundation/window/window_manager/window_scene/screen_session_manager/src/zidl/screen_session_manager_stub.cpp b/foundation/window/window_manager/window_scene/screen_session_manager/src/zidl/screen_session_manager_stub.cpp
+--- a/foundation/window/window_manager/window_scene/screen_session_manager/src/zidl/screen_session_manager_stub.cpp
++++ b/foundation/window/window_manager/window_scene/screen_session_manager/src/zidl/screen_session_manager_stub.cpp
+@@ -219,6 +219,7 @@
+             reply.WriteInt32(static_cast<int32_t>(ret));
+             if (!MarshallingHelper::MarshallingVectorParcelableObj<ScreenInfo>(reply, screenInfos)) {
+                 TLOGE(WmsLogTag::DMS, "fail to marshalling screenInfos in stub.");
++                return ERR_INVALID_DATA;
+             }
+             break;
+         }
+diff --git a/foundation/window/window_manager/window_scene/screen_session_manager/src/zidl/screen_session_manager_proxy.cpp b/foundation/window/window_manager/window_scene/screen_session_manager/src/zidl/screen_session_manager_proxy.cpp
+--- a/foundation/window/window_manager/window_scene/screen_session_manager/src/zidl/screen_session_manager_proxy.cpp
++++ b/foundation/window/window_manager/window_scene/screen_session_manager/src/zidl/screen_session_manager_proxy.cpp
+@@ -2422,8 +2422,21 @@
+         TLOGW(WmsLogTag::DMS, "GetAllScreenInfos: SendRequest failed");
+         return DMError::DM_ERROR_IPC_FAILED;
+     }
+-    DMError ret = static_cast<DMError>(reply.ReadInt32());
+-    MarshallingHelper::UnmarshallingVectorParcelableObj<ScreenInfo>(reply, screenInfos);
++    int32_t result = 0;
++    if (!reply.ReadInt32(result)) {
++        TLOGE(WmsLogTag::DMS, "GetAllScreenInfos: missing service result");
++        return DMError::DM_ERROR_IPC_FAILED;
++    }
++    DMError ret = static_cast<DMError>(result);
++    if (ret != DMError::DM_OK) {
++        return ret;
++    }
++    std::vector<sptr<ScreenInfo>> decoded;
++    if (!MarshallingHelper::UnmarshallingVectorParcelableObj<ScreenInfo>(reply, decoded)) {
++        TLOGE(WmsLogTag::DMS, "GetAllScreenInfos: incomplete screen information");
++        return DMError::DM_ERROR_IPC_FAILED;
++    }
++    screenInfos = std::move(decoded);
+     return ret;
+ }
+ 

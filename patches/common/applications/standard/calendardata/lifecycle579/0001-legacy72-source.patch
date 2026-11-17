@@ -1,0 +1,1398 @@
+--- a/applications/standard/calendardata/calendarmanager/napi/include/calendar_napi.h
++++ b/applications/standard/calendardata/calendarmanager/napi/include/calendar_napi.h
+@@ -41,6 +41,9 @@
+     static napi_value UpdateEvent(napi_env env, napi_callback_info info);
+     static napi_value UpdateEvents(napi_env env, napi_callback_info info);
+     static napi_value GetEvents(napi_env env, napi_callback_info info);
++    static napi_value GetEventSnapshot(napi_env env, napi_callback_info info);
++    static napi_value UpdateEventIfUnchanged(napi_env env, napi_callback_info info);
++    static napi_value DeleteEventIfUnchanged(napi_env env, napi_callback_info info);
+     static napi_value GetConfig(napi_env env, napi_callback_info info);
+     static napi_value SetConfig(napi_env env, napi_callback_info info);
+     static napi_value GetAccount(napi_env env, napi_callback_info info);
+--- a/applications/standard/calendardata/calendarmanager/napi/src/calendar_napi.cpp
++++ b/applications/standard/calendardata/calendarmanager/napi/src/calendar_napi.cpp
+@@ -19,6 +19,7 @@
+ #include "napi_queue.h"
+ #include "native_util.h"
+ #include "report_hievent_manager.h"
++#include <cmath>
+ 
+ namespace {
+     const std::string CALENDAR_CLASS_NAME = "Calendar";
+@@ -36,6 +37,9 @@
+         DECLARE_NAPI_FUNCTION("updateEvent", UpdateEvent),
+         DECLARE_NAPI_FUNCTION("updateEvents", UpdateEvents),
+         DECLARE_NAPI_FUNCTION("getEvents", GetEvents),
++        DECLARE_NAPI_FUNCTION("getEventSnapshot", GetEventSnapshot),
++        DECLARE_NAPI_FUNCTION("updateEventIfUnchanged", UpdateEventIfUnchanged),
++        DECLARE_NAPI_FUNCTION("deleteEventIfUnchanged", DeleteEventIfUnchanged),
+         DECLARE_NAPI_FUNCTION("getConfig", GetConfig),
+         DECLARE_NAPI_FUNCTION("setConfig", SetConfig),
+         DECLARE_NAPI_FUNCTION("getAccount", GetAccount),
+@@ -186,10 +190,9 @@
+         CHECK_RETURN_VOID(nativeCalendar != nullptr, "nativeCalendar nullptr");
+         auto beginTime = Native::ReportHiEventManager::GetInstance().GetCurrentTime();
+         auto delResult = nativeCalendar->DeleteEvent(ctxt->eventId);
+-        if (delResult.IsOk()) {
+-            ctxt->result = delResult.GetValue();
+-        }
+-        Native::ReportHiEventManager::GetInstance().OnApiCallEnd("DeleteEvent", ctxt->result, beginTime);
++        Native::ReportHiEventManager::GetInstance().OnApiCallEnd("DeleteEvent",
++            delResult.IsOk() && delResult.GetValue(), beginTime);
++        CHECK_RESULT_RETURN_VOID(ctxt, delResult, "DeleteEvent failed!", ctxt->result);
+     };
+     return NapiQueue::AsyncWork(env, ctxt, std::string(__FUNCTION__), execute);
+ }
+@@ -252,10 +255,9 @@
+         CHECK_RETURN_VOID(nativeCalendar != nullptr, "nativeCalendar nullptr");
+         auto beginTime = Native::ReportHiEventManager::GetInstance().GetCurrentTime();
+         auto upResult = nativeCalendar->UpdateEvent(ctxt->event);
+-        if (upResult.IsOk()) {
+-            ctxt->result = upResult.GetValue();
+-        }
+-        Native::ReportHiEventManager::GetInstance().OnApiCallEnd("UpdateEvent", ctxt->result, beginTime);
++        Native::ReportHiEventManager::GetInstance().OnApiCallEnd("UpdateEvent",
++            upResult.IsOk() && upResult.GetValue(), beginTime);
++        CHECK_RESULT_RETURN_VOID(ctxt, upResult, "UpdateEvent failed!", ctxt->result);
+     };
+     return NapiQueue::AsyncWork(env, ctxt, std::string(__FUNCTION__), execute);
+ }
+@@ -314,22 +316,27 @@
+         if (argc >= 1) {
+             ctxt->status = napi_typeof(env, argv[0], &type);
+             CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "cannot inspect event filter type");
+-            CHECK_ARGS_RETURN_VOID(ctxt, type == napi_object, PARAMETER_INVALID, "type error!");
+-            EventFilterNapi* filter = nullptr;
+-            ctxt->status = NapiUtil::GetValue(env, argv[0], filter);
+-            CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_VALUE_OUTRANGE, "invalid arg[0], i.e. invalid keys!");
+-            CHECK_ARGS_RETURN_VOID(ctxt, filter != nullptr, PARAMETER_INVALID, "invalid event filter wrapper");
+-            ctxt->eventFilter = filter->GetNative();
+-            CHECK_ARGS_RETURN_VOID(ctxt, ctxt->eventFilter != nullptr, PARAMETER_INVALID,
+-                "invalid native event filter");
++            CHECK_ARGS_RETURN_VOID(ctxt, type == napi_object || type == napi_undefined,
++                PARAMETER_INVALID, "invalid event filter type");
++            if (type != napi_undefined) {
++                EventFilterNapi* filter = nullptr;
++                ctxt->status = NapiUtil::GetValue(env, argv[0], filter);
++                CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_VALUE_OUTRANGE, "invalid arg[0], i.e. invalid keys!");
++                CHECK_ARGS_RETURN_VOID(ctxt, filter != nullptr, PARAMETER_INVALID, "invalid event filter wrapper");
++                ctxt->eventFilter = filter->GetNative();
++                CHECK_ARGS_RETURN_VOID(ctxt, ctxt->eventFilter != nullptr, PARAMETER_INVALID,
++                    "invalid native event filter");
++            }
+         }
+         if (argc == 2) {
+             // required atleast 2 arguments :: <eventKey>
+             ctxt->status = napi_typeof(env, argv[1], &type);
+             CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "cannot inspect event keys type");
+-            CHECK_ARGS_RETURN_VOID(ctxt, type == napi_object, PARAMETER_INVALID, "invalid arg[1], i.e. invalid keys!");
+-            ctxt->status = NapiUtil::GetValue(env, argv[1], ctxt->eventKeys);
+-            CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_VALUE_OUTRANGE, "invalid arg[1], i.e. invalid keys!");
++            if (type != napi_undefined) {
++                CHECK_ARGS_RETURN_VOID(ctxt, type == napi_object, PARAMETER_INVALID, "invalid arg[1], i.e. invalid keys!");
++                ctxt->status = NapiUtil::GetValue(env, argv[1], ctxt->eventKeys);
++                CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_VALUE_OUTRANGE, "invalid arg[1], i.e. invalid keys!");
++            }
+         }
+     };
+     ctxt->GetCbInfo(env, info, input);
+@@ -341,6 +348,129 @@
+     auto output = [ctxt](napi_value& result) {
+         ctxt->status = NapiUtil::SetValue(ctxt->env, ctxt->events, result);
+         CHECK_STATUS_RETURN_VOID(ctxt, INTERNAL_ERROR, "output failed");
++    };
++    return NapiQueue::AsyncWork(env, ctxt, std::string(__FUNCTION__), execute, output);
++}
++
++// These three additive product methods retain the native receiver on the JS
++// thread. No NAPI wrapper or JS value is dereferenced by worker execution.
++struct ConditionalCalendarContext : public ContextBase {
++    std::shared_ptr<Native::Calendar> calendar;
++    Native::EventSnapshot snapshot;
++    Event event;
++    std::string revision;
++    int id = -1;
++    bool changed = false;
++};
++
++napi_value CalendarNapi::GetEventSnapshot(napi_env env, napi_callback_info info)
++{
++    auto ctxt = std::make_shared<ConditionalCalendarContext>();
++    auto input = [env, ctxt](size_t argc, napi_value* argv) {
++        CHECK_ARGS_RETURN_VOID(ctxt, argc == 1, PARAMETER_INVALID, "expected event ID");
++        double id = 0;
++        ctxt->status = napi_get_value_double(env, argv[0], &id);
++        CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "event ID must be numeric");
++        CHECK_ARGS_RETURN_VOID(ctxt, std::isfinite(id) && id == std::trunc(id) && id > 0 && id <= 2147483647,
++            PARAMETER_INVALID, "invalid event ID");
++        ctxt->id = static_cast<int>(id);
++        CalendarNapi* wrapper = nullptr;
++        ctxt->status = CalendarNapi::ToJson(env, ctxt->self, wrapper);
++        CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "invalid Calendar receiver");
++        CHECK_ARGS_RETURN_VOID(ctxt, wrapper != nullptr, INTERNAL_ERROR, "missing Calendar receiver");
++        ctxt->calendar = wrapper->GetNative();
++        CHECK_ARGS_RETURN_VOID(ctxt, ctxt->calendar != nullptr, INTERNAL_ERROR, "missing native Calendar");
++    };
++    ctxt->GetCbInfo(env, info, input);
++    auto execute = [ctxt]() {
++        auto result = ctxt->calendar->GetEventSnapshot(ctxt->id);
++        CHECK_RESULT_RETURN_VOID(ctxt, result, "Calendar snapshot failed", ctxt->snapshot);
++    };
++    auto output = [env, ctxt](napi_value& result) {
++        ctxt->status = napi_create_object(env, &result);
++        CHECK_STATUS_RETURN_VOID(ctxt, INTERNAL_ERROR, "snapshot result allocation failed");
++        ctxt->status = NapiUtil::SetNamedProperty(env, "event", ctxt->snapshot.event, result);
++        CHECK_STATUS_RETURN_VOID(ctxt, INTERNAL_ERROR, "snapshot event output failed");
++        ctxt->status = NapiUtil::SetNamedProperty(env, "revision", ctxt->snapshot.revision, result);
++        CHECK_STATUS_RETURN_VOID(ctxt, INTERNAL_ERROR, "snapshot revision output failed");
++    };
++    return NapiQueue::AsyncWork(env, ctxt, std::string(__FUNCTION__), execute, output);
++}
++
++napi_value CalendarNapi::UpdateEventIfUnchanged(napi_env env, napi_callback_info info)
++{
++    auto ctxt = std::make_shared<ConditionalCalendarContext>();
++    auto input = [env, ctxt](size_t argc, napi_value* argv) {
++        CHECK_ARGS_RETURN_VOID(ctxt, argc == 2, PARAMETER_INVALID, "expected revision and edit fields");
++        ctxt->status = NapiUtil::GetValue(env, argv[0], ctxt->revision);
++        CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "revision must be a string");
++        ctxt->status = NapiUtil::GetValue(env, argv[1], ctxt->event);
++        CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "invalid Calendar edit fields");
++        for (const auto* field : {"startTime", "endTime"}) {
++            napi_value value = nullptr;
++            double number = 0;
++            ctxt->status = napi_get_named_property(env, argv[1], field, &value);
++            CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "missing Calendar time");
++            ctxt->status = napi_get_value_double(env, value, &number);
++            CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "Calendar time must be numeric");
++            CHECK_ARGS_RETURN_VOID(ctxt, std::isfinite(number) && number == std::trunc(number) &&
++                number >= 0 && number <= 8640000000000000.0, PARAMETER_INVALID, "invalid Calendar time");
++        }
++        napi_value idValue = nullptr;
++        double id = 0;
++        ctxt->status = napi_get_named_property(env, argv[1], "id", &idValue);
++        CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "missing edit event ID");
++        ctxt->status = napi_get_value_double(env, idValue, &id);
++        CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "edit event ID must be numeric");
++        CHECK_ARGS_RETURN_VOID(ctxt, std::isfinite(id) && id == std::trunc(id) && id > 0 && id <= 2147483647,
++            PARAMETER_INVALID, "invalid edit event ID");
++        CalendarNapi* wrapper = nullptr;
++        ctxt->status = CalendarNapi::ToJson(env, ctxt->self, wrapper);
++        CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "invalid Calendar receiver");
++        CHECK_ARGS_RETURN_VOID(ctxt, wrapper != nullptr, INTERNAL_ERROR, "missing Calendar receiver");
++        ctxt->calendar = wrapper->GetNative();
++        CHECK_ARGS_RETURN_VOID(ctxt, ctxt->calendar != nullptr, INTERNAL_ERROR, "missing native Calendar");
++    };
++    ctxt->GetCbInfo(env, info, input);
++    auto execute = [ctxt]() {
++        auto result = ctxt->calendar->UpdateEventIfUnchanged(ctxt->revision, ctxt->event);
++        CHECK_RESULT_RETURN_VOID(ctxt, result, "Conditional Calendar update failed", ctxt->changed);
++    };
++    auto output = [env, ctxt](napi_value& result) {
++        ctxt->status = NapiUtil::SetValue(env, ctxt->changed, result);
++        CHECK_STATUS_RETURN_VOID(ctxt, INTERNAL_ERROR, "conditional result output failed");
++    };
++    return NapiQueue::AsyncWork(env, ctxt, std::string(__FUNCTION__), execute, output);
++}
++
++napi_value CalendarNapi::DeleteEventIfUnchanged(napi_env env, napi_callback_info info)
++{
++    auto ctxt = std::make_shared<ConditionalCalendarContext>();
++    auto input = [env, ctxt](size_t argc, napi_value* argv) {
++        CHECK_ARGS_RETURN_VOID(ctxt, argc == 2, PARAMETER_INVALID, "expected revision and event ID");
++        ctxt->status = NapiUtil::GetValue(env, argv[0], ctxt->revision);
++        CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "revision must be a string");
++        double id = 0;
++        ctxt->status = napi_get_value_double(env, argv[1], &id);
++        CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "event ID must be numeric");
++        CHECK_ARGS_RETURN_VOID(ctxt, std::isfinite(id) && id == std::trunc(id) && id > 0 && id <= 2147483647,
++            PARAMETER_INVALID, "invalid event ID");
++        ctxt->id = static_cast<int>(id);
++        CalendarNapi* wrapper = nullptr;
++        ctxt->status = CalendarNapi::ToJson(env, ctxt->self, wrapper);
++        CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "invalid Calendar receiver");
++        CHECK_ARGS_RETURN_VOID(ctxt, wrapper != nullptr, INTERNAL_ERROR, "missing Calendar receiver");
++        ctxt->calendar = wrapper->GetNative();
++        CHECK_ARGS_RETURN_VOID(ctxt, ctxt->calendar != nullptr, INTERNAL_ERROR, "missing native Calendar");
++    };
++    ctxt->GetCbInfo(env, info, input);
++    auto execute = [ctxt]() {
++        auto result = ctxt->calendar->DeleteEventIfUnchanged(ctxt->revision, ctxt->id);
++        CHECK_RESULT_RETURN_VOID(ctxt, result, "Conditional Calendar delete failed", ctxt->changed);
++    };
++    auto output = [env, ctxt](napi_value& result) {
++        ctxt->status = NapiUtil::SetValue(env, ctxt->changed, result);
++        CHECK_STATUS_RETURN_VOID(ctxt, INTERNAL_ERROR, "conditional result output failed");
+     };
+     return NapiQueue::AsyncWork(env, ctxt, std::string(__FUNCTION__), execute, output);
+ }
+--- a/applications/standard/calendardata/calendarmanager/native/include/native_calendar.h
++++ b/applications/standard/calendardata/calendarmanager/native/include/native_calendar.h
+@@ -22,6 +22,11 @@
+ #include "uri.h"
+ using Uri = OHOS::Uri;
+ namespace OHOS::CalendarApi::Native {
++struct EventSnapshot {
++    Event event;
++    std::string revision;
++};
++
+ class Calendar final {
+ public:
+     Calendar(int id);
+@@ -41,6 +46,9 @@
+     Result<int> DeleteEvents(const std::vector<int>& id);
+     void DeleteAllEvents();
+     Result<bool> UpdateEvent(const Event& event);
++    Result<EventSnapshot> GetEventSnapshot(int id);
++    Result<bool> UpdateEventIfUnchanged(const std::string& revision, const Event& event);
++    Result<bool> DeleteEventIfUnchanged(const std::string& revision, int id);
+     int UpdateEvents(const std::vector<Event>& events);
+     CalendarConfig GetConfig();
+     Result<bool> SetConfig(const CalendarConfig& config);
+@@ -66,6 +74,8 @@
+         return m_id;
+     }
+ private:
++    Result<std::string> ReadMutationRevision(int id);
++    Result<bool> ConditionalMutation(const std::string& revision, int id, const Event* event);
+     CalendarAccount m_account = {"", "", std::nullopt};
+     CalendarConfig m_config = {true, 0};
+     int m_id = 0;
+--- a/applications/standard/calendardata/calendarmanager/native/src/native_calendar.cpp
++++ b/applications/standard/calendardata/calendarmanager/native/src/native_calendar.cpp
+@@ -19,6 +19,8 @@
+ #include "data_ability_helper.h"
+ #include "native_util.h"
+ #include "napi_queue.h"
++#include <regex>
++#include <cmath>
+ 
+ namespace {
+     const string eventUrl = "datashare:///calendardata/Events";
+@@ -237,6 +239,159 @@
+     }
+ 
+     return Result<bool>(ret.GetValue() == 1);
++}
++
++Result<std::string> Calendar::ReadMutationRevision(int id)
++{
++    DataShare::DataSharePredicates predicates;
++    predicates.EqualTo("_id", id);
++    predicates.EqualTo("calendar_id", GetId());
++    std::vector<std::string> columns = {"calendarMutationRevision"};
++    auto result = DataShareHelperManager::GetInstance().Query(*m_eventUri, predicates, columns);
++    if (result.IsErr()) { return Result<std::string>(result.GetError()); }
++    auto rows = result.GetValue();
++    if (rows == nullptr) { return Result<std::string>(Error{"Missing Calendar revision result", INTERNAL_ERROR}); }
++    int count = 0;
++    int index = 0;
++    int64_t revision = -1;
++    auto status = rows->GetRowCount(count);
++    if (status == DataShare::E_OK && count == 1) { status = rows->GoToFirstRow(); }
++    if (status == DataShare::E_OK && count == 1) { status = rows->GetColumnIndex(columns[0], index); }
++    if (status == DataShare::E_OK && count == 1) { status = rows->GetLong(index, revision); }
++    rows->Close();
++    if (count == 0) { return Result<std::string>(Error{"Calendar event not found", QUERY_RESULT_EMPTY}); }
++    if (status != DataShare::E_OK || count != 1 || revision < 0 || revision > 9007199254740990LL) {
++        return Result<std::string>(Error{"Invalid Calendar revision result", INTERNAL_ERROR});
++    }
++    return Result<std::string>(std::to_string(GetId()) + ":" + std::to_string(id) + ":" + std::to_string(revision));
++}
++
++Result<EventSnapshot> Calendar::GetEventSnapshot(int id)
++{
++    if (id <= 0) { return Result<EventSnapshot>(Error{"Invalid Calendar event ID", PARAMETER_INVALID}); }
++    const std::vector<std::string> keys = {"id", "type", "title", "startTime", "endTime", "isAllDay",
++        "location", "description", "reminderTime", "recurrenceRule", "attendee", "service", "identifier",
++        "isLunar", "timeZone"};
++    // Every Event/Attendees/Reminders write advances the persistent revision in
++    // its own SQLite transaction. Equal before/after revisions prove the Event
++    // plus relations were read from a stable state, including legacy writers.
++    for (int attempt = 0; attempt < 3; ++attempt) {
++        auto before = ReadMutationRevision(id);
++        if (before.IsErr()) { return Result<EventSnapshot>(before.GetError()); }
++        DataShare::DataSharePredicates exact;
++        exact.EqualTo("_id", id); exact.EqualTo("calendar_id", GetId());
++        std::vector<std::string> columns = {"_id"};
++        std::set<std::string> fields;
++        Error fieldError = {"", NO_ERROR};
++        SetField(keys, columns, fields, fieldError);
++        if (fieldError.code != NO_ERROR) { return Result<EventSnapshot>(fieldError); }
++        auto base = DataShareHelperManager::GetInstance().Query(*m_eventUri, exact, columns);
++        if (base.IsErr()) { return Result<EventSnapshot>(base.GetError()); }
++        auto rows = base.GetValue();
++        if (rows == nullptr) { return Result<EventSnapshot>(Error{"Missing Calendar event result", INTERNAL_ERROR}); }
++        std::vector<Event> events;
++        std::vector<std::string> ids;
++        const auto baseStatus = ResultSetToEvents(ids, events, rows, fields);
++        rows->Close();
++        if (baseStatus != DataShare::E_OK || events.size() != 1 || events[0].id.value_or(-1) != id) {
++            return Result<EventSnapshot>(Error{"Calendar event snapshot missing", QUERY_RESULT_EMPTY});
++        }
++        events[0].attendees.clear();
++        events[0].reminderTime = std::vector<int>{};
++        for (int relation = 0; relation < 2; ++relation) {
++            DataShare::DataSharePredicates predicate;
++            predicate.EqualTo("event_id", id);
++            std::vector<std::string> childColumns = relation == 0
++                ? std::vector<std::string>{"event_id", "attendeeName", "attendeeEmail", "attendeeRelationship",
++                    "attendeeStatus", "attendeeType"}
++                : std::vector<std::string>{"event_id", "minutes"};
++            const auto& uri = relation == 0 ? m_attendeeUri : m_reminderUrl;
++            if (uri == nullptr) { return Result<EventSnapshot>(Error{"Missing Calendar relation URI", INTERNAL_ERROR}); }
++            auto child = DataShareHelperManager::GetInstance().Query(*uri, predicate, childColumns);
++            if (child.IsErr()) { return Result<EventSnapshot>(child.GetError()); }
++            auto childRows = child.GetValue();
++            if (childRows == nullptr) {
++                return Result<EventSnapshot>(Error{"Missing Calendar relation result", INTERNAL_ERROR});
++            }
++            int count = 0;
++            auto status = childRows->GetRowCount(count);
++            if (status == DataShare::E_OK && count > 0) {
++                status = relation == 0 ? ResultSetToMultiAttendees(events, childRows)
++                    : ResultSetToMultiReminders(events, childRows);
++            }
++            childRows->Close();
++            if (status != DataShare::E_OK || count < 0) {
++                return Result<EventSnapshot>(Error{"Invalid Calendar relation result", INTERNAL_ERROR});
++            }
++        }
++        auto after = ReadMutationRevision(id);
++        if (after.IsErr()) { return Result<EventSnapshot>(after.GetError()); }
++        if (before.GetValue() != after.GetValue()) { continue; }
++        return Result<EventSnapshot>(EventSnapshot{events[0], after.GetValue()});
++    }
++    return Result<EventSnapshot>(Error{"Calendar event changed during snapshot; retry", INTERNAL_ERROR});
++}
++
++Result<bool> Calendar::ConditionalMutation(const std::string& revision, int id, const Event* event)
++{
++    const std::string prefix = std::to_string(GetId()) + ":" + std::to_string(id) + ":";
++    if (id <= 0 || revision.size() > 64 || revision.compare(0, prefix.size(), prefix) != 0) {
++        return Result<bool>(Error{"Calendar revision belongs to another event", PARAMETER_INVALID});
++    }
++    const auto counter = revision.substr(prefix.size());
++    if (!std::regex_match(counter, std::regex("0|[1-9][0-9]{0,15}"))) {
++        return Result<bool>(Error{"Invalid Calendar revision", PARAMETER_INVALID});
++    }
++    int64_t parsed = 0;
++    for (const char digit : counter) { parsed = parsed * 10 + (digit - '0'); }
++    if (parsed > 9007199254740990LL) {
++        return Result<bool>(Error{"Calendar revision out of range", PARAMETER_INVALID});
++    }
++    DataShare::DataShareValuesBucket values;
++    values.Put("__calendarMutationKind", std::string(event == nullptr ? "delete" : "update"));
++    values.Put("__calendarMutationId", id);
++    values.Put("__calendarMutationExpectedRevision", counter);
++    if (event != nullptr) {
++        if (event->type != Normal || !event->title.has_value() || event->title->empty() || event->title->size() > 20000 ||
++            !event->description.has_value() || event->description->size() > 20000 ||
++            event->startTime < 0 || event->endTime <= event->startTime || event->endTime > 8640000000000000LL ||
++            !event->reminderTime.has_value() || event->reminderTime->size() > 1) {
++            return Result<bool>(Error{"Invalid conditional Calendar edit fields", PARAMETER_INVALID});
++        }
++        std::string reminders;
++        if (!event->reminderTime->empty()) {
++            const int minutes = event->reminderTime->front();
++            if (minutes < 0 || minutes > 10080) {
++                return Result<bool>(Error{"Invalid Calendar reminder minutes", PARAMETER_INVALID});
++            }
++            reminders = std::to_string(minutes);
++        }
++        values.Put("title", *event->title);
++        values.Put("description", *event->description);
++        values.Put("dtstart", event->startTime);
++        values.Put("dtend", event->endTime);
++        values.Put("__calendarMutationReminders", reminders);
++    }
++    DataShare::DataSharePredicates predicates;
++    predicates.EqualTo("_id", id);
++    predicates.EqualTo("calendar_id", GetId());
++    predicates.EqualTo("calendarMutationRevision", parsed);
++    auto result = DataShareHelperManager::GetInstance().Update(*m_eventUri, predicates, values);
++    if (result.IsErr()) { return Result<bool>(result.GetError()); }
++    if (result.GetValue() != 0 && result.GetValue() != 1) {
++        return Result<bool>(Error{"Unexpected conditional Calendar mutation count", INTERNAL_ERROR});
++    }
++    return Result<bool>(result.GetValue() == 1);
++}
++
++Result<bool> Calendar::UpdateEventIfUnchanged(const std::string& revision, const Event& event)
++{
++    return ConditionalMutation(revision, event.id.value_or(-1), &event);
++}
++
++Result<bool> Calendar::DeleteEventIfUnchanged(const std::string& revision, int id)
++{
++    return ConditionalMutation(revision, id, nullptr);
+ }
+ 
+ int Calendar::UpdateEvents(const std::vector<Event>& events)
+--- /dev/null
++++ b/applications/standard/calendardata/datamanager/src/main/ets/processor/events/ConditionalEventMutation.ets
+@@ -0,0 +1,126 @@
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import rdb from '@ohos.data.relationalStore';
++import dataSharePredicates from '@ohos.data.dataSharePredicates';
++import util from '@ohos.util';
++import { BusinessError } from '@ohos.base';
++
++export const MUTATION_KIND: string = '__calendarMutationKind';
++export const MUTATION_ID: string = '__calendarMutationId';
++export const MUTATION_REVISION: string = '__calendarMutationExpectedRevision';
++export const MUTATION_REMINDERS: string = '__calendarMutationReminders';
++export const MUTATION_COLUMN: string = 'calendarMutationRevision';
++
++export interface ConditionalMutationResult {
++  id: number;
++  count: number;
++  operation: string;
++}
++
++function invalid(message: string): BusinessError {
++  return { code: 401, name: 'CalendarConditionalMutationParameterError', message: message };
++}
++
++/** Invoked only after the existing DataShare authentication and creator filter. */
++export async function mutateEventConditionally(store: rdb.RdbStore, values: rdb.ValuesBucket,
++  authorizedPredicates: dataSharePredicates.DataSharePredicates): Promise<ConditionalMutationResult> {
++  const operation = values[MUTATION_KIND] as string;
++  const id = values[MUTATION_ID] as number;
++  const revision = values[MUTATION_REVISION] as string;
++  const allowed = [MUTATION_KIND, MUTATION_ID, MUTATION_REVISION];
++  if (operation === 'update') {
++    allowed.push('title', 'dtstart', 'dtend', 'description', MUTATION_REMINDERS);
++  }
++  if (!['update', 'delete'].includes(operation) || !Number.isSafeInteger(id) || id <= 0 || id > 2147483647 ||
++    typeof revision !== 'string' || !/^(0|[1-9][0-9]{0,15})$/.test(revision) ||
++    !Number.isSafeInteger(Number(revision)) || Object.keys(values).some((key: string) => !allowed.includes(key))) {
++    throw invalid('Invalid conditional Calendar mutation');
++  }
++  const changes: rdb.ValuesBucket = {};
++  let reminders: number[] = [];
++  if (operation === 'update') {
++    const title = values['title'] as string;
++    const description = values['description'] as string;
++    const start = values['dtstart'] as number;
++    const end = values['dtend'] as number;
++    const reminderText = values[MUTATION_REMINDERS] as string;
++    if (typeof title !== 'string' || title.trim().length === 0 || title.length > 5000 ||
++      typeof description !== 'string' || description.length > 5000 || !Number.isSafeInteger(start) ||
++      !Number.isSafeInteger(end) || start < 0 || end <= start || end > 8640000000000000 ||
++      typeof reminderText !== 'string' || (reminderText !== '' && !/^(0|[1-9][0-9]{0,4})$/.test(reminderText)) ||
++      (reminderText !== '' && Number(reminderText) > 10080)) {
++      throw invalid('Invalid conditional Calendar edit fields');
++    }
++    if (reminderText !== '') { reminders = [Number(reminderText)]; }
++    changes['title'] = title; changes['description'] = description;
++    changes['dtstart'] = start; changes['dtend'] = end;
++  }
++
++  // The original low-authority creator predicate is evaluated by the real
++  // provider. No fixture or privileged helper opens this database.
++  const authorized = await store.query('Events', authorizedPredicates,
++    ['_id', 'calendar_id', 'creator', MUTATION_COLUMN]);
++  let calendarId: number = 0;
++  let creator: string = '';
++  try {
++    if (authorized.rowCount === 0) { return { id: id, count: 0, operation: operation }; }
++    if (authorized.rowCount !== 1 || !authorized.goToFirstRow() ||
++      authorized.getLong(authorized.getColumnIndex('_id')) !== id) {
++      throw invalid('Conditional Calendar predicate must identify one exact revision');
++    }
++    if (authorized.getLong(authorized.getColumnIndex(MUTATION_COLUMN)).toString() !== revision) {
++      return { id: id, count: 0, operation: operation };
++    }
++    calendarId = authorized.getLong(authorized.getColumnIndex('calendar_id'));
++    creator = authorized.getString(authorized.getColumnIndex('creator'));
++  } finally { authorized.close(); }
++
++  const tx = await store.createTransaction({ transactionType: rdb.TransactionType.IMMEDIATE });
++  let finished: boolean = false;
++  try {
++    const exact = new rdb.RdbPredicates('Events').equalTo('_id', id).equalTo('calendar_id', calendarId)
++      .equalTo('creator', creator).equalTo(MUTATION_COLUMN, Number(revision));
++    const actual = await tx.query(exact,
++      ['_id', 'uuid', 'important_event_type', 'allDay', 'event_calendar_type', 'rrule', 'rdate', 'exrule', 'exdate']);
++    let uuid: string = '';
++    try {
++      if (actual.rowCount === 0) {
++        await tx.rollback(); finished = true;
++        return { id: id, count: 0, operation: operation };
++      }
++      if (actual.rowCount !== 1 || !actual.goToFirstRow()) { throw invalid('Ambiguous Calendar revision'); }
++      // The product editor remains restricted to ordinary timed non-recurring
++      // events. Rich event and relation fields are preserved, never rewritten.
++      for (const column of ['important_event_type', 'allDay', 'event_calendar_type']) {
++        if (actual.getLong(actual.getColumnIndex(column)) !== 0) { throw invalid('Read-only Calendar event'); }
++      }
++      for (const column of ['rrule', 'rdate', 'exrule', 'exdate']) {
++        const index = actual.getColumnIndex(column);
++        if (!actual.isColumnNull(index) && actual.getString(index) !== '') { throw invalid('Read-only recurring event'); }
++      }
++      uuid = actual.getString(actual.getColumnIndex('uuid'));
++    } finally { actual.close(); }
++    const reminderPredicate = new rdb.RdbPredicates('Reminders').equalTo('event_id', id);
++    const oldReminders = await tx.query(reminderPredicate, ['_id']);
++    try { if (oldReminders.rowCount > 1) { throw invalid('Read-only multiple-reminder event'); } }
++    finally { oldReminders.close(); }
++    let count: number;
++    if (operation === 'delete') {
++      count = await tx.delete(exact); // Existing event cleanup triggers cover all child tables.
++    } else {
++      count = await tx.update(changes, exact);
++      if (count !== 1) { throw invalid('Conditional Calendar update lost its revision'); }
++      await tx.delete(reminderPredicate);
++      for (const minutes of reminders) {
++        const inserted = await tx.insert('Reminders', { event_id: id, minutes: minutes, creator: creator,
++          reminder_uuid: util.generateRandomUUID(), event_uuid: uuid });
++        if (inserted <= 0) { throw invalid('Conditional Calendar reminder insert failed'); }
++      }
++    }
++    if (count !== 1) { throw invalid('Conditional Calendar mutation affected unexpected rows'); }
++    await tx.commit(); finished = true;
++    return { id: id, count: count, operation: operation };
++  } catch (error) {
++    if (!finished) { await tx.rollback(); }
++    throw error; // Actual RDB/provider errors must not become stale=false.
++  }
++}
+--- a/applications/standard/calendardata/datamanager/src/main/ets/processor/events/EventsProcessor.ets
++++ b/applications/standard/calendardata/datamanager/src/main/ets/processor/events/EventsProcessor.ets
+@@ -40,6 +40,10 @@
+ import { parseEventByIndex } from '@ohos/datastructure';
+ import { GlobalPackageName } from '@ohos/common';
+ 
++import { MUTATION_KIND, MUTATION_COLUMN, mutateEventConditionally } from './ConditionalEventMutation';
++import { notifyProviderChange, OPERATION_UPDATE, OPERATION_DELETE } from '../../commonevents/notify/ProviderChangeNotifier';
++import { AlertsObserverManager } from '../alerts/observer/AlertsObserverManager';
++
+ const TAG: string = 'EventsProcessor';
+ const CHANNEL_ID: string = 'channel_id';
+ 
+@@ -52,6 +56,7 @@
+   async insertByHighAuthority(rdbStore: data_rdb.RdbStore, uri: string,
+                               value: data_rdb.ValuesBucket, callback: Function) {
+     let values = filterValuesBucket(value, CHANNEL_ID);
++    delete values[MUTATION_COLUMN];
+     if (!this.isFromMigrate) {
+       const callerName = getBundleNameByUri(uri);
+       initValueCreator(values, callerName);
+@@ -75,6 +80,7 @@
+   async insertByLowAuthority(rdbStore: data_rdb.RdbStore, uri: string,
+                              value: data_rdb.ValuesBucket, callback: Function) {
+     let values = filterValuesBucket(value, CHANNEL_ID);
++    delete values[MUTATION_COLUMN];
+     if (!this.isFromMigrate) {
+       const callerName = getBundleNameByUri(uri);
+       initValueCreator(values, callerName);
+@@ -126,17 +132,46 @@
+   async updateByHighAuthority(rdbStore: data_rdb.RdbStore, uri: string, value: data_rdb.ValuesBucket,
+                               predicates: dataSharePredicates.DataSharePredicates, callback: Function) {
+     let values = filterValuesBucket(value, CHANNEL_ID);
+-    deleteValueCreator(values);
++    delete values[MUTATION_COLUMN];
++    values = deleteValueCreator(values);
++    if (values[MUTATION_KIND] !== undefined) {
++      await this.conditionalMutation(rdbStore, values, predicates, callback);
++      return;
++    }
+     this.updateEventWithInstance(rdbStore, uri, values, predicates, callback);
+   }
+ 
+   async updateByLowAuthority(rdbStore: data_rdb.RdbStore, uri: string, value: data_rdb.ValuesBucket,
+                              predicates: dataSharePredicates.DataSharePredicates, callback: Function) {
+     let values = filterValuesBucket(value, CHANNEL_ID);
++    delete values[MUTATION_COLUMN];
+     const callerName = getBundleNameByUri(uri);
+-    deleteValueCreator(values);
++    values = deleteValueCreator(values);
+     initPredicateCreator(predicates, callerName);
++    if (values[MUTATION_KIND] !== undefined) {
++      await this.conditionalMutation(rdbStore, values, predicates, callback);
++      return;
++    }
+     this.updateEventWithInstance(rdbStore, uri, values, predicates, callback);
++  }
++
++  private async conditionalMutation(rdbStore: data_rdb.RdbStore, values: data_rdb.ValuesBucket,
++    predicates: dataSharePredicates.DataSharePredicates, callback: Function): Promise<void> {
++    try {
++      const result = await mutateEventConditionally(rdbStore, values, predicates);
++      if (result.count === 1) {
++        if (result.operation === 'update') {
++          await updateInstances(rdbStore, [result.id]);
++        }
++        const operation = result.operation === 'delete' ? OPERATION_DELETE : OPERATION_UPDATE;
++        notifyProviderChange(EventColumns.TABLE_NAME, operation);
++        AlertsObserverManager.getInstance().notifyAlertsChanges(operation, EventColumns.TABLE_NAME);
++      }
++      callback(null, result.count);
++    } catch (error) {
++      // A real provider/transaction error is never a stale-revision result.
++      callback(error as BusinessError, -1);
++    }
+   }
+ 
+   async queryByLowAuthority(rdbStore: data_rdb.RdbStore, uri: string, columns: Array<string>,
+--- a/applications/standard/calendardata/datamanager/src/main/ets/utils/CalendarDataHelper.ets
++++ b/applications/standard/calendardata/datamanager/src/main/ets/utils/CalendarDataHelper.ets
+@@ -15,6 +15,7 @@
+  */
+ 
+ import ohosDataRdb from '@ohos.data.relationalStore';
++import { ensureCalendarMutationSchema } from './CalendarMutationSchema';
+ import { EventColumns } from '@ohos/datastructure/src/main/ets/events/EventColumns';
+ import { InstancesColumns } from '@ohos/datastructure/src/main/ets/instances/InstancesColumns';
+ import { CalendarsColumns } from '@ohos/datastructure/src/main/ets/calendars/CalendarsColumns';
+@@ -352,6 +353,7 @@
+   private static instance: CalendarDataHelper;
+ 
+   private rdbStore: ohosDataRdb.RdbStore | undefined = undefined;
++  private initializing: Promise<void> | undefined = undefined;
+ 
+   private constructor() {
+   }
+@@ -371,9 +373,10 @@
+    * get the instance of rdbStore
+    */
+   public async getRdbStore() {
+-    if (this.rdbStore === null || this.rdbStore === undefined) {
+-      await CalendarDataHelper.getInstance().initRdbStore();
+-    }
++    if (this.initializing === undefined) {
++      this.initializing = this.initRdbStore();
++    }
++    await this.initializing;
+     return this.rdbStore;
+   }
+ 
+@@ -424,18 +427,20 @@
+       await this.rdbStore?.executeSql(CREATE_EXTEND_CALENDAR_EVENT_TABLE_NAME_SQL, []);
+       Log.log(TAG, 'initRdbStore CREATE_EXTEND_CALENDAR_EVENT_TABLE_NAME_SQL succeed');
+ 
+-      this.createSyncIdUpdateTrigger();
++      await this.createSyncIdUpdateTrigger();
+       Log.log(TAG, 'initRdbStore createSyncIdUpdateTrigger succeed');
+-      this.createDeleteEventTriggers();
++      await this.createDeleteEventTriggers();
+       Log.log(TAG, 'initRdbStore createDeleteEventTriggers succeed');
+-      this.createColorsTriggers();
++      await this.createColorsTriggers();
+       Log.log(TAG, 'initRdbStore createColorsTriggers succeed');
+-      this.createCalendarCleanupTrigger();
++      await this.createCalendarCleanupTrigger();
+       Log.log(TAG, 'initRdbStore createCalendarCleanupTrigger succeed');
+       Log.log(TAG, 'initRdbStore executeSql end');
+     } catch (err) {
+       Log.error(TAG, `initRdbStore err:${err.message}`);
+-    }
++      throw err;
++    }
++    await ensureCalendarMutationSchema(this.rdbStore);
+   }
+ 
+   private async createEventsTable() {
+--- /dev/null
++++ b/applications/standard/calendardata/datamanager/src/main/ets/utils/CalendarMutationSchema.ets
+@@ -0,0 +1,56 @@
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import rdb from '@ohos.data.relationalStore';
++
++const COLUMN: string = 'calendarMutationRevision';
++const CLOCK: string = 'CalendarMutationClock';
++const MAX_REVISION: number = 9007199254740990;
++
++/** Additive migration for both an existing provider DB and a newly created DB. */
++export async function ensureCalendarMutationSchema(store: rdb.RdbStore): Promise<void> {
++  const columns = await store.querySql('PRAGMA table_info(Events)');
++  let exists: boolean = false;
++  try {
++    while (columns.goToNextRow()) {
++      if (columns.getString(columns.getColumnIndex('name')) !== COLUMN) { continue; }
++      if (exists || columns.getString(columns.getColumnIndex('type')).toUpperCase() !== 'INTEGER' ||
++        columns.getLong(columns.getColumnIndex('notnull')) !== 1 ||
++        columns.getString(columns.getColumnIndex('dflt_value')) !== '0') {
++        throw new Error('Incompatible Calendar mutation revision schema');
++      }
++      exists = true;
++    }
++  } finally { columns.close(); }
++  if (!exists) {
++    await store.executeSql(`ALTER TABLE Events ADD COLUMN ${COLUMN} INTEGER NOT NULL DEFAULT 0`);
++  }
++  await store.executeSql(`CREATE TABLE IF NOT EXISTS ${CLOCK} ` +
++    '(singleton INTEGER PRIMARY KEY CHECK(singleton = 1), value INTEGER NOT NULL CHECK(value >= 0))');
++  await store.executeSql(`INSERT OR IGNORE INTO ${CLOCK}(singleton, value) VALUES(1, 0)`);
++  await store.executeSql(`CREATE TRIGGER IF NOT EXISTS calendar_mutation_clock_bound BEFORE UPDATE ON ${CLOCK} ` +
++    `WHEN OLD.value >= ${MAX_REVISION} BEGIN SELECT RAISE(ABORT, 'Calendar revision exhausted'); END`);
++  const advance = `UPDATE ${CLOCK} SET value = value + 1 WHERE singleton = 1; `;
++  const assignNew = `UPDATE Events SET ${COLUMN} = (SELECT value FROM ${CLOCK} WHERE singleton = 1) ` +
++    'WHERE _id = NEW._id; ';
++  await store.executeSql('CREATE TRIGGER IF NOT EXISTS calendar_mutation_event_insert AFTER INSERT ON Events ' +
++    `BEGIN ${advance}${assignNew}END`);
++  await store.executeSql('CREATE TRIGGER IF NOT EXISTS calendar_mutation_event_update AFTER UPDATE ON Events ' +
++    `WHEN NEW.${COLUMN} = OLD.${COLUMN} BEGIN ${advance}${assignNew}END`);
++  // These triggers execute in the SAME SQLite transaction as the real relation
++  // write. Failed or rolled-back mutations also roll back clock and revision.
++  // Using a provider-wide persistent clock prevents delete/reinsert ABA even
++  // when a raw DataShare client supplies an old event ID or UUID.
++  for (const table of ['Attendees', 'Reminders']) {
++    const key = 'event_id';
++    for (const operation of ['INSERT', 'UPDATE', 'DELETE']) {
++      let body: string = '';
++      if (operation !== 'INSERT') {
++        body += `UPDATE Events SET ${COLUMN} = ${COLUMN} WHERE _id = OLD.${key}; `;
++      }
++      if (operation !== 'DELETE') {
++        body += `UPDATE Events SET ${COLUMN} = ${COLUMN} WHERE _id = NEW.${key}; `;
++      }
++      await store.executeSql(`CREATE TRIGGER IF NOT EXISTS calendar_mutation_${table}_${operation} ` +
++        `AFTER ${operation} ON ${table} BEGIN ${body}END`);
++    }
++  }
++}
+--- a/applications/standard/calendardata/entry/src/main/ets/MainAbility/MainAbility.ets
++++ b/applications/standard/calendardata/entry/src/main/ets/MainAbility/MainAbility.ets
+@@ -2,47 +2,68 @@
+ import UIAbility from '@ohos.app.ability.UIAbility';
+ import Want from '@ohos.app.ability.Want';
+ import window from '@ohos.window';
++import util from '@ohos.util';
++import { CalendarObserverLifetime } from '../calendar/CalendarChangeSubscription';
+ 
+ export default class MainAbility extends UIAbility {
+   private storage: LocalStorage = new LocalStorage();
+   private revision: number = 0;
+   private visible: boolean = false;
++  private instance: string = util.generateRandomUUID();
++  private observerLifetime: CalendarObserverLifetime = new CalendarObserverLifetime();
++
++  private observe(event: string, uri: string = ''): void {
++    console.info('CALENDAR579 ' + JSON.stringify({ event: event, instance: this.instance,
++      revision: this.revision, timestamp: Date.now(), uri: uri }));
++  }
+ 
+   onCreate(want: Want): void {
++    this.storage.setOrCreate<string>('calendarInstance', this.instance);
++    this.storage.setOrCreate<CalendarObserverLifetime>('calendarObserverLifetime', this.observerLifetime);
++    this.observe('onCreate', want.uri ?? '');
+     this.storage.setOrCreate<boolean>('calendarForeground', false);
+     this.storage.setOrCreate<string>('calendarRoute', want.uri ?? '');
+     this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+   }
+ 
+   onNewWant(want: Want): void {
++    this.observe('onNewWant', want.uri ?? '');
+     this.storage.setOrCreate<string>('calendarRoute', want.uri ?? '');
+     this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+   }
+ 
+   onWindowStageCreate(windowStage: window.WindowStage): void {
++    this.observe('onWindowStageCreate');
+     this.storage.setOrCreate<boolean>('calendarForeground', this.visible);
+     this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+     windowStage.loadContent('pages/index', this.storage);
+   }
+ 
+   onForeground(): void {
++    this.observe('onForeground');
+     this.visible = true;
+     this.storage.setOrCreate<boolean>('calendarForeground', true);
+     this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+   }
+ 
+   onBackground(): void {
++    this.observe('onBackground');
++    this.observerLifetime.stop();
+     this.visible = false;
+     this.storage.setOrCreate<boolean>('calendarForeground', false);
+     this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+   }
+ 
+   onWindowStageDestroy(): void {
++    this.observe('onWindowStageDestroy');
++    this.observerLifetime.stop();
+     this.storage.setOrCreate<boolean>('calendarForeground', false);
+     this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+   }
+ 
+   onDestroy(): void {
++    this.observe('onDestroy');
++    this.observerLifetime.stop();
+     this.visible = false;
+     this.storage.setOrCreate<boolean>('calendarForeground', false);
+     this.storage.setOrCreate<string>('calendarRoute', '');
+--- /dev/null
++++ b/applications/standard/calendardata/entry/src/main/ets/calendar/CalendarAtomic.ets
+@@ -0,0 +1,18 @@
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import calendarManager from '@ohos.calendarManager';
++
++export interface CalendarEventSnapshot {
++  event: calendarManager.Event;
++  revision: string;
++}
++
++/** Additive native product methods; this is a declaration, never a JS fallback.
++ * updateEventIfUnchanged changes only title/start/end/description/reminderTime.
++ * All other persisted Event and attendee/service/location fields are preserved.
++ * Existing rich-event and multiple-reminder items remain read-only here.
++ */
++export interface AtomicCalendar extends calendarManager.Calendar {
++  getEventSnapshot(id: number): Promise<CalendarEventSnapshot>;
++  updateEventIfUnchanged(revision: string, fields: calendarManager.Event): Promise<boolean>;
++  deleteEventIfUnchanged(revision: string, id: number): Promise<boolean>;
++}
+--- a/applications/standard/calendardata/entry/src/main/ets/calendar/CalendarBusinessController.ets
++++ b/applications/standard/calendardata/entry/src/main/ets/calendar/CalendarBusinessController.ets
+@@ -3,6 +3,8 @@
+ import { common } from '@kit.AbilityKit';
+ import { BusinessError } from '@ohos.base';
+ import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
++import { AtomicCalendar } from './CalendarAtomic';
++import { CalendarChangeSubscription } from './CalendarChangeSubscription';
+ 
+ export class CalendarChoice {
+   id: number = 0;
+@@ -33,10 +35,19 @@
+   private writing: boolean = false;
+   private readFilter: calendarManager.EventFilter | undefined = undefined;
+   private publish: (view: CalendarView) => void;
+-
+-  constructor(context: common.UIAbilityContext, publish: (view: CalendarView) => void) {
++  private changes: CalendarChangeSubscription;
++  private selectedRevision: string = '';
++  private changePending: boolean = false;
++  private instance: string;
++
++  constructor(context: common.UIAbilityContext, publish: (view: CalendarView) => void, instance: string) {
+     this.context = context;
++    this.instance = instance;
+     this.publish = publish;
++    this.changes = new CalendarChangeSubscription(context, instance, () => {
++      this.changePending = true;
++      if (!this.writing) { this.refresh('provider-change'); }
++    });
+   }
+ 
+   private emit(): void {
+@@ -67,11 +78,13 @@
+       return;
+     }
+     this.active = true;
+-    this.refresh();
++    this.refresh('foreground');
+   }
+ 
+   background(): void {
+     this.active = false;
++    this.changes.stop();
++    this.selectedRevision = '';
+     this.generation++;
+     this.calendars = [];
+     this.view = new CalendarView();
+@@ -85,11 +98,15 @@
+     this.disposed = true;
+   }
+ 
+-  async refresh(): Promise<void> {
++  async refresh(reason: string = 'user'): Promise<void> {
+     if (!this.active || this.disposed || this.writing) {
+       return;
+     }
+     const generation = ++this.generation;
++    this.changePending = false;
++    this.selectedRevision = '';
++    console.info('CALENDAR579 ' + JSON.stringify({ event: 'refresh', instance: this.instance,
++      timestamp: Date.now(), reason: reason, generation: generation }));
+     this.view.loading = true;
+     this.view.ready = false;
+     this.view.error = '';
+@@ -107,6 +124,8 @@
+         grants.authResults.length !== 1 || grants.authResults[0] !== 0) {
+         throw new Error('未授予读取日历权限；可授权后重新读取');
+       }
++      await this.changes.start();
++      if (!this.current(generation)) { return; }
+       const manager = this.manager ?? calendarManager.getCalendarManager(this.context);
+       this.manager = manager;
+       const calendars = await manager.getAllCalendars();
+@@ -211,18 +230,32 @@
+     this.refresh();
+   }
+ 
+-  select(id: number, start: number): void {
++  async select(id: number, start: number): Promise<void> {
+     const event = this.view.events.find((item: calendarManager.Event) => item.id === id &&
+       (item.instanceStartTime ?? item.startTime) === start);
+-    if (this.active && !this.writing && this.view.ready && event !== undefined) {
+-      this.view.selected = event;
++    if (!this.active || this.writing || !this.view.ready || event === undefined) { return; }
++    const generation = this.generation;
++    try {
++      const snapshot = await (this.calendar() as AtomicCalendar).getEventSnapshot(id);
++      if (!this.current(generation) || this.writing) { return; }
++      snapshot.event.instanceStartTime = event.instanceStartTime;
++      snapshot.event.instanceEndTime = event.instanceEndTime;
++      this.selectedRevision = snapshot.revision;
++      this.view.selected = snapshot.event;
+       this.emit();
++    } catch (error) {
++      if (this.current(generation)) {
++        this.selectedRevision = '';
++        this.view.error = this.failure(error as BusinessError, '日程读取失败');
++        this.emit();
++      }
+     }
+   }
+ 
+   cancel(): void {
+     if (this.active && !this.writing) {
+       this.view.selected = undefined;
++      this.selectedRevision = '';
+       this.view.error = '';
+       this.emit();
+     }
+@@ -241,6 +274,7 @@
+       return;
+     }
+     const generation = this.generation;
++    const displayedRevision = this.selectedRevision;
+     let submitted = false;
+     this.writing = true;
+     this.view.error = '';
+@@ -268,28 +302,10 @@
+       let event: calendarManager.Event = { type: calendarManager.EventType.NORMAL,
+         title: title, startTime: start, endTime: end, description: description, timeZone: 'UTC' };
+       if (existingId > 0) {
+-        // Keep the native filter wrapper strongly owned across the async read,
+-        // including background/dispose, until the actual promise settles.
+-        this.readFilter = calendarManager.EventFilter.filterById([existingId]);
+-        const current = await calendar.getEvents(this.readFilter, ['id', 'type', 'title', 'startTime', 'endTime',
+-  'isAllDay', 'location', 'description', 'reminderTime', 'recurrenceRule', 'attendee', 'service',
+-  'identifier', 'isLunar', 'timeZone', 'instanceStartTime', 'instanceEndTime']);
+-        if (!this.current(generation)) {
+-          return;
+-        }
+-        if (current.length !== 1 || current[0].id !== existingId || !this.editable(current[0])) {
+-          throw new Error('日程已变更，请刷新后重试');
+-        }
+-        this.checkEvents(current);
+-        // Preserve every untouched public field; do not replace the event
+-        // with a reduced title/time object and erase attendees or services.
+-        event = current[0];
+-        event.title = title;
+-        event.startTime = start;
+-        event.endTime = end;
+-        event.description = description;
+-        event.instanceStartTime = undefined;
+-        event.instanceEndTime = undefined;
++        if (displayedRevision.length === 0) { throw new Error('日程版本不可用，请刷新后重试'); }
++        event.id = existingId;
++        // The provider updates only these five editable fields and reminders
++        // in its transaction; all other event/attendee/service data is retained.
+       }
+       event.reminderTime = reminder === undefined ? [] : [reminder];
+       if (!this.current(generation)) {
+@@ -297,7 +313,9 @@
+       }
+       submitted = true;
+       if (existingId > 0) {
+-        await calendar.updateEvent(event);
++        event.timeZone = undefined;
++        const changed = await (calendar as AtomicCalendar).updateEventIfUnchanged(displayedRevision, event);
++        if (!changed) { throw new Error('日程已变更，请刷新后重试'); }
+       } else {
+         const id = await calendar.addEvent(event);
+         if (!Number.isInteger(id) || id <= 0 || id > 2147483647) {
+@@ -316,7 +334,7 @@
+     } finally {
+       this.readFilter = undefined;
+       this.writing = false;
+-      if (submitted || generation !== this.generation) {
++      if (submitted || this.changePending || generation !== this.generation) {
+         if (this.active && !this.disposed) {
+           // Read again after a submitted transaction, including when its UI
+           // was backgrounded. Never pretend that a submitted write was undone.
+@@ -491,6 +509,7 @@
+       return;
+     }
+     const generation = this.generation;
++    const displayedRevision = this.selectedRevision;
+     let submitted = false;
+     let refreshRequired = false;
+     this.writing = true;
+@@ -500,6 +519,7 @@
+     try {
+       refreshRequired = true;
+       const displayedSnapshot = this.deleteSnapshot(selected);
++      if (displayedRevision.length === 0) { throw new Error('日程版本不可用，请刷新后重试'); }
+       refreshRequired = false;
+       const calendar = this.calendar();
+       if (!await this.requestWrite(generation)) {
+@@ -520,11 +540,12 @@
+         this.deleteSnapshot(current[0]) !== displayedSnapshot) {
+         throw new Error('日程已变更，请刷新后重试');
+       }
+-      // This read/compare/delete is still not an atomic CAS: the public API
+-      // accepts only the ID, with no expected-version transaction argument.
++      // The original strict read is a UI shape check; the following native
++      // operation also checks the original displayed revision in one DB transaction.
+       refreshRequired = false;
+       submitted = true;
+-      await calendar.deleteEvent(id);
++      const changed = await (calendar as AtomicCalendar).deleteEventIfUnchanged(displayedRevision, id);
++      if (!changed) { throw new Error('日程已变更，请刷新后重试'); }
+       if (this.current(generation)) {
+         this.view.notice = '日程已删除';
+       }
+@@ -536,7 +557,7 @@
+     } finally {
+       this.readFilter = undefined;
+       this.writing = false;
+-      if ((submitted || refreshRequired || generation !== this.generation) && this.active && !this.disposed) {
++      if ((submitted || refreshRequired || this.changePending || generation !== this.generation) && this.active && !this.disposed) {
+         const error = this.current(generation) ? this.view.error : '';
+         const notice = this.current(generation) ? this.view.notice : '';
+         const refreshGeneration = this.generation + 1;
+--- /dev/null
++++ b/applications/standard/calendardata/entry/src/main/ets/calendar/CalendarChangeSubscription.ets
+@@ -0,0 +1,77 @@
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import dataShare from '@ohos.data.dataShare';
++import { common } from '@kit.AbilityKit';
++
++const URI: string = 'datashareproxy://com.ohos.calendardata/Calendars';
++
++/** Exact provider notification URI emitted by ProviderChangeNotifier. */
++export class CalendarChangeSubscription {
++  private helper: dataShare.DataShareHelper | undefined = undefined;
++  private pending: Promise<void> | undefined = undefined;
++  private active: boolean = false;
++  private epoch: number = 0;
++  private readonly callback = (): void => {
++    if (this.active && this.helper !== undefined) {
++      console.info('CALENDAR579 ' + JSON.stringify({ event: 'provider-change', instance: this.instance,
++        timestamp: Date.now(), uri: URI }));
++      this.changed();
++    }
++  };
++
++  private context: common.UIAbilityContext;
++  private instance: string;
++  private changed: () => void;
++  constructor(context: common.UIAbilityContext, instance: string, changed: () => void) {
++    this.context = context; this.instance = instance; this.changed = changed;
++  }
++
++  async start(): Promise<void> {
++    this.active = true;
++    if (this.helper !== undefined) { return; }
++    if (this.pending !== undefined) {
++      await this.pending;
++      if (this.active && this.helper === undefined) { await this.start(); }
++      return;
++    }
++    const epoch = this.epoch;
++    this.pending = this.attach(epoch);
++    try { await this.pending; } finally { this.pending = undefined; }
++  }
++
++  private async attach(epoch: number): Promise<void> {
++    const helper = await dataShare.createDataShareHelper(this.context,
++      'datashareproxy://com.ohos.calendardata', { isProxy: true });
++    if (!this.active || epoch !== this.epoch) { await helper.close(); return; }
++    try {
++      helper.on('dataChange', URI, this.callback);
++      this.helper = helper;
++      console.info('CALENDAR579 ' + JSON.stringify({ event: 'subscribe', instance: this.instance,
++        timestamp: Date.now(), uri: URI }));
++    } catch (error) { await helper.close(); throw error; }
++  }
++
++  stop(): void {
++    this.active = false; this.epoch++;
++    const helper = this.helper; this.helper = undefined;
++    if (helper === undefined) { return; }
++    try { helper.off('dataChange', URI, this.callback); }
++    finally {
++      helper.close().then(() => {
++        console.info('CALENDAR579 ' + JSON.stringify({ event: 'unsubscribe', instance: this.instance,
++          timestamp: Date.now(), uri: URI }));
++      }).catch((error: Error) => console.error('CALENDAR579 unsubscribe error ' + error.message));
++    }
++  }
++}
++
++/** Per-Ability owner: onBackground stops observers synchronously even if ArkUI
++ * defers a LocalStorage Watch while the page is no longer foreground. */
++export class CalendarObserverLifetime {
++  private stopObservers: (() => void) | undefined = undefined;
++  bind(stop: () => void): void { this.stopObservers = stop; }
++  stop(): void {
++    const callback = this.stopObservers; this.stopObservers = undefined;
++    if (callback !== undefined) { callback(); }
++  }
++  clear(): void { this.stopObservers = undefined; }
++}
+--- a/applications/standard/calendardata/entry/src/main/ets/pages/index.ets
++++ b/applications/standard/calendardata/entry/src/main/ets/pages/index.ets
+@@ -2,6 +2,7 @@
+ import common from '@ohos.app.ability.common';
+ import { BusinessError } from '@ohos.base';
+ import calendarManager from '@ohos.calendarManager';
++import { CalendarObserverLifetime } from '../calendar/CalendarChangeSubscription';
+ import { CalendarReminderReader } from '../reminder/CalendarReminderReader';
+ import { CalendarChoice, CalendarBusinessController, CalendarView } from '../calendar/CalendarBusinessController';
+ 
+@@ -9,6 +10,8 @@
+ @Component
+ struct Index {
+   @LocalStorageLink('calendarRoute') route: string = '';
++  @LocalStorageLink('calendarInstance') instance: string = '';
++  @LocalStorageProp('calendarObserverLifetime') observerLifetime: CalendarObserverLifetime = new CalendarObserverLifetime();
+   @LocalStorageLink('calendarRevision') @Watch('routeChanged') revision: number = 0;
+   @LocalStorageLink('calendarForeground') foreground: boolean = false;
+   @State private browsing: boolean = false;
+@@ -37,6 +40,7 @@
+   }
+ 
+   aboutToDisappear(): void {
++    this.observerLifetime.clear();
+     this.appearing = false;
+     this.generation++;
+     this.reader?.dispose();
+@@ -71,24 +75,37 @@
+     }
+     this.reminderStatus = '正在读取日程';
+     try {
+-      const reader = new CalendarReminderReader(getContext(this) as common.UIAbilityContext);
++      this.bindObserverStop();
++      const reader = new CalendarReminderReader(getContext(this) as common.UIAbilityContext, this.instance,
++        () => this.publishReminder(reader, generation));
+       this.reader = reader;
+       await reader.open(this.route);
+       if (generation !== this.generation || this.reader !== reader || !this.foreground || !this.appearing) {
+         return;
+       }
+-      this.reminderStatus = reader.status;
+-      if (reader.event !== undefined) {
+-        this.reminderTitle = reader.event.title ?? '无标题日程';
+-        this.reminderStart = new Date(reader.event.startTime).toLocaleString();
+-        this.reminderEnd = new Date(reader.event.endTime).toLocaleString();
+-        this.reminderDescription = reader.event.description ?? '';
+-      }
++      this.publishReminder(reader, generation);
+     } catch (error) {
+       if (generation === this.generation && this.foreground && this.appearing) {
+         this.reminderStatus = '日历初始化失败：' + (error as BusinessError).message;
+       }
+     }
++  }
++
++  private bindObserverStop(): void {
++    this.observerLifetime.bind(() => {
++      this.generation++;
++      this.controller?.background();
++      this.reader?.dispose();
++    });
++  }
++
++  private publishReminder(reader: CalendarReminderReader, generation: number): void {
++    if (generation !== this.generation || this.reader !== reader || !this.foreground || !this.appearing) { return; }
++    this.reminderStatus = reader.status;
++    this.reminderTitle = reader.event?.title ?? '';
++    this.reminderStart = reader.event === undefined ? '' : new Date(reader.event.startTime).toLocaleString();
++    this.reminderEnd = reader.event === undefined ? '' : new Date(reader.event.endTime).toLocaleString();
++    this.reminderDescription = reader.event?.description ?? '';
+   }
+ 
+   private startBusiness(): void {
+@@ -103,9 +120,10 @@
+               this.view = view;
+               this.viewChanged();
+             }
+-          });
++          }, this.instance);
+         this.controller = controller;
+       }
++      this.bindObserverStop();
+       this.controller.foreground();
+     } catch (error) {
+       this.view = new CalendarView();
+--- a/applications/standard/calendardata/entry/src/main/ets/reminder/CalendarReminderReader.ets
++++ b/applications/standard/calendardata/entry/src/main/ets/reminder/CalendarReminderReader.ets
+@@ -2,6 +2,7 @@
+ import calendarManager from '@ohos.calendarManager';
+ import common from '@ohos.app.ability.common';
+ import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
++import { CalendarChangeSubscription } from '../calendar/CalendarChangeSubscription';
+ 
+ // Accept the existing provider's URI contract, including persisted reminders.
+ // Query times are untrusted routing hints; display only the persisted event.
+@@ -30,13 +31,19 @@
+   private context: common.UIAbilityContext;
+   private generation: number = 0;
+   private active: boolean = true;
++  private uri: string = '';
++  private changes: CalendarChangeSubscription;
++  private changed: () => void;
+ 
+-  constructor(context: common.UIAbilityContext) {
++  constructor(context: common.UIAbilityContext, instance: string, changed: () => void) {
+     this.context = context;
++    this.changed = changed;
++    this.changes = new CalendarChangeSubscription(context, instance, () => { this.open(this.uri); });
+   }
+ 
+   public dispose(): void {
+     this.active = false;
++    this.changes.stop();
+     this.generation++;
+     this.event = undefined;
+   }
+@@ -45,6 +52,7 @@
+     if (!this.active) {
+       return;
+     }
++    this.uri = uri;
+     const generation: number = ++this.generation;
+     this.event = undefined;
+     this.status = '正在读取日程';
+@@ -64,6 +72,8 @@
+       if (grants.authResults.length !== 1 || grants.authResults[0] !== 0) {
+         throw new Error('未授予读取日历权限');
+       }
++      await this.changes.start();
++      if (!this.current(generation)) { return; }
+       const manager: calendarManager.CalendarManager = calendarManager.getCalendarManager(this.context);
+       const calendars: calendarManager.Calendar[] = await manager.getAllCalendars();
+       if (!this.current(generation)) {
+@@ -90,6 +100,8 @@
+         this.event = undefined;
+         this.status = '无法读取日程，请检查日历权限后重试';
+       }
++    } finally {
++      if (this.current(generation)) { this.changed(); }
+     }
+   }
+ 
+--- a/base/notification/distributed_notification_service/services/reminder/include/reminder_agent_service.h
++++ b/base/notification/distributed_notification_service/services/reminder/include/reminder_agent_service.h
+@@ -28,6 +28,7 @@
+     public std::enable_shared_from_this<ReminderAgentService> {
+ public:
+     ~ReminderAgentService() override = default;
++    int Dump(int fd, const std::vector<std::u16string>& args) override;
+ 
+     /**
+      * @brief Get the instance of service.
+--- a/base/notification/distributed_notification_service/services/reminder/include/reminder_data_manager.h
++++ b/base/notification/distributed_notification_service/services/reminder/include/reminder_data_manager.h
+@@ -309,6 +309,9 @@
+      * @brief Whether the device is ready or not.
+      */
+     bool IsSystemReady();
++    // Read-only service queue snapshot, exposed only through the native/shell
++    // diagnostic Dump boundary. Never refreshes or mutates the provider.
++    bool DumpCalendarReminders(std::string& output);
+ 
+     int32_t QueryActiveReminderCount();
+ 
+--- a/base/notification/distributed_notification_service/services/reminder/src/reminder_agent_service.cpp
++++ b/base/notification/distributed_notification_service/services/reminder/src/reminder_agent_service.cpp
+@@ -34,6 +34,8 @@
+ #include "in_process_call_wrapper.h"
+ 
+ #include <file_ex.h>
++#include <cerrno>
++#include <unistd.h>
+ 
+ namespace OHOS::Notification {
+ namespace {
+@@ -402,6 +404,29 @@
+     return ERR_OK;
+ }
+ 
++int ReminderAgentService::Dump(int fd, const std::vector<std::u16string>& args)
++{
++    if (args.size() != 1 || args[0] != u"--calendar-reminders") {
++        return ReminderAgentServiceStub::Dump(fd, args);
++    }
++    const auto type = Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(IPCSkeleton::GetCallingTokenID());
++    if (type != Security::AccessToken::ATokenTypeEnum::TOKEN_SHELL &&
++        type != Security::AccessToken::ATokenTypeEnum::TOKEN_NATIVE) {
++        return ERR_REMINDER_PERMISSION_DENIED;
++    }
++    auto manager = ReminderDataManager::GetInstance();
++    std::string snapshot;
++    if (manager == nullptr || !manager->DumpCalendarReminders(snapshot)) { return ERR_REMINDER_INVALID_PARAM; }
++    size_t offset = 0;
++    while (offset < snapshot.size()) {
++        const ssize_t written = write(fd, snapshot.data() + offset, snapshot.size() - offset);
++        if (written < 0 && errno == EINTR) { continue; }
++        if (written <= 0) { return ERR_REMINDER_INVALID_PARAM; }
++        offset += static_cast<size_t>(written);
++    }
++    return ERR_OK;
++}
++
+ bool ReminderAgentService::CheckReminderPermission()
+ {
+     Security::AccessToken::AccessTokenID callerToken = IPCSkeleton::GetCallingTokenID();
+--- a/base/notification/distributed_notification_service/services/reminder/src/reminder_data_manager_inner.cpp
++++ b/base/notification/distributed_notification_service/services/reminder/src/reminder_data_manager_inner.cpp
+@@ -83,6 +83,49 @@
+     }
+ #endif
+     return folderSize;
++}
++
++namespace {
++std::string CalendarDumpHex(const std::string& value)
++{
++    static constexpr char DIGITS[] = "0123456789abcdef";
++    std::string result;
++    result.reserve(value.size() * 2);
++    for (const unsigned char byte : value) {
++        result.push_back(DIGITS[byte >> 4]); result.push_back(DIGITS[byte & 15]);
++    }
++    return result;
++}
++}
++
++bool ReminderDataManager::DumpCalendarReminders(std::string& output)
++{
++    std::lock_guard<std::mutex> lock(ReminderDataManager::MUTEX);
++    if (!IsSystemReady()) { return false; }
++    std::string rows;
++    size_t count = 0;
++    for (const auto& reminder : reminderVector_) {
++        if (reminder == nullptr || !reminder->IsShare() ||
++            reminder->GetReminderType() != ReminderRequest::ReminderType::CALENDAR) { continue; }
++        const auto want = reminder->GetWantAgentInfo();
++        rows += "CALENDAR_PENDING579_ROW {\"id\":" + std::to_string(reminder->GetReminderId()) +
++            ",\"notification_id\":" + std::to_string(reminder->GetNotificationId()) +
++            ",\"uid\":" + std::to_string(reminder->GetUid()) +
++            ",\"user\":" + std::to_string(reminder->GetUserId()) +
++            ",\"identifier_hex\":\"" + CalendarDumpHex(reminder->GetIdentifier()) +
++            "\",\"bundle_hex\":\"" + CalendarDumpHex(reminder->GetBundleName()) +
++            "\",\"title_hex\":\"" + CalendarDumpHex(reminder->GetTitle()) +
++            "\",\"uri_hex\":\"" + CalendarDumpHex(want == nullptr ? "" : want->uri) +
++            "\",\"trigger_ms\":" + std::to_string(reminder->GetTriggerTimeInMilli()) +
++            ",\"state\":" + std::to_string(reminder->GetState()) +
++            ",\"expired\":" + std::string(reminder->IsExpired() ? "true" : "false") + "}\n";
++        ++count;
++        if (rows.size() > 16 * 1024 * 1024) { return false; }
++    }
++    output = "CALENDAR_PENDING579_BEGIN {\"schema\":1,\"ready\":true,\"rows\":" +
++        std::to_string(count) + "}\n" + rows + "CALENDAR_PENDING579_END {\"rows\":" +
++        std::to_string(count) + "}\n";
++    return true;
+ }
+ 
+ bool ReminderDataManager::IsSystemReady()

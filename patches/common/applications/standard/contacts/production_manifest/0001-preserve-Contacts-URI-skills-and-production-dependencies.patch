@@ -1,0 +1,25 @@
+diff --git a/applications/standard/contacts/oh-package.json5 b/applications/standard/contacts/oh-package.json5
+--- a/applications/standard/contacts/oh-package.json5
++++ b/applications/standard/contacts/oh-package.json5
+@@ -8,7 +8,6 @@
+   "dependencies": {
+   },
+   "devDependencies": {
+-    "@ohos/hypium": "1.0.16",
+ //    "@hms-paf/ui-widget-base": "14.16.9-314",
+ //    "@hms-paf/ui-widget-about": "14.16.9-314"
+   },
+diff --git a/applications/standard/contacts/entry/src/main/module.json5 b/applications/standard/contacts/entry/src/main/module.json5
+--- a/applications/standard/contacts/entry/src/main/module.json5
++++ b/applications/standard/contacts/entry/src/main/module.json5
+@@ -53,9 +53,7 @@
+             "uris": [
+               {
+                 "scheme": "tel"
+-              }
+-            ],
+-            'uris': [
++              },
+               {
+                 "scheme": "calllog",
+                 "host": "voice",

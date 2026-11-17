@@ -1,0 +1,231 @@
+--- a/base/telephony/number_identity/number_location/include/number_identity_datashare_stub_impl.h
++++ b/base/telephony/number_identity/number_location/include/number_identity_datashare_stub_impl.h
+@@ -16,6 +16,7 @@
+ #ifndef DATASHARE_STUB_IMPL_H
+ #define DATASHARE_STUB_IMPL_H
+ 
++#include <cstdint>
+ #include "datashare_stub.h"
+ #include "datashare_ext_ability.h"
+ 
+@@ -44,6 +45,12 @@
+     Uri NormalizeUri(const Uri &uri) override;
+     Uri DenormalizeUri(const Uri &uri) override;
+ 
++    // Assigned once before this new stub is returned to the connection caller.
++    void SetNativeObservationIdentity(uint64_t instance, uint64_t connection)
++    {
++        nativeObservationInstance_ = instance;
++        nativeObservationConnection_ = connection;
++    }
+     void SetNumberLocationAbility(std::shared_ptr<DataShareExtAbility> extension);
+     void SetDownloadFileAbility(std::shared_ptr<DataShareExtAbility> extension);
+     void SetNumberMarkAbility(std::shared_ptr<DataShareExtAbility> extension);
+@@ -54,6 +61,8 @@
+     std::shared_ptr<DataShareExtAbility> GetNumberMarkAbility();
+     std::shared_ptr<DataShareExtAbility> GetOwner(const Uri &uri);
+ private:
++    uint64_t nativeObservationInstance_ = 0;
++    uint64_t nativeObservationConnection_ = 0;
+     std::mutex setNumberLocationMutex_;
+     std::mutex downloadFileMutex_;
+     std::mutex numberMarkMutex_;
+--- /dev/null
++++ b/base/telephony/number_identity/number_location/include/number_identity_native_trace.h
+@@ -0,0 +1,56 @@
++/* Diagnostic observations only; no business verdict or caller authority. */
++#ifndef OHOS_NUMBER_IDENTITY_NATIVE_TRACE495_H
++#define OHOS_NUMBER_IDENTITY_NATIVE_TRACE495_H
++
++#include <atomic>
++#include <cerrno>
++#include <cstdint>
++#include <string>
++#include <time.h>
++#include <unistd.h>
++#include "number_identity_log_wrapper.h"
++
++namespace OHOS {
++namespace Telephony {
++namespace NumberNativeObservation495 {
++
++// Hidden inline functions have one ODR state inside the provider DSO.  Other
++// DSOs cannot preempt this counter.  IDs and record sequence share this counter;
++// gaps are valid, zero/wrap or ambiguous concurrent histories are not proof.
++__attribute__((visibility("hidden"))) inline uint64_t NextId()
++{
++    static std::atomic<uint64_t> next { 1 };
++    return next.fetch_add(1, std::memory_order_relaxed);
++}
++
++__attribute__((visibility("hidden"))) inline int Route(const std::string &uri)
++{
++    if (uri == "datashare:///com.ohos.numberlocationability") { return 1; }
++    if (uri == "datashare:///com.ohos.numbermarkability/number_mark_info") { return 2; }
++    if (uri == "datashare:///com.ohos.numbermarkability/api/process_number") { return 3; }
++    if (uri == "datashare:///com.ohos.numbermarkability/number_mark") { return 4; }
++    return 0;
++}
++
++__attribute__((visibility("hidden"))) inline void Observe(const char *event, uint64_t instance,
++    uint64_t connection, uint64_t request, int route, int result,
++    int callingPid = 0, int callingUid = 0, uint32_t callingToken = 0)
++{
++    const int savedErrno = errno;
++    struct timespec observedTime = {};
++    const bool clockOk = clock_gettime(CLOCK_MONOTONIC, &observedTime) == 0;
++    const uint64_t monotonicNs = clockOk ? static_cast<uint64_t>(observedTime.tv_sec) * 1000000000ULL +
++        static_cast<uint64_t>(observedTime.tv_nsec) : 0;
++    const uint64_t sequence = NextId();
++    NUMBER_IDENTITY_LOGI("NUMBER_NATIVE495 v=1 event=%{public}s seq=%{public}llu mono_ns=%{public}llu "
++        "pid=%{public}d tid=%{public}d instance=%{public}llu connection=%{public}llu request=%{public}llu "
++        "route=%{public}d result=%{public}d caller_pid=%{public}d caller_uid=%{public}d caller_token=%{public}u",
++        event, static_cast<unsigned long long>(sequence), static_cast<unsigned long long>(monotonicNs), getpid(), gettid(),
++        static_cast<unsigned long long>(instance), static_cast<unsigned long long>(connection),
++        static_cast<unsigned long long>(request), route, result, callingPid, callingUid, callingToken);
++    errno = savedErrno;
++}
++} // namespace NumberNativeObservation495
++} // namespace Telephony
++} // namespace OHOS
++#endif // OHOS_NUMBER_IDENTITY_NATIVE_TRACE495_H
+--- a/base/telephony/number_identity/number_location/include/number_location_ability.h
++++ b/base/telephony/number_identity/number_location/include/number_location_ability.h
+@@ -16,6 +16,7 @@
+ #ifndef NUMBER_LOCATION_DB_ABILITY_H
+ #define NUMBER_LOCATION_DB_ABILITY_H
+ 
++#include <cstdint>
+ #include "__mutex_base"
+ #include "ability.h"
+ #include "ability_lifecycle.h"
+@@ -41,6 +42,7 @@
+     NumberLocationAbility();
+     virtual ~NumberLocationAbility() override;
+     static NumberLocationAbility* Create();
++    uint64_t GetNativeObservationInstance() const { return nativeObservationInstance_; }
+     virtual void OnStart(const AppExecFwk::Want &want) override;
+     sptr<IRemoteObject> OnConnect(const AAFwk::Want &want) override;
+     virtual int Insert(const Uri &uri, const DataShare::DataShareValuesBucket &value) override;
+@@ -53,6 +55,7 @@
+ 
+ private:
+     std::mutex lock_;
++    uint64_t nativeObservationInstance_ = 0;
+ };
+ } // namespace Telephony
+ } // namespace OHOS
+--- a/base/telephony/number_identity/number_location/src/number_identity_datashare_stub_impl.cpp
++++ b/base/telephony/number_identity/number_location/src/number_identity_datashare_stub_impl.cpp
+@@ -18,6 +18,8 @@
+ #include "number_identity_datashare_stub_impl.h"
+ #include "number_identity_errors.h"
+ #include "number_identity_log_wrapper.h"
++#include "number_identity_native_trace.h"
++#include "ipc_skeleton.h"
+ #include "download_file_ability.h"
+ #include "number_identity_rdb_helper.h"
+ 
+@@ -68,13 +70,25 @@
+     const DataSharePredicates &predicates, std::vector<std::string> &columns, DatashareBusinessError &businessError)
+ {
+     NUMBER_IDENTITY_LOGD("Query begin.");
++    const uint64_t observedRequest = Telephony::NumberNativeObservation495::NextId();
++    const int observedCallingPid = IPCSkeleton::GetCallingPid();
++    const int observedCallingUid = IPCSkeleton::GetCallingUid();
++    const uint32_t observedCallingToken = IPCSkeleton::GetCallingTokenID();
++    const int observedRoute = Telephony::NumberNativeObservation495::Route(uri.ToString());
++    auto observeQuery = [&](const char *event, int result) {
++        Telephony::NumberNativeObservation495::Observe(event, nativeObservationInstance_, nativeObservationConnection_,
++            observedRequest, observedRoute, result, observedCallingPid, observedCallingUid, observedCallingToken);
++    };
++    observeQuery("query-enter", -1);
+     auto extension = GetOwner(uri);
+     if (extension == nullptr) {
+         NUMBER_IDENTITY_LOGE("Query failed, extension is null.");
++        observeQuery("query-result", 0);
+         return nullptr;
+     }
+     auto resultSet = extension->Query(uri, predicates, columns, businessError);
+     NUMBER_IDENTITY_LOGD("Query end.");
++    observeQuery("query-result", resultSet != nullptr ? 1 : 0);
+     return resultSet;
+ }
+ 
+--- a/base/telephony/number_identity/number_location/src/number_location_ability.cpp
++++ b/base/telephony/number_identity/number_location/src/number_location_ability.cpp
+@@ -25,6 +25,7 @@
+ #include "number_identity_datashare_stub_impl.h"
+ #include "number_identity_errors.h"
+ #include "number_identity_log_wrapper.h"
++#include "number_identity_native_trace.h"
+ #include "number_location_manager.h"
+ #include "number_location_result_set_bridge.h"
+ #include "rdb_errno.h"
+@@ -40,7 +41,8 @@
+ using namespace NativeRdb;
+ namespace Telephony {
+ 
+-NumberLocationAbility::NumberLocationAbility() : DataShareExtAbility() {}
++NumberLocationAbility::NumberLocationAbility() : DataShareExtAbility(),
++    nativeObservationInstance_(NumberNativeObservation495::NextId()) {}
+ 
+ NumberLocationAbility::~NumberLocationAbility() {}
+ 
+@@ -48,31 +50,43 @@
+ {
+     NUMBER_IDENTITY_LOGD("NumberLocationAbility::Create begin.");
+     auto self = new NumberLocationAbility();
++    NumberNativeObservation495::Observe("create-result", self != nullptr ? self->GetNativeObservationInstance() : 0,
++        0, 0, 0, self != nullptr ? 1 : 0);
+     return self;
+ }
+ 
+ static DataShare::DataShareExtAbility *NumberLocationDataShareCreator(const std::unique_ptr<Runtime> &runtime)
+ {
+     NUMBER_IDENTITY_LOGD("NumberLocationDataShareCreator::%{public}s begin.", __func__);
+-    return NumberLocationAbility::Create();
++    NumberNativeObservation495::Observe("creator-enter", 0, 0, 0, 0, -1);
++    auto result = NumberLocationAbility::Create();
++    NumberNativeObservation495::Observe("creator-result", result != nullptr ? result->GetNativeObservationInstance() : 0,
++        0, 0, 0, result != nullptr ? 1 : 0);
++    return result;
+ }
+ 
+ __attribute__((constructor)) void RegisterDataShareCreator()
+ {
+     NUMBER_IDENTITY_LOGD("NumberLocationDataShareCreator::%{public}s", __func__);
++    NumberNativeObservation495::Observe("register-enter", 0, 0, 0, 0, -1);
+     DataShare::DataShareExtAbility::SetCreator(NumberLocationDataShareCreator);
++    NumberNativeObservation495::Observe("register-result", 0, 0, 0, 0, 1);
+ }
+ 
+ sptr<IRemoteObject> NumberLocationAbility::OnConnect(const AAFwk::Want &want)
+ {
+     NUMBER_IDENTITY_LOGD("NumberLocationAbility::OnConnect");
++    const uint64_t observedConnection = NumberNativeObservation495::NextId();
++    NumberNativeObservation495::Observe("connect-enter", nativeObservationInstance_, observedConnection, 0, 0, -1);
+     Extension::OnConnect(want);
+     sptr<DataShare::NumberIdentityDataShareStubImpl> remoteObject =
+         new (std::nothrow) DataShare::NumberIdentityDataShareStubImpl();
+     if (remoteObject == nullptr) {
+         NUMBER_IDENTITY_LOGE("%{public}s No memory allocated for DataShareStubImpl", __func__);
++        NumberNativeObservation495::Observe("connect-result", nativeObservationInstance_, observedConnection, 0, 0, 0);
+         return nullptr;
+     }
++    remoteObject->SetNativeObservationIdentity(nativeObservationInstance_, observedConnection);
+     remoteObject->SetNumberLocationAbility(std::static_pointer_cast<NumberLocationAbility>(shared_from_this()));
+     std::shared_ptr<NumberMarkAbility> numberMarkAbility(NumberMarkAbility::Create(GetContext()));
+     remoteObject->SetNumberMarkAbility(std::static_pointer_cast<NumberMarkAbility>(numberMarkAbility));
+@@ -80,7 +94,10 @@
+     std::shared_ptr<DownloadFileAbility> downloadFileAbility(DownloadFileAbility::Create(GetContext()));
+     remoteObject->SetDownloadFileAbility(std::static_pointer_cast<DownloadFileAbility>(downloadFileAbility));
+     NUMBER_IDENTITY_LOGI("DownloadFileAbility %{public}s end.", __func__);
+-    return remoteObject->AsObject();
++    auto result = remoteObject->AsObject();
++    NumberNativeObservation495::Observe("connect-result", nativeObservationInstance_, observedConnection, 0, 0,
++        result != nullptr ? 1 : 0);
++    return result;
+ }
+ 
+ void NumberLocationAbility::OnStart(const AppExecFwk::Want &want)

@@ -1,0 +1,1380 @@
+--- a/foundation/multimedia/audio_framework/services/audio_service/server/src/renderer_in_server.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_service/server/src/renderer_in_server.cpp
+@@ -881,7 +881,7 @@
+ 
+ BufferDesc RendererInServer::PrepareOutputBuffer(const RingBufferWrapper& ringBufferDesc)
+ {
+-    BufferDesc bufferDesc;
++    BufferDesc bufferDesc {};
+     if (ringBufferDesc.basicBufferDescs[0].bufLength >= ringBufferDesc.dataLength) {
+         bufferDesc.buffer = ringBufferDesc.basicBufferDescs[0].buffer;
+         bufferDesc.bufLength = ringBufferDesc.dataLength;
+@@ -892,7 +892,8 @@
+         tmpWrapper.dataLength = ringBufferDesc.dataLength;
+         tmpWrapper.basicBufferDescs[0].buffer = rendererTmpBuffer_.data();
+         tmpWrapper.basicBufferDescs[0].bufLength = ringBufferDesc.dataLength;
+-        tmpWrapper.CopyInputBufferValueToCurBuffer(ringBufferDesc);
++        int32_t ret = tmpWrapper.CopyInputBufferValueToCurBuffer(ringBufferDesc);
++        CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, bufferDesc, "PrepareOutputBuffer copy failed");
+ 
+         bufferDesc.buffer = rendererTmpBuffer_.data();
+         bufferDesc.bufLength = ringBufferDesc.dataLength;
+@@ -1008,7 +1009,10 @@
+             }
+         }
+         BufferDesc bufferDesc = PrepareOutputBuffer(ringBufferDesc);
+-        stream_->EnqueueBuffer(bufferDesc);
++        CHECK_AND_RETURN_RET_LOG(bufferDesc.buffer != nullptr &&
++            bufferDesc.dataLength == ringBufferDesc.dataLength, ERR_OPERATION_FAILED, "invalid output buffer");
++        int32_t enqueueRet = stream_->EnqueueBuffer(bufferDesc);
++        CHECK_AND_RETURN_RET_LOG(enqueueRet >= SUCCESS, enqueueRet, "EnqueueBuffer failed");
+         if (AudioDump::GetInstance().GetVersionType() == DumpFileUtil::BETA_VERSION) {
+             DumpFileUtil::WriteDumpFile(dumpC2S_, static_cast<void *>(bufferDesc.buffer), bufferDesc.bufLength);
+             AudioCacheMgr::GetInstance().CacheData(dumpFileName_,
+@@ -1048,7 +1052,7 @@
+     return SUCCESS;
+ }
+ 
+-void RendererInServer::CopyDataToInputBuffer(int8_t* inputData, size_t requestDataLen,
++int32_t RendererInServer::CopyDataToInputBuffer(int8_t* inputData, size_t requestDataLen,
+     const RingBufferWrapper& ringBufferDesc)
+ {
+     RingBufferWrapper wrapperInputData = {
+@@ -1059,8 +1063,7 @@
+         .dataLength = requestDataLen
+     };
+ 
+-    CHECK_AND_RETURN_LOG(wrapperInputData.CopyInputBufferValueToCurBuffer(ringBufferDesc) == 0,
+-        "memcpy error");
++    return wrapperInputData.CopyInputBufferValueToCurBuffer(ringBufferDesc);
+ }
+ 
+ void RendererInServer::ProcessFadeOutIfNeeded(RingBufferWrapper& ringBufferDesc,
+@@ -1103,6 +1106,8 @@
+ 
+ int32_t RendererInServer::WriteData(int8_t *inputData, size_t requestDataLen, bool wakeFutex)
+ {
++    CHECK_AND_RETURN_RET_LOG(inputData != nullptr && byteSizePerFrame_ > 0 &&
++        requestDataLen % byteSizePerFrame_ == 0, ERR_INVALID_PARAM, "invalid input frame size");
+     size_t requestDataInFrame = requestDataLen / byteSizePerFrame_;
+ 
+     std::lock_guard lock(writeLock_);
+@@ -1133,12 +1138,11 @@
+ 
+     ringBufferDesc.dataLength = requestDataLen;
+     ProcessFadeOutIfNeeded(ringBufferDesc, currentReadFrame, currentWriteFrame, requestDataInFrame);
+-    CopyDataToInputBuffer(inputData, requestDataLen, ringBufferDesc);
++    ret = CopyDataToInputBuffer(inputData, requestDataLen, ringBufferDesc);
++    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS, ret, "input copy failed");
+     ringBufferDesc.SetBuffersValueWithSpecifyDataLen(0); // clear is needed for reuse.
+     uint64_t nextReadFrame = currentReadFrame + requestDataInFrame;
+-    audioServerBuffer_->SetCurReadFrame(nextReadFrame, wakeFutex);
+-
+-    return SUCCESS;
++    return audioServerBuffer_->SetCurReadFrame(nextReadFrame, wakeFutex);
+ }
+ 
+ int32_t RendererInServer::WriteDataInStaticMode(int8_t *inputData, size_t requestDataLen)
+@@ -1500,8 +1504,15 @@
+             PLAY_START_OPERATION_FAILED, "Policy start client failed", false),
+         HILOG_COMM_ERROR("[StartInnerDuringStandby]Policy start client failed, reason: %{public}d", ret));
+ 
+-    ret = (managerType_ == DIRECT_PLAYBACK || managerType_ == VOIP_PLAYBACK) ?
+-        IStreamManager::GetPlaybackManager(managerType_).StartRender(streamIndex_) : stream_->Start();
++    const int32_t audioHapticsSyncId = audioHapticsSyncId_.load();
++    if (audioHapticsSyncId > 0) {
++        ret = (managerType_ == DIRECT_PLAYBACK || managerType_ == VOIP_PLAYBACK) ?
++            IStreamManager::GetPlaybackManager(managerType_).StartRenderWithSyncId(streamIndex_, audioHapticsSyncId) :
++            stream_->StartWithSyncId(audioHapticsSyncId);
++    } else {
++        ret = (managerType_ == DIRECT_PLAYBACK || managerType_ == VOIP_PLAYBACK) ?
++            IStreamManager::GetPlaybackManager(managerType_).StartRender(streamIndex_) : stream_->Start();
++    }
+     RecordStandbyTime(true, false);
+     return ret;
+ }
+@@ -1577,9 +1588,17 @@
+         WaitForDataConnection();
+     }
+ 
+-    ret = (managerType_ == DIRECT_PLAYBACK || managerType_ == VOIP_PLAYBACK || managerType_ == EAC3_PLAYBACK ||
+-        managerType_ == AUDIO_VIVID_3DA_DIRECT_PLAYBACK) ?
+-        IStreamManager::GetPlaybackManager(managerType_).StartRender(streamIndex_) : stream_->Start();
++    const int32_t audioHapticsSyncId = audioHapticsSyncId_.load();
++    if (audioHapticsSyncId > 0) {
++        ret = (managerType_ == DIRECT_PLAYBACK || managerType_ == VOIP_PLAYBACK || managerType_ == EAC3_PLAYBACK ||
++            managerType_ == AUDIO_VIVID_3DA_DIRECT_PLAYBACK) ?
++            IStreamManager::GetPlaybackManager(managerType_).StartRenderWithSyncId(streamIndex_, audioHapticsSyncId) :
++            stream_->StartWithSyncId(audioHapticsSyncId);
++    } else {
++        ret = (managerType_ == DIRECT_PLAYBACK || managerType_ == VOIP_PLAYBACK || managerType_ == EAC3_PLAYBACK ||
++            managerType_ == AUDIO_VIVID_3DA_DIRECT_PLAYBACK) ?
++            IStreamManager::GetPlaybackManager(managerType_).StartRender(streamIndex_) : stream_->Start();
++    }
+     CHECK_AND_CALL_FUNC_RETURN_RET_REPORT(ret == SUCCESS, ret,
+         StreamDfxManager::GetInstance().SendAudioErrorEvent(static_cast<int32_t>(processConfig_.appInfo.appUid),
+             PLAY_START_OPERATION_FAILED, "Start stream failed", false),
+--- a/foundation/multimedia/audio_framework/services/audio_service/server/src/hpae_renderer_stream_impl.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_service/server/src/hpae_renderer_stream_impl.cpp
+@@ -196,6 +196,10 @@
+     if (processConfig_.streamInfo.customSampleRate != 0) {
+         noWaitDataFlag_ = false;
+     }
++    std::string tempStringSessionId = std::to_string(streamIndex_);
++    IHpaeManager::GetHpaeManager().AddStreamVolumeToEffect(tempStringSessionId, clientVolume_);
++    CoreServiceHandler::GetInstance().RecordBootStateTime(static_cast<int32_t>(
++        BootAnimationState::PREE_AUDIO_START), processConfig_.appInfo.appUid, ClockTime::GetCurMilli());
+     if (ret != 0) {
+         AUDIO_ERR_LOG("ErrorCode: %{public}d", ret);
+         return ERR_INVALID_PARAM;
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_sink_output_node.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/src/hpae_sink_output_node.cpp
+@@ -21,6 +21,7 @@
+ #include "hpae_remote_device_class.h"
+ #include "audio_errors.h"
+ #include <iostream>
++#include <algorithm>
+ #include "hpae_format_convert.h"
+ #include "audio_utils.h"
+ #include "hpae_node_common.h"
+@@ -61,6 +62,7 @@
+ HpaeSinkOutputNode::HpaeSinkOutputNode(HpaeNodeInfo &nodeInfo)
+     : HpaeNode(nodeInfo),
+       renderFrameData_(nodeInfo.frameLen * nodeInfo.channels * GetSizeFromFormat(nodeInfo.format)),
++      renderFrameScratch_(renderFrameData_.size()),
+       interleveData_(nodeInfo.frameLen * nodeInfo.channels)
+ {
+     renderSize_ = renderFrameData_.size();
+@@ -111,9 +113,19 @@
+         return;
+     }
+ 
++    // An invalid accepted-byte count makes the remaining prefix unknowable.
++    // This node must be destroyed after an unknown transport/count outcome.
++    CHECK_AND_RETURN(!renderWriteInvalid_);
+     CHECK_AND_RETURN(ReadDataAndConvertFormat());
++    const size_t frameSize = GetChannelCount() * static_cast<size_t>(GetSizeFromFormat(GetBitWidth()));
++    CHECK_AND_RETURN(frameSize != 0 && GetSampleRate() != 0);
++    CHECK_AND_RETURN(pendingRenderSize_ <= currentSize_ && pendingRenderSize_ <= renderFrameScratch_.size());
++    const size_t requestSize = pendingRenderSize_;
++    // RenderFrame may alter its input in place (mono/balance/device mute).
++    // Keep the queued tail unmodified so retrying never applies those twice.
++    std::copy_n(renderFrameData_.begin(), requestSize, renderFrameScratch_.begin());
+     uint64_t writeLen = 0;
+-    char *renderFrameData = (char *)renderFrameData_.data();
++    char *renderFrameData = renderFrameScratch_.data();
+ 
+ #ifdef ENABLE_HOOK_PCM
+     HighResolutionTimer timer;
+@@ -121,10 +133,14 @@
+     intervalTimer_.Stop();
+ #endif
+     HandleHapticParam(renderFrameTimes_);
+-    renderFrameTimes_ += FRAME_LEN_20MS;
+-    auto ret = audioRendererSink_->RenderFrame(*renderFrameData, renderSize_, writeLen);
+-    if (ret != SUCCESS || writeLen != renderSize_) {
+-        AUDIO_ERR_LOG("RenderFrame failed");
++    auto ret = audioRendererSink_->RenderFrame(*renderFrameData, requestSize, writeLen);
++    const bool countValid = ret == SUCCESS && writeLen <= requestSize && writeLen % frameSize == 0;
++    if (!countValid) {
++        renderWriteInvalid_ = true;
++    }
++    if (ret != SUCCESS || !countValid || writeLen != requestSize) {
++        AUDIO_ERR_LOG("RenderFrame failed, ret:%{public}d request:%{public}zu reported:%{public}llu",
++            ret, requestSize, static_cast<unsigned long long>(writeLen));
+         if (!IsRemoteDeviceClass(GetDeviceClass())) {
+             periodTimer_.Stop();
+             uint64_t usedTimeUs = static_cast<uint64_t>(periodTimer_.Elapsed<std::chrono::microseconds>());
+@@ -136,12 +152,20 @@
+     }
+ 
+     CheckAndSetCollDelayForRenderFrameFailed();
+-    RenderFrameForAuxiliarySink();
++    if (countValid && writeLen != 0) {
++        // Only successful transport makes the returned aligned prefix known.
++        RenderFrameForAuxiliarySink(renderFrameData, static_cast<size_t>(writeLen));
++        std::move(renderFrameData_.begin() + writeLen, renderFrameData_.begin() + currentSize_,
++            renderFrameData_.begin());
++        currentSize_ -= writeLen;
++        pendingRenderSize_ -= writeLen;
++        const uint64_t frames = writeLen / frameSize;
++        const uint64_t scaledFrames = frames * AUDIO_MS_PER_S + renderTimeRemainder_;
++        renderFrameTimes_ += scaledFrames / GetSampleRate();
++        renderTimeRemainder_ = scaledFrames % GetSampleRate();
++    }
+     periodTimer_.Start();
+     HandleRemoteTiming(); // used to control remote RenderFrame tempo.
+-    std::move(renderFrameData_.begin() + renderSize_, renderFrameData_.begin() + currentSize_,
+-        renderFrameData_.begin());
+-    currentSize_ -= renderSize_;
+ #ifdef ENABLE_HOOK_PCM
+     timer.Stop();
+     int64_t elapsed = timer.Elapsed();
+@@ -153,7 +177,7 @@
+     return;
+ }
+ 
+-void HpaeSinkOutputNode::RenderFrameForAuxiliarySink()
++void HpaeSinkOutputNode::RenderFrameForAuxiliarySink(char *data, size_t bytes)
+ {
+     AUDIO_DEBUG_LOG("spkName:%{public}s, auxSinkEnable_:%{public}s auxSinkState:%{public}d ",
+         sinkOutAttr_.sinkName.c_str(), auxSinkEnable_ ? "true" : "false", auxSinkState_);
+@@ -164,8 +188,7 @@
+ 
+     CHECK_AND_RETURN_LOG(auxiliarySink_ != nullptr, "auxiliarySink_ is null");
+     uint64_t writeLen = 0;
+-    char *renderFrameData = (char *)renderFrameData_.data();
+-    auxiliarySink_->RenderFrame(*renderFrameData, renderSize_, writeLen);
++    auxiliarySink_->RenderFrame(*data, bytes, writeLen);
+ }
+ 
+ const char *HpaeSinkOutputNode::GetRenderFrameData(void)
+@@ -180,8 +203,18 @@
+     audioRendererSink_->RegisterCurrentDeviceCallback(callback);
+ }
+ 
++void HpaeSinkOutputNode::ResetPendingRenderData()
++{
++    currentSize_ = 0;
++    pendingRenderSize_ = 0;
++    // Keep an unknown acceptance outcome latched for this node's lifetime.
++    renderFrameTimes_ = 0;
++    renderTimeRemainder_ = 0;
++}
++
+ bool HpaeSinkOutputNode::Reset()
+ {
++    ResetPendingRenderData();
+     const auto preOutputMap = inputStream_.GetPreOutputMap();
+     for (const auto &preOutput : preOutputMap) {
+         OutputPort<HpaePcmBuffer *> *output = preOutput.first;
+@@ -192,6 +225,7 @@
+ 
+ bool HpaeSinkOutputNode::ResetAll()
+ {
++    ResetPendingRenderData();
+     const auto preOutputMap = inputStream_.GetPreOutputMap();
+     for (const auto &preOutput : preOutputMap) {
+         OutputPort<HpaePcmBuffer *> *output = preOutput.first;
+@@ -241,6 +275,7 @@
+         HdiAdapterManager::GetInstance().ReleaseId(renderId_);
+         return ERROR;
+     }
++    ResetPendingRenderData();
+     GetAuxiliarySink(deviceClass);
+     return SUCCESS;
+ }
+@@ -351,6 +386,7 @@
+ #endif
+     audioRendererSink_->DeInit();
+     audioRendererSink_ = nullptr;
++    ResetPendingRenderData();
+     HdiAdapterManager::GetInstance().ReleaseId(renderId_);
+ #ifdef ENABLE_HOOK_PCM
+     timer.Stop();
+@@ -395,7 +431,11 @@
+ int32_t HpaeSinkOutputNode::RenderSinkFlush(void)
+ {
+     CHECK_AND_RETURN_RET(audioRendererSink_ != nullptr, ERROR);
+-    return audioRendererSink_->Flush();
++    const int32_t ret = audioRendererSink_->Flush();
++    if (ret == SUCCESS) {
++        ResetPendingRenderData();
++    }
++    return ret;
+ }
+ 
+ int32_t HpaeSinkOutputNode::RenderSinkPause(void)
+@@ -409,7 +449,11 @@
+ int32_t HpaeSinkOutputNode::RenderSinkReset(void)
+ {
+     CHECK_AND_RETURN_RET(audioRendererSink_ != nullptr, ERROR);
+-    return audioRendererSink_->Reset();
++    const int32_t ret = audioRendererSink_->Reset();
++    if (ret == SUCCESS) {
++        ResetPendingRenderData();
++    }
++    return ret;
+ }
+ 
+ int32_t HpaeSinkOutputNode::RenderSinkResume(void)
+@@ -425,7 +469,9 @@
+ {
+     CHECK_AND_RETURN_RET(audioRendererSink_ != nullptr, ERROR);
+     CHECK_AND_RETURN_RET_LOG(audioRendererSink_->IsInited(), ERROR, "audioRendererSink_ not init");
++    CHECK_AND_RETURN_RET(!renderWriteInvalid_, ERROR);
+     renderFrameTimes_ = 0;
++    renderTimeRemainder_ = 0;
+     int32_t ret;
+ #ifdef ENABLE_HOOK_PCM
+     HighResolutionTimer timer;
+@@ -467,6 +513,7 @@
+ #endif
+     ret = audioRendererSink_->Stop();
+     CHECK_AND_RETURN_RET(ret == SUCCESS, ret);
++    ResetPendingRenderData();
+ #ifdef ENABLE_HOOK_PCM
+     timer.Stop();
+     int64_t interval = timer.Elapsed();
+@@ -651,6 +698,10 @@
+ 
+ bool HpaeSinkOutputNode::ReadDataAndConvertFormat()
+ {
++    // Retry the outstanding packet without pulling new upstream audio.
++    if (pendingRenderSize_ != 0) {
++        return pendingRenderSize_ <= currentSize_;
++    }
+     while (currentSize_ < renderSize_) {
+         std::vector<HpaePcmBuffer *> &outputVec = inputStream_.ReadPreOutputData();
+         CHECK_AND_RETURN_RET(!outputVec.empty(), false);
+@@ -665,18 +716,21 @@
+         HandlePaPower(outputData);
+         uint32_t frameLen = outputData->GetFrameLen();
+         uint32_t channels = outputData->GetChannelCount();
+-        uint32_t inDurationMs = frameLen * AUDIO_MS_PER_S / outputData->GetSampleRate();
+-        uint32_t outDurationMs = GetFrameLen() * AUDIO_MS_PER_S / GetSampleRate();
+-        if (renderFrameData_.size() == renderSize_ && inDurationMs != outDurationMs) {
+-            outputSize_ = frameLen * channels * static_cast<size_t>(GetSizeFromFormat(GetBitWidth()));
+-            AUDIO_INFO_LOG("Update outputSize to %{public}zu", outputSize_);
+-            renderFrameData_.resize(outputSize_ + renderSize_);
++        const size_t sampleSize = GetSizeFromFormat(GetBitWidth());
++        CHECK_AND_RETURN_RET(frameLen != 0 && channels != 0 && sampleSize != 0, false);
++        CHECK_AND_RETURN_RET(channels <= renderFrameData_.max_size() / sampleSize, false);
++        const size_t frameSize = channels * sampleSize;
++        CHECK_AND_RETURN_RET(frameLen <= (renderFrameData_.max_size() - currentSize_) / frameSize, false);
++        outputSize_ = frameLen * frameSize;
++        if (renderFrameData_.size() < currentSize_ + outputSize_) {
++            renderFrameData_.resize(currentSize_ + outputSize_);
+         }
+         ConvertFromFloat(
+             GetBitWidth(), channels * frameLen, outputData->GetPcmDataBuffer(), renderFrameData_.data() + currentSize_);
+         currentSize_ += outputSize_;
+     }
+-    return true;
++    pendingRenderSize_ = renderSize_;
++    return pendingRenderSize_ != 0;
+ }
+ 
+ int32_t HpaeSinkOutputNode::SetAuxiliarySinkEnable(bool isEnabled)
+--- a/foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_sink_output_node.h
++++ b/foundation/multimedia/audio_framework/services/audio_engine/node/include/hpae_sink_output_node.h
+@@ -71,14 +71,16 @@
+     void HandlePaPower(HpaePcmBuffer *pcmBuffer);
+     void HandleHapticParam(uint64_t syncTime);
+     bool ReadDataAndConvertFormat();
++    void ResetPendingRenderData();
+     InputPort<HpaePcmBuffer *> inputStream_;
+     std::vector<char, AlignedAllocator<char, 16>> renderFrameData_; // 16 for alignment in byte
++    std::vector<char, AlignedAllocator<char, 16>> renderFrameScratch_;
+     
+     // only for auxiliarysink
+     int32_t GetAuxiliarySink(const std::string &deviceClass);
+     int32_t AuxiliarySinkInit();
+     int32_t AuxiliarySinkDeInit();
+-    void RenderFrameForAuxiliarySink();
++    void RenderFrameForAuxiliarySink(char *data, size_t bytes);
+     void UpdateAuxiliarySinkState(StreamChangeType change,
+         uint32_t sessionId, StreamUsage usage, RendererState state);
+     std::shared_ptr<IAudioRenderSink> auxiliarySink_ = nullptr;
+@@ -105,6 +107,9 @@
+     size_t outputSize_ = 0;
+     size_t currentSize_ = 0;
+     size_t renderSize_ = 0;
++    size_t pendingRenderSize_ = 0;
++    bool renderWriteInvalid_ = false;
++    uint64_t renderTimeRemainder_ = 0;
+     HighResolutionTimer periodTimer_;
+ #ifdef ENABLE_HOOK_PCM
+     HighResolutionTimer intervalTimer_;
+--- a/foundation/multimedia/audio_framework/services/audio_service/server/include/renderer_in_server.h
++++ b/foundation/multimedia/audio_framework/services/audio_service/server/include/renderer_in_server.h
+@@ -265,7 +265,7 @@
+     int32_t InitDupStreamVolume(uint32_t dupStreamIndex);
+     int32_t FlushOhAudioBuffer();
+     BufferDesc PrepareOutputBuffer(const RingBufferWrapper& ringBufferDesc);
+-    void CopyDataToInputBuffer(int8_t* inputData, size_t requestDataLen,
++    int32_t CopyDataToInputBuffer(int8_t* inputData, size_t requestDataLen,
+         const RingBufferWrapper& ringBufferDesc);
+     int32_t Write3DAModeData(uint64_t currentReadFrame, uint64_t currentWriteFrame);
+     void ProcessFadeOutIfNeeded(RingBufferWrapper& ringBufferDesc, uint64_t currentReadFrame,
+--- a/foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include/ring_buffer_wrapper.h
++++ b/foundation/multimedia/audio_framework/interfaces/inner_api/native/audiocommon/include/ring_buffer_wrapper.h
+@@ -193,6 +193,7 @@
+                 srcBuffer.basicBufferDescs[0].buffer, copySize);
+             if (ret != EOK) [[unlikely]] {
+                 AUDIO_ERR_LOG("memcpy err :%{public}d", ret);
++                return ERR_OPERATION_FAILED;
+             }
+             dstBuffer.SeekFromStart(copySize);
+             srcBuffer.SeekFromStart(copySize);
+--- a/foundation/multimedia/audio_framework/services/audio_service/client/include/renderer_in_client_private.h
++++ b/foundation/multimedia/audio_framework/services/audio_service/client/include/renderer_in_client_private.h
+@@ -297,7 +297,19 @@
+     int32_t InitSharedBuffer();
+     int32_t CopyStaticBufferData();
+ 
+-    int32_t WriteCacheData(uint8_t *buffer, size_t bufferSize, bool speedCached, size_t oriBufferSize);
++    struct WriteProgress {
++        size_t published = 0;
++        int32_t error = SUCCESS;
++        bool retryable = false;
++        bool canceled = false;
++    };
++    WriteProgress WriteCacheData(uint8_t *buffer, size_t bufferSize);
++    int32_t DrainOwnedOutput(); // caller holds writeMutex_
++    int32_t DrainPendingOutput(bool finishSpeed = false); // owned tail before Sonic output
++    int32_t CacheConvertedOutput(uint8_t *buffer, size_t bufferSize);
++    int32_t RebuildWriteTransforms();
++    void DropOwnedOutput(); // explicit business drop; does not clear unknown
++
+ 
+     void SetCacheSize(uint32_t cacheSizeInFrame);
+     void InitCallbackBuffer(uint64_t bufferDurationInUs);
+@@ -310,8 +322,8 @@
+     bool WriteCallbackFunc();
+     // for callback mode. Check status if not running, wait for start or release.
+     bool WaitForRunning();
+-    bool ProcessSpeed(uint8_t *&buffer, size_t &bufferSize, bool &speedCached);
+-    bool ProcessPitch(uint8_t *&buffer, size_t &bufferSize, bool &pitchCached);
++    int32_t ProcessSpeed(uint8_t *&buffer, size_t &bufferSize, bool &speedCached);
++    int32_t ProcessPitch(uint8_t *&buffer, size_t &bufferSize, bool &pitchCached);
+     int32_t ProcessBufferAndWriteCache(uint8_t *buffer, size_t bufferSize, size_t oriBufferSize);
+     int32_t WriteInner(uint8_t *buffer, size_t bufferSize);
+     int32_t WriteInner(uint8_t *pcmBuffer, size_t pcmBufferSize, uint8_t *metaBuffer, size_t metaBufferSize);
+@@ -501,6 +513,13 @@
+ 
+     // buffer handle
+     std::mutex writeMutex_; // used for prevent multi thread call write
++    // One complete converted output, owned before acknowledging its original input.
++    // These owned-output fields are protected by writeMutex_; Pause preserves them.
++    std::unique_ptr<uint8_t[]> ownedOutput_;
++    size_t ownedOutputSize_ = 0;
++    size_t ownedOutputOffset_ = 0;
++    bool outputWriteUnknown_ = false;
++    bool lastWriteRetryable_ = false;
+ 
+     // Mark reach and period reach callback
+     int64_t totalBytesWritten_ = 0;
+@@ -535,6 +554,7 @@
+ 
+     std::shared_ptr<AudioPitchProcessor> pitchProcessor_ = nullptr;
+     std::unique_ptr<uint8_t[]> pitchBuffer_ {nullptr};
++    size_t pitchBufferCapacity_ = 0; // protected by pitchMutex_
+     float curPitch_ = 1.0f;
+     std::mutex pitchMutex_;
+ 
+--- a/foundation/multimedia/audio_framework/services/audio_service/client/src/renderer_in_client.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_service/client/src/renderer_in_client.cpp
+@@ -333,6 +333,9 @@
+ int32_t RendererInClientInner::InitIpcStream()
+ {
+     Trace trace("RendererInClientInner::InitIpcStream");
++    std::lock_guard<std::mutex> writeLock(writeMutex_);
++    DropOwnedOutput();
++    outputWriteUnknown_ = true;
+     AudioProcessConfig config = ConstructConfig();
+     bool resetSilentMode = (gServerProxy_ == nullptr) ? true : false;
+     sptr<IStandardAudioService> gasp = RendererInClientInner::GetAudioServerProxy();
+@@ -609,7 +612,10 @@
+     }
+     if (result < 0) {
+         AUDIO_WARNING_LOG("Call write fail, result:%{public}d, bufLength:%{public}zu", result, bufferDesc.bufLength);
+-        RecordDropPosition(bufferDesc.bufLength);
++        std::lock_guard<std::mutex> lock(writeMutex_);
++        if (!lastWriteRetryable_) {
++            RecordDropPosition(bufferDesc.bufLength);
++        }
+     }
+     return result;
+ }
+@@ -740,6 +746,21 @@
+         return true;
+     }
+     CheckAndProcessPendingSpanSize();
++    int32_t pendingRet = SUCCESS;
++    bool writeUnknown = false;
++    {
++        std::lock_guard<std::mutex> lock(writeMutex_);
++        pendingRet = DrainPendingOutput();
++        writeUnknown = outputWriteUnknown_;
++    }
++    if (writeUnknown) {
++        // Keep this existing loop available for a successful native recreation; do not take another input.
++        usleep(WAIT_FOR_NEXT_CB);
++        return true;
++    }
++    if (pendingRet != SUCCESS) {
++        return true; // DrainOwnedOutput already performed the bounded buffer wait.
++    }
+     if (cbBufferQueue_.Size() > 1) { // One callback, one enqueue, queue size should always be 1.
+         HILOG_COMM_WARN("[WriteCallbackFunc]The queue is too long, reducing data through loops");
+     }
+@@ -753,7 +774,23 @@
+         }
+         traceQueuePop.End();
+         // call write here.
++        {
++            std::lock_guard<std::mutex> lock(writeMutex_);
++            lastWriteRetryable_ = false;
++        }
+         int32_t result = ProcessWriteInner(temp);
++        {
++            std::lock_guard<std::mutex> lock(writeMutex_);
++            writeUnknown = outputWriteUnknown_;
++            if (!writeUnknown && result <= 0 && lastWriteRetryable_ && curStreamParams_.encoding == ENCODING_PCM) {
++                cbBufferQueue_.Push(temp); // no bytes of this input were published/owned
++                break;
++            }
++        }
++        if (writeUnknown) {
++            usleep(WAIT_FOR_NEXT_CB);
++            return true;
++        }
+         // only run in pause scene, do not repush audiovivid buffer cause metadata error
+         if (result > 0 && static_cast<size_t>(result) < temp.dataLength &&
+             curStreamParams_.encoding == ENCODING_PCM) {
+@@ -780,7 +817,7 @@
+     return true;
+ }
+ 
+-bool RendererInClientInner::ProcessSpeed(uint8_t *&buffer, size_t &bufferSize, bool &speedCached)
++int32_t RendererInClientInner::ProcessSpeed(uint8_t *&buffer, size_t &bufferSize, bool &speedCached)
+ {
+     speedCached = false;
+ #ifdef SONIC_ENABLE
+@@ -789,52 +826,53 @@
+         Trace trace(traceTag_ + " ProcessSpeed" + std::to_string(speed_));
+         if (audioSpeed_ == nullptr) {
+             AUDIO_ERR_LOG("audioSpeed_ is nullptr, use speed default 1.0");
+-            return true;
+-        }
++            return 1;
++        }
++        CHECK_AND_RETURN_RET_LOG(sizePerFrameInByte_ > 0 &&
++            bufferSize % sizePerFrameInByte_ == 0 && speedBuffer_ != nullptr, ERR_INVALID_PARAM,
++            "invalid speed input frame or output buffer");
+         int32_t outBufferSize = 0;
+-        if (audioSpeed_->ChangeSpeedFunc(buffer, bufferSize, speedBuffer_, outBufferSize) == 0) {
+-            bufferSize = 0;
+-            HILOG_COMM_ERROR("[ProcessSpeed]process speed error");
+-            return false;
+-        }
+-        if (outBufferSize == 0) {
+-            HILOG_COMM_ERROR("[ProcessSpeed]speed buffer is not full");
+-            return false;
+-        }
++        int32_t ret = audioSpeed_->ChangeSpeedFunc(buffer, bufferSize, speedBuffer_, outBufferSize);
++        CHECK_AND_RETURN_RET_LOG(ret > 0 && static_cast<size_t>(ret) == bufferSize && outBufferSize >= 0 &&
++            outBufferSize <= MAX_SPEED_BUFFER_SIZE &&
++            static_cast<size_t>(outBufferSize) % sizePerFrameInByte_ == 0, ERR_OPERATION_FAILED,
++            "speed input ownership or output size is unknown");
++        speedCached = true;
+         buffer = speedBuffer_.get();
+         bufferSize = static_cast<size_t>(outBufferSize);
+-        speedCached = true;
++        return outBufferSize == 0 ? 0 : 1;
+     }
+ #endif
+-    return true;
+-}
+-
+-bool RendererInClientInner::ProcessPitch(uint8_t *&buffer, size_t &bufferSize, bool &pitchCached)
++    return 1;
++}
++
++int32_t RendererInClientInner::ProcessPitch(uint8_t *&buffer, size_t &bufferSize, bool &pitchCached)
+ {
+     pitchCached = false;
+     std::lock_guard lockPitch(pitchMutex_);
+-    
+     if (isEqual(curPitch_, 1.0f) || pitchProcessor_ == nullptr) {
+-        return true;
+-    }
++        return 1;
++    }
++    CHECK_AND_RETURN_RET_LOG(sizePerFrameInByte_ > 0 && bufferSize < MAX_WRITE_SIZE &&
++        bufferSize % sizePerFrameInByte_ == 0, ERR_INVALID_PARAM, "invalid pitch input frame size");
+     Trace trace(traceTag_ + " ProcessPitch" + std::to_string(curPitch_));
+-    size_t outputSize = bufferSize * MAX_PITCH_BUFFER_FACTOR;
++    const size_t requiredCapacity = bufferSize * MAX_PITCH_BUFFER_FACTOR;
++    if (pitchBuffer_ == nullptr || pitchBufferCapacity_ < requiredCapacity) {
++        auto replacement = std::unique_ptr<uint8_t[]>(new (std::nothrow) uint8_t[requiredCapacity]);
++        CHECK_AND_RETURN_RET_LOG(replacement != nullptr, ERR_OPERATION_FAILED, "pitch output allocation failed");
++        pitchBuffer_ = std::move(replacement);
++        pitchBufferCapacity_ = requiredCapacity;
++    }
++    size_t outputSize = pitchBufferCapacity_;
+     int32_t ret = pitchProcessor_->ProcessBufferPitch(reinterpret_cast<int8_t*>(buffer), bufferSize,
+         reinterpret_cast<int8_t*>(pitchBuffer_.get()), outputSize);
+-    if (ret != SUCCESS) {
+-        AUDIO_ERR_LOG("ProcessBufferPitch failed");
+-        return false;
+-    }
+-    
+-    if (outputSize == 0) {
+-        AUDIO_ERR_LOG("Pitch buffer is empty");
+-        return false;
+-    }
+-    
++    CHECK_AND_RETURN_RET_LOG(ret == SUCCESS && outputSize <= pitchBufferCapacity_ &&
++        outputSize % sizePerFrameInByte_ == 0, ERR_OPERATION_FAILED,
++        "pitch input ownership or output size is unknown");
++    pitchCached = true;
+     buffer = pitchBuffer_.get();
+     bufferSize = outputSize;
+-    pitchCached = true;
+-    return true;
++    return outputSize == 0 ? 0 : 1;
+ }
+ 
+ void RendererInClientInner::DfxWriteInterval()
+@@ -891,13 +929,18 @@
+     AUDIO_INFO_LOG("NotifyStreamSilentChange cost %{public}" PRId64 " ns", ClockTime::GetCurNano() - stamp);
+ }
+ 
+-int32_t RendererInClientInner::WriteCacheData(uint8_t *buffer, size_t bufferSize, bool bufferCached,
+-    size_t oriBufferSize)
+-{
+-    CHECK_AND_CALL_FUNC_RETURN_RET(sizePerFrameInByte_ > 0, ERROR,
+-        HILOG_COMM_ERROR("[WriteCacheData]sizePerFrameInByte :%{public}zu", sizePerFrameInByte_));
++RendererInClientInner::WriteProgress RendererInClientInner::WriteCacheData(uint8_t *buffer, size_t bufferSize)
++{
++    WriteProgress progress;
++    if (sizePerFrameInByte_ == 0 || buffer == nullptr || clientBuffer_ == nullptr) {
++        progress.error = ERR_INVALID_PARAM;
++        return progress;
++    }
+     size_t remainSize = (bufferSize / sizePerFrameInByte_) * sizePerFrameInByte_;
+-
++    if (remainSize == 0) {
++        progress.error = ERR_INVALID_PARAM;
++        return progress;
++    }
+     RingBufferWrapper inBuffer = {
+         .basicBufferDescs = {{
+             {.buffer = buffer, .bufLength = remainSize},
+@@ -905,49 +948,92 @@
+         }},
+         .dataLength = 0
+     };
+-
+     while (remainSize >= sizePerFrameInByte_) {
+-        FutexCode futexRes = FUTEX_OPERATION_FAILED;
+         int32_t timeout = GetBufferWaitTimeoutInMs();
+-        futexRes = clientBuffer_->WaitFor(static_cast<int64_t>(timeout) * AUDIO_US_PER_SECOND,
++        FutexCode futexRes = clientBuffer_->WaitFor(static_cast<int64_t>(timeout) * AUDIO_US_PER_SECOND,
+             [this] () { return (state_ != RUNNING) || CheckBufferNeedWrite(); });
+-        CHECK_AND_RETURN_RET_LOG(state_ == RUNNING, ERR_ILLEGAL_STATE, "failed with state:%{public}d", state_.load());
+-        CHECK_AND_CALL_FUNC_RETURN_RET(futexRes != FUTEX_TIMEOUT, ERROR, HILOG_COMM_ERROR("[WriteCacheData]write data "
+-            "time out, mode is %{public}s", (offloadEnable_ ? "offload" : "normal")));
+-
++        if (state_ != RUNNING || futexRes == FUTEX_TIMEOUT) {
++            progress.error = state_ != RUNNING ? ERR_ILLEGAL_STATE : ERROR;
++            progress.retryable = state_ == RUNNING || state_ == PAUSED;
++            progress.canceled = state_ == STOPPING || state_ == STOPPED || state_ == RELEASED;
++            break;
++        }
+         uint64_t writePos = clientBuffer_->GetCurWriteFrame();
+         uint64_t readPos = clientBuffer_->GetCurReadFrame();
+-        CHECK_AND_CALL_FUNC_RETURN_RET(writePos >= readPos, ERROR, HILOG_COMM_ERROR("[WriteCacheData]writePos: "
+-            "%{public}" PRIu64 " readPos: %{public}" PRIu64 "", writePos, readPos));
++        if (writePos < readPos) {
++            progress.error = ERROR;
++            break;
++        }
+         RingBufferWrapper ringBuffer;
+         int32_t ret = clientBuffer_->GetAllWritableBufferFromPosFrame(writePos, ringBuffer);
+-        CHECK_AND_CALL_FUNC_RETURN_RET(ret == SUCCESS && (ringBuffer.dataLength > 0), ERROR,
+-            HILOG_COMM_ERROR("[WriteCacheData]Write failed:%{public}d", ret));
+-        auto copySize = std::min(remainSize, ringBuffer.dataLength);
++        auto copySize = (std::min(remainSize, ringBuffer.dataLength) / sizePerFrameInByte_) * sizePerFrameInByte_;
++        if (ret != SUCCESS || copySize == 0) {
++            progress.error = ret == SUCCESS ? ERROR : ret;
++            break;
++        }
+         inBuffer.dataLength = copySize;
+         ret = ringBuffer.CopyInputBufferValueToCurBuffer(inBuffer);
+-        CHECK_AND_CALL_FUNC_RETURN_RET(ret == SUCCESS, ret,
+-            HILOG_COMM_ERROR("[WriteCacheData]errcode: %{public}d", ret));
+-        clientBuffer_->SetCurWriteFrame((writePos + (copySize / sizePerFrameInByte_)), false);
++        if (ret != SUCCESS) {
++            progress.error = ret;
++            break;
++        }
++        ret = clientBuffer_->SetCurWriteFrame(writePos + (copySize / sizePerFrameInByte_), false);
++        if (ret != SUCCESS) {
++            progress.error = ret;
++            break;
++        }
+         inBuffer.SeekFromStart(copySize);
+         remainSize -= copySize;
+-    }
+-    size_t writtenSize = bufferSize - remainSize;
+-
+-    preWriteEndTime_ = ClockTime::GetCurNano() / AUDIO_US_PER_SECOND;
+-
+-    CHECK_AND_RETURN_RET(ProcessVolume(), ERR_OPERATION_FAILED);
+-    VolumeTools::DfxOperation({.buffer = buffer, .bufLength = writtenSize, .dataLength = writtenSize},
+-        clientConfig_.streamInfo, traceTag_, volumeDataCount_);
+-    NotifyStreamSilentChange();
+-    DumpFileUtil::WriteDumpFile(dumpOutFd_, static_cast<void *>(buffer), writtenSize);
+-
+-    CHECK_AND_CALL_FUNC_RETURN_RET(ipcStream_ != nullptr, ERR_OPERATION_FAILED,
+-        HILOG_COMM_ERROR("[WriteCacheData]WriteCacheData failed, null ipcStream_."));
+-    ipcStream_->UpdatePosition(); // notiify server update position
+-    HandleRendererPositionChanges(writtenSize);
+-
+-    return bufferCached ? oriBufferSize : writtenSize;
++        progress.published += copySize;
++    }
++    if (progress.published > 0) {
++        preWriteEndTime_ = ClockTime::GetCurNano() / AUDIO_US_PER_SECOND;
++        if (!ProcessVolume()) {
++            AUDIO_ERR_LOG("volume update failed after publishing audio");
++        }
++        VolumeTools::DfxOperation({.buffer = buffer, .bufLength = progress.published, .dataLength = progress.published},
++            clientConfig_.streamInfo, traceTag_, volumeDataCount_);
++        NotifyStreamSilentChange();
++        DumpFileUtil::WriteDumpFile(dumpOutFd_, static_cast<void *>(buffer), progress.published);
++        if (ipcStream_ != nullptr) {
++            ipcStream_->UpdatePosition();
++        } else {
++            AUDIO_ERR_LOG("position notification unavailable after publishing audio");
++        }
++        HandleRendererPositionChanges(progress.published);
++    }
++    return progress;
++}
++
++void RendererInClientInner::DropOwnedOutput()
++{
++    ownedOutput_.reset();
++    ownedOutputSize_ = 0;
++    ownedOutputOffset_ = 0;
++}
++
++int32_t RendererInClientInner::DrainOwnedOutput()
++{
++    CHECK_AND_RETURN_RET_LOG(!outputWriteUnknown_, ERR_OPERATION_FAILED, "output write state is unknown");
++    if (ownedOutputSize_ == 0) {
++        return SUCCESS;
++    }
++    auto progress = WriteCacheData(ownedOutput_.get() + ownedOutputOffset_, ownedOutputSize_ - ownedOutputOffset_);
++    ownedOutputOffset_ += progress.published;
++    lastWriteRetryable_ = progress.retryable;
++    if (progress.canceled) {
++        return progress.error; // Stop/Release owns the explicit discard after the writer exits.
++    }
++    if (progress.error != SUCCESS && !progress.retryable) {
++        outputWriteUnknown_ = true;
++        DropOwnedOutput();
++        return progress.error;
++    }
++    if (ownedOutputOffset_ == ownedOutputSize_) {
++        DropOwnedOutput();
++        return SUCCESS;
++    }
++    return progress.error == SUCCESS ? ERR_OPERATION_FAILED : progress.error;
+ }
+ 
+ void RendererInClientInner::HandleRendererPositionChanges(size_t bytesWritten)
+@@ -987,38 +1073,132 @@
+     }
+ }
+ 
+-int32_t RendererInClientInner::ProcessBufferAndWriteCache(uint8_t *buffer, size_t bufferSize, size_t oriBufferSize)
+-{
+-    bool speedCached = false;
+-    bool pitchCached = false;
++int32_t RendererInClientInner::CacheConvertedOutput(uint8_t *buffer, size_t bufferSize)
++{
++    CHECK_AND_RETURN_RET_LOG(buffer != nullptr && bufferSize > 0 &&
++        bufferSize <= MAX_WRITE_SIZE * MAX_PITCH_BUFFER_FACTOR &&
++        bufferSize % sizePerFrameInByte_ == 0, ERR_INVALID_PARAM, "invalid converted output");
++    auto output = std::unique_ptr<uint8_t[]>(new (std::nothrow) uint8_t[bufferSize]);
++    CHECK_AND_RETURN_RET_LOG(output != nullptr, ERR_OPERATION_FAILED, "output allocation failed");
++    CHECK_AND_RETURN_RET_LOG(memcpy_s(output.get(), bufferSize, buffer, bufferSize) == EOK,
++        ERR_OPERATION_FAILED, "output ownership copy failed");
++    WriteMuteDataSysEvent(output.get(), bufferSize);
++    if (isBlendSet_) {
++        audioBlend_.Process(output.get(), bufferSize);
++    }
++    ownedOutput_ = std::move(output);
++    ownedOutputSize_ = bufferSize;
++    ownedOutputOffset_ = 0;
+     AudioWriteState currentState = audioWriteState_.load();
+-    currentState.perPeriodFrame_ += bufferSize / sizePerFrameInByte_;
+-    
+-    if (!ProcessSpeed(buffer, bufferSize, speedCached)) {
+-        audioWriteState_.store(currentState);
+-        return bufferSize;
+-    }
+-    
+-    if (!ProcessPitch(buffer, bufferSize, pitchCached)) {
+-        audioWriteState_.store(currentState);
+-        return bufferSize;
+-    }
+-    
+-    WriteMuteDataSysEvent(buffer, bufferSize);
+-    
+-    CHECK_AND_RETURN_RET_PRELOG(state_ == RUNNING, ERR_ILLEGAL_STATE,
+-        "Write: Illegal state:%{public}u sessionid: %{public}u", state_.load(), sessionId_);
+-    
+-    if (isBlendSet_) {
+-        audioBlend_.Process(buffer, bufferSize);
+-    }
+-    
+     currentState.unprocessedFramesBytes_ += currentState.perPeriodFrame_;
+     currentState.totalBytesWrittenAfterFlush_ += bufferSize / sizePerFrameInByte_;
+     currentState.perPeriodFrame_ = 0;
+     audioWriteState_.store(currentState);
+-    
+-    return WriteCacheData(buffer, bufferSize, speedCached || pitchCached, oriBufferSize);
++    return SUCCESS;
++}
++
++int32_t RendererInClientInner::DrainPendingOutput(bool finishSpeed)
++{
++    int32_t ret = DrainOwnedOutput();
++    CHECK_AND_RETURN_RET(ret == SUCCESS, ret);
++#ifdef SONIC_ENABLE
++    if (finishSpeed) {
++        std::lock_guard lockSpeed(speedMutex_);
++        if (audioSpeed_ != nullptr && audioSpeed_->Finish() != SUCCESS) {
++            outputWriteUnknown_ = true;
++            return ERR_OPERATION_FAILED;
++        }
++    }
++    while (true) {
++        int32_t outputSize = 0;
++        {
++            std::lock_guard lockSpeed(speedMutex_);
++            if (audioSpeed_ == nullptr) {
++                return SUCCESS;
++            }
++            ret = audioSpeed_->ReadOutput(speedBuffer_, outputSize);
++        }
++        if (ret != SUCCESS || outputSize < 0 || outputSize > MAX_SPEED_BUFFER_SIZE ||
++            static_cast<size_t>(outputSize) % sizePerFrameInByte_ != 0) {
++            outputWriteUnknown_ = true;
++            return ERR_OPERATION_FAILED;
++        }
++        if (outputSize == 0) {
++            return SUCCESS; // Sonic can still own delayed input until Finish or another input.
++        }
++        uint8_t *buffer = speedBuffer_.get();
++        size_t bufferSize = static_cast<size_t>(outputSize);
++        bool pitchCached = false;
++        ret = ProcessPitch(buffer, bufferSize, pitchCached);
++        if (ret > 0) {
++            ret = CacheConvertedOutput(buffer, bufferSize);
++        }
++        if (ret < 0) {
++            outputWriteUnknown_ = true;
++            return ret;
++        }
++        ret = DrainOwnedOutput();
++        CHECK_AND_RETURN_RET(ret == SUCCESS, ret);
++    }
++#else
++    return SUCCESS;
++#endif
++}
++
++int32_t RendererInClientInner::ProcessBufferAndWriteCache(uint8_t *buffer, size_t bufferSize, size_t oriBufferSize)
++{
++    lastWriteRetryable_ = false;
++    CHECK_AND_RETURN_RET_LOG(!outputWriteUnknown_, ERR_OPERATION_FAILED, "output write state is unknown");
++    CHECK_AND_RETURN_RET_LOG(sizePerFrameInByte_ > 0, ERR_INVALID_PARAM, "invalid input frame size");
++    int32_t ret = DrainPendingOutput();
++    CHECK_AND_RETURN_RET(ret == SUCCESS, ret);
++    CHECK_AND_RETURN_RET_PRELOG(state_ == RUNNING, ERR_ILLEGAL_STATE,
++        "Write: Illegal state:%{public}u sessionid: %{public}u", state_.load(), sessionId_);
++    bool speedCached = false;
++    bool pitchCached = false;
++    ret = ProcessSpeed(buffer, bufferSize, speedCached);
++    if (ret > 0) {
++        ret = ProcessPitch(buffer, bufferSize, pitchCached);
++    }
++    if (ret < 0) {
++        if (ret != ERR_INVALID_PARAM || speedCached) {
++            outputWriteUnknown_ = true;
++        }
++        return ret;
++    }
++    if (!speedCached && !pitchCached) {
++        WriteMuteDataSysEvent(buffer, bufferSize);
++        std::unique_ptr<uint8_t[]> blendBuffer;
++        if (isBlendSet_) {
++            blendBuffer = std::unique_ptr<uint8_t[]>(new (std::nothrow) uint8_t[bufferSize]);
++            CHECK_AND_RETURN_RET_LOG(blendBuffer != nullptr &&
++                memcpy_s(blendBuffer.get(), bufferSize, buffer, bufferSize) == EOK,
++                ERR_OPERATION_FAILED, "blend scratch allocation or copy failed");
++            buffer = blendBuffer.get();
++            audioBlend_.Process(buffer, bufferSize);
++        }
++        auto progress = WriteCacheData(buffer, bufferSize);
++        lastWriteRetryable_ = progress.retryable;
++        AudioWriteState currentState = audioWriteState_.load();
++        currentState.unprocessedFramesBytes_ += progress.published / sizePerFrameInByte_;
++        currentState.totalBytesWrittenAfterFlush_ += progress.published / sizePerFrameInByte_;
++        audioWriteState_.store(currentState);
++        return progress.published > 0 ? static_cast<int32_t>(progress.published) : progress.error;
++    }
++    AudioWriteState currentState = audioWriteState_.load();
++    currentState.perPeriodFrame_ += oriBufferSize / sizePerFrameInByte_;
++    audioWriteState_.store(currentState);
++    if (ret == 0) {
++        return static_cast<int32_t>(oriBufferSize); // complete successful input is owned by converter history
++    }
++    ret = CacheConvertedOutput(buffer, bufferSize);
++    if (ret != SUCCESS) {
++        outputWriteUnknown_ = true;
++        return ret;
++    }
++    ret = DrainPendingOutput();
++    CHECK_AND_RETURN_RET_LOG(!outputWriteUnknown_, ret, "converted output write failed");
++    return static_cast<int32_t>(oriBufferSize); // output is fully owned, including a retryable unpublished tail
+ }
+ 
+ int32_t RendererInClientInner::WriteInner(uint8_t *buffer, size_t bufferSize)
+@@ -1245,6 +1425,7 @@
+         AUDIO_ERR_LOG("Drain failed. Illegal state:%{public}u", state_.load());
+         return false;
+     }
++    CHECK_AND_RETURN_RET(DrainPendingOutput(true) == SUCCESS, false);
+     if (rendererInfo_.streamUsage == STREAM_USAGE_INTERPHONE) {
+         return true;
+     }
+--- a/foundation/multimedia/audio_framework/services/audio_service/client/src/renderer_in_client_public.cpp
++++ b/foundation/multimedia/audio_framework/services/audio_service/client/src/renderer_in_client_public.cpp
+@@ -242,6 +242,31 @@
+     return;
+ }
+ 
++int32_t RendererInClientInner::RebuildWriteTransforms()
++{
++    std::lock_guard lockSpeed(speedMutex_);
++    if (audioSpeed_ != nullptr) {
++        CHECK_AND_RETURN_RET_LOG(audioSpeed_->Reconfigure(curStreamParams_.samplingRate,
++            curStreamParams_.format, curStreamParams_.channels) == SUCCESS,
++            ERR_OPERATION_FAILED, "speed recreation failed");
++    }
++    std::lock_guard lockPitch(pitchMutex_);
++    if (pitchProcessor_ != nullptr) {
++        AudioStreamInfo info(static_cast<AudioSamplingRate>(curStreamParams_.samplingRate),
++            static_cast<AudioEncodingType>(curStreamParams_.encoding),
++            static_cast<AudioSampleFormat>(curStreamParams_.format),
++            static_cast<AudioChannel>(curStreamParams_.channels),
++            static_cast<AudioChannelLayout>(curStreamParams_.channelLayout));
++        auto replacement = AudioPitchProcessor::CreateInstance(info);
++        CHECK_AND_RETURN_RET_LOG(replacement != nullptr && replacement->PitchAlgoInit() == SUCCESS &&
++            replacement->SetPitch(curPitch_) == SUCCESS, ERR_OPERATION_FAILED, "pitch recreation failed");
++        pitchProcessor_ = std::move(replacement);
++        pitchBuffer_.reset();
++        pitchBufferCapacity_ = 0;
++    }
++    return SUCCESS;
++}
++
+ int32_t RendererInClientInner::SetAudioStreamInfo(const AudioStreamParams info,
+     const std::shared_ptr<AudioClientTracker> &proxyObj,
+     const AudioPlaybackCaptureConfig &config)
+@@ -257,6 +282,11 @@
+     AudioXCollie guard("RendererInClientInner::SetAudioStreamInfo", CREATE_TIMEOUT_IN_SECOND,
+          nullptr, nullptr, AUDIO_XCOLLIE_FLAG_LOG);
+ 
++    {
++        std::lock_guard<std::mutex> writeLock(writeMutex_);
++        DropOwnedOutput();
++        outputWriteUnknown_ = true; // prevent output from crossing a format/native-buffer rebuild
++    }
+     streamParams_ = curStreamParams_ = info; // keep it for later use
+     isHWDecodingType_ = IsHWDecodingType(static_cast<AudioEncodingType>(streamParams_.encoding));
+     if (curStreamParams_.encoding == ENCODING_AUDIOVIVID) {
+@@ -297,7 +327,14 @@
+     int32_t initRet = InitIpcStream();
+     CHECK_AND_CALL_FUNC_RETURN_RET(initRet == SUCCESS, initRet,
+         HILOG_COMM_ERROR("[SetAudioStreamInfo]Init stream failed: %{public}d", initRet));
+-    UpdateStreamState(PREPARED);
++    {
++        std::lock_guard<std::mutex> writeLock(writeMutex_);
++        CHECK_AND_RETURN_RET_LOG(RebuildWriteTransforms() == SUCCESS, ERR_OPERATION_FAILED,
++            "write transform recreation failed");
++        UpdateStreamState(PREPARED);
++        outputWriteUnknown_ = false; // actual new process/buffer/session initialization succeeded
++        lastWriteRetryable_ = false;
++    }
+ 
+     InitDFXOperaiton();
+     InitDirectPipeType();
+@@ -864,7 +901,8 @@
+         }
+         
+         GetBufferSize(bufferSize_);
+-        pitchBuffer_ = std::make_unique<uint8_t[]>(bufferSize_ * MAX_PITCH_BUFFER_FACTOR);
++        pitchBuffer_.reset();
++        pitchBufferCapacity_ = 0; // sized from the actual input by ProcessPitch under the writer lock
+     }
+     
+     pitchProcessor_->SetPitch(pitch);
+@@ -1330,6 +1368,12 @@
+     StateCmdTypeToParams(param, state_, cmdType);
+     SafeSendCallbackEvent(STATE_CHANGE_EVENT, param);
+     preWriteEndTime_ = 0;
++    {
++        std::lock_guard<std::mutex> writeLock(writeMutex_);
++        if (DrainPendingOutput() != SUCCESS) {
++            AUDIO_WARNING_LOG("Resume retains pending output or unknown write state");
++        }
++    }
+     return true;
+ }
+ 
+@@ -1433,6 +1477,11 @@
+     if (state_ == STOPPED) {
+         AUDIO_INFO_LOG("Renderer in client is already stopped");
+         streamFocusState_ = static_cast<StreamFocusState>(STOPPED);
++        if (!lock.owns_lock()) {
++            lock.lock();
++        }
++        DropOwnedOutput();
++        FlushSpeedBuffer();
+         return true;
+     }
+     CHECK_AND_CALL_FUNC_RETURN_RET_LOG(state_ == RUNNING || state_ == PAUSED, false,
+@@ -1465,6 +1514,11 @@
+ 
+     waitLock.unlock();
+     FutexTool::FutexWake(clientBuffer_->GetFutex());
++    if (!lock.owns_lock()) {
++        lock.lock(); // STOPPED and futex wake precede waiting for an offload writer
++    }
++    DropOwnedOutput();
++    FlushSpeedBuffer();
+     statusLock.unlock();
+     HandleStopSuccess();
+     return true;
+@@ -1514,6 +1568,10 @@
+ 
+     //clear write callback
+     JoinCallbackLoop();
++    {
++        std::lock_guard<std::mutex> writeLock(writeMutex_);
++        DropOwnedOutput();
++    }
+     paramsIsSet_ = false;
+ 
+     std::unique_lock<std::mutex> lock(streamCbMutex_);
+@@ -1557,6 +1615,7 @@
+         "Flush failed. Illegal state:%{public}u", state_.load());
+ 
+     ClearCbBufferQueue();
++    DropOwnedOutput();
+     FlushSpeedBuffer();
+ 
+     CHECK_AND_CALL_FUNC_RETURN_RET_LOG(ipcStream_ != nullptr, false,
+--- a/foundation/multimedia/audio_framework/frameworks/native/audioutils/include/audio_speed.h
++++ b/foundation/multimedia/audio_framework/frameworks/native/audioutils/include/audio_speed.h
+@@ -40,7 +40,10 @@
+     int32_t SetSpeed(float speed);
+     int32_t SetPitch(float pitch);
+     float GetSpeed();
+-    int32_t Flush();
++    int32_t Flush(); // explicit discard of converter history and output
++    int32_t Finish(); // generate final output without discarding it
++    int32_t ReadOutput(std::unique_ptr<uint8_t[]> &outBuffer, int32_t &outBufferSize);
++    int32_t Reconfigure(size_t rate, size_t format, size_t channels);
+ 
+     int32_t ChangeSpeedFor8Bit(uint8_t *buffer, int32_t bufferSize,
+         std::unique_ptr<uint8_t []> &outBuffer, int32_t &outBufferSize);
+@@ -54,7 +57,8 @@
+ 
+     std::function<int32_t(uint8_t *, int32_t, std::unique_ptr<uint8_t []>&, int32_t&)> ChangeSpeedFunc;
+ private:
+-    float speed_ = 0.0f;
++    int32_t OutputFrameCapacity() const;
++    float speed_ = SPEED_NORMAL;
+     size_t rate_;
+     size_t format_;
+ 
+@@ -64,6 +68,7 @@
+     size_t formatSize_ = 1;
+     size_t channels_ = 2;
+     sonicStream sonicStream_ = nullptr;
++    bool finished_ = false; // one successful finish per input epoch
+     int32_t maxSpeedBufferSize_;
+ };
+ } // namespace AudioStandard
+--- a/foundation/multimedia/audio_framework/frameworks/native/audioutils/src/audio_speed.cpp
++++ b/foundation/multimedia/audio_framework/frameworks/native/audioutils/src/audio_speed.cpp
+@@ -45,11 +45,24 @@
+     }
+ }
+ 
++int32_t AudioSpeed::OutputFrameCapacity() const
++{
++    // Sonic's read limit is frames; maxSpeedBufferSize_ is destination bytes.
++    if (maxSpeedBufferSize_ <= 0 || formatSize_ == 0 || channels_ == 0 ||
++        channels_ > static_cast<size_t>(maxSpeedBufferSize_) / formatSize_) {
++        return 0;
++    }
++    return maxSpeedBufferSize_ / static_cast<int32_t>(formatSize_ * channels_);
++}
++
+ int32_t AudioSpeed::Init()
+ {
++    finished_ = false;
++    LoadChangeSpeedFunc();
++    CHECK_AND_RETURN_RET_LOG(OutputFrameCapacity() > 0, ERROR, "invalid speed output capacity");
+     sonicStream_ = sonicCreateStream(rate_, channels_);
+     CHECK_AND_RETURN_RET_LOG(sonicStream_ != nullptr, ERROR, "sonicCreateStream failed.");
+-    LoadChangeSpeedFunc();
++    finished_ = true; // A newly created stream has no input to finish.
+ 
+     return SUCCESS;
+ }
+@@ -107,6 +120,7 @@
+ int32_t AudioSpeed::SetSpeed(float speed)
+ {
+     AUDIO_INFO_LOG("SetSpeed %{public}f", speed);
++    CHECK_AND_RETURN_RET_LOG(sonicStream_ != nullptr, ERROR, "speed stream is not initialized");
+     speed_ = speed;
+     sonicSetSpeed(sonicStream_, speed_);
+     return SUCCESS;
+@@ -115,6 +129,7 @@
+ int32_t AudioSpeed::SetPitch(float pitch)
+ {
+     AUDIO_INFO_LOG("SetPitch %{public}f", pitch);
++    CHECK_AND_RETURN_RET_LOG(sonicStream_ != nullptr, ERROR, "speed stream is not initialized");
+     sonicSetPitch(sonicStream_, pitch);
+     sonicSetRate(sonicStream_, 1.0f);
+     return SUCCESS;
+@@ -142,51 +157,48 @@
+ int32_t AudioSpeed::ChangeSpeedFor8Bit(uint8_t *buffer, int32_t bufferSize,
+     std::unique_ptr<uint8_t []> &outBuffer, int32_t &outBufferSize)
+ {
+-    Trace trace("AudioSpeed::ChangeSpeedFor8Bit");
+-    int32_t numSamples = bufferSize / static_cast<int32_t>(formatSize_ * channels_);
+-    int32_t res = sonicWriteUnsignedCharToStream(sonicStream_, static_cast<unsigned char*>(buffer), numSamples);
+-    CHECK_AND_RETURN_RET_LOG(res == 1, 0, "sonic write unsigned char to stream failed.");
+-
+-    int32_t outSamples = sonicReadUnsignedCharFromStream(sonicStream_,
+-        static_cast<unsigned char*>(outBuffer.get()), maxSpeedBufferSize_);
+-    CHECK_AND_RETURN_RET_LOG(outSamples != 0, bufferSize, "sonic stream is not full continue to write.");
+-
+-    outBufferSize = outSamples * static_cast<int32_t>(formatSize_ * channels_);
+-    return bufferSize;
++    outBufferSize = 0;
++    CHECK_AND_RETURN_RET_LOG(sonicStream_ != nullptr && OutputFrameCapacity() > 0 && buffer != nullptr &&
++        bufferSize > 0 && bufferSize % (formatSize_ * channels_) == 0, ERROR, "invalid speed input");
++    int32_t frames = bufferSize / static_cast<int32_t>(formatSize_ * channels_);
++    CHECK_AND_RETURN_RET_LOG(sonicWriteUnsignedCharToStream(sonicStream_, buffer, frames) == 1,
++        ERROR, "sonic write failed");
++    finished_ = false;
++    int32_t ret = ReadOutput(outBuffer, outBufferSize);
++    return ret == SUCCESS ? bufferSize : ret;
+ }
+ 
+ int32_t AudioSpeed::ChangeSpeedFor16Bit(uint8_t *buffer, int32_t bufferSize,
+     std::unique_ptr<uint8_t []> &outBuffer, int32_t &outBufferSize)
+ {
+-    Trace trace("AudioSpeed::ChangeSpeedFor16Bit");
+-    int32_t numSamples = bufferSize / static_cast<int32_t>(formatSize_ * channels_);
+-    int32_t res = sonicWriteShortToStream(sonicStream_, reinterpret_cast<short*>(buffer), numSamples);
+-    CHECK_AND_RETURN_RET_LOG(res == 1, 0, "sonic write short to stream failed.");
+-
+-    int32_t outSamples = sonicReadShortFromStream(sonicStream_, reinterpret_cast<short*>(outBuffer.get()),
+-        maxSpeedBufferSize_);
+-    CHECK_AND_RETURN_RET_LOG(outSamples != 0, bufferSize, "sonic stream is not full continue to write.");
+-
+-    outBufferSize = outSamples * static_cast<int32_t>(formatSize_ * channels_);
+-    return bufferSize;
++    outBufferSize = 0;
++    CHECK_AND_RETURN_RET_LOG(sonicStream_ != nullptr && OutputFrameCapacity() > 0 && buffer != nullptr &&
++        bufferSize > 0 && bufferSize % (formatSize_ * channels_) == 0, ERROR, "invalid speed input");
++    int32_t frames = bufferSize / static_cast<int32_t>(formatSize_ * channels_);
++    CHECK_AND_RETURN_RET_LOG(sonicWriteShortToStream(sonicStream_, reinterpret_cast<short*>(buffer), frames) == 1,
++        ERROR, "sonic write failed");
++    finished_ = false;
++    int32_t ret = ReadOutput(outBuffer, outBufferSize);
++    return ret == SUCCESS ? bufferSize : ret;
+ }
+ 
+ int32_t AudioSpeed::ChangeSpeedFor24Bit(uint8_t *buffer, int32_t bufferSize,
+     std::unique_ptr<uint8_t []> &outBuffer, int32_t &outBufferSize)
+ {
+     Trace trace("AudioSpeed::ChangeSpeedFor24Bit");
+-    if (bufferSize <= 0 || bufferSize > maxSpeedBufferSize_) {
++    outBufferSize = 0;
++    if (bufferSize <= 0 || channels_ == 0 || bufferSize % (formatSize_ * channels_) != 0) {
+         AUDIO_ERR_LOG("BufferSize is illegal:%{public}d", bufferSize);
+         return ERR_MEMORY_ALLOC_FAILED;
+     }
+-    float *bitTofloat = new (std::nothrow) float[bufferSize];
++    float *bitTofloat = new (std::nothrow) float[bufferSize / formatSize_];
+     if (bitTofloat == nullptr) {
+         AUDIO_ERR_LOG("bitTofloat nullptr, No memory");
+         return ERR_MEMORY_ALLOC_FAILED;
+     }
+     ConvertFrom24BitToFloat(bufferSize / formatSize_, buffer, bitTofloat);
+ 
+-    float *speedBuf = new (std::nothrow) float[maxSpeedBufferSize_];
++    float *speedBuf = new (std::nothrow) float[static_cast<size_t>(OutputFrameCapacity()) * channels_];
+     if (speedBuf == nullptr) {
+         AUDIO_ERR_LOG("speedBuf nullptr, No memory");
+         delete [] bitTofloat;
+@@ -205,18 +217,19 @@
+     std::unique_ptr<uint8_t []> &outBuffer, int32_t &outBufferSize)
+ {
+     Trace trace("AudioSpeed::ChangeSpeedFor32Bit");
+-    if (bufferSize <= 0 || bufferSize > maxSpeedBufferSize_) {
++    outBufferSize = 0;
++    if (bufferSize <= 0 || channels_ == 0 || bufferSize % (formatSize_ * channels_) != 0) {
+         AUDIO_ERR_LOG("BufferSize is illegal:%{public}d", bufferSize);
+         return ERR_MEMORY_ALLOC_FAILED;
+     }
+-    float *bitTofloat = new (std::nothrow) float[bufferSize];
++    float *bitTofloat = new (std::nothrow) float[bufferSize / formatSize_];
+     if (bitTofloat == nullptr) {
+         AUDIO_ERR_LOG("bitTofloat nullptr, No memory");
+         return ERR_MEMORY_ALLOC_FAILED;
+     }
+     ConvertFrom32BitToFloat(bufferSize / formatSize_, reinterpret_cast<int32_t *>(buffer), bitTofloat);
+ 
+-    float *speedBuf = new (std::nothrow) float[maxSpeedBufferSize_];
++    float *speedBuf = new (std::nothrow) float[static_cast<size_t>(OutputFrameCapacity()) * channels_];
+     if (speedBuf == nullptr) {
+         AUDIO_ERR_LOG("speedBuf nullptr, No memory");
+         delete [] bitTofloat;
+@@ -234,49 +247,92 @@
+ int32_t AudioSpeed::ChangeSpeedForFloat(float *buffer, int32_t bufferSize,
+     float* outBuffer, int32_t &outBufferSize)
+ {
+-    Trace trace("AudioSpeed::ChangeSpeedForFloat");
+-    int32_t numSamples = bufferSize / static_cast<int32_t>(formatSize_ * channels_);
+-    int32_t res = static_cast<int32_t>(sonicWriteFloatToStream(sonicStream_, buffer, numSamples));
+-    CHECK_AND_RETURN_RET_LOG(res == 1, 0, "sonic write float to stream failed.");
+-    int32_t outSamples = sonicReadFloatFromStream(sonicStream_, outBuffer, maxSpeedBufferSize_);
+-    outBufferSize = outSamples * static_cast<int32_t>(formatSize_ * channels_);
++    outBufferSize = 0;
++    CHECK_AND_RETURN_RET_LOG(sonicStream_ != nullptr && OutputFrameCapacity() > 0 && buffer != nullptr &&
++        outBuffer != nullptr && bufferSize > 0 && bufferSize % (formatSize_ * channels_) == 0,
++        ERROR, "invalid speed float input");
++    int32_t frames = bufferSize / static_cast<int32_t>(formatSize_ * channels_);
++    CHECK_AND_RETURN_RET_LOG(sonicWriteFloatToStream(sonicStream_, buffer, frames) == 1,
++        ERROR, "sonic write float failed");
++    finished_ = false;
++    int32_t outputFrames = sonicReadFloatFromStream(sonicStream_, outBuffer, OutputFrameCapacity());
++    CHECK_AND_RETURN_RET_LOG(outputFrames >= 0, ERROR, "sonic read float failed");
++    outBufferSize = outputFrames * static_cast<int32_t>(formatSize_ * channels_);
+     return bufferSize;
+ }
+ 
++int32_t AudioSpeed::ReadOutput(std::unique_ptr<uint8_t[]> &outBuffer, int32_t &outBufferSize)
++{
++    outBufferSize = 0;
++    CHECK_AND_RETURN_RET_LOG(sonicStream_ != nullptr && OutputFrameCapacity() > 0 && outBuffer != nullptr,
++        ERROR, "invalid speed output");
++    if (sonicSamplesAvailable(sonicStream_) == 0) {
++        return SUCCESS;
++    }
++    int32_t frames = 0;
++    switch (format_) {
++        case SAMPLE_U8:
++            frames = sonicReadUnsignedCharFromStream(sonicStream_, outBuffer.get(), OutputFrameCapacity());
++            break;
++        case SAMPLE_S16LE:
++            frames = sonicReadShortFromStream(sonicStream_, reinterpret_cast<short*>(outBuffer.get()),
++                OutputFrameCapacity());
++            break;
++        case SAMPLE_S24LE:
++        case SAMPLE_S32LE: {
++            const size_t samples = static_cast<size_t>(OutputFrameCapacity()) * channels_;
++            auto floats = std::unique_ptr<float[]>(new (std::nothrow) float[samples]);
++            CHECK_AND_RETURN_RET_LOG(floats != nullptr, ERROR, "speed output allocation failed");
++            frames = sonicReadFloatFromStream(sonicStream_, floats.get(), OutputFrameCapacity());
++            if (format_ == SAMPLE_S24LE) {
++                ConvertFromFloatTo24Bit(static_cast<size_t>(frames) * channels_, floats.get(), outBuffer.get());
++            } else {
++                ConvertFromFloatTo32Bit(static_cast<size_t>(frames) * channels_, floats.get(),
++                    reinterpret_cast<int32_t*>(outBuffer.get()));
++            }
++            break;
++        }
++        case SAMPLE_F32LE:
++            frames = sonicReadFloatFromStream(sonicStream_, reinterpret_cast<float*>(outBuffer.get()),
++                OutputFrameCapacity());
++            break;
++        default:
++            return ERROR;
++    }
++    CHECK_AND_RETURN_RET_LOG(frames > 0 && frames <= OutputFrameCapacity(), ERROR, "sonic output made no progress");
++    outBufferSize = frames * static_cast<int32_t>(formatSize_ * channels_);
++    return SUCCESS;
++}
++
++int32_t AudioSpeed::Finish()
++{
++    if (finished_) {
++        return SUCCESS;
++    }
++    CHECK_AND_RETURN_RET_LOG(sonicStream_ != nullptr && sonicFlushStream(sonicStream_) == 1,
++        ERROR, "sonic flush failed");
++    finished_ = true;
++    return SUCCESS;
++}
++
++int32_t AudioSpeed::Reconfigure(size_t rate, size_t format, size_t channels)
++{
++    const float pitch = sonicStream_ == nullptr ? SPEED_NORMAL : sonicGetPitch(sonicStream_);
++    if (sonicStream_ != nullptr) {
++        sonicDestroyStream(sonicStream_);
++        sonicStream_ = nullptr;
++    }
++    rate_ = rate;
++    format_ = format;
++    channels_ = channels;
++    CHECK_AND_RETURN_RET_LOG(Init() == SUCCESS, ERROR, "speed stream recreation failed");
++    SetSpeed(speed_);
++    return SetPitch(pitch);
++}
++
+ int32_t AudioSpeed::Flush()
+ {
+-    Trace trace("AudioSpeed::Flush");
+-    sonicFlushStream(sonicStream_);
+-    std::unique_ptr<uint8_t[]> tmpBuffer = std::make_unique<uint8_t[]>(maxSpeedBufferSize_);
+-
+-    int samplesWritten = 0;
+-    const size_t channelMultiplier = static_cast<size_t>(channels_);
+-    do {
+-        switch (format_) {
+-            case SAMPLE_U8:
+-                samplesWritten = sonicReadUnsignedCharFromStream(sonicStream_,
+-                    reinterpret_cast<uint8_t*>(tmpBuffer.get()),
+-                    maxSpeedBufferSize_ / channelMultiplier);
+-                break;
+-            case SAMPLE_S24LE:
+-            case SAMPLE_S32LE:
+-            case SAMPLE_F32LE:
+-                samplesWritten = sonicReadFloatFromStream(sonicStream_,
+-                    reinterpret_cast<float*>(tmpBuffer.get()),
+-                    maxSpeedBufferSize_ / (channelMultiplier * sizeof(float)));
+-                break;
+-            case SAMPLE_S16LE:
+-                samplesWritten = sonicReadShortFromStream(sonicStream_,
+-                    reinterpret_cast<short*>(tmpBuffer.get()),
+-                    maxSpeedBufferSize_ / (channelMultiplier * sizeof(short)));
+-                break;
+-            default:
+-                AUDIO_ERR_LOG("invalid format_");
+-                samplesWritten = 0;
+-                break;
+-        }
+-    } while (samplesWritten > 0);
+-    return SUCCESS;
++    return Reconfigure(rate_, format_, channels_);
+ }
+ } // namespace AudioStandard
+ } // namespace OHOS

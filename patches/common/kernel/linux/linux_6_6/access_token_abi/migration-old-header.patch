@@ -1,0 +1,59 @@
+diff --git a/kernel/linux/linux-6.6/drivers/accesstokenid/access_tokenid.h b/kernel/linux/linux-6.6/drivers/accesstokenid/access_tokenid.h
+index 7eb3119ef..abd0d2415 100644
+--- a/kernel/linux/linux-6.6/drivers/accesstokenid/access_tokenid.h
++++ b/kernel/linux/linux-6.6/drivers/accesstokenid/access_tokenid.h
+@@ -24,6 +24,22 @@ enum {
+ 	REMOVE_PERMISSIONS,
+ 	GET_PERMISSION,
+ 	SET_PERMISSION,
++	GET_CLOSEST_HAP_TOKENID,
++	GET_FAMILY_TOKENIDS,
++	GET_ALL_PERMISSIONS = 11,
++	SET_USERID,
++	GET_USERID,
++	ADD_SPM_ENTRIES = 16,
++	SET_SPM_ENTRIES,
++	GET_SPM_ENTRY,
++	REMOVE_SPM_ENTRY,
++	SET_REFCNT_UID,
++	GET_REFCNT_UID,
++	SET_REFCNT_TOKENID,
++	GET_REFCNT_TOKENID,
++	CLEAR_REFCNT_SPAWNID,
++	GET_SPM_VERSION,
++	SET_HAP_PTOKENID = 0x1A,
+ 	ACCESS_TOKENID_MAX_NR
+ };
+ 
+@@ -47,6 +63,21 @@ typedef struct {
+ 	uint32_t perm[MAX_PERM_GROUP_NUM];
+ } ioctl_add_perm_data;
+ 
++typedef struct {
++	uint32_t token;
++	uint32_t perm[MAX_PERM_GROUP_NUM];
++} ioctl_get_all_perm_data;
++
++typedef struct {
++	uint32_t uid;
++	uint64_t refcnt;
++} ioctl_spm_uid_ref;
++
++typedef struct {
++	uint32_t tokenid;
++	uint64_t refcnt;
++} ioctl_spm_tokenid_ref;
++
+ struct token_perm_node {
+ 	ioctl_add_perm_data perm_data;
+ 	struct token_perm_node *left;
+@@ -69,5 +100,9 @@ struct token_perm_node {
+ 	_IOW(ACCESS_TOKEN_ID_IOCTL_BASE, GET_PERMISSION, ioctl_set_get_perm_data)
+ #define	ACCESS_TOKENID_SET_PERMISSION \
+ 	_IOW(ACCESS_TOKEN_ID_IOCTL_BASE, SET_PERMISSION, ioctl_set_get_perm_data)
++#define	ACCESS_TOKENID_GET_ALL_PERMISSIONS \
++	_IOW(ACCESS_TOKEN_ID_IOCTL_BASE, GET_ALL_PERMISSIONS, ioctl_get_all_perm_data)
++#define	ACCESS_TOKENID_GET_SPM_VERSION \
++	_IOR(ACCESS_TOKEN_ID_IOCTL_BASE, GET_SPM_VERSION, uint32_t)
+ 
+ #endif /* _ACCESS_TOKEN_ID_H */

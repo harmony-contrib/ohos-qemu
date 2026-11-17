@@ -1,0 +1,64 @@
+diff --git a/kernel/linux/common_modules/qos_auth/auth_ctl/qos_ctrl.c b/kernel/linux/common_modules/qos_auth/auth_ctl/qos_ctrl.c
+--- a/kernel/linux/common_modules/qos_auth/auth_ctl/qos_ctrl.c
++++ b/kernel/linux/common_modules/qos_auth/auth_ctl/qos_ctrl.c
+@@ -489,6 +489,16 @@ static int do_qos_manipulate(struct qos_ctrl_data *data)
+ 	return ret;
+ }
+ 
++static void __user *qos_abi_user_ptr(int abi, void __user *uarg)
++{
++	if (abi == QOS_IOCTL_ABI_ARM32) {
++#ifdef CONFIG_COMPAT
++		return compat_ptr((compat_uptr_t)(unsigned long)uarg);
++#endif
++	}
++	return uarg;
++}
++
+ static long ctrl_qos_operation(int abi, void __user *uarg)
+ {
+ 	struct qos_ctrl_data qos_data;
+@@ -497,11 +507,12 @@ static long ctrl_qos_operation(int abi, void __user *uarg)
+ #pragma GCC diagnostic push
+ #pragma GCC diagonstic ignored "-Wpointer-to-int-cast"
+ 
++	uarg = qos_abi_user_ptr(abi, uarg);
++
+ 	switch (abi) {
+ 	case QOS_IOCTL_ABI_ARM32:
+-		ret = copy_from_user(&qos_data,
+-				(void __user *)compat_ptr((compat_uptr_t)uarg),
+-				sizeof(struct qos_ctrl_data));
++		ret = copy_from_user(&qos_data, uarg,
++				sizeof(struct qos_ctrl_data));
+ 		break;
+ 	case QOS_IOCTL_ABI_AARCH64:
+ 		ret = copy_from_user(&qos_data, uarg, sizeof(struct qos_ctrl_data));
+@@ -528,8 +539,7 @@ static long ctrl_qos_operation(int abi, void __user *uarg)
+ 
+ 	switch (abi) {
+ 	case QOS_IOCTL_ABI_ARM32:
+-		ret = copy_to_user((void __user *)compat_ptr((compat_uptr_t)uarg),
+-				&qos_data, sizeof(struct qos_ctrl_data));
++		ret = copy_to_user(uarg, &qos_data, sizeof(struct qos_ctrl_data));
+ 		break;
+ 	case QOS_IOCTL_ABI_AARCH64:
+ 		ret = copy_to_user(uarg, &qos_data, sizeof(struct qos_ctrl_data));
+@@ -683,12 +693,13 @@ static long ctrl_qos_policy(int abi, void __user *uarg)
+ 	long ret = -1;
+ 
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
+ 
++	uarg = qos_abi_user_ptr(abi, uarg);
++
+ 	switch (abi) {
+ 	case QOS_IOCTL_ABI_ARM32:
+-		ret = copy_from_user(&policy_datas,
+-				(void __user *)compat_ptr((compat_uptr_t)uarg),
+-				sizeof(struct qos_policy_datas));
++		ret = copy_from_user(&policy_datas, uarg,
++				sizeof(struct qos_policy_datas));
+ 		break;
+ 	case QOS_IOCTL_ABI_AARCH64:
+ 		ret = copy_from_user(&policy_datas, uarg, sizeof(struct qos_policy_datas));

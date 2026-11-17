@@ -1,0 +1,316 @@
+--- a/base/location/location/services/location_gnss/gnss/include/gnss_event_callback.h
++++ b/base/location/location/services/location_gnss/gnss/include/gnss_event_callback.h
+@@ -18,7 +18,6 @@
+ #ifdef FEATURE_GNSS_SUPPORT
+
+ #include <v2_0/ignss_callback.h>
+-#include "satellite_status.h"
+
+ namespace OHOS {
+ namespace Location {
+@@ -42,14 +41,6 @@
+     int32_t RequestPredictGnssData() override;
+     int32_t ReportCachedLocation(const std::vector<LocationInfo>& gnssLocations) override;
+     int32_t ReportGnssNiNotification(const GnssNiNotificationRequest& notification) override;
+-private:
+-    void SendDummySvInfo();
+-    bool IsNeedSvIncrease();
+-    bool IsSvTypeGps(const std::unique_ptr<SatelliteStatus> &sv, int index);
+-    bool IsSvUsed(const std::unique_ptr<SatelliteStatus> &sv, int index);
+-    void AddDummySv(std::unique_ptr<SatelliteStatus> &sv, int svid, int cN0Dbhz);
+-    void ReportDummySv(const std::unique_ptr<SatelliteStatus> &sv);
+-    std::mutex svInfoMutex_;
+ };
+ }  // namespace Location
+ }  // namespace OHOS
+--- a/base/location/location/services/location_gnss/gnss/source/gnss_ability.cpp
++++ b/base/location/location/services/location_gnss/gnss/source/gnss_ability.cpp
+@@ -19,6 +19,8 @@
+ #include <file_ex.h>
+ #include <thread>
+ #include <fstream>
++#include <algorithm>
++#include <limits>
+
+ #include "agnss_ni_manager.h"
+ #include "event_runner.h"
+@@ -242,7 +244,34 @@
+
+ LocationErrCode GnssAbility::SendLocationRequest(WorkRecord &workrecord)
+ {
++    // RequestConfig/WorkRecord intervals are seconds; the HDI field is ms.
++    // Use the fastest active request, including an explicit zero interval.
++    const int size = workrecord.Size();
++    int64_t intervalMs = std::numeric_limits<uint32_t>::max();
++    for (int i = 0; i < size; ++i) {
++        const int seconds = workrecord.GetTimeInterval(i);
++        if (seconds < 0) {
++            return ERRCODE_INVALID_PARAM;
++        }
++        const int64_t requestedMs = static_cast<int64_t>(seconds) * EVENT_INTERVAL_UNITE;
++        intervalMs = std::min(intervalMs, requestedMs);
++    }
++    const int64_t previousInterval = fixInterval_;
++    if (size > 0) {
++        fixInterval_ = intervalMs;
++        if (gnssWorkingStatus_.load() == GNSS_WORKING_STATUS_SESSION_BEGIN &&
++            previousInterval != fixInterval_) {
++            const auto error = SetPositionMode();
++            if (error != ERRCODE_SUCCESS) {
++                fixInterval_ = previousInterval;
++                return error;
++            }
++        }
++    }
+     LocationRequest(workrecord);
++    if (size > 0 && gnssWorkingStatus_.load() != GNSS_WORKING_STATUS_SESSION_BEGIN) {
++        return ERRCODE_SERVICE_UNAVAILABLE;
++    }
+     return ERRCODE_SUCCESS;
+ }
+
+@@ -651,7 +680,11 @@
+         LBSLOGE(GNSS, "gnssInterface is nullptr");
+         return ERRCODE_SERVICE_UNAVAILABLE;
+     }
+-    GnssConfigPara para;
++    GnssConfigPara para {};
++    if (fixInterval_ < 0 || fixInterval_ > std::numeric_limits<uint32_t>::max()) {
++        return ERRCODE_INVALID_PARAM;
++    }
++    para.gnssBasic.minInterval = static_cast<uint32_t>(fixInterval_);
+     int suplMode = LocationConfigManager::GetInstance()->GetSuplMode();
+     if (suplMode == MODE_STANDALONE) {
+         para.gnssBasic.gnssMode = GnssWorkingMode::GNSS_WORKING_MODE_STANDALONE;
+@@ -660,12 +693,13 @@
+     } else if (suplMode == MODE_MS_ASSISTED) {
+         para.gnssBasic.gnssMode = GnssWorkingMode::GNSS_WORKING_MODE_MS_ASSISTED;
+     } else {
+-        LBSLOGE(GNSS, "unknow mode");
+-        return ERRCODE_SUCCESS;
++        LBSLOGE(GNSS, "unknown GNSS working mode");
++        return ERRCODE_SERVICE_UNAVAILABLE;
+     }
+     int ret = gnssInterface->SetGnssConfigPara(para);
+     if (ret != ERRCODE_SUCCESS) {
+         LBSLOGE(GNSS, "SetGnssConfigPara failed , ret =%{public}d", ret);
++        return ERRCODE_SERVICE_UNAVAILABLE;
+     }
+     return ERRCODE_SUCCESS;
+ }
+@@ -677,12 +711,13 @@
+         LBSLOGE(GNSS, "gnssInterface is nullptr");
+         return ERRCODE_SERVICE_UNAVAILABLE;
+     }
+-    GnssConfigPara para;
++    GnssConfigPara para {};
+     para.gnssCaching.interval = reportingPeriodSec <= 0 ? 0 : static_cast<uint32_t>(reportingPeriodSec);
+     para.gnssCaching.fifoFullNotify = wakeUpCacheQueueFull;
+     int ret = gnssInterface->SetGnssConfigPara(para);
+     if (ret != ERRCODE_SUCCESS) {
+         LBSLOGE(GNSS, "SetGnssConfigPara Cache failed , ret =%{public}d", ret);
++        return ERRCODE_SERVICE_UNAVAILABLE;
+     }
+     return ERRCODE_SUCCESS;
+ }
+@@ -1875,7 +1910,9 @@
+     if (GetRequestNum() == 0) {
+         return;
+     }
+-    SetPositionMode();
++    if (SetPositionMode() != ERRCODE_SUCCESS) {
++        return;
++    }
+     int ret = gnssInterface->StartGnss(GNSS_START_TYPE_NORMAL);
+     if (ret == 0) {
+         gnssWorkingStatus_.store(GNSS_WORKING_STATUS_SESSION_BEGIN);
+@@ -1957,7 +1994,9 @@
+     if (GetBatchingRequestNum() == 0) {
+         return;
+     }
+-    SetCachePositionMode(reportingPeriodSec, wakeUpCacheQueueFull);
++    if (SetCachePositionMode(reportingPeriodSec, wakeUpCacheQueueFull) != ERRCODE_SUCCESS) {
++        return;
++    }
+     int ret = gnssInterface->StartGnss(GNSS_START_TYPE_GNSS_CACHE);
+     if (ret == 0) {
+         gnssBatchingWorkingStatus_.store(GNSS_BATCHING_WORKING_STATUS_SESSION_BEGIN);
+@@ -2654,7 +2693,10 @@
+     auto gnssAbility = GnssAbility::GetInstance();
+     std::unique_ptr<WorkRecord> workrecord = event->GetUniqueObject<WorkRecord>();
+     if (workrecord != nullptr) {
+-        gnssAbility->LocationRequest(*workrecord);
++        const auto error = gnssAbility->SendLocationRequest(*workrecord);
++        if (error != ERRCODE_SUCCESS) {
++            LBSLOGE(GNSS, "GNSS request/configuration failed, error =%{public}d", error);
++        }
+     }
+ }
+
+--- a/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp
++++ b/base/location/location/services/location_gnss/gnss/source/gnss_event_callback.cpp
+@@ -25,6 +25,7 @@
+ #include "common_hisysevent.h"
+ #include "agnss_ni_manager.h"
+ #include "hook_utils.h"
++#include "satellite_status.h"
+
+ #ifdef TIME_SERVICE_ENABLE
+ #include "ntp_time_check.h"
+@@ -33,16 +34,6 @@
+ namespace OHOS {
+ namespace Location {
+ using namespace OHOS::HiviewDFX;
+-const int WEAK_GPS_SIGNAL_SCENARIO_COUNT = 3;
+-const int MAX_SV_COUNT = 64;
+-const int GPS_DUMMY_SV_COUNT = 5;
+-const int AZIMUTH_DEGREES = 60;
+-const int ELEVATION_DEGREES = 90;
+-const int SATELLITES_ADDITIONAL = 4;
+-bool g_hasLocation = false;
+-bool g_svIncrease = false;
+-std::unique_ptr<SatelliteStatus> g_svInfo = nullptr;
+-
+ static void SetGpsTime(int64_t gpsTime)
+ {
+ #ifdef TIME_SERVICE_ENABLE
+@@ -79,8 +70,6 @@
+         IPCSkeleton::SetCallingIdentity(identity);
+         return ERR_OK;
+     }
+-    // add dummy sv if needed
+-    SendDummySvInfo();
+     struct timeval now;
+     gettimeofday(&now, NULL);
+     WriteLocationInnerEvent(RECEIVE_GNSS_LOCATION, {
+@@ -120,8 +109,14 @@
+ {
+     auto gnssAbility = GnssAbility::GetInstance();
+     std::unique_ptr<SatelliteStatus> svStatus = std::make_unique<SatelliteStatus>();
+-    if (info.satellitesNumber < 0) {
+-        LBSLOGD(GNSS, "SvStatusCallback, satellites_num < 0!");
++    // Only device-reported entries may reach observers. Validate every vector
++    // before indexing; an absent or malformed measurement cannot create SVs.
++    const auto count = info.satellitesNumber;
++    if (info.satelliteIds.size() < count || info.constellation.size() < count ||
++        info.carrierToNoiseDensitys.size() < count || info.elevation.size() < count ||
++        info.azimuths.size() < count || info.carrierFrequencies.size() < count ||
++        info.additionalInfo.size() < count) {
++        LBSLOGE(GNSS, "SvStatusCallback, satellite vector length mismatch!");
+         return ERR_INVALID_VALUE;
+     }
+     std::vector<std::string> names;
+@@ -146,112 +141,14 @@
+         names.push_back(std::to_string(i));
+         satelliteStatusInfos.push_back(str_info);
+     }
+-    // save sv info
+-    std::unique_lock<std::mutex> lock(svInfoMutex_, std::defer_lock);
+-    lock.lock();
+-    g_svInfo = nullptr;
+-    g_svInfo = std::make_unique<SatelliteStatus>(*svStatus);
+-    lock.unlock();
+     WriteLocationInnerEvent(RECEIVE_SATELLITESTATUSINFO, names, satelliteStatusInfos);
+     gnssAbility->ReportSv(svStatus);
+     GnssStatusInfo statusInfo;
+-    statusInfo.cn0 = info.carrierToNoiseDensitys;
++    statusInfo.cn0.assign(info.carrierToNoiseDensitys.begin(), info.carrierToNoiseDensitys.begin() + count);
+     statusInfo.availableTimeStamp = CommonUtils::GetCurrentTimeStamp() * MILLI_PER_SEC;
+     HookUtils::ExecuteHook(
+         LocationProcessStage::GNSS_STATUS_REPORT_PROCESS, (void *)&statusInfo, nullptr);
+     return ERR_OK;
+-}
+-
+-void GnssEventCallback::SendDummySvInfo()
+-{
+-    std::unique_lock<std::mutex> lock(svInfoMutex_);
+-    if (g_svInfo == nullptr) {
+-        LBSLOGE(GNSS, "%{public}s: sv is nullptr.", __func__);
+-        return;
+-    }
+-    // indicates location is coming
+-    g_hasLocation = true;
+-    int usedSvCount = 0;
+-    int svListSize = g_svInfo->GetSatellitesNumber();
+-    // calculate the num of used GPS satellites
+-    for (int svSize = 0; svSize < svListSize; svSize++) {
+-        if (IsSvTypeGps(g_svInfo, svSize) && IsSvUsed(g_svInfo, svSize)) {
+-            usedSvCount++;
+-        }
+-    }
+-    LBSLOGD(GNSS, "%{public}s: the USED GPS SV Count is %{public}d", __func__, usedSvCount);
+-    // weak gps signal scenario
+-    if (usedSvCount <= WEAK_GPS_SIGNAL_SCENARIO_COUNT) {
+-        // indicates the need for dummy satellites
+-        g_svIncrease = true;
+-        LBSLOGD(GNSS, "%{public}s: start increase dummy sv", __func__);
+-
+-        if (MAX_SV_COUNT - svListSize >= GPS_DUMMY_SV_COUNT) {
+-            AddDummySv(g_svInfo, 4, 6); // sv1: svid = 4, cN0Dbhz = 6
+-            AddDummySv(g_svInfo, 7, 15); // sv2: svid = 7, cN0Dbhz = 15
+-            AddDummySv(g_svInfo, 1, 2); // sv3: svid = 1, cN0Dbhz = 2
+-            AddDummySv(g_svInfo, 11, 10); // sv4: svid = 11, cN0Dbhz = 10
+-            AddDummySv(g_svInfo, 17, 5); // sv5: svid = 17, cN0Dbhz = 5
+-            g_svInfo->
+-                SetSatellitesNumber(g_svInfo->GetSatellitesNumber() + GPS_DUMMY_SV_COUNT);
+-            ReportDummySv(g_svInfo);
+-        } else {
+-            LBSLOGD(GNSS, "%{public}s: sv number > 58, no need send dummy satellites", __func__);
+-        }
+-        LBSLOGD(GNSS, "%{public}s: increase sv finished", __func__);
+-    } else {
+-        // indicates no need for dummy satellites
+-        g_svIncrease = false;
+-    }
+-}
+-
+-void GnssEventCallback::ReportDummySv(const std::unique_ptr<SatelliteStatus> &sv)
+-{
+-    auto gnssAbility = GnssAbility::GetInstance();
+-    if (sv == nullptr) {
+-        LBSLOGE(GNSS, "%{public}s sv is nullptr.", __func__);
+-        return;
+-    }
+-    gnssAbility->ReportSv(sv);
+-}
+-
+-bool GnssEventCallback::IsNeedSvIncrease()
+-{
+-    if (g_hasLocation && g_svIncrease) {
+-        return true;
+-    }
+-    return false;
+-}
+-
+-bool GnssEventCallback::IsSvTypeGps(const std::unique_ptr<SatelliteStatus> &sv, int index)
+-{
+-    if (sv == nullptr) {
+-        return false;
+-    }
+-    return sv->GetConstellationTypes()[index] == HDI::Location::Gnss::V2_0::CONSTELLATION_CATEGORY_GPS;
+-}
+-
+-bool GnssEventCallback::IsSvUsed(const std::unique_ptr<SatelliteStatus> &sv, int index)
+-{
+-    if (sv == nullptr) {
+-        return false;
+-    }
+-    return static_cast<uint32_t>(sv->GetSatelliteAdditionalInfoList()[index]) &
+-        static_cast<uint8_t>(HDI::Location::Gnss::V2_0::SATELLITES_ADDITIONAL_INFO_USED_IN_FIX);
+-}
+-
+-void GnssEventCallback::AddDummySv(std::unique_ptr<SatelliteStatus> &sv, int svid, int cN0Dbhz)
+-{
+-    if (sv == nullptr) {
+-        return;
+-    }
+-    sv->SetSatelliteId(svid);
+-    sv->SetConstellationType(HDI::Location::Gnss::V2_0::CONSTELLATION_CATEGORY_GPS);
+-    sv->SetCarrierToNoiseDensity(cN0Dbhz);
+-    sv->SetAltitude(ELEVATION_DEGREES); // elevationDegrees
+-    sv->SetAzimuth(AZIMUTH_DEGREES); // azimuthDegrees
+-    sv->SetCarrierFrequencie(0); // carrierFrequencyHz
+-    sv->SetSatelliteAdditionalInfo(SATELLITES_ADDITIONAL); // satellites_additional
+ }
+
+ int32_t GnssEventCallback::RequestGnssReferenceInfo(GnssRefInfoType type)

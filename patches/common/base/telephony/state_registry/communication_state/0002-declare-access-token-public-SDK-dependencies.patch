@@ -1,0 +1,20 @@
+--- a/base/telephony/state_registry/frameworks/js/napi/BUILD.gn
++++ b/base/telephony/state_registry/frameworks/js/napi/BUILD.gn
+@@ -34,6 +34,7 @@
+   deps = [ "$SUBSYSTEM_DIR/state_registry/frameworks/native/observer:tel_state_registry_api" ]
+
+   external_deps = [
++    "access_token:libaccesstoken_sdk",
+     "c_utils:utils",
+     "core_service:libtel_common",
+     "core_service:tel_core_service_api",
+--- a/base/telephony/state_registry/frameworks/ets/ani/observer/BUILD.gn
++++ b/base/telephony/state_registry/frameworks/ets/ani/observer/BUILD.gn
+@@ -43,6 +43,7 @@
+     "$SUBSYSTEM_DIR/state_registry/frameworks/native/observer:tel_state_registry_api",
+   ]
+   external_deps = [
++    "access_token:libaccesstoken_sdk",
+     "c_utils:utils",
+     "core_service:libtel_common",
+     "core_service:tel_core_service_api",

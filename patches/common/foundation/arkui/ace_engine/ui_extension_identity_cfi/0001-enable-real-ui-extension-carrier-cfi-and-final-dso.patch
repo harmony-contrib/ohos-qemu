@@ -1,0 +1,29 @@
+--- a/foundation/arkui/ace_engine/frameworks/core/components_ng/components.gni
++++ b/foundation/arkui/ace_engine/frameworks/core/components_ng/components.gni
+@@ -64,6 +64,15 @@
+     }
+ 
+     ohos_source_set("ace_core_components_${component_name}_${platform}") {
++      # Keep the real UIExtension identity carrier instrumented in libace_compatible.
++      # Other component targets and non-OHOS platforms keep their existing policy.
++      if (current_os == "ohos" && platform == "ohos" &&
++          component_name == "ui_extension_pattern_ng") {
++        sanitize = {
++          cfi = true
++          cfi_cross_dso = true
++        }
++      }
+       defines += invoker.defines
+ 
+       sources = []
+--- a/foundation/arkui/ace_engine/build/BUILD.gn
++++ b/foundation/arkui/ace_engine/build/BUILD.gn
+@@ -151,6 +151,8 @@
+   deps = [ "$ace_root/interfaces/inner_api/ace_kit:ace_kit" ]
+   if (is_ohos) {
+     sanitize = {
++      cfi = true
++      cfi_cross_dso = true
+       integer_overflow = true
+       boundary_sanitize = true
+       debug = ace_sanitize_debug

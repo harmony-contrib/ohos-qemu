@@ -1,0 +1,7 @@
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/include/pipeline/rs_logical_display_render_node.h
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/include/pipeline/rs_logical_display_render_node.h
+@@ -236,3 +236,3 @@
+     ScreenId screenId_ = INVALID_SCREEN_ID;
+-    Rect contentRect_;
++    Rect contentRect_ = {0, 0, 0, 0};
+     std::vector<Occlusion::Rect> topSurfaceOpaqueRects_;

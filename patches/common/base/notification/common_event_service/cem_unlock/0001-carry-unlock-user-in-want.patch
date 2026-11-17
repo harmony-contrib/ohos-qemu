@@ -1,0 +1,15 @@
+diff --git a/base/notification/common_event_service/tools/cem/src/common_event_command.cpp b/base/notification/common_event_service/tools/cem/src/common_event_command.cpp
+--- a/base/notification/common_event_service/tools/cem/src/common_event_command.cpp
++++ b/base/notification/common_event_service/tools/cem/src/common_event_command.cpp
+@@ -76,3 +76,6 @@
+         Want want;
+         want.SetAction(cmdInfo.action);
++        if (cmdInfo.userId != UNDEFINED_USER) {
++            want.SetParam("userId", cmdInfo.userId);
++        }
+         CommonEventData commonEventData;
+@@ -86,3 +89,3 @@
+         int32_t publishResult = CommonEvent::GetInstance()->PublishCommonEventAsUser(
+-            commonEventData, publishInfo, nullptr, cmdInfo.userId);
++            commonEventData, publishInfo, nullptr, UNDEFINED_USER);
+         if (publishResult == ERR_OK) {

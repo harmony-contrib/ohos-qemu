@@ -1,0 +1,31 @@
+diff --git a/foundation/graphic/graphic_2d/frameworks/vulkan_layers/BUILD.gn b/foundation/graphic/graphic_2d/frameworks/vulkan_layers/BUILD.gn
+--- a/foundation/graphic/graphic_2d/frameworks/vulkan_layers/BUILD.gn
++++ b/foundation/graphic/graphic_2d/frameworks/vulkan_layers/BUILD.gn
+@@ -14,5 +14,11 @@ import("//build/ohos.gni")
+ import("//foundation/graphic/graphic_2d/graphic_config.gni")
+ 
++# QEMU's SwiftShader ICD implements Vulkan core but not VK_OHOS_native_buffer.
++# The OHOS swapchain layer currently rejects vkCreateDevice without that
++# extension. Its implicit registration would also falsely advertise OHOS WSI.
++qemu_virt_product = product_name == "armv7a_virt" ||
++                    product_name == "arm64_virt" || product_name == "x86_64_virt"
++
+ ## Build libvulkan_swapchain.so {{{
+ declare_args() {
+   vulkan_use_aps_plugin = true
+@@ -86,6 +92,6 @@ ohos_prebuilt_etc("vulkan_swapchain_layer_json") {
+   subsystem_name = "graphic"
+   module_install_dir = "etc/vulkan/swapchain/vulkan/implicit_layer.d"
+-  if (is_emulator) {
++  if (is_emulator || qemu_virt_product) {
+     install_enable = false
+   }
+ }
+@@ -146,4 +152,7 @@ ohos_prebuilt_etc("VkLayer_Trace3D_json") {
+   part_name = "graphic_2d"
+   subsystem_name = "graphic"
+   module_install_dir = "etc/vulkan/implicit_layer.d"
++  if (qemu_virt_product) {
++    install_enable = false
++  }
+ }

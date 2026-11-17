@@ -1,0 +1,21 @@
+diff --git a/applications/standard/hap/BUILD.gn b/applications/standard/hap/BUILD.gn
+--- a/applications/standard/hap/BUILD.gn
++++ b/applications/standard/hap/BUILD.gn
+@@ -34,9 +34,2 @@
+ 
+-ohos_prebuilt_etc("settings_hap") {
+-  source = hap_src_dir + "Settings.hap"
+-  module_install_dir = "app/com.ohos.settings"
+-  part_name = "prebuilt_hap"
+-  subsystem_name = "applications"
+-}
+-
+ ohos_prebuilt_etc("note_hap") {
+@@ -425,3 +418,2 @@
+     "//applications/standard/hap:settings_faceauth_hap",
+-    ":settings_hap",
+     "//applications/standard/hap:statusBar_hap",
+@@ -483,3 +475,2 @@
+       "//applications/standard/hap:settings_faceauth_hap",
+-      ":settings_hap",
+       "//applications/standard/hap:statusBar_hap",

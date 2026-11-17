@@ -1,0 +1,36 @@
+diff --git a/applications/standard/theme/product/phone/src/main/module.json5 b/applications/standard/theme/product/phone/src/main/module.json5
+--- a/applications/standard/theme/product/phone/src/main/module.json5
++++ b/applications/standard/theme/product/phone/src/main/module.json5
+@@ -6,7 +6,7 @@
+     "description": "$string:myapplication_desc",
+     "mainElement": "MainAbility",
+     "deviceTypes": [
+-      "phone"
++      "default"
+     ],
+     "deliveryWithInstall": true,
+     "installationFree": false,
+diff --git a/applications/standard/theme/product/phone/src/main/ets/Application/AbilityStage.ts b/applications/standard/theme/product/phone/src/main/ets/Application/AbilityStage.ts
+--- a/applications/standard/theme/product/phone/src/main/ets/Application/AbilityStage.ts
++++ b/applications/standard/theme/product/phone/src/main/ets/Application/AbilityStage.ts
+@@ -13,7 +13,7 @@
+  * limitations under the License.
+  */
+
+-import AbilityStage from "@ohos.application.AbilityStage"
++import AbilityStage from "@ohos.app.ability.AbilityStage"
+
+ export default class MyAbilityStage extends AbilityStage {
+     onCreate() {
+diff --git a/applications/standard/theme/product/pad/src/main/ets/Application/AbilityStage.ts b/applications/standard/theme/product/pad/src/main/ets/Application/AbilityStage.ts
+--- a/applications/standard/theme/product/pad/src/main/ets/Application/AbilityStage.ts
++++ b/applications/standard/theme/product/pad/src/main/ets/Application/AbilityStage.ts
+@@ -13,7 +13,7 @@
+  * limitations under the License.
+  */
+
+-import AbilityStage from "@ohos.application.AbilityStage"
++import AbilityStage from "@ohos.app.ability.AbilityStage"
+
+ export default class MyAbilityStage extends AbilityStage {
+     onCreate() {

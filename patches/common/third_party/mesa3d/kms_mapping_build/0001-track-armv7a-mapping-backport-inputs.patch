@@ -1,0 +1,19 @@
+diff --git a/third_party/mesa3d/ohos/BUILD.gn b/third_party/mesa3d/ohos/BUILD.gn
+--- a/third_party/mesa3d/ohos/BUILD.gn
++++ b/third_party/mesa3d/ohos/BUILD.gn
+@@ -114,6 +114,10 @@
+   }
+   if (product_name == "armv7a_virt") {
+     script = "//device/qemu/arm_virt/linux_full_armv7a/build_armv7a_mesa.py"
++    inputs = [
++      "//device/qemu/common/virt_full/hardware/gpu/mesa_kms_mapping/apply_mesa_kms_mapping.py",
++      "//device/qemu/common/virt_full/hardware/gpu/mesa_kms_mapping/0001-serialize-displaytarget-mapping.patch",
++    ]
+     deps += [ "//third_party/libdrm:libdrm" ]
+     external_deps = [
+       "graphic_surface:surface",
+@@ -151,4 +155,3 @@
+ group("mesa3d_all_libs") {
+   deps = mesa3d_all_lib_deps
+ }
+-

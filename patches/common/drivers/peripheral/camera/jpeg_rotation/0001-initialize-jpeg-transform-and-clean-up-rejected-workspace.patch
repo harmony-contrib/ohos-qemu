@@ -1,0 +1,29 @@
+diff --git a/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/src/node/codec_node.cpp b/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/src/node/codec_node.cpp
+--- a/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/src/node/codec_node.cpp
++++ b/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/src/node/codec_node.cpp
+@@ -73,10 +73,9 @@ static void RotJpegImg(
+     outInfo.err = jpeg_std_error(&jerrOut);
+     jpeg_create_compress(&outInfo);
+     jpeg_mem_src(&inputInfo, inputImg, inputSize);
+-    jpeg_mem_dest(&outInfo, outImg, (unsigned long *)outSize);
+ 
+-    JCOPY_OPTION copyoption;
+-    jpeg_transform_info transformoption;
++    const JCOPY_OPTION copyoption = JCOPYOPT_ALL;
++    jpeg_transform_info transformoption = {};
+     transformoption.transform = rotDegrees;
+     transformoption.perfect = TRUE;
+     transformoption.trim = FALSE;
+@@ -89,9 +88,12 @@ static void RotJpegImg(
+ 
+     if (!jtransform_request_workspace(&inputInfo, &transformoption)) {
+         CAMERA_LOGE("%s: transformation is not perfect", __func__);
++        jpeg_destroy_compress(&outInfo);
++        jpeg_destroy_decompress(&inputInfo);
+         return;
+     }
+ 
++    jpeg_mem_dest(&outInfo, outImg, (unsigned long *)outSize);
+     src_coef_arrays = jpeg_read_coefficients(&inputInfo);
+     jpeg_copy_critical_parameters(&inputInfo, &outInfo);
+     dst_coef_arrays = jtransform_adjust_parameters(&inputInfo, &outInfo, src_coef_arrays, &transformoption);

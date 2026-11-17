@@ -1,0 +1,8 @@
+diff --git a/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp b/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
+--- a/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
++++ b/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
+@@ -90,3 +90,3 @@
+ constexpr const char *INNER_CHL_NAME = "inner-chl";
+-constexpr const char *VPN_DIALOG_BUNDLENAME = "com.huawei.hmos.vpndialog";
++constexpr const char *VPN_DIALOG_BUNDLENAME = "com.ohos.vpndialog";
+ NetworkVpnService::NetworkVpnService() : SystemAbility(COMM_VPN_MANAGER_SYS_ABILITY_ID, true) {}

@@ -1,0 +1,61 @@
+diff --git a/foundation/communication/netmanager_ext/interfaces/innerkits/ethernetclient/BUILD.gn b/foundation/communication/netmanager_ext/interfaces/innerkits/ethernetclient/BUILD.gn
+--- a/foundation/communication/netmanager_ext/interfaces/innerkits/ethernetclient/BUILD.gn
++++ b/foundation/communication/netmanager_ext/interfaces/innerkits/ethernetclient/BUILD.gn
+@@ -100,7 +100,7 @@ config("ethernet_service_interface_stub_config") {
+   if (netmanager_ext_feature_iface_supplier_id) {
+     defines += [ "FEATURE_GET_IFACE_SUPPLIER_ID" ]
+   }
+-  if (netmanager_ext_feature_net_firewall) {
++  if (netmanager_ext_feature_ethernet) {
+     defines += [ "NETMANAGER_EXT_ETHERNET_ENABLE_DISABLE" ]
+   }
+ }
+@@ -182,7 +182,7 @@ ohos_shared_library("ethernet_client") {
+   }
+ 
+   # Enable ethernet enable/disable feature conditionally
+-  if (netmanager_ext_feature_net_firewall) {
++  if (netmanager_ext_feature_ethernet) {
+     defines += [ "NETMANAGER_EXT_ETHERNET_ENABLE_DISABLE" ]
+   }
+ 
+diff --git a/foundation/communication/netmanager_ext/services/ethernetmanager/BUILD.gn b/foundation/communication/netmanager_ext/services/ethernetmanager/BUILD.gn
+--- a/foundation/communication/netmanager_ext/services/ethernetmanager/BUILD.gn
++++ b/foundation/communication/netmanager_ext/services/ethernetmanager/BUILD.gn
+@@ -108,6 +108,6 @@ ohos_shared_library("ethernet_manager") {
+ 
+   # Enable ethernet enable/disable feature conditionally
+-  if (netmanager_ext_feature_net_firewall) {
++  if (netmanager_ext_feature_ethernet) {
+     defines += [ "NETMANAGER_EXT_ETHERNET_ENABLE_DISABLE" ]
+     external_deps += [
+       "ability_base:want",
+@@ -213,6 +213,6 @@ ohos_shared_library("ethernet_manager_server") {
+ 
+   # Enable ethernet enable/disable feature conditionally
+-  if (netmanager_ext_feature_net_firewall) {
++  if (netmanager_ext_feature_ethernet) {
+     defines += [ "NETMANAGER_EXT_ETHERNET_ENABLE_DISABLE" ]
+     external_deps += [
+       "ability_base:want",
+diff --git a/foundation/communication/netmanager_ext/frameworks/js/napi/ethernet/BUILD.gn b/foundation/communication/netmanager_ext/frameworks/js/napi/ethernet/BUILD.gn
+--- a/foundation/communication/netmanager_ext/frameworks/js/napi/ethernet/BUILD.gn
++++ b/foundation/communication/netmanager_ext/frameworks/js/napi/ethernet/BUILD.gn
+@@ -43,7 +43,7 @@ ohos_shared_library("ethernet") {
+   ]
+ 
+   # Add enable/disable sources conditionally
+-  if (netmanager_ext_feature_net_firewall) {
++  if (netmanager_ext_feature_ethernet) {
+     sources += [
+       "context/disable_ethernet_context.cpp",
+       "context/enable_ethernet_context.cpp",
+@@ -53,7 +53,7 @@ ohos_shared_library("ethernet") {
+   defines = [ "NETMGR_DEBUG" ]
+ 
+   # Enable ethernet enable/disable feature conditionally
+-  if (netmanager_ext_feature_net_firewall) {
++  if (netmanager_ext_feature_ethernet) {
+     defines += [ "NETMANAGER_EXT_ETHERNET_ENABLE_DISABLE" ]
+   }
+ 

@@ -1,0 +1,26 @@
+diff --git a/drivers/peripheral/camera/camera.gni b/drivers/peripheral/camera/camera.gni
+--- a/drivers/peripheral/camera/camera.gni
++++ b/drivers/peripheral/camera/camera.gni
+@@ -44,3 +44,4 @@
+ declare_args() {
+   drivers_peripheral_camera_feature_usb = false
++  drivers_peripheral_camera_qemu_vivid_capture = false
+ }
+diff --git a/drivers/peripheral/camera/bundle.json b/drivers/peripheral/camera/bundle.json
+--- a/drivers/peripheral/camera/bundle.json
++++ b/drivers/peripheral/camera/bundle.json
+@@ -16,3 +16,4 @@
+       "drivers_peripheral_camera_feature_usb",
++      "drivers_peripheral_camera_qemu_vivid_capture",
+       "drivers_peripheral_camera_feature_batch_buffers",
+       "drivers_peripheral_camera_feature_board_config",
+diff --git a/drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/driver_adapter/BUILD.gn b/drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/driver_adapter/BUILD.gn
+--- a/drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/driver_adapter/BUILD.gn
++++ b/drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/driver_adapter/BUILD.gn
+@@ -45,3 +45,6 @@
+     defines += [ "CAMERA_BUILT_ON_USB" ]
+   }
++  if (drivers_peripheral_camera_qemu_vivid_capture) {
++    defines += [ "QEMU_VIVID_CAPTURE_ENABLED" ]
++  }
+   sources = [

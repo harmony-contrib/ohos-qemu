@@ -1,0 +1,22 @@
+{
+  "schema": "native-ui-extension-identity-cfi-source/v1",
+  "project": "foundation/arkui/ace_engine",
+  "revision": "e55e178228b9f6388b15d3024e8caf125fa293d7",
+  "files": [
+    {
+      "relative": "frameworks/core/components_ng/components.gni",
+      "original_sha256": "40eeb7262448f89e65b18c776ae8ffda7330ed9589898585eabfddb1d63d7f76",
+      "final_sha256": "b845a254530491f05d8a8081a5f329fd6cd24a551c77f6f9c9cfeba0c43e1f8f"
+    },
+    {
+      "relative": "build/BUILD.gn",
+      "original_sha256": "bd4b450a591a8110ec519ad90b29ea7cc44834a173b7e3de8c0403954f1faae9",
+      "final_sha256": "7c3b56fc8c144a184c1328a5400f58f5e1c908c927128a6b10956aaa73f64b14"
+    }
+  ],
+  "patch": "0001-enable-real-ui-extension-carrier-cfi-and-final-dso.patch",
+  "patch_sha256": "e033023a190cdb38a257c55f16dbcb29da80a5e00018f332829a0d64be305ebb",
+  "scope": "actual product GN sanitizer configuration; original query and receipt are unchanged",
+  "actual_gn_compile_solink_runtime_pending": true,
+  "first_artifact_behavior_gate_passed": false
+}

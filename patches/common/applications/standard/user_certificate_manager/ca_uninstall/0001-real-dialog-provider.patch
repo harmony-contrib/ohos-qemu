@@ -1,0 +1,279 @@
+--- a/applications/standard/user_certificate_manager/BUILD.gn
++++ b/applications/standard/user_certificate_manager/BUILD.gn
+@@ -13,10 +13,7 @@
+ import("//build/ohos.gni")
+ 
+ ohos_app("user_cert_manager") {
+-  deps = [
+-    ":cert_manager_js_assets",
+-    ":cert_manager_resources",
+-  ]
++  deps = []
+   publicity_file = "publicity.xml"
+   certificate_profile = "signature/privacyCenter.p7b"
+   hap_name = "CertificateManager"
+@@ -30,19 +27,3 @@
+   build_level = "module"
+   build_modules = [ "CertManager" ]
+ }
+-
+-ohos_app_scope("user_cert_manager_app_profile") {
+-  app_profile = "AppScope/app.json"
+-  sources = [ "AppScope/resources" ]
+-}
+-
+-ohos_js_assets("cert_manager_js_assets") {
+-  ets2abc = true
+-  source_dir = "certmanager/src/main/ets"
+-}
+-
+-ohos_resources("cert_manager_resources") {
+-  sources = [ "certmanager/src/main/resources" ]
+-  deps = [ ":user_cert_manager_app_profile" ]
+-  hap_profile = "certmanager/src/main/module.json"
+-}
+--- a/applications/standard/user_certificate_manager/build-profile.json5
++++ b/applications/standard/user_certificate_manager/build-profile.json5
+@@ -31,7 +31,6 @@
+     "products": [
+       {
+         "name": "default",
+-        "signingConfig": "default",
+         "compileSdkVersion": "26.0.0",
+         "compatibleSdkVersion": 24,
+         "runtimeOS": "OpenHarmony"
+--- a/applications/standard/user_certificate_manager/certmanager/src/main/ets/MainAbility/CertPickerUiExtAbility.ets
++++ b/applications/standard/user_certificate_manager/certmanager/src/main/ets/MainAbility/CertPickerUiExtAbility.ets
+@@ -19,6 +19,7 @@
+ import UIExtensionAbility from '@ohos.app.ability.UIExtensionAbility';
+ import { BusinessError } from '@ohos.base';
+ import Logger from '../common/util/Logger';
++import { CmDialogOperationType } from '../model/CertMangerModel';
+ 
+ const logger: Logger = new Logger('CertPickerUiExtAbility');
+ const PAGE_CA_INSTALL = 5;
+@@ -47,7 +48,9 @@
+     }
+     let storage: LocalStorage = new LocalStorage(param);
+     try {
+-      if (this.isStartToInstall(want.parameters)) {
++      if (this.isStartToUninstall(want.parameters)) {
++        session.loadContent('pages/CertificateUninstallPage', storage);
++      } else if (this.isStartToInstall(want.parameters)) {
+         session.loadContent('pages/CertificateInstallPage', storage);
+       } else if (this.isStartToAuthorize(want.parameters)) {
+         session.loadContent('pages/RequestAuthSheet', storage);
+@@ -71,6 +74,11 @@
+     } catch (err) {
+       logger.error('CertPickerUiExtAbility setWindowBackgroundColor');
+     }
++  }
++
++  private isStartToUninstall(parameters: Record<string, Object> | undefined): boolean {
++    return parameters?.['pageType'] === PAGE_CA_INSTALL &&
++      parameters?.['operationType'] === CmDialogOperationType.UNINSTALL;
+   }
+ 
+   private isStartToInstall(parameters: Record<string, Object> | undefined): boolean {
+--- a/applications/standard/user_certificate_manager/certmanager/src/main/ets/model/CheckUserAuthModel.ets
++++ b/applications/standard/user_certificate_manager/certmanager/src/main/ets/model/CheckUserAuthModel.ets
+@@ -106,6 +106,7 @@
+     } catch (error) {
+       let err: BusinessError = error as BusinessError;
+       logger.error(`auth catch error. code is ${err?.code}, message is ${err?.message}`);
++      callback(false);
+     }
+   }
+ }
+--- /dev/null
++++ b/applications/standard/user_certificate_manager/certmanager/src/main/ets/pages/CertificateUninstallPage.ets
+@@ -0,0 +1,148 @@
++/*
++ * Copyright (c) 2026 Harmony Contrib
++ * SPDX-License-Identifier: Apache-2.0
++ */
++import Want from '@ohos.app.ability.Want';
++import UIExtensionContentSession from '@ohos.app.ability.UIExtensionContentSession';
++import certificateDialog from '@ohos.security.certManagerDialog';
++import certManagerModel, { CMModelErrorCode, CMModelOptType, CmDialogOperationType,
++  DialogErrorCode } from '../model/CertMangerModel';
++import { CertInfoVo } from '../model/CertManagerVo/CertInfoVo';
++import checkUserAuthModel from '../model/CheckUserAuthModel';
++import { ResourceUtils } from '../common/util/ResourceUtils';
++import Logger from '../common/util/Logger';
++
++const logger: Logger = new Logger('CertificateUninstallPage');
++// cm_type.h / cm_dialog_api_common.h map this actual operation failure to
++// the public 29700003. The existing permission, syscap and CA policy gates
++// remain in the native launcher and certificate service.
++const REMOVE_FAILED: number = -5;
++const storage: LocalStorage = LocalStorage.getShared();
++
++@Entry(storage)
++@Component
++struct CertificateUninstallPage {
++  @State private subject: string = '';
++  @State private issuer: string = '';
++  @State private fingerprint: string = '';
++  @State private callerName: string = '';
++  @State private loaded: boolean = false;
++  @State private pending: boolean = false;
++  private active: boolean = false;
++  private authFinished: boolean = false;
++  private uri: string = '';
++  private original: Uint8Array = new Uint8Array();
++  private session: UIExtensionContentSession = storage.get<UIExtensionContentSession>('session') as UIExtensionContentSession;
++  private want: Want = storage.get<Want>('want') as Want;
++
++  aboutToAppear(): void {
++    this.active = true;
++    const params: Record<string, Object> | undefined = this.want?.parameters;
++    if ((this.want?.deviceId !== undefined && this.want.deviceId.length > 0) ||
++      params?.['pageType'] !== 5 || params?.['operationType'] !== CmDialogOperationType.UNINSTALL ||
++      params?.['certType'] !== certificateDialog.CertificateType.CA_CERT ||
++      typeof params?.['certUri'] !== 'string' || typeof params?.['bundleName'] !== 'string') {
++      this.finish(DialogErrorCode.DIALOG_ERROR_PARAM_INVALID);
++      return;
++    }
++    this.uri = params['certUri'] as string;
++    this.callerName = params['bundleName'] as string;
++    if (this.uri.length === 0 || this.uri.length > 256 || this.uri.includes('\u0000')) {
++      this.finish(DialogErrorCode.DIALOG_ERROR_PARAM_INVALID);
++      return;
++    }
++    certManagerModel.getCertOrCred(CMModelOptType.CM_MODEL_OPT_USER_CA, this.uri,
++      (code: CMModelErrorCode, cert: CertInfoVo | undefined) => {
++        if (!this.active) { return; }
++        if (code !== CMModelErrorCode.CM_MODEL_ERROR_SUCCESS || cert === undefined ||
++          cert.uri !== this.uri || cert.cert.length === 0) {
++          this.finish(REMOVE_FAILED);
++          return;
++        }
++        this.original = new Uint8Array(cert.cert);
++        this.subject = cert.subjectName;
++        this.issuer = cert.issuerName;
++        this.fingerprint = cert.fingerprintSha256;
++        this.loaded = true;
++      });
++  }
++
++  aboutToDisappear(): void { this.active = false; }
++
++  private finish(code: number): void {
++    if (!this.active) { return; }
++    this.active = false;
++    this.session.terminateSelfWithResult({ resultCode: code });
++  }
++
++  private sameCertificate(actual: CertInfoVo | undefined): boolean {
++    if (actual === undefined || actual.uri !== this.uri || actual.cert.length !== this.original.length) {
++      return false;
++    }
++    for (let index: number = 0; index < this.original.length; ++index) {
++      if (actual.cert[index] !== this.original[index]) { return false; }
++    }
++    return true;
++  }
++
++  private confirm(): void {
++    if (!this.active || !this.loaded || this.pending) { return; }
++    this.pending = true;
++    const title: string = ResourceUtils.getResourceString(getContext(this), $r('app.string.Identity_Authentication'));
++    checkUserAuthModel.auth(title, (authenticated: boolean) => {
++      if (!this.active || this.authFinished) { return; }
++      this.authFinished = true;
++      if (!authenticated) {
++        this.finish(DialogErrorCode.DIALOG_OPERATION_CANCELS);
++        return;
++      }
++      // Re-read the exact displayed certificate after user authentication;
++      // neither a stale session nor a changed URI may authorize deletion.
++      certManagerModel.getCertOrCred(CMModelOptType.CM_MODEL_OPT_USER_CA, this.uri,
++        (code: CMModelErrorCode, actual: CertInfoVo | undefined) => {
++          if (!this.active) { return; }
++          if (code !== CMModelErrorCode.CM_MODEL_ERROR_SUCCESS || !this.sameCertificate(actual)) {
++            this.finish(REMOVE_FAILED);
++            return;
++          }
++          certManagerModel.deleteCertOrCred(CMModelOptType.CM_MODEL_OPT_USER_CA, this.uri,
++            (removed: CMModelErrorCode) => {
++              if (!this.active) { return; }
++              if (removed !== CMModelErrorCode.CM_MODEL_ERROR_SUCCESS) {
++                this.finish(REMOVE_FAILED);
++                return;
++              }
++              logger.info(`CA uninstall committed uri:${this.uri}`);
++              // The original native void callback closes this modal and
++              // resolves exactly once only after the real service succeeded.
++              this.active = false;
++              this.session.sendData({ uri: this.uri });
++            });
++        });
++    });
++  }
++
++  build() {
++    Column({ space: 16 }) {
++      Text($r('app.string.ca_uninstall_title')).fontSize(24).id('cert-uninstall-title')
++      Text(this.callerName).id('cert-uninstall-requester')
++      Text($r('app.string.ca_uninstall_warning'))
++      Scroll() {
++        Column({ space: 12 }) {
++          Text(this.subject).id('cert-uninstall-subject')
++          Text(this.issuer).id('cert-uninstall-issuer')
++          Text(this.fingerprint).id('cert-uninstall-fingerprint')
++        }
++      }.layoutWeight(1)
++      Row({ space: 16 }) {
++        Button($r('app.string.deleteAllCredCancel')).id('cert-uninstall-cancel')
++          .enabled(!this.pending)
++          .onClick(() => this.finish(DialogErrorCode.DIALOG_OPERATION_CANCELS))
++        Button($r('app.string.deleteAllCredDelete')).id('cert-uninstall-confirm')
++          .enabled(this.loaded && !this.pending)
++          .onClick(() => this.confirm())
++      }
++    }.padding(24).width('100%').height('100%')
++      .backgroundColor($r('sys.color.background_secondary'))
++  }
++}
+--- /dev/null
++++ b/applications/standard/user_certificate_manager/certmanager/src/main/resources/base/element/ca_uninstall.json
+@@ -0,0 +1,6 @@
++{
++  "string": [
++    {"name": "ca_uninstall_title", "value": "删除 CA 证书"},
++    {"name": "ca_uninstall_warning", "value": "删除此证书可能导致依赖它的网络连接失败。请核对证书后再删除。"}
++  ]
++}
+--- a/applications/standard/user_certificate_manager/certmanager/src/main/resources/base/profile/main_pages.json
++++ b/applications/standard/user_certificate_manager/certmanager/src/main/resources/base/profile/main_pages.json
+@@ -7,6 +7,7 @@
+     "pages/requestAuth",
+     "pages/certInstallFromStorage",
+     "pages/CertificateInstallPage",
++    "pages/CertificateUninstallPage",
+     "pages/picker/CertManagerSheetFa",
+     "pages/RequestAuthSheet",
+     "pages/UKeyAuthSheet"
+--- /dev/null
++++ b/applications/standard/user_certificate_manager/certmanager/src/main/resources/en_US/element/ca_uninstall.json
+@@ -0,0 +1,6 @@
++{
++  "string": [
++    {"name": "ca_uninstall_title", "value": "Remove CA certificate"},
++    {"name": "ca_uninstall_warning", "value": "Removing this certificate may prevent dependent network connections. Check the certificate before removing it."}
++  ]
++}
+--- a/applications/standard/user_certificate_manager/oh-package.json5
++++ b/applications/standard/user_certificate_manager/oh-package.json5
+@@ -16,9 +16,7 @@
+ {
+   "modelVersion": "6.0.0",
+   "license": "",
+-  "devDependencies": {
+-    "@ohos/hypium": "1.0.11"
+-  },
++  "devDependencies": {},
+   "author": "",
+   "name": "security_privacy_center",
+   "description": "Please describe the basic information.",

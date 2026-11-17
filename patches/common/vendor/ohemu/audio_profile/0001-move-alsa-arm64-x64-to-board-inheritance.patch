@@ -1,0 +1,31 @@
+diff --git a/vendor/ohemu/qemu_arm64_linux_full/config.json b/vendor/ohemu/qemu_arm64_linux_full/config.json
+--- a/vendor/ohemu/qemu_arm64_linux_full/config.json
++++ b/vendor/ohemu/qemu_arm64_linux_full/config.json
+@@ -39,6 +39,2 @@
+         },
+-        {
+-          "component": "alsa-lib",
+-          "features": []
+-        },
+         {
+diff --git a/vendor/ohemu/virt/virt_common.json b/vendor/ohemu/virt/virt_common.json
+--- a/vendor/ohemu/virt/virt_common.json
++++ b/vendor/ohemu/virt/virt_common.json
+@@ -228,3 +228,7 @@
+       "components": [
++        {
++          "component": "alsa-lib",
++          "features": []
++        },
+         {
+           "component": "libuv",
+diff --git a/vendor/ohemu/qemu_x86_64_linux_full/config.json b/vendor/ohemu/qemu_x86_64_linux_full/config.json
+--- a/vendor/ohemu/qemu_x86_64_linux_full/config.json
++++ b/vendor/ohemu/qemu_x86_64_linux_full/config.json
+@@ -39,6 +39,2 @@
+         },
+-        {
+-          "component": "alsa-lib",
+-          "features": []
+-        },
+         {

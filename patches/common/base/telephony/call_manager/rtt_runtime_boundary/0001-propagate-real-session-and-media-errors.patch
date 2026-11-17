@@ -1,0 +1,151 @@
+--- a/base/telephony/call_manager/services/call_manager_service/src/call_manager_service.cpp
++++ b/base/telephony/call_manager/services/call_manager_service/src/call_manager_service.cpp
+@@ -1933,7 +1933,7 @@
+         TELEPHONY_LOGE("callControlManagerPtr_ is nullptr!");
+         return TELEPHONY_ERR_LOCAL_PTR_NULL;
+     }
+-    return callControlManagerPtr_->SendRttMessage(rttMessage);
++    return callControlManagerPtr_->SendRttMessage(callId, rttMessage);
+ }
+ 
+ int32_t CallManagerService::UpdateImsRttCallMode(int32_t callId, ImsRTTCallMode mode)
+--- a/base/telephony/call_manager/services/call/src/call_control_manager.cpp
++++ b/base/telephony/call_manager/services/call/src/call_control_manager.cpp
+@@ -2361,14 +2361,28 @@
+     rttCallListener_->InitRttManager(imsCall);
+ }
+ 
+-int32_t CallControlManager::SendRttMessage(const std::string &rttMessage)
++int32_t CallControlManager::SendRttMessage(int32_t callId, const std::string &rttMessage)
+ {
++    if (callId <= 0) {
++        return CALL_ERR_INVALID_CALLID;
++    }
++    sptr<CallBase> call = CallObjectManager::GetOneCallObject(callId);
++    if (call == nullptr) {
++        return CALL_ERR_INVALID_CALLID;
++    }
++    if (call->GetCallType() != CallType::TYPE_IMS ||
++        call->GetTelCallState() != TelCallState::CALL_STATUS_ACTIVE) {
++        return CALL_ERR_CALL_STATE_MISMATCH_OPERATION;
++    }
++    sptr<IMSCall> imsCall = reinterpret_cast<IMSCall *>(call.GetRefPtr());
++    if (imsCall->GetRttState() != RttCallState::RTT_STATE_YES) {
++        return CALL_ERR_CALL_STATE_MISMATCH_OPERATION;
++    }
+     if (rttCallListener_ == nullptr) {
+         return TELEPHONY_ERR_LOCAL_PTR_NULL;
+     }
+ 
+-    rttCallListener_->SendRttMessage(rttMessage);
+-    return TELEPHONY_SUCCESS;
++    return rttCallListener_->SendRttMessage(callId, rttMessage);
+ }
+ #endif
+ 
+--- a/base/telephony/call_manager/services/call/include/call_control_manager.h
++++ b/base/telephony/call_manager/services/call/include/call_control_manager.h
+@@ -125,7 +125,7 @@
+     int32_t UpdateImsRttCallMode(int32_t callId, ImsRTTCallMode mode);
+     int32_t UnInitRttManager();
+     void RefreshRttManager(const CallDetailInfo &callInfo);
+-    int32_t SendRttMessage(const std::string &rttMessage);
++    int32_t SendRttMessage(int32_t callId, const std::string &rttMessage);
+ #endif
+     // invite calls to participate conference
+     int32_t JoinConference(int32_t callId, std::vector<std::u16string> &numberList);
+--- a/base/telephony/call_manager/services/call/call_state_observer/src/rtt_call_listener.cpp
++++ b/base/telephony/call_manager/services/call/call_state_observer/src/rtt_call_listener.cpp
+@@ -16,6 +16,7 @@
+ #include "rtt_call_listener.h"
+ 
+ #include "ims_rtt_manager.h"
++#include "ims_rtt_errcode.h"
+ #include "call_manager_errors.h"
+ #include "telephony_log_wrapper.h"
+ 
+@@ -50,7 +51,8 @@
+     if (imsCall == nullptr) {
+         return;
+     }
+-    if (imsCall->GetRttState() != RttCallState::RTT_STATE_YES) {
++    if (imsCall->GetRttState() != RttCallState::RTT_STATE_YES ||
++        imsCall->GetTelCallState() != TelCallState::CALL_STATUS_ACTIVE || imsCall->GetCallID() <= 0) {
+         TELEPHONY_LOGI("cannot InitRttManager, rttState: %{public}d", imsCall->GetRttState());
+         return;
+     }
+@@ -63,7 +65,16 @@
+         rttManager_->SetCallID(currCallID);
+         rttManager_->SetChannelID(currChannelID);
+     }
+-    rttManager_->InitRtt();
++    int32_t result = rttManager_->InitRtt();
++    if (result != RTT_SUCCESS) {
++        TELEPHONY_LOGE("InitRtt failed: %{public}d", result);
++        rttManager_->DestroyRtt();
++        rttManager_ = nullptr;
++        rttCallId_ = -1;
++        imsCall->SetPrevRtt(false);
++        return;
++    }
++    rttCallId_ = currCallID;
+     imsCall->SetPrevRtt(true);
+     TELEPHONY_LOGI("InitRtt success, callId: %{public}d, channelId: %{public}d", currCallID, currChannelID);
+ }
+@@ -72,6 +83,7 @@
+ {
+     TELEPHONY_LOGI("Start to UnInitRttManager");
+     std::lock_guard<ffrt::mutex> lock(mutex_);
++    rttCallId_ = -1;
+     if (rttManager_ == nullptr) {
+         TELEPHONY_LOGI("RttManager already un-initialized");
+         return;
+@@ -81,13 +93,16 @@
+     rttManager_ = nullptr;
+ }
+ 
+-int32_t RttCallListener::SendRttMessage(const std::string &rttMessage)
++int32_t RttCallListener::SendRttMessage(int32_t callId, const std::string &rttMessage)
+ {
+     std::lock_guard<ffrt::mutex> lock(mutex_);
+     if (rttManager_ == nullptr) {
+         TELEPHONY_LOGE("rttManager_ is nullptr!");
+         return TELEPHONY_ERR_LOCAL_PTR_NULL;
+     }
++    if (callId <= 0 || callId != rttCallId_) {
++        return CALL_ERR_INVALID_CALLID;
++    }
+ 
+     return rttManager_->SendRttMessage(rttMessage);
+ }
+--- a/base/telephony/call_manager/services/call/call_state_observer/include/rtt_call_listener.h
++++ b/base/telephony/call_manager/services/call/call_state_observer/include/rtt_call_listener.h
+@@ -30,12 +30,13 @@
+     void CallStateUpdated(sptr<CallBase> &callObjectPtr, TelCallState priorState, TelCallState nextState) override;
+     void InitRttManager(sptr<IMSCall> &imsCall);
+     void UnInitRttManager();
+-    int32_t SendRttMessage(const std::string &rttMessage);
++    int32_t SendRttMessage(int32_t callId, const std::string &rttMessage);
+ 
+ private:
+     std::shared_ptr<ImsRttManager> rttManager_ = nullptr;
++    int32_t rttCallId_ = -1; // protected by mutex_; assigned only after real InitRtt succeeds
+     ffrt::mutex mutex_;
+ };
+ } // namespace Telephony
+ } // namespace OHOS
+-#endif // TELEPHONY_RTT_CALL_LISTENER_H
+\ No newline at end of file
++#endif // TELEPHONY_RTT_CALL_LISTENER_H
+--- a/base/telephony/call_manager/services/rtt_call/src/ims_rtt_manager.cpp
++++ b/base/telephony/call_manager/services/rtt_call/src/ims_rtt_manager.cpp
+@@ -276,6 +276,9 @@
+ int32_t ImsRttManager::SendRttMessage(const std::string &rttMessage)
+ {
+     std::lock_guard<ffrt::mutex> lock(sendMtx_);
++    if (devFd_.load() <= 0 || !sendThreadActive_.load() || !recvThreadActive_.load()) {
++        return RTT_ERR_PROXY_CLOSED;
++    }
+     sendStream_.append(rttMessage);
+     sendCond_.notify_one();
+     return RTT_SUCCESS;

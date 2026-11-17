@@ -1,0 +1,10 @@
+diff --git a/vendor/ohemu/virt/preinstall-config/install_list.json b/vendor/ohemu/virt/preinstall-config/install_list.json
+--- a/vendor/ohemu/virt/preinstall-config/install_list.json
++++ b/vendor/ohemu/virt/preinstall-config/install_list.json
+@@ -210,5 +210,5 @@
+     },
+     {
+-      "app_dir": "/system/app/com.ohos.dhardwareui",
++      "app_dir": "/system/app/DHardware_UI",
+       "removable": true
+     }

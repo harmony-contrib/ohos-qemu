@@ -1,0 +1,223 @@
+--- a/services/audio_engine/node/src/hpae_source_input_node.cpp
++++ b/services/audio_engine/node/src/hpae_source_input_node.cpp
+@@ -357,6 +357,10 @@
+             CHECK_AND_RETURN_LOG(CheckEcAndMicRefReplyValid(frameByteSizeMap_.at(sourceBufferType), replyBytes),
+                 "micref request != reply");
+             DoProcessInner(sourceBufferType, replyBytes);
++        } else if (sourceInputNodeType_ == HPAE_SOURCE_MIC &&
++            (sourceBufferType == HPAE_SOURCE_BUFFER_TYPE_MIC ||
++             sourceBufferType == HPAE_SOURCE_BUFFER_TYPE_DEFAULT)) {
++            ProcessAssembledMic(sourceBufferType);
+         } else {
+             ReadDataFromSource(sourceBufferType, replyBytes);
+             DoProcessMicInner(sourceBufferType, replyBytes);
+@@ -366,11 +370,13 @@
+ 
+ bool HpaeSourceInputNode::Reset()
+ {
++    micFrameAssembler_.Invalidate();
+     return true;
+ }
+ 
+ bool HpaeSourceInputNode::ResetAll()
+ {
++    micFrameAssembler_.Invalidate();
+     return true;
+ }
+ 
+@@ -505,6 +511,7 @@
+ 
+ int32_t HpaeSourceInputNode::CapturerSourceDeInit()
+ {
++    micFrameAssembler_.Invalidate();
+     CHECK_AND_CALL_FUNC_RETURN_RET_LOG(audioCapturerSource_ != nullptr && captureId_ != HDI_INVALID_ID, ERROR,
+         StreamDfxManager::GetInstance().SendAudioErrorEvent(static_cast<int32_t>(getuid()),
+             BuildErrorCode(ProblemCategory::FAULT_STATE_INCONSISTENT, OperationType::RECORD,
+@@ -522,6 +529,7 @@
+ 
+ int32_t HpaeSourceInputNode::CapturerSourceFlush(void)
+ {
++    micFrameAssembler_.Invalidate();
+     CHECK_AND_CALL_FUNC_RETURN_RET_LOG(audioCapturerSource_ != nullptr && captureId_ != HDI_INVALID_ID, ERROR,
+         StreamDfxManager::GetInstance().SendAudioErrorEvent(static_cast<int32_t>(getuid()),
+             BuildErrorCode(ProblemCategory::FAULT_STATE_INCONSISTENT, OperationType::RECORD,
+@@ -563,6 +571,7 @@
+ 
+ int32_t HpaeSourceInputNode::CapturerSourceReset(void)
+ {
++    micFrameAssembler_.Invalidate();
+     CHECK_AND_CALL_FUNC_RETURN_RET_LOG(audioCapturerSource_ != nullptr && captureId_ != HDI_INVALID_ID, ERROR,
+         StreamDfxManager::GetInstance().SendAudioErrorEvent(static_cast<int32_t>(getuid()),
+             BuildErrorCode(ProblemCategory::FAULT_STATE_INCONSISTENT, OperationType::RECORD,
+@@ -592,6 +601,7 @@
+ 
+ int32_t HpaeSourceInputNode::CapturerSourceStart(void)
+ {
++    micFrameAssembler_.Invalidate();
+     Trace trace("HpaeSourceInputNode::CapturerSourceStart");
+     CHECK_AND_CALL_FUNC_RETURN_RET_LOG(audioCapturerSource_ != nullptr && captureId_ != HDI_INVALID_ID, ERROR,
+         StreamDfxManager::GetInstance().SendAudioErrorEvent(static_cast<int32_t>(getuid()),
+@@ -617,6 +627,7 @@
+ 
+ int32_t HpaeSourceInputNode::CapturerSourceStop(void)
+ {
++    micFrameAssembler_.Invalidate();
+     Trace trace("HpaeSourceInputNode::CapturerSourceStop");
+     SetSourceState(STREAM_MANAGER_SUSPENDED);
+     CHECK_AND_CALL_FUNC_RETURN_RET_LOG(audioCapturerSource_ != nullptr && captureId_ != HDI_INVALID_ID, ERROR,
+@@ -727,6 +738,36 @@
+ uint32_t HpaeSourceInputNode::GetCaptureId() const
+ {
+     return captureId_;
++}
++
++void HpaeSourceInputNode::ProcessAssembledMic(const HpaeSourceBufferType &bufferType)
++{
++    const auto &info = nodeInfoMap_.at(bufferType);
++    const size_t sampleFrameBytes = info.channels * static_cast<size_t>(GetSizeFromFormat(info.format));
++    const size_t outputBytes = info.frameLen * sampleFrameBytes;
++    const size_t capacity = frameByteSizeMap_.at(bufferType);
++    const uint64_t lease = micFrameAssembler_.Begin(outputBytes, sampleFrameBytes, capacity);
++    CHECK_AND_RETURN_LOG(lease != 0, "invalid ordinary MIC frame geometry");
++    std::vector<char> input(capacity);
++    while (!micFrameAssembler_.HasFrame(lease)) {
++        CHECK_AND_RETURN_LOG(micFrameAssembler_.IsCurrent(lease), "discard retired ordinary MIC read lease");
++        uint64_t actualBytes = 0;
++        // Keep this read outside the assembler lock, so a lifecycle transition
++        // can invalidate its lease without waiting for an HDI call to return.
++        int32_t ret = audioCapturerSource_->CaptureFrame(input.data(), capacity, actualBytes);
++        const bool valid = ret == SUCCESS && actualBytes != 0 && actualBytes <= capacity &&
++            actualBytes % sampleFrameBytes == 0;
++        backoffController_.HandleResult(valid);
++        CHECK_AND_RETURN_LOG(valid, "ordinary MIC read incomplete/error ret:%{public}d bytes:%{public}" PRIu64,
++            ret, actualBytes);
++        CHECK_AND_RETURN_LOG(micFrameAssembler_.Append(lease, input.data(), static_cast<size_t>(actualBytes)),
++            "discard retired ordinary MIC read");
++    }
++    micFrameAssembler_.PublishFrame(lease, [this, &info, &bufferType](char *frame) {
++        ConvertToFloat(info.format, info.channels * info.frameLen, frame,
++            inputAudioBufferMap_.at(bufferType).GetPcmDataBuffer());
++        outputStreamMap_.at(bufferType).WriteDataToOutput(&inputAudioBufferMap_.at(bufferType));
++    });
+ }
+ 
+ void HpaeSourceInputNode::ReadDataFromSource(const HpaeSourceBufferType &bufferType, uint64_t &replyBytes)
+--- a/services/audio_engine/node/include/hpae_source_input_node.h
++++ b/services/audio_engine/node/include/hpae_source_input_node.h
+@@ -18,6 +18,7 @@
+ #include <memory>
+ #include "hpae_backoff_controller.h"
+ #include "hpae_node.h"
++#include "hpae_capture_frame_assembler.h"
+ #include "hpae_pcm_buffer.h"
+ #include "source/i_audio_capture_source.h"
+ #include "common/hdi_adapter_type.h"
+@@ -74,6 +75,7 @@
+     void SetBufferValid(const HpaeSourceBufferType &bufferType, const uint64_t &replyBytes);
+     void DoProcessInner(const HpaeSourceBufferType &bufferType, const uint64_t &replyBytes);
+     void DoProcessMicInner(const HpaeSourceBufferType &bufferType, const uint64_t &replyBytes);
++    void ProcessAssembledMic(const HpaeSourceBufferType &bufferType);
+     void ReadDataFromSource(const HpaeSourceBufferType &bufferType, uint64_t &replyBytes);
+     void PushDataToBuffer(const HpaeSourceBufferType &bufferType, const uint64_t &replyBytes);
+     void UpdateSourceInputMapCancatMicEc();
+@@ -105,6 +107,7 @@
+     std::unordered_map<HpaeSourceBufferType, std::vector<char>> capturerFrameDataMap_; // input buffer
+     std::unordered_map<HpaeSourceBufferType, FrameDesc> fdescMap_; // CaptureframeWithEc argument struct
+ 
++    HpaeCaptureFrameAssembler micFrameAssembler_;
+     bool isInjecting_ = false; // mark injecting state
+     HpaeBackoffController backoffController_;
+     bool concatMicEcFlag_ = false;
+--- /dev/null
++++ b/services/audio_engine/node/include/hpae_capture_frame_assembler.h
+@@ -0,0 +1,90 @@
++/* Copyright (c) 2026 OpenHarmony QEMU contributors. Licensed under the Apache License, Version 2.0. */
++#ifndef HPAE_CAPTURE_FRAME_ASSEMBLER_H
++#define HPAE_CAPTURE_FRAME_ASSEMBLER_H
++#include <cstddef>
++#include <cstdint>
++#include <mutex>
++#include <vector>
++
++namespace OHOS { namespace AudioStandard { namespace HPAE {
++// Private ordinary-MIC byte queue. HDI calls never execute under this mutex.
++// Every read carries the immutable lease acquired before that actual read.
++class HpaeCaptureFrameAssembler final {
++public:
++    uint64_t Begin(size_t outputBytes, size_t sampleFrameBytes, size_t maximumReadBytes)
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        if (outputBytes == 0 || sampleFrameBytes == 0 || maximumReadBytes == 0 ||
++            outputBytes % sampleFrameBytes != 0 || maximumReadBytes % sampleFrameBytes != 0) {
++            return 0;
++        }
++        if (outputBytes_ != outputBytes || sampleFrameBytes_ != sampleFrameBytes ||
++            maximumReadBytes_ != maximumReadBytes) {
++            RetireLocked();
++            outputBytes_ = outputBytes;
++            sampleFrameBytes_ = sampleFrameBytes;
++            maximumReadBytes_ = maximumReadBytes;
++        }
++        return generation_;
++    }
++
++    bool IsCurrent(uint64_t lease) const
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        return lease != 0 && lease == generation_;
++    }
++
++    bool HasFrame(uint64_t lease) const
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        return lease != 0 && lease == generation_ && outputBytes_ != 0 && bytes_.size() >= outputBytes_;
++    }
++
++    bool Append(uint64_t lease, const char *data, size_t size)
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        if (lease == 0 || lease != generation_ || data == nullptr || size == 0 ||
++            size > maximumReadBytes_ || sampleFrameBytes_ == 0 || size % sampleFrameBytes_ != 0 ||
++            bytes_.size() >= outputBytes_) {
++            return false;
++        }
++        // Before a read we have less than one output frame; this read is bounded
++        // by its actual caller capacity. No padding, recovery or time synthesis.
++        bytes_.insert(bytes_.end(), data, data + size);
++        return true;
++    }
++
++    template<class Publish> bool PublishFrame(uint64_t lease, Publish publish)
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        if (lease == 0 || lease != generation_ || outputBytes_ == 0 || bytes_.size() < outputBytes_) {
++            return false;
++        }
++        // Production publish is ONLY ConvertToFloat + OutputPort::WriteDataToOutput,
++        // both bounded local operations; no HDI, public callback or lifecycle API.
++        // Serializing this commit with Invalidate prevents a retired read publishing.
++        publish(bytes_.data());
++        bytes_.erase(bytes_.begin(), bytes_.begin() + outputBytes_);
++        return true;
++    }
++
++    void Invalidate()
++    {
++        std::lock_guard<std::mutex> lock(mutex_);
++        RetireLocked();
++    }
++private:
++    void RetireLocked()
++    {
++        bytes_.clear();
++        if (++generation_ == 0) { ++generation_; }
++    }
++    mutable std::mutex mutex_;
++    uint64_t generation_ = 1;
++    size_t outputBytes_ = 0;
++    size_t sampleFrameBytes_ = 0;
++    size_t maximumReadBytes_ = 0;
++    std::vector<char> bytes_;
++};
++} } }
++#endif

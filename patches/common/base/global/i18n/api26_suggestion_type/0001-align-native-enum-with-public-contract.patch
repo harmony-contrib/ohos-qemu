@@ -1,0 +1,83 @@
+diff --git a/base/global/i18n/interfaces/js/kits/src/system_locale_manager_addon.cpp b/base/global/i18n/interfaces/js/kits/src/system_locale_manager_addon.cpp
+--- a/base/global/i18n/interfaces/js/kits/src/system_locale_manager_addon.cpp
++++ b/base/global/i18n/interfaces/js/kits/src/system_locale_manager_addon.cpp
+@@ -43,2 +43,52 @@
++// The public dynamic SDK numbers differ from the internal native enum.
++// Keep the native ABI and sorting semantics unchanged; translate at this boundary.
++static bool ToPublicSuggestionType(SuggestionType type, int32_t &value)
++{
++    switch (type) {
++        case SUGGESTION_TYPE_NONE:
++            value = 0;
++            return true;
++        case SUGGESTION_TYPE_RELATED:
++            value = 1;
++            return true;
++        case SUGGESTION_TYPE_SIM:
++            value = 2;
++            return true;
++        default:
++            return false;
++    }
++}
++
++static napi_status RegisterSuggestionType(napi_env env, napi_value exports)
++{
++    const SuggestionType nativeTypes[] = {
++        SUGGESTION_TYPE_NONE, SUGGESTION_TYPE_RELATED, SUGGESTION_TYPE_SIM
++    };
++    const char *names[] = {
++        "SUGGESTION_TYPE_NONE", "SUGGESTION_TYPE_RELATED", "SUGGESTION_TYPE_SIM"
++    };
++    napi_value result = nullptr;
++    napi_status status = napi_create_object(env, &result);
++    if (status != napi_ok) {
++        return status;
++    }
++    for (size_t index = 0; index < sizeof(nativeTypes) / sizeof(nativeTypes[0]); ++index) {
++        int32_t number = 0;
++        if (!ToPublicSuggestionType(nativeTypes[index], number)) {
++            return napi_invalid_arg;
++        }
++        napi_value member = nullptr;
++        status = napi_create_int32(env, number, &member);
++        if (status != napi_ok) {
++            return status;
++        }
++        status = napi_set_named_property(env, result, names[index], member);
++        if (status != napi_ok) {
++            return status;
++        }
++    }
++    return napi_set_named_property(env, exports, "SuggestionType", result);
++}
++
+ napi_value SystemLocaleManagerAddon::InitSystemLocaleManager(napi_env env, napi_value exports)
+ {
+@@ -71,5 +121,8 @@
+         HILOG_ERROR_I18N("Set property failed when InitSystemLocaleManager");
+         return nullptr;
+     }
++    if (RegisterSuggestionType(env, exports) != napi_ok) {
++        return nullptr;
++    }
+     return exports;
+ }
+@@ -350,10 +403,15 @@
+ napi_value SystemLocaleManagerAddon::CreateSuggestionType(napi_env env, SuggestionType suggestionType)
+ {
+-    napi_value result;
+-    napi_status status = napi_create_int32(env, static_cast<int32_t>(suggestionType), &result);
++    int32_t number = 0;
++    if (!ToPublicSuggestionType(suggestionType, number)) {
++        HILOG_ERROR_I18N("Unknown native SuggestionType.");
++        return nullptr;
++    }
++    napi_value result = nullptr;
++    napi_status status = napi_create_int32(env, number, &result);
+     if (status != napi_ok) {
+         HILOG_ERROR_I18N("create SuggestionType failed.");
+         return nullptr;
+     }
+     return result;
+ }

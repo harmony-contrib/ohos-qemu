@@ -1,0 +1,352 @@
+--- a/applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp
++++ b/applications/standard/calendardata/calendarmanager/napi/src/calendar_manager_napi.cpp
+@@ -252,9 +252,10 @@
+ napi_value CalendarManagerNapi::EditEvent(napi_env env, napi_callback_info info)
+ {
+     auto ctxt = std::make_shared<EditEventContext>();
+-    auto input = [env, ctxt](size_t argc, napi_value* argv) {
++    napi_value jsContext = nullptr;
++    auto input = [env, ctxt, &jsContext](size_t argc, napi_value* argv) {
+         CHECK_ARGS_RETURN_VOID(ctxt, argc == ARGS_INDEX_THREE, PARAMETER_INVALID, "invalid arguments!");
+-        ctxt->_jsContext = argv[0];
++        jsContext = argv[0];
+         ctxt->status = NapiUtil::GetValue(env, argv[ARGS_INDEX_ONE], ctxt->event);
+         CHECK_STATUS_RETURN_VOID(ctxt, PARAMETER_INVALID, "invalid event JSON");
+         ctxt->status = NapiUtil::GetValue(env, argv[ARGS_INDEX_TWO], ctxt->caller);
+@@ -265,60 +266,172 @@
+         return LaunchEditorPage(env, ctxt);
+     }
+     bool isStageMode = false;
+-    auto status = OHOS::AbilityRuntime::IsStageContext(env, ctxt->_jsContext, isStageMode);
++    auto status = OHOS::AbilityRuntime::IsStageContext(env, jsContext, isStageMode);
+     if (status != napi_ok || !isStageMode) {
+         ctxt->error = {"editEvent requires a Stage UIAbility context", PARAMETER_INVALID};
+         return LaunchEditorPage(env, ctxt);
+     }
+-    auto stageContext = OHOS::AbilityRuntime::GetStageModeContext(env, ctxt->_jsContext);
++    auto stageContext = OHOS::AbilityRuntime::GetStageModeContext(env, jsContext);
+     auto abilityContext = OHOS::AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(stageContext);
+     if (abilityContext == nullptr) {
+         ctxt->error = {"editEvent requires a UIAbility context", PARAMETER_INVALID};
+         return LaunchEditorPage(env, ctxt);
+     }
++    ctxt->hostContext = abilityContext;
+     ctxt->_uiContent = abilityContext->GetUIContent();
+     return LaunchEditorPage(env, ctxt);
+ }
+ 
+-void CalendarManagerNapi::FinishEditor(napi_env env, std::shared_ptr<EditEventContext> ctxt,
+-    napi_deferred deferred, bool failed, int32_t code, const std::string &message, bool closeModal)
+-{
+-    if (ctxt->settled) {
++void CalendarManagerNapi::CleanupEditorEnvironment(void *data)
++{
++    std::unique_ptr<EditorCleanup> cleanup(static_cast<EditorCleanup *>(data));
++    auto environment = cleanup->environment;
++    std::lock_guard<std::mutex> envLock(environment->mutex);
++    environment->alive = false;
++    environment->env = nullptr;
++    auto ctxt = cleanup->context.lock();
++    if (ctxt == nullptr) {
+         return;
+     }
+-    // Callbacks may reenter while CloseModalUIExtension destroys the session.
+-    ctxt->settled = true;
+-    napi_value result = nullptr;
+-    if (failed) {
+-        napi_value text = nullptr;
+-        napi_value errorCode = nullptr;
+-        napi_create_string_utf8(env, message.c_str(), NAPI_AUTO_LENGTH, &text);
+-        napi_create_error(env, nullptr, text, &result);
+-        napi_create_int32(env, code, &errorCode);
+-        napi_set_named_property(env, result, "code", errorCode);
+-        napi_reject_deferred(env, deferred, result);
++    std::lock_guard<std::mutex> lock(ctxt->mutex);
++    ctxt->cancelled = true;
++    ++ctxt->generation;
++    ctxt->completionQueued = false;
++    ctxt->deferred = nullptr;
++    ctxt->cleanup = nullptr;
++    ctxt->_uiContent = nullptr;
++    ctxt->closed = true;
++}
++
++void CalendarManagerNapi::CloseEditorSession(const std::shared_ptr<EditEventContext> &ctxt)
++{
++    std::lock_guard<std::mutex> lock(ctxt->mutex);
++    if (ctxt->closed || ctxt->_uiContent == nullptr || ctxt->_sessionId <= 0) {
++        return;
++    }
++    ctxt->closed = true;
++    auto host = ctxt->hostContext.lock();
++    auto content = host == nullptr ? nullptr : host->GetUIContent();
++    if (content != nullptr && content == ctxt->_uiContent) {
++        // This implementation posts CloseModalUIExtension to UI asynchronously.
++        // Keep the lifetime lock until it has copied its native session/id task.
++        content->CloseModalUIExtension(ctxt->_sessionId);
++    }
++}
++
++void CalendarManagerNapi::QueueEditorResult(const std::shared_ptr<EditEventContext> &ctxt,
++    bool failed, int32_t code, const std::string &message, int32_t eventId, bool closeModal)
++{
++    uint64_t generation;
++    {
++        std::lock_guard<std::mutex> lock(ctxt->mutex);
++        if (ctxt->cancelled || ctxt->settled || ctxt->completionQueued) {
++            return;
++        }
++        ctxt->completionQueued = true;
++        generation = ctxt->generation;
++    }
++    napi_status status = napi_closing;
++    auto environment = ctxt->environment;
++    {
++        // Cleanup is registered/removed only on JS. Its mutex excludes a sender
++        // from using env while the cleanup hook invalidates the environment.
++        std::lock_guard<std::mutex> envLock(environment->mutex);
++        if (environment->alive) {
++            status = napi_send_event(environment->env,
++                [ctxt, generation, failed, code, message, eventId, closeModal] {
++                    FinishEditor(ctxt, generation, failed, code, message, eventId, closeModal);
++                }, napi_eprio_high);
++        }
++    }
++    if (status != napi_ok) {
++        {
++            std::lock_guard<std::mutex> lock(ctxt->mutex);
++            ctxt->cancelled = true;
++            ++ctxt->generation;
++            ctxt->completionQueued = false;
++            ctxt->deferred = nullptr;
++        }
++        // No NAPI fallback on a UI callback when JS delivery is unavailable.
++        LOG_ERROR("Calendar editor JS event delivery failed");
++        CloseEditorSession(ctxt);
++    }
++}
++
++void CalendarManagerNapi::FinishEditor(const std::shared_ptr<EditEventContext> &ctxt, uint64_t generation,
++    bool failed, int32_t code, const std::string &message, int32_t eventId, bool closeModal)
++{
++    auto environment = ctxt->environment;
++    std::lock_guard<std::mutex> envLock(environment->mutex);
++    if (!environment->alive) {
++        return;
++    }
++    napi_env env = environment->env;
++    napi_deferred deferred;
++    void *cleanup;
++    {
++        std::lock_guard<std::mutex> lock(ctxt->mutex);
++        if (ctxt->cancelled || ctxt->settled || ctxt->generation != generation) {
++            return;
++        }
++        ctxt->settled = true;
++        ctxt->completionQueued = false;
++        deferred = ctxt->deferred;
++        ctxt->deferred = nullptr;
++        cleanup = ctxt->cleanup;
++    }
++    napi_handle_scope scope = nullptr;
++    if (napi_open_handle_scope(env, &scope) == napi_ok) {
++        napi_value result = nullptr;
++        if (failed) {
++            napi_value text = nullptr;
++            napi_value errorCode = nullptr;
++            napi_create_string_utf8(env, message.c_str(), NAPI_AUTO_LENGTH, &text);
++            napi_create_error(env, nullptr, text, &result);
++            napi_create_int32(env, code, &errorCode);
++            napi_set_named_property(env, result, "code", errorCode);
++            napi_reject_deferred(env, deferred, result);
++        } else {
++            napi_create_int32(env, eventId, &result);
++            napi_resolve_deferred(env, deferred, result);
++        }
++        napi_close_handle_scope(env, scope);
+     } else {
+-        // Never retain a napi_value beyond its callback/handle scope.
+-        napi_create_int32(env, ctxt->eventId, &result);
+-        napi_resolve_deferred(env, deferred, result);
+-    }
+-    if (closeModal && !ctxt->closed && ctxt->_uiContent != nullptr && ctxt->_sessionId > 0) {
+-        ctxt->closed = true;
+-        ctxt->_uiContent->CloseModalUIExtension(ctxt->_sessionId);
++        LOG_ERROR("Calendar editor cannot open JS handle scope");
++    }
++    if (cleanup != nullptr && napi_remove_env_cleanup_hook(env, CleanupEditorEnvironment, cleanup) == napi_ok) {
++        {
++            std::lock_guard<std::mutex> lock(ctxt->mutex);
++            ctxt->cleanup = nullptr;
++        }
++        delete static_cast<EditorCleanup *>(cleanup);
++    }
++    if (closeModal) {
++        CloseEditorSession(ctxt);
+     }
+ }
+ 
+ napi_value CalendarManagerNapi::LaunchEditorPage(napi_env env, std::shared_ptr<EditEventContext> ctxt)
+ {
+     napi_value promise = nullptr;
+-    napi_deferred deferred = nullptr;
+-    if (napi_create_promise(env, &deferred, &promise) != napi_ok) {
++    if (napi_create_promise(env, &ctxt->deferred, &promise) != napi_ok) {
+         napi_throw_error(env, nullptr, "Cannot create calendar editor promise");
+         return nullptr;
+     }
++    ctxt->environment = std::make_shared<EditorEnvironment>();
++    ctxt->environment->env = env;
++    auto cleanup = new EditorCleanup { ctxt->environment, ctxt };
++    if (napi_add_env_cleanup_hook(env, CleanupEditorEnvironment, cleanup) != napi_ok) {
++        delete cleanup;
++        FinishEditor(ctxt, ctxt->generation, true, INTERNAL_ERROR, "Cannot watch calendar editor environment",
++            INVALID_EVENT_ID, false);
++        return promise;
++    }
++    ctxt->cleanup = cleanup;
+     if (ctxt->error.code != NO_ERROR || ctxt->status != napi_ok || ctxt->_uiContent == nullptr) {
+         int32_t code = ctxt->error.code == NO_ERROR ? INTERNAL_ERROR : ctxt->error.code;
+-        FinishEditor(env, ctxt, deferred, true, code, "Calendar editor context is unavailable", false);
++        FinishEditor(ctxt, ctxt->generation, true, code, "Calendar editor context is unavailable",
++            INVALID_EVENT_ID, false);
+         return promise;
+     }
+     AAFwk::Want want;
+@@ -328,37 +441,51 @@
+     // Caller identity is display-only input and is never used to authorize a write.
+     Ace::ModalUIExtensionCallbacks callbacks;
+     callbacks = {
+-        .onRelease = [env, ctxt, deferred](int32_t code) {
+-            FinishEditor(env, ctxt, deferred, code != 0, INTERNAL_ERROR, "Calendar editor was released", true);
++        .onRelease = [ctxt](int32_t code) {
++            QueueEditorResult(ctxt, code != 0, INTERNAL_ERROR, "Calendar editor was released", INVALID_EVENT_ID, true);
+         },
+-        .onResult = [env, ctxt, deferred](int32_t code, const AAFwk::Want &wantRes) {
++        .onResult = [ctxt](int32_t code, const AAFwk::Want &wantRes) {
+             int32_t eventId = wantRes.GetIntParam("eventId", INVALID_EVENT_ID);
+             bool failed = code != 0 || eventId == 0;
+-            ctxt->eventId = eventId > 0 ? eventId : INVALID_EVENT_ID;
+             int32_t errorCode = wantRes.GetIntParam("errorCode", code > 0 ? code : INTERNAL_ERROR);
+-            FinishEditor(env, ctxt, deferred, failed, errorCode, "Calendar editor operation failed", true);
++            QueueEditorResult(ctxt, failed, errorCode, "Calendar editor operation failed",
++                eventId > 0 ? eventId : INVALID_EVENT_ID, true);
+         },
+         .onReceive = [](const AAFwk::WantParams &) {},
+-        .onError = [env, ctxt, deferred](int32_t code, const std::string &, const std::string &msg) {
+-            FinishEditor(env, ctxt, deferred, true, code > 0 ? code : INTERNAL_ERROR, msg, true);
++        .onError = [ctxt](int32_t code, const std::string &, const std::string &msg) {
++            QueueEditorResult(ctxt, true, code > 0 ? code : INTERNAL_ERROR, msg, INVALID_EVENT_ID, true);
+         },
+         .onRemoteReady = [](const std::shared_ptr<Ace::ModalUIExtensionProxy> &) {},
+-        .onDestroy = [env, ctxt, deferred] {
+-            // The host owns UIContent; never dereference it after destruction.
+-            ctxt->closed = true;
+-            ctxt->_uiContent = nullptr;
+-            FinishEditor(env, ctxt, deferred, false, 0, "", false);
++        .onDestroy = [ctxt] {
++            {
++                // Invalidate native lifetime immediately on UI, before posting
++                // cancellation. A queued result must never close a dead host.
++                std::lock_guard<std::mutex> lock(ctxt->mutex);
++                ctxt->closed = true;
++                ctxt->_uiContent = nullptr;
++                ++ctxt->generation;
++                ctxt->completionQueued = false;
++            }
++            QueueEditorResult(ctxt, false, 0, "", INVALID_EVENT_ID, false);
+         },
+     };
+     Ace::ModalUIExtensionConfig config;
+     config = { .isProhibitBack = false };
+-    ctxt->_sessionId = ctxt->_uiContent->CreateModalUIExtension(want, callbacks, config);
+-    if (ctxt->_sessionId <= 0) {
+-        FinishEditor(env, ctxt, deferred, true, INTERNAL_ERROR, "Cannot create calendar editor session", false);
+-    } else if (ctxt->settled && !ctxt->closed && ctxt->_uiContent != nullptr) {
+-        // Also handle a synchronous failure/result during session creation.
+-        ctxt->closed = true;
+-        ctxt->_uiContent->CloseModalUIExtension(ctxt->_sessionId);
++    int32_t sessionId = ctxt->_uiContent->CreateModalUIExtension(want, callbacks, config);
++    uint64_t generation;
++    bool cancelSession;
++    {
++        std::lock_guard<std::mutex> lock(ctxt->mutex);
++        ctxt->_sessionId = sessionId;
++        generation = ctxt->generation;
++        cancelSession = ctxt->cancelled || ctxt->settled;
++    }
++    if (sessionId <= 0) {
++        FinishEditor(ctxt, generation, true, INTERNAL_ERROR, "Cannot create calendar editor session",
++            INVALID_EVENT_ID, false);
++    } else if (cancelSession) {
++        // A send failure during synchronous creation had no session id yet.
++        CloseEditorSession(ctxt);
+     }
+     return promise;
+ }
+--- a/applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h
++++ b/applications/standard/calendardata/calendarmanager/napi/include/calendar_manager_napi.h
+@@ -17,6 +17,7 @@
+ #define CALENDAR_MANAGER_NAPI_H
+ 
+ #include <vector>
++#include <mutex>
+ 
+ #include "napi/native_api.h"
+ #include "napi/native_common.h"
+@@ -35,20 +36,37 @@
+ 
+ #include <ui_content.h>
+ #include "napi_base_context.h"
++namespace OHOS::AbilityRuntime { class AbilityContext; }
+ namespace OHOS::CalendarApi {
+ class CalendarManagerNapi {
+ public:
++    struct EditorEnvironment {
++        std::mutex mutex;
++        napi_env env = nullptr;
++        bool alive = true;
++    };
+     struct EditEventContext : public ContextBase {
++        std::mutex mutex;
+         string event;
+-        napi_value _jsContext = nullptr;
+         string caller;
+         int32_t _sessionId = 0;
++        // Identity only: reacquire through the caller's live AbilityContext before closing.
+         Ace::UIContent *_uiContent = nullptr;
+-        int32_t eventId = -1;
++        std::weak_ptr<AbilityRuntime::AbilityContext> hostContext;
++        std::shared_ptr<EditorEnvironment> environment;
++        napi_deferred deferred = nullptr;
++        void *cleanup = nullptr;
++        uint64_t generation = 0;
++        bool completionQueued = false;
++        bool cancelled = false;
+         bool settled = false;
+         bool closed = false;
+     };
+-    
++    struct EditorCleanup {
++        std::shared_ptr<EditorEnvironment> environment;
++        std::weak_ptr<EditEventContext> context;
++    };
++
+     static napi_value New(napi_env env, napi_callback_info info);
+     static napi_value CreateCalendar(napi_env env, napi_callback_info info);
+     static napi_value DeleteCalendar(napi_env env, napi_callback_info info);
+@@ -57,8 +75,12 @@
+     static napi_value EditEvent(napi_env env, napi_callback_info info);
+     static napi_value Init(napi_env env, napi_value exports);
+ private:
+-    static void FinishEditor(napi_env env, std::shared_ptr<EditEventContext> ctxt, napi_deferred deferred,
+-        bool failed, int32_t code, const std::string &message, bool closeModal);
++    static void CleanupEditorEnvironment(void *data);
++    static void CloseEditorSession(const std::shared_ptr<EditEventContext> &ctxt);
++    static void QueueEditorResult(const std::shared_ptr<EditEventContext> &ctxt,
++        bool failed, int32_t code, const std::string &message, int32_t eventId, bool closeModal);
++    static void FinishEditor(const std::shared_ptr<EditEventContext> &ctxt, uint64_t generation,
++        bool failed, int32_t code, const std::string &message, int32_t eventId, bool closeModal);
+     static napi_value LaunchEditorPage(napi_env env, std::shared_ptr<EditEventContext> ctxt);
+ };
+ 

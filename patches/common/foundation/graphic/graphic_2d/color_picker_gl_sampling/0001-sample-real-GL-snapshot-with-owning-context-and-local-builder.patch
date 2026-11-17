@@ -1,0 +1,46 @@
+diff --git a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/feature/color_picker/rs_color_picker_utils.cpp b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/feature/color_picker/rs_color_picker_utils.cpp
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/feature/color_picker/rs_color_picker_utils.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/feature/color_picker/rs_color_picker_utils.cpp
+@@ -32,6 +32,7 @@
+ #include "pipeline/rs_render_node_map.h"
+ #include "pipeline/rs_surface_render_node.h"
+ #include "platform/common/rs_log.h"
++#include "platform/common/rs_system_properties.h"
+ #include "render/rs_high_performance_visual_engine.h"
+ 
+ #if defined(ROSEN_OHOS) && defined(RS_ENABLE_VK)
+@@ -316,6 +317,19 @@
+         RS_LOGE("ExtractSnapshotAndScheduleColorPick: gpuContext is null");
+         return false;
+     }
++#ifdef RS_ENABLE_GL
++    if (!RSSystemProperties::IsUseVulkan()) {
++        // Read the actual snapshot on its owning GL render context. The Vulkan
++        // semaphore path cannot schedule a GL image on ColorPickerThread.
++        Drawing::ColorQuad colorPicked;
++        if (!RSPropertyDrawableUtils::PickColor(gpuCtx, snapshot, colorPicked)) {
++            RS_LOGE("ExtractSnapshotAndScheduleColorPick: GL PickColor failed");
++            return false;
++        }
++        manager->HandleColorUpdate(colorPicked);
++        return true;
++    }
++#endif
+     auto weakManager = std::weak_ptr<IColorPickerManager>(manager);
+     auto colorPickerInfo = CreateColorPickerInfo(drawingSurface, snapshot, weakManager);
+     ScheduleColorPickWithSemaphore(*drawingSurface, weakManager, std::move(colorPickerInfo), *gpuCtx);
+diff --git a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/drawable/rs_property_drawable_utils.cpp b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/drawable/rs_property_drawable_utils.cpp
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/drawable/rs_property_drawable_utils.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/drawable/rs_property_drawable_utils.cpp
+@@ -269,8 +269,9 @@
+         return nullptr;
+     }
+ 
+-    static auto effectBuilder =
+-        std::make_shared<Drawing::RuntimeShaderBuilder>(Drawing::RuntimeEffect::CreateForShader(PASS_THROUGH_PROG));
++    static const auto effect = Drawing::RuntimeEffect::CreateForShader(PASS_THROUGH_PROG);
++    // Builders mutate shader bindings; render threads must not share one.
++    auto effectBuilder = std::make_shared<Drawing::RuntimeShaderBuilder>(effect);
+     if (!effectBuilder) {
+         ROSEN_LOGE("RSPropertyDrawableUtils::GpuScaleImage effect is null");
+         return nullptr;

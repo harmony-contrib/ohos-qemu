@@ -1,0 +1,15 @@
+diff --git a/arkcompiler/jsvm/BUILD.gn b/arkcompiler/jsvm/BUILD.gn
+--- a/arkcompiler/jsvm/BUILD.gn
++++ b/arkcompiler/jsvm/BUILD.gn
+@@ -35,7 +35,9 @@ js_engine_url = jsvm_engine_artifact_root
+ action("copy_v8") {
+   external_deps = []
+   deps = []
+   script = "copy_v8.sh"
+-  sources = []
++  sources = [
++    "${js_engine_url}/v8-include/v8-include/source_location",
++  ]
+   outputs = [
+     "$target_gen_dir/libv8_shared.so",
+     "$target_gen_dir/v8-include",

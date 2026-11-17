@@ -1,0 +1,75 @@
+{
+  "scope": "whole product policy originals plus seven finite install insertions and CertificateManager signer-only capability; source-only",
+  "policies": {
+    "install_list.json": {
+      "before_sha256": "c373f96100e8b7263bd51d057f17b695d1a48890c3c48bc84f458a026b6c9ea5",
+      "bytes": 5233
+    },
+    "install_list_capability.json": {
+      "before_sha256": "2ce081c3d8b929070f4ced1a46298c7d019afcba0e83a6c1e6973cd1df653701",
+      "bytes": 10579
+    },
+    "install_list_permissions.json": {
+      "before_sha256": "fb3e91e110c26d882f2dd4653c908836c6cac8b22ba17c783429e63b304abc87",
+      "bytes": 9936
+    }
+  },
+  "first_artifact_behavior_gate_passed": false,
+  "historical_prebuilt_inputs": [
+    {
+      "path": "applications/standard/hap/sceneboard/PortalLogin.hap",
+      "sha256": "d650d0a1bbd744d1bdf8cfcc4ca16ca51cecdc2b96c09d8f358897a54da00185",
+      "bytes": 237378,
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r59-F-private-docker-cli-97-01/bin/docker",
+        "exec",
+        "647b9d86c06fedae94c1b38ed78c984c93ecd999cd69ee641e3bc86a24597102",
+        "cat",
+        "/Volumes/PSSD/qemu/openharmony/applications/standard/hap/sceneboard/PortalLogin.hap"
+      ]
+    },
+    {
+      "path": "applications/standard/hap/sceneboard/mediacontroller.hap",
+      "sha256": "1118c178e106bfd49bcff5de099daa8f24166595acac24941077e4cde60cd2d3",
+      "bytes": 2308626,
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r59-F-private-docker-cli-97-01/bin/docker",
+        "exec",
+        "647b9d86c06fedae94c1b38ed78c984c93ecd999cd69ee641e3bc86a24597102",
+        "cat",
+        "/Volumes/PSSD/qemu/openharmony/applications/standard/hap/sceneboard/mediacontroller.hap"
+      ]
+    },
+    {
+      "path": "applications/standard/hap/sceneboard/Intelligent_Scene.hap",
+      "sha256": "b328caf535c073768f50d52fcea8d1ced786f13479706e8085fb0553d163b420",
+      "bytes": 2110196,
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r59-F-private-docker-cli-97-01/bin/docker",
+        "exec",
+        "647b9d86c06fedae94c1b38ed78c984c93ecd999cd69ee641e3bc86a24597102",
+        "cat",
+        "/Volumes/PSSD/qemu/openharmony/applications/standard/hap/sceneboard/Intelligent_Scene.hap"
+      ]
+    },
+    {
+      "path": "applications/standard/hap/sceneboard/CallSetting.hap",
+      "sha256": "dc3f070e7200c471a492db08f4ac335809dfa598b784161af706435232a592e0",
+      "bytes": 12317811,
+      "argv": [
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r59-F-private-docker-cli-97-01/bin/docker",
+        "exec",
+        "647b9d86c06fedae94c1b38ed78c984c93ecd999cd69ee641e3bc86a24597102",
+        "cat",
+        "/Volumes/PSSD/qemu/openharmony/applications/standard/hap/sceneboard/CallSetting.hap"
+      ]
+    }
+  ],
+  "selected_source_providers": [
+    "com.ohos.locationdialog",
+    "com.ohos.communicationsetting",
+    "com.ohos.callsetting",
+    "com.ohos.certmanager",
+    "com.ohos.vassistant"
+  ]
+}

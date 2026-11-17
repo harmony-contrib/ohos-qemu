@@ -1,0 +1,584 @@
+--- a/drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp
++++ b/drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.cpp
+@@ -14,110 +14,253 @@
+  */
+ 
+ #include "location_vendor_interface.h"
++#include <array>
++#include <cerrno>
++#include <condition_variable>
++#include <dlfcn.h>
++#include <memory>
++#include <pthread.h>
++#include <string>
++#include <utility>
++#include "gnss_hdf_log.h"
+ 
+-#include <dlfcn.h>
+-#include "gnss_hdf_log.h"
+-#include "gnss_interface_impl.h"
++namespace OHOS::HDI::Location {
++namespace {
++struct Session {
++    void* handle = nullptr;
++    GnssVendorInterface methods{};
++    GnssCallbackStruct callbacks{};
++    GnssCallbackStruct vendorCallbacks{};
++    size_t calls = 0;
++    size_t callbacksInFlight = 0;
++    bool enabled = false;
++    bool transition = false;
++    bool borrowedModule = false;
++};
++std::mutex gate;
++std::condition_variable changed;
++std::shared_ptr<Session> current;
++std::shared_ptr<Session> retiring;
++bool loading = false;
++bool retireFailed = false;
++bool reaperStarted = false;
++pthread_t reaper{};
++thread_local unsigned callDepth = 0;
++thread_local unsigned callbackDepth = 0;
+ 
+-#define HDF_LOG_TAG AGnss
+-#ifdef LOG_DOMAIN
+-#undef LOG_DOMAIN
+-#endif
+-#define LOG_DOMAIN 0xD002300
+-
+-namespace OHOS {
+-namespace HDI {
+-namespace Location {
+-namespace {
+-const std::string VENDOR_NAME = "vendorGnssAdapter.so";
++class Call {
++public:
++    Call() {
++        std::lock_guard<std::mutex> lock(gate);
++        session = current;
++        if (session) { ++session->calls; ++callDepth; }
++    }
++    ~Call() {
++        if (!session) return;
++        std::lock_guard<std::mutex> lock(gate);
++        --session->calls; --callDepth; changed.notify_all();
++    }
++    std::shared_ptr<Session> session;
++};
++template<class Member, class... Args> void Forward(Member member, Args... args)
++{
++    std::shared_ptr<Session> session;
++    auto callback = GnssBasicCallbackIfaces{}.*member;
++    {
++        std::lock_guard<std::mutex> lock(gate);
++        session = current;
++        if (!session || !session->enabled) return;
++        callback = session->callbacks.gnssCallback.*member;
++        if (!callback) return;
++        ++session->callbacksInFlight; ++callbackDepth;
++    }
++    callback(args...);
++    {
++        std::lock_guard<std::mutex> lock(gate);
++        --session->callbacksInFlight; --callbackDepth; changed.notify_all();
++    }
++}
++void Position(GnssLocation* value) { Forward(&GnssBasicCallbackIfaces::locationUpdate, value); }
++void Status(uint16_t* value) { Forward(&GnssBasicCallbackIfaces::gnssWorkingStatusUpdate, value); }
++void Satellites(GnssSatelliteStatus* value) { Forward(&GnssBasicCallbackIfaces::satelliteStatusUpdate, value); }
++void Nmea(int64_t time, const char* text, int size) { Forward(&GnssBasicCallbackIfaces::nmeaUpdate,time,text,size); }
++void Capabilities(uint32_t value) { Forward(&GnssBasicCallbackIfaces::capabilitiesUpdate,value); }
++void Reference(int value) { Forward(&GnssBasicCallbackIfaces::requestRefInfo,value); }
++void EphemerisRequest() { Forward(&GnssBasicCallbackIfaces::requestExtendedEphemeris); }
++void Cached(const GnssLocation** values, size_t size)
++{
++    std::shared_ptr<Session> session;
++    OnCachedLocationsChange callback;
++    {
++        std::lock_guard<std::mutex> lock(gate); session=current;
++        if (!session || !session->enabled || !session->callbacks.gnssCacheCallback.cachedLocationUpdate) return;
++        callback=session->callbacks.gnssCacheCallback.cachedLocationUpdate;
++        ++session->callbacksInFlight; ++callbackDepth;
++    }
++    callback(values,size);
++    { std::lock_guard<std::mutex> lock(gate); --session->callbacksInFlight; --callbackDepth; changed.notify_all(); }
++}
++GnssCallbackStruct Trampolines(const GnssCallbackStruct& client)
++{
++    GnssCallbackStruct cb{}; cb.size=sizeof(cb); cb.gnssCallback.size=sizeof(cb.gnssCallback);
++    cb.gnssCacheCallback.size=sizeof(cb.gnssCacheCallback);
++    auto& out=cb.gnssCallback; const auto& in=client.gnssCallback;
++    out.locationUpdate=in.locationUpdate?Position:nullptr;
++    out.gnssWorkingStatusUpdate=in.gnssWorkingStatusUpdate?Status:nullptr;
++    out.satelliteStatusUpdate=in.satelliteStatusUpdate?Satellites:nullptr;
++    out.nmeaUpdate=in.nmeaUpdate?Nmea:nullptr;
++    out.capabilitiesUpdate=in.capabilitiesUpdate?Capabilities:nullptr;
++    out.requestRefInfo=in.requestRefInfo?Reference:nullptr;
++    out.requestExtendedEphemeris=in.requestExtendedEphemeris?EphemerisRequest:nullptr;
++    cb.gnssCacheCallback.cachedLocationUpdate=client.gnssCacheCallback.cachedLocationUpdate?Cached:nullptr;
++    return cb;
++}
++int Enable(GnssCallbackStruct* callbacks)
++{
++    if (!callbacks || callbacks->size!=sizeof(*callbacks) ||
++        callbacks->gnssCallback.size!=sizeof(callbacks->gnssCallback) || !callbacks->gnssCallback.locationUpdate) return -EINVAL;
++    Call call; if (!call.session) return -ENODEV;
++    auto session=call.session;
++    {
++        std::lock_guard<std::mutex> lock(gate);
++        if (session->enabled || session->transition) return -EBUSY;
++        session->callbacks=*callbacks; session->enabled=true; session->transition=true;
++    }
++    session->vendorCallbacks=Trampolines(*callbacks);
++    int result=session->methods.enableGnss(&session->vendorCallbacks);
++    { std::lock_guard<std::mutex> lock(gate); session->transition=false;
++      if(result){session->enabled=false; session->callbacks={};} }
++    return result;
++}
++int Disable()
++{
++    Call call; if (!call.session) return -ENODEV;
++    { std::lock_guard<std::mutex> lock(gate);
++      if(call.session->transition)return -EBUSY;
++      call.session->enabled=false;call.session->transition=true; }
++    int result=call.session->methods.disableGnss();
++    { std::lock_guard<std::mutex> lock(gate); call.session->callbacks={};call.session->transition=false; }
++    return result;
++}
++int Start(uint32_t type) { Call call; return call.session?call.session->methods.startGnss(type):-ENODEV; }
++int Stop(uint32_t type) { Call call; return call.session?call.session->methods.stopGnss(type):-ENODEV; }
++int Inject(int type,GnssReferenceInfo* info) { Call call; return call.session?call.session->methods.injectsGnssReferenceInfo(type,info):-ENODEV; }
++int Config(GnssConfigParameter* config) { Call call; return call.session?call.session->methods.setGnssConfigPara(config):-ENODEV; }
++void Remove(uint16_t flags) { Call call; if(call.session)call.session->methods.removeAuxiliaryData(flags); }
++int InjectExtended(char* data,int size) { Call call; return call.session?call.session->methods.injectExtendedEphemeris(data,size):-ENODEV; }
++int CacheSize() { Call call; return call.session&&call.session->methods.getCachedLocationsSize?call.session->methods.getCachedLocationsSize():-ENOTSUP; }
++void Flush() { Call call; if(call.session&&call.session->methods.flushCachedGnssLocations)call.session->methods.flushCachedGnssLocations(); }
++const void* Module(int id)
++{
++    Call call; if(!call.session)return nullptr;
++    const void* result=call.session->methods.getGnssModuleIface(id);
++    // This ABI exposes unscoped module pointers: preserve mapping if any are borrowed.
++    if(result){std::lock_guard<std::mutex> lock(gate);call.session->borrowedModule=true;}
++    return result;
++}
++const std::array<GnssVendorInterface,4> proxies=[] {
++    std::array<GnssVendorInterface,4> result{};
++    for(size_t i=0;i<result.size();++i)result[i]={sizeof(GnssVendorInterface),Enable,Disable,Start,Stop,Inject,Config,
++        Remove,InjectExtended,(i&1)?CacheSize:nullptr,(i&2)?Flush:nullptr,Module};
++    return result;
++}();
++void* Reap(void*)
++{
++    std::shared_ptr<Session> session;
++    {
++        std::unique_lock<std::mutex> lock(gate); session=retiring;
++        changed.wait(lock,[&]{return session->calls==0;});
++    }
++    // Always execute disable on this non-provider thread: its return includes a real worker join.
++    int result=session->methods.disableGnss();
++    {
++        std::unique_lock<std::mutex> lock(gate);
++        changed.wait(lock,[&]{return session->callbacksInFlight==0;});
++        if(result || session->borrowedModule) {
++            retireFailed=true; changed.notify_all();
++            return nullptr; // Fail closed: never unmap active code or an unscoped borrowed module.
++        }
++    }
++    int closed=dlclose(session->handle);
++    { std::lock_guard<std::mutex> lock(gate);
++      if(closed)retireFailed=true;else retiring.reset();changed.notify_all(); }
++    return nullptr;
++}
++void JoinCompleted()
++{
++    pthread_t thread{};bool join=false;
++    {
++        std::lock_guard<std::mutex> lock(gate);
++        if(reaperStarted && (!retiring || retireFailed)) { thread=reaper; reaperStarted=false;join=true; }
++    }
++    if(join)pthread_join(thread,nullptr);
++}
+ } // namespace
+-
+-std::mutex LocationVendorInterface::mutex_;
+-LocationVendorInterface* LocationVendorInterface::instance_ = nullptr;
+-
+-LocationVendorInterface::LocationVendorInterface()
+-{
+-    Init();
+-    HDF_LOGI("%{public}s constructed.", __func__);
+-}
+-
+-LocationVendorInterface::~LocationVendorInterface()
+-{
+-    CleanUp();
+-    HDF_LOGI("%{public}s destructed.", __func__);
+-}
+- 
++LocationVendorInterface::LocationVendorInterface() = default;
++LocationVendorInterface::~LocationVendorInterface() { CleanUp(); }
++LocationVendorInterface* LocationVendorInterface::Singleton()
++{
++    static LocationVendorInterface singleton; return &singleton;
++}
+ LocationVendorInterface* LocationVendorInterface::GetInstance()
+ {
+-    if (instance_ == nullptr) {
+-        std::lock_guard<std::mutex> lock(mutex_);
+-        if (instance_ == nullptr) {
+-            instance_ = new LocationVendorInterface();
++    auto* singleton=Singleton(); singleton->Init(); return singleton;
++}
++void LocationVendorInterface::DestroyInstance()
++{
++    // A bounded lifetime singleton keeps the proxy address valid for racing/reentrant callers.
++    Singleton()->CleanUp();
++}
++void LocationVendorInterface::Init()
++{
++    JoinCompleted();
++    {
++        std::unique_lock<std::mutex> lock(gate);
++        changed.wait(lock,[]{return !loading;});
++        if(current || retiring)return;
++        loading=true;
++    }
++    auto session=std::make_shared<Session>();
++    session->handle=dlopen("vendorGnssAdapter.so",RTLD_NOW|RTLD_LOCAL);
++    if(session->handle) {
++        auto* device=static_cast<GnssVendorDevice*>(dlsym(session->handle,"GnssVendorInterface"));
++        if(device && device->size==sizeof(*device) && device->getGnssInterface) {
++            auto* table=device->getGnssInterface();
++            if(table && table->size==sizeof(*table) && table->enableGnss && table->disableGnss &&
++               table->startGnss && table->stopGnss && table->injectsGnssReferenceInfo && table->setGnssConfigPara &&
++               table->removeAuxiliaryData && table->injectExtendedEphemeris && table->getGnssModuleIface) {
++                session->methods=*table;
++            }
+         }
+-    }
+-    return instance_;
+-}
+-
+-void LocationVendorInterface::DestroyInstance()
+-{
+-    std::lock_guard<std::mutex> lock(mutex_);
+-    if (instance_ != nullptr) {
+-        delete instance_;
+-        instance_ = nullptr;
+-    }
+-}
+-
+-void LocationVendorInterface::Init()
+-{
+-    HDF_LOGI("%{public}s.", __func__);
+-    vendorHandle_ = dlopen(VENDOR_NAME.c_str(), RTLD_LAZY);
+-    if (!vendorHandle_) {
+-        HDF_LOGE("%{public}s:dlopen %{public}s failed: %{public}s", __func__, VENDOR_NAME.c_str(), dlerror());
+-        return;
+-    }
+-    GnssVendorDevice *gnssDevice = static_cast<GnssVendorDevice *>(dlsym(vendorHandle_, "GnssVendorInterface"));
+-    if (gnssDevice == nullptr) {
+-        HDF_LOGE("%{public}s:dlsym GnssInterface failed.", __func__);
+-        return;
+-    }
+-    vendorInterface_ = gnssDevice->getGnssInterface();
+-    if (vendorInterface_ == nullptr) {
+-        HDF_LOGE("%{public}s:getGnssInterface failed.", __func__);
+-        return;
+-    }
+-}
+-
+-const GnssVendorInterface *LocationVendorInterface::GetGnssVendorInterface() const
+-{
+-    if (vendorInterface_ == nullptr) {
+-        HDF_LOGE("%{public}s:GetGnssVendorInterface() failed.", __func__);
+-    }
+-    return vendorInterface_;
+-}
+-
+-const void *LocationVendorInterface::GetModuleInterface(int moduleId) const
+-{
+-    auto vendorInterface = GetGnssVendorInterface();
+-    if (vendorInterface == nullptr) {
+-        HDF_LOGE("%{public}s:can not get vendorInterface.", __func__);
+-        return nullptr;
+-    }
+-    auto moduleInterface = vendorInterface->getGnssModuleIface(moduleId);
+-    if (moduleInterface == nullptr) {
+-        HDF_LOGE("%{public}s:can not get moduleInterface.", __func__);
+-    }
+-    return moduleInterface;
+-}
+-
++        if(!session->methods.enableGnss){dlclose(session->handle);session->handle=nullptr;}
++    }
++    {
++        std::lock_guard<std::mutex> lock(gate);
++        if(session->handle)current=session;
++        loading=false;changed.notify_all();
++    }
++}
++const GnssVendorInterface* LocationVendorInterface::GetGnssVendorInterface() const
++{
++    std::lock_guard<std::mutex> lock(gate);
++    if(!current)return nullptr;
++    size_t index=(current->methods.getCachedLocationsSize?1:0)|(current->methods.flushCachedGnssLocations?2:0);
++    return &proxies[index];
++}
++const void* LocationVendorInterface::GetModuleInterface(int id) const { return Module(id); }
+ void LocationVendorInterface::CleanUp()
+ {
+-    if (vendorInterface_ == nullptr) {
+-        return;
+-    }
+-    vendorInterface_ = nullptr;
+-    dlclose(vendorHandle_);
+-    vendorHandle_ = nullptr;
+-}
+-} // Location
+-} // HDI
+-} // OHOS
++    {
++        std::unique_lock<std::mutex> lock(gate);
++        changed.wait(lock,[]{return !loading;});
++        if(current) {
++            retiring=std::move(current);retiring->enabled=false;retiring->callbacks={};retireFailed=false;
++            if(pthread_create(&reaper,nullptr,Reap,nullptr)==0)reaperStarted=true;
++            else {retireFailed=true;changed.notify_all();}
++        }
++        if(callDepth || callbackDepth)return; // Reaper waits for this callback to return into/out of provider first.
++        changed.wait(lock,[]{return !retiring || retireFailed;});
++    }
++    JoinCompleted();
++}
++} // namespace OHOS::HDI::Location
+--- a/drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.cpp
++++ b/drivers/peripheral/location/gnss/hdi_service/gnss_interface_impl.cpp
+@@ -50,11 +50,23 @@
+ GnssMeasurementCallbackMap g_gnssMeasurementCallbackMap;
+ #endif
+ GnssDeathRecipientMap g_gnssCallBackDeathRecipientMap;
+-GnssConfigParameter g_configPara;
+ std::mutex g_mutex;
+ std::mutex g_deathMutex;
+ } // namespace
+ 
++LocationCallBackMap SnapshotLocationCallbacks()
++{
++    std::lock_guard<std::mutex> lock(g_mutex);
++    return g_locationCallBackMap;
++}
++#ifndef EMULATOR_ENABLED
++GnssMeasurementCallbackMap SnapshotMeasurementCallbacks()
++{
++    std::lock_guard<std::mutex> lock(g_mutex);
++    return g_gnssMeasurementCallbackMap;
++}
++#endif
++
+ extern "C" IGnssInterface* GnssInterfaceImplGetInstance(void)
+ {
+     return new (std::nothrow) GnssInterfaceImpl();
+@@ -67,7 +79,7 @@
+         return;
+     }
+     HDF_LOGI("%{public}s:NiNotifyCb.", __func__);
+-    std::unique_lock<std::mutex> lock(g_mutex);
++    auto callbacks = SnapshotLocationCallbacks();
+     GnssNiNotificationRequest niNotification;
+     niNotification.gnssNiNotificationId = notification->gnssNiNotificationId;
+     niNotification.gnssNiRequestCategory = GnssNiRequestCategory(notification->gnssNiRequestCategory);
+@@ -87,7 +99,7 @@
+         niNotification.requestTimeout,
+         niNotification.defaultResponseCmd);
+ 
+-    for (const auto& iter : g_locationCallBackMap) {
++    for (const auto& iter : callbacks) {
+         auto& callback = iter.second;
+         if (callback != nullptr) {
+             callback->ReportGnssNiNotification(niNotification);
+@@ -103,7 +115,7 @@
+         return;
+     }
+     HDF_LOGI("%{public}s:LocationUpdate.", __func__);
+-    std::unique_lock<std::mutex> lock(g_mutex);
++    auto callbacks = SnapshotLocationCallbacks();
+     LocationInfo locationNew;
+     locationNew.fieldValidity = location->fieldValidity;
+     locationNew.latitude = location->latitude;
+@@ -118,7 +130,7 @@
+     locationNew.timeForFix = location->timeForFix;
+     locationNew.timeSinceBoot = location->timeSinceBoot;
+     locationNew.timeUncertainty = location->timeUncertainty;
+-    for (const auto& iter : g_locationCallBackMap) {
++    for (const auto& iter : callbacks) {
+         auto& callback = iter.second;
+         if (callback != nullptr) {
+             callback->ReportLocation(locationNew);
+@@ -152,7 +164,7 @@
+         HDF_LOGE("%{public}s:gnssMeasurementInfo is nullptr.", __func__);
+         return;
+     }
+-    std::unique_lock<std::mutex> lock(g_mutex);
++    auto callbacks = SnapshotMeasurementCallbacks();
+     OHOS::HDI::Location::Gnss::V2_0::GnssMeasurementInfo gnssMeasurementInfoNew;
+     SetGnssClock(&gnssMeasurementInfoNew, gnssMeasurementInfo);
+     gnssMeasurementInfoNew.elapsedRealtime = static_cast<long>(gnssMeasurementInfo->elapsedRealtime);
+@@ -189,7 +201,7 @@
+         gnssMeasurements.push_back(gnssMeasurement);
+     }
+     gnssMeasurementInfoNew.measurements = gnssMeasurements;
+-    for (const auto& iter : g_gnssMeasurementCallbackMap) {
++    for (const auto& iter : callbacks) {
+         auto& callback = iter.second;
+         if (callback != nullptr) {
+             callback->ReportGnssMeasurementInfo(gnssMeasurementInfoNew);
+@@ -205,9 +217,9 @@
+         HDF_LOGE("%{public}s:param is nullptr.", __func__);
+         return;
+     }
+-    std::unique_lock<std::mutex> lock(g_mutex);
++    auto callbacks = SnapshotLocationCallbacks();
+     GnssWorkingStatus gnssStatus = static_cast<GnssWorkingStatus>(*status);
+-    for (const auto& iter : g_locationCallBackMap) {
++    for (const auto& iter : callbacks) {
+         auto& callback = iter.second;
+         if (callback != nullptr) {
+             callback->ReportGnssWorkingStatus(gnssStatus);
+@@ -222,7 +234,7 @@
+         HDF_LOGE("%{public}s:sv_info is null.", __func__);
+         return;
+     }
+-    std::unique_lock<std::mutex> lock(g_mutex);
++    auto callbacks = SnapshotLocationCallbacks();
+     SatelliteStatusInfo svStatus;
+     svStatus.satellitesNumber = svInfo->satellitesNum;
+     for (unsigned int i = 0; i < svInfo->satellitesNum; i++) {
+@@ -235,7 +247,7 @@
+         svStatus.carrierToNoiseDensitys.push_back(svInfo->satellitesList[i].cn0);
+         svStatus.additionalInfo.push_back(svInfo->satellitesList[i].satelliteAdditionalInfo);
+     }
+-    for (const auto& iter : g_locationCallBackMap) {
++    for (const auto& iter : callbacks) {
+         auto& callback = iter.second;
+         if (callback != nullptr) {
+             callback->ReportSatelliteStatusInfo(svStatus);
+@@ -249,8 +261,8 @@
+         HDF_LOGE("%{public}s:nmea is nullptr.", __func__);
+         return;
+     }
+-    std::unique_lock<std::mutex> lock(g_mutex);
+-    for (const auto& iter : g_locationCallBackMap) {
++    auto callbacks = SnapshotLocationCallbacks();
++    for (const auto& iter : callbacks) {
+         auto& callback = iter.second;
+         if (callback != nullptr) {
+             callback->ReportNmea(timestamp, nmea, length);
+@@ -285,8 +297,8 @@
+         locationNew.timeUncertainty = locationArray[i]->timeUncertainty;
+         locationArrayNew.push_back(locationNew);
+     }
+-    std::unique_lock<std::mutex> lock(g_mutex);
+-    for (const auto& iter : g_locationCallBackMap) {
++    auto callbacks = SnapshotLocationCallbacks();
++    for (const auto& iter : callbacks) {
+         auto& callback = iter.second;
+         if (callback != nullptr) {
+             callback->ReportCachedLocation(locationArrayNew);
+@@ -299,7 +311,7 @@
+     if (device == nullptr) {
+         return;
+     }
+-    device->size = sizeof(GnssCallbackStruct);
++    device->size = sizeof(GnssBasicCallbackIfaces);
+     device->locationUpdate = LocationUpdate;
+     device->gnssWorkingStatusUpdate = GnssWorkingStatusUpdate;
+     device->satelliteStatusUpdate = SvStatusCallback;
+@@ -360,19 +372,23 @@
+         HDF_LOGE("%{public}s:GetGnssVendorInterface return nullptr.", __func__);
+         return HDF_ERR_INVALID_PARAM;
+     }
++    if (para.gnssBasic.gnssMode < 0 || para.gnssBasic.gnssMode > GNSS_WORKING_MODE_MS_ASSISTED) return HDF_ERR_INVALID_PARAM;
++    GnssConfigParameter configPara{};
++    configPara.size = sizeof(configPara);
+     int ret;
+     if (!IsGnssBasicConfigValid(para.gnssBasic.gnssMode)) {
+-        g_configPara.startCategory = static_cast<uint32_t>(GnssStartCategory::GNSS_START_CATEGORY_GNSS_CACHE);
+-        g_configPara.u.gnssCacheConfig.interval = para.gnssCaching.interval;
+-        g_configPara.u.gnssCacheConfig.fifoFullNotify = para.gnssCaching.fifoFullNotify;
+-        g_configPara.u.gnssCacheConfig.size = sizeof(GnssCachingConfig);
+-        ret = gnssInterface->setGnssConfigPara(&g_configPara);
++        configPara.startCategory = static_cast<uint32_t>(GnssStartCategory::GNSS_START_CATEGORY_GNSS_CACHE);
++        configPara.u.gnssCacheConfig.interval = para.gnssCaching.interval;
++        configPara.u.gnssCacheConfig.fifoFullNotify = para.gnssCaching.fifoFullNotify;
++        configPara.u.gnssCacheConfig.size = sizeof(GnssCachingConfig);
++        ret = gnssInterface->setGnssConfigPara(&configPara);
+         HDF_LOGI("%{public}s, cache ret=%{public}d", __func__, ret);
+     } else {
+-        g_configPara.startCategory = static_cast<uint32_t>(GnssStartCategory::GNSS_START_CATEGORY_NORMAL);
+-        g_configPara.u.gnssBasicConfig.gnssMode = para.gnssBasic.gnssMode;
+-        g_configPara.u.gnssBasicConfig.size = sizeof(GnssBasicConfigPara);
+-        ret = gnssInterface->setGnssConfigPara(&g_configPara);
++        configPara.startCategory = static_cast<uint32_t>(GnssStartCategory::GNSS_START_CATEGORY_NORMAL);
++        configPara.u.gnssBasicConfig.gnssMode = para.gnssBasic.gnssMode;
++        configPara.u.gnssBasicConfig.minInterval = para.gnssBasic.minInterval;
++        configPara.u.gnssBasicConfig.size = sizeof(GnssBasicConfigPara);
++        ret = gnssInterface->setGnssConfigPara(&configPara);
+         HDF_LOGI("%{public}s, gnss ret=%{public}d", __func__, ret);
+     }
+     return ret;
+@@ -393,7 +409,6 @@
+         HDF_LOGE("%{public}s:invalid callbackObj", __func__);
+         return HDF_ERR_INVALID_PARAM;
+     }
+-    std::unique_lock<std::mutex> lock(g_mutex);
+     const sptr<IRemoteObject>& remote = OHOS::HDI::hdi_objcast<IGnssCallback>(callbackObj);
+     if (remote == nullptr) {
+         HDF_LOGE("%{public}s:invalid remote", __func__);
+@@ -422,17 +437,21 @@
+         HDF_LOGE("%{public}s:can not get gnssNiInterface.", __func__);
+     }
+     
+-    if (g_locationCallBackMap.size() > 0) {
+-        for (const auto& iter : g_locationCallBackMap) {
++    LocationCallBackMap previous;
++    {
++        std::lock_guard<std::mutex> lock(g_mutex);
++        previous.swap(g_locationCallBackMap);
++    }
++    if (!previous.empty()) {
++        for (const auto& iter : previous) {
+             const auto& callback = iter.second;
+             if (callback != nullptr) {
+                 RemoveGnssDeathRecipient(callback);
+             }
+         }
+-        g_locationCallBackMap.clear();
+     }
+     AddGnssDeathRecipient(callbackObj);
+-    g_locationCallBackMap[remote.GetRefPtr()] = callbackObj;
++    { std::lock_guard<std::mutex> lock(g_mutex); g_locationCallBackMap[remote.GetRefPtr()] = callbackObj; }
+     return ret;
+ }
+ 
+--- a/drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.h
++++ b/drivers/peripheral/location/gnss/hdi_service/location_vendor_interface.h
+@@ -30,15 +30,13 @@
+     static LocationVendorInterface* GetInstance();
+     static void DestroyInstance();
+ private:
++    static LocationVendorInterface* Singleton();
+     LocationVendorInterface();
+     ~LocationVendorInterface();
+     void Init();
+     void CleanUp();
+ 
+-    static LocationVendorInterface* instance_;
+-    static std::mutex mutex_;
+-    void *vendorHandle_ = nullptr;
+-    const GnssVendorInterface *vendorInterface_ = nullptr;
++    // The singleton and proxy table outlive retired vendor DSOs. No caller borrows a DSO table.
+ };
+ } // Location
+ } // HDI

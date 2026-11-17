@@ -1,0 +1,16 @@
+{
+  "schema": "number-identity-public-permission580/v1",
+  "project": "base/telephony/number_identity",
+  "revision": "50e1330646432ce166e7981c577f25f46c90e7ac",
+  "files": [
+    [
+      "frameworks/js/src/napi_number_identity.cpp",
+      "28d6466d157bfdb3b115887bab861fa843a82bdc5b0216fbd80bf811217d5756",
+      "36a024778c3057f8f3dbe7ad620e5e8446f47cfe718e71c2d0edf65a92a97582"
+    ]
+  ],
+  "patch": "0001-translate-number-permission-to-public-201.patch",
+  "patch_sha256": "2aa384169123af2301a902f79d85e7a8d3c2d263b502d541f8ca2748073956ea",
+  "source_only": true,
+  "build_or_guest_pass": false
+}

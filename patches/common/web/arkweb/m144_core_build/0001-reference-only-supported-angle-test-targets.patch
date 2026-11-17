@@ -1,0 +1,48 @@
+diff --git a/src/BUILD.gn b/src/BUILD.gn
+--- a/src/BUILD.gn
++++ b/src/BUILD.gn
+@@ -114,9 +114,7 @@ group("gn_all") {
+       "//services/service_manager/public/cpp",
+       "//skia:skia_unittests",
+       "//sql:sql_unittests",
+       "//testing/libfuzzer/tests",
+-      "//third_party/angle/src/tests:angle_end2end_tests",
+       "//third_party/angle/src/tests:angle_unittests",
+-      "//third_party/angle/src/tests:angle_white_box_tests",
+       "//third_party/flatbuffers:flatbuffers_unittests",
+       "//third_party/highway:highway_tests",
+@@ -134,5 +132,12 @@ group("gn_all") {
+       "//url:url_unittests",
+     ]
+ 
++    if (!is_ohos) {
++      deps += [
++        "//third_party/angle/src/tests:angle_end2end_tests",
++        "//third_party/angle/src/tests:angle_white_box_tests",
++      ]
++    }
++
+     #if BUILDFLAG(ARKWEB_NWEB_EX)
+     if (defined(arkweb_nweb_ex) && arkweb_nweb_ex) {
+diff --git a/src/third_party/angle/src/tests/BUILD.gn b/src/third_party/angle/src/tests/BUILD.gn
+--- a/src/third_party/angle/src/tests/BUILD.gn
++++ b/src/third_party/angle/src/tests/BUILD.gn
+@@ -2101,8 +2101,10 @@ group("angle_tests") {
+   testonly = true
+   deps = [
+-    ":angle_end2end_tests",
+     ":angle_system_info_test",
+     ":angle_unittests",
+   ]
++  if (!is_ohos) {
++    deps += [ ":angle_end2end_tests" ]
++  }
+   if (angle_enable_cl_testing) {
+     deps += [ ":angle_openclcts" ]
+@@ -2125,5 +2127,5 @@ group("angle_tests") {
+-  if (!is_fuchsia) {
++  if (!is_fuchsia && !is_ohos) {
+     deps += [
+       ":angle_white_box_perftests",
+       ":angle_white_box_tests",
+     ]

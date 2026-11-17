@@ -1,0 +1,16 @@
+--- a/base/location/location/services/location_locator/locator/source/locator_ability.cpp
++++ b/base/location/location/services/location_locator/locator/source/locator_ability.cpp
+@@ -1524,9 +1524,12 @@
+ }
+ bool FusionOwnerAvailable(const AppIdentity& identity)
+ {
++    // The shared account helper accepts a mutable reference but only reads it.
++    // Pass an owned copy so the fence's registered identity stays immutable.
++    AppIdentity accountIdentity = identity;
+     return PermissionManager::CheckLocationPermission(identity.GetTokenId(), identity.GetFirstTokenId()) &&
+         PermissionManager::CheckSystemPermission(identity.GetTokenId(), identity.GetTokenIdEx()) &&
+-        CommonUtils::IsAppBelongCurrentAccount(identity) &&
++        CommonUtils::IsAppBelongCurrentAccount(accountIdentity) &&
+         LocationDataRdbManager::QuerySwitchStateWithUid(identity.GetUid()) == ENABLED &&
+         (!ReportManager::GetInstance()->IsAppBackground(identity.GetBundleName(), identity.GetTokenId(),
+             identity.GetTokenIdEx(), identity.GetUid(), identity.GetPid()) ||

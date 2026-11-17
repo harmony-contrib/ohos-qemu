@@ -1,0 +1,26 @@
+diff --git a/base/update/sys_installer/bundle.json b/base/update/sys_installer/bundle.json
+--- a/base/update/sys_installer/bundle.json
++++ b/base/update/sys_installer/bundle.json
+@@ -50,6 +50,7 @@
+       "sub_component": [
+         "//base/update/sys_installer/frameworks/ipc_server:sys_installer",
+         "//base/update/sys_installer/frameworks/ipc_server/etc:sys_installer_etc",
+-        "//base/update/sys_installer/frameworks/ipc_server/sa_profile:sys_installer_sa_profile"
++        "//base/update/sys_installer/frameworks/ipc_server/sa_profile:sys_installer_sa_profile",
++        "//base/update/sys_installer/services/module_update/src:check_module_update"
+       ],
+       "inner_kits": [
+diff --git a/base/startup/init/services/modules/module_update/module_update_init.cpp b/base/startup/init/services/modules/module_update/module_update_init.cpp
+--- a/base/startup/init/services/modules/module_update/module_update_init.cpp
++++ b/base/startup/init/services/modules/module_update/module_update_init.cpp
+@@ -30,6 +30,8 @@ static void HandleModuleUpdate(void)
+         INIT_LOGE("HandleModuleUpdate, fork fail.");
+     } else if (pid == 0) {
+         INIT_LOGI("HandleModuleUpdate, exec chekc_module_update.");
+-        int ret = execv("/system/bin/check_module_update_init", nullptr);
++        const char *path = "/system/bin/check_module_update_init";
++        char *const argv[] = { const_cast<char *>(path), nullptr };
++        int ret = execv(path, argv);
+         if (ret != 0) {
+             INIT_LOGE("exec error, ret = [%d], err = [%s].", ret, strerror(errno));
+         }

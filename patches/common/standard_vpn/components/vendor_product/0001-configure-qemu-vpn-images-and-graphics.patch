@@ -1,0 +1,45 @@
+diff --git a/vendor/ohemu/virt/image_conf/userdata_image_conf.txt b/vendor/ohemu/virt/image_conf/userdata_image_conf.txt
+index 3daeb4f..64e57ca 100644
+--- a/vendor/ohemu/virt/image_conf/userdata_image_conf.txt
++++ b/vendor/ohemu/virt/image_conf/userdata_image_conf.txt
+@@ -1,5 +1,5 @@
+ /data
+ 2147483648
+---fs_type=ext4
++--fs_type=f2fs
+ --dac_config ../../build/ohos/images/mkimage/dac.txt
+ --file_context obj/base/security/selinux/file_contexts.bin
+diff --git a/vendor/ohemu/virt/virt_common.json b/vendor/ohemu/virt/virt_common.json
+index 437346f..e81bae3 100644
+--- a/vendor/ohemu/virt/virt_common.json
++++ b/vendor/ohemu/virt/virt_common.json
+@@ -8,7 +8,11 @@
+           "component": "graphic_2d",
+           "features": [
+             "graphic_2d_feature_rs_enable_eglimage = true",
+-            "graphic_2d_feature_use_texgine = true"
++            "graphic_2d_feature_use_texgine = true",
++            "graphic_2d_feature_ace_enable_gpu = true",
++            "graphic_2d_feature_enable_opengl = true",
++            "graphic_2d_feature_enable_vulkan = false",
++            "graphic_2d_feature_parallel_render_enable = true"
+           ]
+         },
+         {
+diff --git a/vendor/ohemu/virt/virt_common_x86_64.json b/vendor/ohemu/virt/virt_common_x86_64.json
+index 15f011c..d3d4a93 100644
+--- a/vendor/ohemu/virt/virt_common_x86_64.json
++++ b/vendor/ohemu/virt/virt_common_x86_64.json
+@@ -8,7 +8,11 @@
+           "component": "graphic_2d",
+           "features": [
+             "graphic_2d_feature_rs_enable_eglimage = true",
+-            "graphic_2d_feature_use_texgine = true"
++            "graphic_2d_feature_use_texgine = true",
++            "graphic_2d_feature_ace_enable_gpu = true",
++            "graphic_2d_feature_enable_opengl = true",
++            "graphic_2d_feature_enable_vulkan = false",
++            "graphic_2d_feature_parallel_render_enable = true"
+           ]
+         },
+         {

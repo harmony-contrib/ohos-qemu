@@ -1,0 +1,11 @@
+--- a/applications/standard/calendardata/entry/src/main/ets/pages/index.ets
++++ b/applications/standard/calendardata/entry/src/main/ets/pages/index.ets
+@@ -2,7 +2,7 @@
+ import common from '@ohos.app.ability.common';
+ import { CalendarReminderReader } from '../reminder/CalendarReminderReader';
+ 
+-@Entry
++@Entry({ useSharedStorage: true })
+ @Component
+ struct Index {
+   @LocalStorageLink('calendarRoute') route: string = '';

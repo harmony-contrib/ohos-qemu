@@ -1,0 +1,351 @@
+--- a/applications/standard/systemui/product/default/dialog/src/main/ets/ServiceExtAbility/ExtAbility.ts
++++ b/applications/standard/systemui/product/default/dialog/src/main/ets/ServiceExtAbility/ExtAbility.ts
+@@ -35,6 +35,23 @@
+   onRemoteRequest(code: number, data, reply, option) {
+     const connectId = getConnectId(rpc.IPCSkeleton.getCallingPid(), rpc.IPCSkeleton.getCallingTokenId());
+     Log.showInfo(TAG, `onRemoteRequest start ${connectId}`);
++
++    if (code === 3) {
++      const controller = globalThis.SystemDialog_Controller;
++      const sessionId = data.readInt();
++      const uid = data.readInt();
++      if (!Number.isInteger(sessionId) || sessionId <= 0 || !Number.isInteger(uid) || uid < 0) { return false; }
++      const audioConnectId = `${connectId}-audio-${uid}-${sessionId}`;
++      const current = controller?.getData().get(audioConnectId);
++      if (current?.parameters?.bundleName !== 'com.ohos.systemui' ||
++          current?.parameters?.abilityName !== 'PlaybackCaptureConsentExtension' ||
++          current?.parameters?.parameters?.sessionId !== sessionId || current?.parameters?.parameters?.uid !== uid) {
++        return false;
++      }
++      controller.destroyWindow(audioConnectId);
++      reply.writeInt(REPLY_SUCCESS_CODE);
++      return true;
++    }
+ 
+     if (code === ServiceStubCode.COMMAND_SEND_REMOTE_OBJECT) {
+       Log.showInfo(TAG, `onRemoteRequest code:${ServiceStubCode.COMMAND_SEND_REMOTE_OBJECT} start ${connectId}`);
+@@ -76,7 +93,20 @@
+         }
+       }
+ 
+-      this.createWindow(connectId, parameters);
++      let dialogConnectId = connectId;
++      if (parameters.bundleName === 'com.ohos.systemui' && parameters.abilityName === 'PlaybackCaptureConsentExtension') {
++        const sessionId = parameters.parameters?.sessionId;
++        const uid = parameters.parameters?.uid;
++        if (!Number.isInteger(sessionId) || sessionId <= 0 || sessionId > 0x7fffffff ||
++            !Number.isInteger(uid) || uid < 0 || uid > 0x7fffffff) { return false; }
++        // All capturers call through one audio-server PID/token. Retain the
++        // protected caller key and add the actual stream/owner identity so two
++        // simultaneous authorization windows cannot replace each other.
++        dialogConnectId = `${connectId}-audio-${uid}-${sessionId}`;
++      }
++      this.createWindow(dialogConnectId, parameters).catch(error => {
++        Log.showError(TAG, `createWindow failed ${dialogConnectId} ${JSON.stringify(error)}`);
++      });
+ 
+       reply.writeInt(REPLY_SUCCESS_CODE);
+       return true;
+@@ -88,42 +118,41 @@
+   async createWindow(connectId: string, parameters: IDialogParameters) {
+     const controller = globalThis.SystemDialog_Controller;
+     const current = controller.getData().get(connectId);
+-    if (current && current.windowName) {
+-      Log.showInfo(TAG, `createWindow <this same> connectId:${connectId}`);
+-      controller.destroyWindow(connectId, false);
++    if (current && current.windowName) { controller.destroyWindow(connectId, false); }
++    const windowName = `SystemDialog${++controller.count}`;
++    controller.addDataByKey(connectId, { windowName, parameters });
++    const alive = () => globalThis.SystemDialog_Controller === controller &&
++      controller.getData().get(connectId)?.windowName === windowName;
++    let win: window.Window | undefined = undefined;
++    try {
++      const dis = await display.getDefaultDisplay();
++      if (!alive()) { return; }
++      win = await window.createWindow({ ctx: controller.getContext(), name: windowName,
++        windowType: parameters?.bundleName == "com.ohos.powerdialog" ? window.WindowType.TYPE_SCREENSHOT : window.WindowType.TYPE_FLOAT });
++      if (!alive()) { await win.destroyWindow(); return; }
++      const localStorage = new LocalStorage({ windowName, connectId, parameters });
++      await win.moveWindowTo(0, 0);
++      if (!alive()) { await win.destroyWindow(); return; }
++      await win.resize(dis.width, dis.height);
++      if (!alive()) { await win.destroyWindow(); return; }
++      await win.loadContent('pages/ExtIndex', localStorage);
++      if (!alive()) { await win.destroyWindow(); return; }
++      await win.setWindowBackgroundColor('#00000000');
++      if (!alive()) { await win.destroyWindow(); return; }
++      await win.showWindow();
++      if (!alive()) { await win.destroyWindow(); }
++    } catch (error) {
++      // Only remove this exact async window generation. An old failed create
++      // cannot close a newer request that reuses the same native connection key.
++      if (alive()) { controller.destroyWindow(connectId); }
++      else if (win !== undefined) {
++        try { await win.destroyWindow(); }
++        catch (cleanupError) { Log.showError(TAG, `stale window destroy ${JSON.stringify(cleanupError)}`); }
++      }
++      throw error;
+     }
++  }
+ 
+-    const windowName = `SystemDialog${++controller.count}`;
+-    Log.showInfo(TAG, `createWindow <start> windowName:${windowName} connectId:${connectId} parameters:${JSON.stringify(parameters)}`);
+-
+-    controller.addDataByKey(connectId, { windowName, parameters });
+-
+-    const navigationBarRect = await display.getDefaultDisplay().then(dis => {
+-      return {
+-        left: 0,
+-        top: 0,
+-        width: dis.width,
+-        height: dis.height
+-      };
+-    });
+-    Log.showInfo(TAG, `createWindow <getDefaultDisplay> ${JSON.stringify(navigationBarRect)}`);
+-    const win = await window.createWindow({
+-      ctx: controller.getContext(),
+-      name: windowName,
+-      windowType: parameters?.bundleName == "com.ohos.powerdialog" ? window.WindowType.TYPE_SCREENSHOT : window.WindowType.TYPE_FLOAT
+-    });
+-    Log.showDebug(TAG, 'createWindow <window.createWindow>');
+-
+-    const localStorage = new LocalStorage({ windowName, connectId, parameters });
+-
+-    await win.moveWindowTo(navigationBarRect.left, navigationBarRect.top);
+-    await win.resize(navigationBarRect.width, navigationBarRect.height);
+-    await win.loadContent('pages/ExtIndex', localStorage);
+-    await win.setWindowBackgroundColor('#00000000');
+-    await win.showWindow();
+-
+-    Log.showDebug(TAG, `createWindow end`);
+-  }
+ }
+ 
+ export default class DialogServiceExtAbility extends ServiceExtensionAbility {
+--- /dev/null
++++ b/applications/standard/systemui/product/default/dialog/src/main/ets/ServiceExtAbility/PlaybackCaptureConsentExtension.ets
+@@ -0,0 +1,40 @@
++import UIExtensionAbility from '@ohos.app.ability.UIExtensionAbility';
++import UIExtensionContentSession from '@ohos.app.ability.UIExtensionContentSession';
++import Want from '@ohos.app.ability.Want';
++import hilog from '@ohos.hilog';
++import { BusinessError } from '@ohos.base';
++import { PlaybackCaptureConsent } from '../common/PlaybackCaptureConsent';
++
++// Non-exported. Only the existing same-bundle SystemUI system-dialog host can
++// embed this extension. The host service retains START_SYSTEM_DIALOG protection.
++export default class PlaybackCaptureConsentExtension extends UIExtensionAbility {
++  private sessions: Map<UIExtensionContentSession, PlaybackCaptureConsent> = new Map();
++  onSessionCreate(want: Want, session: UIExtensionContentSession): void {
++    try {
++      const parameters = want.parameters;
++      if (parameters === undefined || typeof parameters.sessionId !== 'number' || typeof parameters.uid !== 'number' ||
++        parameters['ability.want.params.uiExtensionType'] !== 'sys/commonUI') {
++        throw new Error('real audio-service playback privacy parameters required');
++      }
++      const request = PlaybackCaptureConsent.create(parameters.sessionId as number, parameters.uid as number, session);
++      this.sessions.set(session, request);
++      session.loadContent('pages/PlaybackCaptureConsentPage', new LocalStorage({ consentId: request.id, bundle: request.bundle }));
++      session.setWindowBackgroundColor('#00000000');
++    } catch (error) {
++      hilog.error(0xFF71, 'AudioPrivacyConsent', 'AP extension rejected code=%{public}d', (error as BusinessError).code || -1);
++      const request = this.sessions.get(session);
++      if (request !== undefined) { request.decide(false, 'load-error'); }
++      else { session.terminateSelf().catch((reason: BusinessError): void => {
++        hilog.error(0xFF71, 'AudioPrivacyConsent', 'AP reject close code=%{public}d', reason.code);
++      }); }
++    }
++  }
++  onSessionDestroy(session: UIExtensionContentSession): void {
++    const request = this.sessions.get(session);
++    this.sessions.delete(session); request?.decide(false, 'destroy');
++  }
++  onDestroy(): void {
++    this.sessions.forEach((request: PlaybackCaptureConsent): void => { request.decide(false, 'extension-destroy'); });
++    this.sessions.clear();
++  }
++}
+--- /dev/null
++++ b/applications/standard/systemui/product/default/dialog/src/main/ets/common/PlaybackCaptureConsent.ets
+@@ -0,0 +1,88 @@
++import audio from '@ohos.multimedia.audio';
++import bundleManager from '@ohos.bundle.bundleManager';
++import UIExtensionContentSession from '@ohos.app.ability.UIExtensionContentSession';
++import hilog from '@ohos.hilog';
++import util from '@ohos.util';
++import { BusinessError } from '@ohos.base';
++
++// This source-local type declares the real exported NAPI entry verified in
++// NapiAudioManager::ReportPlaybackCaptureUserChoice; it is not a JS substitute.
++interface PrivacyAudioManager extends audio.AudioManager {
++  reportPlaybackCaptureUserChoice(sessionId: number, choice: boolean): number;
++}
++export class PlaybackCaptureConsent {
++  readonly id: string = util.generateRandomUUID();
++  readonly bundle: string;
++  private settled: boolean = false;
++  private closeRequested: boolean = false;
++  private poll: number = -1;
++  private expiry: number = -1;
++  private static pending: Map<string, PlaybackCaptureConsent> = new Map();
++  private static streams: Map<number, string> = new Map();
++  private constructor(readonly streamId: number, readonly uid: number,
++    private readonly content: UIExtensionContentSession) {
++    this.verifyLive();
++    this.bundle = bundleManager.getBundleNameByUidSync(uid);
++    if (this.bundle.length === 0) { throw new Error('requesting capture UID has no actual bundle'); }
++  }
++  static create(streamId: number, uid: number, content: UIExtensionContentSession): PlaybackCaptureConsent {
++    if (!Number.isInteger(streamId) || streamId <= 0 || streamId > 0x7FFFFFFF ||
++      !Number.isInteger(uid) || uid < 0 || uid > 0x7FFFFFFF || PlaybackCaptureConsent.streams.has(streamId)) {
++      throw new Error('one genuine pending capture stream and UID required');
++    }
++    const request = new PlaybackCaptureConsent(streamId, uid, content);
++    PlaybackCaptureConsent.pending.set(request.id, request);
++    PlaybackCaptureConsent.streams.set(streamId, request.id);
++    request.poll = setInterval((): void => {
++      if (request.settled) { return; }
++      try { request.verifyLive(); } catch (error) { request.decide(false, 'stream-gone'); }
++    }, 250);
++    // Native admission owns the final deadline. This earlier UI expiry cannot
++    // grant after native expiry, even under a delayed or suspended callback.
++    request.expiry = setTimeout((): void => { request.decide(false, 'timeout'); }, 50000);
++    request.log('shown', 0);
++    return request;
++  }
++  static find(id: string): PlaybackCaptureConsent | undefined { return PlaybackCaptureConsent.pending.get(id); }
++  private verifyLive(): void {
++    const infos = audio.getAudioManager().getStreamManager().getCurrentAudioCapturerInfoArraySync();
++    const matching = infos.filter((entry: audio.AudioCapturerChangeInfo): boolean => entry.streamId === this.streamId);
++    if (matching.length !== 1 || matching[0].clientUid !== this.uid ||
++      matching[0].capturerInfo.source !== audio.SourceType.SOURCE_TYPE_PLAYBACK_CAPTURE ||
++      matching[0].capturerState !== audio.AudioState.STATE_PREPARED) {
++      throw new Error('actual playback capture stream/UID/source/prepared state changed');
++    }
++  }
++  decide(choice: boolean, reason: string): void {
++    if (this.settled) { return; }
++    this.settled = true;
++    clearInterval(this.poll); clearTimeout(this.expiry);
++    let live: boolean = false;
++    try { this.verifyLive(); live = true; }
++    catch (error) { this.log('stale', (error as BusinessError).code || -1); }
++    try {
++      if (live) {
++        const actual: number = (audio.getAudioManager() as PrivacyAudioManager)
++          .reportPlaybackCaptureUserChoice(this.streamId, choice);
++        // Only actual OS API return bytes/status are logged. Capture client
++        // callback and real running state independently establish any grant.
++        this.log((choice ? 'allow-' : 'deny-') + reason, actual);
++        if (actual !== 0) { throw new Error('native privacy decision did not succeed'); }
++      }
++    } catch (error) { this.log('report-error', (error as BusinessError).code || -1); }
++    finally { this.close(); }
++  }
++  private close(): void {
++    if (this.closeRequested) { return; }
++    this.closeRequested = true;
++    PlaybackCaptureConsent.pending.delete(this.id);
++    if (PlaybackCaptureConsent.streams.get(this.streamId) === this.id) { PlaybackCaptureConsent.streams.delete(this.streamId); }
++    this.content.terminateSelf().then((): void => { this.log('closed', 0); },
++      (error: BusinessError): void => { this.log('close-error', error.code); });
++  }
++  private log(event: string, code: number): void {
++    hilog.info(0xFF71, 'AudioPrivacyConsent',
++      'AP id=%{public}s event=%{public}s stream=%{public}d uid=%{public}d bundle=%{public}s code=%{public}d',
++      this.id, event, this.streamId, this.uid, this.bundle, code);
++  }
++}
+--- /dev/null
++++ b/applications/standard/systemui/product/default/dialog/src/main/ets/pages/PlaybackCaptureConsentPage.ets
+@@ -0,0 +1,30 @@
++import { PlaybackCaptureConsent } from '../common/PlaybackCaptureConsent';
++
++@Entry
++@Component
++struct PlaybackCaptureConsentPage {
++  @LocalStorageProp('consentId') consentId: string = '';
++  @LocalStorageProp('bundle') bundle: string = '';
++  @State private decided: boolean = false;
++  private choose(allow: boolean, reason: string): void {
++    if (this.decided) { return; }
++    this.decided = true; PlaybackCaptureConsent.find(this.consentId)?.decide(allow, reason);
++  }
++  onBackPress(): boolean { this.choose(false, 'back'); return true; }
++  aboutToDisappear(): void { this.choose(false, 'disappear'); }
++  build() {
++    Column() {
++      Column({ space: 16 }) {
++        Text($r('app.string.playback_consent579_title')).fontSize(22).fontWeight(FontWeight.Bold)
++        Text(this.bundle).id('playback-consent-app').fontSize(16)
++        Text($r('app.string.playback_consent579_message')).fontSize(16)
++        Row({ space: 16 }) {
++          Button($r('app.string.playback_consent579_deny')).id('playback-consent-deny').enabled(!this.decided)
++            .onClick((): void => { this.choose(false, 'button'); })
++          Button($r('app.string.playback_consent579_allow')).id('playback-consent-allow').enabled(!this.decided)
++            .onClick((): void => { this.choose(true, 'button'); })
++        }.width('100%').justifyContent(FlexAlign.SpaceEvenly)
++      }.width('90%').constraintSize({ maxWidth: 600 }).padding(24).backgroundColor(Color.White).borderRadius(24)
++    }.width('100%').height('100%').justifyContent(FlexAlign.Center).backgroundColor('#66000000')
++  }
++}
+--- a/applications/standard/systemui/product/default/dialog/src/main/module.json5
++++ b/applications/standard/systemui/product/default/dialog/src/main/module.json5
+@@ -16,7 +16,17 @@
+     "installationFree": false,
+     "uiSyntax": "ets",
+     "pages": "$profile:main_pages",
++    "requestPermissions": [
++      { "name": "ohos.permission.MANAGE_AUDIO_CONFIG" },
++      { "name": "ohos.permission.GET_BUNDLE_INFO_PRIVILEGED" }
++    ],
+     "extensionAbilities": [
++      {
++        "name": "PlaybackCaptureConsentExtension",
++        "srcEntrance": "./ets/ServiceExtAbility/PlaybackCaptureConsentExtension.ets",
++        "type": "sys/commonUI",
++        "exported": false
++      },
+       {
+         "exported": true,
+         "srcEntrance": "./ets/ServiceExtAbility/ExtAbility.ts",
+--- a/applications/standard/systemui/product/default/dialog/src/main/resources/base/element/string.json
++++ b/applications/standard/systemui/product/default/dialog/src/main/resources/base/element/string.json
+@@ -3,6 +3,10 @@
+     {
+       "name": "mainability_description",
+       "value": "System-Dialog ServiceExtensionAbility"
+-    }
++    },
++    { "name": "playback_consent579_title", "value": "Capture played audio?" },
++    { "name": "playback_consent579_message", "value": "This app will capture audio playing on this device. Microphone permission is not granted by this choice." },
++    { "name": "playback_consent579_deny", "value": "Cancel" },
++    { "name": "playback_consent579_allow", "value": "Allow" }
+   ]
+ }
+\ No newline at end of file
+--- a/applications/standard/systemui/product/default/dialog/src/main/resources/base/profile/main_pages.json
++++ b/applications/standard/systemui/product/default/dialog/src/main/resources/base/profile/main_pages.json
+@@ -1,5 +1,6 @@
+ {
+   "src": [
+-    "pages/ExtIndex"
++    "pages/ExtIndex",
++    "pages/PlaybackCaptureConsentPage"
+   ]
+ }
+--- a/applications/standard/systemui/product/default/dialog/src/main/resources/zh_CN/element/string.json
++++ b/applications/standard/systemui/product/default/dialog/src/main/resources/zh_CN/element/string.json
+@@ -3,6 +3,10 @@
+     {
+       "name": "mainability_description",
+       "value": "System-Dialog ServiceExtensionAbility"
+-    }
++    },
++    { "name": "playback_consent579_title", "value": "是否允许捕获播放音频？" },
++    { "name": "playback_consent579_message", "value": "此应用将捕获设备正在播放的声音。此选择不会授予麦克风权限。" },
++    { "name": "playback_consent579_deny", "value": "取消" },
++    { "name": "playback_consent579_allow", "value": "允许" }
+   ]
+ }
+\ No newline at end of file

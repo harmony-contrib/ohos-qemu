@@ -1,0 +1,57 @@
+diff --git a/device/qemu/common/virt_full/kernel/arm64_virt_defconfig b/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
+--- a/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
++++ b/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
+@@ -6369,7 +6369,7 @@
+ #
+ # USB port drivers
+ #
+-CONFIG_USB_SERIAL=m
++CONFIG_USB_SERIAL=y
+ # CONFIG_USB_SERIAL_GENERIC is not set
+ # CONFIG_USB_SERIAL_SIMPLE is not set
+ # CONFIG_USB_SERIAL_AIRCABLE is not set
+@@ -6381,7 +6381,7 @@
+ # CONFIG_USB_SERIAL_CP210X is not set
+ # CONFIG_USB_SERIAL_CYPRESS_M8 is not set
+ # CONFIG_USB_SERIAL_EMPEG is not set
+-CONFIG_USB_SERIAL_FTDI_SIO=m
++CONFIG_USB_SERIAL_FTDI_SIO=y
+ # CONFIG_USB_SERIAL_VISOR is not set
+ # CONFIG_USB_SERIAL_IPAQ is not set
+ # CONFIG_USB_SERIAL_IR is not set
+diff --git a/device/qemu/common/virt_full/kernel/arm_virt_defconfig b/device/qemu/common/virt_full/kernel/arm_virt_defconfig
+--- a/device/qemu/common/virt_full/kernel/arm_virt_defconfig
++++ b/device/qemu/common/virt_full/kernel/arm_virt_defconfig
+@@ -4590,7 +4590,8 @@
+ # USB Host Controller Drivers
+ #
+ # CONFIG_USB_C67X00_HCD is not set
+-# CONFIG_USB_XHCI_HCD is not set
++CONFIG_USB_XHCI_HCD=y
++CONFIG_USB_XHCI_PCI=y
+ # CONFIG_USB_BRCMSTB is not set
+ # CONFIG_USB_EHCI_HCD is not set
+ # CONFIG_USB_OXU210HP_HCD is not set
+@@ -4642,7 +4643,8 @@
+ #
+ # USB port drivers
+ #
+-# CONFIG_USB_SERIAL is not set
++CONFIG_USB_SERIAL=y
++CONFIG_USB_SERIAL_FTDI_SIO=y
+ 
+ #
+ # USB Miscellaneous drivers
+diff --git a/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig b/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig
+--- a/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig
++++ b/device/qemu/common/virt_full/kernel/x86_64_virt_defconfig
+@@ -4703,7 +4703,8 @@
+ #
+ # USB port drivers
+ #
+-# CONFIG_USB_SERIAL is not set
++CONFIG_USB_SERIAL=y
++CONFIG_USB_SERIAL_FTDI_SIO=y
+ 
+ #
+ # USB Miscellaneous drivers

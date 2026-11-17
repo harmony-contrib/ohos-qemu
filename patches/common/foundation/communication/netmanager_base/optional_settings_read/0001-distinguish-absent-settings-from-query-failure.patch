@@ -1,0 +1,76 @@
+diff --git a/foundation/communication/netmanager_base/utils/data_share/include/net_datashare_utils.h b/foundation/communication/netmanager_base/utils/data_share/include/net_datashare_utils.h
+--- a/foundation/communication/netmanager_base/utils/data_share/include/net_datashare_utils.h
++++ b/foundation/communication/netmanager_base/utils/data_share/include/net_datashare_utils.h
+@@ -44,3 +44,4 @@
+     int32_t Query(Uri &uri, const std::string &key, std::string &value);
++    int32_t QueryOptional(Uri &uri, const std::string &key, std::string &value, bool &found);
+     int32_t Insert(Uri &uri, const std::string &key, const std::string &value);
+     int32_t Update(Uri &uri, const std::string &key, const std::string &value);
+diff --git a/foundation/communication/netmanager_base/utils/data_share/include/net_datashare_utils_iface.h b/foundation/communication/netmanager_base/utils/data_share/include/net_datashare_utils_iface.h
+--- a/foundation/communication/netmanager_base/utils/data_share/include/net_datashare_utils_iface.h
++++ b/foundation/communication/netmanager_base/utils/data_share/include/net_datashare_utils_iface.h
+@@ -46,3 +46,4 @@
+     static int32_t Query(const std::string &strUri, const std::string &key, std::string &value);
++    static int32_t QueryOptional(const std::string &strUri, const std::string &key, std::string &value, bool &found);
+     static int32_t Insert(const std::string &strUri, const std::string &key, const std::string &value);
+     static int32_t Update(const std::string &strUri, const std::string &key, const std::string &value);
+diff --git a/foundation/communication/netmanager_base/utils/data_share/src/net_datashare_utils_iface.cpp b/foundation/communication/netmanager_base/utils/data_share/src/net_datashare_utils_iface.cpp
+--- a/foundation/communication/netmanager_base/utils/data_share/src/net_datashare_utils_iface.cpp
++++ b/foundation/communication/netmanager_base/utils/data_share/src/net_datashare_utils_iface.cpp
+@@ -49,3 +49,11 @@
++int32_t NetDataShareHelperUtilsIface::QueryOptional(const std::string &strUri, const std::string &key,
++    std::string &value, bool &found)
++{
++    NetDataShareHelperUtils helper;
++    Uri uri(strUri);
++    return helper.QueryOptional(uri, key, value, found);
++}
++
+ int32_t NetDataShareHelperUtilsIface::Insert(const std::string &strUri, const std::string &key,
+                                              const std::string &value)
+ {
+diff --git a/foundation/communication/netmanager_base/utils/data_share/src/net_datashare_utils.cpp b/foundation/communication/netmanager_base/utils/data_share/src/net_datashare_utils.cpp
+--- a/foundation/communication/netmanager_base/utils/data_share/src/net_datashare_utils.cpp
++++ b/foundation/communication/netmanager_base/utils/data_share/src/net_datashare_utils.cpp
+@@ -103,3 +103,41 @@
++int32_t NetDataShareHelperUtils::QueryOptional(Uri &uri, const std::string &key,
++    std::string &value, bool &found)
++{
++    value.clear();
++    found = false;
++    auto helper = CreateDataShareHelper();
++    if (helper == nullptr) {
++        return NETMANAGER_ERROR;
++    }
++    DataShare::DataSharePredicates predicates;
++    predicates.EqualTo(SETTINGS_DATA_COLUMN_KEYWORD, key);
++    std::vector<std::string> columns;
++    DataShare::DatashareBusinessError error;
++    auto result = helper->Query(uri, predicates, columns, &error);
++    int32_t status = NETMANAGER_ERROR;
++    if (result != nullptr && error.GetCode() == 0) {
++        int rows = -1;
++        const int countStatus = result->GetRowCount(rows);
++        if (countStatus == DataShare::E_OK && rows == 0) {
++            status = NETMANAGER_SUCCESS;
++        } else if (countStatus == DataShare::E_OK && rows == 1 && result->GoToFirstRow() == DataShare::E_OK) {
++            int index = -1;
++            std::string readValue;
++            if (result->GetColumnIndex(SETTINGS_DATA_COLUMN_VALUE, index) == DataShare::E_OK &&
++                result->GetString(index, readValue) == DataShare::E_OK) {
++                value = std::move(readValue);
++                found = true;
++                status = NETMANAGER_SUCCESS;
++            }
++        }
++    }
++    if (result != nullptr) {
++        result->Close();
++    }
++    helper->Release();
++    return status;
++}
++
+ int32_t NetDataShareHelperUtils::Insert(Uri &uri, const std::string &key, const std::string &value)
+ {
+     std::shared_ptr<DataShare::DataShareHelper> dataShareHelper = CreateDataShareHelper();

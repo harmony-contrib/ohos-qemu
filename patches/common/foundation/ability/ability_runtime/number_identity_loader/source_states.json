@@ -1,0 +1,16 @@
+{
+  "schema": "number-identity-native-loader382/v1",
+  "project": "foundation/ability/ability_runtime",
+  "revision": "6c18fdc9bdef6cfcf5888517cd8ed9448584f6e8",
+  "files": [
+    [
+      "frameworks/native/appkit/app/main_thread.cpp",
+      "ea42b93089e536e6ac8fea3dacadea9f3c93ca5fe0edd67f39cdc83a5bef2b2c",
+      "3680fd9fb200b103a87bc01d530e0c68deadfac843825354adb4182763618c1e"
+    ]
+  ],
+  "patch": "0001-load-numberidentity-bundle-native-provider-library.patch",
+  "patch_sha256": "23f53c5c4b2fa9ac840edd0140ee06790c46f388853f87d8d101be1f57f7c154",
+  "source_only": true,
+  "build_or_guest_pass": false
+}

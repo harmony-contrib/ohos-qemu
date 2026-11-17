@@ -1,0 +1,275 @@
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/transaction/zidl/rs_client_to_render_connection_stub.cpp
+@@ -15,6 +15,8 @@
+ 
+ #include "rs_client_to_render_connection_stub.h"
+ #include <memory>
++#include <cstring>
++
+ #include "ipc_skeleton.h"
+ #include "ivsync_connection.h"
+ #ifdef RES_SCHED_ENABLE
+@@ -144,16 +146,19 @@
+     uintptr_t copiedData = copied.GetData();
+ 
+     for (size_t i = 0; i < objectNum; i++) {
+-        const flat_binder_object* flat = reinterpret_cast<flat_binder_object*>(data + object[i]);
+-        flat_binder_object* copiedFlat = reinterpret_cast<flat_binder_object*>(copiedData + copiedObject[i]);
+-
+-        if (flat->hdr.type == BINDER_TYPE_FD && flat->handle >= 0) {
+-            int32_t val = dup(flat->handle);
++        flat_binder_object flat {};
++        std::memcpy(&flat, reinterpret_cast<const void*>(data + object[i]), sizeof(flat));
++
++        if (flat.hdr.type == BINDER_TYPE_FD || flat.hdr.type == BINDER_TYPE_FDR) {
++            int32_t val = dup(static_cast<int32_t>(flat.handle));
+             if (val < 0) {
+                 ROSEN_LOGW("CopyFileDescriptor dup failed, fd:%{public}d, handle:%{public}" PRIu32, val,
+-                    static_cast<uint32_t>(flat->handle));
+-            }
+-            copiedFlat->handle = static_cast<uint32_t>(val);
++                    flat.handle);
++            }
++            flat.hdr.type = BINDER_TYPE_FD;
++            flat.handle = static_cast<uint32_t>(val);
++            flat.cookie = 1;
++            std::memcpy(reinterpret_cast<void*>(copiedData + copiedObject[i]), &flat, sizeof(flat));
+         }
+     }
+ }
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/platform/ohos/rs_ashmem_helper.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/platform/ohos/rs_ashmem_helper.cpp
+@@ -54,6 +54,62 @@
+     return true;
+ }
+ 
++bool SanitizeAshmemFileDescriptors(MessageParcel& parcel, const binder_size_t* offsets, size_t count)
++{
++    for (size_t i = 0; i < count; ++i) {
++        flat_binder_object flat {};
++        auto* bytes = reinterpret_cast<void*>(parcel.GetData() + offsets[i]);
++        if (memcpy_s(&flat, sizeof(flat), bytes, sizeof(flat)) != EOK) {
++            return false;
++        }
++        if (flat.hdr.type == BINDER_TYPE_FD || flat.hdr.type == BINDER_TYPE_FDR) {
++            // These numbers belong to the sender, not to this process. Never
++            // publish them in the receiver's object table, even on failure.
++            flat.hdr.type = BINDER_TYPE_FD;
++            flat.handle = static_cast<uint32_t>(-1);
++            flat.cookie = 1;
++            if (memcpy_s(bytes, sizeof(flat), &flat, sizeof(flat)) != EOK) {
++                return false;
++            }
++        }
++    }
++    return true;
++}
++
++bool RestoreAshmemFileDescriptors(std::shared_ptr<MessageParcel>& parcel, MessageParcel* ashmem,
++    std::unique_ptr<AshmemFdWorker>& worker, pid_t callingPid)
++{
++    worker = std::make_unique<AshmemFdWorker>(callingPid);
++    const auto* offsets = reinterpret_cast<const binder_size_t*>(parcel->GetObjectOffsets());
++    for (size_t i = 0; i < parcel->GetOffsetsSize(); ++i) {
++        const binder_size_t offset = offsets[i];
++        if (offset > parcel->GetDataSize() || sizeof(flat_binder_object) > parcel->GetDataSize() - offset) {
++            return false;
++        }
++        flat_binder_object flat {};
++        auto* bytes = reinterpret_cast<void*>(parcel->GetData() + offset);
++        if (memcpy_s(&flat, sizeof(flat), bytes, sizeof(flat)) != EOK) {
++            return false;
++        }
++        if (flat.hdr.type != BINDER_TYPE_FD) {
++            continue;
++        }
++        const int fd = ashmem->ReadFileDescriptor();
++        if (fd < 0) {
++            return false;
++        }
++        flat.handle = static_cast<uint32_t>(fd);
++        if (memcpy_s(bytes, sizeof(flat), &flat, sizeof(flat)) != EOK) {
++            ::close(fd);
++            return false;
++        }
++        // The Parcel owns every duplicate until the async path FlushBuffer()s
++        // and explicitly transfers that responsibility to this worker.
++        worker->InsertFdWithOffset(fd, offset, true);
++    }
++    return true;
++}
++
+ bool RestoreAshmemObjectOffsets(std::shared_ptr<MessageParcel>& dataParcel, MessageParcel* ashmemParcel,
+     std::unique_ptr<AshmemFdWorker>& ashmemFdWorker, pid_t callingPid)
+ {
+@@ -82,12 +138,14 @@
+         !IsValidAshmemObjectOffsets(offsets.get(), count, dataParcel->GetDataSize())) {
+         return false;
+     }
++    if (!SanitizeAshmemFileDescriptors(*dataParcel, offsets.get(), count)) {
++        return false;
++    }
+     dataParcel->InjectOffsets(reinterpret_cast<binder_size_t>(offsets.get()), count);
+     if (dataParcel->GetOffsetsSize() != count || dataParcel->GetObjectOffsets() == 0) {
+         return false;
+     }
+-    RSAshmemHelper::InjectFileDescriptor(dataParcel, ashmemParcel, ashmemFdWorker, callingPid);
+-    return true;
++    return RestoreAshmemFileDescriptors(dataParcel, ashmemParcel, ashmemFdWorker, callingPid);
+ }
+ 
+ }
+@@ -228,7 +286,7 @@
+         ::munmap(data_, size_);
+         data_ = nullptr;
+     }
+-    if (fd_ > 0) {
++    if (fd_ >= 0) {
+         ::close(fd_);
+         fd_ = -1;
+     }
+@@ -358,7 +416,7 @@
+ {
+     if (needManualCloseFds_) {
+         for (const int fd : fdsToBeClosed_) {
+-            if (fd > 0) {
++            if (fd >= 0) {
+                 ::close(fd);
+             }
+         }
+@@ -412,10 +470,16 @@
+     size_t objectNum = dataParcel->GetOffsetsSize();
+     uintptr_t data = dataParcel->GetData();
+     for (size_t i = 0; i < objectNum; i++) {
+-        const flat_binder_object* flat = reinterpret_cast<flat_binder_object*>(data + object[i]);
+-        if (flat->hdr.type == BINDER_TYPE_FD) {
+-            if (!ashmemParcel->WriteFileDescriptor(flat->handle)) {
+-                ROSEN_LOGE("RSAshmemHelper::CopyFileDescriptor failed, fd:%{public}u", flat->handle);
++        flat_binder_object flat {};
++        const binder_size_t offset = object[i];
++        if (offset > dataParcel->GetDataSize() ||
++            sizeof(flat) > dataParcel->GetDataSize() - offset ||
++            memcpy_s(&flat, sizeof(flat), reinterpret_cast<void*>(data + offset), sizeof(flat)) != EOK) {
++            return;
++        }
++        if (flat.hdr.type == BINDER_TYPE_FD || flat.hdr.type == BINDER_TYPE_FDR) {
++            if (!ashmemParcel->WriteFileDescriptor(static_cast<int32_t>(flat.handle))) {
++                ROSEN_LOGE("RSAshmemHelper::CopyFileDescriptor failed, fd:%{public}u", flat.handle);
+             }
+         }
+     }
+@@ -424,30 +488,12 @@
+ void RSAshmemHelper::InjectFileDescriptor(std::shared_ptr<MessageParcel>& dataParcel, MessageParcel* ashmemParcel,
+     std::unique_ptr<AshmemFdWorker>& ashmemFdWorker, pid_t callingPid)
+ {
+-    ashmemFdWorker = std::make_unique<AshmemFdWorker>(callingPid);
+-    binder_size_t* object = reinterpret_cast<binder_size_t*>(dataParcel->GetObjectOffsets());
+-    size_t objectNum = dataParcel->GetOffsetsSize();
+-    uintptr_t data = dataParcel->GetData();
+-    for (size_t i = 0; i < objectNum; i++) {
+-        binder_size_t offset = object[i];
+-        if (offset > dataParcel->GetDataSize() ||
+-            sizeof(flat_binder_object) > dataParcel->GetDataSize() - static_cast<size_t>(offset)) {
+-            ROSEN_LOGW("RSAshmemHelper::InjectFileDescriptor offset invalid");
+-            continue;
+-        }
+-        flat_binder_object* flat = reinterpret_cast<flat_binder_object*>(data + offset);
+-        if (flat->hdr.type == BINDER_TYPE_FD || flat->hdr.type == BINDER_TYPE_FDR) {
+-            int32_t val = ashmemParcel->ReadFileDescriptor();
+-            if (val < 0) {
+-                ROSEN_LOGW("RSAshmemHelper::InjectFileDescriptor failed, fd:%{public}d, handle:%{public}u", val,
+-                    flat->handle);
+-            }
+-            flat->handle = static_cast<uint32_t>(val);
+-            if (ashmemFdWorker) {
+-                bool shouldCloseFd = flat->hdr.type == BINDER_TYPE_FD;
+-                ashmemFdWorker->InsertFdWithOffset(val, offset, shouldCloseFd);
+-            }
+-        }
++    const auto* offsets = reinterpret_cast<const binder_size_t*>(dataParcel->GetObjectOffsets());
++    const size_t count = dataParcel->GetOffsetsSize();
++    if (!IsValidAshmemObjectOffsets(offsets, count, dataParcel->GetDataSize()) ||
++        !SanitizeAshmemFileDescriptors(*dataParcel, offsets, count) ||
++        !RestoreAshmemFileDescriptors(dataParcel, ashmemParcel, ashmemFdWorker, callingPid)) {
++        ROSEN_LOGE("RSAshmemHelper::InjectFileDescriptor failed to restore receiver-owned FDs");
+     }
+ }
+ 
+@@ -517,20 +563,25 @@
+     }
+ 
+     int fd = ashmemParcel->ReadFileDescriptor();
+-    auto ashmemAllocator = AshmemAllocator::CreateAshmemAllocatorWithFd(fd, dataSize, PROT_READ | PROT_WRITE);
++    auto ashmemAllocator = AshmemAllocator::CreateAshmemAllocatorWithFd(fd, dataSize, PROT_READ);
+     if (!ashmemAllocator) {
+         ROSEN_LOGE("ParseFromAshmemParcel failed, ashmemAllocator is nullptr");
+         return nullptr;
+     }
+-    void* data = ashmemAllocator->GetData();
+-    auto dataParcel = std::make_shared<MessageParcel>(ashmemAllocator.release());
++    // Only a private snapshot may hold object metadata or queued commands.
++    void* data = ashmemAllocator->CopyFromAshmem(dataSize);
++    if (data == nullptr) {
++        return nullptr;
++    }
++    auto dataParcel = std::make_shared<MessageParcel>();
+     if (!dataParcel->ParseFrom(reinterpret_cast<uintptr_t>(data), dataSize)) {
++        free(data);
+         return nullptr;
+     }
+ 
+     if (!RestoreAshmemObjectOffsets(dataParcel, ashmemParcel, ashmemFdWorker, callingPid)) {
+-        // Failed injection may hold borrowed FD numbers. Clear them before destruction.
+-        dataParcel->FlushBuffer();
++        // Sanitized metadata contains only receiver-owned FDs, including
++        // partial restoration. Let the Parcel release them exactly once.
+         ROSEN_LOGE("ParseFromAshmemParcel: invalid or incomplete object offsets");
+         return nullptr;
+     }
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/transaction/rs_transaction_data.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service_base/src/transaction/rs_transaction_data.cpp
+@@ -205,7 +205,7 @@
+ {
+     std::unique_lock<std::mutex> lock(commandMutex_);
+     for (auto& [nodeId, followType, command] : payload_) {
+-        if (command != nullptr &&
++        if (command != nullptr && command->IsCallingPidValid() &&
+             command->GetType() == RSCommandType::CANVAS_NODE &&
+             command->GetSubType() == RSCanvasNodeCommandType::CANVAS_NODE_UPDATE_RECORDING) {
+             command->Process(context);
+--- a/foundation/graphic/graphic_2d/rosen/modules/render_service/core/rs_render_pipeline_agent.cpp
++++ b/foundation/graphic/graphic_2d/rosen/modules/render_service/core/rs_render_pipeline_agent.cpp
+@@ -172,17 +172,22 @@
+         RS_LOGW("CommitTransaction data droped");
+         return ERR_INVALID_VALUE;
+     }
+-    if (transactionData && transactionData->GetDVSyncUpdate()) {
+-        pipeline->GetMainThread()->DVSyncUpdate(
+-            transactionData->GetDVSyncTime(), transactionData->GetTimestamp());
+-    }
+-    bool isProcessBySingleFrame =
+-        pipeline->GetMainThread()->IsNeedProcessBySingleFrameComposer(transactionData);
+-    if (isProcessBySingleFrame) {
+-        pipeline->GetMainThread()->ProcessDataBySingleFrameComposer(transactionData);
+-    } else {
+-        pipeline->GetMainThread()->RecvRSTransactionData(transactionData);
+-    }
++    // Keep the commit asynchronous, but never inspect or mutate the node map
++    // from the Binder thread. The queued task owns its transaction on cancel.
++    pipeline->ScheduleMainThreadTask([pipeline, data = std::move(transactionData)]() mutable {
++        auto* mainThread = pipeline->GetMainThread();
++        if (mainThread == nullptr || data == nullptr) {
++            return;
++        }
++        if (data->GetDVSyncUpdate()) {
++            mainThread->DVSyncUpdate(data->GetDVSyncTime(), data->GetTimestamp());
++        }
++        if (mainThread->IsNeedProcessBySingleFrameComposer(data)) {
++            mainThread->ProcessDataBySingleFrameComposer(data);
++        } else {
++            mainThread->RecvRSTransactionData(data);
++        }
++    });
+     return ERR_OK;
+ }
+ 

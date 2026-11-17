@@ -1,0 +1,13 @@
+--- a/foundation/arkui/ace_engine/bundle.json
++++ b/foundation/arkui/ace_engine/bundle.json
+@@ -130,7 +130,9 @@
+                 "egl",
+                 "qrcode_generator"
+             ],
+-            "third_party": []
++            "third_party": [
++                "bounds_checking_function"
++            ]
+         },
+         "build": {
+             "group_type": {

@@ -1,0 +1,269 @@
+--- a/build/ohos/app/app.gni
++++ b/build/ohos/app/app.gni
+@@ -546,6 +546,13 @@
+                              "compatible_version",
+                              "test_type",
+                            ])
++    if (defined(invoker.strict_hap_list) && invoker.strict_hap_list) {
++      assert(defined(invoker.hap_list),
++             "strict_hap_list requires an explicit hap_list")
++      assert(invoker.hap_list != [],
++             "strict_hap_list requires a nonempty hap_list")
++      strict_hap_list = true
++    }
+     unsigned_hap_path_list = _unsigned_hap_path_list
+     deps = [
+       ":$_compile_app_target",
+--- a/build/ohos/app/app_internal.gni
++++ b/build/ohos/app/app_internal.gni
+@@ -519,6 +519,9 @@
+   if (defined(invoker.hap_list)) {
+     sign_variables += [ "hap_list" ]
+   }
++  if (defined(invoker.strict_hap_list)) {
++    sign_variables += [ "strict_hap_list" ]
++  }
+   action(target_name) {
+     forward_variables_from(invoker, sign_variables)
+     _sign_hap_py_path = "//build/scripts/app_sign.py"
+@@ -592,6 +595,12 @@
+         "--hap-list",
+         rebase_path(hap_list, root_build_dir),
+       ]
++    }
++    if (defined(strict_hap_list) && strict_hap_list) {
++      assert(defined(hap_list),
++             "strict_hap_list requires an explicit hap_list")
++      inputs += [ hap_list ]
++      args += [ "--strict-hap-list" ]
+     }
+ 
+     if (defined(sign_hap_py_path)) {
+--- a/build/scripts/app_sign.py
++++ b/build/scripts/app_sign.py
+@@ -44,6 +44,8 @@
+     parser.add_argument('--certificate-file', help='')
+     parser.add_argument('--hap-name', help='')
+     parser.add_argument('--hap-list', help='')
++    parser.add_argument('--strict-hap-list', action='store_true',
++                        help='sign exactly the complete explicit hap_list')
+     options = parser.parse_args(args)
+     return options
+ 
+@@ -71,8 +73,216 @@
+         raise Exception("Failed to sign hap")
+ 
+ 
++def _strict_path(path):
++    import stat
++
++    path = os.path.abspath(path)
++    cursor = path
++    while True:
++        if os.path.lexists(cursor) and stat.S_ISLNK(os.lstat(cursor).st_mode):
++            raise ValueError('strict HAP path contains a symlink: ' + path)
++        parent = os.path.dirname(cursor)
++        if parent == cursor:
++            return path
++        cursor = parent
++
++
++def _strict_regular_file(path):
++    import stat
++
++    value = os.lstat(_strict_path(path))
++    if not stat.S_ISREG(value.st_mode) or value.st_nlink != 1:
++        raise ValueError('strict HAP input/output is not a unique regular file: ' + path)
++    return (value.st_dev, value.st_ino, value.st_mode, value.st_size,
++            value.st_mtime_ns, value.st_ctime_ns, value.st_nlink)
++
++
++def _strict_json(path):
++    import json
++
++    def unique_pairs(pairs):
++        result = {}
++        for key, value in pairs:
++            if key in result:
++                raise ValueError('duplicate strict HAP JSON key: ' + key)
++            result[key] = value
++        return result
++
++    before = _strict_regular_file(path)
++    with open(path, 'r', encoding='utf-8') as stream:
++        value = json.load(stream, object_pairs_hook=unique_pairs)
++    if before != _strict_regular_file(path):
++        raise ValueError('strict HAP JSON changed while reading: ' + path)
++    return value
++
++
++def _strict_output_state(directory, expected):
++    import stat
++
++    value = os.lstat(_strict_path(directory))
++    if not stat.S_ISDIR(value.st_mode):
++        raise ValueError('strict HAP output is not a directory')
++    result = {}
++    with os.scandir(directory) as entries:
++        for entry in entries:
++            if not entry.name.endswith(('.hap', '.hsp')):
++                continue
++            if entry.name not in expected:
++                raise ValueError('unknown strict HAP output; preserving it: ' + entry.name)
++            result[entry.name] = _strict_regular_file(entry.path)
++    return (value.st_dev, value.st_ino), result
++
++
++def _strict_main(options):
++    import re
++    import shutil
++    import tempfile
++
++    # Complete plan validation precedes directory creation and every signer call.
++    safe_name = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.-]*\Z')
++
++    def stem(value):
++        if (not isinstance(value, str) or not safe_name.fullmatch(value) or
++                value.endswith(('.hap', '.hsp'))):
++            raise ValueError('strict hap_list requires safe extensionless names')
++        return value
++
++    if not options.hap_out_dir or not options.hap_list or not options.unsigned_hap_path_list:
++        raise ValueError('strict HAP list requires directory, hap_list and unsigned list')
++    prefix = stem(options.hap_name)
++    specification = _strict_json(options.hap_list)
++    if (not isinstance(specification, dict) or specification.get('do_filter') is not True or
++            not isinstance(specification.get('hap_list'), list) or not specification['hap_list']):
++        raise ValueError('strict HAP list requires a nonempty explicit filtering list')
++    mapping = {}
++    output_stems = set()
++    for row in specification['hap_list']:
++        if not isinstance(row, str) or row.count(':') != 1:
++            raise ValueError('strict hap_list row requires source:output')
++        source, output = [stem(value) for value in row.split(':')]
++        if source in mapping or output in output_stems:
++            raise ValueError('duplicate strict hap_list source or output')
++        mapping[source] = output
++        output_stems.add(output)
++
++    unsigned = _strict_json(options.unsigned_hap_path_list)
++    if (not isinstance(unsigned, dict) or
++            not isinstance(unsigned.get('unsigned_hap_path_list'), list) or
++            not unsigned['unsigned_hap_path_list']):
++        raise ValueError('strict HAP list requires a nonempty unsigned list')
++    selected = {}
++    paths = set()
++    identities = set()
++    for original in unsigned['unsigned_hap_path_list']:
++        if not isinstance(original, str) or not original or '\x00' in original:
++            raise ValueError('invalid strict unsigned HAP path')
++        path = os.path.abspath(original)
++        if path in paths:
++            raise ValueError('duplicate strict unsigned path')
++        paths.add(path)
++        basename, extension = os.path.splitext(os.path.basename(path))
++        if extension not in ('.hap', '.hsp'):
++            raise ValueError('strict unsigned input must be a HAP or HSP')
++        # Unlike the legacy one-input shortcut, strict keys always use hap_name + basename.
++        source = prefix + '-' + basename
++        if source not in mapping:
++            continue
++        if source in selected:
++            raise ValueError('multiple unsigned inputs match strict key: ' + source)
++        identity = _strict_regular_file(path)
++        if identity[:2] in identities or identity[3] <= 0:
++            raise ValueError('aliased or empty strict unsigned input: ' + source)
++        identities.add(identity[:2])
++        selected[source] = (path, mapping[source] + extension, identity)
++    if set(selected) != set(mapping):
++        raise ValueError('strict hap_list has unmatched selected keys: ' +
++                         ', '.join(sorted(set(mapping) - set(selected))))
++    expected = {row[1] for row in selected.values()}
++    if len(expected) != len(selected):
++        raise ValueError('strict HAP output names are not unique')
++
++    directory = _strict_path(options.hap_out_dir)
++    if not os.path.exists(directory):
++        os.makedirs(directory, exist_ok=True)
++    directory_id, original_state = _strict_output_state(directory, expected)
++    if any(value[:2] in identities for value in original_state.values()):
++        raise ValueError('strict output aliases a selected unsigned input')
++    temporary = tempfile.mkdtemp(prefix='.' + os.path.basename(directory) + '.strict-hap-list-',
++                                 dir=os.path.dirname(directory))
++    keep_temporary = False
++    touched = []
++    try:
++        staged = {}
++        for source in sorted(selected):
++            path, name, identity = selected[source]
++            if _strict_regular_file(path) != identity:
++                raise ValueError('strict unsigned input changed before signing: ' + source)
++            output = os.path.join(temporary, name)
++            sign_app(options, path, output)
++            if _strict_regular_file(path) != identity:
++                raise ValueError('strict unsigned input changed while signing: ' + source)
++            staged[name] = _strict_regular_file(output)
++            if staged[name][3] <= 0:
++                raise ValueError('strict signer produced an empty output: ' + name)
++        if _strict_output_state(temporary, expected)[1] != staged or set(staged) != expected:
++            raise ValueError('strict signer did not produce the exact expected collection')
++        if _strict_output_state(directory, expected) != (directory_id, original_state):
++            raise ValueError('strict output changed before publication; preserving it')
++
++        backup = os.path.join(temporary, 'previous')
++        os.mkdir(backup)
++        current_state = dict(original_state)
++        for name in sorted(expected):
++            if _strict_output_state(directory, expected) != (directory_id, current_state):
++                raise ValueError('strict output changed during publication; preserving it')
++            target = os.path.join(directory, name)
++            previous = os.path.join(backup, name)
++            record = {'name': name, 'old': None, 'new': None,
++                      'old_moved': False, 'new_published': False}
++            touched.append(record)
++            if name in original_state:
++                os.replace(target, previous)
++                record['old_moved'] = True
++                record['old'] = _strict_regular_file(previous)
++            if os.path.lexists(target):
++                raise ValueError('strict publication destination appeared; preserving it: ' + name)
++            os.replace(os.path.join(temporary, name), target)
++            record['new_published'] = True
++            record['new'] = _strict_regular_file(target)
++            current_state[name] = record['new']
++        if (_strict_output_state(directory, expected) != (directory_id, current_state) or
++                set(current_state) != expected):
++            raise ValueError('strict publication did not retain the exact complete collection')
++    except BaseException as failure:
++        # Roll back only files whose identity still belongs to this publication.
++        for record in reversed(touched):
++            target = os.path.join(directory, record['name'])
++            previous = os.path.join(temporary, 'previous', record['name'])
++            try:
++                if record['new_published']:
++                    if record['new'] is None or _strict_regular_file(target) != record['new']:
++                        raise ValueError('published file has an external change')
++                    os.unlink(target)
++                if record['old_moved']:
++                    if (record['old'] is None or os.path.lexists(target) or
++                            _strict_regular_file(previous) != record['old']):
++                        raise ValueError('rollback destination or backup has an external change')
++                    os.replace(previous, target)
++            except (OSError, ValueError):
++                keep_temporary = True
++        if keep_temporary:
++            raise RuntimeError('strict HAP publication failed; external changes preserved; '
++                               'recovery files retained at ' + temporary) from failure
++        raise
++    finally:
++        if not keep_temporary:
++            shutil.rmtree(temporary)
++
++
+ def main(args):
+     options = parse_args(args)
++    if options.strict_hap_list:
++        return _strict_main(options)
+     if not options.hap_out_dir:
+         sign_app(options, options.inFile, options.outFile)
+     else:

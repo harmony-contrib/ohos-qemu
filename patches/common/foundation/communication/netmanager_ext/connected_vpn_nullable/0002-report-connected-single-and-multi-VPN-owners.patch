@@ -1,0 +1,47 @@
+diff --git a/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp b/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
+--- a/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
++++ b/foundation/communication/netmanager_ext/services/vpnmanager/src/networkvpn_service.cpp
+@@ -894,7 +894,7 @@
+         return ret;
+     }
+     std::shared_ptr<NetVpnImpl> vpnObj = std::make_shared<ExtendedVpnCtl>(
+-        sptr<VpnConfig>::MakeSptr(config), "", userId, activeUserIds);
++        sptr<VpnConfig>::MakeSptr(config), vpnBundleName, userId, activeUserIds);
+     if (vpnObj == nullptr || vpnObj->RegisterConnectStateChangedCb(vpnConnCallback_) != NETMANAGER_EXT_SUCCESS) {
+         NETMGR_EXT_LOG_E("SetUpVpn register internal callback fail.");
+         return NETMANAGER_EXT_ERR_INTERNAL;
+@@ -1640,6 +1640,7 @@
+ // LCOV_EXCL_START
+ int32_t NetworkVpnService::GetConnectedVpnAppInfo(std::vector<std::string> &bundleNameList)
+ {
++    bundleNameList.clear();
+     std::string vpnBundleName = GetBundleName();
+     if (!CheckVpnPermission(vpnBundleName)) {
+         return NETMANAGER_EXT_ERR_PERMISSION_DENIED;
+@@ -1652,15 +1653,24 @@
+         return ret;
+     }
+     std::shared_lock<ffrt::shared_mutex> lock(netVpnMutex_);
++    // API10 callers without vpnId use the single-connection slot. Keep its
++    // immutable owner on the connection, rather than mutable global names.
++    if (vpnObj_ != nullptr && vpnObj_->GetUserId() == userId && vpnObj_->IsVpnConnecting()) {
++        const std::string name = vpnObj_->GetVpnPkg();
++        if (!name.empty()) {
++            bundleNameList.push_back(name);
++        }
++    }
+     for (const auto &entry : vpnObjMap_) {
+         std::shared_ptr<NetVpnImpl> vpnObj = entry.second;
+         if (vpnObj == nullptr || vpnObj->multiVpnInfo_ == nullptr) {
+             NETMGR_EXT_LOG_E("GetConnectedVpnAppInfo failed, vpnObj invalid");
+             continue;
+         }
+-        if (userId == vpnObj->multiVpnInfo_->userId) {
++        if (userId == vpnObj->multiVpnInfo_->userId && vpnObj->IsVpnConnecting()) {
+             std::string name = vpnObj->multiVpnInfo_->bundleName;
+-            if (std::find(bundleNameList.begin(), bundleNameList.end(), name) == bundleNameList.end()) {
++            if (!name.empty() &&
++                std::find(bundleNameList.begin(), bundleNameList.end(), name) == bundleNameList.end()) {
+                 bundleNameList.push_back(name);
+             }
+         }

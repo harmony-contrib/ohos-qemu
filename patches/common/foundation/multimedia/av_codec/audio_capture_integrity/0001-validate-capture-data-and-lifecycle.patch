@@ -1,0 +1,468 @@
+--- a/foundation/multimedia/av_codec/services/media_engine/filters/audio_capture_filter.cpp
++++ b/foundation/multimedia/av_codec/services/media_engine/filters/audio_capture_filter.cpp
+@@ -176,8 +176,10 @@
+ 
+ Status AudioCaptureFilter::DoStart()
+ {
++    std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+     MEDIA_LOG_I("Start");
+     MediaAVCodec::AVCodecTrace trace("AudioCaptureFilter::Start");
++    FALSE_RETURN_V_MSG_E(taskPtr_ != nullptr, Status::ERROR_INVALID_OPERATION, "audio reader task is null");
+     eos_ = false;
+     currentTime_ = 0;
+     recordAudioFrameCount_ = 0;
+@@ -193,26 +195,30 @@
+     }
+     FALSE_RETURN_V_MSG_E(res == Status::OK, res, "audioCaptureModule start failed");
+     // start task secondly
+-    if (taskPtr_) {
+-        taskPtr_->Start();
++    taskPtr_->Start();
++    if (!taskPtr_->IsTaskRunning()) {
++        audioCaptureModule_->Stop();
++        return Status::ERROR_AUD_START_FAILED;
+     }
+     return res;
+ }
+ 
+ Status AudioCaptureFilter::DoPause()
+ {
++    std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+     MEDIA_LOG_I("Pause");
+     MediaAVCodec::AVCodecTrace trace("AudioCaptureFilter::Pause");
+-    if (taskPtr_) {
+-        taskPtr_->Pause();
+-    }
+     Status ret = Status::ERROR_INVALID_OPERATION;
+     if (audioCaptureModule_) {
+         ret = audioCaptureModule_->Stop();
+     }
+     if (ret != Status::OK) {
+         MEDIA_LOG_E("audioCaptureModule stop fail");
+-        ret = Status::ERROR_AUD_STOP_FAILED;
++        return Status::ERROR_AUD_STOP_FAILED;
++    }
++    // Stop wakes a blocking Read before Pause waits for its job to finish.
++    if (taskPtr_) {
++        taskPtr_->Pause();
+     }
+ 
+     GetCurrentTime(pauseTime_);
+@@ -243,30 +249,35 @@
+ 
+ Status AudioCaptureFilter::DoResume()
+ {
++    std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+     MEDIA_LOG_I("Resume");
+     MediaAVCodec::AVCodecTrace trace("AudioCaptureFilter::Resume");
++    FALSE_RETURN_V_MSG_E(taskPtr_ != nullptr, Status::ERROR_INVALID_OPERATION, "audio reader task is null");
+     currentTime_ = 0;
+     firstAudioFramePts_.store(-1);
+     firstVideoFramePts_.store(-1);
+     hasCalculateAVTime_ = false;
+     GetCurrentTime(startTime_);
+     MEDIA_LOG_I("[audio] resumeTime: " PUBLIC_LOG_D64, startTime_);
+-    if (taskPtr_) {
+-        taskPtr_->Start();
+-    }
+     Status ret = Status::ERROR_INVALID_OPERATION;
+     if (audioCaptureModule_) {
+         ret = audioCaptureModule_->Start();
+     }
+     if (ret != Status::OK) {
+         MEDIA_LOG_E("audioCapturer start failed");
+-        ret = Status::ERROR_AUD_START_FAILED;
++        return Status::ERROR_AUD_START_FAILED;
++    }
++    taskPtr_->Start();
++    if (!taskPtr_->IsTaskRunning()) {
++        audioCaptureModule_->Stop();
++        return Status::ERROR_AUD_START_FAILED;
+     }
+     return ret;
+ }
+ 
+ Status AudioCaptureFilter::DoStop()
+ {
++    std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+     MEDIA_LOG_I("Stop");
+     MediaAVCodec::AVCodecTrace trace("AudioCaptureFilter::Stop");
+     // stop task firstly
+@@ -280,6 +291,10 @@
+     }
+     if (ret != Status::OK) {
+         MEDIA_LOG_E("audioCaptureModule stop fail");
++        return ret;
++    }
++    if (taskPtr_) {
++        taskPtr_->Stop();
+     }
+     firstAudioFramePts_.store(-1);
+     firstVideoFramePts_.store(-1);
+@@ -300,13 +315,23 @@
+ 
+ Status AudioCaptureFilter::DoRelease()
+ {
++    std::lock_guard<std::mutex> lifecycleLock(lifecycleMutex_);
+     MEDIA_LOG_I("Release");
+     MediaAVCodec::AVCodecTrace trace("AudioCaptureFilter::Release");
++    if (audioCaptureModule_) {
++        auto ret = audioCaptureModule_->Stop();
++        if (ret != Status::OK) {
++            return ret;
++        }
++    }
+     if (taskPtr_) {
+         taskPtr_->Stop();
+     }
+     if (audioCaptureModule_) {
+-        audioCaptureModule_->Deinit();
++        auto ret = audioCaptureModule_->Deinit();
++        if (ret != Status::OK) {
++            return ret;
++        }
+     }
+     audioCaptureModule_ = nullptr;
+     taskPtr_ = nullptr;
+@@ -566,6 +591,7 @@
+ {
+     FALSE_RETURN_MSG(audioCaptureModule_ != nullptr && outputBufferQueue_ != nullptr,
+         "audioCaptureModule_ or outputBufferQueue_ is nullptr, cannot RecordOneAudioFrame");
++    FALSE_RETURN_MSG(bufferSize > 0 && bufferSize < MAX_CAPTURE_BUFFER_SIZE, "invalid audio buffer size");
+     std::shared_ptr<AVBuffer> buffer;
+     AVBufferConfig avBufferConfig;
+     avBufferConfig.size = static_cast<int32_t>(bufferSize);
+@@ -574,11 +600,13 @@
+     if (ret != Status::OK || buffer == nullptr
+         || buffer->memory_ == nullptr || buffer->memory_->GetCapacity() <= 0) {
+         MEDIA_LOG_E("AudioCaptureFilter RequestBuffer fail");
++        if (buffer != nullptr) {
++            outputBufferQueue_->PushBuffer(buffer, false);
++        }
+         RelativeSleep(AUDIO_CAPTURE_READ_FAILED_WAIT_TIME);
+         return;
+     }
+-    std::shared_ptr<AVMemory> bufData = buffer->memory_;
+-    ret = audioCaptureModule_->Read(bufData->GetAddr(), bufferSize);
++    ret = audioCaptureModule_->Read(buffer, static_cast<size_t>(bufferSize));
+     if (ret != Status::OK) {
+         MEDIA_LOG_E("audioCaptureModule read return fail");
+         outputBufferQueue_->PushBuffer(buffer, false);
+@@ -590,7 +618,6 @@
+         FillLostFrame(lostCount);
+         RecordCachedData(lostCount);
+     }
+-    buffer->memory_->SetSize(bufferSize);
+     ret = outputBufferQueue_->PushBuffer(buffer, true);
+     if (ret != Status::OK) {
+         MEDIA_LOG_E("PushBuffer fail");
+@@ -609,7 +636,10 @@
+         return;
+     }
+     uint64_t bufferSize = 0;
+-    audioCaptureModule_->GetSize(bufferSize);
++    if (audioCaptureModule_->GetSize(bufferSize) != Status::OK || bufferSize == 0 ||
++        bufferSize >= MAX_CAPTURE_BUFFER_SIZE || recordFrameNum <= 0) {
++        return;
++    }
+ 
+     std::deque<std::shared_ptr<uint8_t>> tempDataDeque;
+     {
+@@ -632,10 +662,22 @@
+         if (ret != Status::OK || buffer == nullptr
+             || buffer->memory_ == nullptr || buffer->memory_->GetCapacity() <= 0) {
+             MEDIA_LOG_E("AudioCaptureFilter RequestBuffer fail");
++            if (buffer != nullptr) {
++                outputBufferQueue_->PushBuffer(buffer, false);
++            }
+             RelativeSleep(AUDIO_CAPTURE_READ_FAILED_WAIT_TIME);
+             continue;
+         }
+-        buffer->memory_->Write(tmpData.get(), static_cast<int32_t>(bufferSize), 0);
++        auto memory = buffer->memory_;
++        const int32_t offset = memory->GetOffset();
++        const int32_t capacity = memory->GetCapacity();
++        if (tmpData == nullptr || offset < 0 || offset > capacity ||
++            bufferSize > static_cast<uint64_t>(capacity - offset) ||
++            memory->Write(tmpData.get(), static_cast<int32_t>(bufferSize), offset) != static_cast<int32_t>(bufferSize) ||
++            memory->SetSize(static_cast<int32_t>(bufferSize)) != Status::OK) {
++            outputBufferQueue_->PushBuffer(buffer, false);
++            continue;
++        }
+         ret = outputBufferQueue_->PushBuffer(buffer, true);
+         if (ret != Status::OK) {
+             MEDIA_LOG_E("PushBuffer fail");
+--- a/foundation/multimedia/av_codec/services/media_engine/modules/source/audio_capture/audio_capture_module.cpp
++++ b/foundation/multimedia/av_codec/services/media_engine/modules/source/audio_capture/audio_capture_module.cpp
+@@ -13,6 +13,7 @@
+  * limitations under the License.
+  */
+ #include "audio_capture_module.h"
++#include <cstring>
+ #include "common/log.h"
+ #include "osal/task/autolock.h"
+ #include "common/status.h"
+@@ -83,6 +84,7 @@
+ 
+ Status AudioCaptureModule::Init()
+ {
++    std::lock_guard<std::mutex> controlLock(controlMutex_);
+     AutoLock lock(captureMutex_);
+     if (audioCapturer_ == nullptr) {
+         AudioStandard::AppInfo appInfo;
+@@ -105,15 +107,28 @@
+ 
+ Status AudioCaptureModule::DoDeinit()
+ {
+-    AutoLock lock(captureMutex_);
+-    if (audioCapturer_) {
+-        if (audioCapturer_->GetStatus() == AudioStandard::CapturerState::CAPTURER_RUNNING) {
+-            FALSE_LOG_MSG(audioCapturer_->Stop(), "stop audioCapturer fail");
+-        }
+-        FALSE_LOG_MSG(audioCapturer_->Release(), "Release audioCapturer fail");
+-        audioCapturer_->RemoveAudioCapturerInfoChangeCallback(audioCapturerInfoChangeCallback_);
++    std::lock_guard<std::mutex> controlLock(controlMutex_);
++    std::shared_ptr<AudioStandard::AudioCapturer> capturer;
++    {
++        AutoLock lock(captureMutex_);
++        ++readGeneration_;
++        capturer = audioCapturer_;
++        if (capturer == nullptr) {
++            return Status::OK;
++        }
++        if (capturer->GetStatus() == AudioStandard::CAPTURER_RUNNING && !capturer->Stop()) {
++            return Status::ERROR_AUD_STOP_FAILED;
++        }
++        // Reject new reads before waiting for the stopped generation to leave Read().
+         audioCapturer_ = nullptr;
+     }
++    std::lock_guard<std::mutex> readLock(readMutex_);
++    if (!capturer->Release()) {
++        AutoLock lock(captureMutex_);
++        audioCapturer_ = capturer;
++        return Status::ERROR_INVALID_OPERATION;
++    }
++    capturer->RemoveAudioCapturerInfoChangeCallback(audioCapturerInfoChangeCallback_);
+     return Status::OK;
+ }
+ 
+@@ -141,12 +156,15 @@
+ 
+ Status AudioCaptureModule::Reset()
+ {
++    std::lock_guard<std::mutex> controlLock(controlMutex_);
+     MEDIA_LOG_I("Reset enter.");
+     {
+         AutoLock lock (captureMutex_);
+         FALSE_RETURN_V_MSG_E(audioCapturer_ != nullptr, Status::ERROR_AUD_INIT_FAILED, "no available audio capture");
+-        if (audioCapturer_->GetStatus() == AudioStandard::CapturerState::CAPTURER_RUNNING) {
+-            FALSE_LOG_MSG(audioCapturer_->Stop(), "Stop audioCapturer fail");
++        ++readGeneration_;
++        if (audioCapturer_->GetStatus() == AudioStandard::CapturerState::CAPTURER_RUNNING &&
++            !audioCapturer_->Stop()) {
++            return Status::ERROR_AUD_STOP_FAILED;
+         }
+     }
+     bufferSize_ = 0;
+@@ -157,6 +175,7 @@
+ 
+ Status AudioCaptureModule::Start()
+ {
++    std::lock_guard<std::mutex> controlLock(controlMutex_);
+     MEDIA_LOG_I("start enter.");
+     AutoLock lock (captureMutex_);
+     FALSE_RETURN_V_MSG_E(audioCapturer_ != nullptr, Status::ERROR_AUD_INIT_FAILED, "no available audio capture");
+@@ -173,8 +192,10 @@
+ 
+ Status AudioCaptureModule::Stop()
+ {
++    std::lock_guard<std::mutex> controlLock(controlMutex_);
+     MEDIA_LOG_I("stop enter.");
+     AutoLock lock (captureMutex_);
++    ++readGeneration_;
+     if (audioCapturer_ && audioCapturer_->GetStatus() == AudioStandard::CAPTURER_RUNNING) {
+         if (!audioCapturer_->Stop()) {
+             MEDIA_LOG_E("Stop audioCapturer fail");
+@@ -319,57 +340,70 @@
+ 
+ Status AudioCaptureModule::Read(std::shared_ptr<AVBuffer> &buffer, size_t expectedLen)
+ {
+-    MEDIA_LOG_D("AudioCaptureModule Read");
+-    auto bufferMeta = buffer->meta_;
+-    if (!bufferMeta) {
++    if (buffer == nullptr || buffer->meta_ == nullptr || buffer->memory_ == nullptr ||
++        expectedLen == 0 || expectedLen >= MAX_CAPTURE_BUFFER_SIZE) {
+         return Status::ERROR_INVALID_PARAMETER;
+     }
+-    std::shared_ptr<AVMemory> bufData = buffer->memory_;
+-    if (bufData->GetCapacity() <= 0) {
+-        return Status::ERROR_NO_MEMORY;
+-    }
+-    auto size = 0;
+-    Status ret = Status::OK;
++    auto memory = buffer->memory_;
++    const int32_t capacity = memory->GetCapacity();
++    const int32_t offset = memory->GetOffset();
++    if (capacity <= 0 || offset < 0 || offset > capacity ||
++        expectedLen > static_cast<size_t>(capacity - offset) || memory->GetAddr() == nullptr ||
++        (memory->GetMemoryFlag() & MemoryFlag::MEMORY_WRITE_ONLY) == 0) {
++        return Status::ERROR_INVALID_PARAMETER;
++    }
++    auto ret = memory->SetSize(0);
++    if (ret != Status::OK) {
++        return ret;
++    }
++    ret = Read(memory->GetAddr() + offset, expectedLen);
++    if (ret != Status::OK) {
++        return ret;
++    }
++    return memory->SetSize(static_cast<int32_t>(expectedLen));
++}
++
++Status AudioCaptureModule::Read(uint8_t *cacheAudioData, size_t expectedLen)
++{
++    if (cacheAudioData == nullptr || expectedLen == 0 || expectedLen >= MAX_CAPTURE_BUFFER_SIZE) {
++        return Status::ERROR_INVALID_PARAMETER;
++    }
++    // Serialize readers, but never hold captureMutex_ across a blocking Capturer::Read.
++    std::lock_guard<std::mutex> readLock(readMutex_);
++    std::shared_ptr<AudioStandard::AudioCapturer> capturer;
++    uint64_t generation;
+     {
+         AutoLock lock(captureMutex_);
+-        if (audioCapturer_ == nullptr) {
+-            MEDIA_LOG_E("Audio capture is null");
+-            return Status::ERROR_WRONG_STATE;
+-        }
+-        if (audioCapturer_->GetStatus() != AudioStandard::CAPTURER_RUNNING) {
+-            return Status::ERROR_AGAIN;
+-        }
+-        FALSE_RETURN_V_MSG_E(bufData->GetAddr() != nullptr,
+-            Status::ERROR_NULL_POINTER, "audioCapturer GetAddr() fail");
+-        size = audioCapturer_->Read(*bufData->GetAddr(), expectedLen, true);
+-    }
+-    FALSE_RETURN_V_MSG_E(size >= 0, Status::ERROR_NOT_ENOUGH_DATA, "audioCapturer Read() fail");
+-
++        capturer = audioCapturer_;
++        generation = readGeneration_;
++    }
++    if (capturer == nullptr) {
++        return Status::ERROR_AUD_INIT_FAILED;
++    }
++    size_t filled = 0;
++    while (filled < expectedLen) {
++        {
++            AutoLock lock(captureMutex_);
++            if (generation != readGeneration_ || capturer != audioCapturer_ ||
++                capturer->GetStatus() != AudioStandard::CAPTURER_RUNNING) {
++                return Status::ERROR_AGAIN;
++            }
++        }
++        const size_t remaining = expectedLen - filled;
++        const int32_t readSize = capturer->Read(cacheAudioData[filled], remaining, true);
++        if (readSize <= 0 || static_cast<size_t>(readSize) > remaining) {
++            return Status::ERROR_NOT_ENOUGH_DATA;
++        }
++        filled += static_cast<size_t>(readSize);
++    }
++    AutoLock lock(captureMutex_);
++    // Stop/Resume may have completed while the last blocking read was returning.
++    if (generation != readGeneration_ || capturer != audioCapturer_ ||
++        capturer->GetStatus() != AudioStandard::CAPTURER_RUNNING) {
++        return Status::ERROR_AGAIN;
++    }
+     if (isTrackMaxAmplitude) {
+-        TrackMaxAmplitude(reinterpret_cast<int16_t *>(bufData->GetAddr()),
+-            static_cast<int32_t>(static_cast<uint32_t>(bufData->GetSize()) >> 1));
+-    }
+-    return ret;
+-}
+-
+-Status AudioCaptureModule::Read(uint8_t *cacheAudioData, size_t expectedLen)
+-{
+-    MEDIA_LOG_D("AudioCaptureModule Read");
+-    auto size = 0;
+-    {
+-        AutoLock lock(captureMutex_);
+-        FALSE_RETURN_V_MSG_E(audioCapturer_ != nullptr, Status::ERROR_AUD_INIT_FAILED, "no available audio capture");
+-        FALSE_RETURN_V_MSG_E(audioCapturer_->GetStatus() == AudioStandard::CAPTURER_RUNNING,
+-            Status::ERROR_AGAIN, "Audio capture Status error");
+-        FALSE_RETURN_V_MSG_E(cacheAudioData != nullptr, Status::ERROR_UNKNOWN, "cacheAudioData is null");
+-
+-        size = audioCapturer_->Read(*cacheAudioData, expectedLen, true);
+-    }
+-    FALSE_RETURN_V_MSG_E(size >= 0, Status::ERROR_NOT_ENOUGH_DATA, "audioCapturer Read() fail");
+-
+-    if (isTrackMaxAmplitude) {
+-        TrackMaxAmplitude(reinterpret_cast<int16_t *>(cacheAudioData),
+-            static_cast<int32_t>(static_cast<uint32_t>(size) >> 1));
++        TrackMaxAmplitude(cacheAudioData, static_cast<int32_t>(filled / sizeof(int16_t)));
+     }
+     return Status::OK;
+ }
+@@ -455,10 +489,11 @@
+ 
+ int32_t AudioCaptureModule::GetMaxAmplitude()
+ {
++    AutoLock lock(captureMutex_);
+     if (!isTrackMaxAmplitude) {
+         isTrackMaxAmplitude = true;
+     }
+-    int16_t value = maxAmplitude_;
++    int32_t value = maxAmplitude_;
+     maxAmplitude_ = 0;
+     return value;
+ }
+@@ -468,10 +503,12 @@
+     options_.capturerInfo.sourceType = source;
+ }
+ 
+-void AudioCaptureModule::TrackMaxAmplitude(int16_t *data, int32_t size)
++void AudioCaptureModule::TrackMaxAmplitude(const uint8_t *data, int32_t size)
+ {
+     for (int32_t i = 0; i < size; i++) {
+-        int16_t value = *data++;
++        int16_t sample;
++        std::memcpy(&sample, data + static_cast<size_t>(i) * sizeof(sample), sizeof(sample));
++        int32_t value = sample;
+         if (value < 0) {
+             value = -value;
+         }
+--- a/foundation/multimedia/av_codec/services/media_engine/modules/source/audio_capture/audio_capture_module.h
++++ b/foundation/multimedia/av_codec/services/media_engine/modules/source/audio_capture/audio_capture_module.h
+@@ -18,6 +18,7 @@
+ 
+ #include <string>
+ #include <memory>
++#include <mutex>
+ #include "audio_capturer.h"
+ #include "common/status.h"
+ #include "meta/meta.h"
+@@ -69,10 +70,14 @@
+     bool AssignChannelNumIfSupported(const int32_t value);
+     bool AssignSampleFmtIfSupported(const Plugins::AudioSampleFormat value);
+ 
+-    void TrackMaxAmplitude(int16_t *data, int32_t size);
++    void TrackMaxAmplitude(const uint8_t *data, int32_t size);
+ 
++    // Control operations may stop a blocked read; they never wait for readMutex_ while holding captureMutex_.
++    std::mutex controlMutex_;
++    std::mutex readMutex_;
++    uint64_t readGeneration_ {0};
+     Mutex captureMutex_ {};
+-    std::unique_ptr<OHOS::AudioStandard::AudioCapturer> audioCapturer_ {nullptr};
++    std::shared_ptr<OHOS::AudioStandard::AudioCapturer> audioCapturer_ {nullptr};
+     std::shared_ptr<AudioStandard::AudioCapturerInfoChangeCallback> audioCapturerInfoChangeCallback_{nullptr};
+     AudioStandard::AudioCapturerOptions options_{};
+     std::shared_ptr<AudioCaptureModuleCallback> audioCaptureModuleCallback_ {nullptr};
+--- a/foundation/multimedia/av_codec/interfaces/inner_api/native/audio_capture_filter.h
++++ b/foundation/multimedia/av_codec/interfaces/inner_api/native/audio_capture_filter.h
+@@ -69,6 +69,8 @@
+ private:
+     void ReadLoop();
+     Status PrepareAudioCapture();
++    // Worker jobs do not acquire this control-operation lock.
++    std::mutex lifecycleMutex_;
+     std::shared_ptr<Task> taskPtr_{nullptr};
+     int32_t RelativeSleep(int64_t nanoTime);
+     void GetCurrentTime(int64_t &currentTime);

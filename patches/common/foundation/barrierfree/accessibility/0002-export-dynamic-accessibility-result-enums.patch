@@ -1,0 +1,82 @@
+diff --git a/foundation/barrierfree/accessibility/interfaces/kits/napi/src/native_module.cpp b/foundation/barrierfree/accessibility/interfaces/kits/napi/src/native_module.cpp
+--- a/foundation/barrierfree/accessibility/interfaces/kits/napi/src/native_module.cpp
++++ b/foundation/barrierfree/accessibility/interfaces/kits/napi/src/native_module.cpp
+@@ -231,6 +231,69 @@ static napi_value CreateFocusRuleType(napi_env env)
+     return objValue;
+ }
+ 
++static napi_value CreateAccessibilitySourceType(napi_env env)
++{
++    napi_value objValue = nullptr;
++    napi_create_object(env, &objValue);
++    napi_set_named_property(env, objValue, "DEFAULT",
++        CreateIntObject(env, OHOS::Accessibility::AccessibilitySourceType::DEFAULT_NODE));
++    napi_set_named_property(env, objValue, "ADDED_FROM_ACCESSIBILITY_VIRTUAL_NODE",
++        CreateIntObject(env, OHOS::Accessibility::AccessibilitySourceType::ADDED_FROM_ACCESSIBILITY_VIRTUAL_NODE));
++    napi_set_named_property(env, objValue, "UPDATED_FROM_ACCESSIBILITY_VIRTUAL_NODE",
++        CreateIntObject(env, OHOS::Accessibility::AccessibilitySourceType::UPDATED_FROM_ACCESSIBILITY_VIRTUAL_NODE));
++    return objValue;
++}
++
++static napi_value CreateFocusMoveResultCode(napi_env env)
++{
++    napi_value objValue = nullptr;
++    napi_create_object(env, &objValue);
++    napi_set_named_property(env, objValue, "NOT_SUPPORTED",
++        CreateIntObject(env, OHOS::Accessibility::FocusMoveResultType::NOT_SUPPORT));
++    napi_set_named_property(env, objValue, "SEARCH_SUCCESS",
++        CreateIntObject(env, OHOS::Accessibility::FocusMoveResultType::SEARCH_SUCCESS));
++    napi_set_named_property(env, objValue, "SEARCH_SUCCESS_NEXT_BYPASS_DESCENDANTS",
++        CreateIntObject(env, OHOS::Accessibility::FocusMoveResultType::SEARCH_SUCCESS_NEXT_BYPASS_DESCENDANTS));
++    napi_set_named_property(env, objValue, "SEARCH_FAILURE",
++        CreateIntObject(env, OHOS::Accessibility::FocusMoveResultType::SEARCH_FAIL));
++    napi_set_named_property(env, objValue, "SEARCH_FAILURE_IN_CHILD_TREE",
++        CreateIntObject(env, OHOS::Accessibility::FocusMoveResultType::SEARCH_FAIL_IN_CHILDTREE));
++    napi_set_named_property(env, objValue, "SEARCH_FAILURE_LOST_NODE",
++        CreateIntObject(env, OHOS::Accessibility::FocusMoveResultType::SEARCH_FAIL_LOST_NODE));
++    napi_set_named_property(env, objValue, "SEARCH_NEXT",
++        CreateIntObject(env, OHOS::Accessibility::FocusMoveResultType::SEARCH_NEXT));
++    napi_set_named_property(env, objValue, "DOUBLE_CHECK_CHILD_PROPERTY",
++        CreateIntObject(env, OHOS::Accessibility::FocusMoveResultType::DOUBLE_CHECK_CHILD_PROPERTY));
++    napi_set_named_property(env, objValue, "DOUBLE_CHECK_CHILD_PROPERTY_AND_GET_LAST",
++        CreateIntObject(env, OHOS::Accessibility::FocusMoveResultType::DOUBLE_CHECK_CHILD_PROPERTY_AND_GET_LAST));
++    napi_set_named_property(env, objValue, "SEARCH_FAILURE_IN_SCROLL",
++        CreateIntObject(env, OHOS::Accessibility::FocusMoveResultType::SEARCH_FAIL_IN_SCROLL));
++    return objValue;
++}
++
++static napi_value CreateOperateVirtualNodeResult(napi_env env)
++{
++    napi_value objValue = nullptr;
++    napi_create_object(env, &objValue);
++    napi_set_named_property(env, objValue, "SUCCESS",
++        CreateIntObject(env, OHOS::Accessibility::OperateVirtualNodeResult::SUCCESS));
++    napi_set_named_property(env, objValue, "ACCESSIBILITY_ELEMENT_NOT_EXIST",
++        CreateIntObject(env, OHOS::Accessibility::OperateVirtualNodeResult::ACCESSIBILITY_ELEMENT_NOT_EXIST));
++    napi_set_named_property(env, objValue, "CANNOT_MODIFY_ROOT_NODE",
++        CreateIntObject(env, OHOS::Accessibility::OperateVirtualNodeResult::CANNOT_MODIFY_ROOT_NODE));
++    napi_set_named_property(env, objValue, "ACCESSIBILITY_PROPERTY_IS_EMPTY",
++        CreateIntObject(env, OHOS::Accessibility::OperateVirtualNodeResult::ACCESSIBILITY_PROPERTY_EMPTY));
++    napi_set_named_property(env, objValue, "ALLOCATE_ID_FAILED",
++        CreateIntObject(env, OHOS::Accessibility::OperateVirtualNodeResult::ALLOCATE_ID_FAILED));
++    napi_set_named_property(env, objValue, "VIRTUAL_NODE_PARAMETER_IS_EMPTY",
++        CreateIntObject(env, OHOS::Accessibility::OperateVirtualNodeResult::ADD_NODE_IS_EMPTY));
++    napi_set_named_property(env, objValue, "INTERNAL_ERROR",
++        CreateIntObject(env, OHOS::Accessibility::OperateVirtualNodeResult::INTERNAL_ERROR));
++    napi_set_named_property(env, objValue, "VIRTUAL_NODE_NOT_SUPPORTED",
++        CreateIntObject(env, OHOS::Accessibility::OperateVirtualNodeResult::VIRTUAL_NODE_NOT_SUPPORT));
++    return objValue;
++}
++
+ static napi_value CreateAccessibilityAction(napi_env env)
+ {
+     napi_value objValue = nullptr;
+@@ -319,5 +382,8 @@ static napi_value Init(napi_env env, napi_value exports)
+     napi_set_named_property(env, exports, "InjectActionType", CreateInjectActionType(env));
+     napi_set_named_property(env, exports, "AccessibilityFocusScene", CreateAccessibilityFocusScene(env));
+     napi_set_named_property(env, exports, "FocusRuleType", CreateFocusRuleType(env));
++    napi_set_named_property(env, exports, "AccessibilitySourceType", CreateAccessibilitySourceType(env));
++    napi_set_named_property(env, exports, "FocusMoveResultCode", CreateFocusMoveResultCode(env));
++    napi_set_named_property(env, exports, "OperateVirtualNodeResult", CreateOperateVirtualNodeResult(env));
+ 
+     auto &instance = OHOS::AccessibilityConfig::AccessibilityConfig::GetInstance();

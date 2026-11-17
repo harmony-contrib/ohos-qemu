@@ -1,0 +1,16 @@
+diff --git a/base/powermgr/thermal_manager/services/native/profile/BUILD.gn b/base/powermgr/thermal_manager/services/native/profile/BUILD.gn
+--- a/base/powermgr/thermal_manager/services/native/profile/BUILD.gn
++++ b/base/powermgr/thermal_manager/services/native/profile/BUILD.gn
+@@ -16,6 +16,12 @@
+ ## Install thermal_service_config.xml to /system/etc/thermal_config/thermal_service_config.xml
+ ohos_prebuilt_etc("thermal_service_config") {
+   source = "thermal_service_config.xml"
++  if (defined(product_name) &&
++      (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++       product_name == "x86_64_virt")) {
++    source = "qemu_thermal_service_config.xml"
++    output = "thermal_service_config.xml"
++  }
+   relative_install_dir = "thermal_config"
+   part_name = "thermal_manager"
+   subsystem_name = "powermgr"

@@ -1,0 +1,28 @@
+diff --git a/vendor/ohemu/virt/virt_common.json b/vendor/ohemu/virt/virt_common.json
+index 605fb5c..b08dfb6 100644
+--- a/vendor/ohemu/virt/virt_common.json
++++ b/vendor/ohemu/virt/virt_common.json
+@@ -128,7 +128,8 @@
+           "features": [
+             "drivers_peripheral_audio_feature_full_test_suite = true",
+             "drivers_peripheral_audio_feature_alsa_lib = true",
+-            "drivers_peripheral_audio_feature_effect = true"
++            "drivers_peripheral_audio_feature_effect = true",
++            "drivers_peripheral_audio_vendor_alsa_path = \"//device/qemu/common/virt_full/audio_alsa\""
+           ]
+         },
+         {
+diff --git a/vendor/ohemu/virt/virt_common_x86_64.json b/vendor/ohemu/virt/virt_common_x86_64.json
+index 1c3538f..04b5ff8 100644
+--- a/vendor/ohemu/virt/virt_common_x86_64.json
++++ b/vendor/ohemu/virt/virt_common_x86_64.json
+@@ -128,7 +128,8 @@
+           "features": [
+             "drivers_peripheral_audio_feature_full_test_suite = true",
+             "drivers_peripheral_audio_feature_alsa_lib = true",
+-            "drivers_peripheral_audio_feature_effect = true"
++            "drivers_peripheral_audio_feature_effect = true",
++            "drivers_peripheral_audio_vendor_alsa_path = \"//device/qemu/common/virt_full/audio_alsa\""
+           ]
+         },
+         {

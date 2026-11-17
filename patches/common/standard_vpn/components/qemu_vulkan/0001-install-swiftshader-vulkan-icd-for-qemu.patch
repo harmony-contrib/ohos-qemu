@@ -1,0 +1,12 @@
+diff --git a/device/qemu/common/virt_full/hardware/BUILD.gn b/device/qemu/common/virt_full/hardware/BUILD.gn
+--- a/device/qemu/common/virt_full/hardware/BUILD.gn
++++ b/device/qemu/common/virt_full/hardware/BUILD.gn
+@@ -23,6 +23,8 @@ group("hardware_group") {
+     "//third_party/alsa-lib:libasound",
+   ]
+ 
++  deps += [ "//device/qemu/common/virt_full/hardware/vulkan:swiftshader_vulkan" ]
++
+   # The checked-in GPU binaries only cover arm64 and x86_64. Build Mesa's
+   # kms_swrast driver from source for the armv7a QEMU product.
+   if (target_cpu == "arm") {

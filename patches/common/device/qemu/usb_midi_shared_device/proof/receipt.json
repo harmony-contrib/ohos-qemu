@@ -1,0 +1,383 @@
+{
+  "scope": "normal bounded readonly source/out/toolchain/Ninja-command facts only; no compilation, binary execution, image freshness or runtime acceptance",
+  "root_integration_commit": "8a2d22d6d1f98be2143a44468e9d1ee7cd250ae7",
+  "closed_original_attempt": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r67-canonical-first-arm64-phone-build-579-04/evidence.json",
+    "sha256": "d4205ca82002fe63cb96c6f19fed155bd90807bb9825b46d67530bde49814a2e",
+    "bytes": 13224
+  },
+  "exit_code": 0,
+  "commands": [
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "ohos-readonly-whole579-c9ee1c07aafd4be2a5642675923ebdf7"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 1,
+      "timed_out": false,
+      "started_monotonic": 1463387.282516125,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0000-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0000-inspect-owned-stderr.bin",
+      "host_pid": 9985,
+      "seconds": 0.409295333083719,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0000-inspect-owned-stdout.bin",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "bytes": 3
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0000-inspect-owned-stderr.bin",
+        "sha256": "aee60072ce7ca964f9e42e44da1474d35e4d75a7abe69308012fed03284363ca",
+        "bytes": 79
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "create",
+        "--name",
+        "ohos-readonly-whole579-c9ee1c07aafd4be2a5642675923ebdf7",
+        "--cidfile",
+        "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/ohos-readonly-whole579-c9ee1c07aafd4be2a5642675923ebdf7.cid",
+        "--label",
+        "ohos-qemu.root-run=c9ee1c07aafd4be2a5642675923ebdf7",
+        "--label",
+        "ohos-qemu.source-commit=8a2d22d6d1f98be2143a44468e9d1ee7cd250ae7",
+        "--platform",
+        "linux/amd64",
+        "--read-only",
+        "--cpus",
+        "2",
+        "--memory",
+        "2g",
+        "--pids-limit",
+        "256",
+        "--network",
+        "none",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--tmpfs",
+        "/tmp:rw,exec,nosuid,nodev,size=512m",
+        "--mount",
+        "type=volume,src=ohos-qemu-7_0-release-source,dst=/ohos,readonly",
+        "--mount",
+        "type=volume,src=ohos-qemu-7_0-release-out,dst=/ohos/out,readonly",
+        "--mount",
+        "type=bind,src=/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/readonly-usb-midi26,dst=/input,readonly",
+        "--mount",
+        "type=bind,src=/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26,dst=/evidence",
+        "sha256:8f7a960c7dc515a597d43a510d6d8a5e634e5c94a55aa5d9e22bfbf6b0f42c55",
+        "python3",
+        "-B",
+        "/input/inner.py"
+      ],
+      "label": "create-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1463387.697754916,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0001-create-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0001-create-owned-stderr.bin",
+      "host_pid": 9989,
+      "seconds": 0.5807669169735163,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0001-create-owned-stdout.bin",
+        "sha256": "cc0254d972aac0d7d02289d36066d4032b917c8912dbb3091c49049db0b0dc21",
+        "bytes": 65
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0001-create-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "4a33699c32e3773cc0fbd90a0cd9a56baa171274ec796002faf7853f174ba36e"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1463388.281925625,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0002-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0002-inspect-owned-stderr.bin",
+      "host_pid": 10002,
+      "seconds": 0.04695229115895927,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0002-inspect-owned-stdout.bin",
+        "sha256": "dacf2e8f656a4d45a7805a00125febfe239222f66a4714ceb91620a549cd8e79",
+        "bytes": 12208
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0002-inspect-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "4a33699c32e3773cc0fbd90a0cd9a56baa171274ec796002faf7853f174ba36e"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1463388.33216325,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0003-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0003-inspect-owned-stderr.bin",
+      "host_pid": 10003,
+      "seconds": 0.04599329084157944,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0003-inspect-owned-stdout.bin",
+        "sha256": "3963101ee3b3e20b41cfc54dc4ae88ce83a25398c7a52c39e9f85f29cdc69f51",
+        "bytes": 12208
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0003-inspect-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "start",
+        "-a",
+        "4a33699c32e3773cc0fbd90a0cd9a56baa171274ec796002faf7853f174ba36e"
+      ],
+      "label": "start-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1463388.381434541,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0004-start-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0004-start-owned-stderr.bin",
+      "host_pid": 10006,
+      "seconds": 1.442689083982259,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0004-start-owned-stdout.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0004-start-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "4a33699c32e3773cc0fbd90a0cd9a56baa171274ec796002faf7853f174ba36e"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1463389.829605291,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0005-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0005-inspect-owned-stderr.bin",
+      "host_pid": 10022,
+      "seconds": 0.14260679204016924,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0005-inspect-owned-stdout.bin",
+        "sha256": "754309817ecd92876f5a67675e16dbc51218e37f4d091bfe57b5a234a720fccc",
+        "bytes": 12755
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0005-inspect-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "4a33699c32e3773cc0fbd90a0cd9a56baa171274ec796002faf7853f174ba36e"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1463389.979450041,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0006-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0006-inspect-owned-stderr.bin",
+      "host_pid": 10023,
+      "seconds": 0.04086245899088681,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0006-inspect-owned-stdout.bin",
+        "sha256": "754309817ecd92876f5a67675e16dbc51218e37f4d091bfe57b5a234a720fccc",
+        "bytes": 12755
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0006-inspect-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "4a33699c32e3773cc0fbd90a0cd9a56baa171274ec796002faf7853f174ba36e"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1463390.025577125,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0007-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0007-inspect-owned-stderr.bin",
+      "host_pid": 10025,
+      "seconds": 0.04667020798660815,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0007-inspect-owned-stdout.bin",
+        "sha256": "1532a87b1d73e571c660d84e0d509dac2d127227b5f841f2283ee293df293d39",
+        "bytes": 12755
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0007-inspect-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "rm",
+        "4a33699c32e3773cc0fbd90a0cd9a56baa171274ec796002faf7853f174ba36e"
+      ],
+      "label": "remove-owned",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1463390.076032,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0008-remove-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0008-remove-owned-stderr.bin",
+      "host_pid": 10027,
+      "seconds": 0.14780683303251863,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0008-remove-owned-stdout.bin",
+        "sha256": "cc0254d972aac0d7d02289d36066d4032b917c8912dbb3091c49049db0b0dc21",
+        "bytes": 65
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0008-remove-owned-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "4a33699c32e3773cc0fbd90a0cd9a56baa171274ec796002faf7853f174ba36e"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 1,
+      "timed_out": false,
+      "started_monotonic": 1463390.226346458,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0009-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0009-inspect-owned-stderr.bin",
+      "host_pid": 10029,
+      "seconds": 0.03982945787720382,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0009-inspect-owned-stdout.bin",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "bytes": 3
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0009-inspect-owned-stderr.bin",
+        "sha256": "3709d0944abc8debaa1dc97d72811d0a3758c743b2b04d177ff204f11762d901",
+        "bytes": 88
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "inspect",
+        "ohos-readonly-whole579-c9ee1c07aafd4be2a5642675923ebdf7"
+      ],
+      "label": "inspect-owned",
+      "exit_code": 1,
+      "timed_out": false,
+      "started_monotonic": 1463390.26914275,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0010-inspect-owned-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0010-inspect-owned-stderr.bin",
+      "host_pid": 10030,
+      "seconds": 0.04449620796367526,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0010-inspect-owned-stdout.bin",
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "bytes": 3
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0010-inspect-owned-stderr.bin",
+        "sha256": "aee60072ce7ca964f9e42e44da1474d35e4d75a7abe69308012fed03284363ca",
+        "bytes": 79
+      }
+    },
+    {
+      "argv": [
+        "docker",
+        "ps",
+        "-aq",
+        "--no-trunc",
+        "--filter",
+        "label=ohos-qemu.root-run=c9ee1c07aafd4be2a5642675923ebdf7"
+      ],
+      "label": "owner-final-inventory",
+      "exit_code": 0,
+      "timed_out": false,
+      "started_monotonic": 1463390.319592916,
+      "stdout": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0011-owner-final-inventory-stdout.bin",
+      "stderr": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0011-owner-final-inventory-stderr.bin",
+      "host_pid": 10031,
+      "seconds": 0.04334616707637906,
+      "stdout_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0011-owner-final-inventory-stdout.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stderr_record": {
+        "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/commands/0011-owner-final-inventory-stderr.bin",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    }
+  ],
+  "source_scripts": {
+    "run.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/readonly-usb-midi26/run.py",
+      "sha256": "630bcd766aa1054790d4d651b2f5ad3090c494b12001ac4f33d1e3ee82f42332",
+      "bytes": 4089
+    },
+    "inner.py": {
+      "path": "/Volumes/PSSD/code/ohos-rs/ohos-qemu/.tmp/parallel-capability-20261016/root-whole579-integration-draft/readonly-usb-midi26/inner.py",
+      "sha256": "8af91c21b21fdf405a646fb89b27235717c33c85feb475b4ba3d331c25e52e47",
+      "bytes": 1609
+    }
+  },
+  "host_tests_executed": false,
+  "runtime_pass": false,
+  "first_artifact_behavior_gate_passed": false,
+  "container_id": "4a33699c32e3773cc0fbd90a0cd9a56baa171274ec796002faf7853f174ba36e",
+  "source_export": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/SOURCE.json",
+    "sha256": "1a80924c6364b2b691a10de74ef5545e4b802ab20f992a450c93902dee034e92",
+    "bytes": 278
+  },
+  "cleanup_verified": true,
+  "owned_container_absent": true,
+  "resource_ledger": {
+    "path": "/Volumes/PSSD/qemu/validation/first-20261005/issue-20-20261006/r70-readonly-usb-midi579-26/resources.json",
+    "sha256": "ca1025d789ca11d1fb5646cf0de0dbbeb494271dba480c4761f8c064ceeacdce",
+    "bytes": 18043
+  },
+  "quarantine_recovery_performed": false,
+  "signals": [],
+  "finished_utc": "2026-10-22T05:37:47.753337+00:00"
+}

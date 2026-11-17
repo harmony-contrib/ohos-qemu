@@ -1,0 +1,26 @@
+diff --git a/vendor/ohemu/virt/preinstall-config/install_list_capability.json b/vendor/ohemu/virt/preinstall-config/install_list_capability.json
+--- a/vendor/ohemu/virt/preinstall-config/install_list_capability.json
++++ b/vendor/ohemu/virt/preinstall-config/install_list_capability.json
+@@ -62,5 +62,12 @@
+       ]
+     },
++    {
++      "bundleName": "com.ohos.settings",
++      "app_signature": [
++        "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
++      ],
++      "allowAppUsePrivilegeExtension": true
++    },
+     {
+       "bundleName": "com.ohos.settingsdata",
+       "app_signature": [
+diff --git a/vendor/ohemu/virt/preinstall-config/install_list_permissions.json b/vendor/ohemu/virt/preinstall-config/install_list_permissions.json
+--- a/vendor/ohemu/virt/preinstall-config/install_list_permissions.json
++++ b/vendor/ohemu/virt/preinstall-config/install_list_permissions.json
+@@ -363,5 +363,5 @@
+     "bundleName": "com.ohos.settings",
+     "app_signature": [
+-      "EB5DBE52EE8DD7206DDE612E7484E88CE264E74958704D0712BFA774C87F4DA1"
++      "8E93863FC32EE238060BF69A9B37E2608FFFB21F93C862DD511CBAC9F30024B5"
+     ],
+     "permissions": [

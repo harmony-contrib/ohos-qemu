@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "component": "privacycenter_provider",
+  "kind": "independent_exact_asset_staging",
+  "devices": ["phone", "2in1"],
+  "entrypoint": "apply.py",
+  "library": "patches/lib/privacycenter_provider.py",
+  "asset_root_environment": "SCENEBOARD_RUNTIME_ASSET_ROOT",
+  "asset": "SecurityPrivacyCenter.hap",
+  "source_target": "applications/standard/hap/sceneboard/SecurityPrivacyCenter.hap",
+  "accepted_source_sha256": [
+    "d150dedbbf732b57ddc376e4a11dc4d873a75281d749bb74873ae0081d35e7e4",
+    "e955901c2f23c23edb819b92493fb7455873656815e21ac693681fa6af453f6a"
+  ],
+  "canonical_asset_sha256": "e955901c2f23c23edb819b92493fb7455873656815e21ac693681fa6af453f6a",
+  "install_entry": {"app_dir": "/system/app/com.ohos.security.privacycenter", "removable": false},
+  "metadata_key": "privacycenter_provider",
+  "image_verifier": "scripts/verify_privacycenter_provider_image.py",
+  "requires_root_shared_build_package_integration": true,
+  "provider_runtime_validated": false,
+  "first_artifact_behavior_gate_passed": false
+}

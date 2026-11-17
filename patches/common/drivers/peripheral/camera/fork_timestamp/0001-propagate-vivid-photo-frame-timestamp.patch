@@ -1,0 +1,16 @@
+diff --git a/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/src/node/fork_node.cpp b/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/src/node/fork_node.cpp
+--- a/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/src/node/fork_node.cpp
++++ b/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/src/node/fork_node.cpp
+@@ -137,6 +137,12 @@ void PcForkNode::DeliverBuffer(std::shared_ptr<IBuffer>& buffer)
+         std::shared_ptr<IBuffer> forkBuffer = bufferPool_->AcquireBuffer(0);
+         if (forkBuffer != nullptr) {
+             CopyBufferToForkBuffer(buffer, forkBuffer);
++#ifdef QEMU_VIVID_CAPTURE_ENABLED
++            // The JPEG stream has its own buffer. Preserve the actual V4L2
++            // frame timestamp when forking it from the live preview frame.
++            // Otherwise the photo surface publishes the default -1 timestamp.
++            forkBuffer->SetEsTimestamp(buffer->GetEsFrameInfo().timestamp);
++#endif
+             forkBuffer->SetIsValidDataInSurfaceBuffer(false);
+             forkBuffer->SetCurFormat(buffer->GetCurFormat());
+             forkBuffer->SetCurWidth(buffer->GetCurWidth());

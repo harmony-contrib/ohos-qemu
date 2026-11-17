@@ -1,0 +1,16 @@
+diff --git a/drivers/peripheral/thermal/interfaces/hdi_service/profile/BUILD.gn b/drivers/peripheral/thermal/interfaces/hdi_service/profile/BUILD.gn
+--- a/drivers/peripheral/thermal/interfaces/hdi_service/profile/BUILD.gn
++++ b/drivers/peripheral/thermal/interfaces/hdi_service/profile/BUILD.gn
+@@ -15,6 +15,12 @@
+ ## Install thermal_hdi_config.xml to /vendor/etc/thermal_config/thermal_hdi_config.xml
+ ohos_prebuilt_etc("thermal_hdf_config") {
+   source = "thermal_hdi_config.xml"
++  if (defined(product_name) &&
++      (product_name == "arm64_virt" || product_name == "armv7a_virt" ||
++       product_name == "x86_64_virt")) {
++    source = "qemu_thermal_hdi_config.xml"
++    output = "thermal_hdi_config.xml"
++  }
+   relative_install_dir = "thermal_config"
+   install_images = [ chipset_base_dir ]
+   subsystem_name = "hdf"

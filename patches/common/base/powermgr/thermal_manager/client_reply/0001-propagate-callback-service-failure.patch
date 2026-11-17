@@ -1,0 +1,59 @@
+diff --git a/base/powermgr/thermal_manager/frameworks/native/thermal_mgr_client.cpp b/base/powermgr/thermal_manager/frameworks/native/thermal_mgr_client.cpp
+--- a/base/powermgr/thermal_manager/frameworks/native/thermal_mgr_client.cpp
++++ b/base/powermgr/thermal_manager/frameworks/native/thermal_mgr_client.cpp
+@@ -99,32 +99,28 @@
+ {
+     THERMAL_RETURN_IF_WITH_RET((callback == nullptr) || (Connect() != ERR_OK), false);
+     THERMAL_HILOGD(COMP_FWK, "Enter");
+-    thermalSrv_->SubscribeThermalTempCallback(typeList, callback);
+-    return true;
++    return thermalSrv_->SubscribeThermalTempCallback(typeList, callback) == ERR_OK;
+ }
+ 
+ bool ThermalMgrClient::UnSubscribeThermalTempCallback(const sptr<IThermalTempCallback>& callback)
+ {
+     THERMAL_RETURN_IF_WITH_RET((callback == nullptr) || (Connect() != ERR_OK), false);
+     THERMAL_HILOGD(COMP_FWK, "Enter");
+-    thermalSrv_->UnSubscribeThermalTempCallback(callback);
+-    return true;
++    return thermalSrv_->UnSubscribeThermalTempCallback(callback) == ERR_OK;
+ }
+ 
+ bool ThermalMgrClient::SubscribeThermalLevelCallback(const sptr<IThermalLevelCallback>& callback, bool isSync)
+ {
+     THERMAL_RETURN_IF_WITH_RET((callback == nullptr) || (Connect() != ERR_OK), false);
+     THERMAL_HILOGD(COMP_FWK, "Enter");
+-    thermalSrv_->SubscribeThermalLevelCallback(callback, isSync);
+-    return true;
++    return thermalSrv_->SubscribeThermalLevelCallback(callback, isSync) == ERR_OK;
+ }
+ 
+ bool ThermalMgrClient::UnSubscribeThermalLevelCallback(const sptr<IThermalLevelCallback>& callback)
+ {
+     THERMAL_RETURN_IF_WITH_RET((callback == nullptr) || (Connect() != ERR_OK), false);
+     THERMAL_HILOGD(COMP_FWK, "Enter");
+-    thermalSrv_->UnSubscribeThermalLevelCallback(callback);
+-    return true;
++    return thermalSrv_->UnSubscribeThermalLevelCallback(callback) == ERR_OK;
+ }
+ 
+ bool ThermalMgrClient::SubscribeThermalActionCallback(
+@@ -132,16 +128,14 @@
+ {
+     THERMAL_RETURN_IF_WITH_RET((callback == nullptr) || (Connect() != ERR_OK), false);
+     THERMAL_HILOGD(COMP_FWK, "Enter");
+-    thermalSrv_->SubscribeThermalActionCallback(actionList, desc, callback);
+-    return true;
++    return thermalSrv_->SubscribeThermalActionCallback(actionList, desc, callback) == ERR_OK;
+ }
+ 
+ bool ThermalMgrClient::UnSubscribeThermalActionCallback(const sptr<IThermalActionCallback>& callback)
+ {
+     THERMAL_RETURN_IF_WITH_RET((callback == nullptr) || (Connect() != ERR_OK), false);
+     THERMAL_HILOGD(COMP_FWK, "Enter");
+-    thermalSrv_->UnSubscribeThermalActionCallback(callback);
+-    return true;
++    return thermalSrv_->UnSubscribeThermalActionCallback(callback) == ERR_OK;
+ }
+ 
+ bool ThermalMgrClient::GetThermalSrvSensorInfo(const SensorType& type, ThermalSrvSensorInfo& sensorInfo)

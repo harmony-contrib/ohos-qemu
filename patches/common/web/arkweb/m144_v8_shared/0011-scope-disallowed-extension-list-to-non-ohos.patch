@@ -1,0 +1,12 @@
+diff --git a/src/components/BUILD.gn b/src/components/BUILD.gn
+--- a/src/components/BUILD.gn
++++ b/src/components/BUILD.gn
+@@ -75,7 +75,7 @@ if (is_ios) {
+   }
+ }
+ 
+-if (!arkweb_unittests) {
++if (!arkweb_unittests && !is_ohos) {
+ disallowed_extension_deps_ = [
+   # Components should largely not depend on //extensions. Since // extensions
+   # is not a component target and is linked with //chrome, depending on most

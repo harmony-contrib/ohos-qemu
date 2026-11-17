@@ -1,0 +1,12 @@
+diff --git a/foundation/multimedia/image_framework/frameworks/kits/js/common/native_module_ohos_image.cpp b/foundation/multimedia/image_framework/frameworks/kits/js/common/native_module_ohos_image.cpp
+--- a/foundation/multimedia/image_framework/frameworks/kits/js/common/native_module_ohos_image.cpp
++++ b/foundation/multimedia/image_framework/frameworks/kits/js/common/native_module_ohos_image.cpp
+@@ -65,6 +65,8 @@ static napi_value Export(napi_env env, napi_value exports)
+     MetadataNapi::InitJfifMetadata(env, exports);
+     IMAGE_LOGD("PngMetadataNapi CALL");
+     MetadataNapi::InitPngMetadata(env, exports);
++    IMAGE_LOGD("AvisMetadataNapi CALL");
++    MetadataNapi::InitAvisMetadata(env, exports);
+     IMAGE_LOGD("ImageReceiverNapi CALL");
+     ImageReceiverNapi::Init(env, exports);
+     IMAGE_LOGD("ImageCreatorNapi CALL");

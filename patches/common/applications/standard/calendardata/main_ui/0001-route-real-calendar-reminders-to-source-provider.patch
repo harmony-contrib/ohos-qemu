@@ -1,0 +1,305 @@
+diff --git a/applications/standard/calendardata/entry/src/main/module.json5 b/applications/standard/calendardata/entry/src/main/module.json5
+--- a/applications/standard/calendardata/entry/src/main/module.json5
++++ b/applications/standard/calendardata/entry/src/main/module.json5
+@@ -115,7 +115,8 @@
+             "DataShareLowerExtAbility",
+             "DataShareHighExtAbility",
+             "ReminderCallbackExtAbility",
+-            "EditorUIExtensionAbility"
++            "EditorUIExtensionAbility",
++            "MainAbility"
+           ],
+           "when": "inuse"
+         }
+diff --git a/applications/standard/calendardata/entry/src/main/ets/MainAbility/MainAbility.ets b/applications/standard/calendardata/entry/src/main/ets/MainAbility/MainAbility.ets
+--- a/applications/standard/calendardata/entry/src/main/ets/MainAbility/MainAbility.ets
++++ b/applications/standard/calendardata/entry/src/main/ets/MainAbility/MainAbility.ets
+@@ -1,61 +1,32 @@
+-/**
+- * @file Describe the file
+- * Copyright (c) 2023 Huawei Device Co., Ltd.
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
+ import UIAbility from '@ohos.app.ability.UIAbility';
+-import { Log } from '@ohos/common/src/main/ets/utils/Log'
+ import Want from '@ohos.app.ability.Want';
+ import window from '@ohos.window';
+-import { BusinessError } from '@ohos.base';
+-
+-const TAG = 'MainAbility';
+ 
+ export default class MainAbility extends UIAbility {
+-  onCreate(want: Want) {
+-    Log.log(TAG, "MainAbility onCreate");
++  private storage: LocalStorage = new LocalStorage();
++  private revision: number = 0;
++
++  onCreate(want: Want): void {
++    this.storage.setOrCreate<string>('calendarRoute', want.uri ?? '');
++    this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+   }
+ 
+-  onDestroy() {
+-    Log.log(TAG, "MainAbility onDestroy");
++  onNewWant(want: Want): void {
++    this.storage.setOrCreate<string>('calendarRoute', want.uri ?? '');
++    this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+   }
+ 
+-  onWindowStageCreate(windowStage: window.WindowStage) {
+-    // Main window is created, set main page for this ability
+-    Log.log(TAG, "MainAbility onWindowStageCreate");
+-
+-    windowStage.loadContent("pages/index", (err: BusinessError, data) => {
+-      if (err.code) {
+-        Log.error(TAG, 'Failed to load content. Cause: ' + JSON.stringify(err) ?? '');
+-        return;
+-      }
+-      Log.info(TAG, 'Success in loading the content. Data: ' + JSON.stringify(data) ?? '');
+-    });
++  onWindowStageCreate(windowStage: window.WindowStage): void {
++    windowStage.loadContent('pages/index', this.storage);
+   }
+ 
+-  onWindowStageDestroy() {
+-    // Main window is destroyed, release UI related resources
+-    Log.log(TAG, "MainAbility onWindowStageDestroy");
++  onForeground(): void {
++    this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+   }
+ 
+-  onForeground() {
+-    // Ability has brought to foreground
+-    Log.log(TAG, "MainAbility onForeground");
++  onDestroy(): void {
++    this.storage.setOrCreate<string>('calendarRoute', '');
++    this.storage.setOrCreate<number>('calendarRevision', ++this.revision);
+   }
+-
+-  onBackground() {
+-    // Ability has back to background
+-    Log.log(TAG, "MainAbility onBackground");
+-  }
+-};
++}
+diff --git a/applications/standard/calendardata/entry/src/main/ets/pages/index.ets b/applications/standard/calendardata/entry/src/main/ets/pages/index.ets
+--- a/applications/standard/calendardata/entry/src/main/ets/pages/index.ets
++++ b/applications/standard/calendardata/entry/src/main/ets/pages/index.ets
+@@ -1,29 +1,66 @@
+-/**
+- * @file Describe the file
+- * Copyright (c) 2023 Huawei Device Co., Ltd.
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import common from '@ohos.app.ability.common';
++import { CalendarReminderReader } from '../reminder/CalendarReminderReader';
+ 
+ @Entry
+ @Component
+ struct Index {
+-  @State message: string = 'Hello World'
++  @LocalStorageLink('calendarRoute') route: string = '';
++  @LocalStorageLink('calendarRevision') @Watch('routeChanged') revision: number = 0;
++  @State title: string = '';
++  @State start: string = '';
++  @State end: string = '';
++  @State description: string = '';
++  @State status: string = '';
++  private reader: CalendarReminderReader | undefined = undefined;
++  private generation: number = 0;
+ 
+-  /**
+-   * In low-code mode, do not add anything to the build function, as it will be
+-   * overwritten by the content generated by the .visual file in the build phase.
+-   */
++  aboutToAppear(): void {
++    this.reader = new CalendarReminderReader(getContext(this) as common.UIAbilityContext);
++    this.routeChanged();
++  }
++
++  aboutToDisappear(): void {
++    this.generation++;
++    this.reader?.dispose();
++    this.reader = undefined;
++  }
++
++  private async routeChanged(): Promise<void> {
++    const reader: CalendarReminderReader | undefined = this.reader;
++    if (reader === undefined) {
++      return;
++    }
++    const generation: number = ++this.generation;
++    this.title = '';
++    this.start = '';
++    this.end = '';
++    this.description = '';
++    this.status = '正在读取日程';
++    await reader.open(this.route);
++    if (generation !== this.generation || this.reader !== reader) {
++      return;
++    }
++    this.status = reader.status;
++    if (reader.event !== undefined) {
++      this.title = reader.event.title ?? '无标题日程';
++      this.start = new Date(reader.event.startTime).toLocaleString();
++      this.end = new Date(reader.event.endTime).toLocaleString();
++      this.description = reader.event.description ?? '';
++    }
++  }
++
+   build() {
+-
++    Scroll() {
++      Column({ space: 16 }) {
++        Text('日程详情').fontSize(28).id('calendar-main-heading')
++        Text(this.status).fontSize(18).id('calendar-main-status')
++        Text(this.title).fontSize(24).id('calendar-main-title')
++        Text(this.start).fontSize(18).id('calendar-main-start')
++        Text(this.end).fontSize(18).id('calendar-main-end')
++        Text(this.description).fontSize(18).id('calendar-main-description')
++        Button('重新读取').id('calendar-main-refresh').onClick(() => this.routeChanged())
++      }.width('100%').padding(24)
++    }.height('100%').width('100%')
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/applications/standard/calendardata/entry/src/main/ets/reminder/CalendarReminderReader.ets b/applications/standard/calendardata/entry/src/main/ets/reminder/CalendarReminderReader.ets
+new file mode 100644
+--- /dev/null
++++ b/applications/standard/calendardata/entry/src/main/ets/reminder/CalendarReminderReader.ets
+@@ -0,0 +1,99 @@
++/* Copyright (c) 2026 Harmony Contrib. SPDX-License-Identifier: Apache-2.0 */
++import calendarManager from '@ohos.calendarManager';
++import common from '@ohos.app.ability.common';
++import abilityAccessCtrl from '@ohos.abilityAccessCtrl';
++
++// Accept the existing provider's URI contract, including persisted reminders.
++// Query times are untrusted routing hints; display only the persisted event.
++export function parseCalendarReminder(uri: string): number {
++  if (typeof uri !== 'string' || uri.length > 512) {
++    throw new Error('无效的日程链接');
++  }
++  const match: RegExpMatchArray | null = uri.match(
++    /^calendar:\/\/com\.ohos\.calendar\?event_id=([1-9][0-9]*)&start=(0|[1-9][0-9]*)&end=(0|[1-9][0-9]*)$/);
++  if (match === null) {
++    throw new Error('无效的日程链接');
++  }
++  const id: number = Number(match[1]);
++  const start: number = Number(match[2]);
++  const end: number = Number(match[3]);
++  if (!Number.isSafeInteger(id) || id > 2147483647 || !Number.isSafeInteger(start) ||
++    !Number.isSafeInteger(end) || end > 8640000000000000 || end < start) {
++    throw new Error('无效的日程链接');
++  }
++  return id;
++}
++
++export class CalendarReminderReader {
++  public event: calendarManager.Event | undefined = undefined;
++  public status: string = '';
++  private context: common.UIAbilityContext;
++  private generation: number = 0;
++  private active: boolean = true;
++
++  constructor(context: common.UIAbilityContext) {
++    this.context = context;
++  }
++
++  public dispose(): void {
++    this.active = false;
++    this.generation++;
++    this.event = undefined;
++  }
++
++  public async open(uri: string): Promise<void> {
++    if (!this.active) {
++      return;
++    }
++    const generation: number = ++this.generation;
++    this.event = undefined;
++    this.status = '正在读取日程';
++    try {
++      if (uri === '') {
++        this.status = '请从日程提醒打开对应日程';
++        return;
++      }
++      const id: number = parseCalendarReminder(uri);
++      // The exported Ability grants no read result to its caller. The user
++      // grants the existing whole-calendar permission before UI-only reading.
++      const grants = await abilityAccessCtrl.createAtManager()
++        .requestPermissionsFromUser(this.context, ['ohos.permission.READ_WHOLE_CALENDAR']);
++      if (!this.current(generation)) {
++        return;
++      }
++      if (grants.authResults.length !== 1 || grants.authResults[0] !== 0) {
++        throw new Error('未授予读取日历权限');
++      }
++      const manager: calendarManager.CalendarManager = calendarManager.getCalendarManager(this.context);
++      const calendars: calendarManager.Calendar[] = await manager.getAllCalendars();
++      if (!this.current(generation)) {
++        return;
++      }
++      for (const calendar of calendars) {
++        const events: calendarManager.Event[] = await calendar.getEvents(calendarManager.EventFilter.filterById([id]));
++        if (!this.current(generation)) {
++          return;
++        }
++        const matches: calendarManager.Event[] = events.filter((event: calendarManager.Event) => event.id === id);
++        if (matches.length === 1) {
++          this.event = matches[0];
++          this.status = '';
++          return;
++        }
++        if (matches.length > 1) {
++          throw new Error('日历服务返回重复日程');
++        }
++      }
++      this.status = '日程已删除或当前帐号不可见';
++    } catch (error) {
++      if (this.current(generation)) {
++        this.event = undefined;
++        this.status = '无法读取日程，请检查日历权限后重试';
++      }
++    }
++  }
++
++  private current(generation: number): boolean {
++    return this.active && this.generation === generation;
++  }
++}
+diff --git a/applications/standard/calendardata/datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets b/applications/standard/calendardata/datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets
+--- a/applications/standard/calendardata/datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets
++++ b/applications/standard/calendardata/datamanager/src/main/ets/processor/reminders/ReminderAgentHelper.ets
+@@ -33,7 +33,7 @@
+ 
+ const SNOOZE_DELAY = 5 * 60;
+ 
+-const CALENDAR_BUNDLE_NAME = 'com.ohos.calendar';
++const CALENDAR_BUNDLE_NAME = 'com.ohos.calendardata';
+ 
+ const CALENDAR_ABILITY_NAME = 'MainAbility';
+ 

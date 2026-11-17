@@ -1,0 +1,12 @@
+diff --git a/device/qemu/common/virt_full/kernel/arm64_virt_defconfig b/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
+--- a/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
++++ b/device/qemu/common/virt_full/kernel/arm64_virt_defconfig
+@@ -1488,7 +1488,7 @@
+ # CONFIG_MAC80211_DEBUGFS is not set
+ # CONFIG_MAC80211_DEBUG_MENU is not set
+ CONFIG_MAC80211_STA_HASH_MAX_SIZE=0
+-CONFIG_RFKILL=m
++CONFIG_RFKILL=y
+ CONFIG_RFKILL_LEDS=y
+ CONFIG_RFKILL_INPUT=y
+ # CONFIG_RFKILL_GPIO is not set

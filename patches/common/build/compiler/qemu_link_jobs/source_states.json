@@ -1,0 +1,9 @@
+{
+  "scope": "actual source identity only; not compilation or QEMU acceptance",
+  "file": "build/config/compiler/BUILD.gn",
+  "before_sha256": "b598ca44da913c1e4e6a72bba44796ada4be944b7a5fdd35e63a55913eca820b",
+  "final_sha256": "650524a982f12f315c261fc89014546662b251b513340286acda279fc416beee",
+  "default_non_qemu": 0,
+  "actual_non_qemu_original_backend_jobs": 16,
+  "qemu_build_default_jobs": 2
+}

@@ -1,0 +1,32 @@
+--- a/foundation/ability/ability_runtime/interfaces/inner_api/app_manager/src/appmgr/child_process_args.cpp
++++ b/foundation/ability/ability_runtime/interfaces/inner_api/app_manager/src/appmgr/child_process_args.cpp
+@@ -24,5 +24,5 @@ namespace AppExecFwk {
+ bool ChildProcessArgs::ReadFromParcel(Parcel &parcel)
+ {
+-    entryParams = Str16ToStr8(parcel.ReadString16());
++    entryParams = parcel.ReadString();
+ 
+     int32_t fdsSize = parcel.ReadInt32();
+@@ -65,5 +65,5 @@ bool ChildProcessArgs::Marshalling(Parcel &parcel) const
+         TAG_LOGE(AAFwkTag::APPMGR, "child args exceed parameter or parcel capacity");
+         return false;
+     }
+-    WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(String16, parcel, Str8ToStr16(entryParams));
++    WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(String, parcel, entryParams);
+     WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(Int32, parcel, fds.size());
+--- a/foundation/ability/ability_runtime/interfaces/inner_api/app_manager/src/appmgr/child_process_info.cpp
++++ b/foundation/ability/ability_runtime/interfaces/inner_api/app_manager/src/appmgr/child_process_info.cpp
+@@ -50,5 +50,5 @@ bool ChildProcessInfo::ReadFromParcel(Parcel &parcel)
+     processName = Str16ToStr8(parcel.ReadString16());
+     srcEntry = Str16ToStr8(parcel.ReadString16());
+     entryFunc = Str16ToStr8(parcel.ReadString16());
+-    entryParams = Str16ToStr8(parcel.ReadString16());
++    entryParams = parcel.ReadString();
+     jitEnabled = parcel.ReadBool();
+@@ -102,5 +102,5 @@ bool ChildProcessInfo::Marshalling(Parcel &parcel) const
+     WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(String16, parcel, Str8ToStr16(processName));
+     WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(String16, parcel, Str8ToStr16(srcEntry));
+     WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(String16, parcel, Str8ToStr16(entryFunc));
+-    WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(String16, parcel, Str8ToStr16(entryParams));
++    WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(String, parcel, entryParams);
+     WRITE_PARCEL_AND_RETURN_FALSE_IF_FAIL(Bool, parcel, jitEnabled);

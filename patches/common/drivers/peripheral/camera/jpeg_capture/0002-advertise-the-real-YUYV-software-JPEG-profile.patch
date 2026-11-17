@@ -1,0 +1,31 @@
+diff --git a/drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/device_manager/v4l2_device_manager.cpp b/drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/device_manager/v4l2_device_manager.cpp
+--- a/drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/device_manager/v4l2_device_manager.cpp
++++ b/drivers/peripheral/camera/vdi_base/usb_camera/adapter/platform/v4l2/src/device_manager/v4l2_device_manager.cpp
+@@ -735,7 +735,11 @@
+ // {0, 3, 9, -1, 2, 3, 9, -1, 1, 3, -1} for pc
+ std::vector<int> g_defaultUsbCameraStreamFormatConfig = {
+     PREVIEW_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP, OHOS_CAMERA_FORMAT_422_YUYV, OHOS_CAMERA_FORMAT_MJPEG, -1,
+-    CAPTURE_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP, OHOS_CAMERA_FORMAT_422_YUYV, OHOS_CAMERA_FORMAT_MJPEG, -1,
++    CAPTURE_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP, OHOS_CAMERA_FORMAT_422_YUYV, OHOS_CAMERA_FORMAT_MJPEG,
++#ifdef QEMU_VIVID_CAPTURE_ENABLED
++    OHOS_CAMERA_FORMAT_JPEG,
++#endif
++    -1,
+     VIDEO_STREAM, OHOS_CAMERA_FORMAT_YCRCB_420_SP, OHOS_CAMERA_FORMAT_MJPEG, -1,
+ };
+ 
+@@ -797,6 +801,14 @@
+         if (it.width <= minWidth) {
+             continue;
+         }
++#ifdef QEMU_VIVID_CAPTURE_ENABLED
++        // CodecNode really encodes YUYV frames to JPEG. Do not advertise a
++        // JPEG capture size without its enumerated physical source format.
++        if (format == OHOS_CAMERA_FORMAT_JPEG && (streamId != CAPTURE_STREAM || !it.isYuv)) {
++            continue;
++        }
++#endif
++
+         if (!it.isMjpeg && format == OHOS_CAMERA_FORMAT_MJPEG) {
+             CAMERA_LOGI("this format not support mjpeg, %{public}d x %{public}d @fps[%{public}d, %{public}d]",
+                 it.width, it.height, it.minFps, it.maxFps);

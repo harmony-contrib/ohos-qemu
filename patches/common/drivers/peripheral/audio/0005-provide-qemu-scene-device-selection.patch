@@ -1,0 +1,28 @@
+diff --git a/device/qemu/common/virt_full/audio_alsa/vendor_capture.c b/device/qemu/common/virt_full/audio_alsa/vendor_capture.c
+index 434ce90..061c186 100644
+--- a/device/qemu/common/virt_full/audio_alsa/vendor_capture.c
++++ b/device/qemu/common/virt_full/audio_alsa/vendor_capture.c
+@@ -220,3 +220,9 @@ int32_t CaptureOverrideFunc(struct AlsaCapture *captureIns)
+ 
+     return HDF_SUCCESS;
+ }
++
++int32_t CaptureGetSceneDev(enum AudioCategory scene)
++{
++    (void)scene;
++    return -1;
++}
+diff --git a/device/qemu/common/virt_full/audio_alsa/vendor_render.c b/device/qemu/common/virt_full/audio_alsa/vendor_render.c
+index 7bb6ae9..dfd42e8 100644
+--- a/device/qemu/common/virt_full/audio_alsa/vendor_render.c
++++ b/device/qemu/common/virt_full/audio_alsa/vendor_render.c
+@@ -259,3 +259,9 @@ int32_t RenderOverrideFunc(struct AlsaRender *renderIns)
+ 
+     return HDF_SUCCESS;
+ }
++
++int32_t RenderGetSceneDev(enum AudioCategory scene)
++{
++    (void)scene;
++    return -1;
++}

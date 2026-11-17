@@ -1,0 +1,18 @@
+{
+  "component": "capturer-read-lifecycle",
+  "projects": {
+    "foundation/multimedia/audio_framework": "6932fa64335b8272ca4a59de7808ab0d6c9eae7a"
+  },
+  "files": {
+    "foundation/multimedia/audio_framework/services/audio_service/client/src/capturer_in_client.cpp": {
+      "before": "cd434230855a7ba3ee018701424c8d9a701bc40ef6c1a78b1a8ee30b05cd9c1c",
+      "after": "d32b7e7f0bbdb508703b7d4fd52f075cf8166b360d8cbb697fbb53f68508d656",
+      "payload": "capturer_in_client.cpp"
+    },
+    "foundation/multimedia/audio_framework/services/audio_service/client/include/capturer_in_client_inner.h": {
+      "before": "76826151505bafd71c10568c2a5fb1557fdea6c9194629c1f9b2574394ba0570",
+      "after": "83379049ad622fe0b5cf9d7b4889f9ab62e7f11c30b5fa9fb841011ffdb2afc5",
+      "payload": "capturer_in_client_inner.h"
+    }
+  }
+}

@@ -1,0 +1,239 @@
+--- a/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
++++ b/foundation/multimedia/media_library/frameworks/js/src/photoaccesshelperinf.js
+@@ -623,10 +623,10 @@
+     return false;
+   }
+   // check whether period is number when it exist
+-  if (!option.period) {
++  if (option.period === undefined) {
+     option.period = SECONDS_OF_ONE_DAY;
+   }
+-  if (typeof option.period !== 'number') {
++  if (typeof option.period !== 'number' || !Number.isFinite(option.period)) {
+     console.error('photoAccessHelper invalid, option.period type is not number.');
+     return false;
+   }
+@@ -649,10 +649,10 @@
+     SCREENSHOT: 2
+   };
+   // check whether photoSource valid
+-  if (!option.photoSource) {
++  if (option.photoSource === undefined) {
+     option.photoSource = PhotoSource.ALL;
+   }
+-  if (typeof option.photoSource !== 'number') {
++  if (typeof option.photoSource !== 'number' || !Number.isFinite(option.photoSource)) {
+     console.error('photoAccessHelper invalid, option.photoSource is not number');
+     return false;
+   }
+@@ -663,59 +663,79 @@
+ }
+ 
+ async function rpcGetRecentPhotoInfoGetProxy() {
+-  let proxy = undefined;
+   let want = {
+     'bundleName': 'com.ohos.photos',
+     'abilityName': 'RecentPhotoInfoAbility'
+   };
+-  let connect = {
+-    onConnect: (elementName, remoteProxy) => {
+-      console.info('RpcClient: js onConnect called');
+-      proxy = remoteProxy;
+-    },
+-    onDisconnect: (elementName) => {
+-      console.info('RpcClient: onDisconnect');
+-    },
+-    onFailed: () => {
+-      console.info('RpcClient: onFailed');
+-    }
+-  };
+   let context = gContext;
+   if (context === undefined) {
+     console.info('photoAccessHelper gContext undefined.');
+     context = getContext(this);
+   }
+-  try {
+-    let connectId = context.connectServiceExtensionAbility(want, connect);
+-    let retryConter = RETRY_COUNTER;
+-    while (proxy === undefined) {
+-      retryConter -= 1;
+-      if (retryConter < 0) {
+-        break;
++  return new Promise((resolve) => {
++    let connectId;
++    let settled = false;
++    let releaseRequested = false;
++    let releasePromise;
++    const release = () => {
++      releaseRequested = true;
++      if (connectId === undefined) {
++        return releasePromise || Promise.resolve();
+       }
+-      await delayFunc();
++      const id = connectId;
++      connectId = undefined;
++      releasePromise = Promise.resolve().then(() => context.disconnectServiceExtensionAbility(id))
++        .catch((error) => console.error('rpcGetRecentPhotoInfo disconnect failed: ' + error));
++      return releasePromise;
++    };
++    const finish = (proxy) => {
++      if (settled) {
++        return;
++      }
++      settled = true;
++      clearTimeout(timer);
++      if (proxy === undefined || proxy === null) {
++        Promise.resolve().then(release).then(() => resolve(undefined));
++      } else {
++        resolve({ proxy, release });
++      }
++    };
++    // Wait for the real connection callback, including a cold Photos start.
++    // A bounded deadline also releases an unfulfilled connection request.
++    const timer = setTimeout(() => finish(undefined), 10000);
++    try {
++      connectId = context.connectServiceExtensionAbility(want, {
++        onConnect: (elementName, proxy) => finish(proxy),
++        onDisconnect: () => finish(undefined),
++        onFailed: () => finish(undefined)
++      });
++      if (releaseRequested) {
++        release();
++      }
++    } catch (error) {
++      console.error('rpcGetRecentPhotoInfo Error: ' + error);
++      finish(undefined);
+     }
+-  } catch (error) {
+-    console.error('rpcGetRecentPhotoInfo Error: ' + error);
+-  }
+-  return proxy;
++  });
+ }
+ 
+ async function rpcGetRecentPhotoInfo(recentPhotoOption) {
+-  let proxy = await rpcGetRecentPhotoInfoGetProxy();
+-  if (proxy === undefined) {
++  const connection = await rpcGetRecentPhotoInfoGetProxy();
++  if (connection === undefined) {
+     console.error('rpcGetRecentPhotoInfo proxy is undefined');
+     return undefined;
+   }
+-  let option = new rpc.MessageOption();
+-  let data = rpc.MessageSequence.create();
+-  let reply = rpc.MessageSequence.create();
++  let data;
++  let reply;
+   try { // rpc Request
++    let option = new rpc.MessageOption();
++    data = rpc.MessageSequence.create();
++    reply = rpc.MessageSequence.create();
+     data.writeInterfaceToken(RPC_TOKEN_RECENT_PHOTO_INFO);
+     data.writeInt(recentPhotoOption.period);
+     data.writeString(recentPhotoOption.MIMEType);
+     data.writeInt(recentPhotoOption.photoSource);
+-    let result = await proxy.sendMessageRequest(RPC_MSGID_RECENT_PHOTO_INFO, data, reply, option);
++    let result = await connection.proxy.sendMessageRequest(RPC_MSGID_RECENT_PHOTO_INFO, data, reply, option);
+     if (result.errCode !== 0) {
+       console.error('rpcGetRecentPhotoInfo sendMessageRequest failed, errCode: ' + result.errCode);
+       return undefined;
+@@ -728,15 +748,26 @@
+     console.error('rpcGetRecentPhotoInfo sendMessageRequest failed: ' + err);
+     return undefined;
+   } finally {
+-    data.reclaim();
+-    reply.reclaim();
++    try {
++      if (data !== undefined) {
++        data.reclaim();
++      }
++    } finally {
++      try {
++        if (reply !== undefined) {
++          reply.reclaim();
++        }
++      } finally {
++        await connection.release();
++      }
++    }
+   }
+ }
+ 
+ async function getRecentPhotoInfoOk(recentPhotoOption) {
+   try {
+     console.info('getRecentPhotoInfoOk enter');
+-    let photoInfo = rpcGetRecentPhotoInfo(recentPhotoOption);
++    let photoInfo = await rpcGetRecentPhotoInfo(recentPhotoOption);
+     if (!photoInfo) {
+       photoInfo = { dateTaken: -1, identifier: '-1' };
+     }
+@@ -752,11 +783,16 @@
+   }
+ }
+ 
+-function getRecentPhotoInfo(recentPhotoOption) {
+-  if (!checkIsRecentPhotoOptionValid(recentPhotoOption)) {
++function getRecentPhotoInfo(recentPhotoOption = {}) {
++  if (recentPhotoOption === null || typeof recentPhotoOption !== 'object' || Array.isArray(recentPhotoOption)) {
+     throw new BusinessError(ERROR_MSG_PARAMERTER_INVALID, ERR_CODE_OHOS_PARAMERTER_INVALID);
+   }
+-  return getRecentPhotoInfoOk(recentPhotoOption);
++  // Normalize our own copy, so a reusable/frozen public option is unchanged.
++  const normalized = { ...recentPhotoOption };
++  if (!checkIsRecentPhotoOptionValid(normalized)) {
++    throw new BusinessError(ERROR_MSG_PARAMERTER_INVALID, ERR_CODE_OHOS_PARAMERTER_INVALID);
++  }
++  return getRecentPhotoInfoOk(normalized);
+ }
+ 
+ function getPhotoAccessHelper(context, userId = -1) {
+@@ -1086,22 +1122,25 @@
+ };
+ 
+ function checkArguments(args) {
+-  let checkArgumentsResult = undefined;
+-
+-  if (args.length === ARGS_TWO && typeof args[ARGS_ONE] !== 'function') {
+-    checkArgumentsResult = getErr(ErrCode.INVALID_ARGS);
++  const invalid = () => new BusinessError(ERROR_MSG_PARAMERTER_INVALID, ERR_CODE_OHOS_PARAMERTER_INVALID);
++  if (args.length > ARGS_TWO || (args.length === ARGS_TWO && typeof args[ARGS_ONE] !== 'function')) {
++    return invalid();
+   }
+-
+-  if (args.length > 0 && typeof args[ARGS_ZERO] === 'object') {
+-    let option = args[ARGS_ZERO];
+-    if (option.maxSelectNumber !== undefined) {
+-      if (option.maxSelectNumber.toString().indexOf('.') !== -1) {
+-        checkArgumentsResult = getErr(ErrCode.INVALID_ARGS);
+-      }
+-    }
++  // The callback-only overload and omitted options remain supported.
++  if (args.length === 0 || args[ARGS_ZERO] === undefined ||
++      (args.length === 1 && typeof args[ARGS_ZERO] === 'function')) {
++    return undefined;
+   }
+-
+-  return checkArgumentsResult;
++  const option = args[ARGS_ZERO];
++  if (option === null || typeof option !== 'object' || Array.isArray(option)) {
++    return invalid();
++  }
++  if (option.maxSelectNumber !== undefined &&
++      (typeof option.maxSelectNumber !== 'number' || !Number.isFinite(option.maxSelectNumber) ||
++       !Number.isInteger(option.maxSelectNumber) || option.maxSelectNumber > 500)) {
++    return invalid();
++  }
++  return undefined;
+ }
+ 
+ function getErr(errCode) {
+@@ -1276,7 +1315,8 @@
+   let checkArgsResult = checkArguments(args);
+   if (checkArgsResult !== undefined) {
+     console.log('[picker] Invalid argument');
+-    throw checkArgsResult;
++    const callback = args.length === ARGS_TWO && typeof args[ARGS_ONE] === 'function' ? args[ARGS_ONE] : undefined;
++    return errorResult(checkArgsResult, callback);
+   }
+ 
+   const config = parsePhotoPickerSelectOption(args);

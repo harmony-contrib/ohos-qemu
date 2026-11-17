@@ -1,0 +1,12 @@
+{
+  "schema": "guarded-product-source-vector579/v1",
+  "projects": {
+    "base/security/selinux_adapter": "cfc1d5b31a7438dbc87763f9222f00337221cf21"
+  },
+  "files": {
+    "base/security/selinux_adapter/sepolicy/whitelist/qemu_cpu_sh.baseline": [
+      null,
+      "04a7576289e3fa8013702e5250e11fc7af80ccc28c7803149c2c85330ca2b3aa"
+    ]
+  }
+}

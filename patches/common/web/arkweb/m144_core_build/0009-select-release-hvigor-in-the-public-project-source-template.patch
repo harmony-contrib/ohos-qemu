@@ -1,0 +1,13 @@
+diff --git a/src/third_party/ohos_nweb_hap/dependencies/rk/hvigor/hvigor-config.json5 b/src/third_party/ohos_nweb_hap/dependencies/rk/hvigor/hvigor-config.json5
+--- a/src/third_party/ohos_nweb_hap/dependencies/rk/hvigor/hvigor-config.json5
++++ b/src/third_party/ohos_nweb_hap/dependencies/rk/hvigor/hvigor-config.json5
+@@ -1,6 +1,5 @@
+ {
+-	"hvigorVersion":"2.3.0",
+-	"dependencies":{
+-		"@ohos/hvigor-ohos-plugin":"2.3.0"
+-	}
++  "modelVersion": "6.0.0",
++  "dependencies": {},
++  "properties": {"hvigor.dependency.useNpm": true}
+ }

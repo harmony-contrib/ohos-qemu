@@ -1,0 +1,13 @@
+diff --git a/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/BUILD.gn b/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/BUILD.gn
+--- a/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/BUILD.gn
++++ b/drivers/peripheral/camera/vdi_base/usb_camera/pipeline_core/BUILD.gn
+@@ -24,6 +24,9 @@
+   if (drivers_peripheral_camera_feature_usb) {
+     defines += [ "CAMERA_BUILT_ON_USB" ]
+   }
++  if (drivers_peripheral_camera_qemu_vivid_capture) {
++    defines += [ "QEMU_VIVID_CAPTURE_ENABLED" ]
++  }
+ 
+   cflags_cc = [
+     "-Wall",

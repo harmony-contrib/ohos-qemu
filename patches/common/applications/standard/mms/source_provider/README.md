@@ -1,0 +1,1 @@
+Build the pinned real source provider with the official API26 SDK. The existing application permissions and ACLs are retained. Signed installation and actual UI behavior require the new representative package; compilation does not close a ledger row.
