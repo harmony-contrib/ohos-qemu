@@ -1,0 +1,15 @@
+diff --git a/third_party/libpng/BUILD.gn b/third_party/libpng/BUILD.gn
+index 86eccdd..335c286 100644
+--- a/third_party/libpng/BUILD.gn
++++ b/third_party/libpng/BUILD.gn
+@@ -88,7 +88,9 @@ if (defined(ohos_lite)) {
+       if (is_ohos && is_clang &&
+           (target_cpu == "arm" || target_cpu == "arm64")) {
+         ldflags = [ "-Wl,-Bsymbolic" ]
+-        defines = [ "PNG_ARM_NEON" ]
++        if (target_cpu == "arm64") {
++          defines = [ "PNG_ARM_NEON" ]
++        }
+       }
+     }
+   }

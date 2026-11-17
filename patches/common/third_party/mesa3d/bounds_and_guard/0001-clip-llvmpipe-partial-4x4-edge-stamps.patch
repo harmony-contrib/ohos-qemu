@@ -1,0 +1,342 @@
+diff --git a/src/gallium/drivers/llvmpipe/lp_rast.c b/src/gallium/drivers/llvmpipe/lp_rast.c
+index f67fbda..8679ea5 100644
+--- a/src/gallium/drivers/llvmpipe/lp_rast.c
++++ b/src/gallium/drivers/llvmpipe/lp_rast.c
+@@ -368,22 +368,20 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
+          task->thread_data.raster_state.view_index = inputs->view_index;
+ 
+          /* run shader on 4x4 block */
+-         BEGIN_JIT_CALL(state, task);
+-         variant->jit_function[RAST_WHOLE]( &state->jit_context,
+-                                            tile_x + x, tile_y + y,
+-                                            inputs->frontfacing,
+-                                            GET_A0(inputs),
+-                                            GET_DADX(inputs),
+-                                            GET_DADY(inputs),
+-                                            color,
+-                                            depth,
+-                                            mask,
+-                                            &task->thread_data,
+-                                            stride,
+-                                            depth_stride,
+-                                            sample_stride,
+-                                            depth_sample_stride);
+-         END_JIT_CALL();
++         lp_rast_call_fs_4x4_clipped(scene, state, task, variant, RAST_WHOLE,
++                                     tile_x + x, tile_y + y,
++                                     inputs->frontfacing,
++                                     GET_A0(inputs),
++                                     GET_DADX(inputs),
++                                     GET_DADY(inputs),
++                                     color,
++                                     depth,
++                                     mask,
++                                     scene->fb.nr_cbufs,
++                                     stride,
++                                     depth_stride,
++                                     sample_stride,
++                                     depth_sample_stride);
+       }
+    }
+ }
+@@ -477,22 +475,20 @@ lp_rast_shade_quads_mask_sample(struct lp_rasterizer_task *task,
+       task->thread_data.raster_state.view_index = inputs->view_index;
+ 
+       /* run shader on 4x4 block */
+-      BEGIN_JIT_CALL(state, task);
+-      variant->jit_function[RAST_EDGE_TEST](&state->jit_context,
+-                                            x, y,
+-                                            inputs->frontfacing,
+-                                            GET_A0(inputs),
+-                                            GET_DADX(inputs),
+-                                            GET_DADY(inputs),
+-                                            color,
+-                                            depth,
+-                                            mask,
+-                                            &task->thread_data,
+-                                            stride,
+-                                            depth_stride,
+-                                            sample_stride,
+-                                            depth_sample_stride);
+-      END_JIT_CALL();
++      lp_rast_call_fs_4x4_clipped(scene, state, task, variant, RAST_EDGE_TEST,
++                                  x, y,
++                                  inputs->frontfacing,
++                                  GET_A0(inputs),
++                                  GET_DADX(inputs),
++                                  GET_DADY(inputs),
++                                  color,
++                                  depth,
++                                  mask,
++                                  scene->fb.nr_cbufs,
++                                  stride,
++                                  depth_stride,
++                                  sample_stride,
++                                  depth_sample_stride);
+    }
+ }
+ 
+@@ -1295,6 +1291,7 @@ lp_rast_create( unsigned num_threads )
+    struct lp_rasterizer *rast;
+    unsigned i;
+ 
++   (void)getenv("LP_QEMU_4X4_BOUNDS_CLIP_V1");
+    rast = CALLOC_STRUCT(lp_rasterizer);
+    if (!rast) {
+       goto no_rast;
+diff --git a/src/gallium/drivers/llvmpipe/lp_rast_linear_fallback.c b/src/gallium/drivers/llvmpipe/lp_rast_linear_fallback.c
+index ede0399..546718f 100644
+--- a/src/gallium/drivers/llvmpipe/lp_rast_linear_fallback.c
++++ b/src/gallium/drivers/llvmpipe/lp_rast_linear_fallback.c
+@@ -112,19 +112,17 @@ shade_quads_all( struct lp_rasterizer_task *task,
+    assert(!variant->key.depth.enabled);
+ 
+    /* run shader on 4x4 block */
+-   BEGIN_JIT_CALL(state, task);
+-   variant->jit_function[RAST_WHOLE]( &state->jit_context,
+-                                      x, y,
+-                                      1,
+-                                      (const float (*)[4])GET_A0(inputs),
+-                                      (const float (*)[4])GET_DADX(inputs),
+-                                      (const float (*)[4])GET_DADY(inputs),
+-                                      cbufs,
+-                                      NULL,
+-                                      0xffff,
+-                                      &task->thread_data,
+-                                      strides, 0, 0, 0 );
+-   END_JIT_CALL();
++   lp_rast_call_fs_4x4_clipped(scene, state, task, variant, RAST_WHOLE,
++                               x, y,
++                               1,
++                               (const float (*)[4])GET_A0(inputs),
++                               (const float (*)[4])GET_DADX(inputs),
++                               (const float (*)[4])GET_DADY(inputs),
++                               cbufs,
++                               NULL,
++                               0xffff,
++                               1,
++                               strides, 0, NULL, 0);
+ }
+ 
+ static void
+@@ -152,19 +150,17 @@ shade_quads_mask(struct lp_rasterizer_task *task,
+    task->thread_data.raster_state.viewport_index = inputs->viewport_index;
+ 
+    /* run shader on 4x4 block */
+-   BEGIN_JIT_CALL(state, task);
+-   variant->jit_function[RAST_EDGE_TEST](&state->jit_context,
+-                                         x, y,
+-                                         1,
+-                                         (const float (*)[4])GET_A0(inputs),
+-                                         (const float (*)[4])GET_DADX(inputs),
+-                                         (const float (*)[4])GET_DADY(inputs),
+-                                         cbufs,
+-                                         NULL,
+-                                         mask,
+-                                         &task->thread_data,
+-                                         strides, 0, 0, 0);
+-   END_JIT_CALL();
++   lp_rast_call_fs_4x4_clipped(scene, state, task, variant, RAST_EDGE_TEST,
++                               x, y,
++                               1,
++                               (const float (*)[4])GET_A0(inputs),
++                               (const float (*)[4])GET_DADX(inputs),
++                               (const float (*)[4])GET_DADY(inputs),
++                               cbufs,
++                               NULL,
++                               mask,
++                               1,
++                               strides, 0, NULL, 0);
+ }
+ 
+ /* Shade a 4x4 stamp completely within the rectangle.
+diff --git a/src/gallium/drivers/llvmpipe/lp_rast_priv.h b/src/gallium/drivers/llvmpipe/lp_rast_priv.h
+index c4da9cc..b5f2a20 100644
+--- a/src/gallium/drivers/llvmpipe/lp_rast_priv.h
++++ b/src/gallium/drivers/llvmpipe/lp_rast_priv.h
+@@ -220,6 +220,148 @@ lp_rast_get_depth_block_pointer(struct lp_rasterizer_task *task,
+ 
+ 
+ 
++/**
++ * Execute a 4x4 fragment shader stamp while clamping out-of-bounds pixels on
++ * right/bottom partial framebuffer edges via a 16-byte-aligned 4x4 scratch
++ * bounce buffer.  llvmpipe JIT fragment shaders unconditionally load and store
++ * full 4x4 unswizzled color blocks even when mask bits for out-of-bounds
++ * rows/columns are zero; on linear KMS/OHOS DMA-BUF surfaces whose width or
++ * height is not a multiple of 4, direct execution can read/write past the BO.
++ */
++static inline void
++lp_rast_call_fs_4x4_clipped(const struct lp_scene *scene,
++                            const struct lp_rast_state *state,
++                            struct lp_rasterizer_task *task,
++                            struct lp_fragment_shader_variant *variant,
++                            unsigned rast_type,
++                            unsigned x, unsigned y,
++                            boolean frontfacing,
++                            const void *a0,
++                            const void *dadx,
++                            const void *dady,
++                            uint8_t **color,
++                            uint8_t *depth,
++                            uint64_t mask,
++                            unsigned nr_cbufs,
++                            unsigned *stride,
++                            unsigned depth_stride,
++                            unsigned *sample_stride,
++                            unsigned depth_sample_stride)
++{
++   if (variant->key.resource_1d ||
++       (x + 4u <= scene->fb.width && y + 4u <= scene->fb.height)) {
++      BEGIN_JIT_CALL(state, task);
++      variant->jit_function[rast_type](&state->jit_context,
++                                       x, y,
++                                       frontfacing,
++                                       a0, dadx, dady,
++                                       color,
++                                       depth,
++                                       mask,
++                                       &task->thread_data,
++                                       stride,
++                                       depth_stride,
++                                       sample_stride,
++                                       depth_sample_stride);
++      END_JIT_CALL();
++      return;
++   }
++
++   if (x >= scene->fb.width || y >= scene->fb.height)
++      return;
++
++   const unsigned block_w = MIN2(4u, scene->fb.width - x);
++   const unsigned block_h = MIN2(4u, scene->fb.height - y);
++   const unsigned row_valid = (1u << block_w) - 1u;
++   unsigned valid16 = 0;
++   for (unsigned ry = 0; ry < block_h; ry++)
++      valid16 |= row_valid << (ry * 4u);
++
++   uint64_t valid_mask = 0;
++   const unsigned num_samples = MAX2(1u, scene->fb_max_samples);
++   for (unsigned s = 0; s < num_samples; s++)
++      valid_mask |= (uint64_t)valid16 << (16u * s);
++
++   mask &= valid_mask;
++   if (!mask)
++      return;
++
++   PIPE_ALIGN_VAR(16) uint8_t scratch[PIPE_MAX_COLOR_BUFS][LP_MAX_SAMPLES * 4 * 64];
++   uint8_t *bounce_color[PIPE_MAX_COLOR_BUFS];
++   unsigned bounce_stride[PIPE_MAX_COLOR_BUFS];
++   unsigned bounce_sample_stride[PIPE_MAX_COLOR_BUFS];
++
++   for (unsigned i = 0; i < nr_cbufs; i++) {
++      if (color[i]) {
++         const unsigned fmt_bytes = scene->cbufs[i].format_bytes;
++         const unsigned cb_samples =
++            sample_stride ? MAX2(1u, scene->cbufs[i].nr_samples) : 1u;
++         const unsigned src_stride = stride[i];
++         const unsigned src_sstride = sample_stride ? sample_stride[i] : 0u;
++         const unsigned sc_stride = MAX2(16u, 4u * fmt_bytes);
++         const unsigned sc_sstride = 4u * sc_stride;
++
++         assert(fmt_bytes > 0 && fmt_bytes <= 16u);
++         assert(cb_samples <= LP_MAX_SAMPLES);
++         memset(scratch[i], 0, cb_samples * sc_sstride);
++         for (unsigned s = 0; s < cb_samples; s++) {
++            const uint8_t *src_s = color[i] + (size_t)s * src_sstride;
++            uint8_t *dst_s = scratch[i] + (size_t)s * sc_sstride;
++            for (unsigned ry = 0; ry < block_h; ry++) {
++               memcpy(dst_s + (size_t)ry * sc_stride,
++                      src_s + (size_t)ry * src_stride,
++                      (size_t)block_w * fmt_bytes);
++            }
++         }
++         bounce_color[i] = scratch[i];
++         bounce_stride[i] = sc_stride;
++         bounce_sample_stride[i] = sc_sstride;
++      } else {
++         bounce_color[i] = NULL;
++         bounce_stride[i] = 0;
++         bounce_sample_stride[i] = 0;
++      }
++   }
++
++   BEGIN_JIT_CALL(state, task);
++   variant->jit_function[RAST_EDGE_TEST](
++      &state->jit_context,
++      x, y,
++      frontfacing,
++      a0, dadx, dady,
++      bounce_color,
++      depth,
++      mask,
++      &task->thread_data,
++      bounce_stride,
++      depth_stride,
++      sample_stride ? bounce_sample_stride : NULL,
++      depth_sample_stride);
++   END_JIT_CALL();
++
++   for (unsigned i = 0; i < nr_cbufs; i++) {
++      if (!color[i])
++         continue;
++      const unsigned fmt_bytes = scene->cbufs[i].format_bytes;
++      const unsigned cb_samples =
++         sample_stride ? MAX2(1u, scene->cbufs[i].nr_samples) : 1u;
++      const unsigned dst_stride = stride[i];
++      const unsigned dst_sstride = sample_stride ? sample_stride[i] : 0u;
++      const unsigned sc_stride = MAX2(16u, 4u * fmt_bytes);
++      const unsigned sc_sstride = 4u * sc_stride;
++
++      for (unsigned s = 0; s < cb_samples; s++) {
++         uint8_t *dst_s = color[i] + (size_t)s * dst_sstride;
++         const uint8_t *src_s = scratch[i] + (size_t)s * sc_sstride;
++         for (unsigned ry = 0; ry < block_h; ry++) {
++            memcpy(dst_s + (size_t)ry * dst_stride,
++                   src_s + (size_t)ry * sc_stride,
++                   (size_t)block_w * fmt_bytes);
++         }
++      }
++   }
++}
++
+ /**
+  * Shade all pixels in a 4x4 block.  The fragment code omits the
+  * triangle in/out tests.
+@@ -276,22 +418,20 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
+       task->thread_data.raster_state.view_index = inputs->view_index;
+ 
+       /* run shader on 4x4 block */
+-      BEGIN_JIT_CALL(state, task);
+-      variant->jit_function[RAST_WHOLE]( &state->jit_context,
+-                                         x, y,
+-                                         inputs->frontfacing,
+-                                         GET_A0(inputs),
+-                                         GET_DADX(inputs),
+-                                         GET_DADY(inputs),
+-                                         color,
+-                                         depth,
+-                                         mask,
+-                                         &task->thread_data,
+-                                         stride,
+-                                         depth_stride,
+-                                         sample_stride,
+-                                         depth_sample_stride);
+-      END_JIT_CALL();
++      lp_rast_call_fs_4x4_clipped(scene, state, task, variant, RAST_WHOLE,
++                                  x, y,
++                                  inputs->frontfacing,
++                                  GET_A0(inputs),
++                                  GET_DADX(inputs),
++                                  GET_DADY(inputs),
++                                  color,
++                                  depth,
++                                  mask,
++                                  scene->fb.nr_cbufs,
++                                  stride,
++                                  depth_stride,
++                                  sample_stride,
++                                  depth_sample_stride);
+    }
+ }
+ 

@@ -846,6 +846,9 @@ def install_mesa_builder_hook(ohos_root: Path, *, verify: bool = False) -> list[
             raise FileNotFoundError(f"missing Mesa LLVM builder: {builder}")
         return changed
 
+    if "apply_mesa_bounds_and_guard.py" in _read_raw_text(builder):
+        return changed
+
     self_bytes = Path(__file__).resolve().read_bytes()
     if verify:
         if not helper_dst.is_file() or helper_dst.read_bytes() != self_bytes:

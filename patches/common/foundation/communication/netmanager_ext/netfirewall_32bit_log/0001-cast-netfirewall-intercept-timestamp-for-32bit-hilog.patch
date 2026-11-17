@@ -1,0 +1,13 @@
+diff --git a/foundation/communication/netmanager_ext/services/netfirewallmanager/src/netfirewall_intercept_recorder.cpp b/foundation/communication/netmanager_ext/services/netfirewallmanager/src/netfirewall_intercept_recorder.cpp
+index 3b07d35..c663ae1 100644
+--- a/foundation/communication/netmanager_ext/services/netfirewallmanager/src/netfirewall_intercept_recorder.cpp
++++ b/foundation/communication/netmanager_ext/services/netfirewallmanager/src/netfirewall_intercept_recorder.cpp
+@@ -188,7 +188,7 @@ int32_t NetFirewallInterceptRecorder::FirewallCallback::OnIntercept(sptr<Interce
+         return FIREWALL_ERR_INTERNAL;
+     }
+     // LCOV_EXCL_STOP
+-    NETMGR_EXT_LOG_I("FirewallCallback::OnIntercept: time=%{public}lu", record->time);
++    NETMGR_EXT_LOG_I("FirewallCallback::OnIntercept: time=%{public}llu", static_cast<unsigned long long>(record->time));
+     ReportInterceptWithoutSkip(record);
+     if (!recorder_) {
+         return FIREWALL_ERR_INTERNAL;

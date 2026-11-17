@@ -33,6 +33,11 @@ BUILD_ID_FILES = (
     "apply_mesa_build_id.py",
     "0001-bound-ELF-note-payloads-before-reading-or-advancing.patch",
 )
+BOUNDS_AND_GUARD_FILES = (
+    "apply_mesa_bounds_and_guard.py",
+    "0001-clip-llvmpipe-partial-4x4-edge-stamps.patch",
+    "0002-reserve-kms-dumb-bo-tail-guard-vma.patch",
+)
 UNCHECKED = object()
 
 
@@ -46,7 +51,8 @@ def checked_path(root: Path, name: str) -> Path:
     return path
 
 
-def transform(name: str, content: bytes, recipe: str, build_id_backport: bool = True) -> bytes:
+def transform(name: str, content: bytes, recipe: str, build_id_backport: bool = True,
+              bounds_and_guard_backport: bool = True) -> bytes:
     if not re.fullmatch("[a-f0-9]{64}", recipe):
         raise ValueError("invalid LLVM recipe identity")
     if hashlib.sha256(content).hexdigest() != GN_FILES[name]:
@@ -88,6 +94,8 @@ def transform(name: str, content: bytes, recipe: str, build_id_backport: bool = 
               f"//third_party/mesa3d/qemu_llvm/{recipe}/{variable}/lib/libllvm.a"]
     if build_id_backport:
         extras += ["//third_party/mesa3d/qemu_build_id/" + name for name in BUILD_ID_FILES]
+    if bounds_and_guard_backport:
+        extras += ["//third_party/mesa3d/qemu_bounds_and_guard/" + name for name in BOUNDS_AND_GUARD_FILES]
     text = text.replace(anchor, anchor + "".join(indent + '"' + item + '",\n'
                                                for item in extras), 1)
     return text.encode()
@@ -122,7 +130,8 @@ def restore_plan(root: Path) -> tuple[dict, list[tuple[Path, bytes]]]:
             raise ValueError("unknown managed GN hook path")
         original = base64.b64decode(item["base"], validate=True)
         repaired = transform(name, original, record["identity"]["recipe_sha256"],
-                             record.get("build_id_backport", False))
+                             record.get("build_id_backport", False),
+                             record.get("bounds_and_guard_backport", False))
         current = checked_path(root, name)
         if current.read_bytes() not in (original, repaired):
             raise ValueError("modified Mesa GN hook; preserving user changes")
@@ -163,6 +172,9 @@ def apply(root: Path, artifacts: Path, products: list[str]) -> None:
     payloads.update({"third_party/mesa3d/qemu_build_id/" + name:
                      (COMPONENT.parent / "build_id_boundaries" / name).read_bytes()
                      for name in BUILD_ID_FILES})
+    payloads.update({"third_party/mesa3d/qemu_bounds_and_guard/" + name:
+                     (COMPONENT.parent / "bounds_and_guard" / name).read_bytes()
+                     for name in BOUNDS_AND_GUARD_FILES})
     snapshots = {name: checked_path(root, name).read_bytes() for name in planned}
     for name, content in payloads.items():
         path = checked_path(root, name)
@@ -195,12 +207,17 @@ def apply(root: Path, artifacts: Path, products: list[str]) -> None:
     for name, content in payloads.items():
         # GN executes this action directly through /usr/bin/env. Repair the
         # mode of an existing checked helper as well as a newly installed one.
+        exec_helper = name in (SOURCE_SCRIPT, "third_party/mesa3d/qemu_bounds_and_guard/apply_mesa_bounds_and_guard.py")
         atomic_write(checked_path(root, name), content, snapshots[name],
-                     mode=0o755 if name == SOURCE_SCRIPT else None)
+                     mode=0o755 if exec_helper else None)
+    legacy_bounds_dir = checked_path(root, "third_party/mesa3d/qemu_bounds_fix")
+    if legacy_bounds_dir.exists():
+        shutil.rmtree(legacy_bounds_dir)
     for name, (original, repaired) in planned.items():
         atomic_write(checked_path(root, name), repaired, snapshots[name])
     record = {
         "schema_version": 1, "identity": identity, "build_id_backport": True,
+        "bounds_and_guard_backport": True,
         "payloads": {name: hashlib.sha256(data).hexdigest() for name, data in payloads.items()},
         "hooks": {name: {"base": base64.b64encode(original).decode(),
                          "patched_sha256": hashlib.sha256(repaired).hexdigest()}
@@ -223,7 +240,8 @@ def main() -> None:
         for path, data in changes:
             repaired = transform(path.relative_to(root).as_posix(), data,
                                  record["identity"]["recipe_sha256"],
-                                 record.get("build_id_backport", False))
+                                 record.get("build_id_backport", False),
+                                 record.get("bounds_and_guard_backport", False))
             atomic_write(path, data, repaired)
         print("restored exact Mesa base hooks before parent component installers")
     else:

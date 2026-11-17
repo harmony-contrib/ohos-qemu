@@ -402,6 +402,11 @@ SETTINGS_INPUT_2IN1_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard
 SETTINGS_REFRESH_RATE_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/settings/refresh_rate_page/apply.sh"
 SCREEN_MODES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/window/window_manager/screen_modes/apply.sh"
 QEMU_CAPTURE_BUDGET_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/window/window_manager/capture_budget/apply.sh"
+QEMU_WM_PAD_DECOR_COMPAT_SCRIPT="${PATCH_ROOT}/common/foundation/window/window_manager/pad_decor_compat/apply.sh"
+QEMU_GBM_HEIGHT_ALIGN4_SCRIPT="${PATCH_ROOT}/common/device/qemu/gbm_height_align4/apply.sh"
+F2FS_VA_COPY_COMPONENT_SCRIPT="${PATCH_ROOT}/common/third_party/f2fs-tools/va_copy_log_buffer/apply.sh"
+LIBPNG_ARM_NEON_GUARD_SCRIPT="${PATCH_ROOT}/common/third_party/libpng/arm_neon_guard/apply.sh"
+NETFIREWALL_32BIT_LOG_SCRIPT="${PATCH_ROOT}/common/foundation/communication/netmanager_ext/netfirewall_32bit_log/apply.sh"
 COMPLETION_HANDLER_COMPONENT_SCRIPT="${PATCH_ROOT}/common/foundation/ability/ability_runtime/completion_handler/apply.sh"
 QEMU_DISPLAY_MODES_COMPONENT_SCRIPT="${PATCH_ROOT}/common/device/qemu/display_modes/apply.sh"
 SETTINGS_PREBUILT_COMPONENT_SCRIPT="${PATCH_ROOT}/common/applications/standard/hap/settings_provider/apply.sh"
@@ -3388,6 +3393,10 @@ for p in list(patch_root.rglob("*.json")) + list((patch_root.parent / "scripts")
         candidates.add(m)
 candidates.update((
     "foundation/multimedia/audio_framework/services/audio_service/common/include/onset579_clock_domain.h",
+    "device/qemu/common/virt_full/hardware/display/src/display_gralloc/hi_gbm_internal.h",
+    "foundation/window/window_manager/wm/src/window_session_impl.cpp",
+    "foundation/window/window_manager/wm/src/window_scene_session_impl.cpp",
+    "third_party/f2fs-tools/lib/libf2fs_log.c",
     "third_party/libpng/BUILD.gn",
     "foundation/communication/netmanager_ext/services/netfirewallmanager/src/netfirewall_intercept_recorder.cpp",
     "base/telephony/number_identity/number_location/src/fix_phone_number.cpp",
@@ -4056,12 +4065,16 @@ PY
     2>&1 | tee "${CACHE_ROOT}/logs/apply_screen_modes_component.log"
   bash "${QEMU_CAPTURE_BUDGET_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_capture_budget_component.log"
+  bash "${QEMU_WM_PAD_DECOR_COMPAT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_wm_pad_decor_compat.log"
   bash "${COMPLETION_HANDLER_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_completion_handler_component.log"
   bash "${QEMU_DISPLAY_MODES_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_display_modes_component.log"
   bash "${PATCH_ROOT}/common/device/qemu/display_gralloc_and_dpms/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_display_gralloc_and_dpms.log"
+  bash "${QEMU_GBM_HEIGHT_ALIGN4_SCRIPT}" --source-root "${OHOS_ROOT}" \
+    2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_gbm_height_align4.log"
   bash "${PATCH_ROOT}/common/drivers/peripheral/display/allocator_xcollie_noop/apply.sh" --source-root "${OHOS_ROOT}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_allocator_xcollie_noop.log"
   bash "${PATCH_ROOT}/common/drivers/peripheral/power/virt_userspace_suspend/apply.sh" --source-root "${OHOS_ROOT}" \
@@ -4480,51 +4493,22 @@ PY
   bash "${PATCH_ROOT}/common/base/security/selinux_adapter/qemu_sh_baseline/apply.sh" \
     --source-root "${OHOS_ROOT}" --profile "${usb_midi_source_profile}" \
     2>&1 | tee "${CACHE_ROOT}/logs/apply_qemu_sh_baseline.log"
+  if [ -d "${OHOS_ROOT}/third_party/libpng/.git" ]; then
+    bash "${LIBPNG_ARM_NEON_GUARD_SCRIPT}" --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_libpng_arm_neon_guard.log"
+  fi
+  if [ -d "${OHOS_ROOT}/foundation/communication/netmanager_ext/.git" ]; then
+    bash "${NETFIREWALL_32BIT_LOG_SCRIPT}" --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_netfirewall_32bit_log.log"
+  fi
+  if [ -d "${OHOS_ROOT}/third_party/f2fs-tools/.git" ]; then
+    bash "${F2FS_VA_COPY_COMPONENT_SCRIPT}" --source-root "${OHOS_ROOT}" \
+      2>&1 | tee "${CACHE_ROOT}/logs/apply_f2fs_va_copy_log_buffer.log"
+  fi
   python3 - "${OHOS_ROOT}" <<'PY'
 import sys
 from pathlib import Path
 root = Path(sys.argv[1]).resolve()
-libpng_gn = root / "third_party/libpng/BUILD.gn"
-if libpng_gn.is_file() and not libpng_gn.is_symlink():
-    txt = libpng_gn.read_text(encoding="utf-8")
-    orig_block = (
-        '        ldflags = [ "-Wl,-Bsymbolic" ]\n'
-        '        defines = [ "PNG_ARM_NEON" ]'
-    )
-    patched_block = (
-        '        ldflags = [ "-Wl,-Bsymbolic" ]\n'
-        '        if (target_cpu == "arm64") {\n'
-        '          defines = [ "PNG_ARM_NEON" ]\n'
-        '        }'
-    )
-    if orig_block in txt and patched_block not in txt:
-        libpng_gn.write_text(txt.replace(orig_block, patched_block, 1), encoding="utf-8")
-netfw_cpp = root / "foundation/communication/netmanager_ext/services/netfirewallmanager/src/netfirewall_intercept_recorder.cpp"
-if netfw_cpp.is_file() and not netfw_cpp.is_symlink():
-    txt = netfw_cpp.read_text(encoding="utf-8")
-    orig_log = 'NETMGR_EXT_LOG_I("FirewallCallback::OnIntercept: time=%{public}lu", record->time);'
-    patched_log = 'NETMGR_EXT_LOG_I("FirewallCallback::OnIntercept: time=%{public}llu", static_cast<unsigned long long>(record->time));'
-    if orig_log in txt and patched_log not in txt:
-        netfw_cpp.write_text(txt.replace(orig_log, patched_log, 1), encoding="utf-8")
-f2fs_log_c = root / "third_party/f2fs-tools/lib/libf2fs_log.c"
-if f2fs_log_c.is_file() and not f2fs_log_c.is_symlink():
-    txt = f2fs_log_c.read_text(encoding="utf-8")
-    patched = txt.replace(
-        "#define LOG_BUF_INITIAL_SIZE                64",
-        "#define LOG_BUF_INITIAL_SIZE                2048",
-        1,
-    )
-    orig_vsnprintf = "        ret = vsnprintf_s(buf, size, size - 1, fmt, args);"
-    patched_vsnprintf = (
-        "        va_list copy_args;\n"
-        "        va_copy(copy_args, args);\n"
-        "        ret = vsnprintf_s(buf, size, size - 1, fmt, copy_args);\n"
-        "        va_end(copy_args);"
-    )
-    if orig_vsnprintf in patched and "va_copy(copy_args, args);" not in patched:
-        patched = patched.replace(orig_vsnprintf, patched_vsnprintf, 1)
-    if patched != txt:
-        f2fs_log_c.write_text(patched, encoding="utf-8")
 number_identity_32bit_fixes = {
     "base/telephony/number_identity/number_location/src/fix_phone_number.cpp": (
         (

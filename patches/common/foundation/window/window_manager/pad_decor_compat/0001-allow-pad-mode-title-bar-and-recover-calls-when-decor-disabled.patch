@@ -1,0 +1,66 @@
+diff --git a/foundation/window/window_manager/wm/src/window_scene_session_impl.cpp b/foundation/window/window_manager/wm/src/window_scene_session_impl.cpp
+index cb6675a..b6f619e 100644
+--- a/foundation/window/window_manager/wm/src/window_scene_session_impl.cpp
++++ b/foundation/window/window_manager/wm/src/window_scene_session_impl.cpp
+@@ -4347,8 +4347,13 @@ WMError WindowSceneSessionImpl::SetWindowTitle(const std::string& title)
+         return WMError::WM_OK;
+     }
+     if (!IsDecorEnable()) {
+-        TLOGE(WmsLogTag::WMS_DECOR, "DecorEnable is false");
+-        return WMError::WM_ERROR_INVALID_WINDOW;
++        if (WindowHelper::IsMainWindow(GetType())) {
++            auto abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(GetContext());
++            if (abilityContext != nullptr) {
++                abilityContext->SetMissionLabel(title);
++            }
++        }
++        return WMError::WM_OK;
+     }
+     if (WindowHelper::IsMainWindow(GetType())) {
+         auto abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(GetContext());
+@@ -4847,7 +4852,8 @@ WMError WindowSceneSessionImpl::Recover(uint32_t reason, const SnapshotAnimation
+         return WMError::WM_ERROR_INVALID_WINDOW;
+     }
+     
+-    if (IsPadAndNotFreeMultiWindowCompatibleMode()) {
++    if (IsPadAndNotFreeMultiWindowCompatibleMode() ||
++        (IsPcOrFreeMultiWindowCapabilityEnabled() && !IsPcOrPadFreeMultiWindowMode())) {
+         TLOGE(WmsLogTag::WMS_LAYOUT_PC, "The device is not supported");
+         return WMError::WM_OK;
+     }
+diff --git a/foundation/window/window_manager/wm/src/window_session_impl.cpp b/foundation/window/window_manager/wm/src/window_session_impl.cpp
+index d8df0b2..e653cd7 100644
+--- a/foundation/window/window_manager/wm/src/window_session_impl.cpp
++++ b/foundation/window/window_manager/wm/src/window_session_impl.cpp
+@@ -4610,7 +4610,8 @@ WMError WindowSessionImpl::SetWindowTitleMoveEnabled(bool enable)
+     if (IsWindowSessionInvalid()) {
+         return WMError::WM_ERROR_INVALID_WINDOW;
+     }
+-    if (IsPadAndNotFreeMultiWindowCompatibleMode()) {
++    if (IsPadAndNotFreeMultiWindowCompatibleMode() ||
++        (IsPcOrFreeMultiWindowCapabilityEnabled() && !IsPcOrPadFreeMultiWindowMode())) {
+         TLOGE(WmsLogTag::WMS_DECOR, "The is PcAppInPad, not supported");
+         return WMError::WM_OK;
+     }
+@@ -5986,10 +5987,20 @@ WMError WindowSessionImpl::SetTitleButtonVisible(bool isMaximizeVisible, bool is
+     if (!IsPcOrFreeMultiWindowCapabilityEnabled()) {
+         return WMError::WM_ERROR_DEVICE_NOT_SUPPORT;
+     }
+-    if (GetUIContentSharedPtr() == nullptr || !IsDecorEnable()) {
++    if (GetUIContentSharedPtr() == nullptr) {
+         return WMError::WM_ERROR_INVALID_WINDOW;
+     }
++#if defined(__has_attribute) && __has_attribute(retain)
++    __attribute__((used, retain))
++#elif defined(__GNUC__)
++    __attribute__((used))
++#endif
++    static const char kQemuWmPadDecorCompatMarker[] = "OHOS_QEMU_WM_PAD_DECOR_COMPAT_V1";
++    (void)kQemuWmPadDecorCompatMarker;
+     windowTitleVisibleFlags_ = { isMaximizeVisible, isMinimizeVisible, isSplitVisible, isCloseVisible };
++    if (!IsDecorEnable()) {
++        return WMError::WM_OK;
++    }
+     UpdateTitleButtonVisibility();
+     return WMError::WM_OK;
+ }
