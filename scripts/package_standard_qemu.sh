@@ -3820,6 +3820,15 @@ replace_or_append_param() {
   fi
 }
 
+debugfs_mkdir_if_missing() {
+  local image="$1"
+  local dir="$2"
+  if debugfs -R "stat ${dir}" "${image}" 2>/dev/null | grep -q '^Inode:'; then
+    return 0
+  fi
+  debugfs -w -R "mkdir ${dir}" "${image}" >/dev/null 2>&1 || true
+}
+
 install_qemu_virt_device_support() {
   local package_dir="$1"
   local product="$2"
@@ -3861,12 +3870,12 @@ install_qemu_virt_device_support() {
   tmpdir="$(mktemp -d)"
 
   if [ -f "${system_img}" ]; then
-    debugfs -w -R "mkdir /mnt/share" "${system_img}" >/dev/null 2>&1 || true
-    debugfs -w -R "mkdir /mnt/data" "${system_img}" >/dev/null 2>&1 || true
-    debugfs -w -R "mkdir /mnt/data/external" "${system_img}" >/dev/null 2>&1 || true
-    debugfs -w -R "mkdir /mnt/data/external/sdcard" "${system_img}" >/dev/null 2>&1 || true
-    debugfs -w -R "mkdir /mnt/data/external/nvme" "${system_img}" >/dev/null 2>&1 || true
-    debugfs -w -R "mkdir /mnt/data/external/usb" "${system_img}" >/dev/null 2>&1 || true
+    debugfs_mkdir_if_missing "${system_img}" "/mnt/share"
+    debugfs_mkdir_if_missing "${system_img}" "/mnt/data"
+    debugfs_mkdir_if_missing "${system_img}" "/mnt/data/external"
+    debugfs_mkdir_if_missing "${system_img}" "/mnt/data/external/sdcard"
+    debugfs_mkdir_if_missing "${system_img}" "/mnt/data/external/nvme"
+    debugfs_mkdir_if_missing "${system_img}" "/mnt/data/external/usb"
     local ohos_para_tmp="${tmpdir}/ohos.para"
     if debugfs -R "cat /etc/param/ohos.para" "${system_img}" > "${ohos_para_tmp}" 2>/dev/null && \
        [ -s "${ohos_para_tmp}" ]; then
@@ -4558,7 +4567,192 @@ I18N_INSTALL_PY
     fi
   fi
 
+  install_qemu_mesa_bounds_runtime "${package_dir}" "${product}" "${source_root}"
   rm -rf "${tmpdir}"
+}
+
+install_qemu_mesa_bounds_runtime() {
+  local package_dir="$1"
+  local product="$2"
+  local source_root="${3:-}"
+  local system_img="${package_dir}/images/system.img"
+  local vendor_img="${package_dir}/images/vendor.img"
+
+  if [ ! -f "${system_img}" ] || [ ! -f "${vendor_img}" ] || ! command -v python3 >/dev/null 2>&1 || ! command -v debugfs >/dev/null 2>&1; then
+    return 0
+  fi
+
+  python3 - "${SCRIPT_DIR}" "${product}" "${system_img}" "${vendor_img}" "${QEMU_MESA_BOUNDS_STAGE_DIR:-}" "${source_root}" <<'MESA_BOUNDS_INSTALL_PY'
+import hashlib
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+
+script_dir = Path(sys.argv[1]).resolve()
+product = sys.argv[2]
+system_img = Path(sys.argv[3]).resolve()
+vendor_img = Path(sys.argv[4]).resolve()
+stage_env = sys.argv[5]
+source_root_arg = sys.argv[6]
+
+sys.path.insert(0, str(script_dir))
+from verify_qemu_mesa_bounds_image import (
+    GBM_REQUIRED_MARKERS,
+    MESA_REQUIRED_MARKERS,
+    PRODUCT_META,
+    WM_REQUIRED_MARKERS,
+    verify_elf_markers,
+)
+
+if product not in PRODUCT_META:
+    sys.exit(0)
+
+expected_machine, mesa_rel, wm_rel, gbm_rel = PRODUCT_META[product]
+lib_dir = "lib" if product == "armv7a_virt" else "lib64"
+debugfs = shutil.which("debugfs") or "/opt/homebrew/opt/e2fsprogs/sbin/debugfs"
+e2fsck = shutil.which("e2fsck") or "/opt/homebrew/opt/e2fsprogs/sbin/e2fsck"
+
+def candidate_paths(filename: str) -> list[Path]:
+    cands: list[Path] = []
+    if stage_env:
+        st = Path(stage_env).resolve()
+        cands.extend((st / product / filename, st / filename))
+    if source_root_arg:
+        out_p = Path(source_root_arg).resolve() / "out" / product
+        if filename == "kms_swrast_dri.so":
+            cands.extend((
+                out_p / "packages/phone/qemu_mesa/kms_swrast_dri.so",
+                out_p / "packages/phone/mesa3d/kms_swrast_dri.so",
+                out_p / f"packages/phone/system/{lib_dir}/kms_swrast_dri.so",
+            ))
+        elif filename == "libwm.z.so":
+            cands.extend((
+                out_p / "window/window_manager/libwm.z.so",
+                out_p / f"packages/phone/system/{lib_dir}/libwm.z.so",
+            ))
+        elif filename == "libdisplay_buffer_vendor.z.so":
+            cands.extend((
+                out_p / f"device_{product}/qemu_virt_full/libdisplay_buffer_vendor.z.so",
+                out_p / "device_arm_virt/linux_full_armv7a/libdisplay_buffer_vendor.z.so",
+                out_p / f"packages/phone/vendor/{lib_dir}/passthrough/libdisplay_buffer_vendor.z.so",
+            ))
+    return cands
+
+def pick_valid_source(filename: str, markers: tuple[bytes, ...], syms: tuple[str, ...]) -> Path | None:
+    for p in candidate_paths(filename):
+        if not p.is_file():
+            continue
+        try:
+            verify_elf_markers(p, expected_machine, markers, syms)
+            return p
+        except Exception:
+            continue
+    return None
+
+def run_debugfs(image: Path, op: str, *, writable: bool = False) -> subprocess.CompletedProcess[str]:
+    cmd = [debugfs] + (["-w"] if writable else []) + ["-R", op, str(image)]
+    res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    if re.search(r"(?:error|no space|file exists)", res.stderr, re.I):
+        raise RuntimeError(f"debugfs {op} on {image}: {res.stderr.strip()}")
+    return res
+
+def find_target_in_image(image: Path, rels: tuple[str, ...]) -> str:
+    for r in rels:
+        res = subprocess.run([debugfs, "-R", f"stat {r}", str(image)], capture_output=True, text=True)
+        if res.returncode == 0 and "Inode:" in res.stdout:
+            return r
+    raise RuntimeError(f"target {rels} not found in {image}")
+
+def replace_in_ext4(image: Path, rels: tuple[str, ...], src: Path, work: Path, tag: str) -> bool:
+    ext_path = find_target_in_image(image, rels)
+    cur_dump = work / f"{tag}.cur"
+    run_debugfs(image, f"dump {ext_path} {cur_dump}")
+    if cur_dump.is_file() and hashlib.sha256(cur_dump.read_bytes()).hexdigest() == hashlib.sha256(src.read_bytes()).hexdigest():
+        return False
+
+    stat_out = run_debugfs(image, f"stat {ext_path}").stdout
+    mode_m = re.search(r"Mode:\s+(\d+)", stat_out)
+    mode = int(mode_m.group(1), 8) if mode_m else 0o644
+
+    lbl_file = work / f"{tag}.selinux"
+    ea_res = subprocess.run(
+        [debugfs, "-R", f"ea_get -f {lbl_file} {ext_path} security.selinux", str(image)],
+        capture_output=True,
+        text=True,
+    )
+    has_selinux = (
+        ea_res.returncode == 0
+        and lbl_file.is_file()
+        and lbl_file.stat().st_size > 0
+        and "not found" not in ea_res.stderr.lower()
+    )
+
+    staged = work / f"{tag}.new"
+    shutil.copyfile(src, staged)
+    os.chmod(staged, mode & 0o777)
+
+    run_debugfs(image, f"rm {ext_path}", writable=True)
+    run_debugfs(image, f"write {staged} {ext_path}", writable=True)
+    if has_selinux:
+        run_debugfs(image, f"ea_set -f {lbl_file} {ext_path} security.selinux", writable=True)
+    print(f"installed Issue #35 runtime {src.name} -> {image.name}:{ext_path}")
+    return True
+
+sanitized_images: set[Path] = set()
+
+def sanitize_ext4_image(image: Path) -> None:
+    if image in sanitized_images or not e2fsck or not Path(e2fsck).is_file():
+        return
+    sanitized_images.add(image)
+    chk = subprocess.run([e2fsck, "-fn", str(image)], stdin=subprocess.DEVNULL, capture_output=True, text=True)
+    if chk.returncode == 0:
+        return
+    fix = subprocess.run([e2fsck, "-fy", str(image)], stdin=subprocess.DEVNULL, capture_output=True, text=True)
+    if fix.returncode not in (0, 1, 2):
+        raise RuntimeError(f"e2fsck -fy failed on {image} (rc={fix.returncode}): {fix.stderr.strip()}")
+    lf = subprocess.run([debugfs, "-R", "ls /lost+found", str(image)], capture_output=True, text=True)
+    if lf.returncode == 0:
+        removed_orphan = False
+        for tok in lf.stdout.split():
+            if re.fullmatch(r"#\d+", tok):
+                sub = subprocess.run([debugfs, "-R", f"ls /lost+found/{tok}", str(image)], capture_output=True, text=True)
+                entries = [m.group(1) for m in re.finditer(r"\(\d+\)\s+(\S+)", sub.stdout)]
+                if set(entries) <= {".", ".."}:
+                    subprocess.run([debugfs, "-w", "-R", f"rmdir /lost+found/{tok}", str(image)], capture_output=True, text=True)
+                    removed_orphan = True
+        if removed_orphan:
+            subprocess.run([e2fsck, "-fy", str(image)], stdin=subprocess.DEVNULL, capture_output=True, text=True)
+
+mesa_src = pick_valid_source("kms_swrast_dri.so", MESA_REQUIRED_MARKERS, ("__driDriverGetExtensions_kms_swrast",))
+wm_src = pick_valid_source("libwm.z.so", WM_REQUIRED_MARKERS, ())
+gbm_src = pick_valid_source("libdisplay_buffer_vendor.z.so", GBM_REQUIRED_MARKERS, ("_ZN4OHOS3HDI7DISPLAY20GbmGrallocInitializeEv",))
+
+mesa_alt = mesa_rel[len("/system"):] if mesa_rel.startswith("/system/") else f"/system{mesa_rel}"
+wm_alt = wm_rel[len("/system"):] if wm_rel.startswith("/system/") else f"/system{wm_rel}"
+gbm_alt = f"/vendor{gbm_rel}"
+
+touched_images: set[Path] = set()
+with tempfile.TemporaryDirectory(prefix="qemu-mesa-bounds-install-") as td:
+    work = Path(td)
+    if mesa_src is not None or wm_src is not None:
+        sanitize_ext4_image(system_img)
+    if gbm_src is not None:
+        sanitize_ext4_image(vendor_img)
+    if mesa_src is not None and replace_in_ext4(system_img, (mesa_rel, mesa_alt), mesa_src, work, "mesa"):
+        touched_images.add(system_img)
+    if wm_src is not None and replace_in_ext4(system_img, (wm_rel, wm_alt), wm_src, work, "wm"):
+        touched_images.add(system_img)
+    if gbm_src is not None and replace_in_ext4(vendor_img, (gbm_rel, gbm_alt), gbm_src, work, "gbm"):
+        touched_images.add(vendor_img)
+
+if touched_images and e2fsck and Path(e2fsck).is_file():
+    for img in sorted(touched_images):
+        subprocess.run([e2fsck, "-fn", str(img)], check=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+MESA_BOUNDS_INSTALL_PY
 }
 
 configure_qemu_sceneboard_desktop_layout() {
@@ -4801,6 +4995,16 @@ rewrite_package_launchers() {
     "${package_dir}/images/system.img" \
     "${device_type_profile}" \
     "${package_dir}/images/sys_prod.img"
+  if [ "${QEMU_VERIFY_MESA_BOUNDS:-1}" = "1" ] && \
+     [ -f "${package_dir}/images/system.img" ] && \
+     [ -f "${package_dir}/images/vendor.img" ] && \
+     { [ "${product}" = "arm64_virt" ] || [ "${product}" = "x86_64_virt" ] || [ "${product}" = "armv7a_virt" ]; }; then
+    python3 "${SCRIPT_DIR}/verify_qemu_mesa_bounds_image.py" \
+      --product "${product}" \
+      --system-image "${package_dir}/images/system.img" \
+      --vendor-image "${package_dir}/images/vendor.img"
+    echo "QEMU Mesa 4x4 bounds & 2in1 WM compatibility verified for ${product}"
+  fi
 
   write_full_product_launchers \
     "${launch_out}" \
@@ -5016,7 +5220,7 @@ seed_standard_userdata_dirs() {
 
   local dir
   for dir in "${dirs[@]}"; do
-    debugfs -w -R "mkdir ${dir}" "${image}" >/dev/null 2>&1 || true
+    debugfs_mkdir_if_missing "${image}" "${dir}"
   done
 }
 
@@ -5147,7 +5351,7 @@ ensure_standard_system_root() {
     exit 1
   fi
 
-  debugfs -w -R "mkdir /data" "${image}" >/dev/null 2>&1 || true
+  debugfs_mkdir_if_missing "${image}" "/data"
 
   local log_stat
   log_stat="$(debugfs -R "stat /log" "${image}" 2>&1 || true)"
@@ -5738,6 +5942,14 @@ verify_qemu_runtime_capabilities() {
     require_image_jsvm_contract "${system_image}" "${expected_machine}"
     JSVM_VERIFIED=true
     echo "QEMU JSVM M144 V8 capability verified for ${product} (not the ArkWeb engine)"
+  fi
+
+  if [ "${QEMU_VERIFY_MESA_BOUNDS:-1}" = "1" ]; then
+    python3 "${SCRIPT_DIR}/verify_qemu_mesa_bounds_image.py" \
+      --product "${product}" \
+      --system-image "${system_image}" \
+      --vendor-image "${vendor_image}"
+    echo "QEMU Mesa 4x4 bounds & 2in1 WM compatibility verified for ${product}"
   fi
 }
 
